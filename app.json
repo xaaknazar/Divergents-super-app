@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Divergents",
+    "slug": "divergents-super-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "divergents",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "kz.divergents.app"
+    },
+    "android": {
+      "package": "kz.divergents.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#234088"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
