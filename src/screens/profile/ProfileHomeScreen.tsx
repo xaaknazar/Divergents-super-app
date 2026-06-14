@@ -8,6 +8,7 @@ import { ProgressBar, Capsule, IconCircle, IconSquircle, ListSection, ListRow, T
 import { USER, TALENTS, REPORTS, APPLICATIONS } from '../../data/profile';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
+import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
@@ -15,6 +16,10 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 export function ProfileHomeScreen({ navigation }: Props) {
   const { challenge } = useChallenge();
   const { courses, progress } = useCourses();
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const goAuth = () => navigation.getParent()?.getParent()?.navigate('Auth' as never);
   const coursesInProgress = courses.filter((c) => progress(c.id) > 0).length;
 
   const stats = [
@@ -59,6 +64,20 @@ export function ProfileHomeScreen({ navigation }: Props) {
           </View>
         ))}
       </View>
+
+      {/* Account / Clerk auth */}
+      <ListSection header="Аккаунт">
+        {isSignedIn ? (
+          <>
+            <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />}
+              title={user?.primaryEmailAddress?.emailAddress ?? 'Вы вошли'} subtitle="Divergents LMS" />
+            <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title="Выйти" valueColor={T.red} last onPress={() => signOut()} />
+          </>
+        ) : (
+          <ListRow leading={<IconCircle icon="person.crop.circle" color={T.brand} bg={T.brandTinted} size={30} />}
+            title="Войти по почте" subtitle="Чтобы видеть свои курсы и видео" chevron last onPress={goAuth} />
+        )}
+      </ListSection>
 
       {/* Reminders */}
       <ListSection header="Напоминания · 2">

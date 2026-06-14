@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, Pressable, Image, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, Image, ActivityIndicator, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, IconCircle, SectionHeader, T, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
+import { useMyCourses } from '../../state/useMyCourses';
 import { formatPrice } from '../../data/api';
 import { Course } from '../../data/courses';
 import { LMSStackParams } from '../../navigation/types';
@@ -25,6 +26,7 @@ function Cover({ course, height, radius = 0 }: { course: Course; height: number;
 
 export function LMSHomeScreen({ navigation }: Props) {
   const { courses, loading, source, progress, reload } = useCourses();
+  const my = useMyCourses();
 
   if (loading) {
     return (
@@ -69,6 +71,45 @@ export function LMSHomeScreen({ navigation }: Props) {
           {source === 'mock' ? 'Демо-режим · нет связи с сайтом' : 'Продолжайте обучение'}
         </Text>
       </View>
+
+      {/* My Courses (signed in) or sign-in prompt */}
+      {my.isSignedIn ? (
+        my.courses.length > 0 ? (
+          <>
+            <SectionHeader title="Мои курсы" />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 16 }}>
+              {my.courses.map((c) => {
+                const p = progress(c.id);
+                return (
+                  <Pressable key={c.id} onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })}
+                    style={{ width: 240, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden' }}>
+                    <Cover course={c} height={120} />
+                    <View style={{ padding: 12 }}>
+                      <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{c.title}</Text>
+                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{c.lessonsLabel}</Text>
+                      <View style={{ marginTop: 8 }}><ProgressBar value={p} height={3} /></View>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
+        ) : (
+          <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 14, padding: 16 }}>
+            <Text style={[ty.subhead, { color: T.labelSecondary }]}>У вас пока нет купленных курсов. Откройте каталог ниже.</Text>
+          </View>
+        )
+      ) : (
+        <Pressable onPress={() => navigation.getParent()?.getParent()?.navigate('Auth' as never)}
+          style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.brandTinted, borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <IconCircle icon="person.crop.circle" color={T.brand} bg="rgba(35,64,136,0.12)" size={40} iconSize={22} />
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]}>Войдите, чтобы увидеть свои курсы</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>Вход по коду на почту</Text>
+          </View>
+          <SF name="chevron.forward" size={14} color={T.brand} />
+        </Pressable>
+      )}
 
       {/* Continue card */}
       <Pressable

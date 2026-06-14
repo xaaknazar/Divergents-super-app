@@ -145,3 +145,33 @@ export function formatPrice(price: number | null | undefined): string {
   if (price == null || price <= 0) return 'Бесплатно';
   return `${Math.round(price).toLocaleString('ru-RU')} ₸`;
 }
+
+// ─── Authenticated (Clerk) endpoints ──────────────────────────────
+async function getJsonAuthed(path: string, token: string, timeoutMs = 12000): Promise<any> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+interface ApiOwnedCourse extends ApiCourseSummary { progress: number; owned: boolean }
+
+export async function fetchMyCourses(token: string): Promise<Course[]> {
+  const data = await getJsonAuthed('/api/mobile/me/courses', token);
+  const list: ApiOwnedCourse[] = data?.courses ?? [];
+  return list.map((c) => ({ ...mapSummary(c), source: 'live' as const }));
+}
+
+// Owned course detail (chapters unlocked with Mux HLS for every chapter).
+export async function fetchOwnedDetail(id: string, token: string): Promise<Course & { owned: boolean }> {
+  const data = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
+  return { ...mapDetail(data), owned: true };
+}

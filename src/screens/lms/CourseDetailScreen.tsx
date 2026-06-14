@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, ListSection, PrimaryButton, T, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
+import { useAuth } from '@clerk/clerk-expo';
 import { formatPrice } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
@@ -23,10 +24,16 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   const { courseId } = route.params;
   const { getCourse, loadDetail, detailLoading, progress, currentLessonIndex, lessonStatus } = useCourses();
   const course = getCourse(courseId);
+  const { isSignedIn, getToken } = useAuth();
 
   useEffect(() => {
-    if (course && course.lessons.length === 0) loadDetail(courseId);
-  }, [courseId]);
+    (async () => {
+      const token = isSignedIn ? await getToken() : null;
+      // Load when we have no chapters yet, or (re)load with a token to unlock
+      // owned-course videos after sign-in.
+      if (course && (course.lessons.length === 0 || token)) loadDetail(courseId, token);
+    })();
+  }, [courseId, isSignedIn]);
 
   if (!course) {
     return (

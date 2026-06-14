@@ -21,6 +21,7 @@ import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import { CareerHomeScreen } from '../screens/career/CareerHomeScreen';
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { AuthScreen } from '../screens/AuthScreen';
 
 const LMSStack = createNativeStackNavigator<LMSStackParams>();
 function LMSNavigator() {
@@ -91,6 +92,7 @@ export function RootNavigator() {
   return (
     <Root.Navigator screenOptions={{ headerShown: false }} initialRouteName="Tabs">
       <Root.Screen name="Onboarding" component={OnboardingScreen} options={{ presentation: 'fullScreenModal' }} />
+      <Root.Screen name="Auth" component={AuthScreen} options={{ presentation: 'modal' }} />
       <Root.Screen name="Tabs" component={Tabs} />
     </Root.Navigator>
   );

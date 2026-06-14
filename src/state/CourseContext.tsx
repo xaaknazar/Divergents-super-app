@@ -3,7 +3,7 @@
 // Falls back to bundled mock data if the website API is unreachable.
 import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
 import { COURSES as MOCK_COURSES, Course } from '../data/courses';
-import { fetchCatalog, fetchCourseDetail } from '../data/api';
+import { fetchCatalog, fetchCourseDetail, fetchOwnedDetail } from '../data/api';
 
 export type LessonStatus = 'done' | 'current' | 'available' | 'locked';
 export type DataSource = 'live' | 'mock' | 'loading';
@@ -16,7 +16,7 @@ interface CourseState {
   reload: () => void;
 
   getCourse: (id: string) => Course | undefined;
-  loadDetail: (id: string) => Promise<void>;
+  loadDetail: (id: string, token?: string | null) => Promise<void>;
   detailLoading: Record<string, boolean>;
 
   completed: Record<string, string[]>;
@@ -63,10 +63,18 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const loadDetail = useCallback(async (id: string) => {
+  const loadDetail = useCallback(async (id: string, token?: string | null) => {
     setDetailLoading((p) => ({ ...p, [id]: true }));
     try {
-      const detail = await fetchCourseDetail(id);
+      let detail;
+      if (token) {
+        // Signed in: try the owned-course endpoint (unlocks Mux HLS); if the
+        // user doesn't own it (403) fall back to the public catalog detail.
+        try { detail = await fetchOwnedDetail(id, token); }
+        catch { detail = await fetchCourseDetail(id); }
+      } else {
+        detail = await fetchCourseDetail(id);
+      }
       setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...detail } : c)));
     } catch {
       // keep whatever we have (mock courses already include lessons)

@@ -25,7 +25,8 @@ export function VideoScreen({ route, navigation }: Props) {
   const [tab, setTab] = useState(0);
 
   const hls = lesson?.hlsUrl ?? null;
-  const paid = course?.source === 'live' && lesson?.isFree === false;
+  // 'locked' only when it's paid AND we have no playable stream (i.e. not owned)
+  const locked = course?.source === 'live' && lesson?.isFree === false && !lesson?.hlsUrl;
 
   // expo-video player (created unconditionally to satisfy hook rules)
   const player = useVideoPlayer(hls ?? '', (p) => { p.loop = false; });
@@ -55,7 +56,7 @@ export function VideoScreen({ route, navigation }: Props) {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           {hls ? (
             <VideoView player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls allowsFullscreen />
-          ) : paid ? (
+          ) : locked ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
               <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]}>Этот урок доступен по подписке</Text>
@@ -112,7 +113,7 @@ export function VideoScreen({ route, navigation }: Props) {
 
       {/* Bottom CTA */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: 'rgba(249,249,249,0.96)', borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        {paid ? (
+        {locked ? (
           <PrimaryButton label="Открыть на сайте" icon="globe" onPress={() => Linking.openURL(`${API_BASE}/courses/${courseId}`)} />
         ) : (
           <PrimaryButton
