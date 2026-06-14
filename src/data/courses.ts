@@ -10,24 +10,34 @@ export interface Lesson {
   title: string;
   duration: string; // e.g. "26 мин · Видео"
   minutes: number;
+  // Populated for live courses fetched from the website API:
+  isFree?: boolean;
+  playbackId?: string | null;
+  hlsUrl?: string | null;
+  description?: string | null;
 }
 
 export interface Course {
   id: string;
   title: string;
   author: string;
-  level: 'Базовый' | 'Средний' | 'Продвинутый';
-  durationLabel: string;
+  level?: string;
+  durationLabel?: string;
   lessonsLabel: string;
-  rating: string;
-  students: string;
-  match: number;          // % fit to the user's profile
+  rating?: string;
+  students?: string;
+  match?: number;          // % fit to the user's profile (mock only)
   icon: SFName;
   tint: string;
   iconColor: string;
-  category: 'Психометрия' | 'Лидерство' | 'Управление' | 'Семья' | 'Карьера';
+  category: string;
   description: string;
   lessons: Lesson[];
+  // Live-data fields (from the website API):
+  imageUrl?: string | null;   // UploadThing cover URL
+  price?: number | null;      // course price in ₸; 0/null = free
+  chaptersCount?: number;     // published chapters count
+  source?: 'live' | 'mock';
 }
 
 export const COURSES: Course[] = [

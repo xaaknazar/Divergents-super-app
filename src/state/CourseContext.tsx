@@ -1,28 +1,79 @@
-// Tracks per-course lesson completion. Drives progress %, the "continue"
-// action, and sequential lesson unlocking across the LMS module.
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
-import { COURSES, getCourse } from '../data/courses';
+// Courses state: fetches the live catalog from the Divergents website, lazily
+// loads per-course detail (chapters), and tracks local lesson completion.
+// Falls back to bundled mock data if the website API is unreachable.
+import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
+import { COURSES as MOCK_COURSES, Course } from '../data/courses';
+import { fetchCatalog, fetchCourseDetail } from '../data/api';
 
 export type LessonStatus = 'done' | 'current' | 'available' | 'locked';
+export type DataSource = 'live' | 'mock' | 'loading';
 
 interface CourseState {
-  completed: Record<string, string[]>;            // courseId -> completed lesson ids
+  courses: Course[];
+  source: DataSource;
+  loading: boolean;
+  error: string | null;
+  reload: () => void;
+
+  getCourse: (id: string) => Course | undefined;
+  loadDetail: (id: string) => Promise<void>;
+  detailLoading: Record<string, boolean>;
+
+  completed: Record<string, string[]>;
   completeLesson: (courseId: string, lessonId: string) => void;
-  resetCourse: (courseId: string) => void;
-  completedCount: (courseId: string) => number;
-  progress: (courseId: string) => number;          // 0..1
-  currentLessonIndex: (courseId: string) => number; // first incomplete
-  lessonStatus: (courseId: string, index: number) => LessonStatus;
   isCompleted: (courseId: string, lessonId: string) => boolean;
+  completedCount: (courseId: string) => number;
+  totalLessons: (courseId: string) => number;
+  progress: (courseId: string) => number;
+  currentLessonIndex: (courseId: string) => number;
+  lessonStatus: (courseId: string, index: number) => LessonStatus;
 }
 
 const Ctx = createContext<CourseState | null>(null);
 
-// Seed: the "Лидерство" course has the first 3 lessons completed (matches design).
 const SEED: Record<string, string[]> = { leadership: ['l1', 'l2', 'l3'] };
 
 export function CourseProvider({ children }: { children: React.ReactNode }) {
-  const [completed, setCompleted] = useState<Record<string, string[]>>(SEED);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [source, setSource] = useState<DataSource>('loading');
+  const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<Record<string, string[]>>({});
+  const [detailLoading, setDetailLoading] = useState<Record<string, boolean>>({});
+
+  const load = useCallback(async () => {
+    setSource('loading');
+    setError(null);
+    try {
+      const live = await fetchCatalog();
+      if (live.length > 0) {
+        setCourses(live);
+        setSource('live');
+        return;
+      }
+      // API reachable but empty — show mock so the app isn't blank.
+      setCourses(MOCK_COURSES);
+      setSource('mock');
+    } catch (e: any) {
+      setCourses(MOCK_COURSES);
+      setCompleted((prev) => (Object.keys(prev).length ? prev : SEED));
+      setSource('mock');
+      setError(e?.message ?? 'network');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const loadDetail = useCallback(async (id: string) => {
+    setDetailLoading((p) => ({ ...p, [id]: true }));
+    try {
+      const detail = await fetchCourseDetail(id);
+      setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...detail } : c)));
+    } catch {
+      // keep whatever we have (mock courses already include lessons)
+    } finally {
+      setDetailLoading((p) => ({ ...p, [id]: false }));
+    }
+  }, []);
 
   const completeLesson = useCallback((courseId: string, lessonId: string) => {
     setCompleted((prev) => {
@@ -32,40 +83,43 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const resetCourse = useCallback((courseId: string) => {
-    setCompleted((prev) => ({ ...prev, [courseId]: [] }));
-  }, []);
-
   const value = useMemo<CourseState>(() => {
-    const completedCount = (courseId: string) => (completed[courseId] ?? []).length;
-    const totalOf = (courseId: string) => getCourse(courseId)?.lessons.length ?? 0;
-    const progress = (courseId: string) => {
-      const total = totalOf(courseId);
-      return total ? completedCount(courseId) / total : 0;
+    const getCourse = (id: string) => courses.find((c) => c.id === id);
+    const completedCount = (id: string) => (completed[id] ?? []).length;
+    const totalLessons = (id: string) => {
+      const c = getCourse(id);
+      return c?.lessons.length || c?.chaptersCount || 0;
     };
-    const currentLessonIndex = (courseId: string) => {
-      const course = getCourse(courseId);
-      if (!course) return 0;
-      const done = completed[courseId] ?? [];
-      const idx = course.lessons.findIndex((l) => !done.includes(l.id));
-      return idx === -1 ? course.lessons.length - 1 : idx;
+    const progress = (id: string) => {
+      const total = totalLessons(id);
+      return total ? Math.min(1, completedCount(id) / total) : 0;
     };
-    const lessonStatus = (courseId: string, index: number): LessonStatus => {
-      const course = getCourse(courseId);
-      if (!course) return 'locked';
-      const done = completed[courseId] ?? [];
-      const lesson = course.lessons[index];
-      if (done.includes(lesson.id)) return 'done';
-      const current = currentLessonIndex(courseId);
-      if (index === current) return 'current';
-      if (index === current + 1) return 'available';
+    const currentLessonIndex = (id: string) => {
+      const c = getCourse(id);
+      if (!c || c.lessons.length === 0) return 0;
+      const done = completed[id] ?? [];
+      const idx = c.lessons.findIndex((l) => !done.includes(l.id));
+      return idx === -1 ? c.lessons.length - 1 : idx;
+    };
+    const lessonStatus = (id: string, index: number): LessonStatus => {
+      const c = getCourse(id);
+      if (!c || !c.lessons[index]) return 'locked';
+      const done = completed[id] ?? [];
+      if (done.includes(c.lessons[index].id)) return 'done';
+      const cur = currentLessonIndex(id);
+      if (index === cur) return 'current';
+      if (index === cur + 1) return 'available';
       return 'locked';
     };
-    const isCompleted = (courseId: string, lessonId: string) =>
-      (completed[courseId] ?? []).includes(lessonId);
+    const isCompleted = (id: string, lessonId: string) => (completed[id] ?? []).includes(lessonId);
 
-    return { completed, completeLesson, resetCourse, completedCount, progress, currentLessonIndex, lessonStatus, isCompleted };
-  }, [completed, completeLesson, resetCourse]);
+    return {
+      courses, source, loading: source === 'loading', error, reload: load,
+      getCourse, loadDetail, detailLoading,
+      completed, completeLesson, isCompleted, completedCount, totalLessons,
+      progress, currentLessonIndex, lessonStatus,
+    };
+  }, [courses, source, error, load, loadDetail, detailLoading, completed, completeLesson]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -76,4 +130,4 @@ export function useCourses() {
   return c;
 }
 
-export { COURSES };
+export { MOCK_COURSES as COURSES };

@@ -7,15 +7,15 @@ import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, IconCircle, IconSquircle, ListSection, ListRow, T, ty } from '../../components/ui';
 import { USER, TALENTS, REPORTS, APPLICATIONS } from '../../data/profile';
 import { useChallenge } from '../../state/ChallengeContext';
-import { useCourses, COURSES } from '../../state/CourseContext';
+import { useCourses } from '../../state/CourseContext';
 import { ProfileStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 
 export function ProfileHomeScreen({ navigation }: Props) {
   const { challenge } = useChallenge();
-  const { progress } = useCourses();
-  const coursesInProgress = COURSES.filter((c) => progress(c.id) > 0).length;
+  const { courses, progress } = useCourses();
+  const coursesInProgress = courses.filter((c) => progress(c.id) > 0).length;
 
   const stats = [
     { v: String(coursesInProgress), l: 'Курсов' },
@@ -29,7 +29,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
     { t: '10 км ходьбы', p: 6 / 14, e: '6/14' },
   ];
 
-  const goLeadership = () => navigation.getParent()?.getParent()?.navigate('Tabs', { screen: 'LMSTab', params: { screen: 'CourseDetail', params: { courseId: 'leadership' } } });
+  const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
 
   return (
     <Screen>
@@ -63,7 +63,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Reminders */}
       <ListSection header="Напоминания · 2">
         <ListRow leading={<IconCircle icon="bell.badge.fill" color="#fff" bg={T.orange} size={30} />} title="Завершите тест Gardner" subtitle="Осталось 12 вопросов · 8 минут" chevron />
-        <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />} title='Урок "Законы лидерства 2"' subtitle="Не открывали 3 дня" chevron last onPress={goLeadership} />
+        <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />} title='Урок "Законы лидерства 2"' subtitle="Не открывали 3 дня" chevron last onPress={goLearning} />
       </ListSection>
 
       {/* Current work */}
