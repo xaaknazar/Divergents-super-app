@@ -6,7 +6,7 @@ import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, ListSection, PrimaryButton, T, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
 import { useAuth } from '@clerk/clerk-expo';
-import { formatPrice } from '../../data/api';
+import { formatPrice, stripHtml } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'CourseDetail'>;
@@ -149,10 +149,10 @@ export function CourseDetailScreen({ route, navigation }: Props) {
           </ListSection>
         )}
 
-        {course.description ? (
+        {stripHtml(course.description) ? (
           <ListSection header="О курсе">
             <View style={{ padding: 16 }}>
-              <Text style={[ty.body, { color: T.label }]}>{course.description}</Text>
+              <Text style={[ty.body, { color: T.label }]}>{stripHtml(course.description)}</Text>
             </View>
           </ListSection>
         ) : null}

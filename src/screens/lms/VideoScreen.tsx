@@ -6,7 +6,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { SF } from '../../components/SFIcon';
 import { Segmented, PrimaryButton, T, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
-import { API_BASE } from '../../data/api';
+import { API_BASE, stripHtml } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Video'>;
@@ -88,7 +88,7 @@ export function VideoScreen({ route, navigation }: Props) {
           {tab === 0 ? (
             lesson.description ? (
               <View style={{ paddingHorizontal: 20 }}>
-                <Text style={[ty.body, { color: T.label }]}>{lesson.description}</Text>
+                <Text style={[ty.body, { color: T.label }]}>{stripHtml(lesson.description)}</Text>
               </View>
             ) : (
               <View style={{ paddingHorizontal: 16 }}>

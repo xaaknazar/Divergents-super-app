@@ -175,3 +175,21 @@ export async function fetchOwnedDetail(id: string, token: string): Promise<Cours
   const data = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
   return { ...mapDetail(data), owned: true };
 }
+
+// Strip HTML tags / decode common entities (chapter descriptions are rich text).
+export function stripHtml(input?: string | null): string {
+  if (!input) return '';
+  return input
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}

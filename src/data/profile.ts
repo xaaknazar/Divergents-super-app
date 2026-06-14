@@ -2,7 +2,7 @@ import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 
 export const USER = {
-  name: 'Beknazar K.',
+  name: 'Aknazar K.',
   initial: 'B',
   role: 'HR-директор · KEX Group · Алматы',
   psychotype: 'Паранойял',

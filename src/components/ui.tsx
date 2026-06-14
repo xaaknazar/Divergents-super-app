@@ -30,12 +30,23 @@ export function Capsule({
 }
 
 function CapsuleContent({ children, color }: { children: React.ReactNode; color: string }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      {React.Children.map(children, (c) =>
-        typeof c === 'string' ? <Text style={[ty.caption2Em, { color }]}>{c}</Text> : c)}
-    </View>
-  );
+  // Group consecutive string/number children into a single <Text> (so numbers
+  // never render bare — which crashes RN), and keep element children (icons) as-is.
+  const out: React.ReactNode[] = [];
+  let buf: string[] = [];
+  let k = 0;
+  const flush = () => {
+    if (buf.length) {
+      out.push(<Text key={`t${k++}`} style={[ty.caption2Em, { color }]}>{buf.join('')}</Text>);
+      buf = [];
+    }
+  };
+  React.Children.toArray(children).forEach((c) => {
+    if (typeof c === 'string' || typeof c === 'number') buf.push(String(c));
+    else { flush(); out.push(<React.Fragment key={`e${k++}`}>{c}</React.Fragment>); }
+  });
+  flush();
+  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>{out}</View>;
 }
 
 export function IconCircle({

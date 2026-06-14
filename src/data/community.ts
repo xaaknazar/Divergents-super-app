@@ -98,7 +98,7 @@ export interface Member {
 
 export const TEAM_MEMBERS: Member[] = [
   { id: 'm1', name: 'Айгерим Б.', weekBase: 412, day: 18 },
-  { id: 'me', name: 'Beknazar K.', weekBase: 316, day: 12, isMe: true },
+  { id: 'me', name: 'Aknazar K.', weekBase: 316, day: 12, isMe: true },
   { id: 'm3', name: 'Дамир А.', weekBase: 312, day: 11 },
   { id: 'm4', name: 'Жанар К.', weekBase: 287, day: 10 },
   { id: 'm5', name: 'Олжас Т.', weekBase: 245, day: 9 },

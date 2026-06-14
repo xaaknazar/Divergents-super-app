@@ -12,7 +12,7 @@ export interface ChatMessage {
 }
 
 export const INITIAL_MESSAGES: ChatMessage[] = [
-  { id: '1', role: 'bot', time: '09:42', text: 'Привет, Beknazar! Видел, ты завершил тест Gallup. Strategic + Command — мощная комбинация для лидера.' },
+  { id: '1', role: 'bot', time: '09:42', text: 'Привет, Aknazar! Видел, ты завершил тест Gallup. Strategic + Command — мощная комбинация для лидера.' },
   { id: '2', role: 'user', time: '09:43', text: 'Какие курсы посоветуешь под мой профиль?' },
   {
     id: '3', role: 'bot', time: '09:43',
