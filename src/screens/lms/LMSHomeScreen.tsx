@@ -2,10 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge } from '../../components/headers';
+import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { SiteCourseCard } from '../../components/SiteCourseCard';
-import { T, ty } from '../../components/ui';
+import { Chip, SectionHeader, T, ty } from '../../components/ui';
+import { CourseCardPremium, FeaturedCard } from '../../components/CourseCardPremium';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { LMSStackParams } from '../../navigation/types';
@@ -18,75 +18,78 @@ export function LMSHomeScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('Все');
 
-  // owned course id -> server progress (0..100)
   const ownedProgress = useMemo(() => {
     const m: Record<string, number> = {};
     my.courses.forEach((c) => { m[c.id] = c.serverProgress ?? 0; });
     return m;
   }, [my.courses]);
 
-  const categories = useMemo(() => {
-    const set = Array.from(new Set(courses.map((c) => c.category).filter(Boolean)));
-    return ['Все', ...set];
-  }, [courses]);
+  const categories = useMemo(
+    () => ['Все', ...Array.from(new Set(courses.map((c) => c.category).filter(Boolean)))],
+    [courses]
+  );
 
-  const filtered = useMemo(() => {
-    return courses
+  const filtered = useMemo(() => (
+    courses
       .filter((c) => cat === 'Все' || c.category === cat)
       .filter((c) => c.title.toLowerCase().includes(query.trim().toLowerCase()))
-      .sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
-  }, [courses, cat, query]);
+      .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
+  ), [courses, cat, query]);
+
+  // Continue: an owned course in progress (highest progress under 100)
+  const continueCourse = useMemo(() => {
+    const inProgress = my.courses
+      .filter((c) => (c.serverProgress ?? 0) > 0 && (c.serverProgress ?? 0) < 100)
+      .sort((a, b) => (b.serverProgress ?? 0) - (a.serverProgress ?? 0));
+    return inProgress[0] ?? null;
+  }, [my.courses]);
+
+  // Featured (when there's nothing to continue): a catalog course with a cover
+  const featured = useMemo(
+    () => (continueCourse ? null : courses.find((c) => c.imageUrl) ?? courses[0] ?? null),
+    [courses, continueCourse]
+  );
+
+  const showSearch = !query && cat === 'Все';
 
   return (
     <Screen>
-      <NavBarLarge title="Обучение" />
+      <NavBarLarge title="Обучение" trailing={<HeaderIcon name="ellipsis" />} />
 
-      {/* Search */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 12 }}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Поиск курса по названию"
-          placeholderTextColor={T.labelTertiary}
-          style={[ty.subhead, {
-            flex: 1, height: 40, borderWidth: 1, borderColor: T.cardBorder, borderTopLeftRadius: 10, borderBottomLeftRadius: 10,
-            paddingHorizontal: 12, color: T.label, backgroundColor: T.cardBg,
-          }]}
-        />
-        <View style={{ width: 46, height: 40, borderTopRightRadius: 10, borderBottomRightRadius: 10, backgroundColor: T.sky, alignItems: 'center', justifyContent: 'center' }}>
-          <SF name="magnifyingglass" size={18} color="#fff" />
+      <View style={{ paddingHorizontal: 20, paddingBottom: 14 }}>
+        <Text style={[ty.callout, { color: T.labelSecondary }]}>
+          {my.isSignedIn ? 'С возвращением' : 'Курсы Divergents'}
+        </Text>
+        <Text style={[ty.headline, { color: T.label, marginTop: 2 }]}>
+          {courses.length ? `${courses.length} курсов · развивайтесь` : 'Развивайтесь каждый день'}
+        </Text>
+      </View>
+
+      {/* Search (iOS fill style) */}
+      <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, paddingHorizontal: 12, height: 40 }}>
+          <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Поиск курса"
+            placeholderTextColor={T.labelTertiary}
+            style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]}
+          />
+          {query ? (
+            <Pressable onPress={() => setQuery('')} hitSlop={8}><SF name="xmark" size={15} color={T.labelTertiary} /></Pressable>
+          ) : null}
         </View>
       </View>
 
-      {/* Category pills */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 14 }}>
-        {categories.map((c) => {
-          const on = cat === c;
-          return (
-            <Pressable key={c} onPress={() => setCat(c)} style={{
-              paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1,
-              borderColor: on ? 'rgba(7,89,133,0.15)' : T.cardBorder,
-              backgroundColor: on ? T.skyBadgeBg : T.cardBg,
-            }}>
-              <Text style={[ty.subheadEm, { color: on ? T.skyDeep : T.label }]}>{c}</Text>
-            </Pressable>
-          );
-        })}
+      {/* Categories */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
+        {categories.map((c) => <Chip key={c} label={c} active={cat === c} onPress={() => setCat(c)} />)}
       </ScrollView>
 
-      {/* Sign-in prompt */}
-      {!my.isSignedIn ? (
-        <Pressable onPress={() => navigation.getParent()?.getParent()?.navigate('Auth' as never)}
-          style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.skyBadgeBg, borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <SF name="person.crop.circle" size={22} color={T.sky} />
-          <Text style={[ty.subhead, { color: T.skyDeep, flex: 1 }]}>Войдите по почте, чтобы открыть свои курсы и видео</Text>
-          <SF name="chevron.forward" size={14} color={T.sky} />
-        </Pressable>
-      ) : null}
-
       {loading ? (
-        <View style={{ paddingTop: 60, alignItems: 'center' }}>
-          <ActivityIndicator color={T.sky} />
+        <View style={{ paddingTop: 50, alignItems: 'center' }}>
+          <ActivityIndicator color={T.brand} />
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 12 }]}>Загружаем курсы…</Text>
         </View>
       ) : (
@@ -95,11 +98,65 @@ export function LMSHomeScreen({ navigation }: Props) {
             <Text style={[ty.caption1, { color: T.orange, paddingHorizontal: 20, paddingBottom: 8 }]}>Демо-режим · нет связи с сайтом</Text>
           ) : null}
 
-          {/* Course grid */}
+          {/* Continue (owned, in progress) */}
+          {showSearch && continueCourse ? (
+            <View style={{ marginBottom: 18 }}>
+              <SectionHeader title="Продолжить" />
+              <FeaturedCard
+                course={continueCourse}
+                owned
+                progress={continueCourse.serverProgress}
+                eyebrow="Продолжить"
+                onPress={() => navigation.navigate('CourseDetail', { courseId: continueCourse.id })}
+              />
+            </View>
+          ) : null}
+
+          {/* My courses */}
+          {showSearch && my.isSignedIn && my.courses.length > 0 ? (
+            <View style={{ marginBottom: 18 }}>
+              <SectionHeader title="Мои курсы" />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+                {my.courses.map((c) => (
+                  <CourseCardPremium key={c.id} course={c} owned progress={c.serverProgress} width={250}
+                    onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })} />
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
+
+          {/* Featured (when nothing to continue) */}
+          {showSearch && featured ? (
+            <View style={{ marginBottom: 18 }}>
+              <SectionHeader title="Рекомендуем" />
+              <FeaturedCard
+                course={featured}
+                onPress={() => navigation.navigate('CourseDetail', { courseId: featured.id })}
+              />
+            </View>
+          ) : null}
+
+          {/* Sign-in prompt */}
+          {showSearch && !my.isSignedIn ? (
+            <Pressable onPress={() => navigation.getParent()?.getParent()?.navigate('Auth' as never)}
+              style={{ marginHorizontal: 16, marginBottom: 18, backgroundColor: T.brandTinted, borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(35,64,136,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+                <SF name="person.crop.circle" size={22} color={T.brand} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[ty.headline, { color: T.label }]}>Войдите по почте</Text>
+                <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>Откроются ваши курсы и видео</Text>
+              </View>
+              <SF name="chevron.forward" size={14} color={T.brand} />
+            </Pressable>
+          ) : null}
+
+          {/* All courses grid */}
+          <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16 }}>
             {filtered.map((c) => (
               <View key={c.id} style={{ width: '48.5%', marginBottom: 14 }}>
-                <SiteCourseCard
+                <CourseCardPremium
                   course={c}
                   owned={c.id in ownedProgress}
                   progress={ownedProgress[c.id]}
@@ -108,7 +165,6 @@ export function LMSHomeScreen({ navigation }: Props) {
               </View>
             ))}
           </View>
-
           {filtered.length === 0 ? (
             <View style={{ padding: 30, alignItems: 'center' }}>
               <Text style={[ty.subhead, { color: T.labelSecondary }]}>Курсы не найдены</Text>
