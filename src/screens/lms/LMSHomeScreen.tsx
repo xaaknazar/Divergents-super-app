@@ -8,6 +8,8 @@ import { Chip, SectionHeader, T, ty } from '../../components/ui';
 import { CourseCardPremium, FeaturedCard } from '../../components/CourseCardPremium';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
+import { useUser } from '@clerk/clerk-expo';
+import { Logo } from '../../components/Logo';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
@@ -15,6 +17,8 @@ type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
 export function LMSHomeScreen({ navigation }: Props) {
   const { courses, loading, source } = useCourses();
   const my = useMyCourses();
+  const { user } = useUser();
+  const displayName = user?.firstName || user?.fullName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('Все');
 
@@ -56,13 +60,16 @@ export function LMSHomeScreen({ navigation }: Props) {
     <Screen>
       <NavBarLarge title="Обучение" trailing={<HeaderIcon name="ellipsis" />} />
 
-      <View style={{ paddingHorizontal: 20, paddingBottom: 14 }}>
-        <Text style={[ty.callout, { color: T.labelSecondary }]}>
-          {my.isSignedIn ? 'С возвращением' : 'Курсы Divergents'}
-        </Text>
-        <Text style={[ty.headline, { color: T.label, marginTop: 2 }]}>
-          {courses.length ? `${courses.length} курсов · развивайтесь` : 'Развивайтесь каждый день'}
-        </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 14 }}>
+        <Logo size={34} />
+        <View style={{ flex: 1 }}>
+          <Text style={[ty.callout, { color: T.labelSecondary }]} numberOfLines={1}>
+            {displayName ? `Привет, ${displayName}` : 'Divergents'}
+          </Text>
+          <Text style={[ty.headline, { color: T.label, marginTop: 1 }]} numberOfLines={1}>
+            {courses.length ? `${courses.length} курсов · развивайтесь` : 'Развивайтесь каждый день'}
+          </Text>
+        </View>
       </View>
 
       {/* Search (iOS fill style) */}

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignIn } from '@clerk/clerk-expo';
 import { SF } from '../components/SFIcon';
 import { PrimaryButton, T, ty } from '../components/ui';
+import { Logo } from '../components/Logo';
 import { RootStackParams } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Auth'>;
@@ -60,8 +61,8 @@ export function AuthScreen({ navigation }: Props) {
         </Pressable>
 
         <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 28 }}>
-          <View style={{ width: 72, height: 72, borderRadius: 18, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[ty.largeTitle, { color: '#fff' }]}>D</Text>
+          <View style={{ width: 76, height: 76, borderRadius: 20, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+            <Logo size={46} />
           </View>
           <Text style={[ty.title1, { color: T.label, marginTop: 16 }]}>Вход в Divergents</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4, textAlign: 'center' }]}>

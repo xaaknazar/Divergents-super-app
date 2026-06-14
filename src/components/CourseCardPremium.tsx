@@ -50,22 +50,24 @@ export function CourseCardPremium({
         ) : null}
       </View>
       <View style={{ padding: 12 }}>
-        <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{course.title}</Text>
+        <Text style={[ty.subheadEm, { color: T.label, height: 40, lineHeight: 20 }]} numberOfLines={2}>{course.title}</Text>
         <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{course.category}</Text>
-        {owned ? (
-          <View style={{ marginTop: 10 }}>
-            <ProgressBar value={pct / 100} color={done ? T.green : T.brand} />
-            <Text style={[ty.caption2Em, { color: done ? T.green : T.brand, marginTop: 6 }]}>{pct}% пройдено</Text>
-          </View>
-        ) : (
-          <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <SF name="book.fill" size={12} color={T.labelTertiary} />
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>{count}</Text>
+        <View style={{ marginTop: 10, minHeight: 32, justifyContent: 'flex-end' }}>
+          {owned ? (
+            <View>
+              <ProgressBar value={pct / 100} color={done ? T.green : T.brand} />
+              <Text style={[ty.caption2Em, { color: done ? T.green : T.brand, marginTop: 6 }]}>{pct}% пройдено</Text>
             </View>
-            <Text style={[ty.subheadEm, { color: T.brand }]}>{formatPrice(course.price)}</Text>
-          </View>
-        )}
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <SF name="book.fill" size={12} color={T.labelTertiary} />
+                <Text style={[ty.caption1, { color: T.labelSecondary }]}>{count}</Text>
+              </View>
+              <Text style={[ty.subheadEm, { color: T.brand }]}>{formatPrice(course.price)}</Text>
+            </View>
+          )}
+        </View>
       </View>
     </Pressable>
   );
