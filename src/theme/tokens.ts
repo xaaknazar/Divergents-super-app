@@ -41,6 +41,16 @@ export const T = {
   teal: '#30B0C7',
   brown: '#A2845E',
   indigo: '#5856D6',
+
+  // ─ Divergents LMS website palette (sky / emerald) for course UI ─
+  sky: '#0369A1',          // sky-700 (links, accents)
+  skyDeep: '#075985',      // sky-800 (badge text)
+  skyProgress: '#0284C7',  // sky-600 (progress fill)
+  skyTrack: '#E0F2FE',     // sky-100 (progress track)
+  skyBadgeBg: 'rgba(14,165,233,0.10)',   // sky-500/10
+  emeraldText: '#065F46',  // emerald-800
+  emeraldBadgeBg: 'rgba(16,185,129,0.10)', // emerald-500/10
+  cardBorder: 'rgba(0,0,0,0.08)',
 } as const;
 
 // Native iOS font; falls back to system on Android.

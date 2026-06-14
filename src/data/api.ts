@@ -167,7 +167,7 @@ interface ApiOwnedCourse extends ApiCourseSummary { progress: number; owned: boo
 export async function fetchMyCourses(token: string): Promise<Course[]> {
   const data = await getJsonAuthed('/api/mobile/me/courses', token);
   const list: ApiOwnedCourse[] = data?.courses ?? [];
-  return list.map((c) => ({ ...mapSummary(c), source: 'live' as const }));
+  return list.map((c) => ({ ...mapSummary(c), serverProgress: c.progress, source: 'live' as const }));
 }
 
 // Owned course detail (chapters unlocked with Mux HLS for every chapter).

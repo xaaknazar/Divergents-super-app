@@ -38,6 +38,7 @@ export interface Course {
   price?: number | null;      // course price in ₸; 0/null = free
   chaptersCount?: number;     // published chapters count
   source?: 'live' | 'mock';
+  serverProgress?: number; // 0..100 from the website (owned courses)
 }
 
 export const COURSES: Course[] = [

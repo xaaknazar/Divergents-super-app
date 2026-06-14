@@ -1,201 +1,122 @@
-import React from 'react';
-import { View, Text, Pressable, Image, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { ProgressBar, Capsule, IconCircle, SectionHeader, T, ty } from '../../components/ui';
+import { SiteCourseCard } from '../../components/SiteCourseCard';
+import { T, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
-import { formatPrice } from '../../data/api';
-import { Course } from '../../data/courses';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
 
-function Cover({ course, height, radius = 0 }: { course: Course; height: number; radius?: number }) {
-  if (course.imageUrl) {
-    return <Image source={{ uri: course.imageUrl }} style={{ width: '100%', height, borderRadius: radius }} resizeMode="cover" />;
-  }
-  return (
-    <View style={{ width: '100%', height, borderRadius: radius, backgroundColor: course.tint, alignItems: 'center', justifyContent: 'center' }}>
-      <SF name={course.icon} size={Math.min(44, height * 0.34)} color={course.iconColor} />
-    </View>
-  );
-}
-
 export function LMSHomeScreen({ navigation }: Props) {
-  const { courses, loading, source, progress, reload } = useCourses();
+  const { courses, loading, source } = useCourses();
   const my = useMyCourses();
+  const [query, setQuery] = useState('');
+  const [cat, setCat] = useState('Все');
 
-  if (loading) {
-    return (
-      <Screen>
-        <NavBarLarge title="Обучение и развитие" />
-        <View style={{ paddingTop: 80, alignItems: 'center' }}>
-          <ActivityIndicator color={T.brand} />
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 12 }]}>Загружаем курсы…</Text>
-        </View>
-      </Screen>
-    );
-  }
+  // owned course id -> server progress (0..100)
+  const ownedProgress = useMemo(() => {
+    const m: Record<string, number> = {};
+    my.courses.forEach((c) => { m[c.id] = c.serverProgress ?? 0; });
+    return m;
+  }, [my.courses]);
 
-  if (courses.length === 0) {
-    return (
-      <Screen>
-        <NavBarLarge title="Обучение и развитие" />
-        <View style={{ paddingTop: 80, alignItems: 'center', paddingHorizontal: 40 }}>
-          <SF name="book" size={40} color={T.labelTertiary} />
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 12, textAlign: 'center' }]}>Курсы не найдены. Проверьте подключение.</Text>
-          <Pressable onPress={reload} style={{ marginTop: 14 }}><Text style={[ty.body, { color: T.brand }]}>Обновить</Text></Pressable>
-        </View>
-      </Screen>
-    );
-  }
+  const categories = useMemo(() => {
+    const set = Array.from(new Set(courses.map((c) => c.category).filter(Boolean)));
+    return ['Все', ...set];
+  }, [courses]);
 
-  const cont = courses.find((c) => progress(c.id) > 0) ?? courses[0];
-  const contProgress = progress(cont.id);
-  const featured = courses[0];
-  const grid = courses.slice(1, 5);
+  const filtered = useMemo(() => {
+    return courses
+      .filter((c) => cat === 'Все' || c.category === cat)
+      .filter((c) => c.title.toLowerCase().includes(query.trim().toLowerCase()))
+      .sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+  }, [courses, cat, query]);
 
   return (
     <Screen>
-      <NavBarLarge title="Обучение и развитие" trailing={<>
-        <HeaderIcon name="magnifyingglass" onPress={() => navigation.navigate('Catalog')} />
-        <HeaderIcon name="ellipsis" />
-      </>} />
+      <NavBarLarge title="Обучение" />
 
-      <View style={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 16 }}>
-        <Text style={[ty.callout, { color: T.labelSecondary }]}>Доброе утро, Beknazar</Text>
-        <Text style={[ty.headline, { color: T.label, marginTop: 2 }]}>
-          {source === 'mock' ? 'Демо-режим · нет связи с сайтом' : 'Продолжайте обучение'}
-        </Text>
+      {/* Search */}
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingBottom: 12 }}>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Поиск курса по названию"
+          placeholderTextColor={T.labelTertiary}
+          style={[ty.subhead, {
+            flex: 1, height: 40, borderWidth: 1, borderColor: T.cardBorder, borderTopLeftRadius: 10, borderBottomLeftRadius: 10,
+            paddingHorizontal: 12, color: T.label, backgroundColor: T.cardBg,
+          }]}
+        />
+        <View style={{ width: 46, height: 40, borderTopRightRadius: 10, borderBottomRightRadius: 10, backgroundColor: T.sky, alignItems: 'center', justifyContent: 'center' }}>
+          <SF name="magnifyingglass" size={18} color="#fff" />
+        </View>
       </View>
 
-      {/* My Courses (signed in) or sign-in prompt */}
-      {my.isSignedIn ? (
-        my.courses.length > 0 ? (
-          <>
-            <SectionHeader title="Мои курсы" />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 16 }}>
-              {my.courses.map((c) => {
-                const p = progress(c.id);
-                return (
-                  <Pressable key={c.id} onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })}
-                    style={{ width: 240, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden' }}>
-                    <Cover course={c} height={120} />
-                    <View style={{ padding: 12 }}>
-                      <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{c.title}</Text>
-                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{c.lessonsLabel}</Text>
-                      <View style={{ marginTop: 8 }}><ProgressBar value={p} height={3} /></View>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </>
-        ) : (
-          <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 14, padding: 16 }}>
-            <Text style={[ty.subhead, { color: T.labelSecondary }]}>У вас пока нет купленных курсов. Откройте каталог ниже.</Text>
-          </View>
-        )
-      ) : (
+      {/* Category pills */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 14 }}>
+        {categories.map((c) => {
+          const on = cat === c;
+          return (
+            <Pressable key={c} onPress={() => setCat(c)} style={{
+              paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1,
+              borderColor: on ? 'rgba(7,89,133,0.15)' : T.cardBorder,
+              backgroundColor: on ? T.skyBadgeBg : T.cardBg,
+            }}>
+              <Text style={[ty.subheadEm, { color: on ? T.skyDeep : T.label }]}>{c}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {/* Sign-in prompt */}
+      {!my.isSignedIn ? (
         <Pressable onPress={() => navigation.getParent()?.getParent()?.navigate('Auth' as never)}
-          style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.brandTinted, borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <IconCircle icon="person.crop.circle" color={T.brand} bg="rgba(35,64,136,0.12)" size={40} iconSize={22} />
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]}>Войдите, чтобы увидеть свои курсы</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>Вход по коду на почту</Text>
-          </View>
-          <SF name="chevron.forward" size={14} color={T.brand} />
+          style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.skyBadgeBg, borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <SF name="person.crop.circle" size={22} color={T.sky} />
+          <Text style={[ty.subhead, { color: T.skyDeep, flex: 1 }]}>Войдите по почте, чтобы открыть свои курсы и видео</Text>
+          <SF name="chevron.forward" size={14} color={T.sky} />
         </Pressable>
-      )}
-
-      {/* Continue card */}
-      <Pressable
-        onPress={() => navigation.navigate('CourseDetail', { courseId: cont.id })}
-        style={({ pressed }) => ({ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 14, padding: 16, marginBottom: 16, opacity: pressed ? 0.85 : 1 })}
-      >
-        <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-          <View style={{ width: 56, height: 56, borderRadius: 14, overflow: 'hidden' }}>
-            <Cover course={cont} height={56} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.6 }]}>
-              {contProgress > 0 ? 'Продолжить' : 'Начать'}
-            </Text>
-            <Text style={[ty.headline, { color: T.label, marginTop: 1 }]} numberOfLines={1}>{cont.title}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{cont.lessonsLabel}</Text>
-          </View>
-          <SF name="chevron.forward" size={14} color={T.labelTertiary} />
-        </View>
-        {contProgress > 0 ? (
-          <View style={{ marginTop: 14 }}>
-            <ProgressBar value={contProgress} />
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 6 }]}>{Math.round(contProgress * 100)}% завершено</Text>
-          </View>
-        ) : null}
-      </Pressable>
-
-      <SectionHeader title="Рекомендуем для вас" action="Все" onAction={() => navigation.navigate('Catalog')} />
-
-      {/* Featured */}
-      <Pressable
-        onPress={() => navigation.navigate('CourseDetail', { courseId: featured.id })}
-        style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}
-      >
-        <View>
-          <Cover course={featured} height={150} />
-          <View style={{ position: 'absolute', top: 12, left: 12 }}>
-            <Capsule bg="rgba(255,255,255,0.85)" color={T.brand}><SF name="sparkles" size={11} color={T.brand} />Рекомендуем</Capsule>
-          </View>
-        </View>
-        <View style={{ padding: 14 }}>
-          <Text style={[ty.title3, { color: T.label }]} numberOfLines={2}>{featured.title}</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 3 }]}>{featured.author} · {featured.lessonsLabel}</Text>
-          <View style={{ height: 0.5, backgroundColor: T.separator, marginVertical: 12 }} />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Capsule bg={T.fillTertiary} color={T.label}>{featured.category}</Capsule>
-            <Text style={[ty.headline, { color: T.brand }]}>{formatPrice(featured.price)}</Text>
-          </View>
-        </View>
-      </Pressable>
-
-      {/* AI promo */}
-      <Pressable
-        onPress={() => navigation.getParent()?.navigate('AITab' as never)}
-        style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.brandTinted, borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}
-      >
-        <IconCircle icon="sparkles" color={T.brand} bg="rgba(35,64,136,0.12)" size={40} iconSize={20} />
-        <View style={{ flex: 1 }}>
-          <Text style={[ty.headline, { color: T.label }]}>Подобрать курсы под Strategic?</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>AI наставник готов помочь</Text>
-        </View>
-        <SF name="chevron.forward" size={14} color={T.brand} />
-      </Pressable>
-
-      {/* Catalog grid */}
-      {grid.length > 0 ? (
-        <>
-          <SectionHeader title="Каталог" action="Все" onAction={() => navigation.navigate('Catalog')} />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: 16, gap: 12, marginBottom: 20 }}>
-            {grid.map((c) => {
-              const p = progress(c.id);
-              return (
-                <Pressable key={c.id} onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })}
-                  style={{ width: '47.6%', backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden' }}>
-                  <Cover course={c} height={92} />
-                  <View style={{ padding: 12 }}>
-                    <Text style={[ty.footnoteEm, { color: T.label, lineHeight: 17 }]} numberOfLines={2}>{c.title}</Text>
-                    <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 4 }]}>{c.lessonsLabel} · {formatPrice(c.price)}</Text>
-                    {p > 0 ? <View style={{ marginTop: 8 }}><ProgressBar value={p} height={3} /></View> : null}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        </>
       ) : null}
+
+      {loading ? (
+        <View style={{ paddingTop: 60, alignItems: 'center' }}>
+          <ActivityIndicator color={T.sky} />
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 12 }]}>Загружаем курсы…</Text>
+        </View>
+      ) : (
+        <>
+          {source === 'mock' ? (
+            <Text style={[ty.caption1, { color: T.orange, paddingHorizontal: 20, paddingBottom: 8 }]}>Демо-режим · нет связи с сайтом</Text>
+          ) : null}
+
+          {/* Course grid */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16 }}>
+            {filtered.map((c) => (
+              <View key={c.id} style={{ width: '48.5%', marginBottom: 14 }}>
+                <SiteCourseCard
+                  course={c}
+                  owned={c.id in ownedProgress}
+                  progress={ownedProgress[c.id]}
+                  onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })}
+                />
+              </View>
+            ))}
+          </View>
+
+          {filtered.length === 0 ? (
+            <View style={{ padding: 30, alignItems: 'center' }}>
+              <Text style={[ty.subhead, { color: T.labelSecondary }]}>Курсы не найдены</Text>
+            </View>
+          ) : null}
+          <View style={{ height: 16 }} />
+        </>
+      )}
     </Screen>
   );
 }
