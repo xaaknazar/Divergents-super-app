@@ -7,8 +7,8 @@ import { SF } from '../../components/SFIcon';
 import { ProgressBar, Segmented, SectionHeader, ListSection, Capsule, T, ty } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { useChallenge } from '../../state/ChallengeContext';
-import { MEDAL_FOR_RANK, TRIPS } from '../../data/community';
-import { FEATURED_MEMBER } from '../../data/community';
+import { MEDAL_FOR_RANK, TRIPS, FEATURED_MEMBER, CHALLENGES, daysUntil } from '../../data/community';
+import { Logo } from '../../components/Logo';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
@@ -25,6 +25,11 @@ export function CommunityHomeScreen({ navigation }: Props) {
         <HeaderIcon name="plus.circle" size={22} />
       </>} />
 
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
+        <Logo size={22} />
+        <Text style={[ty.subhead, { color: T.labelSecondary }]}>Divergents · челленджи и поездки</Text>
+      </View>
+
       <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
         <Segmented items={['Челленджи', 'Поездки', 'Спорт', 'Встречи']} value={seg} onChange={setSeg} />
       </View>
@@ -40,8 +45,42 @@ export function CommunityHomeScreen({ navigation }: Props) {
         </View>
       ) : (
         <>
+          {/* Challenge selection */}
+          <SectionHeader title="Выбрать челлендж" />
+          {CHALLENGES.filter((x) => x.status === 'upcoming').map((ch) => (
+            <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
+              style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
+              <View style={{ height: 92, backgroundColor: ch.tint, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
+                <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.75)', alignItems: 'center', justifyContent: 'center' }}>
+                  <SF name={ch.icon} size={28} color={T.brand} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Capsule bg="rgba(255,255,255,0.85)" color={T.brand}><SF name="calendar" size={11} color={T.brand} />Старт {ch.startLabel}</Capsule>
+                  <Text style={[ty.title3, { color: T.label, marginTop: 6 }]}>{ch.title}</Text>
+                </View>
+              </View>
+              <View style={{ padding: 14 }}>
+                <Text style={[ty.subhead, { color: T.labelSecondary }]}>{ch.subtitle}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                  <Capsule bg={T.brandTinted} color={T.brand}>через {daysUntil(ch.startISO)} дн.</Capsule>
+                  <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дней</Capsule>
+                  <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
+                  <Capsule bg={T.fillTertiary} color={T.label}>{ch.teams} команды</Capsule>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                  <Text style={[ty.caption1, { color: T.red }]}>3 пропуска (🚩) — вылет</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text style={[ty.subheadEm, { color: T.brand }]}>Подробнее</Text>
+                    <SF name="chevron.forward" size={12} color={T.brand} />
+                  </View>
+                </View>
+              </View>
+            </Pressable>
+          ))}
+
+          <SectionHeader title="Активный челлендж (демо)" />
           {/* Active challenge */}
-          <Pressable onPress={() => navigation.navigate('ChallengeDetail')}
+          <Pressable onPress={() => navigation.navigate('ChallengeDetail', { challengeId: 'no-sugar-21' })}
             style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 16 }}>
             <Text style={[ty.caption2Em, { color: T.brand, textTransform: 'uppercase', letterSpacing: 0.6 }]}>Активный челлендж</Text>
             <Text style={[ty.title2, { color: T.label, marginTop: 4 }]}>{c.title}</Text>

@@ -154,3 +154,103 @@ export const FEATURED_MEMBER: CommunityMember = {
   stats: { courses: 14, books: 52, challenges: 8 },
   talents: ['Communication', 'Woo', 'Positivity', 'Strategic', 'Activator'],
 };
+
+// ─────────────────────────────────────────────────────────────
+// Divergents Challenge — real 30-day rules
+// ─────────────────────────────────────────────────────────────
+export interface ChallengeCategory {
+  key: 'R' | 'NS' | 'A';
+  title: string;
+  norm: string;
+  scoring: string;
+  icon: SFName;
+  color: string;
+}
+
+export const CHALLENGE_CATEGORIES: ChallengeCategory[] = [
+  { key: 'R', title: 'Чтение', norm: '20 страниц в день', scoring: '1 балл за страницу · худлит — 0.5', icon: 'book.fill', color: T.brand },
+  { key: 'NS', title: 'No Sugar', norm: 'Полностью без сахара', scoring: 'Читмил: 2 ч.л. мёда + 1 финик в день', icon: 'tag.fill', color: T.red },
+  { key: 'A', title: 'Активность', norm: '10 000 шагов в день', scoring: '1 балл за 400 шагов · минимум 5 000', icon: 'figure.walk', color: T.green },
+];
+
+export const CHALLENGE_RULES: string[] = [
+  'Три категории: Чтение (R), No Sugar (NS), Активность (A). Норма: 20 страниц и 10 000 шагов в день.',
+  'Баллы: 1 страница = 1 балл (худлит — 0.5), день без сахара = 0 баллов, 400 шагов = 1 балл.',
+  'Активность можно набирать бегом, плаванием, велосипедом и силовыми (см. таблицу пересчёта).',
+  'Отчёт за день — в чат команды до 23:00. Опоздание: −300 баллов и три 🚩.',
+  'Штраф за невыполнение нормы: −100 баллов и 🚩 по этой категории. Баллы не уходят в минус (минимум 0).',
+  '3 🚩 по одной категории → 🏳️ и вылет. Очки фиксируются.',
+  'Команда — ровно 30 человек: капитан и 2 советника, выбранные участниками.',
+  'Никнейм ≤ 9 символов, близкий к ФИО. Фиксируйте аэробную нагрузку для проверки.',
+  'Читмил: до 2 ч.л. мёда с горкой в день; несладкие сухофрукты и финики — без ограничений.',
+  'Побеждает команда с наибольшей суммой баллов всех участников.',
+];
+
+export const ACTIVITY_CONVERSIONS: { label: string; value: string }[] = [
+  { label: 'Бег', value: '1 км = 2000 шагов' },
+  { label: 'Плавание', value: '100 м = 1000 шагов' },
+  { label: 'Велосипед', value: '3 км = 2000 шагов' },
+  { label: 'Отжимания', value: '1 повт = 20 шагов' },
+  { label: 'Приседания', value: '1 повт = 15 шагов' },
+  { label: 'Пресс (скручивания)', value: '1 повт = 20 шагов' },
+  { label: 'Подтягивания', value: '1 повт = 40 шагов' },
+  { label: 'Планка', value: '2 мин = 400 шагов' },
+  { label: 'Йога / пилатес (для девушек)', value: '30 мин = 2000 шагов' },
+];
+
+export interface ChallengeTeam {
+  id: string;
+  name: string;
+  members: number;
+  capacity: number;
+  captain: string;
+  advisors: string[];
+  tint: string;
+}
+
+export const CHALLENGE_TEAMS: ChallengeTeam[] = [
+  { id: 't1', name: 'Алматы Барсы', members: 30, capacity: 30, captain: 'Айгерим Б.', advisors: ['Дамир А.', 'Жанар К.'], tint: '#E6ECFB' },
+  { id: 't2', name: 'Astana Wolves', members: 27, capacity: 30, captain: 'Олжас Т.', advisors: ['Санжар К.', 'Аружан М.'], tint: '#FDE7D9' },
+  { id: 't3', name: 'Көкше Тигр', members: 22, capacity: 30, captain: 'Ерлан С.', advisors: ['Мадина Е.'], tint: '#E0F0DA' },
+  { id: 't4', name: 'Shymkent Lions', members: 18, capacity: 30, captain: 'Нурлан Б.', advisors: ['Аян Т.'], tint: '#F0E2F2' },
+];
+
+export interface ChallengeListItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  status: 'upcoming' | 'active' | 'finished';
+  startISO?: string;
+  startLabel: string;
+  durationDays: number;
+  maxFlags: number;
+  participants: number;
+  teams: number;
+  tint: string;
+  icon: SFName;
+}
+
+export const CHALLENGES: ChallengeListItem[] = [
+  {
+    id: '30days', title: '30 Days Challenge', subtitle: 'Чтение · No Sugar · Активность',
+    status: 'upcoming', startISO: '2026-08-15', startLabel: '15 августа', durationDays: 30,
+    maxFlags: 3, participants: 128, teams: CHALLENGE_TEAMS.length, tint: '#E6ECFB', icon: 'flame.fill',
+  },
+  {
+    id: 'no-sugar-21', title: '21 день без сахара', subtitle: 'Демо · ежедневный трекер баллов',
+    status: 'active', startLabel: 'идёт · день 12', durationDays: 21,
+    maxFlags: 3, participants: 16, teams: 1, tint: '#FDE7D9', icon: 'tag.fill',
+  },
+];
+
+export const getChallengeMeta = (id: string) => CHALLENGES.find((c) => c.id === id);
+
+export function daysUntil(iso?: string): number {
+  if (!iso) return 0;
+  const diff = Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
+  return Math.max(0, diff);
+}
+
+export function teamsNeed(): number {
+  return CHALLENGE_TEAMS.reduce((s, t) => s + Math.max(0, t.capacity - t.members), 0);
+}

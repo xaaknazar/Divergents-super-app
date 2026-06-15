@@ -9,7 +9,8 @@ export type LMSStackParams = {
 
 export type CommunityStackParams = {
   CommunityHome: undefined;
-  ChallengeDetail: undefined;
+  ChallengeDetail: { challengeId: string };
+  JoinChallenge: { challengeId: string };
   TripDetail: { tripId: string };
   Member: { memberId: string };
 };
