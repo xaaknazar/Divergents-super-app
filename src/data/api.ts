@@ -241,3 +241,44 @@ export function imgUrl(url?: string | null, w = 640): string | undefined {
   const width = NEXT_IMG_WIDTHS.find((x) => x >= w) ?? 1080;
   return `${API_BASE}/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=70`;
 }
+
+// ─── Course AI tutor (RAG) — uses the website's /api/ai/chat ───────
+export interface AiSource { chapterTitle: string; startMs: number; endMs: number }
+export interface AiTurn { role: 'user' | 'assistant'; content: string }
+
+export async function askCourseAI(
+  courseId: string,
+  message: string,
+  history: AiTurn[],
+  token: string,
+): Promise<{ answer: string; sources: AiSource[] }> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 60000);
+  try {
+    const res = await fetch(`${API_BASE}/api/ai/chat`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ courseId, message, history: history.slice(-8) }),
+    });
+    if (!res.ok) {
+      if (res.status === 403) throw new Error('Нет доступа к этому курсу');
+      if (res.status === 401) throw new Error('Войдите, чтобы пользоваться ассистентом');
+      throw new Error(`Ошибка ${res.status}`);
+    }
+    const d = await res.json();
+    return { answer: d.answer ?? '', sources: d.sources ?? [] };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// Light markdown -> plain text for chat bubbles.
+export function mdToText(s: string): string {
+  return (s || '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/^\s*>\s?/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
