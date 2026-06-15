@@ -4,84 +4,61 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { Capsule, Chip, PrimaryButton, T, ty } from '../../components/ui';
+import { Capsule, Chip, T, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
 import { useMyCourses } from '../../state/useMyCourses';
-import { askCourseAI, mdToText, AiTurn } from '../../data/api';
+import { askAssistant, askCourseAI, mdToText, AiTurn } from '../../data/api';
 import { AIStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<AIStackParams, 'AIChat'>;
 type Msg = { id: string; role: 'user' | 'bot'; text: string };
 
-const QUICK = ['О чём этот курс?', 'Краткое содержание', 'Главные идеи'];
+const GENERAL = 'general';
+const QUICK_GENERAL = ['Какой курс мне подойдёт?', 'Объясни мой психотип', 'С чего начать развитие?'];
+const QUICK_COURSE = ['О чём этот курс?', 'Краткое содержание', 'Что в уроке 1?'];
 let counter = 0;
-const now = () => `${Date.now()}_${counter++}`;
+const uid = () => `${Date.now()}_${counter++}`;
 
-export function AIChatScreen({ navigation }: Props) {
+export function AIChatScreen({}: Props) {
   const insets = useSafeAreaInsets();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
-  const [courseId, setCourseId] = useState<string | null>(null);
-  const [byCourse, setByCourse] = useState<Record<string, Msg[]>>({});
+  const [mode, setMode] = useState<string>(GENERAL); // 'general' | courseId
+  const [byMode, setByMode] = useState<Record<string, Msg[]>>({});
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
-  const activeId = courseId ?? my.courses[0]?.id ?? null;
-  const activeCourse = my.courses.find((c) => c.id === activeId);
-  const messages = useMemo(() => (activeId ? byCourse[activeId] ?? [] : []), [byCourse, activeId]);
+  const activeCourse = my.courses.find((c) => c.id === mode);
+  const isGeneral = mode === GENERAL;
+  const messages = useMemo(() => byMode[mode] ?? [], [byMode, mode]);
+  const quick = isGeneral ? QUICK_GENERAL : QUICK_COURSE;
 
   const send = async (body: string) => {
     const q = body.trim();
-    if (!q || !activeId || busy) return;
-    if (!isSignedIn) return;
-    const userMsg: Msg = { id: now(), role: 'user', text: q };
-    setByCourse((p) => ({ ...p, [activeId]: [...(p[activeId] ?? []), userMsg] }));
+    if (!q || busy) return;
+    const userMsg: Msg = { id: uid(), role: 'user', text: q };
+    setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), userMsg] }));
     setText('');
     setBusy(true);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     try {
-      const token = await getToken();
-      const history: AiTurn[] = (byCourse[activeId] ?? []).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
-      const { answer } = await askCourseAI(activeId, q, [...history, { role: 'user', content: q }], token ?? '');
-      const botMsg: Msg = { id: now(), role: 'bot', text: mdToText(answer) || 'Не удалось получить ответ.' };
-      setByCourse((p) => ({ ...p, [activeId]: [...(p[activeId] ?? []), botMsg] }));
+      const token = isSignedIn ? await getToken() : null;
+      const history: AiTurn[] = (byMode[mode] ?? []).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
+      const turns: AiTurn[] = [...history, { role: 'user', content: q }];
+      const answer = isGeneral
+        ? (await askAssistant(q, turns, token)).answer
+        : (await askCourseAI(mode, q, turns, token ?? '')).answer;
+      const botMsg: Msg = { id: uid(), role: 'bot', text: mdToText(answer) || 'Не удалось получить ответ.' };
+      setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), botMsg] }));
     } catch (e: any) {
-      const botMsg: Msg = { id: now(), role: 'bot', text: e?.message ? `⚠️ ${e.message}` : '⚠️ Ошибка соединения.' };
-      setByCourse((p) => ({ ...p, [activeId]: [...(p[activeId] ?? []), botMsg] }));
+      const botMsg: Msg = { id: uid(), role: 'bot', text: e?.message ? `⚠️ ${e.message}` : '⚠️ Ошибка соединения.' };
+      setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), botMsg] }));
     } finally {
       setBusy(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     }
   };
-
-  // ── Gate: not signed in ──
-  if (!isSignedIn) {
-    return (
-      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-        <Logo size={56} />
-        <Text style={[ty.title2, { color: T.label, marginTop: 16, textAlign: 'center' }]}>Divergents AI</Text>
-        <Text style={[ty.body, { color: T.labelSecondary, marginTop: 8, textAlign: 'center' }]}>
-          Ассистент отвечает по материалам ваших курсов. Войдите, чтобы начать.
-        </Text>
-        <PrimaryButton label="Войти по почте" style={{ marginTop: 22, alignSelf: 'stretch' }}
-          onPress={() => navigation.getParent()?.getParent()?.navigate('Auth' as never)} />
-      </View>
-    );
-  }
-
-  // ── Gate: no owned courses ──
-  if (!my.loading && my.courses.length === 0) {
-    return (
-      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-        <SF name="sparkles" size={48} color={T.brand} />
-        <Text style={[ty.title3, { color: T.label, marginTop: 14, textAlign: 'center' }]}>Нет доступных курсов</Text>
-        <Text style={[ty.body, { color: T.labelSecondary, marginTop: 8, textAlign: 'center' }]}>
-          Ассистент знает материалы курсов, которые у вас есть. Откройте курс на вкладке «Обучение».
-        </Text>
-      </View>
-    );
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top }}>
@@ -92,15 +69,18 @@ export function AIChatScreen({ navigation }: Props) {
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]}>Divergents AI</Text>
             <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>
-              {activeCourse ? `Знает материалы курса «${activeCourse.title}»` : 'Выберите курс'}
+              {isGeneral
+                ? (isSignedIn ? 'Наставник · знает ваш профиль' : 'Персональный наставник')
+                : `Знает материалы курса «${activeCourse?.title}»`}
             </Text>
           </View>
         </View>
-        {/* Course selector */}
+        {/* Mode selector: general + owned courses */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
+          <Chip label="Общий" icon="sparkles" active={isGeneral} onPress={() => setMode(GENERAL)} />
           {my.courses.map((c) => (
-            <Chip key={c.id} label={c.title.length > 22 ? c.title.slice(0, 21) + '…' : c.title}
-              active={c.id === activeId} onPress={() => setCourseId(c.id)} />
+            <Chip key={c.id} label={c.title.length > 20 ? c.title.slice(0, 19) + '…' : c.title}
+              active={c.id === mode} onPress={() => setMode(c.id)} />
           ))}
         </ScrollView>
       </View>
@@ -108,10 +88,12 @@ export function AIChatScreen({ navigation }: Props) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 8}>
         <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }}>
           {messages.length === 0 ? (
-            <View style={{ alignItems: 'center', paddingTop: 30 }}>
-              <Capsule bg={T.brandTinted} color={T.brand}><SF name="sparkles" size={11} color={T.brand} />Спросите о курсе</Capsule>
+            <View style={{ alignItems: 'center', paddingTop: 28 }}>
+              <Capsule bg={T.brandTinted} color={T.brand}><SF name="sparkles" size={11} color={T.brand} />{isGeneral ? 'Спросите что угодно' : 'Спросите о курсе'}</Capsule>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 14, textAlign: 'center', paddingHorizontal: 20 }]}>
-                Задайте вопрос по материалам курса «{activeCourse?.title}» — я отвечу по урокам с таймкодами.
+                {isGeneral
+                  ? 'Наставник Divergents поможет с курсами, психотипами, талантами, карьерой и развитием.'
+                  : `Вопросы по материалам курса «${activeCourse?.title}» — отвечаю по урокам с таймкодами.`}
               </Text>
             </View>
           ) : null}
@@ -134,16 +116,15 @@ export function AIChatScreen({ navigation }: Props) {
           {busy ? (
             <View style={{ backgroundColor: T.fillTertiary, alignSelf: 'flex-start', borderRadius: 18, borderBottomLeftRadius: 4, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <ActivityIndicator color={T.labelSecondary} />
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>Ищу в материалах курса…</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary }]}>{isGeneral ? 'Думаю…' : 'Ищу в материалах курса…'}</Text>
             </View>
           ) : null}
         </ScrollView>
 
-        {/* Quick replies + input */}
         <View style={{ borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: 'rgba(249,249,249,0.98)', paddingTop: 8, paddingBottom: insets.bottom + 70 }}>
           {messages.length === 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 10 }}>
-              {QUICK.map((q) => (
+              {quick.map((q) => (
                 <Pressable key={q} onPress={() => send(q)} style={{ backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.separator, borderRadius: 18, paddingVertical: 7, paddingHorizontal: 14 }}>
                   <Text style={[ty.subhead, { color: T.label }]}>{q}</Text>
                 </Pressable>
@@ -153,7 +134,7 @@ export function AIChatScreen({ navigation }: Props) {
           <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, alignItems: 'center' }}>
             <TextInput
               value={text} onChangeText={setText}
-              placeholder="Спросите о курсе…" placeholderTextColor={T.labelTertiary}
+              placeholder={isGeneral ? 'Спросите наставника…' : 'Спросите о курсе…'} placeholderTextColor={T.labelTertiary}
               style={[ty.body, { flex: 1, backgroundColor: T.cardBg, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.separator, color: T.label }]}
               onSubmitEditing={() => send(text)} returnKeyType="send" editable={!busy}
             />

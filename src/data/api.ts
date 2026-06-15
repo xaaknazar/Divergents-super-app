@@ -282,3 +282,26 @@ export function mdToText(s: string): string {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
+
+// General Divergents assistant (works without a course; token optional).
+export async function askAssistant(
+  message: string,
+  history: AiTurn[],
+  token?: string | null,
+): Promise<{ answer: string }> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 60000);
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/api/mobile/ai`, {
+      method: 'POST', signal: ctrl.signal, headers,
+      body: JSON.stringify({ message, history: history.slice(-8) }),
+    });
+    if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+    const d = await res.json();
+    return { answer: d.answer ?? '' };
+  } finally {
+    clearTimeout(t);
+  }
+}
