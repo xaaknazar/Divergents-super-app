@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
-import { View, Text, Pressable, Image, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Pressable, Image, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, ListSection, PrimaryButton, T, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
 import { useAuth } from '@clerk/clerk-expo';
-import { formatPrice, stripHtml } from '../../data/api';
+import { formatPrice, stripHtml, API_BASE } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'CourseDetail'>;
@@ -25,6 +25,7 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   const { getCourse, loadDetail, detailLoading, progress, currentLessonIndex, lessonStatus } = useCourses();
   const course = getCourse(courseId);
   const { isSignedIn, getToken } = useAuth();
+  const [bookmarked, setBookmarked] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -69,8 +70,8 @@ export function CourseDetailScreen({ route, navigation }: Props) {
           <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <RoundBtn icon="chevron.left" onPress={() => navigation.goBack()} />
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <RoundBtn icon="square.and.arrow.up" />
-              <RoundBtn icon="bookmark" />
+              <RoundBtn icon="square.and.arrow.up" onPress={() => Share.share({ message: `${course.title} — Divergents\n${API_BASE}/courses/${courseId}` })} />
+              <RoundBtn icon={bookmarked ? 'bookmark.fill' : 'bookmark'} onPress={() => setBookmarked((v) => !v)} />
             </View>
           </View>
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 24 }}>

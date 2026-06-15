@@ -110,6 +110,7 @@ function mapDetail(c: ApiCourseDetail): Course {
     tint: d.tint,
     iconColor: d.iconColor,
     lessons,
+    attachments: c.attachments ?? [],
     source: 'live',
   };
 }
@@ -192,4 +193,40 @@ export function stripHtml(input?: string | null): string {
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+// ─── Chapter discussion (comments) — reuses the website's existing API ──────
+export interface ChapterComment {
+  id: string;
+  content: string;
+  isPinned: boolean;
+  createdAt: string;
+  likesCount: number;
+  isLikedByCurrentUser: boolean;
+  user: { id: string; firstName: string | null; lastName: string | null };
+}
+
+export async function fetchComments(courseId: string, chapterId: string): Promise<ChapterComment[]> {
+  try {
+    const data = await getJson(`/api/courses/${courseId}/chapters/${chapterId}/comments`);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function postComment(
+  courseId: string, chapterId: string, content: string, token: string
+): Promise<ChapterComment | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/courses/${courseId}/chapters/${chapterId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return null;
+  }
 }

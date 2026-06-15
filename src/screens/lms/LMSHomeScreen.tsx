@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { Chip, SectionHeader, T, ty } from '../../components/ui';
 import { CourseCardPremium, FeaturedCard } from '../../components/CourseCardPremium';
@@ -58,7 +58,7 @@ export function LMSHomeScreen({ navigation }: Props) {
 
   return (
     <Screen>
-      <NavBarLarge title="Обучение" trailing={<HeaderIcon name="ellipsis" />} />
+      <NavBarLarge title="Обучение" />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 14 }}>
         <Logo size={34} />

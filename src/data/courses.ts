@@ -39,6 +39,7 @@ export interface Course {
   chaptersCount?: number;     // published chapters count
   source?: 'live' | 'mock';
   serverProgress?: number; // 0..100 from the website (owned courses)
+  attachments?: { id: string; name: string; url: string }[];
 }
 
 export const COURSES: Course[] = [
