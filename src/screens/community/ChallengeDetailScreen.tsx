@@ -76,7 +76,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
               <View style={{ flex: 1 }}>
                 <Text style={[ty.headline, { color: T.label }]}>{cat.title} <Text style={[ty.caption1, { color: T.labelTertiary }]}>· {cat.key}</Text></Text>
                 <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>{cat.norm}</Text>
-                <Text style={[ty.caption1, { color: cat.color, marginTop: 3 }]}>{cat.scoring}</Text>
+                <Text style={[ty.caption1, { color: T.label, marginTop: 3 }]}>{cat.scoring}</Text>
               </View>
               {i < CHALLENGE_CATEGORIES.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 62, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
             </View>
@@ -110,8 +110,8 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
                   <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>Капитан: {t.captain} · советники: {t.advisors.join(', ')}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={[ty.subheadEm, { color: full ? T.green : T.label }]}>{t.members}/{t.capacity}</Text>
-                  <Text style={[ty.caption2, { color: full ? T.green : T.orange }]}>{full ? 'набрана' : `нужно ${need}`}</Text>
+                  <Text style={[ty.subheadEm, { color: full ? T.emeraldText : T.label }]}>{t.members}/{t.capacity}</Text>
+                  <Text style={[ty.caption2, { color: full ? T.emeraldText : '#A85D00' }]}>{full ? 'набрана' : `нужно ${need}`}</Text>
                 </View>
                 {i < CHALLENGE_TEAMS.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 70, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
               </View>

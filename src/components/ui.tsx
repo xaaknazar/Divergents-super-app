@@ -147,7 +147,7 @@ export function Segmented({
       {items.map((s, i) => {
         const on = i === value;
         return (
-          <Pressable key={i} onPress={() => onChange?.(i)} style={{
+          <Pressable key={i} onPress={() => onChange?.(i)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={s} style={{
             flex: 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center',
             backgroundColor: on ? T.systemBg : 'transparent', borderRadius: 7,
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),

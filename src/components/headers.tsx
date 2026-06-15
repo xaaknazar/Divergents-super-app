@@ -27,7 +27,7 @@ export function BackNav({
       backgroundColor: transparent ? 'transparent' : 'rgba(249,249,249,0.96)',
       borderBottomWidth: transparent ? 0 : 0.33, borderBottomColor: T.separator,
     }}>
-      <Pressable onPress={onBack} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
+      <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" accessibilityLabel={back} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
         <SF name="chevron.left" size={20} color={T.brandAccent} />
         <Text style={[ty.body, { color: T.brandAccent }]}>{back}</Text>
       </Pressable>
@@ -41,7 +41,7 @@ export function HeaderIcon({ name, color = T.brandAccent, size = 20, onPress, ba
   name: string; color?: string; size?: number; onPress?: () => void; badge?: number;
 }) {
   return (
-    <Pressable onPress={onPress} hitSlop={8} style={{ position: 'relative' }}>
+    <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" accessibilityLabel={name} style={{ position: 'relative' }}>
       <SF name={name} size={size} color={color} />
       {badge ? (
         <View style={{ position: 'absolute', top: -4, right: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>

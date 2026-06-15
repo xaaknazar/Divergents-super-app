@@ -77,13 +77,14 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
             const sel = teamId === t.id;
             return (
               <Pressable key={t.id} disabled={full} onPress={() => setTeamId(t.id)}
+                accessibilityRole="button" accessibilityState={{ selected: sel, disabled: full }} accessibilityLabel={`Команда ${t.name}`}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, opacity: full ? 0.45 : 1, backgroundColor: sel ? T.brandTinted : 'transparent', borderBottomWidth: i < CHALLENGE_TEAMS.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
                 <SF name={sel ? 'checkmark.circle.fill' : 'circle'} size={22} color={sel ? T.brand : T.labelTertiary} />
                 <View style={{ flex: 1 }}>
                   <Text style={[ty.body, { color: T.label }]}>{t.name}</Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary }]}>{t.members}/{t.capacity} · капитан {t.captain}</Text>
                 </View>
-                <Text style={[ty.caption2Em, { color: full ? T.green : T.orange }]}>{full ? 'набрана' : `нужно ${t.capacity - t.members}`}</Text>
+                <Text style={[ty.caption2Em, { color: full ? T.emeraldText : '#A85D00' }]}>{full ? 'набрана' : `нужно ${t.capacity - t.members}`}</Text>
               </Pressable>
             );
           })}
@@ -96,7 +97,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         </View>
 
         {/* Agree */}
-        <Pressable onPress={() => setAgree((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 22 }}>
+        <Pressable onPress={() => setAgree((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agree }} accessibilityLabel="Согласен с правилами" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 22 }}>
           <SF name={agree ? 'checkmark.circle.fill' : 'circle'} size={24} color={agree ? T.brand : T.labelTertiary} />
           <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>Я ознакомился с правилами: 20 страниц, без сахара, 10 000 шагов и отчёт до 23:00. 3 🚩 — вылет.</Text>
         </Pressable>
