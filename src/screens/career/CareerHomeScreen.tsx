@@ -14,7 +14,7 @@ export function CareerHomeScreen({}: Props) {
   const [filter, setFilter] = useState(0);
 
   return (
-    <Screen>
+    <Screen gradient={['#EAF4EF', '#F3F6F4', '#F2F2F7']}>
       <NavBarLarge title="Карьера" trailing={<>
         <HeaderIcon name="magnifyingglass" />
         <HeaderIcon name="bell.fill" />

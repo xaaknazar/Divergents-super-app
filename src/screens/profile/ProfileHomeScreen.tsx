@@ -37,7 +37,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
 
   return (
-    <Screen>
+    <Screen gradient={['#F1EDFA', '#F5F3F8', '#F2F2F7']}>
       <NavBarLarge title="Профиль" trailing={<>
         <HeaderIcon name="square.and.arrow.up" />
         <HeaderIcon name="gearshape" />

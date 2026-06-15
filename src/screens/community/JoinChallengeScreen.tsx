@@ -3,29 +3,26 @@ import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
-import { Chip, PrimaryButton, T, ty } from '../../components/ui';
+import { PrimaryButton, T, ty } from '../../components/ui';
 import { getChallengeMeta, CHALLENGE_TEAMS } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
 
-const ACTIVITIES = ['Шаги', 'Бег', 'Велосипед', 'Плавание', 'Силовые'];
 
 export function JoinChallengeScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const meta = getChallengeMeta(route.params.challengeId);
   const [nick, setNick] = useState('');
   const [teamId, setTeamId] = useState<string | null>(null);
-  const [activities, setActivities] = useState<string[]>(['Шаги']);
   const [agree, setAgree] = useState(false);
+  const [track, setTrack] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const nickOk = nick.trim().length > 0 && nick.trim().length <= 9;
-  const canSubmit = nickOk && !!teamId && agree;
+  const canSubmit = nickOk && !!teamId && agree && track;
   const team = CHALLENGE_TEAMS.find((t) => t.id === teamId);
 
-  const toggleActivity = (a: string) =>
-    setActivities((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
 
   if (submitted) {
     return (
@@ -90,11 +87,19 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
           })}
         </View>
 
-        {/* Activity preference */}
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 8, marginLeft: 4 }]}>ОСНОВНАЯ АКТИВНОСТЬ</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {ACTIVITIES.map((a) => <Chip key={a} label={a} active={activities.includes(a)} onPress={() => toggleActivity(a)} />)}
-        </View>
+        {/* Step / watch tracking consent */}
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 8, marginLeft: 4 }]}>ОТСЛЕЖИВАНИЕ АКТИВНОСТИ</Text>
+        <Pressable onPress={() => setTrack((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: track }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, padding: 14 }}>
+          <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="figure.walk" size={20} color={T.brand} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.subheadEm, { color: T.label }]}>Разрешить отслеживание шагов</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>Приложение будет считать шаги и, при наличии, подключится к вашим часам (Apple Watch / Google Fit) для авто-учёта активности.</Text>
+          </View>
+          <SF name={track ? 'checkmark.circle.fill' : 'circle'} size={24} color={track ? T.brand : T.labelTertiary} />
+        </Pressable>
 
         {/* Agree */}
         <Pressable onPress={() => setAgree((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agree }} accessibilityLabel="Согласен с правилами" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 22 }}>

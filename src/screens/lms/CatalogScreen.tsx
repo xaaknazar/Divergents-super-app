@@ -47,7 +47,7 @@ export function CatalogScreen({ navigation }: Props) {
   ];
 
   return (
-    <Screen>
+    <Screen gradient={['#EAF0FB', '#F4F5F9', '#F2F2F7']}>
       <NavBarLarge title="Каталог" trailing={<>
         <HeaderIcon name="magnifyingglass" />
         <HeaderIcon name="list.bullet" />

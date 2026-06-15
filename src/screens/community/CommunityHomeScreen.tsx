@@ -10,7 +10,7 @@ import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, 
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
 import {
-  CHALLENGES, daysUntil, TRIPS, SPORT, LECTURES, FEATURED_MEMBER,
+  CHALLENGES, daysUntil, TRIPS, SPORT, LECTURES,
   Trip, SportActivity, Lecture,
 } from '../../data/community';
 import { imgUrl } from '../../data/api';
@@ -132,19 +132,6 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
         </Pressable>
       </View>
 
-      <ListSection header="Участник недели" style={{ marginTop: 18 }}>
-        <Pressable onPress={() => navigation.navigate('Member', { memberId: FEATURED_MEMBER.id })}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, opacity: pressed ? 0.6 : 1 })}>
-          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[ty.title3, { color: '#fff' }]}>{FEATURED_MEMBER.initial}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]}>{FEATURED_MEMBER.name}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary }]}>{FEATURED_MEMBER.role} · {FEATURED_MEMBER.psychotype}</Text>
-          </View>
-          <SF name="chevron.forward" size={14} color={T.labelTertiary} />
-        </Pressable>
-      </ListSection>
     </>
   );
 }

@@ -57,7 +57,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   const showSearch = !query && cat === 'Все';
 
   return (
-    <Screen>
+    <Screen gradient={['#EAF0FB', '#F4F5F9', '#F2F2F7']}>
       <NavBarLarge title="Обучение" />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 14 }}>
