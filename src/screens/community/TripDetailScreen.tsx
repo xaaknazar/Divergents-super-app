@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, Image } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 import { SF, SFName } from '../../components/SFIcon';
 import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, T, ty } from '../../components/ui';
 import { getTrip } from '../../data/community';
+import { imgUrl } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
@@ -47,7 +49,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
         <View style={{ height: 280, backgroundColor: '#8AA3BD' }}>
           {trip.imageUrl ? (
             <>
-              <Image source={{ uri: trip.imageUrl }} style={{ position: 'absolute', width: '100%', height: 280 }} resizeMode="cover" />
+              <Image source={imgUrl(trip.imageUrl, 1080)} style={{ position: 'absolute', width: '100%', height: 280 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
               <View style={{ position: 'absolute', width: '100%', height: 280, backgroundColor: 'rgba(0,0,0,0.28)' }} />
             </>
           ) : (

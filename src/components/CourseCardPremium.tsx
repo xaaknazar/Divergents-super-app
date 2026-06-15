@@ -1,10 +1,11 @@
 // Premium iOS-style course cards (brand navy aesthetic) powered by real data.
 import React from 'react';
-import { View, Text, Pressable, Image } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { SF } from './SFIcon';
 import { ProgressBar, Capsule, T, ty } from './ui';
 import { Course } from '../data/courses';
-import { formatPrice } from '../data/api';
+import { formatPrice, imgUrl } from '../data/api';
 
 export function lessonsWord(n: number) {
   if (n === 1) return 'Тренинг';
@@ -17,7 +18,7 @@ export function lessonsWord(n: number) {
 
 function Cover({ course, height }: { course: Course; height: number | string }) {
   if (course.imageUrl) {
-    return <Image source={{ uri: course.imageUrl }} style={{ width: '100%', height: height as any }} resizeMode="cover" />;
+    return <Image source={imgUrl(course.imageUrl, 640)} style={{ width: '100%', height: height as any }} contentFit="cover" transition={200} cachePolicy="memory-disk" />;
   }
   return (
     <View style={{ width: '100%', height: height as any, backgroundColor: course.tint, alignItems: 'center', justifyContent: 'center' }}>

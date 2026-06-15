@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, Image, ScrollView, ActivityIndicator, Share } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator, Share } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, ListSection, PrimaryButton, T, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
 import { useAuth } from '@clerk/clerk-expo';
-import { formatPrice, stripHtml, API_BASE } from '../../data/api';
+import { formatPrice, stripHtml, API_BASE, imgUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'CourseDetail'>;
@@ -62,7 +63,7 @@ export function CourseDetailScreen({ route, navigation }: Props) {
         {/* Hero */}
         <View style={{ height: 280 }}>
           {course.imageUrl ? (
-            <Image source={{ uri: course.imageUrl }} style={{ position: 'absolute', width: '100%', height: 280 }} resizeMode="cover" />
+            <Image source={imgUrl(course.imageUrl, 1080)} style={{ position: 'absolute', width: '100%', height: 280 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
           ) : (
             <View style={{ position: 'absolute', width: '100%', height: 280, backgroundColor: course.tint }} />
           )}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, Image } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
@@ -9,6 +10,7 @@ import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { useChallenge } from '../../state/ChallengeContext';
 import { MEDAL_FOR_RANK, TRIPS, FEATURED_MEMBER, CHALLENGES, daysUntil } from '../../data/community';
 import { Logo } from '../../components/Logo';
+import { imgUrl } from '../../data/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -165,7 +167,7 @@ export function CommunityHomeScreen({ navigation }: Props) {
                   style={{ width: 260, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden' }}>
                   <View style={{ height: 130 }}>
                     {t.imageUrl ? (
-                      <Image source={{ uri: t.imageUrl }} style={{ position: 'absolute', width: '100%', height: 130 }} resizeMode="cover" />
+                      <Image source={imgUrl(t.imageUrl, 640)} style={{ position: 'absolute', width: '100%', height: 130 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
                     ) : (
                       <>
                         <View style={{ position: 'absolute', width: '100%', height: 130, backgroundColor: t.tint }} />
@@ -222,7 +224,7 @@ function TripsList({ navigation }: { navigation: Props['navigation'] }) {
         <Pressable key={t.id} onPress={() => navigation.navigate('TripDetail', { tripId: t.id })}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
           {t.imageUrl ? (
-            <Image source={{ uri: t.imageUrl }} style={{ width: 56, height: 56, borderRadius: 12 }} resizeMode="cover" />
+            <Image source={imgUrl(t.imageUrl, 256)} style={{ width: 56, height: 56, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
           ) : (
             <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: t.tint, alignItems: 'center', justifyContent: 'center' }}>
               <SF name="mappin.and.ellipse" size={24} color={T.brand} />

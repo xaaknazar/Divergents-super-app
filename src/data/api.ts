@@ -230,3 +230,14 @@ export async function postComment(
     return null;
   }
 }
+
+// Route remote images through the website's Next.js image optimizer
+// (/_next/image) to get resized WebP/AVIF — much smaller + CDN-cached.
+// Width must be one of Next's default device/image sizes.
+const NEXT_IMG_WIDTHS = [256, 384, 640, 750, 828, 1080, 1200, 1920];
+export function imgUrl(url?: string | null, w = 640): string | undefined {
+  if (!url) return undefined;
+  if (!/^https?:\/\//.test(url)) return url;
+  const width = NEXT_IMG_WIDTHS.find((x) => x >= w) ?? 1080;
+  return `${API_BASE}/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=70`;
+}

@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, Pressable, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Chip, ListSection, T, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
-import { formatPrice } from '../../data/api';
+import { formatPrice, imgUrl } from '../../data/api';
 import { Course } from '../../data/courses';
 import { LMSStackParams } from '../../navigation/types';
 
@@ -14,7 +15,7 @@ type Props = NativeStackScreenProps<LMSStackParams, 'Catalog'>;
 
 function Cover({ course }: { course: Course }) {
   if (course.imageUrl) {
-    return <Image source={{ uri: course.imageUrl }} style={{ width: 64, height: 64, borderRadius: 12 }} resizeMode="cover" />;
+    return <Image source={imgUrl(course.imageUrl, 256)} style={{ width: 64, height: 64, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />;
   }
   return (
     <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: course.tint, alignItems: 'center', justifyContent: 'center' }}>
