@@ -17,6 +17,11 @@ const TABS: Record<string, { label: string; on: SFName; off: SFName }> = {
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  // Hide the tab bar when a detail screen is pushed inside the active tab's
+  // stack (nested index > 0) so bottom CTAs aren't covered by the bar.
+  const active = state.routes[state.index] as any;
+  const nestedIndex = active?.state?.index ?? 0;
+  if (nestedIndex > 0) return null;
   return (
     <BlurView intensity={80} tint="light" style={{
       position: 'absolute', left: 0, right: 0, bottom: 0,

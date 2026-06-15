@@ -9,6 +9,7 @@ import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { useChallenge } from '../../state/ChallengeContext';
 import { MEDAL_FOR_RANK, TRIPS, FEATURED_MEMBER, CHALLENGES, daysUntil } from '../../data/community';
 import { Logo } from '../../components/Logo';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
@@ -50,15 +51,15 @@ export function CommunityHomeScreen({ navigation }: Props) {
           {CHALLENGES.filter((x) => x.status === 'upcoming').map((ch) => (
             <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
               style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
-              <View style={{ height: 92, backgroundColor: ch.tint, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
-                <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.75)', alignItems: 'center', justifyContent: 'center' }}>
-                  <SF name={ch.icon} size={28} color={T.brand} />
+              <LinearGradient colors={['#1E337A', '#3D5BDB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
+                <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+                  <SF name={ch.icon} size={28} color="#fff" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Capsule bg="rgba(255,255,255,0.85)" color={T.brand}><SF name="calendar" size={11} color={T.brand} />Старт {ch.startLabel}</Capsule>
-                  <Text style={[ty.title3, { color: T.label, marginTop: 6 }]}>{ch.title}</Text>
+                  <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />Старт {ch.startLabel}</Capsule>
+                  <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]}>{ch.title}</Text>
                 </View>
-              </View>
+              </LinearGradient>
               <View style={{ padding: 14 }}>
                 <Text style={[ty.subhead, { color: T.labelSecondary }]}>{ch.subtitle}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { Screen } from '../../components/Screen';
 import { BackNav } from '../../components/headers';
@@ -34,16 +35,25 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <View style={{ paddingTop: insets.top }}>
-        <BackNav back="Сообщество" onBack={() => navigation.goBack()} trailing={<SF name="square.and.arrow.up" size={20} color={T.brandAccent} />} />
-      </View>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 90 }}>
-        {/* Hero */}
-        <View style={{ padding: 20, paddingBottom: 16 }}>
-          <Capsule bg={T.brandTinted} color={T.brand}><SF name="calendar" size={11} color={T.brand} />Старт {meta.startLabel}</Capsule>
-          <Text style={[ty.largeTitle, { color: T.label, marginTop: 12 }]}>{meta.title}</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{meta.durationDays} дней · 3 категории · {meta.maxFlags} 🚩 — вылет</Text>
+      {/* Gradient hero background */}
+      <LinearGradient colors={['#1E337A', '#2A4DA8', '#3D5BDB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: insets.top }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4 }}>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
+            <SF name="chevron.left" size={20} color="#fff" />
+            <Text style={[ty.body, { color: '#fff' }]}>Сообщество</Text>
+          </Pressable>
+          <SF name="square.and.arrow.up" size={20} color="#fff" />
         </View>
+        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 22, position: 'relative' }}>
+          <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
+            <SF name={meta.icon} size={120} color="#fff" />
+          </View>
+          <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />Старт {meta.startLabel}</Capsule>
+          <Text style={[ty.largeTitle, { color: '#fff', marginTop: 12 }]}>{meta.title}</Text>
+          <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 4 }]}>{meta.durationDays} дней · 3 категории · {meta.maxFlags} 🚩 — вылет</Text>
+        </View>
+      </LinearGradient>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 90 }}>
 
         {/* Countdown */}
         <View style={{ marginHorizontal: 16, marginBottom: 18, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 18 }}>

@@ -54,25 +54,32 @@ export const T = {
 } as const;
 
 // Native iOS font; falls back to system on Android.
-export const FF = Platform.select({ ios: 'System', default: 'sans-serif' });
+// Rounded brand typeface (free Gotham-Rounded alternative). Loaded in App.tsx.
+export const FONT = {
+  regular: 'Nunito_400Regular',
+  semibold: 'Nunito_600SemiBold',
+  bold: 'Nunito_700Bold',
+  extrabold: 'Nunito_800ExtraBold',
+} as const;
+export const FF = FONT.regular;
 
 type TY = Record<string, TextStyle>;
 
 export const ty: TY = {
-  largeTitle: { fontSize: 34, fontWeight: '700', lineHeight: 41, letterSpacing: 0.37 },
-  title1:     { fontSize: 28, fontWeight: '700', lineHeight: 34, letterSpacing: 0.36 },
-  title2:     { fontSize: 22, fontWeight: '700', lineHeight: 28, letterSpacing: 0.35 },
-  title3:     { fontSize: 20, fontWeight: '600', lineHeight: 25, letterSpacing: 0.38 },
-  headline:   { fontSize: 17, fontWeight: '600', lineHeight: 22, letterSpacing: -0.43 },
-  body:       { fontSize: 17, fontWeight: '400', lineHeight: 22, letterSpacing: -0.43 },
-  callout:    { fontSize: 16, fontWeight: '400', lineHeight: 21, letterSpacing: -0.32 },
-  subhead:    { fontSize: 15, fontWeight: '400', lineHeight: 20, letterSpacing: -0.24 },
-  subheadEm:  { fontSize: 15, fontWeight: '600', lineHeight: 20, letterSpacing: -0.24 },
-  footnote:   { fontSize: 13, fontWeight: '400', lineHeight: 18, letterSpacing: -0.08 },
-  footnoteEm: { fontSize: 13, fontWeight: '600', lineHeight: 18, letterSpacing: -0.08 },
-  caption1:   { fontSize: 12, fontWeight: '400', lineHeight: 16, letterSpacing: 0 },
-  caption2:   { fontSize: 11, fontWeight: '400', lineHeight: 14, letterSpacing: 0.07 },
-  caption2Em: { fontSize: 11, fontWeight: '600', lineHeight: 14, letterSpacing: 0.07 },
+  largeTitle: { fontFamily: FONT.extrabold, fontSize: 34, lineHeight: 41, letterSpacing: 0.2 },
+  title1:     { fontFamily: FONT.extrabold, fontSize: 28, lineHeight: 34, letterSpacing: 0.2 },
+  title2:     { fontFamily: FONT.extrabold, fontSize: 22, lineHeight: 28, letterSpacing: 0.2 },
+  title3:     { fontFamily: FONT.bold, fontSize: 20, lineHeight: 25, letterSpacing: 0.2 },
+  headline:   { fontFamily: FONT.bold, fontSize: 17, lineHeight: 22, letterSpacing: -0.2 },
+  body:       { fontFamily: FONT.regular, fontSize: 17, lineHeight: 23, letterSpacing: -0.2 },
+  callout:    { fontFamily: FONT.regular, fontSize: 16, lineHeight: 21, letterSpacing: -0.2 },
+  subhead:    { fontFamily: FONT.regular, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
+  subheadEm:  { fontFamily: FONT.bold, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
+  footnote:   { fontFamily: FONT.regular, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
+  footnoteEm: { fontFamily: FONT.bold, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
+  caption1:   { fontFamily: FONT.regular, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
+  caption2:   { fontFamily: FONT.semibold, fontSize: 11, lineHeight: 14, letterSpacing: 0.1 },
+  caption2Em: { fontFamily: FONT.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0.1 },
 };
 
 // Radius scale (continuous iOS corners)

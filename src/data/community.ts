@@ -232,8 +232,8 @@ export interface ChallengeListItem {
 
 export const CHALLENGES: ChallengeListItem[] = [
   {
-    id: '30days', title: '30 Days Challenge', subtitle: 'Чтение · No Sugar · Активность',
-    status: 'upcoming', startISO: '2026-08-15', startLabel: '15 августа', durationDays: 30,
+    id: '21days', title: '21 Days Challenge', subtitle: 'Чтение · No Sugar · Активность',
+    status: 'upcoming', startISO: '2026-08-15', startLabel: '15 августа', durationDays: 21,
     maxFlags: 3, participants: 128, teams: CHALLENGE_TEAMS.length, tint: '#E6ECFB', icon: 'flame.fill',
   },
   {

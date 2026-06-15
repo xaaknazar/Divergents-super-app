@@ -29,7 +29,7 @@ export interface SFProps {
 }
 
 export function SF({ name, size = 20, color = '#000' }: SFProps) {
-  const sw = 1.6;
+  const sw = 1.9;
   const s = { stroke: color, strokeWidth: sw, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
   const V = (children: React.ReactNode) => (
     <Svg width={size} height={size} viewBox="0 0 24 24">{children}</Svg>
