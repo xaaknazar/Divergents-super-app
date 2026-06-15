@@ -3,10 +3,11 @@
 import React from 'react';
 import { View, ScrollView, StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { T } from '../theme/tokens';
 
 export function Screen({
-  children, bg = T.groupedBg, scroll = true, tabPadding = true, contentStyle, topInset = true,
+  children, bg = T.groupedBg, scroll = true, tabPadding = true, contentStyle, topInset = true, gradient,
 }: {
   children: React.ReactNode;
   bg?: string;
@@ -14,6 +15,7 @@ export function Screen({
   tabPadding?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
   topInset?: boolean;
+  gradient?: string[];
 }) {
   const insets = useSafeAreaInsets();
   const top = topInset ? insets.top : 0;
@@ -24,8 +26,12 @@ export function Screen({
       <View style={{ flex: 1, backgroundColor: bg, paddingTop: top }}>{children}</View>
     );
   }
+  const Bg: any = gradient ? LinearGradient : View;
+  const bgProps = gradient
+    ? { colors: gradient as any, start: { x: 0, y: 0 }, end: { x: 0, y: 1 }, style: { flex: 1 } }
+    : { style: { flex: 1, backgroundColor: bg } };
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <Bg {...bgProps}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[{ paddingTop: top, paddingBottom: bottom }, contentStyle]}
@@ -33,6 +39,6 @@ export function Screen({
       >
         {children}
       </ScrollView>
-    </View>
+    </Bg>
   );
 }

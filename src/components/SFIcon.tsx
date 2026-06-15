@@ -20,7 +20,8 @@ export type SFName =
   | 'paperplane.fill' | 'goforward.15' | 'gobackward.15' | 'pause.fill' | 'airplayvideo'
   | 'arrow.up.left.and.arrow.down.right' | 'clock.fill' | 'calendar' | 'graduationcap.fill'
   | 'puzzlepiece.fill' | 'figure.2.and.child.holdinghands' | 'flag.fill' | 'tag.fill'
-  | 'percent' | 'globe' | 'house.fill' | 'figure.walk' | 'arrow.right';
+  | 'percent' | 'globe' | 'house.fill' | 'figure.walk' | 'arrow.right'
+  | 'soccerball' | 'tennis.racket' | 'bicycle' | 'figure.mind.and.body' | 'dumbbell' | 'cube.fill';
 
 export interface SFProps {
   name: SFName | string;
@@ -115,6 +116,12 @@ export function SF({ name, size = 20, color = '#000' }: SFProps) {
     case 'house.fill': return V(<Path d="M3 10l9-7 9 7v11h-6v-6h-6v6H3V10z" fill={color}/>);
     case 'figure.walk': return V(<><Circle cx="13" cy="5" r="2" fill={color}/><Path d="M8 15l3-5 3 2v8M11 12l-3 3-2-2" {...s}/></>);
     case 'arrow.right': return V(<Path d="M4 12h16M14 6l6 6-6 6" {...s}/>);
+    case 'soccerball': return V(<><Circle cx="12" cy="12" r="9" {...s}/><Path d="M12 7l3 2.2-1.1 3.6h-3.8L9 9.2 12 7z" fill={color}/><Path d="M12 3.2v3.6 M5.2 9.2l3.2 1.4 M18.8 9.2l-3.2 1.4 M8.4 19.4l1.4-3.2 M15.6 19.4l-1.4-3.2" {...s}/></>);
+    case 'tennis.racket': return V(<><Ellipse cx="9" cy="8" rx="5.2" ry="6" {...s}/><Path d="M5.5 12.6L4 14 M13 12.8L20 20 M9 2.2v11.6 M3.9 8h10.2" {...s}/></>);
+    case 'bicycle': return V(<><Circle cx="5.5" cy="17" r="3.2" {...s}/><Circle cx="18.5" cy="17" r="3.2" {...s}/><Path d="M5.5 17l4-7h6l3 7 M9.5 10h6.5l-2.2 7 M9 6h3l1.5 4" {...s}/></>);
+    case 'figure.mind.and.body': return V(<><Circle cx="12" cy="5" r="2.2" fill={color}/><Path d="M12 8.5v5 M6 18c1-3 3.5-4.5 6-4.5s5 1.5 6 4.5z M7 13l5 1 5-1" {...s}/></>);
+    case 'dumbbell': return V(<><Path d="M7 12h10" stroke={color} strokeWidth={2} strokeLinecap="round"/><Rect x="3" y="8.5" width="3.5" height="7" rx="1.2" fill={color}/><Rect x="17.5" y="8.5" width="3.5" height="7" rx="1.2" fill={color}/><Rect x="6.2" y="10.5" width="2" height="3" rx="0.6" fill={color}/><Rect x="15.8" y="10.5" width="2" height="3" rx="0.6" fill={color}/></>);
+    case 'cube.fill': return V(<><Path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" fill={color}/><Path d="M12 3l8 4.5L12 12 4 7.5z M12 12v9" stroke="#fff" strokeWidth={1} fill="none" opacity={0.5}/></>);
     default: return V(<Circle cx="12" cy="12" r="6" fill={color} opacity={0.3}/>);
   }
 }

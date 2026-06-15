@@ -57,7 +57,7 @@ export const INITIAL_CHALLENGE: Challenge = {
   price: '12 000 ₸',
   tasks: [
     { id: 'steps', kind: 'metric', title: '10 000 шагов', icon: 'figure.walk', unit: 'шагов', min: 10000, current: 13240, basePts: 10, unitSize: 100, ptsPerUnit: 1 },
-    { id: 'sugar', kind: 'binary', title: 'День без сахара', icon: 'tag.fill', done: true, basePts: 10 },
+    { id: 'sugar', kind: 'binary', title: 'День без сахара', icon: 'cube.fill', done: true, basePts: 10 },
     { id: 'reading', kind: 'metric', title: '10 страниц книги', icon: 'book.fill', unit: 'стр.', min: 10, current: 6, basePts: 10, unitSize: 1, ptsPerUnit: 2 },
   ],
 };
@@ -231,7 +231,7 @@ export interface ChallengeCategory {
 
 export const CHALLENGE_CATEGORIES: ChallengeCategory[] = [
   { key: 'R', title: 'Чтение', norm: '20 страниц в день', scoring: '1 балл за страницу · худлит — 0.5', icon: 'book.fill', color: T.brand },
-  { key: 'NS', title: 'No Sugar', norm: 'Полностью без сахара', scoring: 'Читмил: 2 ч.л. мёда + 1 финик в день', icon: 'tag.fill', color: T.red },
+  { key: 'NS', title: 'No Sugar', norm: 'Полностью без сахара', scoring: 'Читмил: 2 ч.л. мёда + 1 финик в день', icon: 'cube.fill', color: T.red },
   { key: 'A', title: 'Активность', norm: '10 000 шагов в день', scoring: '1 балл за 400 шагов · минимум 5 000', icon: 'figure.walk', color: T.green },
 ];
 
@@ -330,10 +330,10 @@ export interface SportActivity {
 }
 
 export const SPORT: SportActivity[] = [
-  { id: 'football', title: 'Футбол 5×5', place: 'Almaty Arena', date: 'Каждую среду · 20:00', icon: 'figure.run', going: 14, spotsLabel: '6 мест', tint: '#E0F0DA' },
-  { id: 'tennis', title: 'Большой теннис', place: 'Esentai Tennis Club', date: 'Суббота · 10:00', icon: 'figure.run', going: 6, spotsLabel: '2 места', tint: '#E6ECFB' },
+  { id: 'football', title: 'Футбол 5×5', place: 'Almaty Arena', date: 'Каждую среду · 20:00', icon: 'soccerball', going: 14, spotsLabel: '6 мест', tint: '#E0F0DA' },
+  { id: 'tennis', title: 'Большой теннис', place: 'Esentai Tennis Club', date: 'Суббота · 10:00', icon: 'tennis.racket', going: 6, spotsLabel: '2 места', tint: '#E6ECFB' },
   { id: 'marathon', title: 'Полумарафон 21 км', place: 'Парк Первого Президента', date: '7 сентября · 8:00', icon: 'figure.walk', going: 38, spotsLabel: 'Открыт сбор', tint: '#FDE7D9' },
-  { id: 'yoga', title: 'Йога на рассвете', place: 'Кок-Тобе', date: 'Воскресенье · 6:30', icon: 'figure.walk', going: 12, spotsLabel: '8 мест', tint: '#F0E2F2' },
+  { id: 'yoga', title: 'Йога на рассвете', place: 'Кок-Тобе', date: 'Воскресенье · 6:30', icon: 'figure.mind.and.body', going: 12, spotsLabel: '8 мест', tint: '#F0E2F2' },
 ];
 
 // ─── Встречи: онлайн-лекции Дандай Амокачи ─────────────────────────

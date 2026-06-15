@@ -25,7 +25,7 @@ export function CommunityHomeScreen({ navigation }: Props) {
   const [seg, setSeg] = useState(0);
 
   return (
-    <Screen>
+    <Screen gradient={['#E9EEFB', '#F4F5F9', '#F2F2F7']}>
       <NavBarLarge title="Сообщество" trailing={<>
         <HeaderIcon name="magnifyingglass" />
         <HeaderIcon name="plus.circle" size={22} />
