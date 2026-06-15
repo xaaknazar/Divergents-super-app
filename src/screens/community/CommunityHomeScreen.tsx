@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
@@ -163,10 +163,19 @@ export function CommunityHomeScreen({ navigation }: Props) {
               {TRIPS.map((t) => (
                 <Pressable key={t.id} onPress={() => navigation.navigate('TripDetail', { tripId: t.id })}
                   style={{ width: 260, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden' }}>
-                  <View style={{ height: 130, backgroundColor: t.tint, padding: 10 }}>
-                    <Capsule bg="rgba(255,255,255,0.7)" color={T.label}><SF name="calendar" size={11} color={T.labelSecondary} />{t.date}</Capsule>
-                    <View style={{ position: 'absolute', right: 12, top: 40, opacity: 0.35 }}>
-                      <SF name="mappin.and.ellipse" size={50} color={T.brand} />
+                  <View style={{ height: 130 }}>
+                    {t.imageUrl ? (
+                      <Image source={{ uri: t.imageUrl }} style={{ position: 'absolute', width: '100%', height: 130 }} resizeMode="cover" />
+                    ) : (
+                      <>
+                        <View style={{ position: 'absolute', width: '100%', height: 130, backgroundColor: t.tint }} />
+                        <View style={{ position: 'absolute', right: 12, top: 40, opacity: 0.35 }}>
+                          <SF name="mappin.and.ellipse" size={50} color={T.brand} />
+                        </View>
+                      </>
+                    )}
+                    <View style={{ padding: 10 }}>
+                      <Capsule bg="rgba(255,255,255,0.85)" color={T.label}><SF name="calendar" size={11} color={T.labelSecondary} />{t.date}</Capsule>
                     </View>
                   </View>
                   <View style={{ padding: 12 }}>
@@ -212,9 +221,13 @@ function TripsList({ navigation }: { navigation: Props['navigation'] }) {
       {TRIPS.map((t, i) => (
         <Pressable key={t.id} onPress={() => navigation.navigate('TripDetail', { tripId: t.id })}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
-          <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: t.tint, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="mappin.and.ellipse" size={24} color={T.brand} />
-          </View>
+          {t.imageUrl ? (
+            <Image source={{ uri: t.imageUrl }} style={{ width: 56, height: 56, borderRadius: 12 }} resizeMode="cover" />
+          ) : (
+            <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: t.tint, alignItems: 'center', justifyContent: 'center' }}>
+              <SF name="mappin.and.ellipse" size={24} color={T.brand} />
+            </View>
+          )}
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]}>{t.title}</Text>
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{t.date} · {t.days} дня</Text>
