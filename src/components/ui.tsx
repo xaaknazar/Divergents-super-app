@@ -71,10 +71,13 @@ export function IconSquircle({
 
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }}>
-      <Text style={[ty.title3, { color: T.label }]}>{title}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1, minWidth: 0 }}>
+        <View style={{ width: 4, height: 18, borderRadius: 2, backgroundColor: T.brand }} />
+        <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{title}</Text>
+      </View>
       {action ? (
-        <Pressable onPress={onAction} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{action}</Text></Pressable>
+        <Pressable onPress={onAction} hitSlop={8}><Text style={[ty.subheadEm, { color: T.brandAccent }]}>{action}</Text></Pressable>
       ) : null}
     </View>
   );
