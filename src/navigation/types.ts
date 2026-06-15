@@ -16,7 +16,7 @@ export type CommunityStackParams = {
 };
 
 export type AIStackParams = { AIChat: undefined };
-export type CareerStackParams = { CareerHome: undefined };
+export type CareerStackParams = { CareerHome: undefined; VacancyDetail: { jobId: string } };
 export type ProfileStackParams = { ProfileHome: undefined; Settings: undefined };
 
 export type TabParams = {

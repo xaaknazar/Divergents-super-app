@@ -12,6 +12,7 @@ import {
 import { RootNavigator } from './src/navigation';
 import { CourseProvider } from './src/state/CourseContext';
 import { ChallengeProvider } from './src/state/ChallengeContext';
+import { CareerProvider } from './src/state/CareerContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
 import { T } from './src/theme/tokens';
@@ -40,10 +41,12 @@ export default function App() {
         <SafeAreaProvider>
           <CourseProvider>
             <ChallengeProvider>
+              <CareerProvider>
               <NavigationContainer theme={navTheme}>
                 <StatusBar style="dark" />
                 <RootNavigator />
               </NavigationContainer>
+              </CareerProvider>
             </ChallengeProvider>
           </CourseProvider>
         </SafeAreaProvider>

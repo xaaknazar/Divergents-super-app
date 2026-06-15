@@ -20,6 +20,7 @@ import { MemberScreen } from '../screens/community/MemberScreen';
 
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import { CareerHomeScreen } from '../screens/career/CareerHomeScreen';
+import { VacancyDetailScreen } from '../screens/career/VacancyDetailScreen';
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { AuthScreen } from '../screens/AuthScreen';
@@ -63,6 +64,7 @@ function CareerNavigator() {
   return (
     <CareerStack.Navigator screenOptions={{ headerShown: false }}>
       <CareerStack.Screen name="CareerHome" component={CareerHomeScreen} />
+      <CareerStack.Screen name="VacancyDetail" component={VacancyDetailScreen} />
     </CareerStack.Navigator>
   );
 }

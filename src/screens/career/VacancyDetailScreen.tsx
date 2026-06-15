@@ -1,0 +1,112 @@
+import React from 'react';
+import { View, Text, Pressable } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Screen } from '../../components/Screen';
+import { BackNav } from '../../components/headers';
+import { SF } from '../../components/SFIcon';
+import { Capsule, ListSection, PrimaryButton, T, ty } from '../../components/ui';
+import { getJob } from '../../data/career';
+import { useCareer } from '../../state/CareerContext';
+import { CareerStackParams } from '../../navigation/types';
+
+type Props = NativeStackScreenProps<CareerStackParams, 'VacancyDetail'>;
+
+export function VacancyDetailScreen({ route, navigation }: Props) {
+  const job = getJob(route.params.jobId);
+  const { isApplied, isSaved, apply, toggleSave } = useCareer();
+  if (!job) return <Screen gradient={['#EAF4EF', '#F2F2F7']}><View /></Screen>;
+  const applied = isApplied(job.id);
+
+  return (
+    <Screen gradient={['#EAF4EF', '#F3F6F4', '#F2F2F7']} topInset={false} tabPadding={false}>
+      <BackNav back="Карьера" onBack={() => navigation.goBack()} trailing={
+        <Pressable onPress={() => toggleSave(job.id)} hitSlop={8}>
+          <SF name={isSaved(job.id) ? 'bookmark.fill' : 'bookmark'} size={20} color={T.brandAccent} />
+        </Pressable>
+      } />
+
+      {/* Hero */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}>
+        <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <View style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
+            <Text style={[ty.title1, { color: job.color }]}>{job.logo}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.title2, { color: T.label }]}>{job.title}</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{job.company} · {job.city}</Text>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
+          <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule>
+          <Capsule bg={T.fillTertiary} color={T.label}>{job.salary}</Capsule>
+          <Capsule bg={T.fillTertiary} color={T.label}>{job.level}</Capsule>
+          <Capsule bg={T.fillTertiary} color={T.labelSecondary}>{job.postedLabel}</Capsule>
+        </View>
+      </View>
+
+      {/* Match */}
+      <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <View style={{ alignItems: 'center', minWidth: 70 }}>
+          <Text style={[ty.largeTitle, { color: T.brand }]}>{job.match}<Text style={ty.title3}>%</Text></Text>
+          <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]}>Совпадение</Text>
+        </View>
+        <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.reason}</Text>
+      </View>
+
+      {/* Why you fit — talents */}
+      <ListSection header="Почему вам подходит">
+        <View style={{ padding: 14 }}>
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]}>Совпадающие таланты Gallup:</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {job.talents.map((t) => (
+              <Capsule key={t} bg={T.brandTinted} color={T.brand}><SF name="checkmark" size={11} color={T.brand} />{t}</Capsule>
+            ))}
+          </View>
+        </View>
+      </ListSection>
+
+      {/* Good Boss / Good Company */}
+      <ListSection header="Good Boss">
+        <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
+          <SF name="person.crop.circle.fill" size={22} color={T.brand} />
+          <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.goodBoss}</Text>
+        </View>
+      </ListSection>
+      <ListSection header="Good Company">
+        <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
+          <SF name="building.2.fill" size={22} color={T.green} />
+          <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.goodCompany}</Text>
+        </View>
+      </ListSection>
+
+      {/* Requirements */}
+      <ListSection header="Требования">
+        <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
+          {job.requirements.map((r, i) => (
+            <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: i < job.requirements.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
+              <SF name="checkmark.circle.fill" size={18} color={T.green} />
+              <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{r}</Text>
+            </View>
+          ))}
+        </View>
+      </ListSection>
+
+      {/* About */}
+      <ListSection header="О вакансии">
+        <View style={{ padding: 14 }}>
+          <Text style={[ty.body, { color: T.label }]}>{job.about}</Text>
+        </View>
+      </ListSection>
+
+      <View style={{ padding: 16, paddingTop: 20 }}>
+        <PrimaryButton
+          label={applied ? 'Отклик отправлен ✓' : 'Откликнуться'}
+          icon={applied ? 'checkmark' : 'paperplane.fill'}
+          color={applied ? T.green : T.brand}
+          onPress={() => apply(job.id)}
+        />
+      </View>
+      <View style={{ height: 20 }} />
+    </Screen>
+  );
+}
