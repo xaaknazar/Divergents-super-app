@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
@@ -49,7 +49,7 @@ export function CareerHomeScreen({ navigation }: Props) {
       {/* Filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
         {CAREER_FILTERS.map((c, i) => (
-          <Chip key={c} label={c} active={filter === i} icon={i === 0 ? 'sparkles' : undefined} onPress={() => setFilter(i)} />
+          <Chip key={c} label={c} active={filter === i} icon={i === 0 ? 'sparkles' : undefined} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setFilter(i); }} />
         ))}
       </ScrollView>
 

@@ -1,6 +1,7 @@
 // Premium iOS-style course cards (brand navy aesthetic) powered by real data.
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
+import { PressableScale } from './PressableScale';
 import { Image } from 'expo-image';
 import { SF } from './SFIcon';
 import { ProgressBar, Capsule, T, ty } from './ui';
@@ -35,11 +36,10 @@ export function CourseCardPremium({
   const pct = Math.round(progress ?? 0);
   const done = pct >= 100;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={course.title} style={({ pressed }) => ({
+    <PressableScale onPress={onPress} accessibilityLabel={course.title} style={{
       width: width as any, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden',
-      opacity: pressed ? 0.9 : 1,
       shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2,
-    })}>
+    }}>
       <View style={{ width: '100%', aspectRatio: 16 / 9 }}>
         <Cover course={course} height="100%" />
         {owned ? (
@@ -70,7 +70,7 @@ export function CourseCardPremium({
           )}
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -81,10 +81,10 @@ export function FeaturedCard({
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={course.title} style={({ pressed }) => ({
-      marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden', opacity: pressed ? 0.92 : 1,
+    <PressableScale onPress={onPress} accessibilityLabel={course.title} style={{
+      marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden',
       shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3,
-    })}>
+    }}>
       <View style={{ height: 180 }}>
         <Cover course={course} height={180} />
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 110, backgroundColor: 'rgba(0,0,0,0.38)' }} />
@@ -112,6 +112,6 @@ export function FeaturedCard({
           <Text style={[ty.headline, { color: T.brand }]}>{formatPrice(course.price)}</Text>
         )}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }

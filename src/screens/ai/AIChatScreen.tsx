@@ -1,5 +1,5 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, LayoutAnimation } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
@@ -77,10 +77,10 @@ export function AIChatScreen({}: Props) {
         </View>
         {/* Mode selector: general + owned courses */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
-          <Chip label="Общий" icon="sparkles" active={isGeneral} onPress={() => setMode(GENERAL)} />
+          <Chip label="Общий" icon="sparkles" active={isGeneral} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setMode(GENERAL); }} />
           {my.courses.map((c) => (
             <Chip key={c.id} label={c.title.length > 20 ? c.title.slice(0, 19) + '…' : c.title}
-              active={c.id === mode} onPress={() => setMode(c.id)} />
+              active={c.id === mode} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setMode(c.id); }} />
           ))}
         </ScrollView>
       </View>

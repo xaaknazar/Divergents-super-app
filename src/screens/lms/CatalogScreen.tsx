@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator, LayoutAnimation } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -60,7 +60,7 @@ export function CatalogScreen({ navigation }: Props) {
           {/* Category chips */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
             {categories.map((c, i) => (
-              <Chip key={c} label={c} active={cat === i} onPress={() => setCat(i)} />
+              <Chip key={c} label={c} active={cat === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setCat(i); }} />
             ))}
           </ScrollView>
 

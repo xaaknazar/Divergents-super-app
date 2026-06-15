@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -36,7 +36,7 @@ export function CommunityHomeScreen({ navigation }: Props) {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
-        {SECTIONS.map((s, i) => <Chip key={s} label={s} active={seg === i} onPress={() => setSeg(i)} />)}
+        {SECTIONS.map((s, i) => <Chip key={s} label={s} active={seg === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(i); }} />)}
       </ScrollView>
 
       {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} />}
@@ -94,13 +94,13 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
       <SectionHeader title="Твой челлендж" />
       <ActiveChallengeCard navigation={navigation} />
 
-      <SectionHeader title="Предстоящие поездки" action="Все" onAction={() => setSeg(2)} />
+      <SectionHeader title="Предстоящие поездки" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(2); }} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
         {TRIPS.map((t) => <TripCardH key={t.id} trip={t} navigation={navigation} />)}
       </ScrollView>
 
       <View style={{ marginTop: 18 }}>
-        <SectionHeader title="Спорт" action="Все" onAction={() => setSeg(3)} />
+        <SectionHeader title="Спорт" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
           {SPORT.map((sp) => (
             <View key={sp.id} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
@@ -114,7 +114,7 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
       </View>
 
       <View style={{ marginTop: 18 }}>
-        <SectionHeader title="Встречи · лекции Дандай Амокачи" action="Все" onAction={() => setSeg(4)} />
+        <SectionHeader title="Встречи · лекции Дандай Амокачи" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
         <Pressable style={{ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
           <View style={{ height: 150 }}>
             <Image source={imgUrl(liveLecture.imageUrl, 750)} style={{ width: '100%', height: 150 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
