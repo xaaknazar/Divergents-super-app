@@ -127,9 +127,9 @@ export interface Trip {
 }
 
 export const TRIPS: Trip[] = [
-  { id: 'kolsai', date: '5–7 февраля', title: 'Кольсайские озёра', meta: '12 идут · 8 мест', tint: '#D4E5F0', days: 3, going: 12, spots: 8, price: '85 000 ₸', organizer: 'Айгерим Болатова', organizerType: 'Гипертим · 4 поездки в Кольсай', imageUrl: null },
-  { id: 'alakol', date: '18–24 февраля', title: 'Алаколь', meta: '24 идут · 4 места', tint: '#F0E4D4', days: 7, going: 24, spots: 4, price: '140 000 ₸', organizer: 'Дамир Ахметов', organizerType: 'Паранойял · 2 поездки', imageUrl: null },
-  { id: 'srilanka', date: '15–22 марта', title: 'Шри-Ланка', meta: '8 идут · Открыт сбор', tint: '#E0F0D4', days: 8, going: 8, spots: 12, price: '690 000 ₸', organizer: 'Команда Divergents', organizerType: 'Международная поездка', imageUrl: null },
+  { id: 'kolsai', date: '5–7 февраля', title: 'Кольсайские озёра', meta: '12 идут · 8 мест', tint: '#D4E5F0', days: 3, going: 12, spots: 8, price: '85 000 ₸', organizer: 'Айгерим Болатова', organizerType: 'Гипертим · 4 поездки в Кольсай', imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2pYmkZsauSfwFVCcqZrDJOYvtM734Kxb0T29Le' },
+  { id: 'alakol', date: '18–24 февраля', title: 'Алаколь', meta: '24 идут · 4 места', tint: '#F0E4D4', days: 7, going: 24, spots: 4, price: '140 000 ₸', organizer: 'Дамир Ахметов', organizerType: 'Паранойял · 2 поездки', imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2pccwFts9j5azL0JSPdxV1RUqoZHK2TBFCGt6I' },
+  { id: 'srilanka', date: '15–22 марта', title: 'Шри-Ланка', meta: '8 идут · Открыт сбор', tint: '#E0F0D4', days: 8, going: 8, spots: 12, price: '690 000 ₸', organizer: 'Команда Divergents', organizerType: 'Международная поездка', imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2p8rSdIhgcGzNkP3Qp1tJFou5WlXa46ynLUReC' },
 ];
 
 export const getTrip = (id: string) => TRIPS.find((t) => t.id === id);
