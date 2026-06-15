@@ -111,25 +111,86 @@ export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | 
   return null;
 };
 
+export interface ItineraryItem { day: string; title: string; note: string; icon: SFName; color: string; }
 export interface Trip {
   id: string;
   date: string;
   title: string;
+  region: string;
   meta: string;
   tint: string;
   days: number;
   going: number;
   spots: number;
   price: string;
+  difficulty: string;
   organizer: string;
   organizerType: string;
-  imageUrl?: string | null; // real photo URL (UploadThing/web); falls back to gradient
+  description: string;
+  itinerary: ItineraryItem[];
+  included: { icon: SFName; t: string }[];
+  imageUrl?: string | null;
 }
 
 export const TRIPS: Trip[] = [
-  { id: 'kolsai', date: '5–7 февраля', title: 'Кольсайские озёра', meta: '12 идут · 8 мест', tint: '#D4E5F0', days: 3, going: 12, spots: 8, price: '85 000 ₸', organizer: 'Айгерим Болатова', organizerType: 'Гипертим · 4 поездки в Кольсай', imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2pYmkZsauSfwFVCcqZrDJOYvtM734Kxb0T29Le' },
-  { id: 'alakol', date: '18–24 февраля', title: 'Алаколь', meta: '24 идут · 4 места', tint: '#F0E4D4', days: 7, going: 24, spots: 4, price: '140 000 ₸', organizer: 'Дамир Ахметов', organizerType: 'Паранойял · 2 поездки', imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2pccwFts9j5azL0JSPdxV1RUqoZHK2TBFCGt6I' },
-  { id: 'srilanka', date: '15–22 марта', title: 'Шри-Ланка', meta: '8 идут · Открыт сбор', tint: '#E0F0D4', days: 8, going: 8, spots: 12, price: '690 000 ₸', organizer: 'Команда Divergents', organizerType: 'Международная поездка', imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2p8rSdIhgcGzNkP3Qp1tJFou5WlXa46ynLUReC' },
+  {
+    id: 'kolsai', title: 'Кольсайские озёра', region: 'Алматинская область · 300 км',
+    date: '11–13 июля', days: 3, going: 14, spots: 6, price: '95 000 ₸', difficulty: 'Средняя',
+    meta: '14 идут · 6 мест', tint: '#D4E5F0',
+    organizer: 'Айгерим Болатова', organizerType: 'Гипертим · 4 поездки в Кольсай',
+    description: 'Система из трёх горных озёр в Кунгей-Алатау на высоте 1800–2800 м. В программе — Кольсайские озёра и озеро Каинды с затопленным еловым лесом. Треккинг средней сложности, ночёвки в гостевом доме в селе Саты.',
+    itinerary: [
+      { day: 'День 1', title: 'Алматы → Саты', note: 'Выезд 7:00 · ~300 км · первое Кольсайское озеро', icon: 'mappin.circle.fill', color: T.brand },
+      { day: 'День 2', title: 'Каинды + второе озеро', note: 'Затопленный лес и треккинг ~10 км', icon: 'figure.walk', color: T.green },
+      { day: 'День 3', title: 'Возвращение', note: 'Завтрак в Саты · выезд в Алматы 10:00', icon: 'house.fill', color: T.orange },
+    ],
+    included: [
+      { icon: 'cart.fill', t: 'Трансфер Алматы ⇄ Саты' },
+      { icon: 'house.fill', t: '2 ночи в гостевом доме' },
+      { icon: 'leaf.fill', t: 'Питание + эко-сборы нацпарка' },
+      { icon: 'figure.walk', t: 'Гид и сопровождение' },
+    ],
+    imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2pYmkZsauSfwFVCcqZrDJOYvtM734Kxb0T29Le',
+  },
+  {
+    id: 'alakol', title: 'Алаколь', region: 'Восток КЗ · озеро · 560 км',
+    date: '2–6 августа', days: 5, going: 22, spots: 8, price: '150 000 ₸', difficulty: 'Лёгкая',
+    meta: '22 идут · 8 мест', tint: '#F0E4D4',
+    organizer: 'Дамир Ахметов', organizerType: 'Паранойял · 2 поездки',
+    description: 'Солёное озеро с лечебной чёрной галькой и минерализованной водой. Пляжный отдых на берегу в посёлке Акши: купание, прогулки на катере, закаты. Подходит для семей и спокойного восстановления.',
+    itinerary: [
+      { day: 'День 1', title: 'Переезд до Акши', note: 'Алматы → Ушарал → база на берегу', icon: 'cart.fill', color: T.brand },
+      { day: 'Дни 2–4', title: 'Пляж и озеро', note: 'Купание, чёрная галька, катер, закаты', icon: 'leaf.fill', color: T.green },
+      { day: 'День 5', title: 'Возвращение', note: 'Сборы и выезд в Алматы', icon: 'house.fill', color: T.orange },
+    ],
+    included: [
+      { icon: 'cart.fill', t: 'Трансфер до Алаколя и обратно' },
+      { icon: 'house.fill', t: '4 ночи у самого берега' },
+      { icon: 'leaf.fill', t: 'Завтраки и пляжная зона' },
+      { icon: 'person.3.fill', t: 'Куратор группы' },
+    ],
+    imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2pccwFts9j5azL0JSPdxV1RUqoZHK2TBFCGt6I',
+  },
+  {
+    id: 'srilanka', title: 'Шри-Ланка', region: 'Международная · 9 дней',
+    date: '12–20 сентября', days: 9, going: 11, spots: 9, price: '780 000 ₸', difficulty: 'Лёгкая',
+    meta: '11 идут · 9 мест', tint: '#E0F0D4',
+    organizer: 'Команда Divergents', organizerType: 'Международная поездка сообщества',
+    description: 'Девятидневное путешествие по острову: Канди и храм Зуба Будды, чайные плантации Эллы, сафари в нацпарке Яла и океанские пляжи Мириссы. Тёплый океан, культура и природа в кругу «своих».',
+    itinerary: [
+      { day: 'Дни 1–2', title: 'Коломбо → Канди', note: 'Прилёт, переезд, храм Зуба Будды', icon: 'globe', color: T.brand },
+      { day: 'Дни 3–4', title: 'Элла', note: 'Чайные плантации, девятиарочный мост', icon: 'leaf.fill', color: T.green },
+      { day: 'Дни 5–6', title: 'Сафари Яла', note: 'Леопарды, слоны, джип-сафари', icon: 'figure.walk', color: T.orange },
+      { day: 'Дни 7–9', title: 'Мирисса · океан', note: 'Пляжи, киты (сезон), вылет домой', icon: 'mappin.circle.fill', color: T.purple },
+    ],
+    included: [
+      { icon: 'globe', t: 'Авиаперелёт и трансферы' },
+      { icon: 'house.fill', t: '8 ночей в отелях' },
+      { icon: 'cart.fill', t: 'Джип-сафари в Яле' },
+      { icon: 'leaf.fill', t: 'Завтраки и гид' },
+    ],
+    imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2p8rSdIhgcGzNkP3Qp1tJFou5WlXa46ynLUReC',
+  },
 ];
 
 export const getTrip = (id: string) => TRIPS.find((t) => t.id === id);
@@ -255,3 +316,42 @@ export function daysUntil(iso?: string): number {
 export function teamsNeed(): number {
   return CHALLENGE_TEAMS.reduce((s, t) => s + Math.max(0, t.capacity - t.members), 0);
 }
+
+// ─── Спорт ─────────────────────────────────────────────────────────
+export interface SportActivity {
+  id: string;
+  title: string;
+  place: string;
+  date: string;
+  icon: SFName;
+  going: number;
+  spotsLabel: string;
+  tint: string;
+}
+
+export const SPORT: SportActivity[] = [
+  { id: 'football', title: 'Футбол 5×5', place: 'Almaty Arena', date: 'Каждую среду · 20:00', icon: 'figure.run', going: 14, spotsLabel: '6 мест', tint: '#E0F0DA' },
+  { id: 'tennis', title: 'Большой теннис', place: 'Esentai Tennis Club', date: 'Суббота · 10:00', icon: 'figure.run', going: 6, spotsLabel: '2 места', tint: '#E6ECFB' },
+  { id: 'marathon', title: 'Полумарафон 21 км', place: 'Парк Первого Президента', date: '7 сентября · 8:00', icon: 'figure.walk', going: 38, spotsLabel: 'Открыт сбор', tint: '#FDE7D9' },
+  { id: 'yoga', title: 'Йога на рассвете', place: 'Кок-Тобе', date: 'Воскресенье · 6:30', icon: 'figure.walk', going: 12, spotsLabel: '8 мест', tint: '#F0E2F2' },
+];
+
+// ─── Встречи: онлайн-лекции Дандай Амокачи ─────────────────────────
+export interface Lecture {
+  id: string;
+  title: string;
+  speaker: string;
+  date: string;
+  durationLabel: string;
+  live: boolean;
+  seatsLabel: string;
+  imageUrl: string;
+}
+
+const DANDAY_PHOTO = 'https://utfs.io/f/e23b25be-42e5-4ee4-87b6-94dcfc245071-x5cjij.jpg';
+
+export const LECTURES: Lecture[] = [
+  { id: 'lec1', title: 'Законы лидерства', speaker: 'Дандай Амокачи', date: 'Сегодня · 19:00', durationLabel: '90 мин', live: true, seatsLabel: '124 смотрят', imageUrl: DANDAY_PHOTO },
+  { id: 'lec2', title: 'Формирование команды', speaker: 'Дандай Амокачи', date: '25 июня · 19:00', durationLabel: '90 мин', live: false, seatsLabel: 'Открыта запись', imageUrl: DANDAY_PHOTO },
+  { id: 'lec3', title: 'Лайфхаки лидерства', speaker: 'Дандай Амокачи', date: '2 июля · 19:00', durationLabel: '75 мин', live: false, seatsLabel: 'Открыта запись', imageUrl: DANDAY_PHOTO },
+];

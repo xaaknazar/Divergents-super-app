@@ -4,26 +4,13 @@ import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
-import { SF, SFName } from '../../components/SFIcon';
+import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, T, ty } from '../../components/ui';
 import { getTrip } from '../../data/community';
 import { imgUrl } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
-
-const ITINERARY: { d: string; t: string; m: string; i: SFName; c: string }[] = [
-  { d: 'День 1', t: 'Алматы → Сатти', m: 'Выезд 7:00 · 280 км', i: 'mappin.circle.fill', c: T.brand },
-  { d: 'День 2', t: 'Поход к озёрам', m: '12 км трек · средняя сложность', i: 'figure.walk', c: T.green },
-  { d: 'День 3', t: 'Возвращение', m: 'Завтрак в Сатти · выезд 10:00', i: 'house.fill', c: T.orange },
-];
-
-const INCLUDED: { i: SFName; t: string }[] = [
-  { i: 'figure.walk', t: 'Гид и сопровождение' },
-  { i: 'house.fill', t: 'Ночёвка в Сатти' },
-  { i: 'leaf.fill', t: 'Трёхразовое питание' },
-  { i: 'cart.fill', t: 'Трансфер Алматы ⇄ Сатти' },
-];
 
 function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
   return (
@@ -66,8 +53,9 @@ export function TripDetailScreen({ route, navigation }: Props) {
             </View>
           </View>
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
-            <Capsule bg="rgba(255,255,255,0.75)" color={T.label}><SF name="calendar" size={11} color={T.brand} />{trip.date} · {trip.days} дня</Capsule>
+            <Capsule bg="rgba(255,255,255,0.75)" color={T.label}><SF name="calendar" size={11} color={T.brand} />{trip.date} · {trip.days} дн.</Capsule>
             <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]}>{trip.title}</Text>
+            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]}>{trip.region} · сложность: {trip.difficulty}</Text>
           </View>
         </View>
 
@@ -81,32 +69,38 @@ export function TripDetailScreen({ route, navigation }: Props) {
           ))}
         </View>
 
+        <ListSection header="О поездке">
+          <View style={{ padding: 14 }}>
+            <Text style={[ty.body, { color: T.label }]}>{trip.description}</Text>
+          </View>
+        </ListSection>
+
         <ListSection header="Организатор">
           <ListRow
             leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
             title={trip.organizer} subtitle={trip.organizerType} chevron last />
         </ListSection>
 
-        <ListSection header={`Маршрут · ${trip.days} дня`}>
-          {ITINERARY.map((r, i) => (
+        <ListSection header={`Маршрут · ${trip.days} дн.`}>
+          {trip.itinerary.map((r, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
               <View style={{ width: 32, alignItems: 'center', gap: 4 }}>
-                <IconCircle icon={r.i} bg={r.c + '22'} color={r.c} size={28} />
-                {i < ITINERARY.length - 1 ? <View style={{ width: 2, flex: 1, backgroundColor: T.fillTertiary }} /> : null}
+                <IconCircle icon={r.icon} bg={r.color + '22'} color={r.color} size={28} />
+                {i < trip.itinerary.length - 1 ? <View style={{ width: 2, flex: 1, backgroundColor: T.fillTertiary }} /> : null}
               </View>
-              <View style={{ flex: 1, paddingBottom: i < ITINERARY.length - 1 ? 12 : 0 }}>
-                <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{r.d}</Text>
-                <Text style={[ty.body, { color: T.label, marginTop: 2 }]}>{r.t}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{r.m}</Text>
+              <View style={{ flex: 1, paddingBottom: i < trip.itinerary.length - 1 ? 12 : 0 }}>
+                <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{r.day}</Text>
+                <Text style={[ty.body, { color: T.label, marginTop: 2 }]}>{r.title}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{r.note}</Text>
               </View>
             </View>
           ))}
         </ListSection>
 
         <ListSection header="Что включено">
-          {INCLUDED.map((it, i) => (
-            <ListRow key={i} leading={<SF name={it.i} size={18} color={T.brand} />} title={it.t}
-              trailing={<SF name="checkmark" size={16} color={T.green} />} last={i === INCLUDED.length - 1} />
+          {trip.included.map((it, i) => (
+            <ListRow key={i} leading={<SF name={it.icon} size={18} color={T.brand} />} title={it.t}
+              trailing={<SF name="checkmark" size={16} color={T.green} />} last={i === trip.included.length - 1} />
           ))}
         </ListSection>
 

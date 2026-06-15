@@ -1,25 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
-import { SF } from '../../components/SFIcon';
-import { ProgressBar, Segmented, SectionHeader, ListSection, Capsule, T, ty } from '../../components/ui';
-import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
-import { useChallenge } from '../../state/ChallengeContext';
-import { MEDAL_FOR_RANK, TRIPS, FEATURED_MEMBER, CHALLENGES, daysUntil } from '../../data/community';
+import { SF, SFName } from '../../components/SFIcon';
+import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, T, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
+import { useChallenge } from '../../state/ChallengeContext';
+import {
+  CHALLENGES, daysUntil, TRIPS, SPORT, LECTURES, FEATURED_MEMBER,
+  Trip, SportActivity, Lecture,
+} from '../../data/community';
 import { imgUrl } from '../../data/api';
-import { LinearGradient } from 'expo-linear-gradient';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
+type Nav = Props['navigation'];
+
+const SECTIONS = ['Главная', 'Челленджи', 'Поездки', 'Спорт', 'Встречи'];
 
 export function CommunityHomeScreen({ navigation }: Props) {
   const [seg, setSeg] = useState(0);
-  const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints } = useChallenge();
-  const c = challenge;
 
   return (
     <Screen>
@@ -27,218 +30,267 @@ export function CommunityHomeScreen({ navigation }: Props) {
         <HeaderIcon name="magnifyingglass" />
         <HeaderIcon name="plus.circle" size={22} />
       </>} />
-
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
-        <Text style={[ty.subhead, { color: T.labelSecondary }]}>Divergents · челленджи и поездки</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary }]}>Divergents · свои люди и общий рост</Text>
       </View>
 
-      <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
-        <Segmented items={['Челленджи', 'Поездки', 'Спорт', 'Встречи']} value={seg} onChange={setSeg} />
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
+        {SECTIONS.map((s, i) => <Chip key={s} label={s} active={seg === i} onPress={() => setSeg(i)} />)}
+      </ScrollView>
 
-      {seg === 1 ? (
-        <TripsList navigation={navigation} />
-      ) : seg >= 2 ? (
-        <View style={{ padding: 40, alignItems: 'center' }}>
-          <SF name={seg === 2 ? 'figure.run' : 'person.3.fill'} size={40} color={T.labelTertiary} />
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 12, textAlign: 'center' }]}>
-            {seg === 2 ? 'Футбол, теннис, марафоны — скоро' : 'Локальные встречи сообщества — скоро'}
-          </Text>
-        </View>
-      ) : (
-        <>
-          {/* Challenge selection */}
-          <SectionHeader title="Выбрать челлендж" />
-          {CHALLENGES.filter((x) => x.status === 'upcoming').map((ch) => (
-            <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
-              style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
-              <LinearGradient colors={['#1E337A', '#3D5BDB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
-                <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-                  <SF name={ch.icon} size={28} color="#fff" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />Старт {ch.startLabel}</Capsule>
-                  <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]}>{ch.title}</Text>
-                </View>
-              </LinearGradient>
-              <View style={{ padding: 14 }}>
-                <Text style={[ty.subhead, { color: T.labelSecondary }]}>{ch.subtitle}</Text>
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                  <Capsule bg={T.brandTinted} color={T.brand}>через {daysUntil(ch.startISO)} дн.</Capsule>
-                  <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дней</Capsule>
-                  <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
-                  <Capsule bg={T.fillTertiary} color={T.label}>{ch.teams} команды</Capsule>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
-                  <Text style={[ty.caption1, { color: T.red }]}>3 пропуска (🚩) — вылет</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text style={[ty.subheadEm, { color: T.brand }]}>Подробнее</Text>
-                    <SF name="chevron.forward" size={12} color={T.brand} />
-                  </View>
-                </View>
-              </View>
-            </Pressable>
-          ))}
-
-          <SectionHeader title="Активный челлендж (демо)" />
-          {/* Active challenge */}
-          <Pressable onPress={() => navigation.navigate('ChallengeDetail', { challengeId: 'no-sugar-21' })}
-            style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 16 }}>
-            <Text style={[ty.caption2Em, { color: T.brand, textTransform: 'uppercase', letterSpacing: 0.6 }]}>Активный челлендж</Text>
-            <Text style={[ty.title2, { color: T.label, marginTop: 4 }]}>{c.title}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>Команда «{c.teamName}» · +{teamPoints} pts командой</Text>
-            <View style={{ marginTop: 12 }}>
-              <ProgressBar value={c.currentDay / c.totalDays} />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-                <Text style={[ty.subhead, { color: T.label }]}>День {c.currentDay} из {c.totalDays}</Text>
-                <Text style={[ty.subhead, { color: T.labelSecondary }]}>{c.totalDays - c.currentDay} дней осталось</Text>
-              </View>
-            </View>
-
-            <View style={{ marginTop: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Text style={[ty.footnoteEm, { color: T.label }]}>Сегодня · {c.tasks.length} задачи</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                <SF name="flame.fill" size={11} color={T.orange} />
-                <Text style={[ty.caption2, { color: T.green }]}>+{pointsToday} pts{bonusToday > 0 ? ` (·${bonusToday} бонус)` : ''}</Text>
-              </View>
-            </View>
-
-            <View style={{ marginTop: 8, backgroundColor: T.fillQuaternary, borderRadius: 10, paddingHorizontal: 14 }}>
-              {c.tasks.map((t, i) => (
-                <ChallengeTaskRow
-                  key={t.id}
-                  task={t}
-                  divider={i < c.tasks.length - 1}
-                  onToggle={() => toggleBinary(t.id)}
-                  onAdjust={t.kind === 'metric' ? (d) => setMetric(t.id, t.current + d) : undefined}
-                  step={t.kind === 'metric' ? (t.id === 'steps' ? 500 : 1) : 1}
-                />
-              ))}
-            </View>
-          </Pressable>
-
-          {/* Stats cards */}
-          <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 20 }}>
-            <View style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <SF name="flame.fill" size={16} color={T.orange} />
-                <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]}>Серия</Text>
-              </View>
-              <Text style={[ty.title2, { color: T.label, marginTop: 6 }]}>{c.currentDay} дней</Text>
-              <Text style={[ty.caption1, { color: T.orange }]}>Личный рекорд</Text>
-            </View>
-            <View style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <SF name="trophy.fill" size={16} color={T.yellow} />
-                <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]}>Команда</Text>
-              </View>
-              <Text style={[ty.title2, { color: T.label, marginTop: 6 }]}>{c.teamRank} / {c.teamCount}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>+{teamPoints} pts</Text>
-            </View>
-          </View>
-
-          {/* Leaderboard (live) */}
-          <ListSection header={`Лидерборд команды · вы ${myRank}-е место`}>
-            {leaderboard.map((row, i) => {
-              const medal = MEDAL_FOR_RANK(row.rank);
-              return (
-                <Pressable key={row.id} onPress={() => !row.isMe && navigation.navigate('Member', { memberId: row.id })}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16, backgroundColor: row.isMe ? T.brandTinted : 'transparent' }}>
-                  <Text style={[ty.subheadEm, { color: T.labelSecondary, width: 20, textAlign: 'center' }]}>{row.rank}</Text>
-                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: row.isMe ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={[ty.subheadEm, { color: row.isMe ? '#fff' : T.label }]}>{row.name.charAt(0)}</Text>
-                  </View>
-                  <Text style={[ty.body, { flex: 1, color: T.label }]}>{row.name}{row.isMe ? <Text style={[ty.subhead, { color: T.brand }]}> · Вы</Text> : null}</Text>
-                  {medal ? <SF name={medal.icon} size={16} color={medal.color} /> : null}
-                  <Text style={[ty.headline, { color: T.label }]}>{row.points}</Text>
-                  {i < leaderboard.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 48, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
-                </Pressable>
-              );
-            })}
-          </ListSection>
-
-          {/* Trips preview */}
-          <View style={{ marginTop: 24 }}>
-            <SectionHeader title="Предстоящие поездки" action="Все" onAction={() => setSeg(1)} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 12 }}>
-              {TRIPS.map((t) => (
-                <Pressable key={t.id} onPress={() => navigation.navigate('TripDetail', { tripId: t.id })}
-                  style={{ width: 260, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden' }}>
-                  <View style={{ height: 130 }}>
-                    {t.imageUrl ? (
-                      <Image source={imgUrl(t.imageUrl, 640)} style={{ position: 'absolute', width: '100%', height: 130 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-                    ) : (
-                      <>
-                        <View style={{ position: 'absolute', width: '100%', height: 130, backgroundColor: t.tint }} />
-                        <View style={{ position: 'absolute', right: 12, top: 40, opacity: 0.35 }}>
-                          <SF name="mappin.and.ellipse" size={50} color={T.brand} />
-                        </View>
-                      </>
-                    )}
-                    <View style={{ padding: 10 }}>
-                      <Capsule bg="rgba(255,255,255,0.85)" color={T.label}><SF name="calendar" size={11} color={T.labelSecondary} />{t.date}</Capsule>
-                    </View>
-                  </View>
-                  <View style={{ padding: 12 }}>
-                    <Text style={[ty.headline, { color: T.label }]}>{t.title}</Text>
-                    <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{t.meta}</Text>
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Featured member */}
-          <ListSection header="Участник недели" style={{ marginTop: 8 }}>
-            <ListRowMember navigation={navigation} />
-          </ListSection>
-          <View style={{ height: 20 }} />
-        </>
-      )}
+      {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} />}
+      {seg === 1 && <ChallengesTab navigation={navigation} />}
+      {seg === 2 && <TripsTab navigation={navigation} />}
+      {seg === 3 && <SportTab />}
+      {seg === 4 && <MeetingsTab />}
+      <View style={{ height: 16 }} />
     </Screen>
   );
 }
 
-function ListRowMember({ navigation }: { navigation: Props['navigation'] }) {
-  const m = FEATURED_MEMBER;
+// ─── Active challenge card (redesigned, enterable) ──────────────────
+function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
+  const { challenge: c, teamPoints, myRank, pointsToday } = useChallenge();
+  const open = () => navigation.navigate('ChallengeDetail', { challengeId: c.id });
+  const stats = [
+    { v: `${c.currentDay} дн`, l: 'Серия' },
+    { v: `${teamPoints}`, l: 'Очки команды' },
+    { v: `${myRank} / ${c.teamCount}`, l: 'Место' },
+  ];
   return (
-    <Pressable onPress={() => navigation.navigate('Member', { memberId: m.id })}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, opacity: pressed ? 0.6 : 1 })}>
-      <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={[ty.title3, { color: '#fff' }]}>{m.initial}</Text>
+    <Pressable onPress={open} style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', backgroundColor: T.cardBg, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}>
+      <LinearGradient colors={['#1E337A', '#3D5BDB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="flame.fill" size={11} color="#fff" />Активный челлендж</Capsule>
+          <Capsule bg="rgba(255,255,255,0.22)" color="#fff">День {c.currentDay}/{c.totalDays}</Capsule>
+        </View>
+        <Text style={[ty.title2, { color: '#fff', marginTop: 10 }]}>{c.title}</Text>
+        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>Команда «{c.teamName}» · сегодня +{pointsToday} pts</Text>
+        <View style={{ marginTop: 12, height: 6, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
+          <View style={{ width: `${(c.currentDay / c.totalDays) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6 }} />
+        </View>
+      </LinearGradient>
+      <View style={{ flexDirection: 'row', paddingVertical: 14 }}>
+        {stats.map((st, i) => (
+          <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < stats.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
+            <Text style={[ty.title3, { color: T.label }]}>{st.v}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{st.l}</Text>
+          </View>
+        ))}
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={[ty.headline, { color: T.label }]}>{m.name}</Text>
-        <Text style={[ty.subhead, { color: T.labelSecondary }]}>{m.role} · {m.psychotype}</Text>
+      <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+        <PrimaryButton label="Войти в челлендж" icon="arrow.right" onPress={open} style={{ height: 46 }} />
       </View>
-      <SF name="chevron.forward" size={14} color={T.labelTertiary} />
     </Pressable>
   );
 }
 
-function TripsList({ navigation }: { navigation: Props['navigation'] }) {
+// ─── Главная ────────────────────────────────────────────────────────
+function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number) => void }) {
+  const liveLecture = LECTURES.find((l) => l.live) ?? LECTURES[0];
+  return (
+    <>
+      <SectionHeader title="Твой челлендж" />
+      <ActiveChallengeCard navigation={navigation} />
+
+      <SectionHeader title="Предстоящие поездки" action="Все" onAction={() => setSeg(2)} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
+        {TRIPS.map((t) => <TripCardH key={t.id} trip={t} navigation={navigation} />)}
+      </ScrollView>
+
+      <View style={{ marginTop: 18 }}>
+        <SectionHeader title="Спорт" action="Все" onAction={() => setSeg(3)} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
+          {SPORT.map((sp) => (
+            <View key={sp.id} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
+              <IconSquircle icon={sp.icon} bg={T.brand} size={34} />
+              <Text style={[ty.headline, { color: T.label, marginTop: 10 }]} numberOfLines={1}>{sp.title}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}</Text>
+              <Text style={[ty.caption2, { color: T.brand, marginTop: 6 }]}>{sp.date}</Text>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+
+      <View style={{ marginTop: 18 }}>
+        <SectionHeader title="Встречи · лекции Дандай Амокачи" action="Все" onAction={() => setSeg(4)} />
+        <Pressable style={{ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
+          <View style={{ height: 150 }}>
+            <Image source={imgUrl(liveLecture.imageUrl, 750)} style={{ width: '100%', height: 150 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+            <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 90, backgroundColor: 'rgba(0,0,0,0.4)' }} />
+            {liveLecture.live ? (
+              <View style={{ position: 'absolute', top: 12, left: 12 }}>
+                <Capsule bg={T.red} color="#fff"><SF name="circle.fill" size={8} color="#fff" />LIVE</Capsule>
+              </View>
+            ) : null}
+            <View style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
+              <Text style={[ty.title3, { color: '#fff' }]}>{liveLecture.title}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)' }]}>{liveLecture.speaker} · {liveLecture.date}</Text>
+            </View>
+          </View>
+        </Pressable>
+      </View>
+
+      <ListSection header="Участник недели" style={{ marginTop: 18 }}>
+        <Pressable onPress={() => navigation.navigate('Member', { memberId: FEATURED_MEMBER.id })}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, opacity: pressed ? 0.6 : 1 })}>
+          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={[ty.title3, { color: '#fff' }]}>{FEATURED_MEMBER.initial}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]}>{FEATURED_MEMBER.name}</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary }]}>{FEATURED_MEMBER.role} · {FEATURED_MEMBER.psychotype}</Text>
+          </View>
+          <SF name="chevron.forward" size={14} color={T.labelTertiary} />
+        </Pressable>
+      </ListSection>
+    </>
+  );
+}
+
+// ─── Челленджи ──────────────────────────────────────────────────────
+function ChallengesTab({ navigation }: { navigation: Nav }) {
+  return (
+    <>
+      <SectionHeader title="Активный челлендж" />
+      <ActiveChallengeCard navigation={navigation} />
+      <SectionHeader title="Открыт набор" />
+      {CHALLENGES.filter((x) => x.status === 'upcoming').map((ch) => (
+        <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
+          style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
+          <LinearGradient colors={['#1E337A', '#3D5BDB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
+            <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+              <SF name={ch.icon} size={28} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />Старт {ch.startLabel}</Capsule>
+              <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]}>{ch.title}</Text>
+            </View>
+          </LinearGradient>
+          <View style={{ padding: 14 }}>
+            <Text style={[ty.subhead, { color: T.labelSecondary }]}>{ch.subtitle}</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+              <Capsule bg={T.brandTinted} color={T.brand}>через {daysUntil(ch.startISO)} дн.</Capsule>
+              <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дней</Capsule>
+              <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+              <Text style={[ty.caption1, { color: T.red }]}>3 пропуска (🚩) — вылет</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={[ty.subheadEm, { color: T.brand }]}>Подробнее</Text>
+                <SF name="chevron.forward" size={12} color={T.brand} />
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      ))}
+    </>
+  );
+}
+
+// ─── Поездки ────────────────────────────────────────────────────────
+function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
+  return (
+    <Pressable onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
+      style={{ width: 260, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
+      <View style={{ height: 140 }}>
+        <Image source={imgUrl(trip.imageUrl, 640)} style={{ width: '100%', height: 140 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+        <View style={{ position: 'absolute', top: 10, left: 10 }}>
+          <Capsule bg="rgba(0,0,0,0.45)" color="#fff"><SF name="calendar" size={11} color="#fff" />{trip.date}</Capsule>
+        </View>
+      </View>
+      <View style={{ padding: 12 }}>
+        <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{trip.title}</Text>
+        <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{trip.region}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+          <Text style={[ty.caption1, { color: T.labelSecondary }]}>{trip.meta}</Text>
+          <Text style={[ty.subheadEm, { color: T.brand }]}>{trip.price}</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function TripsTab({ navigation }: { navigation: Nav }) {
   return (
     <ListSection header="Все поездки">
       {TRIPS.map((t, i) => (
         <Pressable key={t.id} onPress={() => navigation.navigate('TripDetail', { tripId: t.id })}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
-          {t.imageUrl ? (
-            <Image source={imgUrl(t.imageUrl, 256)} style={{ width: 56, height: 56, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
-          ) : (
-            <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: t.tint, alignItems: 'center', justifyContent: 'center' }}>
-              <SF name="mappin.and.ellipse" size={24} color={T.brand} />
-            </View>
-          )}
+          <Image source={imgUrl(t.imageUrl, 256)} style={{ width: 64, height: 64, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]}>{t.title}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{t.date} · {t.days} дня</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{t.meta} · {t.price}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{t.region} · {t.difficulty}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{t.date} · {t.meta} · {t.price}</Text>
           </View>
           <SF name="chevron.forward" size={14} color={T.labelTertiary} />
-          {i < TRIPS.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 80, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+          {i < TRIPS.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 88, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
         </Pressable>
       ))}
     </ListSection>
+  );
+}
+
+// ─── Спорт ──────────────────────────────────────────────────────────
+function SportTab() {
+  return (
+    <ListSection header="Спортивные активности">
+      {SPORT.map((sp, i) => (
+        <View key={sp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
+          <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: sp.tint, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name={sp.icon} size={22} color={T.brand} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]}>{sp.title}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{sp.place} · {sp.date}</Text>
+            <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]}>{sp.going} идут · {sp.spotsLabel}</Text>
+          </View>
+          <Pressable style={{ backgroundColor: T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
+            <Text style={[ty.subheadEm, { color: T.brand }]}>Участвую</Text>
+          </Pressable>
+          {i < SPORT.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+        </View>
+      ))}
+    </ListSection>
+  );
+}
+
+// ─── Встречи (онлайн-лекции) ────────────────────────────────────────
+function MeetingsTab() {
+  return (
+    <View style={{ paddingHorizontal: 16 }}>
+      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingVertical: 8, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Онлайн-лекции · Дандай Амокачи</Text>
+      {LECTURES.map((lec) => (
+        <View key={lec.id} style={{ backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden', marginBottom: 14 }}>
+          <View style={{ height: 160 }}>
+            <Image source={imgUrl(lec.imageUrl, 750)} style={{ width: '100%', height: 160 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+            <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 70, backgroundColor: 'rgba(0,0,0,0.35)' }} />
+            {lec.live ? (
+              <View style={{ position: 'absolute', top: 12, left: 12 }}>
+                <Capsule bg={T.red} color="#fff"><SF name="circle.fill" size={8} color="#fff" />LIVE</Capsule>
+              </View>
+            ) : (
+              <View style={{ position: 'absolute', top: 12, left: 12 }}>
+                <Capsule bg="rgba(0,0,0,0.45)" color="#fff"><SF name="calendar" size={11} color="#fff" />{lec.date}</Capsule>
+              </View>
+            )}
+            <View style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
+              <Text style={[ty.title3, { color: '#fff' }]}>{lec.title}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)' }]}>{lec.speaker}</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 }}>
+            <View>
+              <Text style={[ty.subheadEm, { color: T.label }]}>{lec.date}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary }]}>{lec.durationLabel} · {lec.seatsLabel}</Text>
+            </View>
+            <Pressable style={{ backgroundColor: lec.live ? T.red : T.brand, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 18 }}>
+              <Text style={[ty.subheadEm, { color: '#fff' }]}>{lec.live ? 'Смотреть' : 'Напомнить'}</Text>
+            </Pressable>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
