@@ -166,7 +166,7 @@ export function Chip({
   label, active, icon, onPress,
 }: { label: string; active?: boolean; icon?: SFName | string; onPress?: () => void }) {
   return (
-    <Pressable onPress={onPress} style={{
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: !!active }} accessibilityLabel={label} style={{
       flexDirection: 'row', alignItems: 'center', gap: 5,
       paddingVertical: 7, paddingHorizontal: 14, borderRadius: 18,
       backgroundColor: active ? T.brand : T.cardBg,
@@ -184,7 +184,7 @@ export function PrimaryButton({
 }: { label: string; icon?: SFName | string; onPress?: () => void; color?: string; textColor?: string; style?: StyleProp<ViewStyle> }) {
   const fg = textColor ?? (color === 'transparent' ? T.brand : '#fff');
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [{
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [{
       height: 50, borderRadius: 14, backgroundColor: color, flexDirection: 'row',
       alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pressed ? 0.85 : 1,
     }, style]}>

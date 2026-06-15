@@ -34,7 +34,7 @@ export function CourseCardPremium({
   const pct = Math.round(progress ?? 0);
   const done = pct >= 100;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={course.title} style={({ pressed }) => ({
       width: width as any, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden',
       opacity: pressed ? 0.9 : 1,
       shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2,
@@ -80,7 +80,7 @@ export function FeaturedCard({
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={course.title} style={({ pressed }) => ({
       marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden', opacity: pressed ? 0.92 : 1,
       shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3,
     })}>

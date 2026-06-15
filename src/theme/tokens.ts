@@ -75,4 +75,9 @@ export const ty: TY = {
   caption2Em: { fontSize: 11, fontWeight: '600', lineHeight: 14, letterSpacing: 0.07 },
 };
 
+// Radius scale (continuous iOS corners)
+export const radius = { sm: 8, md: 10, lg: 12, xl: 14, xxl: 16, pill: 999 } as const;
+// Spacing scale (4pt base)
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
+
 export type ColorKey = keyof typeof T;
