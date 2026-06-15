@@ -2,8 +2,9 @@
 // fill past 100% to show the over-goal bonus that rolls up to the team. Binary
 // tasks toggle on tap. Mirrors the mechanic refined in the design.
 import React from 'react';
+import { useTheme } from '../theme/ThemeContext';
 import { View, Text, Pressable } from 'react-native';
-import { T, ty } from '../theme/tokens';
+import { ty } from '../theme/tokens';
 import { SF } from './SFIcon';
 import { Capsule } from './ui';
 import { ChallengeTask, taskBonus, taskDone, taskPoints } from '../data/community';
@@ -19,6 +20,7 @@ export function ChallengeTaskRow({
   onAdjust?: (delta: number) => void;
   step?: number;
 }) {
+  const { T } = useTheme();
   const done = taskDone(task);
   const pts = taskPoints(task);
 
@@ -72,6 +74,7 @@ export function ChallengeTaskRow({
 }
 
 function Stepper({ label, onPress, primary }: { label: string; onPress: () => void; primary?: boolean }) {
+  const { T } = useTheme();
   return (
     <Pressable onPress={onPress} style={({ pressed }) => ({
       flex: 1, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center',

@@ -1,9 +1,10 @@
 import React from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { SF, SFName } from '../../components/SFIcon';
-import { Capsule, ListSection, ListRow, SectionHeader, T, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
 import { FEATURED_MEMBER } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -11,11 +12,11 @@ type Props = NativeStackScreenProps<CommunityStackParams, 'Member'>;
 
 const MEDALS: { i: SFName; c: string; l: string }[] = [
   { i: 'crown.fill', c: '#D4AF37', l: 'Лидер' },
-  { i: 'trophy.fill', c: T.brand, l: 'Топ-3' },
-  { i: 'flame.fill', c: T.orange, l: '100 дней' },
-  { i: 'star.fill', c: T.green, l: 'Ментор' },
-  { i: 'book.fill', c: T.purple, l: '50 книг' },
-  { i: 'figure.run', c: T.red, l: 'Марафон' },
+  { i: 'trophy.fill', c: '#234088', l: 'Топ-3' },
+  { i: 'flame.fill', c: '#FF9500', l: '100 дней' },
+  { i: 'star.fill', c: '#34C759', l: 'Ментор' },
+  { i: 'book.fill', c: '#AF52DE', l: '50 книг' },
+  { i: 'figure.run', c: '#FF3B30', l: 'Марафон' },
 ];
 
 const BOOKS = [
@@ -33,6 +34,7 @@ const TRAVELS = [
 ];
 
 export function MemberScreen({ navigation }: Props) {
+  const { T } = useTheme();
   const m = FEATURED_MEMBER;
   const stats = [
     { v: String(m.stats.courses), l: 'Курсов' },

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
-import { ProgressBar, Capsule, ListSection, PrimaryButton, T, ty } from '../../components/ui';
+import { ProgressBar, Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
 import { useAuth } from '@clerk/clerk-expo';
 import { formatPrice, stripHtml, API_BASE, imgUrl } from '../../data/api';
@@ -13,6 +14,7 @@ import { LMSStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<LMSStackParams, 'CourseDetail'>;
 
 function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
+  const { T } = useTheme();
   return (
     <Pressable onPress={onPress} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.8)', alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={16} color={T.label} />
@@ -21,6 +23,7 @@ function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
 }
 
 export function CourseDetailScreen({ route, navigation }: Props) {
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { courseId } = route.params;
   const { getCourse, loadDetail, detailLoading, progress, currentLessonIndex, lessonStatus } = useCourses();

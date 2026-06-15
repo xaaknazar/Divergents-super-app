@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useTheme } from '../theme/ThemeContext';
 import { View, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF, SFName } from '../components/SFIcon';
-import { PrimaryButton, T, ty } from '../components/ui';
+import { PrimaryButton, ty } from '../components/ui';
 import { RootStackParams } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Onboarding'>;
@@ -16,6 +17,7 @@ const STEPS: { icon: SFName; accent: SFName; title: string; body: string }[] = [
 ];
 
 export function OnboardingScreen({ navigation }: Props) {
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const s = STEPS[step];

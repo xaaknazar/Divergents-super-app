@@ -1,21 +1,25 @@
 import React from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { ProgressBar, Capsule, IconCircle, IconSquircle, ListSection, ListRow, T, ty } from '../../components/ui';
+import { ProgressBar, Capsule, IconCircle, IconSquircle, ListSection, ListRow, Segmented, ty } from '../../components/ui';
 import { USER, TALENTS, REPORTS, APPLICATIONS } from '../../data/profile';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
+import { useAchievements } from '../../data/achievements';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 
 export function ProfileHomeScreen({ navigation }: Props) {
+  const { T, mode, setMode } = useTheme();
   const { challenge } = useChallenge();
   const { courses, progress } = useCourses();
+  const ach = useAchievements();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -64,6 +68,18 @@ export function ProfileHomeScreen({ navigation }: Props) {
           </View>
         ))}
       </View>
+
+      {/* Achievements */}
+      <ListSection header={`Достижения · ${ach.earned}/${ach.total}`}>
+        <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
+          {ach.badges.slice(0, 6).map((b) => (
+            <View key={b.id} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+              <SF name={b.icon} size={20} color={b.earned ? '#fff' : T.labelTertiary} />
+            </View>
+          ))}
+        </View>
+        <ListRow title="Смотреть все достижения" valueColor={T.brand} chevron last onPress={() => navigation.navigate('Achievements')} />
+      </ListSection>
 
       {/* Account / Clerk auth */}
       <ListSection header="Аккаунт">
@@ -172,6 +188,22 @@ export function ProfileHomeScreen({ navigation }: Props) {
             trailing={<Capsule bg={a.statusBg} color={a.statusColor}>{a.status}</Capsule>}
             last={i === APPLICATIONS.length - 1} />
         ))}
+      </ListSection>
+
+      {/* Appearance */}
+      <ListSection header="Внешний вид">
+        <View style={{ paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <SF name="paintpalette.fill" size={18} color={T.brandAccent} />
+            <Text style={[ty.body, { color: T.label, flex: 1 }]}>Тема оформления</Text>
+          </View>
+          <Segmented
+            items={['Система', 'Светлая', 'Тёмная']}
+            value={mode === 'system' ? 0 : mode === 'light' ? 1 : 2}
+            onChange={(i) => setMode(i === 0 ? 'system' : i === 1 ? 'light' : 'dark')}
+            leadingIcons={['gearshape.fill', 'sun.max.fill', 'moon.fill']}
+          />
+        </View>
       </ListSection>
 
       <ListSection>

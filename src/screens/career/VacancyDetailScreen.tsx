@@ -1,10 +1,11 @@
 import React from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, PrimaryButton, T, ty } from '../../components/ui';
+import { Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
 import { getJob } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
 import { CareerStackParams } from '../../navigation/types';
@@ -12,6 +13,7 @@ import { CareerStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<CareerStackParams, 'VacancyDetail'>;
 
 export function VacancyDetailScreen({ route, navigation }: Props) {
+  const { T } = useTheme();
   const job = getJob(route.params.jobId);
   const { isApplied, isSaved, apply, toggleSave } = useCareer();
   if (!job) return <Screen gradient={['#EAF4EF', '#F2F2F7']}><View /></Screen>;

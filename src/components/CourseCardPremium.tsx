@@ -1,10 +1,11 @@
 // Premium iOS-style course cards (brand navy aesthetic) powered by real data.
 import React from 'react';
+import { useTheme } from '../theme/ThemeContext';
 import { View, Text } from 'react-native';
 import { PressableScale } from './PressableScale';
 import { Image } from 'expo-image';
 import { SF } from './SFIcon';
-import { ProgressBar, Capsule, T, ty } from './ui';
+import { ProgressBar, Capsule, ty } from './ui';
 import { Course } from '../data/courses';
 import { formatPrice, imgUrl } from '../data/api';
 
@@ -32,6 +33,7 @@ function Cover({ course, height }: { course: Course; height: number | string }) 
 export function CourseCardPremium({
   course, owned, progress, width, onPress,
 }: { course: Course; owned?: boolean; progress?: number; width?: number | string; onPress?: () => void }) {
+  const { T } = useTheme();
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
   const done = pct >= 100;
@@ -78,6 +80,7 @@ export function CourseCardPremium({
 export function FeaturedCard({
   course, owned, progress, eyebrow, onPress,
 }: { course: Course; owned?: boolean; progress?: number; eyebrow?: string; onPress?: () => void }) {
+  const { T } = useTheme();
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
   return (

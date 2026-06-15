@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { Chip, SectionHeader, T, ty } from '../../components/ui';
+import { Chip, SectionHeader, ty } from '../../components/ui';
 import { CourseCardPremium, FeaturedCard } from '../../components/CourseCardPremium';
+import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useUser } from '@clerk/clerk-expo';
@@ -15,7 +17,8 @@ import { LMSStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
 
 export function LMSHomeScreen({ navigation }: Props) {
-  const { courses, loading, source } = useCourses();
+  const { T } = useTheme();
+  const { courses, loading, error, reload, source } = useCourses();
   const my = useMyCourses();
   const { user } = useUser();
   const displayName = user?.firstName || user?.fullName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
@@ -95,10 +98,9 @@ export function LMSHomeScreen({ navigation }: Props) {
       </ScrollView>
 
       {loading ? (
-        <View style={{ paddingTop: 50, alignItems: 'center' }}>
-          <ActivityIndicator color={T.brand} />
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 12 }]}>Загружаем курсы…</Text>
-        </View>
+        <View style={{ paddingTop: 8 }}><CourseGridSkeleton count={4} /></View>
+      ) : error && courses.length === 0 ? (
+        <ErrorState onRetry={reload} />
       ) : (
         <>
           {source === 'mock' ? (
@@ -173,9 +175,7 @@ export function LMSHomeScreen({ navigation }: Props) {
             ))}
           </View>
           {filtered.length === 0 ? (
-            <View style={{ padding: 30, alignItems: 'center' }}>
-              <Text style={[ty.subhead, { color: T.labelSecondary }]}>Курсы не найдены</Text>
-            </View>
+            <EmptyState icon="magnifyingglass" title="Курсы не найдены" subtitle="Попробуйте изменить запрос или категорию." />
           ) : null}
           <View style={{ height: 16 }} />
         </>

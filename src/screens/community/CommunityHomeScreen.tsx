@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -6,7 +7,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF, SFName } from '../../components/SFIcon';
-import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, T, ty } from '../../components/ui';
+import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
 import {
@@ -22,6 +23,7 @@ type Nav = Props['navigation'];
 const SECTIONS = ['Главная', 'Челленджи', 'Поездки', 'Спорт', 'Встречи'];
 
 export function CommunityHomeScreen({ navigation }: Props) {
+  const { T } = useTheme();
   const [seg, setSeg] = useState(0);
 
   return (
@@ -51,6 +53,7 @@ export function CommunityHomeScreen({ navigation }: Props) {
 
 // ─── Active challenge card (redesigned, enterable) ──────────────────
 function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
+  const { T } = useTheme();
   const { challenge: c, teamPoints, myRank, pointsToday } = useChallenge();
   const open = () => navigation.navigate('ChallengeDetail', { challengeId: c.id });
   const stats = [
@@ -88,6 +91,7 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
 
 // ─── Главная ────────────────────────────────────────────────────────
 function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number) => void }) {
+  const { T } = useTheme();
   const liveLecture = LECTURES.find((l) => l.live) ?? LECTURES[0];
   return (
     <>
@@ -138,6 +142,7 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
 
 // ─── Челленджи ──────────────────────────────────────────────────────
 function ChallengesTab({ navigation }: { navigation: Nav }) {
+  const { T } = useTheme();
   return (
     <>
       <SectionHeader title="Активный челлендж" />
@@ -178,6 +183,7 @@ function ChallengesTab({ navigation }: { navigation: Nav }) {
 
 // ─── Поездки ────────────────────────────────────────────────────────
 function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
+  const { T } = useTheme();
   return (
     <Pressable onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
       style={{ width: 260, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
@@ -200,6 +206,7 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
 }
 
 function TripsTab({ navigation }: { navigation: Nav }) {
+  const { T } = useTheme();
   return (
     <ListSection header="Все поездки">
       {TRIPS.map((t, i) => (
@@ -221,6 +228,7 @@ function TripsTab({ navigation }: { navigation: Nav }) {
 
 // ─── Спорт ──────────────────────────────────────────────────────────
 function SportTab() {
+  const { T } = useTheme();
   return (
     <ListSection header="Спортивные активности">
       {SPORT.map((sp, i) => (
@@ -245,6 +253,7 @@ function SportTab() {
 
 // ─── Встречи (онлайн-лекции) ────────────────────────────────────────
 function MeetingsTab() {
+  const { T } = useTheme();
   return (
     <View style={{ paddingHorizontal: 16 }}>
       <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingVertical: 8, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Онлайн-лекции · Дандай Амокачи</Text>

@@ -1,83 +1,79 @@
-// Shared iOS-style UI atoms ported from the design prototype.
+// Shared iOS-style UI atoms — theme-aware via useTheme().
 import React from 'react';
-import { View, Text, Pressable, StyleProp, ViewStyle, TextStyle } from 'react-native';
-import { T, ty } from '../theme/tokens';
+import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { T as LIGHT, ty } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
 import { SF, SFName } from './SFIcon';
 
 export function ProgressBar({
-  value = 0.5, color = T.brand, height = 4, track = T.fillTertiary,
+  value = 0.5, color, height = 4, track,
 }: { value?: number; color?: string; height?: number; track?: string }) {
+  const { T } = useTheme();
+  const fill = color ?? T.brand;
+  const bg = track ?? T.fillTertiary;
   return (
-    <View style={{ height, backgroundColor: track, borderRadius: height, overflow: 'hidden' }}>
-      <View style={{ width: `${Math.min(1, Math.max(0, value)) * 100}%`, height: '100%', backgroundColor: color, borderRadius: height }} />
+    <View style={{ height, backgroundColor: bg, borderRadius: height, overflow: 'hidden' }}>
+      <View style={{ width: `${Math.min(1, Math.max(0, value)) * 100}%`, height: '100%', backgroundColor: fill, borderRadius: height }} />
     </View>
   );
 }
 
 export function Capsule({
-  children, bg = T.fillTertiary, color = T.label, style,
+  children, bg, color, style,
 }: { children: React.ReactNode; bg?: string; color?: string; style?: StyleProp<ViewStyle> }) {
+  const { T } = useTheme();
+  const _bg = bg ?? T.fillTertiary;
+  const _color = color ?? T.label;
   return (
     <View style={[{
       flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
-      paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: bg,
+      paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: _bg,
     }, style]}>
       {typeof children === 'string'
-        ? <Text style={[ty.caption2Em, { color }]}>{children}</Text>
-        : <CapsuleContent color={color}>{children}</CapsuleContent>}
+        ? <Text style={[ty.caption2Em, { color: _color }]}>{children}</Text>
+        : <CapsuleContent color={_color}>{children}</CapsuleContent>}
     </View>
   );
 }
 
 function CapsuleContent({ children, color }: { children: React.ReactNode; color: string }) {
-  // Group consecutive string/number children into a single <Text> (so numbers
-  // never render bare — which crashes RN), and keep element children (icons) as-is.
-  const out: React.ReactNode[] = [];
-  let buf: string[] = [];
-  let k = 0;
-  const flush = () => {
-    if (buf.length) {
-      out.push(<Text key={`t${k++}`} style={[ty.caption2Em, { color }]}>{buf.join('')}</Text>);
-      buf = [];
-    }
-  };
-  React.Children.toArray(children).forEach((c) => {
-    if (typeof c === 'string' || typeof c === 'number') buf.push(String(c));
-    else { flush(); out.push(<React.Fragment key={`e${k++}`}>{c}</React.Fragment>); }
-  });
-  flush();
-  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>{out}</View>;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      {React.Children.map(children, (c) =>
+        typeof c === 'string' ? <Text style={[ty.caption2Em, { color }]}>{c}</Text> : c)}
+    </View>
+  );
 }
 
 export function IconCircle({
-  icon, color = T.brand, bg = T.brandTinted, size = 30, iconSize,
+  icon, color, bg, size = 30, iconSize,
 }: { icon: SFName | string; color?: string; bg?: string; size?: number; iconSize?: number }) {
+  const { T } = useTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
-      <SF name={icon} size={iconSize ?? Math.round(size * 0.55)} color={color} />
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg ?? T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+      <SF name={icon} size={iconSize ?? Math.round(size * 0.55)} color={color ?? T.brand} />
     </View>
   );
 }
 
 export function IconSquircle({
-  icon, color = '#fff', bg = T.brand, size = 30, iconSize,
+  icon, color = '#fff', bg, size = 30, iconSize,
 }: { icon: SFName | string; color?: string; bg?: string; size?: number; iconSize?: number }) {
+  const { T } = useTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: size * 0.22, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: size * 0.22, backgroundColor: bg ?? T.brand, alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={iconSize ?? Math.round(size * 0.6)} color={color} />
     </View>
   );
 }
 
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+  const { T } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 8 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1, minWidth: 0 }}>
-        <View style={{ width: 4, height: 18, borderRadius: 2, backgroundColor: T.brand }} />
-        <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{title}</Text>
-      </View>
+    <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }}>
+      <Text style={[ty.title3, { color: T.label }]}>{title}</Text>
       {action ? (
-        <Pressable onPress={onAction} hitSlop={8}><Text style={[ty.subheadEm, { color: T.brandAccent }]}>{action}</Text></Pressable>
+        <Pressable onPress={onAction} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{action}</Text></Pressable>
       ) : null}
     </View>
   );
@@ -86,6 +82,7 @@ export function SectionHeader({ title, action, onAction }: { title: string; acti
 export function ListSection({
   header, footer, children, style,
 }: { header?: string; footer?: string; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  const { T } = useTheme();
   return (
     <View style={[{ marginTop: 6 }, style]}>
       {header ? (
@@ -107,6 +104,7 @@ export function ListRow({
   leading?: React.ReactNode; title?: string; subtitle?: string; detail?: string;
   trailing?: React.ReactNode; chevron?: boolean; last?: boolean; onPress?: () => void; valueColor?: string;
 }) {
+  const { T } = useTheme();
   const rowStyle: ViewStyle = {
     flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16,
     minHeight: 44, position: 'relative',
@@ -136,21 +134,21 @@ export function ListRow({
   return <View style={rowStyle}>{inner}</View>;
 }
 
-// Inline separator helper
 export function Separator({ left = 16 }: { left?: number }) {
+  const { T } = useTheme();
   return <View style={{ position: 'absolute', bottom: 0, left, right: 0, height: 0.5, backgroundColor: T.separator }} />;
 }
 
-// Segmented control (iOS style)
 export function Segmented({
   items, value, onChange, leadingIcons,
 }: { items: string[]; value: number; onChange?: (i: number) => void; leadingIcons?: (SFName | string)[] }) {
+  const { T } = useTheme();
   return (
     <View style={{ flexDirection: 'row', backgroundColor: T.fillTertiary, borderRadius: 9, padding: 2, height: 32 }}>
       {items.map((s, i) => {
         const on = i === value;
         return (
-          <Pressable key={i} onPress={() => onChange?.(i)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={s} style={{
+          <Pressable key={i} onPress={() => onChange?.(i)} accessibilityRole="button" style={{
             flex: 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center',
             backgroundColor: on ? T.systemBg : 'transparent', borderRadius: 7,
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
@@ -164,12 +162,12 @@ export function Segmented({
   );
 }
 
-// Chip / filter pill
 export function Chip({
   label, active, icon, onPress,
 }: { label: string; active?: boolean; icon?: SFName | string; onPress?: () => void }) {
+  const { T } = useTheme();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: !!active }} accessibilityLabel={label} style={{
+    <Pressable onPress={onPress} accessibilityRole="button" style={{
       flexDirection: 'row', alignItems: 'center', gap: 5,
       paddingVertical: 7, paddingHorizontal: 14, borderRadius: 18,
       backgroundColor: active ? T.brand : T.cardBg,
@@ -181,14 +179,15 @@ export function Chip({
   );
 }
 
-// Primary CTA button
 export function PrimaryButton({
-  label, icon, onPress, color = T.brand, textColor, style,
+  label, icon, onPress, color, textColor, style,
 }: { label: string; icon?: SFName | string; onPress?: () => void; color?: string; textColor?: string; style?: StyleProp<ViewStyle> }) {
-  const fg = textColor ?? (color === 'transparent' ? T.brand : '#fff');
+  const { T } = useTheme();
+  const _color = color ?? T.brand;
+  const fg = textColor ?? (_color === 'transparent' ? T.brand : '#fff');
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [{
-      height: 50, borderRadius: 14, backgroundColor: color, flexDirection: 'row',
+    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [{
+      height: 50, borderRadius: 14, backgroundColor: _color, flexDirection: 'row',
       alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pressed ? 0.85 : 1,
     }, style]}>
       {icon ? <SF name={icon} size={16} color={fg} /> : null}
@@ -197,4 +196,4 @@ export function PrimaryButton({
   );
 }
 
-export { T, ty };
+export { LIGHT as T, ty };

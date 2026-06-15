@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, ActivityIndicator, LayoutAnimation } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { ProgressBar, Chip, ListSection, T, ty } from '../../components/ui';
+import { ProgressBar, Chip, ListSection, ty } from '../../components/ui';
+import { ListSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { formatPrice, imgUrl } from '../../data/api';
 import { Course } from '../../data/courses';
@@ -25,7 +27,8 @@ function Cover({ course }: { course: Course }) {
 }
 
 export function CatalogScreen({ navigation }: Props) {
-  const { courses, loading, progress } = useCourses();
+  const { T } = useTheme();
+  const { courses, loading, error, reload, progress } = useCourses();
   const [cat, setCat] = useState(0);
 
   const categories = useMemo(() => {
@@ -54,7 +57,9 @@ export function CatalogScreen({ navigation }: Props) {
       </>} />
 
       {loading ? (
-        <View style={{ paddingTop: 60, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
+        <View style={{ paddingTop: 12 }}><ListSkeleton rows={5} /></View>
+      ) : error && courses.length === 0 ? (
+        <ErrorState onRetry={reload} />
       ) : (
         <>
           {/* Category chips */}
@@ -98,9 +103,7 @@ export function CatalogScreen({ navigation }: Props) {
               );
             })}
             {filtered.length === 0 ? (
-              <View style={{ padding: 24, alignItems: 'center' }}>
-                <Text style={[ty.subhead, { color: T.labelSecondary }]}>Нет курсов в этой категории</Text>
-              </View>
+              <EmptyState icon="book" title="Нет курсов" subtitle="В этой категории пока пусто. Выберите другую." />
             ) : null}
           </ListSection>
           <View style={{ height: 20 }} />

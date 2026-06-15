@@ -1,10 +1,11 @@
 import React, { useRef, useState, useMemo } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, LayoutAnimation } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { Capsule, Chip, T, ty } from '../../components/ui';
+import { Capsule, Chip, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
 import { useMyCourses } from '../../state/useMyCourses';
 import { askAssistant, askCourseAI, mdToText, AiTurn } from '../../data/api';
@@ -20,6 +21,7 @@ let counter = 0;
 const uid = () => `${Date.now()}_${counter++}`;
 
 export function AIChatScreen({}: Props) {
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();

@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { Capsule, Chip, ListSection, ListRow, SectionHeader, T, ty } from '../../components/ui';
+import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
 import { JOBS, CAREER_FILTERS, GOOD_FIT, Job } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
 import { CareerStackParams } from '../../navigation/types';
@@ -22,6 +23,7 @@ function matchesFilter(j: Job, f: string): boolean {
 }
 
 export function CareerHomeScreen({ navigation }: Props) {
+  const { T } = useTheme();
   const [filter, setFilter] = useState(0);
   const { applied, isApplied } = useCareer();
 

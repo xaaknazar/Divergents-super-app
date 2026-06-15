@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
+import { useTheme } from '../theme/ThemeContext';
 import { View, Text, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignIn } from '@clerk/clerk-expo';
 import { SF } from '../components/SFIcon';
-import { PrimaryButton, T, ty } from '../components/ui';
+import { PrimaryButton, ty } from '../components/ui';
 import { Logo } from '../components/Logo';
 import { RootStackParams } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Auth'>;
 
 export function AuthScreen({ navigation }: Props) {
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { signIn, setActive, isLoaded } = useSignIn();
   const [step, setStep] = useState<'email' | 'code'>('email');

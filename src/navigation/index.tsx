@@ -22,6 +22,7 @@ import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import { CareerHomeScreen } from '../screens/career/CareerHomeScreen';
 import { VacancyDetailScreen } from '../screens/career/VacancyDetailScreen';
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
+import { AchievementsScreen } from '../screens/profile/AchievementsScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 
@@ -74,6 +75,7 @@ function ProfileNavigator() {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }}>
       <ProfileStack.Screen name="ProfileHome" component={ProfileHomeScreen} />
+      <ProfileStack.Screen name="Achievements" component={AchievementsScreen} />
     </ProfileStack.Navigator>
   );
 }

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { Segmented, PrimaryButton, T, ty } from '../../components/ui';
+import { Segmented, PrimaryButton, ty } from '../../components/ui';
 import { useCourses } from '../../state/CourseContext';
 import { API_BASE, stripHtml, fetchComments, postComment, ChapterComment } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
@@ -24,6 +25,7 @@ const fullName = (c: ChapterComment) =>
   [c.user.firstName, c.user.lastName].filter(Boolean).join(' ') || 'Участник';
 
 export function VideoScreen({ route, navigation }: Props) {
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { courseId, lessonId } = route.params;
   const { getCourse, completeLesson, isCompleted } = useCourses();

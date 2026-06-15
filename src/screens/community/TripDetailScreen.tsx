@@ -1,11 +1,12 @@
 import React from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, T, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, ty } from '../../components/ui';
 import { getTrip } from '../../data/community';
 import { imgUrl } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
@@ -13,6 +14,7 @@ import { CommunityStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
 
 function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
+  const { T } = useTheme();
   return (
     <Pressable onPress={onPress} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={16} color={T.label} />
@@ -21,6 +23,7 @@ function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
 }
 
 export function TripDetailScreen({ route, navigation }: Props) {
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const trip = getTrip(route.params.tripId)!;
   const stats = [

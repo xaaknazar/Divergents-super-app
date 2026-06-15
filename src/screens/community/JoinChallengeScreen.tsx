@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
-import { PrimaryButton, T, ty } from '../../components/ui';
+import { PrimaryButton, ty } from '../../components/ui';
 import { getChallengeMeta, CHALLENGE_TEAMS } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -11,6 +12,7 @@ type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
 
 
 export function JoinChallengeScreen({ route, navigation }: Props) {
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const meta = getChallengeMeta(route.params.challengeId);
   const [nick, setNick] = useState('');

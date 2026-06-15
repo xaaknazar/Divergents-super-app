@@ -4,7 +4,8 @@ import { View, Text, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T, ty } from '../theme/tokens';
+import { ty } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
 import { SF, SFName } from '../components/SFIcon';
 
 const TABS: Record<string, { label: string; on: SFName; off: SFName }> = {
@@ -16,6 +17,7 @@ const TABS: Record<string, { label: string; on: SFName; off: SFName }> = {
 };
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
+  const { T, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   // Hide the tab bar when a detail screen is pushed inside the active tab's
   // stack (nested index > 0) so bottom CTAs aren't covered by the bar.
@@ -23,11 +25,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const nestedIndex = active?.state?.index ?? 0;
   if (nestedIndex > 0) return null;
   return (
-    <BlurView intensity={80} tint="light" style={{
+    <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{
       position: 'absolute', left: 0, right: 0, bottom: 0,
       paddingBottom: Math.max(insets.bottom, 10), paddingTop: 8,
       borderTopWidth: 0.5, borderTopColor: T.separator,
-      backgroundColor: 'rgba(249,249,249,0.80)',
+      backgroundColor: isDark ? 'rgba(28,28,30,0.82)' : 'rgba(249,249,249,0.80)',
     }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start' }}>
         {state.routes.map((route, index) => {

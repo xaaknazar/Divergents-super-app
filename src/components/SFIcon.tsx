@@ -20,7 +20,9 @@ export type SFName =
   | 'arrow.up.left.and.arrow.down.right' | 'clock.fill' | 'calendar' | 'graduationcap.fill'
   | 'puzzlepiece.fill' | 'figure.2.and.child.holdinghands' | 'flag.fill' | 'tag.fill'
   | 'percent' | 'globe' | 'house.fill' | 'figure.walk' | 'arrow.right'
-  | 'soccerball' | 'tennis.racket' | 'bicycle' | 'figure.mind.and.body' | 'dumbbell' | 'cube.fill';
+  | 'soccerball' | 'tennis.racket' | 'bicycle' | 'figure.mind.and.body' | 'dumbbell' | 'cube.fill'
+  | 'wifi.slash' | 'arrow.clockwise' | 'tray' | 'moon.fill' | 'sun.max.fill'
+  | 'rosette' | 'checkmark.circle' | 'gearshape.fill' | 'paintpalette.fill';
 
 type Lib = 'ion' | 'mci';
 // name -> [library, icon]
@@ -71,6 +73,11 @@ const MAP: Record<string, [Lib, string]> = {
   'soccerball': ['mci', 'soccer'], 'tennis.racket': ['mci', 'tennis'],
   'bicycle': ['ion', 'bicycle'], 'figure.mind.and.body': ['mci', 'meditation'],
   'dumbbell': ['mci', 'dumbbell'], 'cube.fill': ['ion', 'cube'],
+  'wifi.slash': ['ion', 'cloud-offline'], 'arrow.clockwise': ['ion', 'refresh'],
+  'tray': ['ion', 'file-tray-outline'], 'moon.fill': ['ion', 'moon'],
+  'sun.max.fill': ['ion', 'sunny'], 'rosette': ['mci', 'medal-outline'],
+  'checkmark.circle': ['ion', 'checkmark-circle-outline'], 'gearshape.fill': ['ion', 'settings'],
+  'paintpalette.fill': ['ion', 'color-palette'],
 };
 
 export interface SFProps {

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ActivityIndicator, Platform, UIManager } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ClerkProvider } from '@clerk/clerk-expo';
 import {
@@ -15,46 +15,63 @@ import { ChallengeProvider } from './src/state/ChallengeContext';
 import { CareerProvider } from './src/state/CareerContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
-import { T } from './src/theme/tokens';
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const navTheme = {
-  ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: T.groupedBg, primary: T.brand },
-};
+function Loader() {
+  const { T } = useTheme();
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.systemBg }}>
+      <ActivityIndicator color={T.brand} />
+    </View>
+  );
+}
+
+function Root() {
+  const { T, isDark } = useTheme();
+  const base = isDark ? DarkTheme : DefaultTheme;
+  const navTheme = {
+    ...base,
+    colors: {
+      ...base.colors,
+      background: T.groupedBg,
+      card: T.cardBg,
+      text: T.label,
+      border: T.separator,
+      primary: T.brand,
+    },
+  };
+  return (
+    <NavigationContainer theme={navTheme}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <RootNavigator />
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
     Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
   });
 
-  if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.systemBg }}>
-        <ActivityIndicator color={T.brand} />
-      </View>
-    );
-  }
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
-        <SafeAreaProvider>
-          <CourseProvider>
-            <ChallengeProvider>
-              <CareerProvider>
-              <NavigationContainer theme={navTheme}>
-                <StatusBar style="dark" />
-                <RootNavigator />
-              </NavigationContainer>
-              </CareerProvider>
-            </ChallengeProvider>
-          </CourseProvider>
-        </SafeAreaProvider>
-      </ClerkProvider>
+      <ThemeProvider>
+        <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
+          <SafeAreaProvider>
+            <CourseProvider>
+              <ChallengeProvider>
+                <CareerProvider>
+                  {fontsLoaded ? <Root /> : <Loader />}
+                </CareerProvider>
+              </ChallengeProvider>
+            </CourseProvider>
+          </SafeAreaProvider>
+        </ClerkProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

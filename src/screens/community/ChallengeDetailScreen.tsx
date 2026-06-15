@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +8,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Screen } from '../../components/Screen';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, T, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ty } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { useChallenge } from '../../state/ChallengeContext';
 import {
@@ -29,6 +30,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
 
 // ─── Upcoming challenge (30 Days) — rules, teams, join ──────────────
 function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; navigation: Props['navigation'] }) {
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const meta = getChallengeMeta(challengeId)!;
   const left = daysUntil(meta.startISO);
@@ -142,6 +144,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
 }
 
 function Row({ icon, label, value }: { icon: any; label: string; value: string }) {
+  const { T } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <SF name={icon} size={14} color={T.labelSecondary} />
@@ -153,6 +156,7 @@ function Row({ icon, label, value }: { icon: any; label: string; value: string }
 
 // ─── Active challenge (daily tracker) ──────────────────────────────
 function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
+  const { T } = useTheme();
   const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints } = useChallenge();
   const c = challenge;
   const ringPct = c.currentDay / c.totalDays;

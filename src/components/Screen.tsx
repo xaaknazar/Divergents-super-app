@@ -4,10 +4,10 @@ import React from 'react';
 import { View, ScrollView, StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { T } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
 
 export function Screen({
-  children, bg = T.groupedBg, scroll = true, tabPadding = true, contentStyle, topInset = true, gradient,
+  children, bg, scroll = true, tabPadding = true, contentStyle, topInset = true, gradient,
 }: {
   children: React.ReactNode;
   bg?: string;
@@ -17,19 +17,22 @@ export function Screen({
   topInset?: boolean;
   gradient?: string[];
 }) {
+  const { T, isDark } = useTheme();
+  const _bg = bg ?? T.groupedBg;
   const insets = useSafeAreaInsets();
   const top = topInset ? insets.top : 0;
   const bottom = tabPadding ? insets.bottom + 64 : insets.bottom;
 
   if (!scroll) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, paddingTop: top }}>{children}</View>
+      <View style={{ flex: 1, backgroundColor: _bg, paddingTop: top }}>{children}</View>
     );
   }
-  const Bg: any = gradient ? LinearGradient : View;
-  const bgProps = gradient
-    ? { colors: gradient as any, start: { x: 0, y: 0 }, end: { x: 0, y: 1 }, style: { flex: 1 } }
-    : { style: { flex: 1, backgroundColor: bg } };
+  const grad = !isDark ? gradient : undefined;
+  const Bg: any = grad ? LinearGradient : View;
+  const bgProps = grad
+    ? { colors: grad as any, start: { x: 0, y: 0 }, end: { x: 0, y: 1 }, style: { flex: 1 } }
+    : { style: { flex: 1, backgroundColor: _bg } };
   return (
     <Bg {...bgProps}>
       <ScrollView
