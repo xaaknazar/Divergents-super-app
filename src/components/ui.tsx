@@ -29,7 +29,7 @@ export function Capsule({
       flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
       paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: _bg,
     }, style]}>
-      {typeof children === 'string'
+      {(typeof children === 'string' || typeof children === 'number')
         ? <Text style={[ty.caption2Em, { color: _color }]}>{children}</Text>
         : <CapsuleContent color={_color}>{children}</CapsuleContent>}
     </View>
@@ -40,7 +40,7 @@ function CapsuleContent({ children, color }: { children: React.ReactNode; color:
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       {React.Children.map(children, (c) =>
-        typeof c === 'string' ? <Text style={[ty.caption2Em, { color }]}>{c}</Text> : c)}
+        (typeof c === 'string' || typeof c === 'number') ? <Text style={[ty.caption2Em, { color }]}>{c}</Text> : c)}
     </View>
   );
 }
