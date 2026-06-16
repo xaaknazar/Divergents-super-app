@@ -171,7 +171,7 @@ export function Chip({
       flexDirection: 'row', alignItems: 'center', gap: 5,
       paddingVertical: 7, paddingHorizontal: 14, borderRadius: 18,
       backgroundColor: active ? T.brand : T.cardBg,
-      borderWidth: active ? 0 : 0.5, borderColor: T.separator,
+      borderWidth: 0.5, borderColor: active ? 'transparent' : T.separator,
     }}>
       {icon ? <SF name={icon} size={11} color={active ? '#fff' : T.brand} /> : null}
       <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]}>{label}</Text>

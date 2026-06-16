@@ -1,6 +1,7 @@
 // Navigation headers — large title (root tabs) + inline back (detail screens).
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ty } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
@@ -23,10 +24,11 @@ export function BackNav({
   back = 'Назад', onBack, trailing, transparent = false,
 }: { back?: string; onBack?: () => void; trailing?: React.ReactNode; transparent?: boolean }) {
   const { T } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <View style={{
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      paddingTop: 6, paddingBottom: 10, paddingLeft: 12, paddingRight: 8,
+      paddingTop: insets.top + 6, paddingBottom: 10, paddingLeft: 12, paddingRight: 8,
       backgroundColor: transparent ? 'transparent' : T.cardBg,
       borderBottomWidth: transparent ? 0 : 0.33, borderBottomColor: T.separator,
     }}>
