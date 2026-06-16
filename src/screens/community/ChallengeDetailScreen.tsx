@@ -164,8 +164,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const circ = 2 * Math.PI * r;
 
   return (
-    <Screen tabPadding={false} topInset={false}>
+    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <BackNav back="Сообщество" onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
+      <Screen tabPadding={false} topInset={false}>
 
       <View style={{ padding: 20, paddingBottom: 16 }}>
         <Capsule bg={T.brandTinted} color={T.brand}><SF name="flag.fill" size={11} color={T.brand} />День {c.currentDay} из {c.totalDays}</Capsule>
@@ -247,6 +248,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         <ListRow leading={<SF name="person.3.fill" size={18} color={T.brand} />} title="Чат команды" detail="14 новых" chevron last />
       </ListSection>
       <View style={{ height: 30 }} />
-    </Screen>
+      </Screen>
+    </View>
   );
 }
