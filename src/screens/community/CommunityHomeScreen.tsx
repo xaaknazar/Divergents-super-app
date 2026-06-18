@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
+import { View, Text, Pressable, ScrollView, LayoutAnimation, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { NavBarLarge } from '../../components/headers';
 import { SF, SFName } from '../../components/SFIcon';
 import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
+import { useEnrollment } from '../../state/EnrollmentContext';
 import {
   CHALLENGES, daysUntil, TRIPS, SPORT, LECTURES,
   Trip, SportActivity, Lecture,
@@ -28,10 +29,7 @@ export function CommunityHomeScreen({ navigation }: Props) {
 
   return (
     <Screen gradient={['#E9EEFB', '#F4F5F9', '#F2F2F7']}>
-      <NavBarLarge title="Сообщество" trailing={<>
-        <HeaderIcon name="magnifyingglass" />
-        <HeaderIcon name="plus.circle" size={22} />
-      </>} />
+      <NavBarLarge title="Сообщество" />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
         <Text style={[ty.subhead, { color: T.labelSecondary }]}>Divergents · свои люди и общий рост</Text>
@@ -107,19 +105,19 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
         <SectionHeader title="Спорт" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
           {SPORT.map((sp) => (
-            <View key={sp.id} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
+            <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
               <IconSquircle icon={sp.icon} bg={T.brand} size={34} />
               <Text style={[ty.headline, { color: T.label, marginTop: 10 }]} numberOfLines={1}>{sp.title}</Text>
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}</Text>
               <Text style={[ty.caption2, { color: T.brand, marginTop: 6 }]}>{sp.date}</Text>
-            </View>
+            </Pressable>
           ))}
         </ScrollView>
       </View>
 
       <View style={{ marginTop: 18 }}>
         <SectionHeader title="Встречи · лекции Дандай Амокачи" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
-        <Pressable style={{ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
+        <Pressable onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
           <View style={{ height: 150 }}>
             <Image source={imgUrl(liveLecture.imageUrl, 750)} style={{ width: '100%', height: 150 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
             <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 90, backgroundColor: 'rgba(0,0,0,0.4)' }} />
@@ -229,6 +227,7 @@ function TripsTab({ navigation }: { navigation: Nav }) {
 // ─── Спорт ──────────────────────────────────────────────────────────
 function SportTab() {
   const { T } = useTheme();
+  const { has, toggle } = useEnrollment();
   return (
     <ListSection header="Спортивные активности">
       {SPORT.map((sp, i) => (
@@ -241,9 +240,11 @@ function SportTab() {
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{sp.place} · {sp.date}</Text>
             <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]}>{sp.going} идут · {sp.spotsLabel}</Text>
           </View>
-          <Pressable style={{ backgroundColor: T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
-            <Text style={[ty.subheadEm, { color: T.brand }]}>Участвую</Text>
-          </Pressable>
+          {(() => { const k = `sport:${sp.id}`; const on = has(k); return (
+            <Pressable onPress={() => toggle(k)} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
+              <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]}>{on ? 'Вы идёте' : 'Участвую'}</Text>
+            </Pressable>
+          ); })()}
           {i < SPORT.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
         </View>
       ))}
@@ -254,6 +255,7 @@ function SportTab() {
 // ─── Встречи (онлайн-лекции) ────────────────────────────────────────
 function MeetingsTab() {
   const { T } = useTheme();
+  const { has, toggle } = useEnrollment();
   return (
     <View style={{ paddingHorizontal: 16 }}>
       <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingVertical: 8, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Онлайн-лекции · Дандай Амокачи</Text>
@@ -281,9 +283,15 @@ function MeetingsTab() {
               <Text style={[ty.subheadEm, { color: T.label }]}>{lec.date}</Text>
               <Text style={[ty.caption1, { color: T.labelSecondary }]}>{lec.durationLabel} · {lec.seatsLabel}</Text>
             </View>
-            <Pressable style={{ backgroundColor: lec.live ? T.red : T.brand, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 18 }}>
-              <Text style={[ty.subheadEm, { color: '#fff' }]}>{lec.live ? 'Смотреть' : 'Напомнить'}</Text>
-            </Pressable>
+            {(() => { const k = `lecture:${lec.id}`; const on = has(k); return (
+              <Pressable
+                onPress={() => lec.live
+                  ? Alert.alert('Трансляция', 'Прямой эфир скоро начнётся — мы пришлём уведомление.')
+                  : toggle(k)}
+                style={{ backgroundColor: lec.live ? T.red : on ? T.green : T.brand, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 18 }}>
+                <Text style={[ty.subheadEm, { color: '#fff' }]}>{lec.live ? 'Смотреть' : on ? 'Напомним ✓' : 'Напомнить'}</Text>
+              </Pressable>
+            ); })()}
           </View>
         </View>
       ))}

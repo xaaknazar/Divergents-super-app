@@ -12,7 +12,6 @@ export type CommunityStackParams = {
   ChallengeDetail: { challengeId: string };
   JoinChallenge: { challengeId: string };
   TripDetail: { tripId: string };
-  Member: { memberId: string };
 };
 
 export type AIStackParams = { AIChat: undefined };

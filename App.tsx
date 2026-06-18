@@ -13,6 +13,7 @@ import { RootNavigator } from './src/navigation';
 import { CourseProvider } from './src/state/CourseContext';
 import { ChallengeProvider } from './src/state/ChallengeContext';
 import { CareerProvider } from './src/state/CareerContext';
+import { EnrollmentProvider } from './src/state/EnrollmentContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
@@ -65,7 +66,9 @@ export default function App() {
             <CourseProvider>
               <ChallengeProvider>
                 <CareerProvider>
-                  {fontsLoaded ? <Root /> : <Loader />}
+                  <EnrollmentProvider>
+                    {fontsLoaded ? <Root /> : <Loader />}
+                  </EnrollmentProvider>
                 </CareerProvider>
               </ChallengeProvider>
             </CourseProvider>

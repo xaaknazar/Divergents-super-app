@@ -3,7 +3,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
 import { JOBS, CAREER_FILTERS, GOOD_FIT, Job } from '../../data/career';
@@ -40,10 +40,7 @@ export function CareerHomeScreen({ navigation }: Props) {
 
   return (
     <Screen gradient={['#EAF4EF', '#F3F6F4', '#F2F2F7']}>
-      <NavBarLarge title="Карьера" trailing={<>
-        <HeaderIcon name="magnifyingglass" />
-        <HeaderIcon name="bell.fill" />
-      </>} />
+      <NavBarLarge title="Карьера" />
       <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 12 }]}>
         {JOBS.length} вакансий подобраны по вашему психотипу и талантам
       </Text>

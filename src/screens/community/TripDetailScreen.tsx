@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, Share, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import Svg, { Polygon } from 'react-native-svg';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, ty } from '../../components/ui';
 import { getTrip } from '../../data/community';
+import { useEnrollment } from '../../state/EnrollmentContext';
 import { imgUrl } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -26,6 +27,9 @@ export function TripDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const trip = getTrip(route.params.tripId)!;
+  const { has, toggle, add } = useEnrollment();
+  const fav = has(`tripfav:${trip.id}`);
+  const joined = has(`trip:${trip.id}`);
   const stats = [
     { v: String(trip.going), l: 'Идут' },
     { v: String(trip.spots), l: 'Мест' },
@@ -51,8 +55,8 @@ export function TripDetailScreen({ route, navigation }: Props) {
           <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <RoundBtn icon="chevron.left" onPress={() => navigation.goBack()} />
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <RoundBtn icon="heart" />
-              <RoundBtn icon="square.and.arrow.up" />
+              <RoundBtn icon={fav ? 'heart.fill' : 'heart'} onPress={() => toggle(`tripfav:${trip.id}`)} />
+              <RoundBtn icon="square.and.arrow.up" onPress={() => Share.share({ message: `${trip.title} — поездка Divergents · ${trip.region} · ${trip.date}` })} />
             </View>
           </View>
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
@@ -81,7 +85,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
         <ListSection header="Организатор">
           <ListRow
             leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
-            title={trip.organizer} subtitle={trip.organizerType} chevron last />
+            title={trip.organizer} subtitle={trip.organizerType} last />
         </ListSection>
 
         <ListSection header={`Маршрут · ${trip.days} дн.`}>
@@ -119,7 +123,16 @@ export function TripDetailScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label={`Записаться · ${trip.price}`} />
+        <PrimaryButton
+          label={joined ? 'Вы записаны ✓' : `Записаться · ${trip.price}`}
+          icon={joined ? 'checkmark' : 'paperplane.fill'}
+          color={joined ? T.green : T.brand}
+          onPress={() => {
+            if (joined) return;
+            add(`trip:${trip.id}`);
+            Alert.alert('Заявка принята', `Мы свяжемся с вами по деталям поездки «${trip.title}».`);
+          }}
+        />
       </View>
     </View>
   );

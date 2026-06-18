@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
 import { COURSES as MOCK_COURSES, Course } from '../data/courses';
 import { fetchCatalog, fetchCourseDetail, fetchOwnedDetail } from '../data/api';
+import { loadJSON, saveJSON } from './persist';
 
 export type LessonStatus = 'done' | 'current' | 'available' | 'locked';
 export type DataSource = 'live' | 'mock' | 'loading';
@@ -39,6 +40,13 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Record<string, string[]>>({});
   const [detailLoading, setDetailLoading] = useState<Record<string, boolean>>({});
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore saved lesson progress, then persist on every change.
+  useEffect(() => {
+    loadJSON<Record<string, string[]>>('dvg.completed', {}).then((v) => { setCompleted(v); setHydrated(true); });
+  }, []);
+  useEffect(() => { if (hydrated) saveJSON('dvg.completed', completed); }, [completed, hydrated]);
 
   const load = useCallback(async () => {
     setSource('loading');
@@ -55,7 +63,6 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
       setSource('mock');
     } catch (e: any) {
       setCourses(MOCK_COURSES);
-      setCompleted((prev) => (Object.keys(prev).length ? prev : SEED));
       setSource('mock');
       setError(e?.message ?? 'network');
     }

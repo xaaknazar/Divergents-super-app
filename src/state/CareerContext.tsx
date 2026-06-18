@@ -1,5 +1,6 @@
 // Tracks saved + applied vacancies (local, in-session).
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import { loadJSON, saveJSON } from './persist';
 
 interface CareerState {
   applied: string[];
@@ -16,9 +17,15 @@ export function CareerProvider({ children }: { children: React.ReactNode }) {
   const [applied, setApplied] = useState<string[]>([]);
   const [saved, setSaved] = useState<string[]>([]);
 
-  const apply = useCallback((id: string) => setApplied((p) => (p.includes(id) ? p : [...p, id])), []);
+  useEffect(() => {
+    loadJSON<string[]>('dvg.applied', []).then(setApplied);
+    loadJSON<string[]>('dvg.saved', []).then(setSaved);
+  }, []);
+
+  const apply = useCallback((id: string) =>
+    setApplied((p) => { if (p.includes(id)) return p; const n = [...p, id]; saveJSON('dvg.applied', n); return n; }), []);
   const toggleSave = useCallback((id: string) =>
-    setSaved((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id])), []);
+    setSaved((p) => { const n = p.includes(id) ? p.filter((x) => x !== id) : [...p, id]; saveJSON('dvg.saved', n); return n; }), []);
 
   const value = useMemo<CareerState>(() => ({
     applied, saved,

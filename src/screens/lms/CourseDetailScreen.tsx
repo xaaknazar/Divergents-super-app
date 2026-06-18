@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { Image } from 'expo-image';
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
 import { ErrorState, EmptyState } from '../../components/StateViews';
+import { useEnrollment } from '../../state/EnrollmentContext';
 import { useCourses } from '../../state/CourseContext';
 import { useAuth } from '@clerk/clerk-expo';
 import { formatPrice, stripHtml, API_BASE, imgUrl } from '../../data/api';
@@ -30,7 +31,8 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   const { getCourse, loadDetail, detailLoading, loading, error, reload, progress, currentLessonIndex, lessonStatus } = useCourses();
   const course = getCourse(courseId);
   const { isSignedIn, getToken } = useAuth();
-  const [bookmarked, setBookmarked] = useState(false);
+  const { has, toggle } = useEnrollment();
+  const bookmarked = has(`bookmark:${courseId}`);
 
   useEffect(() => {
     (async () => {
@@ -86,7 +88,7 @@ export function CourseDetailScreen({ route, navigation }: Props) {
             <RoundBtn icon="chevron.left" onPress={() => navigation.goBack()} />
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <RoundBtn icon="square.and.arrow.up" onPress={() => Share.share({ message: `${course.title} — Divergents\n${API_BASE}/courses/${courseId}` })} />
-              <RoundBtn icon={bookmarked ? 'bookmark.fill' : 'bookmark'} onPress={() => setBookmarked((v) => !v)} />
+              <RoundBtn icon={bookmarked ? 'bookmark.fill' : 'bookmark'} onPress={() => toggle(`bookmark:${courseId}`)} />
             </View>
           </View>
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 24 }}>
