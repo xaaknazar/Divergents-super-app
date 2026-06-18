@@ -70,7 +70,7 @@ export function LMSHomeScreen({ navigation }: Props) {
             {displayName ? `Привет, ${displayName}` : 'Divergents'}
           </Text>
           <Text style={[ty.headline, { color: T.label, marginTop: 1 }]} numberOfLines={1}>
-            {courses.length ? `${courses.length} курсов · non stop development` : 'Non stop development'}
+            {courses.length ? `${courses.length} курсов · non-stop development` : 'Non-stop development'}
           </Text>
         </View>
       </View>

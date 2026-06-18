@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
+import { ErrorState, EmptyState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { useAuth } from '@clerk/clerk-expo';
 import { formatPrice, stripHtml, API_BASE, imgUrl } from '../../data/api';
@@ -26,7 +27,7 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { courseId } = route.params;
-  const { getCourse, loadDetail, detailLoading, progress, currentLessonIndex, lessonStatus } = useCourses();
+  const { getCourse, loadDetail, detailLoading, loading, error, reload, progress, currentLessonIndex, lessonStatus } = useCourses();
   const course = getCourse(courseId);
   const { isSignedIn, getToken } = useAuth();
   const [bookmarked, setBookmarked] = useState(false);
@@ -42,8 +43,18 @@ export function CourseDetailScreen({ route, navigation }: Props) {
 
   if (!course) {
     return (
-      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 40, alignItems: 'center' }}>
-        <ActivityIndicator color={T.brand} />
+      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 8 }}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={{ padding: 12 }}>
+          <SF name="chevron.left" size={22} color={T.brandAccent} />
+        </Pressable>
+        {loading ? (
+          <View style={{ paddingTop: 60, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
+        ) : (
+          <ErrorState
+            message={error ? 'Не удалось загрузить курс. Проверьте подключение.' : 'Курс не найден.'}
+            onRetry={reload}
+          />
+        )}
       </View>
     );
   }
@@ -147,9 +158,7 @@ export function CourseDetailScreen({ route, navigation }: Props) {
               );
             })}
             {course.lessons.length === 0 ? (
-              <View style={{ padding: 20, alignItems: 'center' }}>
-                <Text style={[ty.subhead, { color: T.labelSecondary }]}>Уроки появятся здесь</Text>
-              </View>
+              <EmptyState icon="book" title="Программа готовится" subtitle="Уроки этого курса скоро появятся здесь." />
             ) : null}
           </ListSection>
         )}

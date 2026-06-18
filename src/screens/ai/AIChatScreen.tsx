@@ -123,7 +123,7 @@ export function AIChatScreen({}: Props) {
           ) : null}
         </ScrollView>
 
-        <View style={{ borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: 'rgba(249,249,249,0.98)', paddingTop: 8, paddingBottom: insets.bottom + 70 }}>
+        <View style={{ borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: T.cardBg, paddingTop: 8, paddingBottom: insets.bottom + 70 }}>
           {messages.length === 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 10 }}>
               {quick.map((q) => (

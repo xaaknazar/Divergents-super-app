@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
@@ -6,6 +6,7 @@ import {
   AIStackParams, CareerStackParams, ProfileStackParams,
 } from './types';
 import { TabBar } from './TabBar';
+import { isOnboarded } from '../state/onboarding';
 
 import { LMSHomeScreen } from '../screens/lms/LMSHomeScreen';
 import { CatalogScreen } from '../screens/lms/CatalogScreen';
@@ -95,8 +96,11 @@ function Tabs() {
 
 const Root = createNativeStackNavigator<RootStackParams>();
 export function RootNavigator() {
+  const [initial, setInitial] = useState<'Onboarding' | 'Tabs' | null>(null);
+  useEffect(() => { isOnboarded().then((o) => setInitial(o ? 'Tabs' : 'Onboarding')); }, []);
+  if (!initial) return null;
   return (
-    <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }} initialRouteName="Tabs">
+    <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }} initialRouteName={initial}>
       <Root.Screen name="Onboarding" component={OnboardingScreen} options={{ presentation: 'fullScreenModal' }} />
       <Root.Screen name="Auth" component={AuthScreen} options={{ presentation: 'modal' }} />
       <Root.Screen name="Tabs" component={Tabs} />

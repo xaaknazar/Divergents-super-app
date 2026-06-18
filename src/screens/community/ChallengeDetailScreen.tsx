@@ -136,7 +136,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
       </ScrollView>
 
       {/* CTA */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: 'rgba(249,249,249,0.96)', borderTopWidth: 0.5, borderTopColor: T.separator }}>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
         <PrimaryButton label="Подать заявку" icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId })} />
       </View>
     </View>
@@ -188,7 +188,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[ty.headline, { color: T.label }]}>Серия {c.currentDay} дней</Text>
-          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>Личный рекорд</Text>
+          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>дней подряд</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
             <SF name="flame.fill" size={16} color={T.orange} />
             <Text style={[ty.subheadEm, { color: T.label }]}>+{teamPoints} pts</Text>

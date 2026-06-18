@@ -5,6 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF, SFName } from '../components/SFIcon';
 import { PrimaryButton, ty } from '../components/ui';
+import { markOnboarded } from '../state/onboarding';
 import { RootStackParams } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Onboarding'>;
@@ -22,7 +23,10 @@ export function OnboardingScreen({ navigation }: Props) {
   const [step, setStep] = useState(0);
   const s = STEPS[step];
   const last = step === STEPS.length - 1;
-  const finish = () => navigation.navigate('Tabs', { screen: 'LMSTab', params: { screen: 'LMSHome' } });
+  const finish = async () => {
+    await markOnboarded();
+    navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 20, paddingBottom: insets.bottom + 30, paddingHorizontal: 28 }}>
@@ -52,7 +56,7 @@ export function OnboardingScreen({ navigation }: Props) {
 
       {/* Buttons */}
       <View style={{ gap: 10 }}>
-        <PrimaryButton label={last ? 'Загрузить тесты' : 'Далее'} onPress={() => (last ? finish() : setStep((v) => v + 1))} />
+        <PrimaryButton label={last ? 'Начать' : 'Далее'} onPress={() => (last ? finish() : setStep((v) => v + 1))} />
         <PrimaryButton label="Пропустить" color="transparent" onPress={finish} />
       </View>
     </View>

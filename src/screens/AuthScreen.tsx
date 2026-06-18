@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../theme/ThemeContext';
-import { View, Text, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignIn } from '@clerk/clerk-expo';
@@ -88,7 +88,7 @@ export function AuthScreen({ navigation }: Props) {
               returnKeyType="next"
             />
             {error ? <Text style={[ty.footnote, { color: T.red, marginTop: 10, marginLeft: 4 }]}>{error}</Text> : null}
-            <PrimaryButton label={busy ? '' : 'Получить код'} style={{ marginTop: 18 }} onPress={sendCode} />
+            <PrimaryButton label="Получить код" loading={busy} style={{ marginTop: 18 }} onPress={sendCode} />
           </>
         ) : (
           <>
@@ -105,18 +105,13 @@ export function AuthScreen({ navigation }: Props) {
               returnKeyType="done"
             />
             {error ? <Text style={[ty.footnote, { color: T.red, marginTop: 10, marginLeft: 4 }]}>{error}</Text> : null}
-            <PrimaryButton label={busy ? '' : 'Войти'} style={{ marginTop: 18 }} onPress={verify} />
+            <PrimaryButton label="Войти" loading={busy} style={{ marginTop: 18 }} onPress={verify} />
             <Pressable onPress={() => { setStep('email'); setCode(''); setError(null); }} style={{ marginTop: 14, alignItems: 'center' }}>
               <Text style={[ty.body, { color: T.brandAccent }]}>Изменить почту</Text>
             </Pressable>
           </>
         )}
 
-        {busy ? (
-          <View style={{ position: 'absolute', left: 0, right: 0, top: '52%', alignItems: 'center' }}>
-            <ActivityIndicator color={T.brand} />
-          </View>
-        ) : null}
       </View>
     </KeyboardAvoidingView>
   );

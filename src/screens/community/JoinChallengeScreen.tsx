@@ -110,7 +110,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         </Pressable>
       </ScrollView>
 
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: 'rgba(249,249,249,0.96)', borderTopWidth: 0.5, borderTopColor: T.separator }}>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
         <PrimaryButton label="Отправить заявку" icon="paperplane.fill" color={canSubmit ? T.brand : T.labelTertiary} onPress={() => canSubmit && setSubmitted(true)} />
       </View>
     </View>

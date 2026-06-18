@@ -1,14 +1,16 @@
 import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, IconCircle, IconSquircle, ListSection, ListRow, Segmented, ty } from '../../components/ui';
-import { USER, TALENTS, REPORTS, APPLICATIONS } from '../../data/profile';
+import { TALENTS, REPORTS } from '../../data/profile';
+import { JOBS } from '../../data/career';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
+import { useCareer } from '../../state/CareerContext';
 import { useAchievements } from '../../data/achievements';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
@@ -19,44 +21,44 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { T, mode, setMode } = useTheme();
   const { challenge } = useChallenge();
   const { courses, progress } = useCourses();
+  const { applied } = useCareer();
   const ach = useAchievements();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
   const goAuth = () => navigation.getParent()?.getParent()?.navigate('Auth' as never);
-  const coursesInProgress = courses.filter((c) => progress(c.id) > 0).length;
+  const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
+  const goCareer = () => navigation.getParent()?.navigate('CareerTab' as never);
 
+  const coursesInProgress = courses.filter((c) => progress(c.id) > 0).length;
+  const email = user?.primaryEmailAddress?.emailAddress;
+  const name = user?.fullName
+    || [user?.firstName, user?.lastName].filter(Boolean).join(' ')
+    || (email ? email.split('@')[0] : 'Гость');
+  const initial = (name?.trim()?.[0] ?? 'D').toUpperCase();
+
+  const challengeActive = challenge.currentDay > 0;
   const stats = [
     { v: String(coursesInProgress), l: 'Курсов' },
-    { v: String(USER.stats.challenges), l: 'Челленджа' },
-    { v: String(USER.stats.books), l: 'Книги' },
+    { v: String(ach.earned), l: 'Достижений' },
+    { v: challengeActive ? `${challenge.currentDay}/${challenge.totalDays}` : '—', l: 'Челлендж' },
   ];
 
-  const challenges = [
-    { t: challenge.title, p: challenge.currentDay / challenge.totalDays, e: `${challenge.currentDay}/${challenge.totalDays}` },
-    { t: '20 страниц в день', p: 18 / 30, e: '18/30' },
-    { t: '10 км ходьбы', p: 6 / 14, e: '6/14' },
-  ];
-
-  const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
+  const myApps = JOBS.filter((j) => applied.includes(j.id));
 
   return (
     <Screen gradient={['#F1EDFA', '#F5F3F8', '#F2F2F7']}>
-      <NavBarLarge title="Профиль" trailing={<>
-        <HeaderIcon name="square.and.arrow.up" />
-        <HeaderIcon name="gearshape" />
-      </>} />
+      <NavBarLarge title="Профиль" />
 
       {/* Hero */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
         <View style={{ width: 80, height: 80, borderRadius: 18, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-          <Text style={[ty.largeTitle, { color: '#fff' }]}>{USER.initial}</Text>
+          <Text style={[ty.largeTitle, { color: '#fff' }]}>{initial}</Text>
         </View>
-        <Text style={[ty.title1, { color: T.label }]}>{USER.name}</Text>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{USER.role}</Text>
-        <View style={{ marginTop: 10 }}>
-          <Capsule bg={T.fillTertiary} color={T.label}><SF name="circle.fill" size={8} color={T.orange} />{USER.psychotype} · Уровень {USER.level}</Capsule>
-        </View>
+        <Text style={[ty.title1, { color: T.label }]}>{name}</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>
+          {isSignedIn ? (email ?? 'Divergents') : 'Войдите, чтобы синхронизировать профиль'}
+        </Text>
       </View>
 
       {/* Stats row */}
@@ -71,13 +73,13 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
       {/* Achievements */}
       <ListSection header={`Достижения · ${ach.earned}/${ach.total}`}>
-        <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
-          {ach.badges.slice(0, 6).map((b) => (
-            <View key={b.id} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
+          {ach.badges.map((b) => (
+            <View key={b.id} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={b.icon} size={20} color={b.earned ? '#fff' : T.labelTertiary} />
             </View>
           ))}
-        </View>
+        </ScrollView>
         <ListRow title="Смотреть все достижения" valueColor={T.brand} chevron last onPress={() => navigation.navigate('Achievements')} />
       </ListSection>
 
@@ -86,7 +88,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
         {isSignedIn ? (
           <>
             <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />}
-              title={user?.primaryEmailAddress?.emailAddress ?? 'Вы вошли'} subtitle="Divergents LMS" />
+              title={email ?? 'Вы вошли'} subtitle="Divergents LMS" />
             <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title="Выйти" valueColor={T.red} last onPress={() => signOut()} />
           </>
         ) : (
@@ -95,40 +97,15 @@ export function ProfileHomeScreen({ navigation }: Props) {
         )}
       </ListSection>
 
-      {/* Reminders */}
-      <ListSection header="Напоминания · 2">
-        <ListRow leading={<IconCircle icon="bell.badge.fill" color="#fff" bg={T.orange} size={30} />} title="Завершите тест Gardner" subtitle="Осталось 12 вопросов · 8 минут" chevron />
-        <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />} title='Урок "Законы лидерства 2"' subtitle="Не открывали 3 дня" chevron last onPress={goLearning} />
-      </ListSection>
+      {/* Continue learning (only if something is in progress) */}
+      {coursesInProgress > 0 ? (
+        <ListSection header="Продолжить">
+          <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />}
+            title="Продолжить обучение" subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? 'курс в работе' : 'курса в работе'}`} chevron last onPress={goLearning} />
+        </ListSection>
+      ) : null}
 
-      {/* Current work */}
-      <ListSection header="Сейчас работает">
-        <View style={{ padding: 14 }}>
-          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-            <IconSquircle icon="building.2.fill" bg={T.brand} size={38} />
-            <View style={{ flex: 1 }}>
-              <Text style={[ty.headline, { color: T.label }]}>HR-директор</Text>
-              <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>KEX Group · с янв 2023</Text>
-              <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                <Capsule bg={T.fillTertiary} color={T.labelSecondary}>1500+ сотрудников</Capsule>
-                <Capsule bg={T.fillTertiary} color={T.labelSecondary}>70 точек</Capsule>
-                <Capsule bg={T.fillTertiary} color={T.labelSecondary}>F&B</Capsule>
-              </View>
-            </View>
-          </View>
-        </View>
-      </ListSection>
-
-      {/* Personal data */}
-      <ListSection header="Личные данные">
-        <ListRow leading={<SF name="person.fill" size={20} color={T.brandAccent} />} title="Возраст" detail={USER.age} />
-        <ListRow leading={<SF name="mappin.circle.fill" size={20} color={T.red} />} title="Город" detail={USER.city} />
-        <ListRow leading={<SF name="heart.fill" size={20} color={T.pink} />} title="Семейное" detail={USER.family} />
-        <ListRow leading={<SF name="envelope.fill" size={20} color={T.brand} />} title="Email" detail={USER.email} />
-        <ListRow leading={<SF name="phone.fill" size={20} color={T.green} />} title="Телефон" detail={USER.phone} last />
-      </ListSection>
-
-      {/* Top talents */}
+      {/* Top talents (Divergents profile feature) */}
       <ListSection header="Топ талантов Gallup">
         {TALENTS.map((tn, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16 }}>
@@ -158,37 +135,31 @@ export function ProfileHomeScreen({ navigation }: Props) {
         ))}
       </View>
 
-      {/* Sources */}
-      <ListSection header="Источники тестов" style={{ marginTop: 20 }}>
-        <ListRow leading={<IconSquircle icon="checkmark" bg={T.green} size={28} />} title="Gallup" detail="34 таланта · Готов" />
-        <ListRow leading={<IconSquircle icon="checkmark" bg={T.green} size={28} />} title="MBTI" detail={`${USER.mbti} · Готов`} />
-        <ListRow leading={<IconSquircle icon="doc.fill" bg={T.labelTertiary} size={28} />} title="Gardner" detail="Загрузить PDF" valueColor={T.brandAccent} chevron last />
-      </ListSection>
-
-      {/* Active challenges */}
-      <ListSection header="Активные челленджи · 3">
-        {challenges.map((c, i) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
+      {/* Active challenge (real, only when active) */}
+      {challengeActive ? (
+        <ListSection header="Активный челлендж" style={{ marginTop: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
             <View style={{ flex: 1 }}>
-              <Text style={[ty.body, { color: T.label }]}>{c.t}</Text>
-              <View style={{ marginTop: 6 }}><ProgressBar value={c.p} /></View>
+              <Text style={[ty.body, { color: T.label }]}>{challenge.title}</Text>
+              <View style={{ marginTop: 6 }}><ProgressBar value={challenge.currentDay / challenge.totalDays} /></View>
             </View>
-            <Text style={[ty.subheadEm, { color: T.labelSecondary }]}>{c.e}</Text>
-            {i < challenges.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 16, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+            <Text style={[ty.subheadEm, { color: T.labelSecondary }]}>{challenge.currentDay}/{challenge.totalDays}</Text>
           </View>
-        ))}
-      </ListSection>
+        </ListSection>
+      ) : null}
 
-      {/* Applications */}
-      <ListSection header="Отклики на вакансии · 5">
-        {APPLICATIONS.map((a, i) => (
-          <ListRow key={i}
-            leading={<View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: a.color }]}>{a.initial}</Text></View>}
-            title={a.t} subtitle={a.c}
-            trailing={<Capsule bg={a.statusBg} color={a.statusColor}>{a.status}</Capsule>}
-            last={i === APPLICATIONS.length - 1} />
-        ))}
-      </ListSection>
+      {/* Applications (real, from Career) */}
+      {myApps.length > 0 ? (
+        <ListSection header={`Отклики на вакансии · ${myApps.length}`}>
+          {myApps.map((j, i) => (
+            <ListRow key={j.id} onPress={goCareer}
+              leading={<View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
+              title={j.title} subtitle={`${j.company} · ${j.city}`}
+              trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>Отправлен</Capsule>}
+              last={i === myApps.length - 1} />
+          ))}
+        </ListSection>
+      ) : null}
 
       {/* Appearance */}
       <ListSection header="Внешний вид">
@@ -206,9 +177,6 @@ export function ProfileHomeScreen({ navigation }: Props) {
         </View>
       </ListSection>
 
-      <ListSection>
-        <ListRow leading={<SF name="gearshape" size={20} color={T.labelSecondary} />} title="Настройки" chevron last />
-      </ListSection>
       <View style={{ height: 30 }} />
     </Screen>
   );

@@ -1,6 +1,6 @@
 // Shared iOS-style UI atoms — theme-aware via useTheme().
 import React from 'react';
-import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, StyleProp, ViewStyle } from 'react-native';
 import { T as LIGHT, ty } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { SF, SFName } from './SFIcon';
@@ -180,18 +180,24 @@ export function Chip({
 }
 
 export function PrimaryButton({
-  label, icon, onPress, color, textColor, style,
-}: { label: string; icon?: SFName | string; onPress?: () => void; color?: string; textColor?: string; style?: StyleProp<ViewStyle> }) {
+  label, icon, onPress, color, textColor, style, loading, disabled,
+}: { label: string; icon?: SFName | string; onPress?: () => void; color?: string; textColor?: string; style?: StyleProp<ViewStyle>; loading?: boolean; disabled?: boolean }) {
   const { T } = useTheme();
   const _color = color ?? T.brand;
   const fg = textColor ?? (_color === 'transparent' ? T.brand : '#fff');
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [{
+    <Pressable onPress={onPress} disabled={disabled || loading} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} style={({ pressed }) => [{
       height: 50, borderRadius: 14, backgroundColor: _color, flexDirection: 'row',
-      alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pressed ? 0.85 : 1,
+      alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pressed || disabled ? 0.85 : 1,
     }, style]}>
-      {icon ? <SF name={icon} size={16} color={fg} /> : null}
-      <Text style={[ty.headline, { color: fg }]}>{label}</Text>
+      {loading ? (
+        <ActivityIndicator color={fg} />
+      ) : (
+        <>
+          {icon ? <SF name={icon} size={16} color={fg} /> : null}
+          <Text style={[ty.headline, { color: fg }]}>{label}</Text>
+        </>
+      )}
     </Pressable>
   );
 }

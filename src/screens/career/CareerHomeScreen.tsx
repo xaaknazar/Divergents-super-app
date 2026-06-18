@@ -127,7 +127,7 @@ export function CareerHomeScreen({ navigation }: Props) {
           <ListRow key={j.id} onPress={() => open(j.id)}
             leading={<View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: j.color }]}>{j.logo}</Text></View>}
             title={j.title} subtitle={`${j.company} · ${j.city} · ${j.format} · ${j.salary}`}
-            trailing={<View style={{ alignItems: 'flex-end' }}><Text style={[ty.headline, { color: T.brand }]}>{j.match}%</Text><Text style={[ty.caption2, { color: T.labelSecondary }]}>match</Text></View>}
+            trailing={<View style={{ alignItems: 'flex-end' }}><Text style={[ty.headline, { color: T.brand }]}>{j.match}%</Text><Text style={[ty.caption2, { color: T.labelSecondary }]}>совпад.</Text></View>}
             chevron last={i === rest.length - 1} />
         ))}
         {rest.length === 0 ? (
