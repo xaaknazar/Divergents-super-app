@@ -104,11 +104,12 @@ export function CareerHomeScreen({ navigation }: Props) {
 
 // ─── Resume completeness hero (gradient) ───────────────────────────
 function ResumeHero({ navigation }: { navigation: Nav }) {
+  const { T } = useTheme();
   const { completeness } = useResume();
   const filled = completeness > 0;
   return (
     <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 20, overflow: 'hidden', shadowColor: '#1E337A', shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
-      <LinearGradient colors={['#1E337A', '#3D5BDB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
+      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <Ring value={completeness / 100} size={64} color="#fff" label={`${completeness}%`} textColor="#fff" />
           <View style={{ flex: 1 }}>

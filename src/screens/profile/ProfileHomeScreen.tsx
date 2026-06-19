@@ -83,7 +83,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
       {/* Gradient hero card */}
       <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: '#1E337A', shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
-        <LinearGradient colors={['#1E337A', '#3D5BDB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
+        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             {profile?.photoUrl ? (
               <Image source={{ uri: profile.photoUrl }} style={{ width: 64, height: 64, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
@@ -210,15 +210,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
       {/* Appearance */}
       <ListSection header="Внешний вид">
-        <View style={{ paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <SF name="paintpalette.fill" size={18} color={T.brandAccent} />
-            <Text style={[ty.body, { color: T.label, flex: 1 }]}>Тема оформления</Text>
-          </View>
-          <Segmented items={['Система', 'Светлая', 'Тёмная']} value={mode === 'system' ? 0 : mode === 'light' ? 1 : 2}
-            onChange={(i) => setMode(i === 0 ? 'system' : i === 1 ? 'light' : 'dark')}
-            leadingIcons={['gearshape.fill', 'sun.max.fill', 'moon.fill']} />
-        </View>
+        <ListRow leading={<IconCircle icon="paintpalette.fill" color="#fff" bg={T.brand} size={30} />}
+          title="Персонализация" subtitle="Тема, акцентный цвет, фон" chevron last onPress={() => navigation.navigate('Personalize')} />
       </ListSection>
 
       <View style={{ height: 30 }} />
