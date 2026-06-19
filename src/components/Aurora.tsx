@@ -1,35 +1,35 @@
-// Soft "aurora" backdrop: subtle radial brand glows behind content. Adds depth
-// without being loud. Theme-aware (gentle in light, richer in dark).
+// Soft "aurora" backdrop using expo-linear-gradient (no SVG → safe under
+// react-navigation freezeOnBlur). Two diagonal brand glows fading to transparent.
 import React from 'react';
-import { View } from 'react-native';
-import Svg, { Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
+import { View, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeContext';
 
 export function Aurora({ height = 560 }: { height?: number }) {
-  const { T, isDark } = useTheme();
-  const o = isDark ? 0.32 : 0.16;
-  const o2 = isDark ? 0.26 : 0.12;
+  const { isDark } = useTheme();
+  const accent = isDark ? 'rgba(124,149,255,0.22)' : 'rgba(61,91,219,0.16)';
+  const brand = isDark ? 'rgba(61,91,219,0.20)' : 'rgba(35,64,136,0.13)';
+  const sky = isDark ? 'rgba(56,189,248,0.14)' : 'rgba(56,189,248,0.10)';
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height }}>
-      <Svg width="100%" height={height}>
-        <Defs>
-          <RadialGradient id="a1" cx="16%" cy="8%" r="60%">
-            <Stop offset="0" stopColor={T.brandAccent} stopOpacity={o} />
-            <Stop offset="1" stopColor={T.brandAccent} stopOpacity="0" />
-          </RadialGradient>
-          <RadialGradient id="a2" cx="96%" cy="2%" r="55%">
-            <Stop offset="0" stopColor={T.brand} stopOpacity={o} />
-            <Stop offset="1" stopColor={T.brand} stopOpacity="0" />
-          </RadialGradient>
-          <RadialGradient id="a3" cx="62%" cy="34%" r="50%">
-            <Stop offset="0" stopColor={T.sky} stopOpacity={o2} />
-            <Stop offset="1" stopColor={T.sky} stopOpacity="0" />
-          </RadialGradient>
-        </Defs>
-        <Rect width="100%" height={height} fill="url(#a1)" />
-        <Rect width="100%" height={height} fill="url(#a2)" />
-        <Rect width="100%" height={height} fill="url(#a3)" />
-      </Svg>
+      {/* glow from top-left */}
+      <LinearGradient
+        colors={[accent, 'transparent']}
+        start={{ x: 0, y: 0 }} end={{ x: 0.85, y: 0.75 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {/* glow from top-right */}
+      <LinearGradient
+        colors={[brand, 'transparent']}
+        start={{ x: 1, y: 0 }} end={{ x: 0.1, y: 0.7 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {/* soft sky tint mid */}
+      <LinearGradient
+        colors={['transparent', sky, 'transparent']}
+        start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
     </View>
   );
 }
