@@ -15,7 +15,7 @@ export type SFName =
   | 'cart.fill' | 'cart' | 'target' | 'bolt.fill' | 'figure.run' | 'brain.head.profile'
   | 'heart.text.square.fill' | 'leaf.fill' | 'arrow.up.circle.fill' | 'bookmark'
   | 'bookmark.fill' | 'square.and.arrow.up' | 'ellipsis' | 'lock.fill' | 'lock'
-  | 'doc.text' | 'doc.fill' | 'circle.fill' | 'circle' | 'list.bullet' | 'map.fill'
+  | 'doc.text' | 'doc.fill' | 'circle.fill' | 'circle' | 'list.bullet' | 'map.fill' | 'map'
   | 'paperplane.fill' | 'goforward.15' | 'gobackward.15' | 'pause.fill' | 'airplayvideo'
   | 'arrow.up.left.and.arrow.down.right' | 'clock.fill' | 'calendar' | 'graduationcap.fill'
   | 'puzzlepiece.fill' | 'figure.2.and.child.holdinghands' | 'flag.fill' | 'tag.fill'
@@ -58,7 +58,7 @@ const MAP: Record<string, [Lib, string]> = {
   'lock.fill': ['ion', 'lock-closed'], 'lock': ['ion', 'lock-closed-outline'],
   'doc.text': ['ion', 'document-text-outline'], 'doc.fill': ['ion', 'document'],
   'circle.fill': ['ion', 'ellipse'], 'circle': ['ion', 'ellipse-outline'],
-  'list.bullet': ['ion', 'list'], 'map.fill': ['ion', 'map'],
+  'list.bullet': ['ion', 'list'], 'map.fill': ['ion', 'map'], 'map': ['ion', 'map-outline'],
   'paperplane.fill': ['ion', 'paper-plane'],
   'goforward.15': ['mci', 'fast-forward-15'], 'gobackward.15': ['mci', 'rewind-15'],
   'pause.fill': ['ion', 'pause'], 'airplayvideo': ['mci', 'apple-airplay'],

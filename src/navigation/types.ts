@@ -15,6 +15,7 @@ export type CommunityStackParams = {
 };
 
 export type AIStackParams = { AIChat: undefined };
+export type MapStackParams = { MapHome: undefined; PlaceDetail: { placeId: string }; AddPlace: undefined };
 export type CareerStackParams = { CareerHome: undefined; VacancyDetail: { jobId: string }; Resume: undefined; TalentProfile: undefined };
 export type ProfileStackParams = { ProfileHome: undefined; Settings: undefined; Achievements: undefined; Personalize: undefined };
 
@@ -22,6 +23,7 @@ export type TabParams = {
   LMSTab: NavigatorScreenParams<LMSStackParams>;
   AITab: NavigatorScreenParams<AIStackParams>;
   CommunityTab: NavigatorScreenParams<CommunityStackParams>;
+  MapTab: NavigatorScreenParams<MapStackParams>;
   CareerTab: NavigatorScreenParams<CareerStackParams>;
   ProfileTab: NavigatorScreenParams<ProfileStackParams>;
 };

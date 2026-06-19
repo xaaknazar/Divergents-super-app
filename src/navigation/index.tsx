@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   RootStackParams, TabParams, LMSStackParams, CommunityStackParams,
-  AIStackParams, CareerStackParams, ProfileStackParams,
+  AIStackParams, CareerStackParams, ProfileStackParams, MapStackParams,
 } from './types';
 import { TabBar } from './TabBar';
 import { isOnboarded } from '../state/onboarding';
@@ -19,6 +19,9 @@ import { JoinChallengeScreen } from '../screens/community/JoinChallengeScreen';
 import { TripDetailScreen } from '../screens/community/TripDetailScreen';
 
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
+import { MapHomeScreen } from '../screens/map/MapHomeScreen';
+import { PlaceDetailScreen } from '../screens/map/PlaceDetailScreen';
+import { AddPlaceScreen } from '../screens/map/AddPlaceScreen';
 import { CareerHomeScreen } from '../screens/career/CareerHomeScreen';
 import { VacancyDetailScreen } from '../screens/career/VacancyDetailScreen';
 import { ResumeFormScreen } from '../screens/career/ResumeFormScreen';
@@ -62,6 +65,17 @@ function AINavigator() {
   );
 }
 
+const MapStack = createNativeStackNavigator<MapStackParams>();
+function MapNavigator() {
+  return (
+    <MapStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }}>
+      <MapStack.Screen name="MapHome" component={MapHomeScreen} />
+      <MapStack.Screen name="PlaceDetail" component={PlaceDetailScreen} />
+      <MapStack.Screen name="AddPlace" component={AddPlaceScreen} options={{ presentation: 'modal' }} />
+    </MapStack.Navigator>
+  );
+}
+
 const CareerStack = createNativeStackNavigator<CareerStackParams>();
 function CareerNavigator() {
   return (
@@ -92,6 +106,7 @@ function Tabs() {
       <Tab.Screen name="LMSTab" component={LMSNavigator} />
       <Tab.Screen name="AITab" component={AINavigator} />
       <Tab.Screen name="CommunityTab" component={CommunityNavigator} />
+      <Tab.Screen name="MapTab" component={MapNavigator} />
       <Tab.Screen name="CareerTab" component={CareerNavigator} />
       <Tab.Screen name="ProfileTab" component={ProfileNavigator} />
     </Tab.Navigator>

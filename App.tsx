@@ -14,6 +14,7 @@ import { CourseProvider } from './src/state/CourseContext';
 import { ChallengeProvider } from './src/state/ChallengeContext';
 import { CareerProvider } from './src/state/CareerContext';
 import { EnrollmentProvider } from './src/state/EnrollmentContext';
+import { PlacesProvider } from './src/state/PlacesContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
@@ -67,7 +68,9 @@ export default function App() {
               <ChallengeProvider>
                 <CareerProvider>
                   <EnrollmentProvider>
-                    {fontsLoaded ? <Root /> : <Loader />}
+                    <PlacesProvider>
+                      {fontsLoaded ? <Root /> : <Loader />}
+                    </PlacesProvider>
                   </EnrollmentProvider>
                 </CareerProvider>
               </ChallengeProvider>
