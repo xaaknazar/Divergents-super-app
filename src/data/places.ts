@@ -77,7 +77,7 @@ const rv = (id: string, author: string, rating: number, text: string, date: stri
 
 export const PLACES: Place[] = [
   {
-    id: 'p1', name: 'Coffee BOOM', category: 'cafe', country: 'kz', city: 'almaty',
+    id: 'p1', name: 'Qara Brew Coffee', category: 'cafe', country: 'kz', city: 'almaty',
     lat: 43.2389, lng: 76.8897, tags: ['halal', 'no_alcohol', 'clean', 'prayer_room'],
     highlights: 'Отличный колд брю, тихо, есть розетки и зона для работы', hours: '08:00–23:00',
     approved: true, addedBy: 'Айгерим Б.', photo: null,
