@@ -99,7 +99,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
               </Text>
               {profile?.mbtiType ? (
                 <View style={{ marginTop: 8 }}>
-                  <Capsule bg="rgba(255,255,255,0.2)" color="#fff"><SF name="sparkles" size={11} color="#fff" />MBTI · {profile.mbtiType} {mbtiName(profile.mbtiType)}</Capsule>
+                  <Capsule bg="rgba(255,255,255,0.2)" color="#fff"><SF name="sparkles" size={11} color="#fff" />MBTI · {profile.mbtiName || `${profile.mbtiType} ${mbtiName(profile.mbtiType)}`}</Capsule>
                 </View>
               ) : null}
             </View>

@@ -98,7 +98,7 @@ export function TalentProfileScreen({ navigation }: Props) {
               <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.headline, { color: '#fff' }]}>{profile.mbtiType}</Text>
               </View>
-              <Text style={[ty.body, { color: T.label, flex: 1 }]}>{mbtiName(profile.mbtiType) || 'Тип личности'}</Text>
+              <Text style={[ty.body, { color: T.label, flex: 1 }]}>{profile.mbtiName || mbtiName(profile.mbtiType) || 'Тип личности'}</Text>
             </View>
           </ListSection>
         ) : null}
