@@ -1,13 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
+import { View, Text, Pressable, ScrollView, LayoutAnimation, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
+import { Capsule, Chip, ListSection, ListRow, SectionHeader, ProgressBar, ty } from '../../components/ui';
 import { JOBS, CAREER_FILTERS, GOOD_FIT, Job } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
+import { useResume } from '../../state/useResume';
+import { useTalentProfile } from '../../state/useTalentProfile';
+import { GALLUP_DOMAIN_META, mbtiName } from '../../data/talentslab';
 import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'CareerHome'>;
@@ -44,6 +47,8 @@ export function CareerHomeScreen({ navigation }: Props) {
       <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 12 }]}>
         {JOBS.length} вакансий подобраны по вашему психотипу и талантам
       </Text>
+
+      <MyTalentSection navigation={navigation} />
 
       {/* Filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
@@ -133,5 +138,99 @@ export function CareerHomeScreen({ navigation }: Props) {
       </ListSection>
       <View style={{ height: 16 }} />
     </Screen>
+  );
+}
+
+
+// ─── Моя анкета и оценки (Talentslab) ──────────────────────────────
+function MyTalentSection({ navigation }: { navigation: Props['navigation'] }) {
+  const { T } = useTheme();
+  const { completeness } = useResume();
+  const { profile, live } = useTalentProfile();
+  const top = (profile?.gallup ?? []).slice(0, 5);
+  const gardnerTop = (profile?.gardner ?? []).slice().sort((a, b) => b.score - a.score).slice(0, 3);
+  const filledResume = completeness > 0;
+
+  return (
+    <View style={{ marginHorizontal: 16, marginBottom: 18, backgroundColor: T.cardBg, borderRadius: 16, padding: 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={[ty.title3, { color: T.label }]}>Моя анкета и оценки</Text>
+        {!live ? <Capsule bg={T.fillTertiary} color={T.labelSecondary}>демо</Capsule> : null}
+      </View>
+
+      {/* Resume completeness */}
+      <View style={{ marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+          <Text style={[ty.subhead, { color: T.labelSecondary }]}>Заполнено резюме</Text>
+          <Text style={[ty.subheadEm, { color: T.brand }]}>{completeness}%</Text>
+        </View>
+        <ProgressBar value={completeness / 100} />
+      </View>
+      <Pressable onPress={() => navigation.navigate('Resume')}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12, height: 44, borderRadius: 12, backgroundColor: T.brandTinted }}>
+        <SF name={filledResume ? 'square.and.arrow.up' : 'plus'} size={16} color={T.brand} />
+        <Text style={[ty.headline, { color: T.brand }]}>{filledResume ? 'Редактировать анкету' : 'Заполнить анкету'}</Text>
+      </Pressable>
+
+      {/* MBTI */}
+      {profile?.mbtiType ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 }}>
+          <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={[ty.subheadEm, { color: '#fff' }]}>{profile.mbtiType}</Text>
+          </View>
+          <View>
+            <Text style={[ty.body, { color: T.label }]}>MBTI · {mbtiName(profile.mbtiType)}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]}>Тип личности</Text>
+          </View>
+        </View>
+      ) : null}
+
+      {/* Gallup top talents */}
+      {top.length > 0 ? (
+        <View style={{ marginTop: 16 }}>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 8 }]}>Топ талантов Gallup</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {top.map((g) => {
+              const c = GALLUP_DOMAIN_META[g.domain]?.color ?? T.brand;
+              return (
+                <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c + '18' }}>
+                  <Text style={[ty.caption2Em, { color: c }]}>{g.rank}</Text>
+                  <Text style={[ty.footnoteEm, { color: T.label }]}>{g.name}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+
+      {/* Gardner */}
+      {gardnerTop.length > 0 ? (
+        <View style={{ marginTop: 16 }}>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 8 }]}>Интеллект (Гарднер)</Text>
+          {gardnerTop.map((gr, i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Text style={[ty.caption1, { color: T.label, width: 150 }]} numberOfLines={1}>{gr.category}</Text>
+              <View style={{ flex: 1 }}><ProgressBar value={gr.score / 100} /></View>
+              <Text style={[ty.caption2Em, { color: T.labelSecondary, width: 30, textAlign: 'right' }]}>{gr.score}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {/* Reports */}
+      {(profile?.reports ?? []).length > 0 ? (
+        <View style={{ marginTop: 8 }}>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 4, marginTop: 8 }]}>Отчёты</Text>
+          {profile!.reports.map((r, i) => (
+            <Pressable key={i} onPress={() => Linking.openURL(r.url)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, borderTopWidth: i === 0 ? 0 : 0.5, borderTopColor: T.separator }}>
+              <SF name="doc.fill" size={18} color={T.brand} />
+              <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{r.title}</Text>
+              <SF name="arrow.up.circle.fill" size={20} color={T.brand} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }

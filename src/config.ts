@@ -11,3 +11,10 @@ export const CLERK_PUBLISHABLE_KEY =
   'pk_live_Y2xlcmsuZGl2ZXJnZW50cy1sbXMua3ok';
 
 export const API_BASE = 'https://divergents-lms.kz';
+
+// Talentslab (резюме + Gallup/MBTI/Гарднер + отчёты). The mobile API is served
+// by the Talentslab Laravel app. Override via EXPO_PUBLIC_TALENTSLAB_BASE.
+// The app authenticates with the user's Clerk session token (Bearer); the
+// Talentslab endpoint must verify it and resolve the candidate by email.
+export const TALENTSLAB_BASE =
+  process.env.EXPO_PUBLIC_TALENTSLAB_BASE || 'https://talentslab.kz';
