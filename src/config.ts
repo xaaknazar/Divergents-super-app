@@ -17,4 +17,4 @@ export const API_BASE = 'https://divergents-lms.kz';
 // The app authenticates with the user's Clerk session token (Bearer); the
 // Talentslab endpoint must verify it and resolve the candidate by email.
 export const TALENTSLAB_BASE =
-  process.env.EXPO_PUBLIC_TALENTSLAB_BASE || 'https://talentslab.kz';
+  process.env.EXPO_PUBLIC_TALENTSLAB_BASE || 'https://talentslab.org';
