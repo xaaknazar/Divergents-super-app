@@ -8,7 +8,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Screen } from '../../components/Screen';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ProgressBar, ty } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { useChallenge } from '../../state/ChallengeContext';
 import {
@@ -169,32 +169,28 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
       <Screen tabPadding={false} topInset={false}>
 
       <View style={{ padding: 20, paddingBottom: 16 }}>
-        <Capsule bg={T.brandTinted} color={T.brand}><SF name="flag.fill" size={11} color={T.brand} />День {c.currentDay} из {c.totalDays}</Capsule>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Capsule bg={T.brandTinted} color={T.brand}><SF name="flag.fill" size={11} color={T.brand} />День {c.currentDay} из {c.totalDays}</Capsule>
+          <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />Бесплатно</Capsule>
+        </View>
         <Text style={[ty.largeTitle, { color: T.label, marginTop: 12 }]}>{c.title}</Text>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>Команда «{c.teamName}» · {c.members} участников · {c.startedLabel}</Text>
       </View>
 
-      <View style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 20 }}>
-        <View style={{ width: 110, height: 110 }}>
-          <Svg width={110} height={110} viewBox="0 0 110 110">
-            <Circle cx={55} cy={55} r={r} fill="none" stroke={T.fillTertiary} strokeWidth={8} />
-            <Circle cx={55} cy={55} r={r} fill="none" stroke={T.brand} strokeWidth={8}
-              strokeDasharray={`${ringPct * circ} ${circ}`} strokeLinecap="round" transform="rotate(-90 55 55)" />
-          </Svg>
-          <View style={{ position: 'absolute', width: 110, height: 110, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[ty.title1, { color: T.label }]}>{Math.round(ringPct * 100)}%</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]}>прогресс</Text>
-          </View>
+      <View style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ flexDirection: 'row' }}>
+          {[
+            { v: `${c.currentDay}/${c.totalDays}`, l: 'Дней' },
+            { v: `${Math.round(ringPct * 100)}%`, l: 'Прогресс' },
+            { v: `${teamPoints}`, l: 'Очки команды' },
+          ].map((st, i, arr) => (
+            <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < arr.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
+              <Text style={[ty.title2, { color: T.label }]}>{st.v}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{st.l}</Text>
+            </View>
+          ))}
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[ty.headline, { color: T.label }]}>Серия {c.currentDay} дней</Text>
-          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>дней подряд</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
-            <SF name="flame.fill" size={16} color={T.orange} />
-            <Text style={[ty.subheadEm, { color: T.label }]}>+{teamPoints} pts</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary }]}>командой</Text>
-          </View>
-        </View>
+        <View style={{ marginTop: 16 }}><ProgressBar value={ringPct} height={6} /></View>
       </View>
 
       <ListSection header="Календарь">
@@ -243,10 +239,6 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         })}
       </ListSection>
 
-      <ListSection footer={`Челлендж от тренера ${c.trainer} · стоимость ${c.price}`}>
-        <ListRow leading={<SF name="bell.fill" size={18} color={T.orange} />} title="Напоминания" detail="3 раза в день" chevron />
-        <ListRow leading={<SF name="person.3.fill" size={18} color={T.brand} />} title="Чат команды" detail="14 новых" chevron last />
-      </ListSection>
       <View style={{ height: 30 }} />
       </Screen>
     </View>

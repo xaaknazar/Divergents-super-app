@@ -45,7 +45,7 @@ export interface Challenge {
 // refined in the design chat.
 export const INITIAL_CHALLENGE: Challenge = {
   id: 'no-sugar-21',
-  title: '21 день без сахара',
+  title: 'Divergents challenge',
   teamName: 'Алматы Барсы',
   totalDays: 21,
   currentDay: 12,
@@ -299,7 +299,7 @@ export const CHALLENGES: ChallengeListItem[] = [
     maxFlags: 3, participants: 128, teams: CHALLENGE_TEAMS.length, tint: '#E6ECFB', icon: 'flame.fill',
   },
   {
-    id: 'no-sugar-21', title: '21 день без сахара', subtitle: 'Демо · ежедневный трекер баллов',
+    id: 'no-sugar-21', title: 'Divergents challenge', subtitle: 'Ежедневный трекер баллов · бесплатно',
     status: 'active', startLabel: 'идёт · день 12', durationDays: 21,
     maxFlags: 3, participants: 16, teams: 1, tint: '#FDE7D9', icon: 'tag.fill',
   },
