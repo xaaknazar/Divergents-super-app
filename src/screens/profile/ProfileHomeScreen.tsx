@@ -28,7 +28,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { courses, progress } = useCourses();
   const { applied } = useCareer();
   const { completeness: localCompleteness } = useResume();
-  const { profile } = useTalentProfile();
+  const { profile, live, reload } = useTalentProfile();
   const completeness = profile?.completeness ?? localCompleteness;
   const ach = useAchievements();
   const { isSignedIn } = useAuth();
@@ -135,7 +135,15 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Strengths snapshot */}
       {(profile?.gallup ?? []).length > 0 ? (
         <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-          <Text style={[ty.title3, { color: T.label, marginBottom: 12 }]}>Сильные стороны</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <Text style={[ty.title3, { color: T.label }]}>Сильные стороны</Text>
+            {!live ? (
+              <Pressable onPress={reload} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
+                <Text style={[ty.caption2Em, { color: T.labelSecondary }]}>демо · обновить</Text>
+              </Pressable>
+            ) : null}
+          </View>
           <DomainBar gallup={profile!.gallup} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
             {profile!.gallup.slice(0, 5).map((g) => {

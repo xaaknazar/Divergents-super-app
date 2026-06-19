@@ -13,17 +13,18 @@ export function useTalentProfile() {
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
 
+  const email = user?.primaryEmailAddress?.emailAddress ?? null;
+
   const run = useCallback(async () => {
     setLoading(true);
     try {
       const token = isSignedIn ? await getTokenRef.current() : null;
-      const email = user?.primaryEmailAddress?.emailAddress ?? null;
       const p = await fetchTalentProfile(token, email);
       setProfile(p); setLive(true);
     } catch {
       setProfile(MOCK_PROFILE); setLive(false); // demo until API is live
     } finally { setLoading(false); }
-  }, [isSignedIn]);
+  }, [isSignedIn, email]);
 
   useEffect(() => { run(); }, [run]);
 
