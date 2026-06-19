@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -37,6 +37,7 @@ export function VideoScreen({ route, navigation }: Props) {
   const hls = lesson?.hlsUrl ?? null;
   const locked = course?.source === 'live' && lesson?.isFree === false && !lesson?.hlsUrl;
   const player = useVideoPlayer(hls ?? '', (p) => { p.loop = false; });
+  const videoRef = useRef<VideoView>(null);
 
   // discussion state
   const [comments, setComments] = useState<ChapterComment[] | null>(null);
@@ -85,11 +86,16 @@ export function VideoScreen({ route, navigation }: Props) {
             <Text style={[ty.subheadEm, { color: '#fff' }]}>Урок {lesson.n}</Text>
             <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1}>{lesson.title}</Text>
           </View>
-          <View style={{ width: 32 }} />
+          {hls ? (
+            <Pressable onPress={() => { try { videoRef.current?.enterFullscreen(); } catch {} }} hitSlop={8}
+              style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+              <SF name="arrow.up.left.and.arrow.down.right" size={16} color="#fff" />
+            </Pressable>
+          ) : <View style={{ width: 32 }} />}
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           {hls ? (
-            <VideoView player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls allowsFullscreen />
+            <VideoView ref={videoRef} player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls allowsFullscreen />
           ) : locked ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
