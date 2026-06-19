@@ -18,3 +18,10 @@ export const API_BASE = 'https://divergents-lms.kz';
 // Talentslab endpoint must verify it and resolve the candidate by email.
 export const TALENTSLAB_BASE =
   process.env.EXPO_PUBLIC_TALENTSLAB_BASE || 'https://talentslab.org';
+
+// Fallback auth for the Talentslab mobile API (X-App-Key + email) used when the
+// Clerk-token path isn't available. NOTE: this key ships in the app bundle and
+// can read any candidate by email — acceptable for an internal app, but prefer
+// Clerk-only auth in production. Override via EXPO_PUBLIC_TALENTSLAB_APP_KEY.
+export const TALENTSLAB_APP_KEY =
+  process.env.EXPO_PUBLIC_TALENTSLAB_APP_KEY || 'd200c5a5f643d4c7fffe0207ac75a361535970cc6604db40';

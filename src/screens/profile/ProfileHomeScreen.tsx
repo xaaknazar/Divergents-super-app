@@ -181,7 +181,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {(profile?.reports ?? []).length > 0 ? (
         <ListSection header="Отчёты">
           {profile!.reports.map((r, i) => (
-            <ListRow key={i} onPress={() => Linking.openURL(r.url)} leading={<SF name="doc.fill" size={20} color={T.brand} />} title={r.title} trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />} last={i === profile!.reports.length - 1} />
+            <ListRow key={i} onPress={() => Linking.openURL(encodeURI(r.url))} leading={<SF name="doc.fill" size={20} color={T.brand} />} title={r.title} trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />} last={i === profile!.reports.length - 1} />
           ))}
         </ListSection>
       ) : null}

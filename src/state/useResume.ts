@@ -43,7 +43,8 @@ export function useResume() {
     setSubmitting(true);
     try {
       const token = await getTokenRef.current();
-      return await submitResume(token, answers);
+      const email = user?.primaryEmailAddress?.emailAddress ?? null;
+      return await submitResume(token, answers, email);
     } catch { return false; }
     finally { setSubmitting(false); }
   }, [answers]);

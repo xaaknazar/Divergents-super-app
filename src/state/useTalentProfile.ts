@@ -1,11 +1,12 @@
 // Loads the signed-in user's Talentslab profile (Gallup/MBTI/Gardner/reports).
 // Falls back to a demo profile until the Talentslab mobile API is live.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { fetchTalentProfile, MOCK_PROFILE, TalentProfile } from '../data/talentslab';
 
 export function useTalentProfile() {
   const { isSignedIn, getToken } = useAuth();
+  const { user } = useUser();
   const [profile, setProfile] = useState<TalentProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [live, setLive] = useState(false);
@@ -16,7 +17,8 @@ export function useTalentProfile() {
     setLoading(true);
     try {
       const token = isSignedIn ? await getTokenRef.current() : null;
-      const p = await fetchTalentProfile(token);
+      const email = user?.primaryEmailAddress?.emailAddress ?? null;
+      const p = await fetchTalentProfile(token, email);
       setProfile(p); setLive(true);
     } catch {
       setProfile(MOCK_PROFILE); setLive(false); // demo until API is live

@@ -1,7 +1,7 @@
 // Talentslab integration: the signed-in user's candidate profile, Gallup
 // talents, MBTI, Gardner results and report files. Matched by email server-side
 // from the Clerk session token. Falls back to a demo profile until the API is live.
-import { TALENTSLAB_BASE } from '../config';
+import { TALENTSLAB_BASE, TALENTSLAB_APP_KEY } from '../config';
 
 // ─── Types (mirror the Talentslab data model) ──────────────────────
 export type GallupDomain = 'executing' | 'influencing' | 'relationship' | 'strategic';
@@ -65,38 +65,45 @@ export function mbtiName(t?: string | null): string {
 }
 
 // ─── Client ────────────────────────────────────────────────────────
-async function getJson(path: string, token: string | null, timeoutMs = 12000): Promise<any> {
+async function reqJson(path: string, headers: Record<string, string>, timeoutMs = 12000): Promise<any> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(`${TALENTSLAB_BASE}${path}`, {
-      signal: ctrl.signal,
-      headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    });
+    const res = await fetch(`${TALENTSLAB_BASE}${path}`, { signal: ctrl.signal, headers: { Accept: 'application/json', ...headers } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } finally { clearTimeout(t); }
 }
 
-/** GET /api/mobile/profile — candidate resolved by email from the Bearer token. */
-export async function fetchTalentProfile(token: string | null): Promise<TalentProfile> {
-  const raw = await getJson('/api/mobile/profile', token);
-  return normalizeProfile(raw);
+/** GET /api/mobile/profile — tries Clerk token first, then X-App-Key + email. */
+export async function fetchTalentProfile(token: string | null, email?: string | null): Promise<TalentProfile> {
+  if (token) {
+    try { return normalizeProfile(await reqJson('/api/mobile/profile', { Authorization: `Bearer ${token}` })); }
+    catch { /* fall through to app-key path */ }
+  }
+  if (email && TALENTSLAB_APP_KEY) {
+    return normalizeProfile(await reqJson(`/api/mobile/profile?email=${encodeURIComponent(email)}`, { 'X-App-Key': TALENTSLAB_APP_KEY }));
+  }
+  throw new Error('talentslab: no auth');
 }
 
-/** POST /api/mobile/resume — upsert the candidate's resume answers. */
-export async function submitResume(token: string | null, answers: ResumeAnswers): Promise<boolean> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 15000);
-  try {
-    const res = await fetch(`${TALENTSLAB_BASE}/api/mobile/resume`, {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ answers }),
-    });
-    return res.ok;
-  } finally { clearTimeout(t); }
+/** POST /api/mobile/resume — Clerk token first, then X-App-Key + email. */
+export async function submitResume(token: string | null, answers: ResumeAnswers, email?: string | null): Promise<boolean> {
+  const post = async (headers: Record<string, string>, body: any) => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(`${TALENTSLAB_BASE}/api/mobile/resume`, {
+        method: 'POST', signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...headers },
+        body: JSON.stringify(body),
+      });
+      return res.ok;
+    } finally { clearTimeout(t); }
+  };
+  if (token) { try { if (await post({ Authorization: `Bearer ${token}` }, { answers })) return true; } catch {} }
+  if (email && TALENTSLAB_APP_KEY) { try { return await post({ 'X-App-Key': TALENTSLAB_APP_KEY }, { email, answers }); } catch {} }
+  return false;
 }
 
 function normalizeProfile(r: any): TalentProfile {
