@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, ScrollView, Linking } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge } from '../../components/headers';
@@ -11,7 +12,7 @@ import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
-import { GALLUP_DOMAIN_META, mbtiName } from '../../data/talentslab';
+import { GALLUP_DOMAIN_META, mbtiName, fmtList } from '../../data/talentslab';
 import { useAchievements } from '../../data/achievements';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
@@ -54,9 +55,13 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
       {/* Hero */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-        <View style={{ width: 80, height: 80, borderRadius: 18, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-          <Text style={[ty.largeTitle, { color: '#fff' }]}>{initial}</Text>
-        </View>
+        {profile?.photoUrl ? (
+          <Image source={{ uri: profile.photoUrl }} style={{ width: 80, height: 80, borderRadius: 18, marginBottom: 14 }} contentFit="cover" cachePolicy="memory-disk" />
+        ) : (
+          <View style={{ width: 80, height: 80, borderRadius: 18, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+            <Text style={[ty.largeTitle, { color: '#fff' }]}>{initial}</Text>
+          </View>
+        )}
         <Text style={[ty.title1, { color: T.label }]}>{name}</Text>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>
           {isSignedIn ? (email ?? 'Divergents') : 'Войдите, чтобы синхронизировать профиль'}
@@ -98,6 +103,38 @@ export function ProfileHomeScreen({ navigation }: Props) {
             title="Войти по почте" subtitle="Чтобы видеть свои курсы и видео" chevron last onPress={goAuth} />
         )}
       </ListSection>
+
+
+      {/* Личные данные (Talentslab) */}
+      {(() => {
+        const rz = profile?.resume ?? null;
+        const mk = (items: [string, any][]) => items
+          .map(([l, v]) => [l, Array.isArray(v) ? fmtList(v) : (v == null ? '' : String(v))] as [string, string])
+          .filter(([, v]) => v && v !== 'undefined' && v !== 'false');
+        const personal = mk([
+          ['Город', rz?.current_city], ['Телефон', rz?.phone], ['Дата рождения', rz?.birth_date],
+          ['Пол', rz?.gender], ['Семейное положение', rz?.marital_status], ['Гражданство', rz?.citizenship],
+          ['Instagram', rz?.instagram],
+        ]);
+        const career = mk([
+          ['Желаемая должность', rz?.desired_position || fmtList(rz?.desired_positions)],
+          ['Сфера', rz?.activity_sphere], ['Опыт (лет)', rz?.total_experience_years],
+          ['Зарплата', rz?.expected_salary], ['Языки', fmtList(rz?.language_skills)],
+          ['Образование', rz?.school || fmtList(rz?.universities)],
+        ]);
+        const about = mk([
+          ['Хобби', rz?.hobbies], ['Интересы', rz?.interests], ['Спорт', fmtList(rz?.favorite_sports)],
+          ['Страны', fmtList(rz?.visited_countries)], ['Книг в год', rz?.books_per_year],
+        ]);
+        const Sec = (header: string, data: [string, string][]) => data.length === 0 ? null : (
+          <ListSection header={header}>
+            {data.map(([l, v], i) => (
+              <ListRow key={l} title={l} detail={v.length > 24 ? undefined : v} subtitle={v.length > 24 ? v : undefined} last={i === data.length - 1} />
+            ))}
+          </ListSection>
+        );
+        return (<>{Sec('Личные данные', personal)}{Sec('Карьера и образование', career)}{Sec('О себе', about)}</>);
+      })()}
 
       {/* Continue learning (only if something is in progress) */}
       {coursesInProgress > 0 ? (

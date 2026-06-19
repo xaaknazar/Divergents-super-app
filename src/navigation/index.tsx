@@ -22,6 +22,7 @@ import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import { CareerHomeScreen } from '../screens/career/CareerHomeScreen';
 import { VacancyDetailScreen } from '../screens/career/VacancyDetailScreen';
 import { ResumeFormScreen } from '../screens/career/ResumeFormScreen';
+import { TalentProfileScreen } from '../screens/career/TalentProfileScreen';
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
 import { AchievementsScreen } from '../screens/profile/AchievementsScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
@@ -67,6 +68,7 @@ function CareerNavigator() {
       <CareerStack.Screen name="CareerHome" component={CareerHomeScreen} />
       <CareerStack.Screen name="VacancyDetail" component={VacancyDetailScreen} />
       <CareerStack.Screen name="Resume" component={ResumeFormScreen} options={{ presentation: 'modal' }} />
+      <CareerStack.Screen name="TalentProfile" component={TalentProfileScreen} />
     </CareerStack.Navigator>
   );
 }

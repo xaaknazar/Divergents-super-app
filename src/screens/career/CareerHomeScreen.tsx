@@ -235,6 +235,12 @@ function MyTalentSection({ navigation }: { navigation: Props['navigation'] }) {
           ))}
         </View>
       ) : null}
+
+      <Pressable onPress={() => navigation.navigate('TalentProfile')}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+        <Text style={[ty.subheadEm, { color: T.brand }]}>Полный профиль</Text>
+        <SF name="chevron.forward" size={12} color={T.brand} />
+      </Pressable>
     </View>
   );
 }
