@@ -288,6 +288,7 @@ export async function askAssistant(
   message: string,
   history: AiTurn[],
   token?: string | null,
+  profileContext?: string | null,
 ): Promise<{ answer: string }> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 60000);
@@ -296,7 +297,7 @@ export async function askAssistant(
     if (token) headers.Authorization = `Bearer ${token}`;
     const res = await fetch(`${API_BASE}/api/mobile/ai`, {
       method: 'POST', signal: ctrl.signal, headers,
-      body: JSON.stringify({ message, history: history.slice(-8) }),
+      body: JSON.stringify({ message, history: history.slice(-8), profileContext: profileContext || undefined }),
     });
     if (!res.ok) throw new Error(`Ошибка ${res.status}`);
     const d = await res.json();

@@ -194,18 +194,18 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
       </View>
 
       <ListSection header="Календарь">
-        <View style={{ padding: 14 }}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {Array.from({ length: c.totalDays }, (_, i) => {
-              const done = i < c.currentDay;
-              const today = i === c.currentDay - 1;
-              return (
-                <View key={i} style={{ width: '12%', aspectRatio: 1, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: done ? T.brand : T.fillTertiary, borderWidth: today ? 2 : 0, borderColor: T.orange }}>
-                  <Text style={[ty.caption2Em, { color: done ? '#fff' : T.labelSecondary }]}>{i + 1}</Text>
+        <View style={{ paddingHorizontal: 10, paddingVertical: 12, flexDirection: 'row', flexWrap: 'wrap' }}>
+          {Array.from({ length: c.totalDays }, (_, i) => {
+            const done = i < c.currentDay;
+            const today = i === c.currentDay - 1;
+            return (
+              <View key={i} style={{ width: `${100 / 7}%`, aspectRatio: 1, padding: 4 }}>
+                <View style={{ flex: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: done ? T.brand : T.fillTertiary, borderWidth: today ? 2 : 0, borderColor: T.orange }}>
+                  <Text style={[ty.footnoteEm, { color: done ? '#fff' : T.labelSecondary }]}>{i + 1}</Text>
                 </View>
-              );
-            })}
-          </View>
+              </View>
+            );
+          })}
         </View>
       </ListSection>
 

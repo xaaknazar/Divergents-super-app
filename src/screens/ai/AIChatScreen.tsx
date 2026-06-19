@@ -9,6 +9,8 @@ import { Capsule, Chip, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
 import { useMyCourses } from '../../state/useMyCourses';
 import { askAssistant, askCourseAI, mdToText, AiTurn } from '../../data/api';
+import { profileSummary } from '../../data/talentslab';
+import { useTalentProfile } from '../../state/useTalentProfile';
 import { AIStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<AIStackParams, 'AIChat'>;
@@ -25,6 +27,7 @@ export function AIChatScreen({}: Props) {
   const insets = useSafeAreaInsets();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
+  const { profile } = useTalentProfile();
   const [mode, setMode] = useState<string>(GENERAL); // 'general' | courseId
   const [byMode, setByMode] = useState<Record<string, Msg[]>>({});
   const [text, setText] = useState('');
@@ -49,7 +52,7 @@ export function AIChatScreen({}: Props) {
       const history: AiTurn[] = (byMode[mode] ?? []).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       const turns: AiTurn[] = [...history, { role: 'user', content: q }];
       const answer = isGeneral
-        ? (await askAssistant(q, turns, token)).answer
+        ? (await askAssistant(q, turns, token, profileSummary(profile))).answer
         : (await askCourseAI(mode, q, turns, token ?? '')).answer;
       const botMsg: Msg = { id: uid(), role: 'bot', text: mdToText(answer) || 'Не удалось получить ответ.' };
       setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), botMsg] }));

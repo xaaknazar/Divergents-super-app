@@ -3,13 +3,14 @@ import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge } from '../../components/headers';
+import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { Chip, SectionHeader, ty } from '../../components/ui';
 import { CourseCardPremium, FeaturedCard } from '../../components/CourseCardPremium';
 import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
+import { useNotifications } from '../../state/NotificationsContext';
 import { useUser } from '@clerk/clerk-expo';
 import { Logo } from '../../components/Logo';
 import { LMSStackParams } from '../../navigation/types';
@@ -20,6 +21,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
   const { courses, loading, error, reload, source } = useCourses();
   const my = useMyCourses();
+  const { unread } = useNotifications();
   const { user } = useUser();
   const displayName = user?.firstName || user?.fullName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
   const [query, setQuery] = useState('');
@@ -61,7 +63,7 @@ export function LMSHomeScreen({ navigation }: Props) {
 
   return (
     <Screen gradient={['#EAF0FB', '#F4F5F9', '#F2F2F7']}>
-      <NavBarLarge title="Обучение" />
+      <NavBarLarge title="Обучение" trailing={<HeaderIcon name="bell.fill" badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 14 }}>
         <Logo size={34} />

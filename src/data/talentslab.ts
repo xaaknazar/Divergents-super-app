@@ -78,8 +78,10 @@ async function reqJson(path: string, headers: Record<string, string>, timeoutMs 
 /** GET /api/mobile/profile — tries Clerk token first, then X-App-Key + email. */
 export async function fetchTalentProfile(token: string | null, email?: string | null): Promise<TalentProfile> {
   if (token) {
-    try { return normalizeProfile(await reqJson('/api/mobile/profile', { Authorization: `Bearer ${token}` })); }
-    catch { /* fall through to app-key path */ }
+    try {
+      const p = normalizeProfile(await reqJson('/api/mobile/profile', { Authorization: `Bearer ${token}` }));
+      if (p.found) return p; // only accept the Clerk result if it matched a candidate
+    } catch { /* fall through to app-key path */ }
   }
   if (email && TALENTSLAB_APP_KEY) {
     return normalizeProfile(await reqJson(`/api/mobile/profile?email=${encodeURIComponent(email)}`, { 'X-App-Key': TALENTSLAB_APP_KEY }));
@@ -233,4 +235,34 @@ export function resumeRows(r: ResumeData | null): { label: string; value: string
   add('Пол', r.gender); add('Семейное положение', r.marital_status); add('Гражданство', r.citizenship);
   add('Instagram', r.instagram);
   return rows;
+}
+
+// ─── Compact profile summary for the AI assistant ─────────────────
+export function profileSummary(p: TalentProfile | null): string {
+  if (!p || !p.found) return '';
+  const r = p.resume ?? {};
+  const lines: string[] = [];
+  if (p.fullName) lines.push(`Имя: ${p.fullName}`);
+  // age from birth_date dd.mm.yyyy
+  if (r.birth_date) {
+    const yr = parseInt(String(r.birth_date).split('.').pop() || '', 10);
+    if (yr > 1900) lines.push(`Возраст: ~${new Date().getFullYear() - yr}`);
+  }
+  if (r.current_city) lines.push(`Город: ${r.current_city}`);
+  if (r.marital_status) lines.push(`Семейное положение: ${r.marital_status}`);
+  const cur = Array.isArray(r.work_experience) ? r.work_experience.find((w: any) => w?.is_current) || r.work_experience[0] : null;
+  if (cur && typeof cur === 'object') lines.push(`Работает: ${[cur.position, cur.company].filter(Boolean).join(' в ')}`);
+  if (r.desired_position) lines.push(`Желаемая должность: ${r.desired_position}`);
+  if (r.total_experience_years) lines.push(`Опыт: ${r.total_experience_years} лет`);
+  if (r.activity_sphere) lines.push(`Сфера: ${r.activity_sphere}`);
+  if (r.expected_salary) lines.push(`Ожидания по зарплате: ${r.expected_salary}`);
+  if (r.language_skills) lines.push(`Языки: ${fmtList(r.language_skills)}`);
+  if (p.mbtiType) lines.push(`MBTI: ${p.mbtiName || p.mbtiType}`);
+  if (p.gallup.length) lines.push(`Топ таланты Gallup: ${p.gallup.slice(0, 10).map((g) => `${g.rank}. ${g.name}`).join(', ')}`);
+  if (p.gardner.length) {
+    const top = p.gardner.slice().sort((a, b) => b.score - a.score).slice(0, 4).map((g) => `${g.category} (${g.score}%)`);
+    lines.push(`Гарднер: ${top.join(', ')}`);
+  }
+  if (p.reports.length) lines.push(`Доступные отчёты: ${p.reports.map((x) => x.title).join('; ')}`);
+  return lines.join('\n');
 }

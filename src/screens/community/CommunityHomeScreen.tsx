@@ -5,12 +5,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge } from '../../components/headers';
+import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF, SFName } from '../../components/SFIcon';
 import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useEnrollment } from '../../state/EnrollmentContext';
+import { useNotifications } from '../../state/NotificationsContext';
 import {
   CHALLENGES, daysUntil, TRIPS, SPORT, LECTURES,
   Trip, SportActivity, Lecture,
@@ -25,11 +26,12 @@ const SECTIONS = ['Главная', 'Челленджи', 'Поездки', 'С�
 
 export function CommunityHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
+  const { unread } = useNotifications();
   const [seg, setSeg] = useState(0);
 
   return (
     <Screen gradient={['#E9EEFB', '#F4F5F9', '#F2F2F7']}>
-      <NavBarLarge title="Сообщество" />
+      <NavBarLarge title="Сообщество" trailing={<HeaderIcon name="bell.fill" badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
         <Text style={[ty.subhead, { color: T.labelSecondary }]}>Divergents · свои люди и общий рост</Text>
