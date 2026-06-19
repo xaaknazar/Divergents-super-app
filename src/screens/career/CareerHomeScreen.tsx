@@ -192,7 +192,7 @@ function JobCard({ job, onPress, applied, best, profile }: {
           <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{job.title}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{job.company} · {job.city}</Text>
         </View>
-        <Ring value={job.match / 100} size={50} stroke={5} color={T.brand} label={`${job.match}`} sub="%" />
+        <Ring value={job.match / 100} size={52} stroke={5} color={T.brand} label={`${job.match}%`} />
       </View>
       <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
         <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule>
