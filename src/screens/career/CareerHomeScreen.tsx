@@ -47,7 +47,6 @@ export function CareerHomeScreen({ navigation }: Props) {
       <NavBarLarge title="Карьера" />
 
       <ResumeHero navigation={navigation} />
-      <TalentsSnapshot navigation={navigation} profile={profile} />
 
       {/* Vacancies */}
       <SectionHeader title="Вакансии" />
@@ -105,7 +104,9 @@ export function CareerHomeScreen({ navigation }: Props) {
 // ─── Resume completeness hero (gradient) ───────────────────────────
 function ResumeHero({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
-  const { completeness } = useResume();
+  const { completeness: local } = useResume();
+  const { profile } = useTalentProfile();
+  const completeness = profile?.completeness ?? local;
   const filled = completeness > 0;
   return (
     <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 20, overflow: 'hidden', shadowColor: '#1E337A', shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
@@ -133,38 +134,6 @@ function ResumeHero({ navigation }: { navigation: Nav }) {
         </View>
       </LinearGradient>
     </View>
-  );
-}
-
-// ─── Strengths snapshot ────────────────────────────────────────────
-function TalentsSnapshot({ navigation, profile }: { navigation: Nav; profile: ReturnType<typeof useTalentProfile>['profile'] }) {
-  const { T } = useTheme();
-  if (!profile || profile.gallup.length === 0) return null;
-  const top = profile.gallup.slice(0, 6);
-  return (
-    <Pressable onPress={() => navigation.navigate('TalentProfile')}
-      style={{ marginHorizontal: 16, marginBottom: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <Text style={[ty.title3, { color: T.label }]}>Сильные стороны</Text>
-        {profile.mbtiType ? <Capsule bg={T.brandTinted} color={T.brand}>MBTI · {profile.mbtiType}</Capsule> : null}
-      </View>
-      <DomainBar gallup={profile.gallup} />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-        {top.map((g) => {
-          const c = GALLUP_DOMAIN_META[g.domain]?.color ?? T.brand;
-          return (
-            <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c + '18' }}>
-              <Text style={[ty.caption2Em, { color: c }]}>{g.rank}</Text>
-              <Text style={[ty.footnoteEm, { color: T.label }]}>{g.name}</Text>
-            </View>
-          );
-        })}
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, marginTop: 12 }}>
-        <Text style={[ty.subheadEm, { color: T.brand }]}>Полный профиль</Text>
-        <SF name="chevron.forward" size={12} color={T.brand} />
-      </View>
-    </Pressable>
   );
 }
 

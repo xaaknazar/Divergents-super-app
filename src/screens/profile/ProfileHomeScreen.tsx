@@ -27,8 +27,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { challenge } = useChallenge();
   const { courses, progress } = useCourses();
   const { applied } = useCareer();
-  const { completeness } = useResume();
+  const { completeness: localCompleteness } = useResume();
   const { profile } = useTalentProfile();
+  const completeness = profile?.completeness ?? localCompleteness;
   const ach = useAchievements();
   const { isSignedIn } = useAuth();
   const { user } = useUser();

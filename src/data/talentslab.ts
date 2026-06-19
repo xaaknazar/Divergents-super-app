@@ -121,7 +121,7 @@ function normalizeProfile(r: any): TalentProfile {
     resume: r?.resume ?? null,
     gallup: Array.isArray(r?.gallup) ? r.gallup : [],
     gardner: Array.isArray(r?.gardner) ? r.gardner : [],
-    reports: Array.isArray(r?.reports) ? r.reports : [],
+    reports: Array.isArray(r?.reports) ? r.reports.filter((x: any) => !String(x?.type ?? '').endsWith('_short')) : [],
   };
 }
 
