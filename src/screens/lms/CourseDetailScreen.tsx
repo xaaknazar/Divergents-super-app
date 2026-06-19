@@ -191,7 +191,7 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
     { icon: 'play.circle.fill', t: `${course.chaptersCount ?? course.lessons.length} видеоуроков` },
     { icon: 'doc.fill', t: 'Материалы и конспекты' },
     { icon: 'person.3.fill', t: 'Обсуждение с участниками' },
-    { icon: 'checkmark.seal.fill', t: 'Доступ навсегда' },
+    { icon: 'checkmark.seal.fill', t: 'Доступ на 1 год' },
   ];
 
   return (
