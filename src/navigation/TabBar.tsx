@@ -32,7 +32,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       borderTopWidth: 0.5, borderTopColor: T.separator,
       backgroundColor: isDark ? 'rgba(18,22,33,0.86)' : 'rgba(249,249,249,0.80)',
     }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 4 }}>
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const meta = TABS[route.name];
@@ -42,9 +42,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             <Pressable key={route.key} onPress={() => {
               const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
               if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
-            }} style={{ alignItems: 'center', gap: 3, paddingHorizontal: 10, minWidth: 56 }}>
-              <SF name={focused ? meta.on : meta.off} size={25} color={color} />
-              <Text style={[ty.caption2, { color, fontWeight: '500' }]}>{meta.label}</Text>
+            }} style={{ flex: 1, alignItems: 'center', gap: 3, paddingHorizontal: 2 }}>
+              <SF name={focused ? meta.on : meta.off} size={24} color={color} />
+              <Text numberOfLines={1} style={[ty.caption2, { color, fontWeight: '500', fontSize: 10, lineHeight: 13 }]}>{meta.label}</Text>
             </Pressable>
           );
         })}
