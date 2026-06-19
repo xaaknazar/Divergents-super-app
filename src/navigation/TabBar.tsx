@@ -29,7 +29,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       position: 'absolute', left: 0, right: 0, bottom: 0,
       paddingBottom: Math.max(insets.bottom, 10), paddingTop: 8,
       borderTopWidth: 0.5, borderTopColor: T.separator,
-      backgroundColor: isDark ? 'rgba(28,28,30,0.82)' : 'rgba(249,249,249,0.80)',
+      backgroundColor: isDark ? 'rgba(18,22,33,0.86)' : 'rgba(249,249,249,0.80)',
     }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start' }}>
         {state.routes.map((route, index) => {

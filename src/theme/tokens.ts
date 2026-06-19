@@ -63,25 +63,25 @@ const dark: Theme = {
   brandTintedStrong: 'rgba(124,149,255,0.26)',
 
   // System (true-black base + elevated surfaces)
-  systemBg: '#000000',
-  groupedBg: '#000000',
-  secondaryBg: '#1C1C1E',
-  cardBg: '#1C1C1E',
-  tertiaryBg: '#2C2C2E',
-  fillPrimary: 'rgba(120,120,128,0.36)',
-  fillSecondary: 'rgba(120,120,128,0.32)',
-  fillTertiary: 'rgba(118,118,128,0.24)',
-  fillQuaternary: 'rgba(116,116,128,0.18)',
+  systemBg: '#0B0E16',
+  groupedBg: '#0B0E16',
+  secondaryBg: '#161B26',
+  cardBg: '#161B26',
+  tertiaryBg: '#1F2533',
+  fillPrimary: 'rgba(130,140,170,0.26)',
+  fillSecondary: 'rgba(130,140,170,0.20)',
+  fillTertiary: 'rgba(130,140,170,0.15)',
+  fillQuaternary: 'rgba(130,140,170,0.10)',
 
   // Label
-  label: '#FFFFFF',
-  labelSecondary: 'rgba(235,235,245,0.60)',
-  labelTertiary: 'rgba(235,235,245,0.30)',
-  labelQuaternary: 'rgba(235,235,245,0.18)',
+  label: '#F5F7FB',
+  labelSecondary: 'rgba(228,233,243,0.64)',
+  labelTertiary: 'rgba(228,233,243,0.38)',
+  labelQuaternary: 'rgba(228,233,243,0.22)',
 
   // Separator
-  separator: 'rgba(84,84,88,0.65)',
-  separatorOpaque: '#38383A',
+  separator: 'rgba(255,255,255,0.10)',
+  separatorOpaque: '#2A3140',
 
   // Semantic (iOS dark variants)
   green: '#30D158',
@@ -103,7 +103,7 @@ const dark: Theme = {
   skyBadgeBg: 'rgba(56,189,248,0.16)',
   emeraldText: '#6EE7B7',
   emeraldBadgeBg: 'rgba(16,185,129,0.18)',
-  cardBorder: 'rgba(255,255,255,0.10)',
+  cardBorder: 'rgba(255,255,255,0.08)',
 };
 
 export const lightTheme: Theme = light;
