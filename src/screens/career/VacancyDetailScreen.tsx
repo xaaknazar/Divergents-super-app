@@ -8,6 +8,8 @@ import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
 import { getJob } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
+import { useTalentProfile } from '../../state/useTalentProfile';
+import { talentMatch } from '../../data/talentslab';
 import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'VacancyDetail'>;
@@ -16,6 +18,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const job = getJob(route.params.jobId);
   const { isApplied, isSaved, apply, toggleSave } = useCareer();
+  const { profile } = useTalentProfile();
   if (!job) return <Screen gradient={['#EAF4EF', '#F2F2F7']}><View /></Screen>;
   const applied = isApplied(job.id);
 
@@ -55,17 +58,26 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.reason}</Text>
       </View>
 
-      {/* Why you fit — talents */}
-      <ListSection header="Почему вам подходит">
-        <View style={{ padding: 14 }}>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]}>Совпадающие таланты Gallup:</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {job.talents.map((t) => (
-              <Capsule key={t} bg={T.brandTinted} color={T.brand}><SF name="checkmark" size={11} color={T.brand} />{t}</Capsule>
-            ))}
-          </View>
-        </View>
-      </ListSection>
+      {/* Why you fit — talents (matched against your Gallup profile) */}
+      {(() => {
+        const m = talentMatch(job.talents, profile?.gallup ?? []);
+        return (
+          <ListSection header="Почему вам подходит">
+            <View style={{ padding: 14 }}>
+              <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]}>
+                Таланты Gallup для роли · совпадает {m.matched} из {m.total} ваших
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {m.items.map((it) => (
+                  <Capsule key={it.name} bg={it.has ? 'rgba(52,199,89,0.14)' : T.fillTertiary} color={it.has ? T.green : T.labelSecondary}>
+                    <SF name={it.has ? 'checkmark.circle.fill' : 'circle'} size={11} color={it.has ? T.green : T.labelTertiary} />{it.name}
+                  </Capsule>
+                ))}
+              </View>
+            </View>
+          </ListSection>
+        );
+      })()}
 
       {/* Good Boss / Good Company */}
       <ListSection header="Good Boss">

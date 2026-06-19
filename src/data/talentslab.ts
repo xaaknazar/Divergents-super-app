@@ -138,3 +138,37 @@ export const MOCK_PROFILE: TalentProfile = {
     { type: 'gardner', title: 'Гарднер — множественный интеллект', url: 'https://talentslab.kz' },
   ],
 };
+
+// ─── Gallup theme canonicalization (EN ↔ RU) for talent matching ───
+const GALLUP_CANON: Record<string, string> = {};
+const _themes: [string, string[]][] = [
+  ['achiever', ['достижение']], ['arranger', ['организатор']], ['belief', ['вера']],
+  ['consistency', ['последовательность']], ['deliberative', ['рассудительность']],
+  ['discipline', ['дисциплина']], ['focus', ['сосредоточенность', 'фокус']],
+  ['responsibility', ['ответственность']], ['restorative', ['восстановление']],
+  ['activator', ['активатор']], ['command', ['командование']], ['communication', ['коммуникация']],
+  ['competition', ['соревнование']], ['maximizer', ['максимизатор']],
+  ['self-assurance', ['уверенность в себе']], ['significance', ['значимость']], ['woo', ['обаяние']],
+  ['adaptability', ['адаптивность']], ['connectedness', ['взаимосвязанность']], ['developer', ['развитие']],
+  ['empathy', ['эмпатия']], ['harmony', ['гармония']], ['includer', ['сопричастность']],
+  ['individualization', ['индивидуализация']], ['positivity', ['позитивность']], ['relator', ['близость']],
+  ['analytical', ['аналитик', 'аналитика']], ['context', ['контекст']], ['futuristic', ['ориентация на будущее']],
+  ['ideation', ['идеация']], ['input', ['сбор информации']], ['intellection', ['интеллект']],
+  ['learner', ['обучаемость']], ['strategic', ['стратегия', 'стратег']],
+];
+for (const [en, ru] of _themes) {
+  GALLUP_CANON[en] = en;
+  for (const r of ru) GALLUP_CANON[r] = en;
+}
+
+export function gallupCanon(name: string): string {
+  return GALLUP_CANON[name.trim().toLowerCase()] ?? name.trim().toLowerCase();
+}
+
+/** Match a job's required talents against the user's Gallup themes. */
+export function talentMatch(jobTalents: string[], userGallup: { name: string }[]) {
+  const set = new Set(userGallup.map((g) => gallupCanon(g.name)));
+  const items = jobTalents.map((t) => ({ name: t, has: set.has(gallupCanon(t)) }));
+  return { items, matched: items.filter((i) => i.has).length, total: items.length };
+}
+

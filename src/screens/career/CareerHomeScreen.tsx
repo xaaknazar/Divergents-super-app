@@ -10,7 +10,7 @@ import { JOBS, CAREER_FILTERS, GOOD_FIT, Job } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
 import { useResume } from '../../state/useResume';
 import { useTalentProfile } from '../../state/useTalentProfile';
-import { GALLUP_DOMAIN_META, mbtiName } from '../../data/talentslab';
+import { GALLUP_DOMAIN_META, mbtiName, talentMatch } from '../../data/talentslab';
 import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'CareerHome'>;
@@ -29,6 +29,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
   const [filter, setFilter] = useState(0);
   const { applied, isApplied } = useCareer();
+  const { profile } = useTalentProfile();
 
   const sorted = useMemo(() => [...JOBS].sort((a, b) => b.match - a.match), []);
   const best = sorted[0];
@@ -79,6 +80,9 @@ export function CareerHomeScreen({ navigation }: Props) {
               <Capsule bg={T.fillTertiary} color={T.label}>{best.format}</Capsule>
               <Capsule bg={T.fillTertiary} color={T.label}>{best.salary}</Capsule>
               <Capsule bg={T.fillTertiary} color={T.label}>{best.level}</Capsule>
+              {(() => { const m = talentMatch(best.talents, profile?.gallup ?? []); return m.matched > 0 ? (
+                <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />{m.matched} ваших таланта</Capsule>
+              ) : null; })()}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 16, marginTop: 14, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: T.separator }}>
               <View>

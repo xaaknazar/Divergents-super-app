@@ -1,16 +1,17 @@
 import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, IconCircle, IconSquircle, ListSection, ListRow, Segmented, ty } from '../../components/ui';
-import { TALENTS, REPORTS } from '../../data/profile';
 import { JOBS } from '../../data/career';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
+import { useTalentProfile } from '../../state/useTalentProfile';
+import { GALLUP_DOMAIN_META, mbtiName } from '../../data/talentslab';
 import { useAchievements } from '../../data/achievements';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
@@ -23,6 +24,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { courses, progress } = useCourses();
   const { applied } = useCareer();
   const ach = useAchievements();
+  const { profile } = useTalentProfile();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -105,35 +107,52 @@ export function ProfileHomeScreen({ navigation }: Props) {
         </ListSection>
       ) : null}
 
-      {/* Top talents (Divergents profile feature) */}
-      <ListSection header="Топ талантов Gallup">
-        {TALENTS.map((tn, i) => (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16 }}>
-            <Text style={[ty.footnoteEm, { color: T.labelSecondary, width: 24 }]}>{String(tn.i).padStart(2, '0')}</Text>
-            <Text style={[ty.body, { color: T.label, width: 100 }]}>{tn.t}</Text>
-            <View style={{ flex: 1 }}><ProgressBar value={tn.v} /></View>
-            <Text style={[ty.footnoteEm, { color: T.labelSecondary, width: 36, textAlign: 'right' }]}>{Math.round(tn.v * 100)}</Text>
-            {i < TALENTS.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 52, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
-          </View>
-        ))}
-        <ListRow title="Смотреть все 34 таланта" valueColor={T.brand} chevron last leading={<View style={{ width: 24 }} />} />
-      </ListSection>
-
-      {/* Reports */}
-      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 36, paddingTop: 16, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Отчёты Divergents</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 10 }}>
-        {REPORTS.map((r) => (
-          <View key={r.k} style={{ width: '47.6%', backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
-            <IconSquircle icon={r.icon} bg={r.color} size={32} />
-            <Text style={[ty.headline, { color: T.label, marginTop: 10 }]}>{r.k}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]}>{r.name}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-              <SF name="checkmark.circle.fill" size={11} color={T.green} />
-              <Text style={[ty.caption2Em, { color: T.green }]}>Готов</Text>
+      {/* MBTI + Top Gallup talents (Talentslab) */}
+      {profile?.mbtiType ? (
+        <ListSection header="Тип личности">
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
+            <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={[ty.subheadEm, { color: '#fff' }]}>{profile.mbtiType}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[ty.body, { color: T.label }]}>MBTI · {mbtiName(profile.mbtiType)}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary }]}>по тесту Talentslab</Text>
             </View>
           </View>
-        ))}
-      </View>
+        </ListSection>
+      ) : null}
+
+      {(profile?.gallup ?? []).length > 0 ? (
+        <ListSection header="Топ талантов Gallup">
+          {profile!.gallup.slice(0, 8).map((g, i, arr) => {
+            const c = GALLUP_DOMAIN_META[g.domain]?.color ?? T.brand;
+            return (
+              <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16 }}>
+                <Text style={[ty.footnoteEm, { color: T.labelSecondary, width: 24 }]}>{String(g.rank).padStart(2, '0')}</Text>
+                <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{g.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c }} />
+                  <Text style={[ty.caption2, { color: T.labelSecondary }]}>{GALLUP_DOMAIN_META[g.domain]?.label}</Text>
+                </View>
+                {i < arr.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 52, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+              </View>
+            );
+          })}
+          <ListRow title="Открыть в разделе «Карьера»" valueColor={T.brand} chevron last leading={<View style={{ width: 24 }} />} onPress={goCareer} />
+        </ListSection>
+      ) : null}
+
+      {/* Reports (Talentslab) */}
+      {(profile?.reports ?? []).length > 0 ? (
+        <ListSection header="Отчёты">
+          {profile!.reports.map((r, i) => (
+            <ListRow key={i} onPress={() => Linking.openURL(r.url)}
+              leading={<SF name="doc.fill" size={20} color={T.brand} />}
+              title={r.title} trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />}
+              last={i === profile!.reports.length - 1} />
+          ))}
+        </ListSection>
+      ) : null}
 
       {/* Active challenge (real, only when active) */}
       {challengeActive ? (
