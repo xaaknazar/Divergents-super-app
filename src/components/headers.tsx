@@ -9,13 +9,9 @@ import { SF } from './SFIcon';
 export function NavBarLarge({ title, trailing }: { title: string; trailing?: React.ReactNode }) {
   const { T } = useTheme();
   return (
-    <View>
-      <View style={{ height: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 16 }}>
-        <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>{trailing}</View>
-      </View>
-      <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }}>
-        <Text style={[ty.largeTitle, { color: T.label }]}>{title}</Text>
-      </View>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 8, minHeight: 48 }}>
+      <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={1}>{title}</Text>
+      {trailing ? <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', paddingLeft: 12 }}>{trailing}</View> : null}
     </View>
   );
 }
