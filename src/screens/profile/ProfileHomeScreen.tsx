@@ -8,7 +8,7 @@ import { Screen } from '../../components/Screen';
 import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { Capsule, IconCircle, ListSection, ListRow, Segmented, ty } from '../../components/ui';
-import { Ring, DomainBar } from '../../components/talentUI';
+import { Ring } from '../../components/talentUI';
 import { JOBS } from '../../data/career';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
@@ -136,7 +136,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {(profile?.gallup ?? []).length > 0 ? (
         <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={[ty.title3, { color: T.label }]}>Сильные стороны</Text>
+            <Text style={[ty.title3, { color: T.label }]}>Сильные стороны · CliftonStrengths</Text>
             {!live ? (
               <Pressable onPress={reload} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
@@ -144,9 +144,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
               </Pressable>
             ) : null}
           </View>
-          <DomainBar gallup={profile!.gallup} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-            {profile!.gallup.slice(0, 5).map((g) => {
+            {profile!.gallup.slice(0, 10).map((g) => {
               const c = GALLUP_DOMAIN_META[g.domain]?.color ?? T.brand;
               return (
                 <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c + '18' }}>
@@ -155,10 +154,6 @@ export function ProfileHomeScreen({ navigation }: Props) {
                 </View>
               );
             })}
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, marginTop: 12 }}>
-            <Text style={[ty.subheadEm, { color: T.brand }]}>Полный профиль в «Карьере»</Text>
-            <SF name="chevron.forward" size={12} color={T.brand} />
           </View>
         </View>
       ) : null}

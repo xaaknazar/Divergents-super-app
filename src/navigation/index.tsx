@@ -36,7 +36,7 @@ import { NotificationsScreen } from '../screens/notifications/NotificationsScree
 const LMSStack = createNativeStackNavigator<LMSStackParams>();
 function LMSNavigator() {
   return (
-    <LMSStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }}>
+    <LMSStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <LMSStack.Screen name="LMSHome" component={LMSHomeScreen} />
       <LMSStack.Screen name="Catalog" component={CatalogScreen} />
       <LMSStack.Screen name="CourseDetail" component={CourseDetailScreen} />
@@ -48,7 +48,7 @@ function LMSNavigator() {
 const CommunityStack = createNativeStackNavigator<CommunityStackParams>();
 function CommunityNavigator() {
   return (
-    <CommunityStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }}>
+    <CommunityStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <CommunityStack.Screen name="CommunityHome" component={CommunityHomeScreen} />
       <CommunityStack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <CommunityStack.Screen name="JoinChallenge" component={JoinChallengeScreen} options={{ presentation: 'modal' }} />
@@ -60,7 +60,7 @@ function CommunityNavigator() {
 const AIStack = createNativeStackNavigator<AIStackParams>();
 function AINavigator() {
   return (
-    <AIStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }}>
+    <AIStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <AIStack.Screen name="AIChat" component={AIChatScreen} />
     </AIStack.Navigator>
   );
@@ -69,7 +69,7 @@ function AINavigator() {
 const MapStack = createNativeStackNavigator<MapStackParams>();
 function MapNavigator() {
   return (
-    <MapStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }}>
+    <MapStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <MapStack.Screen name="MapHome" component={MapHomeScreen} />
       <MapStack.Screen name="PlaceDetail" component={PlaceDetailScreen} />
       <MapStack.Screen name="AddPlace" component={AddPlaceScreen} options={{ presentation: 'modal' }} />
@@ -80,7 +80,7 @@ function MapNavigator() {
 const CareerStack = createNativeStackNavigator<CareerStackParams>();
 function CareerNavigator() {
   return (
-    <CareerStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }}>
+    <CareerStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <CareerStack.Screen name="CareerHome" component={CareerHomeScreen} />
       <CareerStack.Screen name="VacancyDetail" component={VacancyDetailScreen} />
       <CareerStack.Screen name="Resume" component={ResumeFormScreen} options={{ presentation: 'modal' }} />
@@ -92,7 +92,7 @@ function CareerNavigator() {
 const ProfileStack = createNativeStackNavigator<ProfileStackParams>();
 function ProfileNavigator() {
   return (
-    <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }}>
+    <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <ProfileStack.Screen name="ProfileHome" component={ProfileHomeScreen} />
       <ProfileStack.Screen name="Achievements" component={AchievementsScreen} />
       <ProfileStack.Screen name="Personalize" component={PersonalizeScreen} />
@@ -120,7 +120,7 @@ export function RootNavigator() {
   useEffect(() => { isOnboarded().then((o) => setInitial(o ? 'Tabs' : 'Onboarding')); }, []);
   if (!initial) return null;
   return (
-    <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true, freezeOnBlur: true }} initialRouteName={initial}>
+    <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }} initialRouteName={initial}>
       <Root.Screen name="Onboarding" component={OnboardingScreen} options={{ presentation: 'fullScreenModal' }} />
       <Root.Screen name="Auth" component={AuthScreen} options={{ presentation: 'modal' }} />
       <Root.Screen name="Tabs" component={Tabs} />

@@ -120,16 +120,11 @@ function ResumeHero({ navigation }: { navigation: Nav }) {
             </Text>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+        <View style={{ marginTop: 16 }}>
           <Pressable onPress={() => navigation.navigate('Resume')}
-            style={{ flex: 1, height: 44, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+            style={{ height: 46, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
             <SF name={filled ? 'square.and.arrow.up' : 'plus'} size={15} color="#1E337A" />
-            <Text style={[ty.headline, { color: '#1E337A' }]}>{filled ? 'Анкета' : 'Заполнить'}</Text>
-          </Pressable>
-          <Pressable onPress={() => navigation.navigate('TalentProfile')}
-            style={{ flex: 1, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-            <SF name="person.crop.circle.fill" size={15} color="#fff" />
-            <Text style={[ty.headline, { color: '#fff' }]}>Профиль</Text>
+            <Text style={[ty.headline, { color: '#1E337A' }]}>{filled ? 'Редактировать анкету' : 'Заполнить анкету'}</Text>
           </Pressable>
         </View>
       </LinearGradient>
