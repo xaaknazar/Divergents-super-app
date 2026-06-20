@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ty } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { SF, SFName } from '../components/SFIcon';
+import { hSelect } from '../lib/haptics';
 
 const TABS: Record<string, { label: string; on: SFName; off: SFName }> = {
   LMSTab: { label: 'Обучение', on: 'book.fill', off: 'book' },

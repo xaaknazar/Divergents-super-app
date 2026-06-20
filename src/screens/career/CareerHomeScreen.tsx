@@ -43,7 +43,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const open = (id: string) => navigation.navigate('VacancyDetail', { jobId: id });
 
   return (
-    <Screen>
+    <Screen largeTitle="Карьера">
       <NavBarLarge title="Карьера" />
 
       <ResumeHero navigation={navigation} />

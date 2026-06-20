@@ -30,7 +30,7 @@ export function CommunityHomeScreen({ navigation }: Props) {
   const [seg, setSeg] = useState(0);
 
   return (
-    <Screen gradient={['#E9EEFB', '#F4F5F9', '#F2F2F7']}>
+    <Screen largeTitle="Сообщество">
       <NavBarLarge title="Сообщество" trailing={<HeaderIcon name="bell.fill" badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />

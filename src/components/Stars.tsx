@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Pressable } from 'react-native';
 import { SF } from './SFIcon';
 import { useTheme } from '../theme/ThemeContext';
+import { hSelect } from '../lib/haptics';
 
 export function Stars({ value, size = 14, onChange, color }: { value: number; size?: number; onChange?: (v: number) => void; color?: string }) {
   const { T } = useTheme();
@@ -12,7 +13,7 @@ export function Stars({ value, size = 14, onChange, color }: { value: number; si
         const filled = i <= Math.round(value);
         const star = <SF name={filled ? 'star.fill' : 'star'} size={size} color={filled ? c : T.labelTertiary} />;
         return onChange
-          ? <Pressable key={i} onPress={() => onChange(i)} hitSlop={6}>{star}</Pressable>
+          ? <Pressable key={i} onPress={() => { hSelect(); onChange(i); }} hitSlop={6}>{star}</Pressable>
           : <View key={i}>{star}</View>;
       })}
     </View>

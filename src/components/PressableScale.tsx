@@ -2,6 +2,7 @@
 // Native driver → runs off the JS thread, stays smooth.
 import React, { useRef } from 'react';
 import { Animated, Pressable, StyleProp, ViewStyle, GestureResponderEvent } from 'react-native';
+import { hSelect } from '../lib/haptics';
 
 export function PressableScale({
   children, onPress, style, scaleTo = 0.97, disabled, accessibilityLabel,
@@ -22,7 +23,7 @@ export function PressableScale({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      onPressIn={() => to(scaleTo)}
+      onPressIn={() => { hSelect(); to(scaleTo); }}
       onPressOut={() => to(1, 5)}
     >
       <Animated.View style={[{ transform: [{ scale }] }, style]}>{children}</Animated.View>

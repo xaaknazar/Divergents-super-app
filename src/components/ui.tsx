@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Pressable, ActivityIndicator, StyleProp, ViewStyle } from 'react-native';
 import { T as LIGHT, ty } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
+import { hTap, hSelect } from '../lib/haptics';
 import { SF, SFName } from './SFIcon';
 
 export function ProgressBar({
@@ -148,7 +149,7 @@ export function Segmented({
       {items.map((s, i) => {
         const on = i === value;
         return (
-          <Pressable key={i} onPress={() => onChange?.(i)} accessibilityRole="button" style={{
+          <Pressable key={i} onPress={() => { hSelect(); onChange?.(i); }} accessibilityRole="button" style={{
             flex: 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center',
             backgroundColor: on ? T.systemBg : 'transparent', borderRadius: 7,
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
@@ -167,7 +168,7 @@ export function Chip({
 }: { label: string; active?: boolean; icon?: SFName | string; onPress?: () => void }) {
   const { T } = useTheme();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={{
+    <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} accessibilityRole="button" style={{
       flexDirection: 'row', alignItems: 'center', gap: 5,
       paddingVertical: 7, paddingHorizontal: 14, borderRadius: 18,
       backgroundColor: active ? T.brand : T.cardBg,
@@ -186,7 +187,7 @@ export function PrimaryButton({
   const _color = color ?? T.brand;
   const fg = textColor ?? (_color === 'transparent' ? T.brand : '#fff');
   return (
-    <Pressable onPress={onPress} disabled={disabled || loading} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} style={({ pressed }) => [{
+    <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} style={({ pressed }) => [{
       height: 50, borderRadius: 14, backgroundColor: _color, flexDirection: 'row',
       alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pressed || disabled ? 0.85 : 1,
     }, style]}>

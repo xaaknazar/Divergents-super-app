@@ -79,7 +79,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   );
 
   return (
-    <Screen>
+    <Screen largeTitle="Профиль">
       <NavBarLarge title="Профиль" />
 
       {/* Gradient hero card */}

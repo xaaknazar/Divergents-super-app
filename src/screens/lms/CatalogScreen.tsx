@@ -50,7 +50,7 @@ export function CatalogScreen({ navigation }: Props) {
   ];
 
   return (
-    <Screen gradient={['#EAF0FB', '#F4F5F9', '#F2F2F7']}>
+    <Screen largeTitle="Каталог">
       <NavBarLarge title="Каталог" />
 
       {loading ? (
