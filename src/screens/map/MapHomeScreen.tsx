@@ -24,6 +24,7 @@ export function MapHomeScreen({ navigation }: Props) {
   const [tags, setTags] = useState<PlaceTag[]>([]);
   const [q, setQ] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [selId, setSelId] = useState<string | null>(null);
   const mapRef = useRef<MapView>(null);
 
   const center = cityCenter(country, city);
@@ -31,6 +32,7 @@ export function MapHomeScreen({ navigation }: Props) {
   const cityName = center?.name ?? '';
 
   const list = useMemo(() => filterPlaces(places, country, city, cat, tags, q), [places, country, city, cat, tags, q]);
+  const sel = selId ? places.find((p) => p.id === selId) : null;
 
   useEffect(() => {
     if (center && mapRef.current) {
@@ -89,7 +91,7 @@ export function MapHomeScreen({ navigation }: Props) {
               {list.map((p) => (
                 <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} title={p.name}
                   description={p.highlights} pinColor={CATEGORY_META[p.category].color}
-                  onCalloutPress={() => openPlace(p.id)} />
+                  onPress={() => setSelId(p.id)} />
               ))}
             </MapView>
           ) : null}
@@ -131,6 +133,49 @@ export function MapHomeScreen({ navigation }: Props) {
             ))}
           </ScrollView>
         </View>
+      </Modal>
+
+      {/* Place peek bottom-sheet */}
+      <Modal visible={!!sel} animationType="slide" transparent onRequestClose={() => setSelId(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setSelId(null)} />
+        {sel ? (
+          <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16 }}>
+            <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
+            <View style={{ paddingHorizontal: 20 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: CATEGORY_META[sel.category].color + '22', alignItems: 'center', justifyContent: 'center' }}>
+                  <SF name={CATEGORY_META[sel.category].icon} size={24} color={CATEGORY_META[sel.category].color} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{sel.name}</Text>
+                    {sel.approved ? <SF name="checkmark.seal.fill" size={15} color="#0EA5E9" /> : null}
+                  </View>
+                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{CATEGORY_META[sel.category].label} · {sel.hours}</Text>
+                </View>
+                {ratingOf(sel) > 0 ? (
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={[ty.headline, { color: T.label }]}>{ratingOf(sel).toFixed(1)}</Text>
+                    <Stars value={ratingOf(sel)} size={11} />
+                  </View>
+                ) : null}
+              </View>
+              <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 12 }]} numberOfLines={3}>{sel.highlights}</Text>
+              {sel.tags.length > 0 ? (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                  {sel.tags.slice(0, 5).map((t) => (
+                    <Capsule key={t} bg={T.brandTinted} color={T.brand}><SF name={TAG_META[t].icon} size={10} color={T.brand} />{TAG_META[t].label}</Capsule>
+                  ))}
+                </View>
+              ) : null}
+              <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }}
+                style={{ marginTop: 16, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+                <Text style={[ty.headline, { color: '#fff' }]}>Подробнее и отзывы</Text>
+                <SF name="chevron.forward" size={15} color="#fff" />
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
       </Modal>
     </View>
   );

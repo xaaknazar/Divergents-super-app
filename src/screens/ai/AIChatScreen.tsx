@@ -7,6 +7,9 @@ import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { Capsule, Chip, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
+import { MarkdownText } from '../../components/MarkdownText';
+import * as Clipboard from 'expo-clipboard';
+import { hSuccess } from '../../lib/haptics';
 import { useMyCourses } from '../../state/useMyCourses';
 import { askAssistant, askCourseAI, mdToText, AiTurn } from '../../data/api';
 import { profileSummary } from '../../data/talentslab';
@@ -39,6 +42,18 @@ export function AIChatScreen({}: Props) {
   const messages = useMemo(() => byMode[mode] ?? [], [byMode, mode]);
   const quick = isGeneral ? QUICK_GENERAL : QUICK_COURSE;
 
+  const streamInto = (m: string, id: string, full: string) => {
+    let i = 0;
+    const tick = () => {
+      i = Math.min(full.length, i + 4);
+      setByMode((p) => ({ ...p, [m]: (p[m] ?? []).map((msg) => (msg.id === id ? { ...msg, text: full.slice(0, i) } : msg)) }));
+      if (i % 80 === 0) scrollRef.current?.scrollToEnd({ animated: true });
+      if (i < full.length) setTimeout(tick, 16);
+      else scrollRef.current?.scrollToEnd({ animated: true });
+    };
+    tick();
+  };
+
   const send = async (body: string) => {
     const q = body.trim();
     if (!q || busy) return;
@@ -54,8 +69,10 @@ export function AIChatScreen({}: Props) {
       const answer = isGeneral
         ? (await askAssistant(q, turns, token, profileSummary(profile))).answer
         : (await askCourseAI(mode, q, turns, token ?? '')).answer;
-      const botMsg: Msg = { id: uid(), role: 'bot', text: mdToText(answer) || 'Не удалось получить ответ.' };
-      setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), botMsg] }));
+      const full = (answer && answer.trim()) ? answer : 'Не удалось получить ответ.';
+      const botId = uid();
+      setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), { id: botId, role: 'bot', text: '' }] }));
+      streamInto(mode, botId, full);
     } catch (e: any) {
       const botMsg: Msg = { id: uid(), role: 'bot', text: e?.message ? `⚠️ ${e.message}` : '⚠️ Ошибка соединения.' };
       setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), botMsg] }));
@@ -113,8 +130,16 @@ export function AIChatScreen({}: Props) {
                 borderBottomLeftRadius: m.role === 'user' ? 18 : 4,
                 paddingVertical: 12, paddingHorizontal: 14,
               }}>
-                <Text style={[ty.body, { color: m.role === 'user' ? '#fff' : T.label }]}>{m.text}</Text>
+                {m.role === 'user'
+                  ? <Text style={[ty.body, { color: '#fff' }]}>{m.text}</Text>
+                  : <MarkdownText text={m.text} color={T.label} />}
               </View>
+              {m.role === 'bot' && m.text.length > 0 ? (
+                <Pressable onPress={() => { Clipboard.setStringAsync(m.text); hSuccess(); }} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, paddingHorizontal: 4 }}>
+                  <SF name="square.and.arrow.up" size={12} color={T.labelTertiary} />
+                  <Text style={[ty.caption2, { color: T.labelTertiary }]}>Копировать</Text>
+                </Pressable>
+              ) : null}
             </View>
           ))}
 
