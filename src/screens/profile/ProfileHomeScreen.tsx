@@ -25,7 +25,7 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 export function ProfileHomeScreen({ navigation }: Props) {
   const { T, mode, setMode } = useTheme();
   const { challenge } = useChallenge();
-  const { courses, progress } = useCourses();
+  const { courses, progress, reload: reloadCourses } = useCourses();
   const { applied } = useCareer();
   const { completeness: localCompleteness } = useResume();
   const { profile, live, reload } = useTalentProfile();
@@ -79,7 +79,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   );
 
   return (
-    <Screen largeTitle="Профиль">
+    <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await reload(); }}>
       <NavBarLarge title="Профиль" />
 
       {/* Gradient hero card */}

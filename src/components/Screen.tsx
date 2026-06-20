@@ -1,7 +1,7 @@
 // Screen scaffold: themed bg + Aurora backdrop + safe-area inset, with an
 // optional collapsing blurred header that fades in on scroll (iOS large-title style).
-import React, { useRef } from 'react';
-import { View, ScrollView, Animated, StyleProp, ViewStyle, Text } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, ScrollView, Animated, RefreshControl, StyleProp, ViewStyle, Text } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
@@ -9,7 +9,7 @@ import { ty } from '../theme/tokens';
 import { Aurora } from './Aurora';
 
 export function Screen({
-  children, bg, scroll = true, tabPadding = true, contentStyle, topInset = true, gradient, aurora = true, largeTitle,
+  children, bg, scroll = true, tabPadding = true, contentStyle, topInset = true, gradient, aurora = true, largeTitle, onRefresh,
 }: {
   children: React.ReactNode;
   bg?: string;
@@ -20,6 +20,7 @@ export function Screen({
   gradient?: string[];
   aurora?: boolean;
   largeTitle?: string;
+  onRefresh?: () => void | Promise<void>;
 }) {
   const { T, isDark } = useTheme();
   const _bg = bg ?? T.groupedBg;
@@ -27,6 +28,8 @@ export function Screen({
   const top = topInset ? insets.top : 0;
   const bottom = tabPadding ? insets.bottom + 64 : insets.bottom;
   const scrollY = useRef(new Animated.Value(0)).current;
+  const [refreshing, setRefreshing] = useState(false);
+  const doRefresh = async () => { if (!onRefresh) return; setRefreshing(true); try { await onRefresh(); } finally { setRefreshing(false); } };
 
   const headerOpacity = scrollY.interpolate({ inputRange: [44, 92], outputRange: [0, 1], extrapolate: 'clamp' });
 
@@ -41,6 +44,7 @@ export function Screen({
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+          refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={doRefresh} tintColor={T.brand} /> : undefined}
         >
           {children}
         </Animated.ScrollView>

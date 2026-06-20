@@ -62,7 +62,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   const showSearch = !query && cat === 'Все';
 
   return (
-    <Screen largeTitle="Обучение">
+    <Screen largeTitle="Обучение" onRefresh={async () => { reload(); await my.reload(); }}>
       <NavBarLarge title="Обучение" trailing={<HeaderIcon name="bell.fill" badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 14 }}>

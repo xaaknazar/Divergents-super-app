@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, Animated } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,10 +10,11 @@ import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ProgressBar, ty } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
+import { hSuccess } from '../../lib/haptics';
 import { useChallenge } from '../../state/ChallengeContext';
 import {
   MEDAL_FOR_RANK, getChallengeMeta, daysUntil,
-  CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, CHALLENGE_TEAMS,
+  CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, CHALLENGE_TEAMS, taskDone,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -159,6 +160,16 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const { T } = useTheme();
   const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints } = useChallenge();
   const c = challenge;
+  const insets = useSafeAreaInsets();
+  const allDone = c.tasks.every(taskDone);
+  const [celebrate, setCelebrate] = useState(false);
+  const prevDone = useRef(allDone);
+  const cel = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (allDone && !prevDone.current) { setCelebrate(true); hSuccess(); setTimeout(() => setCelebrate(false), 2600); }
+    prevDone.current = allDone;
+  }, [allDone]);
+  useEffect(() => { Animated.spring(cel, { toValue: celebrate ? 1 : 0, useNativeDriver: true, speed: 14, bounciness: 8 }).start(); }, [celebrate]);
   const ringPct = c.currentDay / c.totalDays;
   const r = 47;
   const circ = 2 * Math.PI * r;
@@ -166,6 +177,12 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <BackNav back="Сообщество" onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
+      <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
+        <View style={{ backgroundColor: T.brand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <Text style={{ fontSize: 18 }}>🎉</Text>
+          <Text style={[ty.headline, { color: '#fff' }]}>День закрыт! Серия {c.currentDay} 🔥</Text>
+        </View>
+      </Animated.View>
       <Screen tabPadding={false} topInset={false}>
 
       <View style={{ padding: 20, paddingBottom: 16 }}>

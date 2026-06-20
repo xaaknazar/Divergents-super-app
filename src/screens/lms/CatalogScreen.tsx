@@ -50,7 +50,7 @@ export function CatalogScreen({ navigation }: Props) {
   ];
 
   return (
-    <Screen largeTitle="Каталог">
+    <Screen largeTitle="Каталог" onRefresh={reload}>
       <NavBarLarge title="Каталог" />
 
       {loading ? (

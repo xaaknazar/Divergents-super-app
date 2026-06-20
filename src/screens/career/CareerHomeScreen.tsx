@@ -32,7 +32,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
   const [filter, setFilter] = useState(0);
   const { applied, isApplied } = useCareer();
-  const { profile } = useTalentProfile();
+  const { profile, reload: reloadProfile } = useTalentProfile();
 
   const sorted = useMemo(() => [...JOBS].sort((a, b) => b.match - a.match), []);
   const best = sorted[0];
@@ -43,7 +43,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const open = (id: string) => navigation.navigate('VacancyDetail', { jobId: id });
 
   return (
-    <Screen largeTitle="Карьера">
+    <Screen largeTitle="Карьера" onRefresh={async () => { await reloadProfile(); }}>
       <NavBarLarge title="Карьера" />
 
       <ResumeHero navigation={navigation} />
