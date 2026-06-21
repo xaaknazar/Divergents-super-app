@@ -47,7 +47,7 @@ export function HeaderIcon({ name, color, size = 20, onPress, badge }: {
     <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" accessibilityLabel={name} style={{ position: 'relative' }}>
       <SF name={name} size={size} color={_color} />
       {badge ? (
-        <View style={{ position: 'absolute', top: -4, right: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
+        <View style={{ position: 'absolute', top: -4, right: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
           <Text style={[ty.caption2Em, { color: '#fff' }]}>{badge}</Text>
         </View>
       ) : null}

@@ -19,7 +19,7 @@ type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
 
 export function LMSHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
-  const { courses, loading, error, reload, source } = useCourses();
+  const { courses, loading, error, reload, source, progress } = useCourses();
   const my = useMyCourses();
   const { unread } = useNotifications();
   const { user } = useUser();
@@ -29,7 +29,7 @@ export function LMSHomeScreen({ navigation }: Props) {
 
   const ownedProgress = useMemo(() => {
     const m: Record<string, number> = {};
-    my.courses.forEach((c) => { m[c.id] = c.serverProgress ?? 0; });
+    my.courses.forEach((c) => { m[c.id] = Math.max(Math.round(c.serverProgress ?? 0), Math.round(progress(c.id) * 100)); });
     return m;
   }, [my.courses]);
 
@@ -63,7 +63,7 @@ export function LMSHomeScreen({ navigation }: Props) {
 
   return (
     <Screen largeTitle="Обучение" onRefresh={async () => { reload(); await my.reload(); }}>
-      <NavBarLarge title="Обучение" trailing={<HeaderIcon name="bell.fill" badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
+      <NavBarLarge title="Обучение" trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 14 }}>
         <Logo size={34} />
@@ -116,7 +116,7 @@ export function LMSHomeScreen({ navigation }: Props) {
               <FeaturedCard
                 course={continueCourse}
                 owned
-                progress={continueCourse.serverProgress}
+                progress={Math.max(Math.round(continueCourse.serverProgress ?? 0), Math.round(progress(continueCourse.id) * 100))}
                 eyebrow="Продолжить"
                 onPress={() => navigation.navigate('CourseDetail', { courseId: continueCourse.id })}
               />
@@ -129,7 +129,7 @@ export function LMSHomeScreen({ navigation }: Props) {
               <SectionHeader title="Мои курсы" />
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
                 {my.courses.map((c) => (
-                  <CourseCardPremium key={c.id} course={c} owned progress={c.serverProgress} width={250}
+                  <CourseCardPremium key={c.id} course={c} owned progress={Math.max(Math.round(c.serverProgress ?? 0), Math.round(progress(c.id) * 100))} width={250}
                     onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })} />
                 ))}
               </ScrollView>

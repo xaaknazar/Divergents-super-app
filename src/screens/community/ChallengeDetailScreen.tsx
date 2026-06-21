@@ -8,6 +8,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Screen } from '../../components/Screen';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
+import { Logo } from '../../components/Logo';
 import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ProgressBar, ty } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { hSuccess } from '../../lib/haptics';
@@ -39,7 +40,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Gradient hero background */}
-      <LinearGradient colors={['#1E337A', '#2A4DA8', '#3D5BDB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: insets.top }}>
+      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: insets.top }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4 }}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
             <SF name="chevron.left" size={20} color="#fff" />
@@ -190,7 +191,10 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           <Capsule bg={T.brandTinted} color={T.brand}><SF name="flag.fill" size={11} color={T.brand} />День {c.currentDay} из {c.totalDays}</Capsule>
           <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />Бесплатно</Capsule>
         </View>
-        <Text style={[ty.largeTitle, { color: T.label, marginTop: 12 }]}>{c.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
+          <Logo size={26} />
+          <Text style={[ty.largeTitle, { color: T.label, flex: 1 }]}>{c.title}</Text>
+        </View>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>Команда «{c.teamName}» · {c.members} участников · {c.startedLabel}</Text>
       </View>
 

@@ -79,6 +79,18 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   // don't own → sales/landing view.
   const owned = isFree || ownedByApi || course.source !== 'live';
 
+  // Avoid the "not purchased" flash: wait until owned courses are resolved.
+  if (!isFree && course.source === 'live' && my.isSignedIn && !my.ready) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 8 }}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={{ padding: 12 }}>
+          <SF name="chevron.left" size={22} color={T.brandAccent} />
+        </Pressable>
+        <View style={{ paddingTop: 60, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
+      </View>
+    );
+  }
+
   return owned
     ? <OwnedCourse course={course} courseId={courseId} navigation={navigation} />
     : <SalesCourse course={course} courseId={courseId} navigation={navigation} />;

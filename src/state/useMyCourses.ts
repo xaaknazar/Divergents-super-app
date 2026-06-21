@@ -8,6 +8,7 @@ export function useMyCourses() {
   const { isSignedIn, getToken } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
 
   // Keep the latest getToken in a ref so the effect doesn't depend on its
   // (unstable) identity — depending on it causes an infinite render loop.
@@ -15,7 +16,7 @@ export function useMyCourses() {
   getTokenRef.current = getToken;
 
   const run = useCallback(async () => {
-    if (!isSignedIn) { setCourses([]); return; }
+    if (!isSignedIn) { setCourses([]); setReady(true); return; }
     setLoading(true);
     try {
       const token = await getTokenRef.current();
@@ -25,10 +26,11 @@ export function useMyCourses() {
       setCourses([]);
     } finally {
       setLoading(false);
+      setReady(true);
     }
   }, [isSignedIn]);
 
   useEffect(() => { run(); }, [run]);
 
-  return { courses, loading, isSignedIn, reload: run };
+  return { courses, loading, ready, isSignedIn, reload: run };
 }

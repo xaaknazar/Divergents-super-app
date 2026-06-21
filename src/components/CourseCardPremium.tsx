@@ -46,7 +46,7 @@ export function CourseCardPremium({
         <Cover course={course} height="100%" />
         {owned ? (
           <View style={{ position: 'absolute', top: 8, right: 8 }}>
-            <Capsule bg={done ? 'rgba(52,199,89,0.92)' : 'rgba(35,64,136,0.92)'} color="#fff" style={{ paddingVertical: 3, paddingHorizontal: 8 }}>
+            <Capsule bg={T.brand} color="#fff" style={{ paddingVertical: 3, paddingHorizontal: 8 }}>
               {done ? 'Пройден' : `${pct}%`}
             </Capsule>
           </View>
@@ -59,7 +59,7 @@ export function CourseCardPremium({
           {owned ? (
             <View>
               <ProgressBar value={pct / 100} color={T.brand} />
-              <Text style={[ty.caption2Em, { color: done ? T.green : T.brand, marginTop: 6 }]}>{pct}% пройдено</Text>
+              <Text style={[ty.caption2Em, { color: T.brand, marginTop: 6 }]}>{pct}% пройдено</Text>
             </View>
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -90,7 +90,7 @@ export function FeaturedCard({
     }}>
       <View style={{ height: 180 }}>
         <Cover course={course} height={180} />
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 110, backgroundColor: 'rgba(0,0,0,0.38)' }} />
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 76, backgroundColor: 'rgba(0,0,0,0.42)' }} />
         <View style={{ position: 'absolute', top: 12, left: 12 }}>
           <Capsule bg="rgba(255,255,255,0.92)" color={T.brand}>
             <SF name="sparkles" size={11} color={T.brand} />{eyebrow ?? 'Рекомендуем'}
