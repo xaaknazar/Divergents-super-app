@@ -37,6 +37,7 @@ export interface TalentProfile {
   mbtiType: string | null; // e.g. 'INTJ'
   mbtiName: string | null;
   resume: ResumeData | null;
+  reportsText: string | null;
   gallup: GallupTalent[];  // up to 34, ranked
   gardner: GardnerResult[];
   reports: TalentReport[];
@@ -121,6 +122,7 @@ function normalizeProfile(r: any): TalentProfile {
     mbtiType: r?.mbtiType ?? null,
     mbtiName: r?.mbtiName ?? null,
     resume: r?.resume ?? null,
+    reportsText: r?.reportsText ?? null,
     gallup: Array.isArray(r?.gallup) ? r.gallup : [],
     gardner: Array.isArray(r?.gardner) ? r.gardner : [],
     reports: Array.isArray(r?.reports) ? r.reports.filter((x: any) => !String(x?.type ?? '').endsWith('_short')) : [],
@@ -173,6 +175,7 @@ export const MOCK_PROFILE: TalentProfile = {
     { category: 'Музыкальный', score: 47 },
     { category: 'Натуралистический', score: 52 },
   ],
+  reportsText: null,
   reports: [
     { type: 'gallup', title: 'Gallup — полный отчёт (34 таланта)', url: 'https://talentslab.kz' },
     { type: 'gallup_short', title: 'Gallup — краткая зона роста', url: 'https://talentslab.kz' },
@@ -264,5 +267,6 @@ export function profileSummary(p: TalentProfile | null): string {
     lines.push(`Гарднер: ${top.join(', ')}`);
   }
   if (p.reports.length) lines.push(`Доступные отчёты: ${p.reports.map((x) => x.title).join('; ')}`);
+  if (p.reportsText) lines.push(`\nСодержание отчётов Divergents (используй для анализа психотипа и рекомендаций):\n${p.reportsText}`);
   return lines.join('\n');
 }
