@@ -30,8 +30,8 @@ export function NotificationsScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: insets.bottom + 30 }} showsVerticalScrollIndicator={false}>
         {items.map((it) => (
           <Pressable key={it.id} onPress={() => markRead(it.id)}
-            style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTinted }}>
-            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: it.color + '22', alignItems: 'center', justifyContent: 'center' }}>
+            style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
+            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: it.color + '33', alignItems: 'center', justifyContent: 'center' }}>
               <SF name={it.icon} size={20} color={it.color} />
             </View>
             <View style={{ flex: 1 }}>

@@ -103,7 +103,7 @@ function ProfileNavigator() {
 const Tab = createBottomTabNavigator<TabParams>();
 function Tabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false, animation: 'shift', lazy: true }} tabBar={(props) => <TabBar {...props} />}>
+    <Tab.Navigator detachInactiveScreens={false} screenOptions={{ headerShown: false, lazy: false }} tabBar={(props) => <TabBar {...props} />}>
       <Tab.Screen name="LMSTab" component={LMSNavigator} />
       <Tab.Screen name="AITab" component={AINavigator} />
       <Tab.Screen name="CommunityTab" component={CommunityNavigator} />

@@ -58,7 +58,7 @@ export function CourseCardPremium({
         <View style={{ marginTop: 10, minHeight: 32, justifyContent: 'flex-end' }}>
           {owned ? (
             <View>
-              <ProgressBar value={pct / 100} color={done ? T.green : T.brand} />
+              <ProgressBar value={pct / 100} color={T.brand} />
               <Text style={[ty.caption2Em, { color: done ? T.green : T.brand, marginTop: 6 }]}>{pct}% пройдено</Text>
             </View>
           ) : (
