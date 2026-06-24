@@ -17,7 +17,7 @@ import {
   Trip, SportActivity, Lecture,
 } from '../../data/community';
 import { imgUrl } from '../../data/api';
-import { CHANNEL, CHANNEL_POSTS, ChannelPost } from '../../data/channel';
+import { CHANNELS, channelById, postsByChannel } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -122,18 +122,8 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
       </View>
 
       <View style={{ marginTop: 18 }}>
-        <SectionHeader title="Канал автора" action="Открыть" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
-        <Pressable onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, flexDirection: 'row', gap: 14, alignItems: 'center', borderWidth: 0.5, borderColor: T.cardBorder }}>
-          <Image source={{ uri: CHANNEL.avatar }} style={{ width: 56, height: 56, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{CHANNEL.name}</Text>
-              <SF name="checkmark.seal.fill" size={14} color="#0EA5E9" />
-            </View>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={2}>Авторские аудио и статьи · @{CHANNEL.handle}</Text>
-          </View>
-          <SF name="chevron.forward" size={14} color={T.labelTertiary} />
-        </Pressable>
+        <SectionHeader title="Каналы" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
+        {CHANNELS.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
       </View>
 
     </>
@@ -254,75 +244,46 @@ function SportTab() {
   );
 }
 
-// ─── Канал автора (Telegram-style группа) ───────────────────────────
+// ─── Каналы (Telegram-style список) ─────────────────────────────────
 function ChannelTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
-  const { joined, join, leave } = useChannel();
-  const subs = CHANNEL.baseSubscribers + (joined ? 1 : 0);
   return (
     <View style={{ paddingHorizontal: 16 }}>
-      <View style={{ backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-        <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-          <Image source={{ uri: CHANNEL.avatar }} style={{ width: 64, height: 64, borderRadius: 20 }} contentFit="cover" cachePolicy="memory-disk" />
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{CHANNEL.name}</Text>
-              {CHANNEL.verified ? <SF name="checkmark.seal.fill" size={15} color="#0EA5E9" /> : null}
-            </View>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]}>@{CHANNEL.handle}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
-              <SF name="person.2.fill" size={12} color={T.labelTertiary} />
-              <Text style={[ty.caption1, { color: T.labelTertiary }]}>{subs.toLocaleString('ru-RU')} подписчиков</Text>
-            </View>
-          </View>
-        </View>
-        <Text style={[ty.subhead, { color: T.label, marginTop: 12 }]}>{CHANNEL.bio}</Text>
-        <Pressable onPress={() => (joined ? leave() : join())} style={{ marginTop: 14, height: 46, borderRadius: 14, backgroundColor: joined ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-          <SF name={joined ? 'checkmark' : 'plus'} size={16} color={joined ? T.label : '#fff'} />
-          <Text style={[ty.headline, { color: joined ? T.label : '#fff' }]}>{joined ? 'Вы подписаны' : 'Вступить в группу'}</Text>
-        </Pressable>
-      </View>
-
-      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingTop: 18, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Публикации автора</Text>
-      {CHANNEL_POSTS.map((p) => <PostCard key={p.id} post={p} onPress={() => navigation.navigate('ChannelPost', { postId: p.id })} />)}
+      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Каналы сообщества</Text>
+      {CHANNELS.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
     </View>
   );
 }
 
-function PostCard({ post, onPress }: { post: ChannelPost; onPress: () => void }) {
+function ChannelRow({ channel, navigation }: { channel: typeof CHANNELS[number]; navigation: Nav }) {
   const { T } = useTheme();
-  const { isLiked } = useChannel();
-  const audio = post.type === 'audio';
+  const { isJoined, unread } = useChannel();
+  const joined = isJoined(channel.id);
+  const count = unread(channel.id);
+  const last = postsByChannel(channel.id)[0];
   return (
-    <Pressable onPress={onPress} style={{ backgroundColor: T.cardBg, borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-          <SF name={audio ? 'play.fill' : 'doc.text.fill'} size={22} color={T.brand} />
+    <Pressable onPress={() => navigation.navigate('Channel', { channelId: channel.id })}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 16, padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: T.cardBorder }}>
+      <Image source={{ uri: channel.avatar }} style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{channel.name}</Text>
+          {channel.verified ? <SF name="checkmark.seal.fill" size={14} color="#0EA5E9" /> : null}
+          {channel.access === 'request' ? <SF name="lock.fill" size={11} color={T.labelTertiary} /> : null}
         </View>
-        <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Capsule bg={T.brandTinted} color={T.brand}><SF name={audio ? 'waveform' : 'doc.text.fill'} size={10} color={T.brand} />{audio ? 'Аудио' : 'Статья'}</Capsule>
-            <Text style={[ty.caption2, { color: T.labelTertiary }]}>{post.date}</Text>
-          </View>
-          <Text style={[ty.subheadEm, { color: T.label, marginTop: 6 }]} numberOfLines={2}>{post.title}</Text>
-          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 3 }]} numberOfLines={2}>{post.excerpt}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 8 }}>
-            <Meta icon={audio ? 'headphones' : 'eye.fill'} text={post.views} />
-            <Meta icon="heart.fill" text={String(post.likes + (isLiked(post.id) ? 1 : 0))} />
-            <Meta icon="book" text={audio ? (post.durationLabel ?? '') : `${post.readMins} мин`} />
-          </View>
-        </View>
+        <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>
+          {joined && last ? last.title : channel.access === 'request' ? 'Закрытый канал · по запросу' : `@${channel.handle}`}
+        </Text>
       </View>
+      {joined && count > 0 ? (
+        <View style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={[ty.caption2Em, { color: '#fff' }]}>{count}</Text>
+        </View>
+      ) : joined ? (
+        <SF name="checkmark.circle.fill" size={20} color={T.brand} />
+      ) : (
+        <SF name="chevron.forward" size={14} color={T.labelTertiary} />
+      )}
     </Pressable>
-  );
-}
-
-function Meta({ icon, text }: { icon: SFName; text: string }) {
-  const { T } = useTheme();
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <SF name={icon} size={12} color={T.labelTertiary} />
-      <Text style={[ty.caption2, { color: T.labelTertiary }]}>{text}</Text>
-    </View>
   );
 }

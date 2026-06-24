@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
-import { CHANNEL, getPost } from '../../data/channel';
+import { channelById, getPost } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -24,6 +24,7 @@ export function ChannelPostScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const post = getPost(route.params.postId);
+  const chan = post ? channelById(post.channelId) : undefined;
   const { isLiked, toggleLike } = useChannel();
 
   if (!post) {
@@ -37,9 +38,9 @@ export function ChannelPostScreen({ route, navigation }: Props) {
 
   const liked = isLiked(post.id);
   const likeCount = post.likes + (liked ? 1 : 0);
-  const share = () => Share.share({ message: `${CHANNEL.name}: «${post.title}» — в приложении Divergents` });
+  const share = () => Share.share({ message: `${chan?.name ?? 'Divergents'}: «${post.title}» — в приложении Divergents` });
 
-  if (post.type === 'audio') return <AudioPost post={post} liked={liked} likeCount={likeCount} onLike={() => toggleLike(post.id)} onShare={share} onBack={() => navigation.goBack()} T={T} insets={insets} />;
+  if (post.type === 'audio') return <AudioPost post={post} chan={chan} liked={liked} likeCount={likeCount} onLike={() => toggleLike(post.id)} onShare={share} onBack={() => navigation.goBack()} T={T} insets={insets} />;
 
   // Article
   return (
@@ -49,8 +50,8 @@ export function ChannelPostScreen({ route, navigation }: Props) {
         {post.cover ? <Image source={{ uri: post.cover }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : null}
         <View style={{ padding: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <Image source={{ uri: CHANNEL.avatar }} style={{ width: 28, height: 28, borderRadius: 14 }} contentFit="cover" />
-            <Text style={[ty.subheadEm, { color: T.label }]}>{CHANNEL.name}</Text>
+            <Image source={{ uri: chan?.avatar }} style={{ width: 28, height: 28, borderRadius: 14 }} contentFit="cover" />
+            <Text style={[ty.subheadEm, { color: T.label }]}>{chan?.name}</Text>
             <SF name="checkmark.seal.fill" size={13} color="#0EA5E9" />
             <Text style={[ty.caption1, { color: T.labelTertiary }]}>· {post.date}</Text>
           </View>
@@ -77,7 +78,7 @@ export function ChannelPostScreen({ route, navigation }: Props) {
 
 function onLikeFactory(id: string, toggle: (id: string) => void) { return () => toggle(id); }
 
-function AudioPost({ post, liked, likeCount, onLike, onShare, onBack, T, insets }: any) {
+function AudioPost({ post, chan, liked, likeCount, onLike, onShare, onBack, T, insets }: any) {
   const player = useVideoPlayer(post.audioUrl ?? '', (p: any) => { p.loop = false; });
   const [playing, setPlaying] = useState(false);
   const [pos, setPos] = useState(0);
@@ -109,11 +110,11 @@ function AudioPost({ post, liked, likeCount, onLike, onShare, onBack, T, insets 
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
         <View style={{ alignItems: 'center', paddingTop: 16, paddingHorizontal: 24 }}>
           <View style={{ width: 220, height: 220, borderRadius: 28, overflow: 'hidden', backgroundColor: T.brandTinted, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 12 } }}>
-            <Image source={{ uri: CHANNEL.avatar }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+            <Image source={{ uri: chan?.avatar }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 18 }}>
             <SF name="waveform" size={15} color={T.brand} />
-            <Text style={[ty.caption1, { color: T.brand }]}>АУДИО · {CHANNEL.name}</Text>
+            <Text style={[ty.caption1, { color: T.brand }]}>АУДИО · {chan?.name}</Text>
           </View>
           <Text style={[ty.title2, { color: T.label, textAlign: 'center', marginTop: 8 }]}>{post.title}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', marginTop: 6 }]}>{post.excerpt}</Text>
