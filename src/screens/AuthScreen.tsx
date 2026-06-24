@@ -102,8 +102,11 @@ export function AuthScreen({}: Props) {
         else setError(t('err_code'));
       } else {
         const res = await signUp!.attemptEmailAddressVerification({ code: code.trim() });
-        if (res.status === 'complete') await setActiveSignUp!({ session: res.createdSessionId });
-        else setError(t('err_code'));
+        if (res.status === 'complete') { await setActiveSignUp!({ session: res.createdSessionId }); }
+        else if (res.status === 'missing_requirements') {
+          const miss = [...(res.missingFields ?? []), ...(res.unverifiedFields ?? [])].join(', ');
+          setError(`Регистрация требует доп. полей в Clerk: ${miss || 'неизвестно'}. Оставьте обязательным только email.`);
+        } else setError(t('err_code'));
       }
     } catch (e: any) {
       setError(e?.errors?.[0]?.message || t('err_code'));
