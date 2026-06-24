@@ -69,6 +69,18 @@ export const COUNTRIES: Country[] = [
 export function cityCenter(country: string, city: string): City | undefined {
   return COUNTRIES.find((c) => c.key === country)?.cities.find((ci) => ci.key === city);
 }
+export function nearestCity(lat: number, lng: number): { country: string; city: string } | null {
+  let best: { country: string; city: string } | null = null;
+  let bestD = Infinity;
+  for (const co of COUNTRIES) {
+    for (const ci of co.cities) {
+      const d = (lat - ci.lat) ** 2 + (lng - ci.lng) ** 2;
+      if (d < bestD) { bestD = d; best = { country: co.key, city: ci.key }; }
+    }
+  }
+  return best;
+}
+
 export function citiesOf(country: string): City[] {
   return COUNTRIES.find((c) => c.key === country)?.cities ?? [];
 }

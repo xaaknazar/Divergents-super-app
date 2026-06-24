@@ -10,7 +10,7 @@ import { SF } from '../../components/SFIcon';
 import { Capsule, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
-import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, cityCenter, Place } from '../../data/places';
+import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, cityCenter, nearestCity, Place } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<MapStackParams, 'MapHome'>;
@@ -78,6 +78,8 @@ export function MapHomeScreen({ navigation }: Props) {
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const targetRef = useRef(target);
   targetRef.current = target;
+  const manualRef = useRef(false);
+  const autoRef = useRef(false);
 
   const center = cityCenter(country, city);
   const countryName = COUNTRIES.find((c) => c.key === country)?.name ?? '';
@@ -121,11 +123,23 @@ export function MapHomeScreen({ navigation }: Props) {
     return () => clearTimeout(id);
   }, [q]);
 
+  // First GPS fix: center on the user and auto-pick their city (until changed manually).
   useEffect(() => {
-    if (center && mapRef.current) mapRef.current.animateToRegion({ latitude: center.lat, longitude: center.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600);
-  }, [country, city]);
+    if (!user || autoRef.current) return;
+    autoRef.current = true;
+    if (!manualRef.current) {
+      const nc = nearestCity(user.latitude, user.longitude);
+      if (nc) setLocation(nc.country, nc.city);
+    }
+    mapRef.current?.animateToRegion({ ...user, latitudeDelta: 0.06, longitudeDelta: 0.06 }, 700);
+  }, [user]);
 
-  const recenter = () => { if (user && mapRef.current) mapRef.current.animateToRegion({ ...user, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 500); };
+  const recenter = () => {
+    if (!user) return;
+    const nc = nearestCity(user.latitude, user.longitude);
+    if (nc && (nc.country !== country || nc.city !== city)) setLocation(nc.country, nc.city);
+    mapRef.current?.animateToRegion({ ...user, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 500);
+  };
   const openPlace = (id: string) => navigation.navigate('PlaceDetail', { placeId: id });
   const navTo = (n: { name: string; lat: number; lng: number }) => { setTarget(n); setRoute(null); setPath(user ? [user] : []); setSelId(null); setSearchPin(null); if (mapRef.current) mapRef.current.animateToRegion({ latitude: n.lat, longitude: n.lng, latitudeDelta: 0.06, longitudeDelta: 0.06 }, 500); };
   const startNav = (p: Place) => navTo({ name: p.name, lat: p.lat, lng: p.lng });
@@ -326,7 +340,7 @@ export function MapHomeScreen({ navigation }: Props) {
                 {co.cities.map((ci) => {
                   const on = co.key === country && ci.key === city;
                   return (
-                    <Pressable key={ci.key} onPress={() => { setLocation(co.key, ci.key); setPickerOpen(false); }}
+                    <Pressable key={ci.key} onPress={() => { manualRef.current = true; setLocation(co.key, ci.key); setPickerOpen(false); mapRef.current?.animateToRegion({ latitude: ci.lat, longitude: ci.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600); }}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 20, backgroundColor: on ? T.brandTinted : 'transparent' }}>
                       <SF name="mappin.circle.fill" size={18} color={on ? T.brand : T.labelTertiary} />
                       <Text style={[ty.body, { color: T.label, flex: 1 }]}>{ci.name}</Text>
