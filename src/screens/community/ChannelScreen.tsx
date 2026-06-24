@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +17,7 @@ export function ChannelScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const channel = channelById(route.params.channelId);
-  const { isJoined, isRequested, join, leave, request, markSeen } = useChannel();
+  const { isJoined, isRequested, isApproved, isPaid, join, leave, request, approve, pay, markSeen } = useChannel();
 
   useEffect(() => { if (channel) markSeen(channel.id); }, [channel?.id]);
 
@@ -32,14 +32,33 @@ export function ChannelScreen({ route, navigation }: Props) {
 
   const joined = isJoined(channel.id);
   const requested = isRequested(channel.id);
-  const locked = channel.access === 'request' && !joined;
-  const subs = channel.baseSubscribers + (joined ? 1 : 0);
+  const approved = isApproved(channel.id);
+  const paid = isPaid(channel.id);
+  const priceLabel = channel.price ? `${channel.price.toLocaleString('ru-RU')} ₸` : '';
+
+  const unlocked = channel.access === 'open' ? true : channel.access === 'paid' ? paid : joined;
+  const locked = !unlocked;
+  const subs = channel.baseSubscribers + (joined || paid ? 1 : 0);
   const posts = postsByChannel(channel.id);
 
-  let btnLabel = 'Вступить в группу'; let btnIcon: SFName = 'plus'; let btnAction = () => join(channel.id); let btnMuted = false;
-  if (joined) { btnLabel = 'Вы подписаны'; btnIcon = 'checkmark'; btnAction = () => leave(channel.id); btnMuted = true; }
-  else if (channel.access === 'request') {
-    if (requested) { btnLabel = 'Запрос отправлен'; btnIcon = 'clock'; btnAction = () => {}; btnMuted = true; }
+  const payFlow = () => Alert.alert(
+    'Оплата доступа',
+    `Канал «${channel.name}» — ${priceLabel}.\nОплата производится через менеджера Divergents / платёжную систему. После подтверждения оплаты канал откроется.`,
+    [{ text: 'Отмена', style: 'cancel' }, { text: 'Я оплатил(а)', onPress: () => pay(channel.id) }],
+  );
+
+  // primary button by access + state
+  let btnLabel = 'Вступить в группу'; let btnIcon: SFName = 'plus'; let btnAction: () => void = () => join(channel.id); let btnMuted = false; let btnDisabled = false;
+  if (channel.access === 'open') {
+    if (joined) { btnLabel = 'Вы подписаны'; btnIcon = 'checkmark'; btnAction = () => leave(channel.id); btnMuted = true; }
+  } else if (channel.access === 'request') {
+    if (joined) { btnLabel = 'Вы подписаны'; btnIcon = 'checkmark'; btnAction = () => leave(channel.id); btnMuted = true; }
+    else if (requested) { btnLabel = 'Запрос на рассмотрении'; btnIcon = 'clock'; btnMuted = true; btnDisabled = true; btnAction = () => {}; }
+    else { btnLabel = 'Запросить доступ'; btnIcon = 'lock.fill'; btnAction = () => request(channel.id); }
+  } else { // paid
+    if (paid) { btnLabel = 'Доступ оплачен'; btnIcon = 'checkmark.seal.fill'; btnMuted = true; btnDisabled = true; btnAction = () => {}; }
+    else if (approved) { btnLabel = `Оплатить ${priceLabel}`; btnIcon = 'creditcard.fill'; btnAction = payFlow; }
+    else if (requested) { btnLabel = 'Запрос на рассмотрении'; btnIcon = 'clock'; btnMuted = true; btnAction = () => approve(channel.id); }
     else { btnLabel = 'Запросить доступ'; btnIcon = 'lock.fill'; btnAction = () => request(channel.id); }
   }
 
@@ -61,11 +80,12 @@ export function ChannelScreen({ route, navigation }: Props) {
                 <SF name="person.2.fill" size={12} color={T.labelTertiary} />
                 <Text style={[ty.caption1, { color: T.labelTertiary }]}>{subs.toLocaleString('ru-RU')} подписчиков</Text>
                 {channel.access === 'request' ? <Capsule bg={T.fillSecondary} color={T.labelSecondary}><SF name="lock.fill" size={9} color={T.labelSecondary} />по запросу</Capsule> : null}
+                {channel.access === 'paid' ? <Capsule bg={T.brandTinted} color={T.brand}><SF name="creditcard.fill" size={9} color={T.brand} />{priceLabel}</Capsule> : null}
               </View>
             </View>
           </View>
           <Text style={[ty.subhead, { color: T.label, marginTop: 12 }]}>{channel.bio}</Text>
-          <Pressable onPress={btnAction} disabled={requested && !joined} style={{ marginTop: 14, height: 46, borderRadius: 14, backgroundColor: btnMuted ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+          <Pressable onPress={btnAction} disabled={btnDisabled} style={{ marginTop: 14, height: 46, borderRadius: 14, backgroundColor: btnMuted ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name={btnIcon} size={16} color={btnMuted ? T.label : '#fff'} />
             <Text style={[ty.headline, { color: btnMuted ? T.label : '#fff' }]}>{btnLabel}</Text>
           </Pressable>
@@ -74,12 +94,23 @@ export function ChannelScreen({ route, navigation }: Props) {
         {locked ? (
           <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 }}>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
-              <SF name="lock.fill" size={28} color={T.labelSecondary} />
+              <SF name={channel.access === 'paid' && approved ? 'creditcard.fill' : 'lock.fill'} size={28} color={T.labelSecondary} />
             </View>
-            <Text style={[ty.headline, { color: T.label, marginTop: 14 }]}>{requested ? 'Запрос на рассмотрении' : 'Доступ по запросу'}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>
-              {requested ? 'Модератор рассмотрит ваш запрос и откроет доступ к публикациям.' : 'Это закрытый канал. Отправьте запрос, чтобы видеть публикации.'}
+            <Text style={[ty.headline, { color: T.label, marginTop: 14 }]}>
+              {channel.access === 'paid'
+                ? (approved ? 'Запрос одобрен' : requested ? 'Запрос на рассмотрении' : 'Платный закрытый канал')
+                : (requested ? 'Запрос на рассмотрении' : 'Доступ по запросу')}
             </Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>
+              {channel.access === 'paid'
+                ? (approved ? `Оплатите доступ (${priceLabel}), чтобы открыть публикации канала.` : requested ? 'Модератор рассмотрит запрос. После одобрения откроется оплата.' : `Сначала отправьте запрос. После одобрения — оплата ${priceLabel}.`)
+                : (requested ? 'Модератор рассмотрит ваш запрос и откроет доступ к публикациям.' : 'Это закрытый канал. Отправьте запрос, чтобы видеть публикации.')}
+            </Text>
+            {channel.access === 'paid' && requested && !approved ? (
+              <Pressable onPress={() => approve(channel.id)} style={{ marginTop: 16, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 12, backgroundColor: T.fillSecondary }}>
+                <Text style={[ty.footnoteEm, { color: T.brand }]}>Проверить статус запроса</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : (
           <>

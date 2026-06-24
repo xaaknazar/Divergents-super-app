@@ -257,8 +257,8 @@ function ChannelTab({ navigation }: { navigation: Nav }) {
 
 function ChannelRow({ channel, navigation }: { channel: typeof CHANNELS[number]; navigation: Nav }) {
   const { T } = useTheme();
-  const { isJoined, unread } = useChannel();
-  const joined = isJoined(channel.id);
+  const { isJoined, isPaid, unread } = useChannel();
+  const joined = isJoined(channel.id) || isPaid(channel.id);
   const count = unread(channel.id);
   const last = postsByChannel(channel.id)[0];
   return (
@@ -270,9 +270,10 @@ function ChannelRow({ channel, navigation }: { channel: typeof CHANNELS[number];
           <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{channel.name}</Text>
           {channel.verified ? <SF name="checkmark.seal.fill" size={14} color="#0EA5E9" /> : null}
           {channel.access === 'request' ? <SF name="lock.fill" size={11} color={T.labelTertiary} /> : null}
+          {channel.access === 'paid' ? <SF name="creditcard.fill" size={11} color={T.labelTertiary} /> : null}
         </View>
         <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>
-          {joined && last ? last.title : channel.access === 'request' ? 'Закрытый канал · по запросу' : `@${channel.handle}`}
+          {joined && last ? last.title : channel.access === 'request' ? 'Закрытый канал · по запросу' : channel.access === 'paid' ? `Платный · ${channel.price ? channel.price.toLocaleString('ru-RU') + ' ₸' : ''}` : `@${channel.handle}`}
         </Text>
       </View>
       {joined && count > 0 ? (

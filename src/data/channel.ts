@@ -4,7 +4,7 @@ import { SFName } from '../components/SFIcon';
 const DANDAY_PHOTO = 'https://utfs.io/f/e23b25be-42e5-4ee4-87b6-94dcfc245071-x5cjij.jpg';
 const WOMENS_PHOTO = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80';
 
-export type ChannelAccess = 'open' | 'request';
+export type ChannelAccess = 'open' | 'request' | 'paid';
 
 export interface Channel {
   id: string;
@@ -15,6 +15,7 @@ export interface Channel {
   baseSubscribers: number;
   bio: string;
   access: ChannelAccess;
+  price?: number; // тенге, для платных каналов
 }
 
 export const CHANNELS: Channel[] = [
@@ -27,6 +28,11 @@ export const CHANNELS: Channel[] = [
     id: 'womens', handle: 'womens.club', name: 'Women’s club', avatar: WOMENS_PHOTO,
     verified: true, baseSubscribers: 860, access: 'request',
     bio: 'Закрытое женское сообщество Divergents: поддержка, встречи и обсуждения. Доступ по запросу.',
+  },
+  {
+    id: 'managers', handle: 'managers.club', name: 'Канал для Управляющих и коммерсов', avatar: DANDAY_PHOTO,
+    verified: true, baseSubscribers: 320, access: 'paid', price: 500000,
+    bio: 'Закрытый платный канал от Дандай Амокачи для управляющих и коммерсантов: стратегии масштабирования, разборы кейсов и закрытые материалы. Доступ — после одобрения запроса и оплаты.',
   },
 ];
 
@@ -79,6 +85,16 @@ export const CHANNEL_POSTS: ChannelPost[] = [
     ], likes: 142, views: '720' },
   { id: 'w_audio_1', channelId: 'womens', type: 'audio', title: 'Женская энергия и границы', date: 'Вчера', icon: 'waveform', audioUrl: 'https://download.samplelib.com/mp3/sample-12s.mp3', durationLabel: '16:30', excerpt: 'Как мягко, но твёрдо выстраивать личные границы.', likes: 98, views: '540' },
 ];
+
+// Канал для Управляющих и коммерсов (платный)
+CHANNEL_POSTS.push(
+  { id: 'm_audio_1', channelId: 'managers', type: 'audio', title: 'Как масштабировать команду до 100 человек', date: 'Сегодня · 08:00', icon: 'waveform', audioUrl: 'https://download.samplelib.com/mp3/sample-15s.mp3', durationLabel: '24:10', excerpt: 'Системы, найм и делегирование на этапе быстрого роста.', likes: 86, views: '210' },
+  { id: 'm_article_1', channelId: 'managers', type: 'article', title: 'Юнит-экономика простыми словами', date: 'Вчера', icon: 'doc.text.fill', cover: DANDAY_PHOTO, readMins: 8, excerpt: 'Как считать прибыль на одного клиента и не уйти в минус при росте.', body: [
+      'Юнит-экономика показывает, зарабатываете ли вы на одном клиенте больше, чем тратите на его привлечение и обслуживание.',
+      'Ключевые метрики: LTV (сколько приносит клиент за всё время) и CAC (сколько стоит его привлечь). Здоровое правило — LTV не меньше 3× CAC.',
+      'Сначала добейтесь положительной экономики на одном клиенте, и только потом масштабируйте рекламу и команду.',
+    ], likes: 64, views: '180' },
+);
 
 export const postsByChannel = (channelId: string) => CHANNEL_POSTS.filter((p) => p.channelId === channelId);
 export const getPost = (id: string) => CHANNEL_POSTS.find((p) => p.id === id);

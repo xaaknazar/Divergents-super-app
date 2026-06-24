@@ -11,6 +11,12 @@ interface ChannelState {
   join: (id: string) => void;
   leave: (id: string) => void;
   request: (id: string) => void;
+  approved: string[];
+  paid: string[];
+  isApproved: (id: string) => boolean;
+  isPaid: (id: string) => boolean;
+  approve: (id: string) => void;
+  pay: (id: string) => void;
   unread: (id: string) => number;
   markSeen: (id: string) => void;
   likes: string[];
@@ -23,12 +29,16 @@ const Ctx = createContext<ChannelState | null>(null);
 export function ChannelProvider({ children }: { children: React.ReactNode }) {
   const [joined, setJoined] = useState<string[]>([]);
   const [requested, setRequested] = useState<string[]>([]);
+  const [approved, setApproved] = useState<string[]>([]);
+  const [paid, setPaid] = useState<string[]>([]);
   const [seen, setSeen] = useState<Record<string, number>>({});
   const [likes, setLikes] = useState<string[]>([]);
 
   useEffect(() => {
     loadJSON<string[]>('dvg.channelJoined.v2', []).then((v) => setJoined(Array.isArray(v) ? v : []));
     loadJSON<string[]>('dvg.channelRequested.v2', []).then((v) => setRequested(Array.isArray(v) ? v : []));
+    loadJSON<string[]>('dvg.channelApproved.v2', []).then((v) => setApproved(Array.isArray(v) ? v : []));
+    loadJSON<string[]>('dvg.channelPaid.v2', []).then((v) => setPaid(Array.isArray(v) ? v : []));
     loadJSON<Record<string, number>>('dvg.channelSeen.v2', {}).then((v) => setSeen(v && typeof v === 'object' ? v : {}));
     loadJSON<string[]>('dvg.channelLikes.v2', []).then((v) => setLikes(Array.isArray(v) ? v : []));
   }, []);
@@ -36,21 +46,24 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
   const join = useCallback((id: string) => setJoined((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelJoined.v2', n); return n; }), []);
   const leave = useCallback((id: string) => setJoined((p) => { const n = p.filter((x) => x !== id); saveJSON('dvg.channelJoined.v2', n); return n; }), []);
   const request = useCallback((id: string) => setRequested((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelRequested.v2', n); return n; }), []);
+  const approve = useCallback((id: string) => setApproved((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelApproved.v2', n); return n; }), []);
+  const pay = useCallback((id: string) => setPaid((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelPaid.v2', n); return n; }), []);
   const markSeen = useCallback((id: string) => setSeen((p) => { const n = { ...p, [id]: postsByChannel(id).length }; saveJSON('dvg.channelSeen.v2', n); return n; }), []);
   const toggleLike = useCallback((id: string) => setLikes((p) => { const n = p.includes(id) ? p.filter((x) => x !== id) : [id, ...p]; saveJSON('dvg.channelLikes.v2', n); return n; }), []);
 
   const unread = useCallback((id: string) => {
-    if (!joined.includes(id)) return 0;
+    if (!joined.includes(id) && !paid.includes(id)) return 0;
     return Math.max(0, postsByChannel(id).length - (seen[id] ?? 0));
-  }, [joined, seen]);
+  }, [joined, paid, seen]);
 
   const value = useMemo<ChannelState>(() => ({
     joined, requested,
     isJoined: (id) => joined.includes(id),
     isRequested: (id) => requested.includes(id),
     join, leave, request, unread, markSeen,
+    approved, paid, isApproved: (id) => approved.includes(id), isPaid: (id) => paid.includes(id), approve, pay,
     likes, isLiked: (id) => likes.includes(id), toggleLike,
-  }), [joined, requested, seen, likes, join, leave, request, unread, markSeen, toggleLike]);
+  }), [joined, requested, approved, paid, seen, likes, join, leave, request, approve, pay, unread, markSeen, toggleLike]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
