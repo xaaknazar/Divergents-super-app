@@ -27,18 +27,26 @@ function fmtDist(km: number): string { return km < 1 ? `${Math.round(km * 1000)}
 function fmtDur(min: number): string { if (min < 60) return `${Math.max(1, Math.round(min))} мин`; const h = Math.floor(min / 60); return `${h} ч ${Math.round(min % 60)} мин`; }
 
 async function fetchRoute(from: LatLng, to: LatLng): Promise<{ coords: LatLng[]; km: number; min: number } | null> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 12000);
-  try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson`;
-    const res = await fetch(url, { signal: ctrl.signal });
-    if (!res.ok) return null;
-    const d = await res.json();
-    const r = d?.routes?.[0];
-    if (!r?.geometry?.coordinates?.length) return null;
-    const coords: LatLng[] = r.geometry.coordinates.map((c: number[]) => ({ latitude: c[1], longitude: c[0] }));
-    return { coords, km: (r.distance ?? 0) / 1000, min: (r.duration ?? 0) / 60 };
-  } catch { return null; } finally { clearTimeout(t); }
+  const coords = `${from.longitude},${from.latitude};${to.longitude},${to.latitude}`;
+  const endpoints = [
+    `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coords}?overview=full&geometries=geojson`,
+    `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`,
+  ];
+  for (const url of endpoints) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 9000);
+    try {
+      const res = await fetch(url, { signal: ctrl.signal });
+      if (!res.ok) { clearTimeout(t); continue; }
+      const d = await res.json();
+      const r = d?.routes?.[0];
+      if (r?.geometry?.coordinates?.length) {
+        clearTimeout(t);
+        return { coords: r.geometry.coordinates.map((c: number[]) => ({ latitude: c[1], longitude: c[0] })), km: (r.distance ?? 0) / 1000, min: (r.duration ?? 0) / 60 };
+      }
+    } catch { /* try next endpoint */ } finally { clearTimeout(t); }
+  }
+  return null;
 }
 
 async function geocode(q: string): Promise<{ name: string; lat: number; lng: number }[]> {
@@ -78,6 +86,7 @@ export function MapHomeScreen({ navigation }: Props) {
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const targetRef = useRef(target);
   targetRef.current = target;
+  const routeReqRef = useRef<string | null>(null);
   const manualRef = useRef(false);
   const autoRef = useRef(false);
 
@@ -106,13 +115,15 @@ export function MapHomeScreen({ navigation }: Props) {
   }, []);
 
   useEffect(() => {
+    if (!target || !user) return;
+    const key = `${target.lat},${target.lng}`;
+    if (routeReqRef.current === key) return; // already requested for this destination
+    routeReqRef.current = key;
     let alive = true;
-    if (target && user && !route && !routing) {
-      setRouting(true);
-      fetchRoute(user, { latitude: target.lat, longitude: target.lng }).then((r) => { if (alive) { setRoute(r); setRouting(false); } });
-    }
+    setRoute(null); setRouting(true);
+    fetchRoute(user, { latitude: target.lat, longitude: target.lng }).then((r) => { if (alive) { setRoute(r); setRouting(false); } });
     return () => { alive = false; };
-  }, [target, user, route, routing]);
+  }, [target, user]);
 
   // Address / building search (OSM Nominatim), debounced.
   useEffect(() => {
@@ -141,9 +152,9 @@ export function MapHomeScreen({ navigation }: Props) {
     mapRef.current?.animateToRegion({ ...user, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 500);
   };
   const openPlace = (id: string) => navigation.navigate('PlaceDetail', { placeId: id });
-  const navTo = (n: { name: string; lat: number; lng: number }) => { setTarget(n); setRoute(null); setPath(user ? [user] : []); setSelId(null); setSearchPin(null); if (mapRef.current) mapRef.current.animateToRegion({ latitude: n.lat, longitude: n.lng, latitudeDelta: 0.06, longitudeDelta: 0.06 }, 500); };
+  const navTo = (n: { name: string; lat: number; lng: number }) => { routeReqRef.current = null; setTarget(n); setRoute(null); setPath(user ? [user] : []); setSelId(null); setSearchPin(null); if (mapRef.current) mapRef.current.animateToRegion({ latitude: n.lat, longitude: n.lng, latitudeDelta: 0.06, longitudeDelta: 0.06 }, 500); };
   const startNav = (p: Place) => navTo({ name: p.name, lat: p.lat, lng: p.lng });
-  const stopNav = () => { setTarget(null); setPath([]); setRoute(null); };
+  const stopNav = () => { routeReqRef.current = null; setTarget(null); setPath([]); setRoute(null); };
   const externalRoute = (t: { lat: number; lng: number }) => Linking.openURL(Platform.OS === 'ios' ? `http://maps.apple.com/?daddr=${t.lat},${t.lng}&dirflg=d` : `https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lng}`);
   const pickGeo = (g: { name: string; lat: number; lng: number }) => { setSearchPin(g); setGeo([]); mapRef.current?.animateToRegion({ latitude: g.lat, longitude: g.lng, latitudeDelta: 0.012, longitudeDelta: 0.012 }, 500); };
 
@@ -209,7 +220,7 @@ export function MapHomeScreen({ navigation }: Props) {
           <SF name="figure.walk" size={18} color="#fff" />
           <View style={{ flex: 1 }}>
             <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>До «{target.name}»</Text>
-            <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>{routing ? 'строю маршрут…' : route ? `${fmtDist(route.km)} · ${fmtDur(route.min)} на авто` : user ? `осталось ${fmtDist(haversineKm(user, { latitude: target.lat, longitude: target.lng }))}` : 'ждём GPS…'}</Text>
+            <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>{routing ? 'строю маршрут…' : route ? `${fmtDist(route.km)} по дороге · ${fmtDur(route.min)}` : user ? `${fmtDist(haversineKm(user, { latitude: target.lat, longitude: target.lng }))} по прямой` : 'ждём GPS…'}</Text>
           </View>
           <Pressable onPress={() => externalRoute(target)} hitSlop={6} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>Навигатор</Text></Pressable>
           <Pressable onPress={stopNav} hitSlop={6}><SF name="xmark" size={18} color="#fff" /></Pressable>
