@@ -20,6 +20,7 @@ import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { AppFlowProvider } from './src/state/AppFlowContext';
+import { LanguageProvider } from './src/state/LanguageContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -66,6 +67,7 @@ export default function App() {
       <ThemeProvider>
         <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
           <AppFlowProvider>
+          <LanguageProvider>
           <SafeAreaProvider>
             <CourseProvider>
               <ChallengeProvider>
@@ -81,6 +83,7 @@ export default function App() {
               </ChallengeProvider>
             </CourseProvider>
           </SafeAreaProvider>
+          </LanguageProvider>
           </AppFlowProvider>
         </ClerkProvider>
       </ThemeProvider>
