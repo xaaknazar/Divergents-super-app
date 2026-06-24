@@ -72,13 +72,15 @@ export function MapHomeScreen({ navigation }: Props) {
   const [tags, setTags] = useState<PlaceTag[]>([]);
   const [q, setQ] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [listOpen, setListOpen] = useState(false);
   const [selId, setSelId] = useState<string | null>(null);
   const [user, setUser] = useState<LatLng | null>(null);
   const [target, setTarget] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [geo, setGeo] = useState<{ name: string; lat: number; lng: number }[]>([]);
   const [geoBusy, setGeoBusy] = useState(false);
   const [searchPin, setSearchPin] = useState<{ name: string; lat: number; lng: number } | null>(null);
+  const [zoomDelta, setZoomDelta] = useState(0.12);
+  const [tracks, setTracks] = useState(true);
+  const tracksTimer = useRef<any>(null);
   const [path, setPath] = useState<LatLng[]>([]);
   const [route, setRoute] = useState<{ coords: LatLng[]; km: number; min: number } | null>(null);
   const [routing, setRouting] = useState(false);
@@ -170,10 +172,15 @@ export function MapHomeScreen({ navigation }: Props) {
           userInterfaceStyle={isDark ? 'dark' : 'light'}
           showsUserLocation
           showsMyLocationButton={false}
+          onRegionChangeComplete={(r) => { setZoomDelta(r.latitudeDelta); setTracks(true); clearTimeout(tracksTimer.current); tracksTimer.current = setTimeout(() => setTracks(false), 500); }}
         >
-          {list.map((p) => (
-            <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} pinColor={CATEGORY_META[p.category].color} onPress={() => setSelId(p.id)} />
-          ))}
+          {(() => { const mk = Math.round(40 - Math.min(1, Math.max(0, (zoomDelta - 0.02) / 0.28)) * 22); return list.map((p) => (
+            <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} onPress={() => setSelId(p.id)} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracks}>
+              <View style={{ width: mk, height: mk, borderRadius: mk / 2, backgroundColor: CATEGORY_META[p.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
+                <SF name={CATEGORY_META[p.category].icon} size={Math.round(mk * 0.5)} color="#fff" />
+              </View>
+            </Marker>
+          )); })()}
           {target && route ? <Polyline coordinates={route.coords} strokeColor={T.brand} strokeWidth={6} />
             : target && user ? <Polyline coordinates={[user, { latitude: target.lat, longitude: target.lng }]} strokeColor={T.brand} strokeWidth={3} lineDashPattern={[8, 6]} /> : null}
           {searchPin ? <Marker coordinate={{ latitude: searchPin.lat, longitude: searchPin.lng }} pinColor="#FF3B30" onPress={() => {}} /> : null}
@@ -233,12 +240,6 @@ export function MapHomeScreen({ navigation }: Props) {
         <Round icon="plus" brand onPress={() => isSignedIn ? navigation.navigate('AddPlace') : navigation.getParent()?.getParent()?.navigate('Auth' as never)} T={T} />
       </View>
 
-      {/* Bottom list pill */}
-      <Pressable onPress={() => setListOpen(true)} style={{ position: 'absolute', left: 14, right: 14, bottom: insets.bottom + 84, height: 50, borderRadius: 16, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
-        <SF name="list.bullet" size={16} color={T.brand} />
-        <Text style={[ty.headline, { color: T.label }]}>Список мест · {list.length}</Text>
-      </Pressable>
-
       {/* Place peek */}
       <Modal visible={!!sel} animationType="slide" transparent onRequestClose={() => setSelId(null)}>
         <Pressable style={{ flex: 1 }} onPress={() => setSelId(null)} />
@@ -278,35 +279,6 @@ export function MapHomeScreen({ navigation }: Props) {
             </View>
           </View>
         ) : null}
-      </Modal>
-
-      {/* List modal */}
-      <Modal visible={listOpen} animationType="slide" transparent onRequestClose={() => setListOpen(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' }} onPress={() => setListOpen(false)} />
-        <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 10, maxHeight: '78%' }}>
-          <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
-          <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 8 }]}>Места · {cityName}</Text>
-          <ScrollView contentContainerStyle={{ paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
-            {list.map((p) => (
-              <Pressable key={p.id} onPress={() => { setListOpen(false); setSelId(p.id); mapRef.current?.animateToRegion({ latitude: p.lat, longitude: p.lng, latitudeDelta: 0.03, longitudeDelta: 0.03 }, 500); }}
-                style={{ flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: CATEGORY_META[p.category].color + '22', alignItems: 'center', justifyContent: 'center' }}>
-                  <SF name={CATEGORY_META[p.category].icon} size={20} color={CATEGORY_META[p.category].color} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{p.name}</Text>
-                    {p.approved ? <SF name="checkmark.seal.fill" size={13} color="#0EA5E9" /> : null}
-                  </View>
-                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{CATEGORY_META[p.category].label} · {p.hours}{distTo(p) ? ` · ${distTo(p)}` : ''}</Text>
-                </View>
-                {ratingOf(p) > 0 ? <Text style={[ty.subheadEm, { color: T.label }]}>{ratingOf(p).toFixed(1)}</Text> : null}
-                <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} />
-              </Pressable>
-            ))}
-            {list.length === 0 ? <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>Здесь пока нет мест</Text></View> : null}
-          </ScrollView>
-        </View>
       </Modal>
 
       {/* Searched address peek */}
