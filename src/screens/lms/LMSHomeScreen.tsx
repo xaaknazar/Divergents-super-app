@@ -147,22 +147,7 @@ export function LMSHomeScreen({ navigation }: Props) {
             </View>
           ) : null}
 
-          {/* Sign-in prompt */}
-          {showSearch && !my.isSignedIn ? (
-            <Pressable onPress={() => navigation.getParent()?.getParent()?.navigate('Auth' as never)}
-              style={{ marginHorizontal: 16, marginBottom: 18, backgroundColor: T.brandTinted, borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(35,64,136,0.12)', alignItems: 'center', justifyContent: 'center' }}>
-                <SF name="person.crop.circle" size={22} color={T.brand} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[ty.headline, { color: T.label }]}>Войдите по почте</Text>
-                <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>Откроются ваши курсы и видео</Text>
-              </View>
-              <SF name="chevron.forward" size={14} color={T.brand} />
-            </Pressable>
-          ) : null}
-
-          {/* All courses grid */}
+{/* All courses grid */}
           <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16 }}>
             {filtered.map((c) => (

@@ -10,6 +10,7 @@ import { RESUME_STEPS } from '../data/resumeSchema';
 import { useResume } from '../state/useResume';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { fetchTalentProfile } from '../data/talentslab';
+import { useAppFlow } from '../state/AppFlowContext';
 import { RootStackParams } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Register'>;
@@ -23,12 +24,13 @@ export function RegisterScreen({ navigation }: Props) {
   const [tlPct, setTlPct] = useState<number | null>(null);
   const { getToken } = useAuth();
   const { user } = useUser();
+  const { finishRegistration } = useAppFlow();
   const total = RESUME_STEPS.length;
   const s = RESUME_STEPS[step];
   const last = step === total - 1;
 
   const go = (n: number) => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setStep(n); };
-  const enter = () => navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
+  const enter = () => finishRegistration();
 
   const next = () => {
     // require non-optional fields of the current step

@@ -6,7 +6,8 @@ import {
   AIStackParams, CareerStackParams, ProfileStackParams, MapStackParams,
 } from './types';
 import { TabBar } from './TabBar';
-import { isOnboarded } from '../state/onboarding';
+import { useAuth } from '@clerk/clerk-expo';
+import { useAppFlow } from '../state/AppFlowContext';
 
 import { LMSHomeScreen } from '../screens/lms/LMSHomeScreen';
 import { CatalogScreen } from '../screens/lms/CatalogScreen';
@@ -117,16 +118,23 @@ function Tabs() {
 
 const Root = createNativeStackNavigator<RootStackParams>();
 export function RootNavigator() {
-  const [initial, setInitial] = useState<'Onboarding' | 'Tabs' | null>(null);
-  useEffect(() => { isOnboarded().then((o) => setInitial(o ? 'Tabs' : 'Onboarding')); }, []);
-  if (!initial) return null;
+  const { isLoaded, isSignedIn } = useAuth();
+  const { ready, onboarded, pendingRegistration } = useAppFlow();
+  if (!isLoaded || !ready) return null;
   return (
-    <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }} initialRouteName={initial}>
-      <Root.Screen name="Onboarding" component={OnboardingScreen} options={{ presentation: 'fullScreenModal' }} />
-      <Root.Screen name="Auth" component={AuthScreen} options={{ presentation: 'modal' }} />
-      <Root.Screen name="Register" component={RegisterScreen} options={{ presentation: 'fullScreenModal' }} />
-      <Root.Screen name="Tabs" component={Tabs} />
-      <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
+    <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
+      {!onboarded ? (
+        <Root.Screen name="Onboarding" component={OnboardingScreen} options={{ presentation: 'fullScreenModal' }} />
+      ) : !isSignedIn ? (
+        <Root.Screen name="Auth" component={AuthScreen} />
+      ) : pendingRegistration ? (
+        <Root.Screen name="Register" component={RegisterScreen} />
+      ) : (
+        <>
+          <Root.Screen name="Tabs" component={Tabs} />
+          <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
+        </>
+      )}
     </Root.Navigator>
   );
 }

@@ -19,6 +19,7 @@ import { NotificationsProvider } from './src/state/NotificationsContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+import { AppFlowProvider } from './src/state/AppFlowContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -64,6 +65,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
+          <AppFlowProvider>
           <SafeAreaProvider>
             <CourseProvider>
               <ChallengeProvider>
@@ -79,6 +81,7 @@ export default function App() {
               </ChallengeProvider>
             </CourseProvider>
           </SafeAreaProvider>
+          </AppFlowProvider>
         </ClerkProvider>
       </ThemeProvider>
     </GestureHandlerRootView>

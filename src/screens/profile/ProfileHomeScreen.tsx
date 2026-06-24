@@ -14,6 +14,7 @@ import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
 import { useResume } from '../../state/useResume';
+import { useAppFlow } from '../../state/AppFlowContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useAchievements } from '../../data/achievements';
 import { GALLUP_DOMAIN_META, mbtiName, fmtList } from '../../data/talentslab';
@@ -34,15 +35,15 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { finishRegistration } = useAppFlow();
 
-  const goAuth = () => navigation.getParent()?.getParent()?.navigate('Auth' as never);
   const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
   const goCareer = () => navigation.getParent()?.navigate('CareerTab' as never);
 
   const coursesInProgress = courses.filter((c) => progress(c.id) > 0).length;
   const email = user?.primaryEmailAddress?.emailAddress;
   const name = user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(' ')
-    || (email ? email.split('@')[0] : 'Гость');
+    || (email ? email.split('@')[0] : 'Divergents');
   const initial = (name?.trim()?.[0] ?? 'D').toUpperCase();
   const challengeActive = challenge.currentDay > 0;
   const myApps = JOBS.filter((j) => applied.includes(j.id));
@@ -96,7 +97,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
             <View style={{ flex: 1 }}>
               <Text style={[ty.title2, { color: '#fff' }]} numberOfLines={1}>{name}</Text>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.85)', marginTop: 2 }]} numberOfLines={1}>
-                {isSignedIn ? (email ?? 'Divergents') : 'Войдите, чтобы синхронизировать'}
+                {email ?? 'Divergents'}
               </Text>
               {profile?.mbtiType ? (
                 <View style={{ marginTop: 8 }}>
@@ -160,14 +161,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
       {/* Account */}
       <ListSection header="Аккаунт" style={{ marginTop: 18 }}>
-        {isSignedIn ? (
-          <>
-            <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />} title={email ?? 'Вы вошли'} subtitle="Divergents LMS" />
-            <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title="Выйти" valueColor={T.red} last onPress={() => signOut()} />
-          </>
-        ) : (
-          <ListRow leading={<IconCircle icon="person.crop.circle" color={T.brand} bg={T.brandTinted} size={30} />} title="Войти по почте" subtitle="Чтобы видеть свои курсы и видео" chevron last onPress={goAuth} />
-        )}
+        <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />} title={email ?? 'Вы вошли'} subtitle="Divergents LMS · Talentslab" />
+        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title="Выйти" valueColor={T.red} last onPress={() => { finishRegistration(); signOut(); }} />
       </ListSection>
 
       {coursesInProgress > 0 ? (

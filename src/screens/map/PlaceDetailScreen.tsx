@@ -147,12 +147,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               style={[ty.body, { backgroundColor: T.fillTertiary, borderRadius: 12, padding: 12, color: T.label, minHeight: 70, textAlignVertical: 'top', marginTop: 12 }]} />
             <PrimaryButton label="Отправить отзыв" icon="paperplane.fill" style={{ marginTop: 12 }} disabled={!stars} onPress={submit} />
           </View>
-        ) : (
-          <Pressable onPress={() => navigation.getParent()?.getParent()?.navigate('Auth' as never)}
-            style={{ marginHorizontal: 16, marginTop: 8, padding: 14, backgroundColor: T.brandTinted, borderRadius: 14, alignItems: 'center' }}>
-            <Text style={[ty.subheadEm, { color: T.brand }]}>Войдите, чтобы оставить отзыв</Text>
-          </Pressable>
-        )}
+        ) : null}
       </ScrollView>
     </View>
   );

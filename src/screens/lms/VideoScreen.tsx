@@ -206,12 +206,7 @@ export function VideoScreen({ route, navigation }: Props) {
                     {sending ? <ActivityIndicator color={T.brand} /> : <SF name="arrow.up.circle.fill" size={32} color={draft.trim() ? T.brand : T.labelTertiary} />}
                   </Pressable>
                 </View>
-              ) : (
-                <Pressable onPress={() => navigation.getParent()?.getParent()?.navigate('Auth' as never)}
-                  style={{ marginTop: 12, padding: 12, backgroundColor: T.brandTinted, borderRadius: 12, alignItems: 'center' }}>
-                  <Text style={[ty.subheadEm, { color: T.brand }]}>Войдите, чтобы комментировать</Text>
-                </Pressable>
-              )}
+              ) : null}
             </View>
           ) : null}
         </ScrollView>

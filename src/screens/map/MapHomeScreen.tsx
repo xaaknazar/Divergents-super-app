@@ -193,7 +193,7 @@ export function MapHomeScreen({ navigation }: Props) {
     Alert.alert('Точка на карте', `${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)}`, [
       { text: 'Маршрут сюда', onPress: () => navTo({ name: 'Точка на карте', lat: c.latitude, lng: c.longitude }) },
       { text: 'Маршрут отсюда', onPress: () => { setOrigin({ name: 'Точка А', lat: c.latitude, lng: c.longitude }); routeReqRef.current = null; } },
-      { text: 'Добавить место здесь', onPress: () => isSignedIn ? navigation.navigate('AddPlace', { lat: c.latitude, lng: c.longitude }) : navigation.getParent()?.getParent()?.navigate('Auth' as never) },
+      { text: 'Добавить место здесь', onPress: () => navigation.navigate('AddPlace', { lat: c.latitude, lng: c.longitude }) },
       { text: 'Отмена', style: 'cancel' },
     ]);
   };
@@ -319,7 +319,7 @@ export function MapHomeScreen({ navigation }: Props) {
       {/* Right floating buttons */}
       <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
         <Round icon="location.fill" onPress={recenter} T={T} />
-        <Round icon="plus" brand onPress={() => isSignedIn ? navigation.navigate('AddPlace') : navigation.getParent()?.getParent()?.navigate('Auth' as never)} T={T} />
+        <Round icon="plus" brand onPress={() => navigation.navigate('AddPlace')} T={T} />
       </View>
 
       {/* Place peek */}

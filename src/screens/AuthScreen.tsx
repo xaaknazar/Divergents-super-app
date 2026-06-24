@@ -8,6 +8,7 @@ import { SF } from '../components/SFIcon';
 import { PrimaryButton, ty } from '../components/ui';
 import { Logo } from '../components/Logo';
 import { RootStackParams } from '../navigation/types';
+import { useAppFlow } from '../state/AppFlowContext';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Auth'>;
 
@@ -17,6 +18,7 @@ export function AuthScreen({ navigation }: Props) {
   const { signIn, setActive: setActiveSignIn, isLoaded: signInLoaded } = useSignIn();
   const { signUp, setActive: setActiveSignUp, isLoaded: signUpLoaded } = useSignUp();
   const isLoaded = signInLoaded && signUpLoaded;
+  const { startRegistration } = useAppFlow();
 
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [mode, setMode] = useState<'in' | 'up'>('in'); // resolved after entering email
@@ -28,6 +30,7 @@ export function AuthScreen({ navigation }: Props) {
   const startSignUp = async () => {
     await signUp!.create({ emailAddress: email.trim() });
     await signUp!.prepareEmailAddressVerification({ strategy: 'email_code' });
+    startRegistration(); // after verification the app shows the registration анкета
     setMode('up'); setStep('code');
   };
 
@@ -74,11 +77,11 @@ export function AuthScreen({ navigation }: Props) {
     try {
       if (mode === 'in') {
         const res = await signIn!.attemptFirstFactor({ strategy: 'email_code', code: code.trim() });
-        if (res.status === 'complete') { await setActiveSignIn!({ session: res.createdSessionId }); navigation.goBack(); }
+        if (res.status === 'complete') { await setActiveSignIn!({ session: res.createdSessionId }); }
         else setError('Не удалось войти. Попробуйте ещё раз.');
       } else {
         const res = await signUp!.attemptEmailAddressVerification({ code: code.trim() });
-        if (res.status === 'complete') { await setActiveSignUp!({ session: res.createdSessionId }); navigation.replace('Register'); }
+        if (res.status === 'complete') { await setActiveSignUp!({ session: res.createdSessionId }); }
         else setError('Не удалось подтвердить почту. Попробуйте ещё раз.');
       }
     } catch (e: any) {
@@ -96,10 +99,6 @@ export function AuthScreen({ navigation }: Props) {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: T.systemBg }}>
       <View style={{ flex: 1, paddingTop: insets.top + 10, paddingHorizontal: 24, paddingBottom: insets.bottom + 20 }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={{ alignSelf: 'flex-start', padding: 6 }}>
-          <SF name="xmark" size={22} color={T.labelSecondary} />
-        </Pressable>
-
         <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 28 }}>
           <View style={{ width: 76, height: 76, borderRadius: 20, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
             <Logo size={46} />
