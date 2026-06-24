@@ -9,16 +9,31 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "kz.divergents.app"
+      "bundleIdentifier": "kz.divergents.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества."
+      }
     },
     "android": {
       "package": "kz.divergents.app",
       "adaptiveIcon": {
         "backgroundColor": "#234088"
-      }
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества."
+        }
+      ]
+    ]
   }
 }
