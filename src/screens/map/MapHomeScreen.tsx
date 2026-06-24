@@ -314,7 +314,6 @@ export function MapHomeScreen({ navigation }: Props) {
               <View style={{ flex: 1 }} />
               {routes.length > 1 ? <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.85)' }]}>ещё {routes.length - 1}</Text> : null}
               <Pressable onPress={shareRoute} hitSlop={6}><SF name="square.and.arrow.up" size={17} color="#fff" /></Pressable>
-              <Pill label="Навигатор" onPress={() => externalRoute(target)} />
             </View>
             {origin ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
