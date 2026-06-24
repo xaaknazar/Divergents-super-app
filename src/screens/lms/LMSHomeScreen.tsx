@@ -148,7 +148,7 @@ export function LMSHomeScreen({ navigation }: Props) {
           ) : null}
 
 {/* All courses grid */}
-          <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} />
+          <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} action="Каталог" onAction={() => navigation.navigate('Catalog')} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16 }}>
             {filtered.map((c) => (
               <View key={c.id} style={{ width: '48.5%', marginBottom: 14 }}>

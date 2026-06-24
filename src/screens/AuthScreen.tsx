@@ -21,7 +21,7 @@ export function AuthScreen({}: Props) {
   const { signIn, setActive: setActiveSignIn, isLoaded: siLoaded } = useSignIn();
   const { signUp, setActive: setActiveSignUp, isLoaded: suLoaded } = useSignUp();
   const isLoaded = siLoaded && suLoaded;
-  const { startRegistration } = useAppFlow();
+  const { startRegistration, finishRegistration } = useAppFlow();
 
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [intent, setIntent] = useState<'in' | 'up'>('in');
@@ -98,7 +98,7 @@ export function AuthScreen({}: Props) {
     try {
       if (mode === 'in') {
         const res = await signIn!.attemptFirstFactor({ strategy: 'email_code', code: code.trim() });
-        if (res.status === 'complete') await setActiveSignIn!({ session: res.createdSessionId });
+        if (res.status === 'complete') { finishRegistration(); await setActiveSignIn!({ session: res.createdSessionId }); }
         else setError(t('err_code'));
       } else {
         const res = await signUp!.attemptEmailAddressVerification({ code: code.trim() });
