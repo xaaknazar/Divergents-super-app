@@ -15,6 +15,7 @@ import { ChallengeProvider } from './src/state/ChallengeContext';
 import { CareerProvider } from './src/state/CareerContext';
 import { EnrollmentProvider } from './src/state/EnrollmentContext';
 import { PlacesProvider } from './src/state/PlacesContext';
+import { ChannelProvider } from './src/state/ChannelContext';
 import { NotificationsProvider } from './src/state/NotificationsContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
@@ -74,9 +75,11 @@ export default function App() {
                 <CareerProvider>
                   <EnrollmentProvider>
                     <PlacesProvider>
+                    <ChannelProvider>
                       <NotificationsProvider>
                         {fontsLoaded ? <Root /> : <Loader />}
                       </NotificationsProvider>
+                    </ChannelProvider>
                     </PlacesProvider>
                   </EnrollmentProvider>
                 </CareerProvider>

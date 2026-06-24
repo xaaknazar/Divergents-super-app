@@ -17,12 +17,14 @@ import {
   Trip, SportActivity, Lecture,
 } from '../../data/community';
 import { imgUrl } from '../../data/api';
+import { CHANNEL, CHANNEL_POSTS, ChannelPost } from '../../data/channel';
+import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
 
-const SECTIONS = ['Главная', 'Челленджи', 'Поездки', 'Спорт', 'Встречи'];
+const SECTIONS = ['Главная', 'Челленджи', 'Поездки', 'Спорт', 'Канал'];
 
 export function CommunityHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
@@ -45,7 +47,7 @@ export function CommunityHomeScreen({ navigation }: Props) {
       {seg === 1 && <ChallengesTab navigation={navigation} />}
       {seg === 2 && <TripsTab navigation={navigation} />}
       {seg === 3 && <SportTab />}
-      {seg === 4 && <MeetingsTab />}
+      {seg === 4 && <ChannelTab navigation={navigation} />}
       <View style={{ height: 16 }} />
     </Screen>
   );
@@ -95,7 +97,6 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
 // ─── Главная ────────────────────────────────────────────────────────
 function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number) => void }) {
   const { T } = useTheme();
-  const liveLecture = LECTURES.find((l) => l.live) ?? LECTURES[0];
   return (
     <>
       <SectionHeader title="Твой челлендж" />
@@ -121,21 +122,17 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
       </View>
 
       <View style={{ marginTop: 18 }}>
-        <SectionHeader title="Встречи · лекции Дандай Амокачи" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
-        <Pressable onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
-          <View style={{ height: 150 }}>
-            <Image source={imgUrl(liveLecture.imageUrl, 750)} style={{ width: '100%', height: 150 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-            <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 90, backgroundColor: 'rgba(0,0,0,0.4)' }} />
-            {liveLecture.live ? (
-              <View style={{ position: 'absolute', top: 12, left: 12 }}>
-                <Capsule bg={T.red} color="#fff"><SF name="circle.fill" size={8} color="#fff" />LIVE</Capsule>
-              </View>
-            ) : null}
-            <View style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
-              <Text style={[ty.title3, { color: '#fff' }]}>{liveLecture.title}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)' }]}>{liveLecture.speaker} · {liveLecture.date}</Text>
+        <SectionHeader title="Канал автора" action="Открыть" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
+        <Pressable onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, flexDirection: 'row', gap: 14, alignItems: 'center', borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <Image source={{ uri: CHANNEL.avatar }} style={{ width: 56, height: 56, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{CHANNEL.name}</Text>
+              <SF name="checkmark.seal.fill" size={14} color="#0EA5E9" />
             </View>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={2}>Авторские аудио и статьи · @{CHANNEL.handle}</Text>
           </View>
+          <SF name="chevron.forward" size={14} color={T.labelTertiary} />
         </Pressable>
       </View>
 
@@ -257,49 +254,75 @@ function SportTab() {
   );
 }
 
-// ─── Встречи (онлайн-лекции) ────────────────────────────────────────
-function MeetingsTab() {
+// ─── Канал автора (Telegram-style группа) ───────────────────────────
+function ChannelTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
-  const { has, toggle } = useEnrollment();
+  const { joined, join, leave } = useChannel();
+  const subs = CHANNEL.baseSubscribers + (joined ? 1 : 0);
   return (
     <View style={{ paddingHorizontal: 16 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingVertical: 8, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Онлайн-лекции · Дандай Амокачи</Text>
-      {LECTURES.map((lec) => (
-        <View key={lec.id} style={{ backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden', marginBottom: 14 }}>
-          <View style={{ height: 160 }}>
-            <Image source={imgUrl(lec.imageUrl, 750)} style={{ width: '100%', height: 160 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-            <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 70, backgroundColor: 'rgba(0,0,0,0.35)' }} />
-            {lec.live ? (
-              <View style={{ position: 'absolute', top: 12, left: 12 }}>
-                <Capsule bg={T.red} color="#fff"><SF name="circle.fill" size={8} color="#fff" />LIVE</Capsule>
-              </View>
-            ) : (
-              <View style={{ position: 'absolute', top: 12, left: 12 }}>
-                <Capsule bg="rgba(0,0,0,0.45)" color="#fff"><SF name="calendar" size={11} color="#fff" />{lec.date}</Capsule>
-              </View>
-            )}
-            <View style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
-              <Text style={[ty.title3, { color: '#fff' }]}>{lec.title}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)' }]}>{lec.speaker}</Text>
+      <View style={{ backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+          <Image source={{ uri: CHANNEL.avatar }} style={{ width: 64, height: 64, borderRadius: 20 }} contentFit="cover" cachePolicy="memory-disk" />
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{CHANNEL.name}</Text>
+              {CHANNEL.verified ? <SF name="checkmark.seal.fill" size={15} color="#0EA5E9" /> : null}
             </View>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 }}>
-            <View>
-              <Text style={[ty.subheadEm, { color: T.label }]}>{lec.date}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>{lec.durationLabel} · {lec.seatsLabel}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]}>@{CHANNEL.handle}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
+              <SF name="person.2.fill" size={12} color={T.labelTertiary} />
+              <Text style={[ty.caption1, { color: T.labelTertiary }]}>{subs.toLocaleString('ru-RU')} подписчиков</Text>
             </View>
-            {(() => { const k = `lecture:${lec.id}`; const on = has(k); return (
-              <Pressable
-                onPress={() => lec.live
-                  ? Alert.alert('Трансляция', 'Прямой эфир скоро начнётся — мы пришлём уведомление.')
-                  : toggle(k)}
-                style={{ backgroundColor: lec.live ? T.red : on ? T.green : T.brand, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 18 }}>
-                <Text style={[ty.subheadEm, { color: '#fff' }]}>{lec.live ? 'Смотреть' : on ? 'Напомним ✓' : 'Напомнить'}</Text>
-              </Pressable>
-            ); })()}
           </View>
         </View>
-      ))}
+        <Text style={[ty.subhead, { color: T.label, marginTop: 12 }]}>{CHANNEL.bio}</Text>
+        <Pressable onPress={() => (joined ? leave() : join())} style={{ marginTop: 14, height: 46, borderRadius: 14, backgroundColor: joined ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+          <SF name={joined ? 'checkmark' : 'plus'} size={16} color={joined ? T.label : '#fff'} />
+          <Text style={[ty.headline, { color: joined ? T.label : '#fff' }]}>{joined ? 'Вы подписаны' : 'Вступить в группу'}</Text>
+        </Pressable>
+      </View>
+
+      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingTop: 18, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Публикации автора</Text>
+      {CHANNEL_POSTS.map((p) => <PostCard key={p.id} post={p} onPress={() => navigation.navigate('ChannelPost', { postId: p.id })} />)}
+    </View>
+  );
+}
+
+function PostCard({ post, onPress }: { post: ChannelPost; onPress: () => void }) {
+  const { T } = useTheme();
+  const { isLiked } = useChannel();
+  const audio = post.type === 'audio';
+  return (
+    <Pressable onPress={onPress} style={{ backgroundColor: T.cardBg, borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+          <SF name={audio ? 'play.fill' : 'doc.text.fill'} size={22} color={T.brand} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Capsule bg={T.brandTinted} color={T.brand}><SF name={audio ? 'waveform' : 'doc.text.fill'} size={10} color={T.brand} />{audio ? 'Аудио' : 'Статья'}</Capsule>
+            <Text style={[ty.caption2, { color: T.labelTertiary }]}>{post.date}</Text>
+          </View>
+          <Text style={[ty.subheadEm, { color: T.label, marginTop: 6 }]} numberOfLines={2}>{post.title}</Text>
+          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 3 }]} numberOfLines={2}>{post.excerpt}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 8 }}>
+            <Meta icon={audio ? 'headphones' : 'eye.fill'} text={post.views} />
+            <Meta icon="heart.fill" text={String(post.likes + (isLiked(post.id) ? 1 : 0))} />
+            <Meta icon="book" text={audio ? (post.durationLabel ?? '') : `${post.readMins} мин`} />
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function Meta({ icon, text }: { icon: SFName; text: string }) {
+  const { T } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <SF name={icon} size={12} color={T.labelTertiary} />
+      <Text style={[ty.caption2, { color: T.labelTertiary }]}>{text}</Text>
     </View>
   );
 }
