@@ -24,7 +24,7 @@ import { CommunityStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
 
-const SECTIONS = ['Главная', 'Челленджи', 'Поездки', 'Спорт', 'Канал'];
+const SECTIONS = ['Главная', 'Каналы', 'Челленджи', 'Поездки', 'Спорт'];
 
 export function CommunityHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
@@ -44,10 +44,10 @@ export function CommunityHomeScreen({ navigation }: Props) {
       </ScrollView>
 
       {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} />}
-      {seg === 1 && <ChallengesTab navigation={navigation} />}
-      {seg === 2 && <TripsTab navigation={navigation} />}
-      {seg === 3 && <SportTab />}
-      {seg === 4 && <ChannelTab navigation={navigation} />}
+      {seg === 1 && <ChannelTab navigation={navigation} />}
+      {seg === 2 && <ChallengesTab navigation={navigation} />}
+      {seg === 3 && <TripsTab navigation={navigation} />}
+      {seg === 4 && <SportTab />}
       <View style={{ height: 16 }} />
     </Screen>
   );
@@ -102,16 +102,16 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
       <SectionHeader title="Твой челлендж" />
       <ActiveChallengeCard navigation={navigation} />
 
-      <SectionHeader title="Предстоящие поездки" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(2); }} />
+      <SectionHeader title="Предстоящие поездки" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
         {TRIPS.map((t) => <TripCardH key={t.id} trip={t} navigation={navigation} />)}
       </ScrollView>
 
       <View style={{ marginTop: 18 }}>
-        <SectionHeader title="Спорт" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
+        <SectionHeader title="Спорт" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
           {SPORT.map((sp) => (
-            <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
+            <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
               <IconSquircle icon={sp.icon} bg={T.brand} size={34} />
               <Text style={[ty.headline, { color: T.label, marginTop: 10 }]} numberOfLines={1}>{sp.title}</Text>
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}</Text>
@@ -122,7 +122,7 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
       </View>
 
       <View style={{ marginTop: 18 }}>
-        <SectionHeader title="Каналы" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
+        <SectionHeader title="Каналы" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(1); }} />
         {CHANNELS.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
       </View>
 
