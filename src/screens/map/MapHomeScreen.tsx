@@ -113,15 +113,6 @@ export function MapHomeScreen({ navigation }: Props) {
   const cityName = center?.name ?? '';
   const baseList = useMemo(() => filterPlaces(places, country, city, cat, tags, q), [places, country, city, cat, tags, q]);
   const list = useMemo(() => (openNow ? baseList.filter((p) => isOpenNow(p.hours).open) : baseList), [baseList, openNow]);
-  const clusters = useMemo(() => {
-    const cell = zoomDelta / 5;
-    if (zoomDelta < 0.05 || cell <= 0) return list.map((p) => ({ single: p as Place | null, lat: p.lat, lng: p.lng, count: 1, key: p.id }));
-    const b: Record<string, Place[]> = {};
-    list.forEach((p) => { const k = `${Math.round(p.lat / cell)}_${Math.round(p.lng / cell)}`; (b[k] ||= []).push(p); });
-    return Object.entries(b).map(([k, arr]) => arr.length === 1
-      ? { single: arr[0] as Place | null, lat: arr[0].lat, lng: arr[0].lng, count: 1, key: arr[0].id }
-      : { single: null as Place | null, lat: arr.reduce((a, p) => a + p.lat, 0) / arr.length, lng: arr.reduce((a, p) => a + p.lng, 0) / arr.length, count: arr.length, key: 'c' + k });
-  }, [list, zoomDelta]);
   const measureKm = useMemo(() => { let s = 0; for (let i = 1; i < measurePts.length; i++) s += haversineKm(measurePts[i - 1], measurePts[i]); return s; }, [measurePts]);
   const sel = selId ? places.find((p) => p.id === selId) : null;
 
@@ -229,17 +220,10 @@ export function MapHomeScreen({ navigation }: Props) {
           onLongPress={(e) => longMenu(e.nativeEvent.coordinate)}
           onRegionChangeComplete={(r) => { setZoomDelta(r.latitudeDelta); setTracks(true); clearTimeout(tracksTimer.current); tracksTimer.current = setTimeout(() => setTracks(false), 500); }}
         >
-          {(() => { const mk = Math.round(40 - Math.min(1, Math.max(0, (zoomDelta - 0.02) / 0.28)) * 22); return clusters.map((c) => c.single ? (
-            <Marker key={c.key} coordinate={{ latitude: c.lat, longitude: c.lng }} onPress={() => setSelId(c.single!.id)} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracks}>
-              <View style={{ width: mk, height: mk, borderRadius: mk / 2, backgroundColor: CATEGORY_META[c.single.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
-                <SF name={CATEGORY_META[c.single.category].icon} size={Math.round(mk * 0.5)} color="#fff" />
-              </View>
-            </Marker>
-          ) : (
-            <Marker key={c.key} coordinate={{ latitude: c.lat, longitude: c.lng }} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracks}
-              onPress={() => mapRef.current?.animateToRegion({ latitude: c.lat, longitude: c.lng, latitudeDelta: Math.max(0.015, zoomDelta / 2.5), longitudeDelta: Math.max(0.015, zoomDelta / 2.5) }, 400)}>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                <Text style={[ty.subheadEm, { color: '#fff' }]}>{c.count}</Text>
+          {(() => { const mk = Math.round(40 - Math.min(1, Math.max(0, (zoomDelta - 0.02) / 0.28)) * 22); return list.map((p) => (
+            <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} onPress={() => setSelId(p.id)} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracks}>
+              <View style={{ width: mk, height: mk, borderRadius: mk / 2, backgroundColor: CATEGORY_META[p.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
+                <SF name={CATEGORY_META[p.category].icon} size={Math.round(mk * 0.5)} color="#fff" />
               </View>
             </Marker>
           )); })()}
