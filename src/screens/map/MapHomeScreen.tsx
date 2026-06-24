@@ -26,27 +26,30 @@ function haversineKm(a: LatLng, b: LatLng): number {
 function fmtDist(km: number): string { return km < 1 ? `${Math.round(km * 1000)} м` : `${km.toFixed(1)} км`; }
 function fmtDur(min: number): string { if (min < 60) return `${Math.max(1, Math.round(min))} мин`; const h = Math.floor(min / 60); return `${h} ч ${Math.round(min % 60)} мин`; }
 
-async function fetchRoute(from: LatLng, to: LatLng): Promise<{ coords: LatLng[]; km: number; min: number } | null> {
+type RouteT = { coords: LatLng[]; km: number; min: number };
+
+async function fetchRoutes(from: LatLng, to: LatLng, mode: 'car' | 'foot'): Promise<RouteT[]> {
   const coords = `${from.longitude},${from.latitude};${to.longitude},${to.latitude}`;
-  const endpoints = [
-    `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coords}?overview=full&geometries=geojson`,
-    `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`,
-  ];
-  for (const url of endpoints) {
+  const q = 'overview=full&geometries=geojson&alternatives=3';
+  const urls = mode === 'foot'
+    ? [`https://routing.openstreetmap.de/routed-foot/route/v1/foot/${coords}?${q}`]
+    : [`https://routing.openstreetmap.de/routed-car/route/v1/driving/${coords}?${q}`,
+       `https://router.project-osrm.org/route/v1/driving/${coords}?${q}`];
+  for (const url of urls) {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 9000);
     try {
       const res = await fetch(url, { signal: ctrl.signal });
       if (!res.ok) { clearTimeout(t); continue; }
       const d = await res.json();
-      const r = d?.routes?.[0];
-      if (r?.geometry?.coordinates?.length) {
-        clearTimeout(t);
-        return { coords: r.geometry.coordinates.map((c: number[]) => ({ latitude: c[1], longitude: c[0] })), km: (r.distance ?? 0) / 1000, min: (r.duration ?? 0) / 60 };
-      }
-    } catch { /* try next endpoint */ } finally { clearTimeout(t); }
+      const rs = Array.isArray(d?.routes) ? d.routes : [];
+      const parsed: RouteT[] = rs
+        .filter((r: any) => r?.geometry?.coordinates?.length)
+        .map((r: any) => ({ coords: r.geometry.coordinates.map((c: number[]) => ({ latitude: c[1], longitude: c[0] })), km: (r.distance ?? 0) / 1000, min: (r.duration ?? 0) / 60 }));
+      if (parsed.length) { clearTimeout(t); return parsed.sort((a, b) => a.min - b.min); } // fastest first
+    } catch { /* next */ } finally { clearTimeout(t); }
   }
-  return null;
+  return [];
 }
 
 async function geocode(q: string): Promise<{ name: string; lat: number; lng: number }[]> {
@@ -82,7 +85,9 @@ export function MapHomeScreen({ navigation }: Props) {
   const [tracks, setTracks] = useState(true);
   const tracksTimer = useRef<any>(null);
   const [path, setPath] = useState<LatLng[]>([]);
-  const [route, setRoute] = useState<{ coords: LatLng[]; km: number; min: number } | null>(null);
+  const [routes, setRoutes] = useState<RouteT[]>([]);
+  const [routeIdx, setRouteIdx] = useState(0);
+  const [mode, setMode] = useState<'car' | 'foot'>('car');
   const [routing, setRouting] = useState(false);
   const mapRef = useRef<MapView>(null);
   const subRef = useRef<Location.LocationSubscription | null>(null);
@@ -118,14 +123,14 @@ export function MapHomeScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (!target || !user) return;
-    const key = `${target.lat},${target.lng}`;
-    if (routeReqRef.current === key) return; // already requested for this destination
+    const key = `${target.lat},${target.lng},${mode}`;
+    if (routeReqRef.current === key) return;
     routeReqRef.current = key;
     let alive = true;
-    setRoute(null); setRouting(true);
-    fetchRoute(user, { latitude: target.lat, longitude: target.lng }).then((r) => { if (alive) { setRoute(r); setRouting(false); } });
+    setRoutes([]); setRouteIdx(0); setRouting(true);
+    fetchRoutes(user, { latitude: target.lat, longitude: target.lng }, mode).then((rs) => { if (alive) { setRoutes(rs); setRouteIdx(0); setRouting(false); } });
     return () => { alive = false; };
-  }, [target, user]);
+  }, [target, user, mode]);
 
   // Address / building search (OSM Nominatim), debounced.
   useEffect(() => {
@@ -154,9 +159,9 @@ export function MapHomeScreen({ navigation }: Props) {
     mapRef.current?.animateToRegion({ ...user, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 500);
   };
   const openPlace = (id: string) => navigation.navigate('PlaceDetail', { placeId: id });
-  const navTo = (n: { name: string; lat: number; lng: number }) => { routeReqRef.current = null; setTarget(n); setRoute(null); setPath(user ? [user] : []); setSelId(null); setSearchPin(null); if (mapRef.current) mapRef.current.animateToRegion({ latitude: n.lat, longitude: n.lng, latitudeDelta: 0.06, longitudeDelta: 0.06 }, 500); };
+  const navTo = (n: { name: string; lat: number; lng: number }) => { routeReqRef.current = null; setTarget(n); setRoutes([]); setRouteIdx(0); setPath(user ? [user] : []); setSelId(null); setSearchPin(null); if (mapRef.current) mapRef.current.animateToRegion({ latitude: n.lat, longitude: n.lng, latitudeDelta: 0.06, longitudeDelta: 0.06 }, 500); };
   const startNav = (p: Place) => navTo({ name: p.name, lat: p.lat, lng: p.lng });
-  const stopNav = () => { routeReqRef.current = null; setTarget(null); setPath([]); setRoute(null); };
+  const stopNav = () => { routeReqRef.current = null; setTarget(null); setPath([]); setRoutes([]); setRouteIdx(0); };
   const externalRoute = (t: { lat: number; lng: number }) => Linking.openURL(Platform.OS === 'ios' ? `http://maps.apple.com/?daddr=${t.lat},${t.lng}&dirflg=d` : `https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lng}`);
   const pickGeo = (g: { name: string; lat: number; lng: number }) => { setSearchPin(g); setGeo([]); mapRef.current?.animateToRegion({ latitude: g.lat, longitude: g.lng, latitudeDelta: 0.012, longitudeDelta: 0.012 }, 500); };
 
@@ -181,7 +186,10 @@ export function MapHomeScreen({ navigation }: Props) {
               </View>
             </Marker>
           )); })()}
-          {target && route ? <Polyline coordinates={route.coords} strokeColor={T.brand} strokeWidth={6} />
+          {target && routes.length > 0
+            ? routes.map((rt, i) => (
+                <Polyline key={i} coordinates={rt.coords} strokeColor={i === routeIdx ? T.brand : 'rgba(120,120,140,0.45)'} strokeWidth={i === routeIdx ? 7 : 4} tappable onPress={() => setRouteIdx(i)} zIndex={i === routeIdx ? 3 : 1} />
+              ))
             : target && user ? <Polyline coordinates={[user, { latitude: target.lat, longitude: target.lng }]} strokeColor={T.brand} strokeWidth={3} lineDashPattern={[8, 6]} /> : null}
           {searchPin ? <Marker coordinate={{ latitude: searchPin.lat, longitude: searchPin.lng }} pinColor="#FF3B30" onPress={() => {}} /> : null}
           {path.length > 1 ? <Polyline coordinates={path} strokeColor={T.brandAccent} strokeWidth={5} /> : null}
@@ -222,17 +230,35 @@ export function MapHomeScreen({ navigation }: Props) {
       </View>
 
       {/* Navigation banner */}
-      {target ? (
-        <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
-          <SF name="figure.walk" size={18} color="#fff" />
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>До «{target.name}»</Text>
-            <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>{routing ? 'строю маршрут…' : route ? `${fmtDist(route.km)} по дороге · ${fmtDur(route.min)}` : user ? `${fmtDist(haversineKm(user, { latitude: target.lat, longitude: target.lng }))} по прямой` : 'ждём GPS…'}</Text>
+      {target ? (() => {
+        const rt = routes[routeIdx];
+        const Pill = ({ label, on, onPress }: { label: string; on?: boolean; onPress: () => void }) => (
+          <Pressable onPress={onPress} hitSlop={4} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: on ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.14)' }}>
+            <Text style={[ty.footnoteEm, { color: '#fff' }]}>{label}</Text>
+          </Pressable>
+        );
+        return (
+          <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 16, padding: 12, gap: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <SF name="paperplane.fill" size={18} color="#fff" />
+              <View style={{ flex: 1 }}>
+                <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>До «{target.name}»</Text>
+                <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>
+                  {routing ? 'ищу самый быстрый маршрут…' : rt ? `${fmtDist(rt.km)} · ${fmtDur(rt.min)}${routeIdx === 0 ? ' · самый быстрый' : ''}` : user ? `${fmtDist(haversineKm(user, { latitude: target.lat, longitude: target.lng }))} по прямой` : 'ждём GPS…'}
+                </Text>
+              </View>
+              <Pressable onPress={stopNav} hitSlop={8}><SF name="xmark" size={18} color="#fff" /></Pressable>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Pill label="Авто" on={mode === 'car'} onPress={() => setMode('car')} />
+              <Pill label="Пешком" on={mode === 'foot'} onPress={() => setMode('foot')} />
+              <View style={{ flex: 1 }} />
+              {routes.length > 1 ? <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.85)' }]}>ещё {routes.length - 1} — тапни линию</Text> : null}
+              <Pill label="Навигатор" onPress={() => externalRoute(target)} />
+            </View>
           </View>
-          <Pressable onPress={() => externalRoute(target)} hitSlop={6} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>Навигатор</Text></Pressable>
-          <Pressable onPress={stopNav} hitSlop={6}><SF name="xmark" size={18} color="#fff" /></Pressable>
-        </View>
-      ) : null}
+        );
+      })() : null}
 
       {/* Right floating buttons */}
       <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 150, gap: 12 }}>
