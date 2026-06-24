@@ -8,6 +8,8 @@ import { PrimaryButton, ty } from '../components/ui';
 import { ResumeFieldInput } from '../components/ResumeField';
 import { RESUME_STEPS } from '../data/resumeSchema';
 import { useResume } from '../state/useResume';
+import { useAuth, useUser } from '@clerk/clerk-expo';
+import { fetchTalentProfile } from '../data/talentslab';
 import { RootStackParams } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Register'>;
@@ -17,6 +19,10 @@ export function RegisterScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { answers, setField, completeness, submit, submitting } = useResume();
   const [step, setStep] = useState(0);
+  const [done, setDone] = useState(false);
+  const [tlPct, setTlPct] = useState<number | null>(null);
+  const { getToken } = useAuth();
+  const { user } = useUser();
   const total = RESUME_STEPS.length;
   const s = RESUME_STEPS[step];
   const last = step === total - 1;
@@ -41,12 +47,45 @@ export function RegisterScreen({ navigation }: Props) {
     });
     if (missing.length) { Alert.alert('Заполните обязательные поля', missing.map((m) => `• ${m.label}`).join('\n')); return; }
     const ok = await submit();
-    Alert.alert(
-      ok ? 'Регистрация завершена' : 'Сохранено локально',
-      ok ? 'Анкета отправлена в Talentslab. Добро пожаловать в Divergents!' : 'Нет связи с Talentslab — данные сохранены в приложении и отправятся позже.',
-      [{ text: 'В приложение', onPress: enter }],
-    );
+    setTlPct(ok ? completeness : completeness);
+    setDone(true);
+    if (ok) {
+      try {
+        const token = await getToken();
+        const email = user?.primaryEmailAddress?.emailAddress ?? null;
+        const prof = await fetchTalentProfile(token, email);
+        if (prof?.found && typeof prof.completeness === 'number') setTlPct(prof.completeness);
+      } catch {}
+    }
   };
+
+  if (done) {
+    const pct = tlPct ?? completeness;
+    return (
+      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top, paddingHorizontal: 24, paddingBottom: insets.bottom + 24, justifyContent: 'center' }}>
+        <View style={{ alignItems: 'center' }}>
+          <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="checkmark.seal.fill" size={48} color={T.brand} />
+          </View>
+          <Text style={[ty.title1, { color: T.label, marginTop: 18, textAlign: 'center' }]}>Регистрация завершена</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>Анкета сохранена в Talentslab. Заполните её до 100%, чтобы пройти Gallup, MBTI и тест Гарднера.</Text>
+        </View>
+        <View style={{ marginTop: 28, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
+            <Text style={[ty.subheadEm, { color: T.label }]}>Заполненность анкеты Talentslab</Text>
+            <Text style={[ty.title3, { color: T.brand }]}>{pct}%</Text>
+          </View>
+          <View style={{ height: 10, borderRadius: 5, backgroundColor: T.fillSecondary, overflow: 'hidden' }}>
+            <View style={{ width: `${Math.max(4, Math.min(100, pct))}%`, height: 10, borderRadius: 5, backgroundColor: T.brand }} />
+          </View>
+          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 10 }]}>
+            {pct >= 100 ? 'Анкета заполнена полностью.' : 'Продолжить заполнение можно в разделе «Карьера».'}
+          </Text>
+        </View>
+        <PrimaryButton label="Войти в приложение" icon="arrow.right" style={{ marginTop: 24 }} onPress={enter} />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>

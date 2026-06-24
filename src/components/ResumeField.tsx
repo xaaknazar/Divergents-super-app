@@ -78,7 +78,7 @@ export function ResumeFieldInput({ field, value, onChange }: { field: ResumeFiel
         onChangeText={(t) => onChange(field.type === 'number' ? t.replace(/[^0-9]/g, '') : t)}
         placeholder={field.placeholder}
         placeholderTextColor={T.labelTertiary}
-        keyboardType={field.type === 'number' ? 'number-pad' : 'default'}
+        keyboardType={field.key === 'phone' ? 'phone-pad' : field.type === 'number' ? 'number-pad' : field.key === 'email' ? 'email-address' : 'default'}
         multiline={field.type === 'textarea'}
         autoCapitalize={field.key === 'email' || field.key === 'instagram' ? 'none' : 'sentences'}
         style={[ty.body, inputStyle, field.type === 'textarea' ? { minHeight: 90, textAlignVertical: 'top' } : null]}
