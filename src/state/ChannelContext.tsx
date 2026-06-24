@@ -27,17 +27,17 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
   const [likes, setLikes] = useState<string[]>([]);
 
   useEffect(() => {
-    loadJSON<string[]>('dvg.channelJoined', []).then(setJoined);
-    loadJSON<string[]>('dvg.channelRequested', []).then(setRequested);
-    loadJSON<Record<string, number>>('dvg.channelSeen', {}).then(setSeen);
-    loadJSON<string[]>('dvg.channelLikes', []).then(setLikes);
+    loadJSON<string[]>('dvg.channelJoined.v2', []).then((v) => setJoined(Array.isArray(v) ? v : []));
+    loadJSON<string[]>('dvg.channelRequested.v2', []).then((v) => setRequested(Array.isArray(v) ? v : []));
+    loadJSON<Record<string, number>>('dvg.channelSeen.v2', {}).then((v) => setSeen(v && typeof v === 'object' ? v : {}));
+    loadJSON<string[]>('dvg.channelLikes.v2', []).then((v) => setLikes(Array.isArray(v) ? v : []));
   }, []);
 
-  const join = useCallback((id: string) => setJoined((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelJoined', n); return n; }), []);
-  const leave = useCallback((id: string) => setJoined((p) => { const n = p.filter((x) => x !== id); saveJSON('dvg.channelJoined', n); return n; }), []);
-  const request = useCallback((id: string) => setRequested((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelRequested', n); return n; }), []);
-  const markSeen = useCallback((id: string) => setSeen((p) => { const n = { ...p, [id]: postsByChannel(id).length }; saveJSON('dvg.channelSeen', n); return n; }), []);
-  const toggleLike = useCallback((id: string) => setLikes((p) => { const n = p.includes(id) ? p.filter((x) => x !== id) : [id, ...p]; saveJSON('dvg.channelLikes', n); return n; }), []);
+  const join = useCallback((id: string) => setJoined((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelJoined.v2', n); return n; }), []);
+  const leave = useCallback((id: string) => setJoined((p) => { const n = p.filter((x) => x !== id); saveJSON('dvg.channelJoined.v2', n); return n; }), []);
+  const request = useCallback((id: string) => setRequested((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelRequested.v2', n); return n; }), []);
+  const markSeen = useCallback((id: string) => setSeen((p) => { const n = { ...p, [id]: postsByChannel(id).length }; saveJSON('dvg.channelSeen.v2', n); return n; }), []);
+  const toggleLike = useCallback((id: string) => setLikes((p) => { const n = p.includes(id) ? p.filter((x) => x !== id) : [id, ...p]; saveJSON('dvg.channelLikes.v2', n); return n; }), []);
 
   const unread = useCallback((id: string) => {
     if (!joined.includes(id)) return 0;
