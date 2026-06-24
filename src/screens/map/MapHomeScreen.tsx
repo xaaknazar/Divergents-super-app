@@ -145,7 +145,6 @@ export function MapHomeScreen({ navigation }: Props) {
           userInterfaceStyle={isDark ? 'dark' : 'light'}
           showsUserLocation
           showsMyLocationButton={false}
-          onPress={() => setSelId(null)}
         >
           {list.map((p) => (
             <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} pinColor={CATEGORY_META[p.category].color} onPress={() => setSelId(p.id)} />
