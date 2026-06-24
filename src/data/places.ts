@@ -185,3 +185,26 @@ export const PLACES: Place[] = [
     reviews: [rv('r6', 'Аружан М.', 5, 'Вкусно и аутентично, удобно для туристов.', '15 апр')],
   },
 ];
+
+
+// Open-now status from an hours string like "09:00–23:00" or "Круглосуточно".
+export interface OpenInfo { known: boolean; open: boolean; label: string }
+export function isOpenNow(hours: string, now: Date = new Date()): OpenInfo {
+  const h = (hours || '').toLowerCase();
+  if (!h) return { known: false, open: false, label: '' };
+  if (h.includes('круглосут')) return { known: true, open: true, label: 'Открыто · круглосуточно' };
+  const m = h.match(/(\d{1,2}):(\d{2})\s*[–\-]\s*(\d{1,2}):(\d{2})/);
+  if (!m) return { known: false, open: false, label: '' };
+  const o = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  let c = parseInt(m[3], 10) * 60 + parseInt(m[4], 10);
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const overnight = c <= o;
+  const open = overnight ? (cur >= o || cur < c) : (cur >= o && cur < c);
+  const pad = (n: number) => `${Math.floor(n / 60).toString().padStart(2, '0')}:${(n % 60).toString().padStart(2, '0')}`;
+  if (open) {
+    let left = (overnight && cur >= o ? c + 1440 : c) - cur;
+    if (left < 0) left += 1440;
+    return { known: true, open: true, label: left <= 60 ? `Закроется через ${left} мин` : `Открыто до ${pad(c % 1440)}` };
+  }
+  return { known: true, open: false, label: `Закрыто · откроется в ${pad(o)}` };
+}

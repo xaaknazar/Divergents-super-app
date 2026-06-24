@@ -11,7 +11,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "kz.divergents.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества."
+        "NSLocationWhenInUseUsageDescription": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.",
+        "NSPhotoLibraryUsageDescription": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества."
       }
     },
     "android": {
@@ -32,6 +33,12 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества."
         }
       ]
     ]

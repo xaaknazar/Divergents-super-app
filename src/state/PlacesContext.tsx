@@ -11,7 +11,11 @@ interface PlacesState {
   places: Place[];                       // merged (mock + user), with ratings
   getPlace: (id: string) => Place | undefined;
   addPlace: (p: Omit<Place, 'id' | 'reviews' | 'rating'> & { reviews?: Review[] }) => string;
+  updatePlace: (id: string, patch: Partial<Place>) => void;
   addReview: (placeId: string, r: Omit<Review, 'id' | 'date'>) => void;
+  favs: string[];
+  isFav: (id: string) => boolean;
+  toggleFav: (id: string) => void;
 }
 
 const Ctx = createContext<PlacesState | null>(null);
@@ -26,10 +30,12 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
   const [city, setCity] = useState('almaty');
   const [userPlaces, setUserPlaces] = useState<Place[]>([]);
   const [userReviews, setUserReviews] = useState<Record<string, Review[]>>({});
+  const [favs, setFavs] = useState<string[]>([]);
 
   useEffect(() => {
     loadJSON<Place[]>('dvg.userPlaces', []).then(setUserPlaces);
     loadJSON<Record<string, Review[]>>('dvg.placeReviews', {}).then(setUserReviews);
+    loadJSON<string[]>('dvg.placeFavs', []).then(setFavs);
   }, []);
 
   const setLocation = useCallback((c: string, ci: string) => { setCountry(c); setCity(ci); }, []);
@@ -39,6 +45,14 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     const place: Place = { ...p, id, reviews: p.reviews ?? [] } as Place;
     setUserPlaces((prev) => { const n = [place, ...prev]; saveJSON('dvg.userPlaces', n); return n; });
     return id;
+  }, []);
+
+  const updatePlace = useCallback((id: string, patch: Partial<Place>) => {
+    setUserPlaces((prev) => { const n = prev.map((p) => (p.id === id ? { ...p, ...patch } : p)); saveJSON('dvg.userPlaces', n); return n; });
+  }, []);
+
+  const toggleFav = useCallback((id: string) => {
+    setFavs((prev) => { const n = prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]; saveJSON('dvg.placeFavs', n); return n; });
   }, []);
 
   const addReview = useCallback((placeId: string, r: Omit<Review, 'id' | 'date'>) => {
@@ -58,8 +72,9 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<PlacesState>(() => ({
     country, city, setLocation, places,
     getPlace: (id) => places.find((p) => p.id === id),
-    addPlace, addReview,
-  }), [country, city, setLocation, places, addPlace, addReview]);
+    addPlace, updatePlace, addReview,
+    favs, isFav: (id) => favs.includes(id), toggleFav,
+  }), [country, city, setLocation, places, addPlace, updatePlace, addReview, favs, toggleFav]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, TextInput, Linking } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Linking, Share, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import MapView, { Marker } from 'react-native-maps';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +11,7 @@ import { Capsule, PrimaryButton, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { BackNav } from '../../components/headers';
 import { usePlaces, ratingOf } from '../../state/PlacesContext';
-import { CATEGORY_META, TAG_META } from '../../data/places';
+import { CATEGORY_META, TAG_META, isOpenNow } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<MapStackParams, 'PlaceDetail'>;
@@ -20,7 +21,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
-  const { getPlace, addReview } = usePlaces();
+  const { getPlace, addReview, isFav, toggleFav } = usePlaces();
   const place = getPlace(route.params.placeId);
   const [stars, setStars] = useState(0);
   const [text, setText] = useState('');
@@ -36,6 +37,15 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
   const meta = CATEGORY_META[place.category];
   const r = ratingOf(place);
+  const open = isOpenNow(place.hours);
+  const mine = place.id.startsWith('u_');
+  const fav = isFav(place.id);
+  const sharePlace = () => Share.share({ message: `${place.name} — ${meta.label}\n${place.highlights}\nhttps://2gis.kz/geo/${place.lng},${place.lat}` });
+  const report = () => Alert.alert('Сообщить о проблеме', `«${place.name}»`, [
+    { text: 'Закрыто / не существует', onPress: () => Alert.alert('Спасибо', 'Передали модераторам Divergents.') },
+    { text: 'Неверные данные', onPress: () => Alert.alert('Спасибо', 'Передали модераторам Divergents.') },
+    { text: 'Отмена', style: 'cancel' },
+  ]);
 
   const submit = () => {
     if (!stars) return;
@@ -48,6 +58,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <BackNav back="Места" onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
+        {place.photo ? <Image source={{ uri: place.photo }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : null}
         {/* Hero */}
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -60,6 +71,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                 {place.approved ? <SF name="checkmark.seal.fill" size={18} color="#0EA5E9" /> : null}
               </View>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{meta.label} · {place.hours}</Text>
+              {open.known ? <Text style={[ty.caption1, { color: open.open ? '#16A34A' : '#EF4444', marginTop: 2 }]}>{open.label}</Text> : null}
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
@@ -74,6 +86,12 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               <Capsule bg="rgba(14,165,233,0.14)" color="#0EA5E9"><SF name="checkmark.seal.fill" size={11} color="#0EA5E9" />Divergents Approved</Capsule>
             </View>
           ) : null}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+            <ActBtn icon={fav ? 'heart.fill' : 'heart'} label={fav ? 'В избранном' : 'В избранное'} active={fav} onPress={() => toggleFav(place.id)} T={T} />
+            <ActBtn icon="square.and.arrow.up" label="Поделиться" onPress={sharePlace} T={T} />
+            {mine ? <ActBtn icon="pencil" label="Изменить" onPress={() => navigation.navigate('AddPlace', { editId: place.id })} T={T} />
+                  : <ActBtn icon="exclamationmark.bubble" label="Сообщить" onPress={report} T={T} />}
+          </View>
         </View>
 
         {place.tags.length > 0 ? (
@@ -137,5 +155,15 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         )}
       </ScrollView>
     </View>
+  );
+}
+
+
+function ActBtn({ icon, label, active, onPress, T }: { icon: any; label: string; active?: boolean; onPress: () => void; T: any }) {
+  return (
+    <Pressable onPress={onPress} style={{ flex: 1, height: 58, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+      <SF name={icon} size={18} color={active ? T.brand : T.label} />
+      <Text style={[ty.caption2, { color: active ? T.brand : T.labelSecondary }]}>{label}</Text>
+    </Pressable>
   );
 }
