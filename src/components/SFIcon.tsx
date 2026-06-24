@@ -12,7 +12,7 @@ export type SFName =
   | 'checkmark' | 'checkmark.seal.fill' | 'plus' | 'plus.circle' | 'plus.circle.fill'
   | 'xmark' | 'gearshape' | 'bell.fill' | 'bell.badge.fill' | 'envelope.fill' | 'phone.fill'
   | 'mappin.circle.fill' | 'mappin.and.ellipse' | 'person.fill' | 'building.2.fill'
-  | 'cart.fill' | 'cart' | 'target' | 'bolt.fill' | 'figure.run' | 'brain.head.profile'
+  | 'cart.fill' | 'cart' | 'target' | 'location.fill' | 'bolt.fill' | 'figure.run' | 'brain.head.profile'
   | 'heart.text.square.fill' | 'leaf.fill' | 'arrow.up.circle.fill' | 'bookmark'
   | 'bookmark.fill' | 'square.and.arrow.up' | 'ellipsis' | 'lock.fill' | 'lock'
   | 'doc.text' | 'doc.fill' | 'circle.fill' | 'circle' | 'list.bullet' | 'map.fill' | 'map'
@@ -49,7 +49,7 @@ const MAP: Record<string, [Lib, string]> = {
   'mappin.circle.fill': ['ion', 'location'], 'mappin.and.ellipse': ['ion', 'location-outline'],
   'person.fill': ['ion', 'person'], 'building.2.fill': ['mci', 'office-building'],
   'cart.fill': ['ion', 'cart'], 'cart': ['ion', 'cart-outline'],
-  'target': ['mci', 'target'], 'bolt.fill': ['ion', 'flash'],
+  'target': ['mci', 'target'], 'location.fill': ['ion', 'locate'], 'bolt.fill': ['ion', 'flash'],
   'figure.run': ['mci', 'run'], 'brain.head.profile': ['mci', 'brain'],
   'heart.text.square.fill': ['mci', 'heart-box'], 'leaf.fill': ['ion', 'leaf'],
   'arrow.up.circle.fill': ['ion', 'arrow-up-circle'],

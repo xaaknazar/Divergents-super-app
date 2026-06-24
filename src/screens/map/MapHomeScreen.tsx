@@ -93,9 +93,6 @@ export function MapHomeScreen({ navigation }: Props) {
   const [mode, setMode] = useState<'car' | 'foot'>('car');
   const [routing, setRouting] = useState(false);
   const [origin, setOrigin] = useState<{ name: string; lat: number; lng: number } | null>(null);
-  const [openNow, setOpenNow] = useState(false);
-  const [measure, setMeasure] = useState(false);
-  const [measurePts, setMeasurePts] = useState<LatLng[]>([]);
   const [recents, setRecents] = useState<{ name: string; lat: number; lng: number }[]>([]);
   const [searchFocused, setSearchFocused] = useState(false);
   const recalcRef = useRef(0);
@@ -111,9 +108,7 @@ export function MapHomeScreen({ navigation }: Props) {
   const center = cityCenter(country, city);
   const countryName = COUNTRIES.find((c) => c.key === country)?.name ?? '';
   const cityName = center?.name ?? '';
-  const baseList = useMemo(() => filterPlaces(places, country, city, cat, tags, q), [places, country, city, cat, tags, q]);
-  const list = useMemo(() => (openNow ? baseList.filter((p) => isOpenNow(p.hours).open) : baseList), [baseList, openNow]);
-  const measureKm = useMemo(() => { let s = 0; for (let i = 1; i < measurePts.length; i++) s += haversineKm(measurePts[i - 1], measurePts[i]); return s; }, [measurePts]);
+  const list = useMemo(() => filterPlaces(places, country, city, cat, tags, q), [places, country, city, cat, tags, q]);
   const sel = selId ? places.find((p) => p.id === selId) : null;
 
   // GPS: request + watch
@@ -202,7 +197,6 @@ export function MapHomeScreen({ navigation }: Props) {
       { text: 'Отмена', style: 'cancel' },
     ]);
   };
-  const onMapPress = (c: LatLng) => { if (measure) { setMeasurePts((p) => [...p, c]); } };
 
   const distTo = (p: Place) => (user ? fmtDist(haversineKm(user, { latitude: p.lat, longitude: p.lng })) : null);
 
@@ -216,22 +210,19 @@ export function MapHomeScreen({ navigation }: Props) {
           userInterfaceStyle={isDark ? 'dark' : 'light'}
           showsUserLocation
           showsMyLocationButton={false}
-          onPress={(e) => onMapPress(e.nativeEvent.coordinate)}
           onLongPress={(e) => longMenu(e.nativeEvent.coordinate)}
           onRegionChangeComplete={(r) => { setZoomDelta(r.latitudeDelta); setTracks(true); clearTimeout(tracksTimer.current); tracksTimer.current = setTimeout(() => setTracks(false), 500); }}
         >
-          {(() => { const mk = Math.round(40 - Math.min(1, Math.max(0, (zoomDelta - 0.02) / 0.28)) * 22); return list.map((p) => (
+          {(() => { const mk = Math.round(40 - Math.min(1, Math.max(0, (zoomDelta - 0.02) / 0.28)) * 22); return list.map((p) => {
+            const oi = isOpenNow(p.hours); const closed = oi.known && !oi.open;
+            return (
             <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} onPress={() => setSelId(p.id)} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracks}>
-              <View style={{ width: mk, height: mk, borderRadius: mk / 2, backgroundColor: CATEGORY_META[p.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
+              <View style={{ width: mk, height: mk, borderRadius: mk / 2, backgroundColor: closed ? '#9CA3AF' : CATEGORY_META[p.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
                 <SF name={CATEGORY_META[p.category].icon} size={Math.round(mk * 0.5)} color="#fff" />
               </View>
             </Marker>
-          )); })()}
+          ); }); })()}
           {origin ? <Marker coordinate={{ latitude: origin.lat, longitude: origin.lng }} anchor={{ x: 0.5, y: 0.5 }}><View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#16A34A', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>A</Text></View></Marker> : null}
-          {measure && measurePts.length > 0 ? <>
-            <Polyline coordinates={measurePts} strokeColor="#F59E0B" strokeWidth={4} lineDashPattern={[6, 6]} />
-            {measurePts.map((p, i) => <Marker key={'m' + i} coordinate={p} anchor={{ x: 0.5, y: 0.5 }}><View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B', borderWidth: 2, borderColor: '#fff' }} /></Marker>)}
-          </> : null}
           {target && routes.length > 0
             ? routes.map((rt, i) => (
                 <Polyline key={i} coordinates={rt.coords} strokeColor={i === routeIdx ? T.brand : 'rgba(120,120,140,0.45)'} strokeWidth={i === routeIdx ? 7 : 4} tappable onPress={() => setRouteIdx(i)} zIndex={i === routeIdx ? 3 : 1} />
@@ -282,7 +273,6 @@ export function MapHomeScreen({ navigation }: Props) {
         ) : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingTop: 8 }}>
           <FChip label="Все" active={!cat} onPress={() => setCat(null)} T={T} />
-          <FChip label="Открыто" icon="clock" active={openNow} onPress={() => setOpenNow((v) => !v)} T={T} />
           {CATEGORIES.map((c) => <FChip key={c} label={CATEGORY_META[c].label} icon={CATEGORY_META[c].icon} active={cat === c} onPress={() => setCat(cat === c ? null : c)} T={T} />)}
           {TAGS.map((t) => <FChip key={t} label={TAG_META[t].label} icon={TAG_META[t].icon} active={tags.includes(t)} onPress={() => setTags((p) => p.includes(t) ? p.filter((x) => x !== t) : [...p, t])} T={T} />)}
         </ScrollView>
@@ -327,24 +317,10 @@ export function MapHomeScreen({ navigation }: Props) {
       })() : null}
 
       {/* Right floating buttons */}
-      <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 150, gap: 12 }}>
-        <Round icon="ruler" active={measure} onPress={() => { setMeasure((m) => !m); if (measure) setMeasurePts([]); }} T={T} />
+      <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
         <Round icon="location.fill" onPress={recenter} T={T} />
         <Round icon="plus" brand onPress={() => isSignedIn ? navigation.navigate('AddPlace') : navigation.getParent()?.getParent()?.navigate('Auth' as never)} T={T} />
       </View>
-
-      {/* Measure banner */}
-      {measure ? (
-        <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: '#F59E0B', borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
-          <SF name="ruler" size={18} color="#fff" />
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.subheadEm, { color: '#fff' }]}>{measurePts.length < 2 ? 'Линейка' : fmtDist(measureKm)}</Text>
-            <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>{measurePts.length < 2 ? 'Тапайте по карте, чтобы измерить' : `точек: ${measurePts.length}`}</Text>
-          </View>
-          {measurePts.length > 0 ? <Pressable onPress={() => setMeasurePts([])} hitSlop={6} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.25)' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>Очистить</Text></Pressable> : null}
-          <Pressable onPress={() => { setMeasure(false); setMeasurePts([]); }} hitSlop={8}><SF name="xmark" size={18} color="#fff" /></Pressable>
-        </View>
-      ) : null}
 
       {/* Place peek */}
       <Modal visible={!!sel} animationType="slide" transparent onRequestClose={() => setSelId(null)}>
