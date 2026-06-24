@@ -13,7 +13,7 @@ const TABS: Record<string, { label: string; on: SFName; off: SFName }> = {
   LMSTab: { label: 'Обучение', on: 'book.fill', off: 'book' },
   AITab: { label: 'AI', on: 'sparkles', off: 'sparkles' },
   CommunityTab: { label: 'Сообщество', on: 'person.3.fill', off: 'person.3' },
-  MapTab: { label: 'Места', on: 'map.fill', off: 'map' },
+  MapTab: { label: 'Карта', on: 'map.fill', off: 'map' },
   CareerTab: { label: 'Карьера', on: 'briefcase.fill', off: 'briefcase' },
   ProfileTab: { label: 'Профиль', on: 'person.crop.circle.fill', off: 'person.crop.circle' },
 };

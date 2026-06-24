@@ -49,7 +49,7 @@ export function MapHomeScreen({ navigation }: Props) {
       <View style={{ paddingTop: insets.top + 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 8 }}>
           <View>
-            <Text style={[ty.largeTitle, { color: T.label }]}>Места</Text>
+            <Text style={[ty.largeTitle, { color: T.label }]}>Карта</Text>
             <Pressable onPress={() => setPickerOpen(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
               <SF name="mappin.circle.fill" size={14} color={T.brand} />
               <Text style={[ty.subheadEm, { color: T.brand }]}>{cityName}, {countryName}</Text>
