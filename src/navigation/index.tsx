@@ -31,6 +31,7 @@ import { AchievementsScreen } from '../screens/profile/AchievementsScreen';
 import { PersonalizeScreen } from '../screens/profile/PersonalizeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { AuthScreen } from '../screens/AuthScreen';
+import { RegisterScreen } from '../screens/RegisterScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 
 const LMSStack = createNativeStackNavigator<LMSStackParams>();
@@ -123,6 +124,7 @@ export function RootNavigator() {
     <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }} initialRouteName={initial}>
       <Root.Screen name="Onboarding" component={OnboardingScreen} options={{ presentation: 'fullScreenModal' }} />
       <Root.Screen name="Auth" component={AuthScreen} options={{ presentation: 'modal' }} />
+      <Root.Screen name="Register" component={RegisterScreen} options={{ presentation: 'fullScreenModal' }} />
       <Root.Screen name="Tabs" component={Tabs} />
       <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
     </Root.Navigator>

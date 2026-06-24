@@ -31,6 +31,7 @@ export type TabParams = {
 export type RootStackParams = {
   Onboarding: undefined;
   Auth: undefined;
+  Register: undefined;
   Tabs: NavigatorScreenParams<TabParams>;
   Notifications: undefined;
 };
