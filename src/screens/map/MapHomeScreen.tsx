@@ -24,6 +24,36 @@ function haversineKm(a: LatLng, b: LatLng): number {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 function fmtDist(km: number): string { return km < 1 ? `${Math.round(km * 1000)} м` : `${km.toFixed(1)} км`; }
+function fmtDur(min: number): string { if (min < 60) return `${Math.max(1, Math.round(min))} мин`; const h = Math.floor(min / 60); return `${h} ч ${Math.round(min % 60)} мин`; }
+
+async function fetchRoute(from: LatLng, to: LatLng): Promise<{ coords: LatLng[]; km: number; min: number } | null> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson`;
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) return null;
+    const d = await res.json();
+    const r = d?.routes?.[0];
+    if (!r?.geometry?.coordinates?.length) return null;
+    const coords: LatLng[] = r.geometry.coordinates.map((c: number[]) => ({ latitude: c[1], longitude: c[0] }));
+    return { coords, km: (r.distance ?? 0) / 1000, min: (r.duration ?? 0) / 60 };
+  } catch { return null; } finally { clearTimeout(t); }
+}
+
+async function geocode(q: string): Promise<{ name: string; lat: number; lng: number }[]> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ru&q=${encodeURIComponent(q)}`;
+    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
+    if (!res.ok) return [];
+    const d = await res.json();
+    return (Array.isArray(d) ? d : [])
+      .map((x: any) => ({ name: String(x.display_name ?? ''), lat: parseFloat(x.lat), lng: parseFloat(x.lon) }))
+      .filter((x: any) => isFinite(x.lat) && isFinite(x.lng));
+  } catch { return []; } finally { clearTimeout(t); }
+}
 
 export function MapHomeScreen({ navigation }: Props) {
   const { T, isDark } = useTheme();
@@ -37,17 +67,23 @@ export function MapHomeScreen({ navigation }: Props) {
   const [listOpen, setListOpen] = useState(false);
   const [selId, setSelId] = useState<string | null>(null);
   const [user, setUser] = useState<LatLng | null>(null);
-  const [destId, setDestId] = useState<string | null>(null);
+  const [target, setTarget] = useState<{ name: string; lat: number; lng: number } | null>(null);
+  const [geo, setGeo] = useState<{ name: string; lat: number; lng: number }[]>([]);
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [searchPin, setSearchPin] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [path, setPath] = useState<LatLng[]>([]);
+  const [route, setRoute] = useState<{ coords: LatLng[]; km: number; min: number } | null>(null);
+  const [routing, setRouting] = useState(false);
   const mapRef = useRef<MapView>(null);
   const subRef = useRef<Location.LocationSubscription | null>(null);
+  const targetRef = useRef(target);
+  targetRef.current = target;
 
   const center = cityCenter(country, city);
   const countryName = COUNTRIES.find((c) => c.key === country)?.name ?? '';
   const cityName = center?.name ?? '';
   const list = useMemo(() => filterPlaces(places, country, city, cat, tags, q), [places, country, city, cat, tags, q]);
   const sel = selId ? places.find((p) => p.id === selId) : null;
-  const dest = destId ? places.find((p) => p.id === destId) : null;
 
   // GPS: request + watch
   useEffect(() => {
@@ -60,12 +96,30 @@ export function MapHomeScreen({ navigation }: Props) {
         (loc) => {
           const c = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
           setUser(c);
-          setPath((prev) => (destId ? [...prev, c] : prev));
+          setPath((prev) => (targetRef.current ? [...prev, c] : prev));
         }
       );
     })();
     return () => { alive = false; subRef.current?.remove(); };
-  }, [destId]);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    if (target && user && !route && !routing) {
+      setRouting(true);
+      fetchRoute(user, { latitude: target.lat, longitude: target.lng }).then((r) => { if (alive) { setRoute(r); setRouting(false); } });
+    }
+    return () => { alive = false; };
+  }, [target, user, route, routing]);
+
+  // Address / building search (OSM Nominatim), debounced.
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 3) { setGeo([]); setGeoBusy(false); return; }
+    setGeoBusy(true);
+    const id = setTimeout(async () => { const r = await geocode(term); setGeo(r); setGeoBusy(false); }, 550);
+    return () => clearTimeout(id);
+  }, [q]);
 
   useEffect(() => {
     if (center && mapRef.current) mapRef.current.animateToRegion({ latitude: center.lat, longitude: center.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600);
@@ -73,9 +127,11 @@ export function MapHomeScreen({ navigation }: Props) {
 
   const recenter = () => { if (user && mapRef.current) mapRef.current.animateToRegion({ ...user, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 500); };
   const openPlace = (id: string) => navigation.navigate('PlaceDetail', { placeId: id });
-  const startNav = (p: Place) => { setDestId(p.id); setPath(user ? [user] : []); setSelId(null); if (mapRef.current) mapRef.current.animateToRegion({ latitude: p.lat, longitude: p.lng, latitudeDelta: 0.08, longitudeDelta: 0.08 }, 500); };
-  const stopNav = () => { setDestId(null); setPath([]); };
-  const externalRoute = (p: Place) => Linking.openURL(Platform.OS === 'ios' ? `http://maps.apple.com/?daddr=${p.lat},${p.lng}&dirflg=d` : `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`);
+  const navTo = (n: { name: string; lat: number; lng: number }) => { setTarget(n); setRoute(null); setPath(user ? [user] : []); setSelId(null); setSearchPin(null); if (mapRef.current) mapRef.current.animateToRegion({ latitude: n.lat, longitude: n.lng, latitudeDelta: 0.06, longitudeDelta: 0.06 }, 500); };
+  const startNav = (p: Place) => navTo({ name: p.name, lat: p.lat, lng: p.lng });
+  const stopNav = () => { setTarget(null); setPath([]); setRoute(null); };
+  const externalRoute = (t: { lat: number; lng: number }) => Linking.openURL(Platform.OS === 'ios' ? `http://maps.apple.com/?daddr=${t.lat},${t.lng}&dirflg=d` : `https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lng}`);
+  const pickGeo = (g: { name: string; lat: number; lng: number }) => { setSearchPin(g); setGeo([]); mapRef.current?.animateToRegion({ latitude: g.lat, longitude: g.lng, latitudeDelta: 0.012, longitudeDelta: 0.012 }, 500); };
 
   const distTo = (p: Place) => (user ? fmtDist(haversineKm(user, { latitude: p.lat, longitude: p.lng })) : null);
 
@@ -94,7 +150,9 @@ export function MapHomeScreen({ navigation }: Props) {
           {list.map((p) => (
             <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} pinColor={CATEGORY_META[p.category].color} onPress={() => setSelId(p.id)} />
           ))}
-          {dest && user ? <Polyline coordinates={[user, { latitude: dest.lat, longitude: dest.lng }]} strokeColor={T.brand} strokeWidth={3} lineDashPattern={[8, 6]} /> : null}
+          {target && route ? <Polyline coordinates={route.coords} strokeColor={T.brand} strokeWidth={6} />
+            : target && user ? <Polyline coordinates={[user, { latitude: target.lat, longitude: target.lng }]} strokeColor={T.brand} strokeWidth={3} lineDashPattern={[8, 6]} /> : null}
+          {searchPin ? <Marker coordinate={{ latitude: searchPin.lat, longitude: searchPin.lng }} pinColor="#FF3B30" onPress={() => {}} /> : null}
           {path.length > 1 ? <Polyline coordinates={path} strokeColor={T.brandAccent} strokeWidth={5} /> : null}
         </MapView>
       ) : null}
@@ -112,6 +170,19 @@ export function MapHomeScreen({ navigation }: Props) {
             <SF name="chevron.down" size={11} color={T.labelSecondary} />
           </Pressable>
         </View>
+        {q.trim().length >= 3 && (geoBusy || geo.length > 0) ? (
+          <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+            {geoBusy && geo.length === 0 ? (
+              <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelSecondary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>Поиск адресов…</Text></View>
+            ) : null}
+            {geo.map((g, i) => (
+              <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 14, borderTopWidth: i ? 0.5 : 0, borderTopColor: T.separator }}>
+                <SF name="mappin.and.ellipse" size={16} color={T.brand} />
+                <Text style={[ty.subhead, { color: T.label, flex: 1 }]} numberOfLines={2}>{g.name}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingTop: 8 }}>
           <FChip label="Все" active={!cat} onPress={() => setCat(null)} T={T} />
           {CATEGORIES.map((c) => <FChip key={c} label={CATEGORY_META[c].label} icon={CATEGORY_META[c].icon} active={cat === c} onPress={() => setCat(cat === c ? null : c)} T={T} />)}
@@ -120,14 +191,14 @@ export function MapHomeScreen({ navigation }: Props) {
       </View>
 
       {/* Navigation banner */}
-      {dest ? (
+      {target ? (
         <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <SF name="figure.walk" size={18} color="#fff" />
           <View style={{ flex: 1 }}>
-            <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>До «{dest.name}»</Text>
-            <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>{user ? `осталось ${fmtDist(haversineKm(user, { latitude: dest.lat, longitude: dest.lng }))}` : 'ждём GPS…'}</Text>
+            <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>До «{target.name}»</Text>
+            <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>{routing ? 'строю маршрут…' : route ? `${fmtDist(route.km)} · ${fmtDur(route.min)} на авто` : user ? `осталось ${fmtDist(haversineKm(user, { latitude: target.lat, longitude: target.lng }))}` : 'ждём GPS…'}</Text>
           </View>
-          <Pressable onPress={() => externalRoute(dest)} hitSlop={6} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>Навигатор</Text></Pressable>
+          <Pressable onPress={() => externalRoute(target)} hitSlop={6} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>Навигатор</Text></Pressable>
           <Pressable onPress={stopNav} hitSlop={6}><SF name="xmark" size={18} color="#fff" /></Pressable>
         </View>
       ) : null}
@@ -212,6 +283,35 @@ export function MapHomeScreen({ navigation }: Props) {
             {list.length === 0 ? <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>Здесь пока нет мест</Text></View> : null}
           </ScrollView>
         </View>
+      </Modal>
+
+      {/* Searched address peek */}
+      <Modal visible={!!searchPin} animationType="slide" transparent onRequestClose={() => setSearchPin(null)}>
+        <Pressable style={{ flex: 1 }} onPress={() => setSearchPin(null)} />
+        {searchPin ? (
+          <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: -4 } }}>
+            <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
+            <View style={{ paddingHorizontal: 20 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,59,48,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+                  <SF name="mappin.and.ellipse" size={22} color="#FF3B30" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{searchPin.name.split(',')[0]}</Text>
+                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>{searchPin.name}{user ? ` · ${fmtDist(haversineKm(user, { latitude: searchPin.lat, longitude: searchPin.lng }))}` : ''}</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+                <Pressable onPress={() => navTo(searchPin)} style={{ flex: 1, height: 46, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                  <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>Вести сюда</Text>
+                </Pressable>
+                <Pressable onPress={() => externalRoute(searchPin)} style={{ width: 110, height: 46, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[ty.headline, { color: T.brand }]}>Навигатор</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        ) : null}
       </Modal>
 
       {/* City picker */}
