@@ -11,6 +11,7 @@ import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/Sta
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useNotifications } from '../../state/NotificationsContext';
+import { useLang } from '../../state/LanguageContext';
 import { useUser } from '@clerk/clerk-expo';
 import { Logo } from '../../components/Logo';
 import { LMSStackParams } from '../../navigation/types';
@@ -22,6 +23,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   const { courses, loading, error, reload, source, progress } = useCourses();
   const my = useMyCourses();
   const { unread } = useNotifications();
+  const { t } = useLang();
   const { user } = useUser();
   const displayName = user?.firstName || user?.fullName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
   const [query, setQuery] = useState('');
@@ -62,8 +64,8 @@ export function LMSHomeScreen({ navigation }: Props) {
   const showSearch = !query && cat === 'Все';
 
   return (
-    <Screen largeTitle="Обучение" onRefresh={async () => { reload(); await my.reload(); }}>
-      <NavBarLarge title="Обучение" trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
+    <Screen largeTitle={t('tab_learn')} onRefresh={async () => { reload(); await my.reload(); }}>
+      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 14 }}>
         <Logo size={34} />
@@ -84,7 +86,7 @@ export function LMSHomeScreen({ navigation }: Props) {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Поиск курса"
+            placeholder={t('search_course')}
             placeholderTextColor={T.labelTertiary}
             style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]}
           />
@@ -106,13 +108,13 @@ export function LMSHomeScreen({ navigation }: Props) {
       ) : (
         <>
           {source === 'mock' ? (
-            <Text style={[ty.caption1, { color: T.orange, paddingHorizontal: 20, paddingBottom: 8 }]}>Демо-режим · нет связи с сайтом</Text>
+            <Text style={[ty.caption1, { color: T.orange, paddingHorizontal: 20, paddingBottom: 8 }]}>{t('demo_mode')}</Text>
           ) : null}
 
           {/* Continue (owned, in progress) */}
           {showSearch && continueCourse ? (
             <View style={{ marginBottom: 18 }}>
-              <SectionHeader title="Продолжить" />
+              <SectionHeader title={t('continue_')} />
               <FeaturedCard
                 course={continueCourse}
                 owned
@@ -126,7 +128,7 @@ export function LMSHomeScreen({ navigation }: Props) {
           {/* My courses */}
           {showSearch && my.isSignedIn && my.courses.length > 0 ? (
             <View style={{ marginBottom: 18 }}>
-              <SectionHeader title="Мои курсы" />
+              <SectionHeader title={t('my_courses')} />
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
                 {my.courses.map((c) => (
                   <CourseCardPremium key={c.id} course={c} owned progress={Math.max(Math.round(c.serverProgress ?? 0), Math.round(progress(c.id) * 100))} width={250}
@@ -139,7 +141,7 @@ export function LMSHomeScreen({ navigation }: Props) {
           {/* Featured (when nothing to continue) */}
           {showSearch && featured ? (
             <View style={{ marginBottom: 18 }}>
-              <SectionHeader title="Рекомендуем" />
+              <SectionHeader title={t('recommended')} />
               <FeaturedCard
                 course={featured}
                 onPress={() => navigation.navigate('CourseDetail', { courseId: featured.id })}
@@ -162,7 +164,7 @@ export function LMSHomeScreen({ navigation }: Props) {
             ))}
           </View>
           {filtered.length === 0 ? (
-            <EmptyState icon="magnifyingglass" title="Курсы не найдены" subtitle="Попробуйте изменить запрос или категорию." />
+            <EmptyState icon="magnifyingglass" title={t('not_found_title')} subtitle={t('not_found_sub')} />
           ) : null}
           <View style={{ height: 16 }} />
         </>

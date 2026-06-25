@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, LayoutAnimation, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -30,6 +31,7 @@ function matchesFilter(j: Job, f: string): boolean {
 
 export function CareerHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
+  const { t } = useLang();
   const [filter, setFilter] = useState(0);
   const { applied, isApplied } = useCareer();
   const { profile, reload: reloadProfile } = useTalentProfile();
@@ -43,13 +45,13 @@ export function CareerHomeScreen({ navigation }: Props) {
   const open = (id: string) => navigation.navigate('VacancyDetail', { jobId: id });
 
   return (
-    <Screen largeTitle="Карьера" onRefresh={async () => { await reloadProfile(); }}>
-      <NavBarLarge title="Карьера" />
+    <Screen largeTitle={t('tab_career')} onRefresh={async () => { await reloadProfile(); }}>
+      <NavBarLarge title={t('tab_career')} />
 
       <ResumeHero navigation={navigation} />
 
       {/* Vacancies */}
-      <SectionHeader title="Вакансии" />
+      <SectionHeader title={t('vacancies')} />
       <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 12, marginTop: -4 }]}>
         Подобраны по вашему психотипу и талантам
       </Text>

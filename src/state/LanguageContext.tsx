@@ -124,6 +124,17 @@ export const STR: Record<string, Pair> = {
   your_challenge: { ru: 'Твой челлендж', en: 'Your challenge' },
   upcoming_trips: { ru: 'Предстоящие поездки', en: 'Upcoming trips' },
   open_: { ru: 'Открыть', en: 'Open' },
+  search_course: { ru: 'Поиск курса', en: 'Search course' },
+  my_courses: { ru: 'Мои курсы', en: 'My courses' },
+  recommended: { ru: 'Рекомендуем', en: 'Recommended' },
+  not_found_title: { ru: 'Курсы не найдены', en: 'No courses found' },
+  not_found_sub: { ru: 'Попробуйте изменить запрос или категорию.', en: 'Try a different query or category.' },
+  demo_mode: { ru: 'Демо-режим · нет связи с сайтом', en: 'Demo mode · no server connection' },
+  vacancies: { ru: 'Вакансии', en: 'Vacancies' },
+  map_search_ph: { ru: 'Поиск: место, адрес, здание', en: 'Search: place, address, building' },
+  car: { ru: 'Авто', en: 'Car' },
+  walk: { ru: 'Пешком', en: 'Walk' },
+  recent_: { ru: 'Недавние', en: 'Recent' },
 };
 
 interface LangState { lang: Lang; setLang: (l: Lang) => void; t: (k: keyof typeof STR) => string; }

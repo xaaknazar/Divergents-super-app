@@ -13,6 +13,7 @@ import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
 import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, cityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
+import { useLang } from '../../state/LanguageContext';
 import { loadJSON, saveJSON } from '../../state/persist';
 
 type Props = NativeStackScreenProps<MapStackParams, 'MapHome'>;
@@ -73,6 +74,7 @@ export function MapHomeScreen({ navigation }: Props) {
   const { T, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
+  const { t } = useLang();
   const { country, city, setLocation, places, isFav, toggleFav } = usePlaces();
   const [cat, setCat] = useState<PlaceCategory | null>(null);
   const [tags, setTags] = useState<PlaceTag[]>([]);
@@ -238,7 +240,7 @@ export function MapHomeScreen({ navigation }: Props) {
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12 }}>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.cardBg, borderRadius: 14, paddingHorizontal: 12, height: 44, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}>
             <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
-            <TextInput value={q} onChangeText={setQ} onFocus={() => setSearchFocused(true)} onBlur={() => setTimeout(() => setSearchFocused(false), 200)} placeholder="Поиск: место, адрес, здание" placeholderTextColor={T.labelTertiary} style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]} />
+            <TextInput value={q} onChangeText={setQ} onFocus={() => setSearchFocused(true)} onBlur={() => setTimeout(() => setSearchFocused(false), 200)} placeholder={t('map_search_ph')} placeholderTextColor={T.labelTertiary} style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]} />
             {q.length > 0 ? <Pressable onPress={() => setQ('')} hitSlop={8}><SF name="xmark.circle.fill" size={16} color={T.labelTertiary} /></Pressable> : null}
           </View>
           <Pressable onPress={() => setPickerOpen(true)} style={{ height: 44, paddingHorizontal: 12, borderRadius: 14, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', gap: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}>
@@ -249,7 +251,7 @@ export function MapHomeScreen({ navigation }: Props) {
         </View>
         {searchFocused && q.trim().length < 3 && recents.length > 0 ? (
           <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
-            <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }]}>Недавние</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }]}>{t('recent_')}</Text>
             {recents.map((g, i) => (
               <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14 }}>
                 <SF name="clock.arrow.circlepath" size={15} color={T.labelSecondary} />
@@ -272,7 +274,7 @@ export function MapHomeScreen({ navigation }: Props) {
           </View>
         ) : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingTop: 8 }}>
-          <FChip label="Все" active={!cat} onPress={() => setCat(null)} T={T} />
+          <FChip label={t('all')} active={!cat} onPress={() => setCat(null)} T={T} />
           {CATEGORIES.map((c) => <FChip key={c} label={CATEGORY_META[c].label} icon={CATEGORY_META[c].icon} active={cat === c} onPress={() => setCat(cat === c ? null : c)} T={T} />)}
           {TAGS.map((t) => <FChip key={t} label={TAG_META[t].label} icon={TAG_META[t].icon} active={tags.includes(t)} onPress={() => setTags((p) => p.includes(t) ? p.filter((x) => x !== t) : [...p, t])} T={T} />)}
         </ScrollView>
@@ -299,8 +301,8 @@ export function MapHomeScreen({ navigation }: Props) {
               <Pressable onPress={stopNav} hitSlop={8}><SF name="xmark" size={18} color="#fff" /></Pressable>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Pill label="Авто" on={mode === 'car'} onPress={() => setMode('car')} />
-              <Pill label="Пешком" on={mode === 'foot'} onPress={() => setMode('foot')} />
+              <Pill label={t('car')} on={mode === 'car'} onPress={() => setMode('car')} />
+              <Pill label={t('walk')} on={mode === 'foot'} onPress={() => setMode('foot')} />
               <View style={{ flex: 1 }} />
               {routes.length > 1 ? <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.85)' }]}>ещё {routes.length - 1}</Text> : null}
               <Pressable onPress={shareRoute} hitSlop={6}><SF name="square.and.arrow.up" size={17} color="#fff" /></Pressable>
