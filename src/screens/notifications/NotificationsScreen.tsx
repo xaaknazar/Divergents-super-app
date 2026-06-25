@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +13,7 @@ type Props = NativeStackScreenProps<RootStackParams, 'Notifications'>;
 
 export function NotificationsScreen({ navigation }: Props) {
   const { T } = useTheme();
+  useLang();
   const insets = useSafeAreaInsets();
   const { items, unread, markRead, markAllRead } = useNotifications();
 
@@ -20,10 +22,10 @@ export function NotificationsScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>Закрыть</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]}>Уведомления</Text>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Закрыть')}</Text></Pressable>
+        <Text style={[ty.headline, { color: T.label }]}>{tr('Уведомления')}</Text>
         <Pressable onPress={markAllRead} hitSlop={8} disabled={unread === 0}>
-          <Text style={[ty.subhead, { color: unread ? T.brandAccent : T.labelTertiary }]}>Прочитать</Text>
+          <Text style={[ty.subhead, { color: unread ? T.brandAccent : T.labelTertiary }]}>{tr('Прочитать')}</Text>
         </Pressable>
       </View>
 
@@ -48,7 +50,7 @@ export function NotificationsScreen({ navigation }: Props) {
         {items.length === 0 ? (
           <View style={{ padding: 40, alignItems: 'center' }}>
             <SF name="bell.fill" size={32} color={T.labelTertiary} />
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>Уведомлений пока нет</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>{tr('Уведомлений пока нет')}</Text>
           </View>
         ) : null}
       </ScrollView>

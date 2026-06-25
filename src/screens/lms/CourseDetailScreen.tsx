@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, ActivityIndicator, Share, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -20,6 +21,7 @@ type Nav = Props['navigation'];
 
 function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
   const { T } = useTheme();
+  useLang();
   return (
     <Pressable onPress={onPress} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={16} color="#fff" />
@@ -122,7 +124,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
           <View style={{ position: 'absolute', width: '100%', height: 230, backgroundColor: 'rgba(0,0,0,0.28)' }} />
           <HeroBar course={course} courseId={courseId} navigation={navigation} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
-            <Capsule bg="rgba(52,199,89,0.9)" color="#fff"><SF name="checkmark.seal.fill" size={11} color="#fff" />Курс открыт</Capsule>
+            <Capsule bg="rgba(52,199,89,0.9)" color="#fff"><SF name="checkmark.seal.fill" size={11} color="#fff" />{tr('Курс открыт')}</Capsule>
             <Text style={[ty.title1, { color: '#fff', marginTop: 10 }]}>{course.title}</Text>
             <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{course.author} · Divergents</Text>
           </View>
@@ -140,7 +142,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
         {course.lessons.length > 0 ? (
           <View style={{ margin: 16, backgroundColor: T.groupedBg, borderRadius: 14, padding: 16 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Text style={[ty.body, { color: T.label }]}>Ваш прогресс</Text>
+              <Text style={[ty.body, { color: T.label }]}>{tr('Ваш прогресс')}</Text>
               <Text style={[ty.headline, { color: T.brand }]}>{Math.round(p * 100)}%</Text>
             </View>
             <View style={{ marginTop: 10 }}><ProgressBar value={p} /></View>
@@ -153,7 +155,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
         {chaptersLoading ? (
           <View style={{ paddingVertical: 30, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
         ) : (
-          <ListSection header="Программа курса">
+          <ListSection header={tr('Программа курса')}>
             {course.lessons.map((l, i) => {
               const status = lessonStatus(courseId, i);
               const indicator = status === 'done'
@@ -176,12 +178,12 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
                 </Pressable>
               );
             })}
-            {course.lessons.length === 0 ? <EmptyState icon="book" title="Программа готовится" subtitle="Уроки этого курса скоро появятся здесь." /> : null}
+            {course.lessons.length === 0 ? <EmptyState icon="book" title={tr('Программа готовится')} subtitle={tr('Уроки этого курса скоро появятся здесь.')} /> : null}
           </ListSection>
         )}
 
         {stripHtml(course.description) ? (
-          <ListSection header="О курсе">
+          <ListSection header={tr('О курсе')}>
             <View style={{ padding: 16 }}><Text style={[ty.body, { color: T.label }]}>{stripHtml(course.description)}</Text></View>
           </ListSection>
         ) : null}
@@ -227,28 +229,28 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
         <View style={{ margin: 16, backgroundColor: T.groupedBg, borderRadius: 16, padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
             <Text style={[ty.largeTitle, { color: T.label }]}>{formatPrice(course.price)}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary }]}>единоразово</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('единоразово')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
             <SF name="lock.fill" size={12} color={T.labelSecondary} />
-            <Text style={[ty.caption1, { color: T.labelSecondary }]}>Полный доступ открывается после покупки</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('Полный доступ открывается после покупки')}</Text>
           </View>
           <PrimaryButton label={`Купить · ${formatPrice(course.price)}`} icon="cart.fill" style={{ marginTop: 14 }} onPress={buy} />
           {freeLesson ? (
-            <PrimaryButton label="Смотреть бесплатный урок" icon="play.fill" color="transparent" style={{ marginTop: 8 }}
+            <PrimaryButton label={tr('Смотреть бесплатный урок')} icon="play.fill" color="transparent" style={{ marginTop: 8 }}
               onPress={() => navigation.navigate('Video', { courseId, lessonId: freeLesson.id })} />
           ) : null}
         </View>
 
         {/* About */}
         {stripHtml(course.description) ? (
-          <ListSection header="О курсе">
+          <ListSection header={tr('О курсе')}>
             <View style={{ padding: 16 }}><Text style={[ty.body, { color: T.label }]}>{stripHtml(course.description)}</Text></View>
           </ListSection>
         ) : null}
 
         {/* What's included */}
-        <ListSection header="Что входит">
+        <ListSection header={tr('Что входит')}>
           {includes.map((it, i) => (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
               <SF name={it.icon} size={20} color={T.brand} />
@@ -288,9 +290,9 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View>
           <Text style={[ty.title3, { color: T.label }]}>{formatPrice(course.price)}</Text>
-          <Text style={[ty.caption2, { color: T.labelSecondary }]}>оплата на divergents-lms.kz</Text>
+          <Text style={[ty.caption2, { color: T.labelSecondary }]}>{tr('оплата на divergents-lms.kz')}</Text>
         </View>
-        <PrimaryButton label="Купить курс" icon="cart.fill" style={{ flex: 1 }} onPress={buy} />
+        <PrimaryButton label={tr('Купить курс')} icon="cart.fill" style={{ flex: 1 }} onPress={buy} />
       </View>
     </View>
   );

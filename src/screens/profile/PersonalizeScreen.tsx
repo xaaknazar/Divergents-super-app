@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,14 +16,15 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'Personalize'>;
 
 export function PersonalizeScreen({ navigation }: Props) {
   const { T, scheme, mode, setMode, accent, setAccent, background, setBackground } = useTheme();
+  useLang();
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Профиль" onBack={() => navigation.goBack()} />
+      <BackNav back={tr('Профиль')} onBack={() => navigation.goBack()} />
       <Screen tabPadding={false} topInset={false} contentStyle={{ paddingBottom: 40 }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 14 }}>
-          <Text style={[ty.largeTitle, { color: T.label }]}>Персонализация</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>Настройте тему, акцент и фон под себя</Text>
+          <Text style={[ty.largeTitle, { color: T.label }]}>{tr('Персонализация')}</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Настройте тему, акцент и фон под себя')}</Text>
         </View>
 
         {/* Live preview */}
@@ -31,8 +33,8 @@ export function PersonalizeScreen({ navigation }: Props) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <Ring value={0.72} size={62} color="#fff" label="72%" textColor="#fff" />
               <View style={{ flex: 1 }}>
-                <Text style={[ty.title3, { color: '#fff' }]}>Предпросмотр</Text>
-                <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>Так выглядит ваша тема</Text>
+                <Text style={[ty.title3, { color: '#fff' }]}>{tr('Предпросмотр')}</Text>
+                <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{tr('Так выглядит ваша тема')}</Text>
                 <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
                   <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="sparkles" size={11} color="#fff" />Divergents</Capsule>
                 </View>
@@ -41,16 +43,16 @@ export function PersonalizeScreen({ navigation }: Props) {
           </LinearGradient>
           <View style={{ backgroundColor: T.cardBg, padding: 16, flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
-              <PrimaryButton label="Кнопка" icon="checkmark" onPress={() => {}} style={{ height: 44 }} />
+              <PrimaryButton label={tr('Кнопка')} icon="checkmark" onPress={() => {}} style={{ height: 44 }} />
             </View>
             <View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 18, backgroundColor: T.brandTinted }}>
-              <Text style={[ty.footnoteEm, { color: T.brand }]}>Чип</Text>
+              <Text style={[ty.footnoteEm, { color: T.brand }]}>{tr('Чип')}</Text>
             </View>
           </View>
         </View>
 
         {/* Theme mode */}
-        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }]}>Тема</Text>
+        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 8 }]}>{tr('Тема')}</Text>
         <View style={{ paddingHorizontal: 16, marginBottom: 22 }}>
           <Segmented items={['Система', 'Светлая', 'Тёмная']} value={mode === 'system' ? 0 : mode === 'light' ? 1 : 2}
             onChange={(i) => setMode(i === 0 ? 'system' : i === 1 ? 'light' : 'dark')}
@@ -58,7 +60,7 @@ export function PersonalizeScreen({ navigation }: Props) {
         </View>
 
         {/* Accent grid */}
-        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 10 }]}>Акцентный цвет</Text>
+        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 10 }]}>{tr('Акцентный цвет')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, marginBottom: 22 }}>
           {ACCENTS.map((a) => {
             const ac = scheme === 'dark' ? a.dark : a.light;
@@ -77,7 +79,7 @@ export function PersonalizeScreen({ navigation }: Props) {
         </View>
 
         {/* Background grid */}
-        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 10 }]}>Фон</Text>
+        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 10 }]}>{tr('Фон')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, marginBottom: 24 }}>
           {BACKGROUNDS.map((b) => {
             const on = background === b.key;

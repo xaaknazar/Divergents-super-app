@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, ScrollView, Pressable, Animated } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +34,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
 // ─── Upcoming challenge (30 Days) — rules, teams, join ──────────────
 function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; navigation: Props['navigation'] }) {
   const { T } = useTheme();
+  useLang();
   const insets = useSafeAreaInsets();
   const meta = getChallengeMeta(challengeId)!;
   const left = daysUntil(meta.startISO);
@@ -44,7 +46,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4 }}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
             <SF name="chevron.left" size={20} color="#fff" />
-            <Text style={[ty.body, { color: '#fff' }]}>Сообщество</Text>
+            <Text style={[ty.body, { color: '#fff' }]}>{tr('Сообщество')}</Text>
           </Pressable>
           <SF name="square.and.arrow.up" size={20} color="#fff" />
         </View>
@@ -63,17 +65,17 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
         <View style={{ marginHorizontal: 16, marginBottom: 18, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 18 }}>
           <View style={{ alignItems: 'center', minWidth: 86 }}>
             <Text style={[ty.largeTitle, { color: T.brand }]}>{left}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]}>дней до старта</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('дней до старта')}</Text>
           </View>
           <View style={{ flex: 1, gap: 6 }}>
-            <Row icon="calendar" label="Старт" value={meta.startLabel} />
-            <Row icon="flame.fill" label="Длительность" value={`${meta.durationDays} дней`} />
-            <Row icon="person.3.fill" label="Заявок" value={`${meta.participants}`} />
+            <Row icon="calendar" label={tr('Старт')} value={meta.startLabel} />
+            <Row icon="flame.fill" label={tr('Длительность')} value={`${meta.durationDays} дней`} />
+            <Row icon="person.3.fill" label={tr('Заявок')} value={`${meta.participants}`} />
           </View>
         </View>
 
         {/* Categories + scoring */}
-        <ListSection header="Категории и баллы">
+        <ListSection header={tr('Категории и баллы')}>
           {CHALLENGE_CATEGORIES.map((cat, i) => (
             <View key={cat.key} style={{ flexDirection: 'row', gap: 12, padding: 14, position: 'relative' }}>
               <IconSquircle icon={cat.icon} bg={cat.color} size={36} />
@@ -88,7 +90,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
         </ListSection>
 
         {/* Activity conversions */}
-        <ListSection header="Пересчёт активности в шаги" footer="Минимум 5 000 шагов нужно «набрать» аэробной нагрузкой.">
+        <ListSection header={tr('Пересчёт активности в шаги')} footer="Минимум 5 000 шагов нужно «набрать» аэробной нагрузкой.">
           <View style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
             {ACTIVITY_CONVERSIONS.map((a, i) => (
               <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 9, borderBottomWidth: i < ACTIVITY_CONVERSIONS.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
@@ -124,7 +126,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
         </ListSection>
 
         {/* Rules */}
-        <ListSection header="Правила">
+        <ListSection header={tr('Правила')}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
             {CHALLENGE_RULES.map((rule, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 9, borderBottomWidth: i < CHALLENGE_RULES.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
@@ -139,7 +141,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
 
       {/* CTA */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label="Подать заявку" icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId })} />
+        <PrimaryButton label={tr('Подать заявку')} icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId })} />
       </View>
     </View>
   );
@@ -177,7 +179,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Сообщество" onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
+      <BackNav back={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <Text style={{ fontSize: 18 }}>🎉</Text>
@@ -189,7 +191,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
       <View style={{ padding: 20, paddingBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Capsule bg={T.brandTinted} color={T.brand}><SF name="flag.fill" size={11} color={T.brand} />День {c.currentDay} из {c.totalDays}</Capsule>
-          <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />Бесплатно</Capsule>
+          <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />{tr('Бесплатно')}</Capsule>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
           <Logo size={26} />
@@ -214,7 +216,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         <View style={{ marginTop: 16 }}><ProgressBar value={ringPct} height={6} /></View>
       </View>
 
-      <ListSection header="Календарь">
+      <ListSection header={tr('Календарь')}>
         <View style={{ paddingHorizontal: 10, paddingVertical: 12, flexDirection: 'row', flexWrap: 'wrap' }}>
           {Array.from({ length: c.totalDays }, (_, i) => {
             const done = i < c.currentDay;

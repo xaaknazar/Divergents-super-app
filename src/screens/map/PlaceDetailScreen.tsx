@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, TextInput, Linking, Share, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import MapView, { Marker } from 'react-native-maps';
@@ -18,6 +19,7 @@ type Props = NativeStackScreenProps<MapStackParams, 'PlaceDetail'>;
 
 export function PlaceDetailScreen({ route, navigation }: Props) {
   const { T, isDark } = useTheme();
+  useLang();
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -29,8 +31,8 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   if (!place) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back="Места" onBack={() => navigation.goBack()} />
-        <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>Место не найдено</Text></View>
+        <BackNav back={tr('Места')} onBack={() => navigation.goBack()} />
+        <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Место не найдено')}</Text></View>
       </View>
     );
   }
@@ -56,7 +58,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Места" onBack={() => navigation.goBack()} />
+      <BackNav back={tr('Места')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
         {place.photo ? <Image source={{ uri: place.photo }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : null}
         {/* Hero */}
@@ -88,9 +90,9 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
             <ActBtn icon={fav ? 'heart.fill' : 'heart'} label={fav ? 'В избранном' : 'В избранное'} active={fav} onPress={() => toggleFav(place.id)} T={T} />
-            <ActBtn icon="square.and.arrow.up" label="Поделиться" onPress={sharePlace} T={T} />
-            {mine ? <ActBtn icon="pencil" label="Изменить" onPress={() => navigation.navigate('AddPlace', { editId: place.id })} T={T} />
-                  : <ActBtn icon="exclamationmark.bubble" label="Сообщить" onPress={report} T={T} />}
+            <ActBtn icon="square.and.arrow.up" label={tr('Поделиться')} onPress={sharePlace} T={T} />
+            {mine ? <ActBtn icon="pencil" label={tr('Изменить')} onPress={() => navigation.navigate('AddPlace', { editId: place.id })} T={T} />
+                  : <ActBtn icon="exclamationmark.bubble" label={tr('Сообщить')} onPress={report} T={T} />}
           </View>
         </View>
 
@@ -104,7 +106,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
         {/* Highlights */}
         <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 6 }]}>Чем хорошо</Text>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 6 }]}>{tr('Чем хорошо')}</Text>
           <Text style={[ty.body, { color: T.label }]}>{place.highlights}</Text>
         </View>
 
@@ -119,7 +121,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         <Pressable onPress={() => Linking.openURL(`https://2gis.kz/geo/${place.lng},${place.lat}`)}
           style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 12, backgroundColor: T.brandTinted }}>
           <SF name="map.fill" size={15} color={T.brand} />
-          <Text style={[ty.headline, { color: T.brand }]}>Открыть на карте</Text>
+          <Text style={[ty.headline, { color: T.brand }]}>{tr('Открыть на карте')}</Text>
         </Pressable>
 
         {/* Reviews */}
@@ -135,17 +137,17 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </View>
         ))}
         {place.reviews.length === 0 ? (
-          <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8 }]}>Пока нет отзывов — оставь первый.</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Пока нет отзывов — оставь первый.')}</Text>
         ) : null}
 
         {/* Add review */}
         {isSignedIn ? (
           <View style={{ marginHorizontal: 16, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-            <Text style={[ty.headline, { color: T.label, marginBottom: 10 }]}>Ваш отзыв</Text>
+            <Text style={[ty.headline, { color: T.label, marginBottom: 10 }]}>{tr('Ваш отзыв')}</Text>
             <Stars value={stars} size={28} onChange={setStars} />
-            <TextInput value={text} onChangeText={setText} placeholder="Чем понравилось / что улучшить" placeholderTextColor={T.labelTertiary} multiline
+            <TextInput value={text} onChangeText={setText} placeholder={tr('Чем понравилось / что улучшить')} placeholderTextColor={T.labelTertiary} multiline
               style={[ty.body, { backgroundColor: T.fillTertiary, borderRadius: 12, padding: 12, color: T.label, minHeight: 70, textAlignVertical: 'top', marginTop: 12 }]} />
-            <PrimaryButton label="Отправить отзыв" icon="paperplane.fill" style={{ marginTop: 12 }} disabled={!stars} onPress={submit} />
+            <PrimaryButton label={tr('Отправить отзыв')} icon="paperplane.fill" style={{ marginTop: 12 }} disabled={!stars} onPress={submit} />
           </View>
         ) : null}
       </ScrollView>

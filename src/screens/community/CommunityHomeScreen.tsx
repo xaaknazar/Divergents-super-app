@@ -20,7 +20,7 @@ import { imgUrl } from '../../data/api';
 import { CHANNELS, channelById, postsByChannel } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
-import { useLang } from '../../state/LanguageContext';
+import { useLang, tr } from '../../state/LanguageContext';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
@@ -34,7 +34,7 @@ export function CommunityHomeScreen({ navigation }: Props) {
   const [seg, setSeg] = useState(0);
 
   return (
-    <Screen largeTitle="Сообщество">
+    <Screen largeTitle={tr('Сообщество')}>
       <NavBarLarge title={t('community')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
@@ -69,7 +69,7 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
     <Pressable onPress={open} style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', backgroundColor: T.cardBg, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="flame.fill" size={11} color="#fff" />Активный челлендж</Capsule>
+          <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="flame.fill" size={11} color="#fff" />{tr('Активный челлендж')}</Capsule>
           <Capsule bg="rgba(255,255,255,0.22)" color="#fff">День {c.currentDay}/{c.totalDays}</Capsule>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
@@ -90,7 +90,7 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
         ))}
       </View>
       <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
-        <PrimaryButton label="Войти в челлендж" icon="arrow.right" onPress={open} style={{ height: 46 }} />
+        <PrimaryButton label={tr('Войти в челлендж')} icon="arrow.right" onPress={open} style={{ height: 46 }} />
       </View>
     </Pressable>
   );
@@ -138,9 +138,9 @@ function ChallengesTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
   return (
     <>
-      <SectionHeader title="Активный челлендж" />
+      <SectionHeader title={tr('Активный челлендж')} />
       <ActiveChallengeCard navigation={navigation} />
-      <SectionHeader title="Открыт набор" />
+      <SectionHeader title={tr('Открыт набор')} />
       {CHALLENGES.filter((x) => x.status === 'upcoming').map((ch) => (
         <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
           style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
@@ -161,9 +161,9 @@ function ChallengesTab({ navigation }: { navigation: Nav }) {
               <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
-              <Text style={[ty.caption1, { color: T.red }]}>3 пропуска (🚩) — вылет</Text>
+              <Text style={[ty.caption1, { color: T.red }]}>{tr('3 пропуска (🚩) — вылет')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={[ty.subheadEm, { color: T.brand }]}>Подробнее</Text>
+                <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Подробнее')}</Text>
                 <SF name="chevron.forward" size={12} color={T.brand} />
               </View>
             </View>
@@ -201,7 +201,7 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
 function TripsTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
   return (
-    <ListSection header="Все поездки">
+    <ListSection header={tr('Все поездки')}>
       {TRIPS.map((t, i) => (
         <Pressable key={t.id} onPress={() => navigation.navigate('TripDetail', { tripId: t.id })}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
@@ -224,7 +224,7 @@ function SportTab() {
   const { T } = useTheme();
   const { has, toggle } = useEnrollment();
   return (
-    <ListSection header="Спортивные активности">
+    <ListSection header={tr('Спортивные активности')}>
       {SPORT.map((sp, i) => (
         <View key={sp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
           <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: sp.tint, alignItems: 'center', justifyContent: 'center' }}>

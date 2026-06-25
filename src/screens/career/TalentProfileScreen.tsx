@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, ScrollView, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,6 +17,7 @@ const DOMAIN_ORDER: GallupDomain[] = ['strategic', 'executing', 'influencing', '
 
 export function TalentProfileScreen({ navigation }: Props) {
   const { T } = useTheme();
+  useLang();
   const { profile, live } = useTalentProfile();
   const r = profile?.resume ?? null;
 
@@ -56,7 +58,7 @@ export function TalentProfileScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Карьера" onBack={() => navigation.goBack()} />
+      <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Hero */}
         <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16 }}>
@@ -64,23 +66,23 @@ export function TalentProfileScreen({ navigation }: Props) {
             ? <Image source={{ uri: profile.photoUrl }} style={{ width: 88, height: 88, borderRadius: 24 }} contentFit="cover" cachePolicy="memory-disk" />
             : <View style={{ width: 88, height: 88, borderRadius: 24, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.largeTitle, { color: '#fff' }]}>{(profile?.fullName ?? 'D').charAt(0)}</Text></View>}
           <Text style={[ty.title2, { color: T.label, marginTop: 12 }]}>{profile?.fullName ?? '—'}</Text>
-          {!live ? <View style={{ marginTop: 6 }}><Capsule bg={T.fillTertiary} color={T.labelSecondary}>демо-данные</Capsule></View> : null}
+          {!live ? <View style={{ marginTop: 6 }}><Capsule bg={T.fillTertiary} color={T.labelSecondary}>{tr('демо-данные')}</Capsule></View> : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
             {profile?.mbtiType ? <Capsule bg={T.brandTinted} color={T.brand}>MBTI · {profile.mbtiType}</Capsule> : null}
             <Capsule bg={T.fillTertiary} color={T.label}>Анкета {profile?.completeness ?? 0}%</Capsule>
           </View>
         </View>
 
-        <Section header="Личные данные" items={personal} />
-        <Section header="Карьера и образование" items={career} />
-        <Section header="О себе" items={about} />
+        <Section header={tr('Личные данные')} items={personal} />
+        <Section header={tr('Карьера и образование')} items={career} />
+        <Section header={tr('О себе')} items={about} />
 
         {/* Work experience list */}
         {(() => {
           const we: any[] = Array.isArray(r?.work_experience) ? r!.work_experience! : [];
           if (we.length === 0) return null;
           return (
-            <ListSection header="Опыт работы">
+            <ListSection header={tr('Опыт работы')}>
               {we.map((w, i) => (
                 <ListRow key={i} leading={<SF name="briefcase.fill" size={18} color={T.brand} />}
                   title={typeof w === 'string' ? w : [w.position, w.company].filter(Boolean).join(' · ')}
@@ -93,7 +95,7 @@ export function TalentProfileScreen({ navigation }: Props) {
 
         {/* MBTI */}
         {profile?.mbtiType ? (
-          <ListSection header="Тип личности (MBTI)">
+          <ListSection header={tr('Тип личности (MBTI)')}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
               <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.headline, { color: '#fff' }]}>{profile.mbtiType}</Text>
@@ -134,7 +136,7 @@ export function TalentProfileScreen({ navigation }: Props) {
 
         {/* Gardner */}
         {(profile?.gardner ?? []).length > 0 ? (
-          <ListSection header="Множественный интеллект (Гарднер)">
+          <ListSection header={tr('Множественный интеллект (Гарднер)')}>
             <View style={{ padding: 14 }}>
               {profile!.gardner.slice().sort((a, b) => b.score - a.score).map((gr, i) => (
                 <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -149,7 +151,7 @@ export function TalentProfileScreen({ navigation }: Props) {
 
         {/* Reports */}
         {(profile?.reports ?? []).length > 0 ? (
-          <ListSection header="Отчёты">
+          <ListSection header={tr('Отчёты')}>
             {profile!.reports.map((rep, i) => (
               <ListRow key={i} onPress={() => Linking.openURL(encodeURI(rep.url))}
                 leading={<SF name="doc.fill" size={20} color={T.brand} />} title={rep.title}

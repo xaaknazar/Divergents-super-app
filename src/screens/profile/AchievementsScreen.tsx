@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { Screen } from '../../components/Screen';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
@@ -13,6 +14,7 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'Achievements'>;
 
 export function BadgeTile({ b }: { b: EarnedBadge }) {
   const { T } = useTheme();
+  useLang();
   const circle = b.earned ? b.color : T.fillTertiary;
   const iconColor = b.earned ? '#fff' : T.labelTertiary;
   return (
@@ -43,10 +45,10 @@ export function AchievementsScreen({ navigation }: Props) {
 
   return (
     <Screen gradient={['#FBF4E6', '#F6F4F1', '#F2F2F7']} topInset={false}>
-      <BackNav back="Профиль" onBack={() => navigation.goBack()} transparent />
+      <BackNav back={tr('Профиль')} onBack={() => navigation.goBack()} transparent />
 
       <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
-        <Text style={[ty.largeTitle, { color: T.label }]}>Достижения</Text>
+        <Text style={[ty.largeTitle, { color: T.label }]}>{tr('Достижения')}</Text>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>
           Получено {earned} из {total} бейджей
         </Text>

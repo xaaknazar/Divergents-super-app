@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, ActivityIndicator, LayoutAnimation } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -28,6 +29,7 @@ function Cover({ course }: { course: Course }) {
 
 export function CatalogScreen({ navigation }: Props) {
   const { T } = useTheme();
+  useLang();
   const { courses, loading, error, reload, progress } = useCourses();
   const [cat, setCat] = useState(0);
 
@@ -50,8 +52,8 @@ export function CatalogScreen({ navigation }: Props) {
   ];
 
   return (
-    <Screen largeTitle="Каталог" onRefresh={reload}>
-      <NavBarLarge title="Каталог" />
+    <Screen largeTitle={tr('Каталог')} onRefresh={reload}>
+      <NavBarLarge title={tr('Каталог')} />
 
       {loading ? (
         <View style={{ paddingTop: 12 }}><ListSkeleton rows={5} /></View>
@@ -100,7 +102,7 @@ export function CatalogScreen({ navigation }: Props) {
               );
             })}
             {filtered.length === 0 ? (
-              <EmptyState icon="book" title="Нет курсов" subtitle="В этой категории пока пусто. Выберите другую." />
+              <EmptyState icon="book" title={tr('Нет курсов')} subtitle={tr('В этой категории пока пусто. Выберите другую.')} />
             ) : null}
           </ListSection>
           <View style={{ height: 20 }} />

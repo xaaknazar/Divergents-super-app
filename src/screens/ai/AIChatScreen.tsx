@@ -1,5 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, LayoutAnimation } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +28,7 @@ const uid = () => `${Date.now()}_${counter++}`;
 
 export function AIChatScreen({}: Props) {
   const { T } = useTheme();
+  useLang();
   const insets = useSafeAreaInsets();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
@@ -99,7 +101,7 @@ export function AIChatScreen({}: Props) {
         </View>
         {/* Mode selector: general + owned courses */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
-          <Chip label="Общий" icon="sparkles" active={isGeneral} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setMode(GENERAL); }} />
+          <Chip label={tr('Общий')} icon="sparkles" active={isGeneral} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setMode(GENERAL); }} />
           {my.courses.map((c) => (
             <Chip key={c.id} label={c.title.length > 20 ? c.title.slice(0, 19) + '…' : c.title}
               active={c.id === mode} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setMode(c.id); }} />
@@ -137,7 +139,7 @@ export function AIChatScreen({}: Props) {
               {m.role === 'bot' && m.text.length > 0 ? (
                 <Pressable onPress={() => { Clipboard.setStringAsync(m.text); hSuccess(); }} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, paddingHorizontal: 4 }}>
                   <SF name="square.and.arrow.up" size={12} color={T.labelTertiary} />
-                  <Text style={[ty.caption2, { color: T.labelTertiary }]}>Копировать</Text>
+                  <Text style={[ty.caption2, { color: T.labelTertiary }]}>{tr('Копировать')}</Text>
                 </Pressable>
               ) : null}
             </View>

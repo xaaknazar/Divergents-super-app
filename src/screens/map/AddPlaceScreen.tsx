@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, TextInput, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -18,6 +19,7 @@ type Props = NativeStackScreenProps<MapStackParams, 'AddPlace'>;
 
 export function AddPlaceScreen({ navigation, route }: Props) {
   const { T, isDark } = useTheme();
+  useLang();
   const insets = useSafeAreaInsets();
   const { user } = useUser();
   const { country, city, addPlace, updatePlace, getPlace } = usePlaces();
@@ -63,7 +65,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>Отмена</Text></Pressable>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Отмена')}</Text></Pressable>
         <Text style={[ty.headline, { color: T.label }]}>{editing ? 'Редактировать' : 'Новое место'}</Text>
         <View style={{ width: 56 }} />
       </View>
@@ -82,9 +84,9 @@ export function AddPlaceScreen({ navigation, route }: Props) {
           </MapView>
         </View>
 
-        <Field label="НАЗВАНИЕ"><TextInput value={name} onChangeText={setName} placeholder="напр. Coffee BOOM" placeholderTextColor={T.labelTertiary} style={inp(T)} /></Field>
+        <Field label={tr('НАЗВАНИЕ')}><TextInput value={name} onChangeText={setName} placeholder={tr('напр. Coffee BOOM')} placeholderTextColor={T.labelTertiary} style={inp(T)} /></Field>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>КАТЕГОРИЯ</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('КАТЕГОРИЯ')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
           {CATEGORIES.map((c) => {
             const on = cat === c;
@@ -97,7 +99,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
           })}
         </View>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>ОСОБЕННОСТИ</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('ОСОБЕННОСТИ')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
           {TAGS.map((t) => {
             const on = tags.includes(t);
@@ -110,21 +112,21 @@ export function AddPlaceScreen({ navigation, route }: Props) {
           })}
         </View>
 
-        <Field label="ЧЕМ ХОРОШО"><TextInput value={highlights} onChangeText={setHighlights} placeholder="напр. Вкусный колд брю, тихо, есть розетки" placeholderTextColor={T.labelTertiary} multiline style={[inp(T), { minHeight: 80, textAlignVertical: 'top' }]} /></Field>
-        <Field label="ЧАСЫ РАБОТЫ"><TextInput value={hours} onChangeText={setHours} placeholder="напр. 09:00–23:00" placeholderTextColor={T.labelTertiary} style={inp(T)} /></Field>
+        <Field label={tr('ЧЕМ ХОРОШО')}><TextInput value={highlights} onChangeText={setHighlights} placeholder={tr('напр. Вкусный колд брю, тихо, есть розетки')} placeholderTextColor={T.labelTertiary} multiline style={[inp(T), { minHeight: 80, textAlignVertical: 'top' }]} /></Field>
+        <Field label={tr('ЧАСЫ РАБОТЫ')}><TextInput value={hours} onChangeText={setHours} placeholder={tr('напр. 09:00–23:00')} placeholderTextColor={T.labelTertiary} style={inp(T)} /></Field>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>ФОТО</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('ФОТО')}</Text>
         {photo ? (
           <View style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
             <Image source={{ uri: photo }} style={{ width: '100%', height: 180 }} contentFit="cover" />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-              <Pressable onPress={pickPhoto} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brand }]}>Заменить</Text></Pressable>
-              <Pressable onPress={() => setPhoto(null)} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]}>Удалить</Text></Pressable>
+              <Pressable onPress={pickPhoto} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brand }]}>{tr('Заменить')}</Text></Pressable>
+              <Pressable onPress={() => setPhoto(null)} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]}>{tr('Удалить')}</Text></Pressable>
             </View>
           </View>
         ) : (
           <Pressable onPress={pickPhoto} style={{ height: 90, borderRadius: 14, borderWidth: 1, borderColor: T.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexDirection: 'row' }}>
-            <SF name="photo" size={18} color={T.brand} /><Text style={[ty.subhead, { color: T.brand }]}>Добавить фото</Text>
+            <SF name="photo" size={18} color={T.brand} /><Text style={[ty.subhead, { color: T.brand }]}>{tr('Добавить фото')}</Text>
           </Pressable>
         )}
       </ScrollView>

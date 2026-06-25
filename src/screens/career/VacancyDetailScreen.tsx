@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -16,6 +17,7 @@ type Props = NativeStackScreenProps<CareerStackParams, 'VacancyDetail'>;
 
 export function VacancyDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
+  useLang();
   const job = getJob(route.params.jobId);
   const { isApplied, isSaved, apply, toggleSave } = useCareer();
   const { profile } = useTalentProfile();
@@ -24,7 +26,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
 
   return (
     <Screen gradient={['#EAF4EF', '#F3F6F4', '#F2F2F7']} topInset={false} tabPadding={false}>
-      <BackNav back="Карьера" onBack={() => navigation.goBack()} trailing={
+      <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} trailing={
         <Pressable onPress={() => toggleSave(job.id)} hitSlop={8}>
           <SF name={isSaved(job.id) ? 'bookmark.fill' : 'bookmark'} size={20} color={T.brandAccent} />
         </Pressable>
@@ -53,7 +55,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
         <View style={{ alignItems: 'center', minWidth: 70 }}>
           <Text style={[ty.largeTitle, { color: T.brand }]}>{job.match}<Text style={ty.title3}>%</Text></Text>
-          <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]}>Совпадение</Text>
+          <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{tr('Совпадение')}</Text>
         </View>
         <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.reason}</Text>
       </View>
@@ -62,7 +64,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       {(() => {
         const m = talentMatch(job.talents, profile?.gallup ?? []);
         return (
-          <ListSection header="Почему вам подходит">
+          <ListSection header={tr('Почему вам подходит')}>
             <View style={{ padding: 14 }}>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]}>
                 Таланты Gallup для роли · совпадает {m.matched} из {m.total} ваших
@@ -94,7 +96,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       </ListSection>
 
       {/* Requirements */}
-      <ListSection header="Требования">
+      <ListSection header={tr('Требования')}>
         <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
           {job.requirements.map((r, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: i < job.requirements.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
@@ -106,7 +108,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       </ListSection>
 
       {/* About */}
-      <ListSection header="О вакансии">
+      <ListSection header={tr('О вакансии')}>
         <View style={{ padding: 14 }}>
           <Text style={[ty.body, { color: T.label }]}>{job.about}</Text>
         </View>

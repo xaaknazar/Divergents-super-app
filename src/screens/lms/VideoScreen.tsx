@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +27,7 @@ const fullName = (c: ChapterComment) =>
 
 export function VideoScreen({ route, navigation }: Props) {
   const { T } = useTheme();
+  useLang();
   const insets = useSafeAreaInsets();
   const { courseId, lessonId } = route.params;
   const { getCourse, completeLesson, isCompleted } = useCourses();
@@ -99,13 +101,13 @@ export function VideoScreen({ route, navigation }: Props) {
           ) : locked ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]}>Урок по подписке</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>Купите курс на сайте, чтобы открыть все уроки</Text>
+              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]}>{tr('Урок по подписке')}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Купите курс на сайте, чтобы открыть все уроки')}</Text>
             </View>
           ) : (
             <View style={{ alignItems: 'center' }}>
               <SF name="play.circle.fill" size={64} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.6)', marginTop: 10 }]}>Демо-урок без видео</Text>
+              <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.6)', marginTop: 10 }]}>{tr('Демо-урок без видео')}</Text>
             </View>
           )}
         </View>
@@ -134,7 +136,7 @@ export function VideoScreen({ route, navigation }: Props) {
             ) : (
               <View style={{ padding: 24, alignItems: 'center' }}>
                 <SF name="doc.text" size={32} color={T.labelTertiary} />
-                <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>Заметок к уроку пока нет</Text>
+                <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>{tr('Заметок к уроку пока нет')}</Text>
               </View>
             )
           ) : null}
@@ -157,7 +159,7 @@ export function VideoScreen({ route, navigation }: Props) {
             ) : (
               <View style={{ padding: 24, alignItems: 'center' }}>
                 <SF name="doc.text" size={32} color={T.labelTertiary} />
-                <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>Материалов к этому уроку нет</Text>
+                <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>{tr('Материалов к этому уроку нет')}</Text>
               </View>
             )
           ) : null}
@@ -186,7 +188,7 @@ export function VideoScreen({ route, navigation }: Props) {
               ) : (
                 <View style={{ padding: 24, alignItems: 'center' }}>
                   <SF name="person.3.fill" size={32} color={T.labelTertiary} />
-                  <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>Обсуждения пока нет. Будьте первым!</Text>
+                  <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>{tr('Обсуждения пока нет. Будьте первым!')}</Text>
                 </View>
               )}
 
@@ -196,7 +198,7 @@ export function VideoScreen({ route, navigation }: Props) {
                   <TextInput
                     value={draft}
                     onChangeText={setDraft}
-                    placeholder="Написать комментарий…"
+                    placeholder={tr('Написать комментарий…')}
                     placeholderTextColor={T.labelTertiary}
                     style={[ty.body, { flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14, color: T.label }]}
                     onSubmitEditing={send}
@@ -215,7 +217,7 @@ export function VideoScreen({ route, navigation }: Props) {
       {/* Bottom CTA */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
         {locked ? (
-          <PrimaryButton label="Открыть на сайте" icon="globe" onPress={() => Linking.openURL(`${API_BASE}/courses/${courseId}`)} />
+          <PrimaryButton label={tr('Открыть на сайте')} icon="globe" onPress={() => Linking.openURL(`${API_BASE}/courses/${courseId}`)} />
         ) : (
           <PrimaryButton
             label={alreadyDone ? 'Урок завершён ✓' : 'Завершить урок'}

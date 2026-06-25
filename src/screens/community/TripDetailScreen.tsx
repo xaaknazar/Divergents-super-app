@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, Share, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,6 +17,7 @@ type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
 
 function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
   const { T } = useTheme();
+  useLang();
   return (
     <Pressable onPress={onPress} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={16} color={T.label} />
@@ -76,13 +78,13 @@ export function TripDetailScreen({ route, navigation }: Props) {
           ))}
         </View>
 
-        <ListSection header="О поездке">
+        <ListSection header={tr('О поездке')}>
           <View style={{ padding: 14 }}>
             <Text style={[ty.body, { color: T.label }]}>{trip.description}</Text>
           </View>
         </ListSection>
 
-        <ListSection header="Организатор">
+        <ListSection header={tr('Организатор')}>
           <ListRow
             leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
             title={trip.organizer} subtitle={trip.organizerType} last />
@@ -104,7 +106,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
           ))}
         </ListSection>
 
-        <ListSection header="Что включено">
+        <ListSection header={tr('Что включено')}>
           {trip.included.map((it, i) => (
             <ListRow key={i} leading={<SF name={it.icon} size={18} color={T.brand} />} title={it.t}
               trailing={<SF name="checkmark" size={16} color={T.green} />} last={i === trip.included.length - 1} />
