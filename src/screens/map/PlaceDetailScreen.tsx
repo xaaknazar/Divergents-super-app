@@ -46,7 +46,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const report = () => Alert.alert('Сообщить о проблеме', `«${place.name}»`, [
     { text: 'Закрыто / не существует', onPress: () => Alert.alert('Спасибо', 'Передали модераторам Divergents.') },
     { text: 'Неверные данные', onPress: () => Alert.alert('Спасибо', 'Передали модераторам Divergents.') },
-    { text: 'Отмена', style: 'cancel' },
+    { text: tr('Отмена'), style: 'cancel' },
   ]);
 
   const submit = () => {

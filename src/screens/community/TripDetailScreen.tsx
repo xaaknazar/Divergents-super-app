@@ -33,9 +33,9 @@ export function TripDetailScreen({ route, navigation }: Props) {
   const fav = has(`tripfav:${trip.id}`);
   const joined = has(`trip:${trip.id}`);
   const stats = [
-    { v: String(trip.going), l: 'Идут' },
-    { v: String(trip.spots), l: 'Мест' },
-    { v: trip.price, l: 'Стоимость' },
+    { v: String(trip.going), l: tr('Идут') },
+    { v: String(trip.spots), l: tr('Мест') },
+    { v: trip.price, l: tr('Стоимость') },
   ];
 
   return (

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { useLang } from '../../state/LanguageContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, LayoutAnimation, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -87,7 +87,7 @@ export function CareerHomeScreen({ navigation }: Props) {
             <ListRow key={j.id} onPress={() => open(j.id)}
               leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
               title={j.title} subtitle={`${j.company} · ${j.city}`}
-              trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>Отправлен</Capsule>}
+              trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отправлен')}</Capsule>}
               last={i === myJobs.length - 1} />
           ))}
         </ListSection>
@@ -96,7 +96,7 @@ export function CareerHomeScreen({ navigation }: Props) {
       <SectionHeader title={filter === 0 ? 'Ещё подходящие' : `Найдено: ${rest.length}`} />
       {rest.map((j) => <JobCard key={j.id} job={j} onPress={() => open(j.id)} applied={isApplied(j.id)} profile={profile} />)}
       {rest.length === 0 ? (
-        <View style={{ padding: 24, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>Ничего не найдено</Text></View>
+        <View style={{ padding: 24, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Ничего не найдено')}</Text></View>
       ) : null}
       <View style={{ height: 16 }} />
     </Screen>
@@ -116,7 +116,7 @@ function ResumeHero({ navigation }: { navigation: Nav }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <Ring value={completeness / 100} size={64} color="#fff" label={`${completeness}%`} textColor="#fff" />
           <View style={{ flex: 1 }}>
-            <Text style={[ty.title3, { color: '#fff' }]}>Моя анкета</Text>
+            <Text style={[ty.title3, { color: '#fff' }]}>{tr('Моя анкета')}</Text>
             <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>
               {filled ? 'Дополните профиль для точного подбора' : 'Заполните анкету — подберём роли по талантам'}
             </Text>
@@ -147,7 +147,7 @@ function JobCard({ job, onPress, applied, best, profile }: {
       {best ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 12 }}>
           <SF name="bolt.fill" size={12} color={T.orange} />
-          <Text style={[ty.caption2Em, { color: T.orange, textTransform: 'uppercase' }]}>Лучшее совпадение</Text>
+          <Text style={[ty.caption2Em, { color: T.orange, textTransform: 'uppercase' }]}>{tr('Лучшее совпадение')}</Text>
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
@@ -164,7 +164,7 @@ function JobCard({ job, onPress, applied, best, profile }: {
         <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule>
         <Capsule bg={T.fillTertiary} color={T.label}>{job.salary}</Capsule>
         {m.matched > 0 ? <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />{m.matched} ваших таланта</Capsule> : null}
-        {applied ? <Capsule bg="rgba(52,199,89,0.15)" color={T.green}>Отклик отправлен</Capsule> : null}
+        {applied ? <Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отклик отправлен')}</Capsule> : null}
       </View>
     </Pressable>
   );

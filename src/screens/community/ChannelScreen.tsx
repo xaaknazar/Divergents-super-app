@@ -9,7 +9,7 @@ import { Capsule, ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { channelById, postsByChannel, ChannelPost } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
-import { useLang } from '../../state/LanguageContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'Channel'>;
@@ -27,7 +27,7 @@ export function ChannelScreen({ route, navigation }: Props) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
-        <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>Канал не найден</Text></View>
+        <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Канал не найден')}</Text></View>
       </View>
     );
   }

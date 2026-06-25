@@ -72,7 +72,7 @@ export function ResumeFormScreen({ navigation }: Props) {
             <View style={{ marginTop: 8, backgroundColor: T.brandTinted, borderRadius: 12, padding: 14, flexDirection: 'row', gap: 10 }}>
               <SF name="doc.fill" size={18} color={T.brand} />
               <Text style={[ty.caption1, { color: T.label, flex: 1 }]}>
-                Отчёты Gallup и тест Гарднера загружаются на сайте Talentslab — после обработки они появятся в разделе «Карьера».
+                {tr('Отчёты Gallup и тест Гарднера загружаются на сайте Talentslab — после обработки они появятся в разделе «Карьера».')}
               </Text>
             </View>
           ) : null}

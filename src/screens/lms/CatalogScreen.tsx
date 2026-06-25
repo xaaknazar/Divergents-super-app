@@ -46,9 +46,9 @@ export function CatalogScreen({ navigation }: Props) {
   const inProgress = courses.filter((c) => progress(c.id) > 0 && progress(c.id) < 1).length;
   const done = courses.filter((c) => progress(c.id) >= 1).length;
   const strip = [
-    { v: String(courses.length), l: 'Курсов' },
-    { v: String(inProgress), l: 'В работе' },
-    { v: String(done), l: 'Завершено' },
+    { v: String(courses.length), l: tr('Курсов') },
+    { v: String(inProgress), l: tr('В работе') },
+    { v: String(done), l: tr('Завершено') },
   ];
 
   return (

@@ -11,7 +11,7 @@ import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/Sta
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useNotifications } from '../../state/NotificationsContext';
-import { useLang } from '../../state/LanguageContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { useUser } from '@clerk/clerk-expo';
 import { Logo } from '../../components/Logo';
 import { LMSStackParams } from '../../navigation/types';
@@ -119,7 +119,7 @@ export function LMSHomeScreen({ navigation }: Props) {
                 course={continueCourse}
                 owned
                 progress={Math.max(Math.round(continueCourse.serverProgress ?? 0), Math.round(progress(continueCourse.id) * 100))}
-                eyebrow="Продолжить"
+                eyebrow={tr('Продолжить')}
                 onPress={() => navigation.navigate('CourseDetail', { courseId: continueCourse.id })}
               />
             </View>

@@ -190,7 +190,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
 
       <View style={{ padding: 20, paddingBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Capsule bg={T.brandTinted} color={T.brand}><SF name="flag.fill" size={11} color={T.brand} />День {c.currentDay} из {c.totalDays}</Capsule>
+          <Capsule bg={T.brandTinted} color={T.brand}><SF name="flag.fill" size={11} color={T.brand} />{tr('День')} {c.currentDay} {tr('из')} {c.totalDays}</Capsule>
           <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />{tr('Бесплатно')}</Capsule>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
@@ -203,9 +203,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
       <View style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
         <View style={{ flexDirection: 'row' }}>
           {[
-            { v: `${c.currentDay}/${c.totalDays}`, l: 'Дней' },
-            { v: `${Math.round(ringPct * 100)}%`, l: 'Прогресс' },
-            { v: `${teamPoints}`, l: 'Очки команды' },
+            { v: `${c.currentDay}/${c.totalDays}`, l: tr('Дней') },
+            { v: `${Math.round(ringPct * 100)}%`, l: tr('Прогресс') },
+            { v: `${teamPoints}`, l: tr('Очки команды') },
           ].map((st, i, arr) => (
             <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < arr.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
               <Text style={[ty.title2, { color: T.label }]}>{st.v}</Text>

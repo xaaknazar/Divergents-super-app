@@ -13,7 +13,7 @@ import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
 import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, cityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
-import { useLang } from '../../state/LanguageContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { loadJSON, saveJSON } from '../../state/persist';
 
 type Props = NativeStackScreenProps<MapStackParams, 'MapHome'>;
@@ -26,8 +26,8 @@ function haversineKm(a: LatLng, b: LatLng): number {
   const s = Math.sin(dLat / 2) ** 2 + Math.cos((a.latitude * Math.PI) / 180) * Math.cos((b.latitude * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(s));
 }
-function fmtDist(km: number): string { return km < 1 ? `${Math.round(km * 1000)} м` : `${km.toFixed(1)} км`; }
-function fmtDur(min: number): string { if (min < 60) return `${Math.max(1, Math.round(min))} мин`; const h = Math.floor(min / 60); return `${h} ч ${Math.round(min % 60)} мин`; }
+function fmtDist(km: number): string { return km < 1 ? `${Math.round(km * 1000)} ${tr('м')}` : `${km.toFixed(1)} ${tr('км')}`; }
+function fmtDur(min: number): string { if (min < 60) return `${Math.max(1, Math.round(min))} ${tr('мин')}`; const h = Math.floor(min / 60); return `${h} ${tr('ч')} ${Math.round(min % 60)} ${tr('мин')}`; }
 
 type RouteT = { coords: LatLng[]; km: number; min: number };
 
@@ -193,10 +193,10 @@ export function MapHomeScreen({ navigation }: Props) {
   const shareRoute = () => { if (!target) return; const o = origin ? `${origin.lat},${origin.lng}` : user ? `${user.latitude},${user.longitude}` : ''; Share.share({ message: `Маршрут в «${target.name}»: https://www.google.com/maps/dir/?api=1${o ? `&origin=${o}` : ''}&destination=${target.lat},${target.lng}` }); };
   const longMenu = (c: LatLng) => {
     Alert.alert('Точка на карте', `${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)}`, [
-      { text: 'Маршрут сюда', onPress: () => navTo({ name: 'Точка на карте', lat: c.latitude, lng: c.longitude }) },
-      { text: 'Маршрут отсюда', onPress: () => { setOrigin({ name: 'Точка А', lat: c.latitude, lng: c.longitude }); routeReqRef.current = null; } },
-      { text: 'Добавить место здесь', onPress: () => navigation.navigate('AddPlace', { lat: c.latitude, lng: c.longitude }) },
-      { text: 'Отмена', style: 'cancel' },
+      { text: tr('Маршрут сюда'), onPress: () => navTo({ name: tr('Точка на карте'), lat: c.latitude, lng: c.longitude }) },
+      { text: tr('Маршрут отсюда'), onPress: () => { setOrigin({ name: tr('Точка А'), lat: c.latitude, lng: c.longitude }); routeReqRef.current = null; } },
+      { text: tr('Добавить место здесь'), onPress: () => navigation.navigate('AddPlace', { lat: c.latitude, lng: c.longitude }) },
+      { text: tr('Отмена'), style: 'cancel' },
     ]);
   };
 
@@ -263,7 +263,7 @@ export function MapHomeScreen({ navigation }: Props) {
         {q.trim().length >= 3 && (geoBusy || geo.length > 0) ? (
           <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             {geoBusy && geo.length === 0 ? (
-              <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelSecondary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>Поиск адресов…</Text></View>
+              <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelSecondary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Поиск адресов…')}</Text></View>
             ) : null}
             {geo.map((g, i) => (
               <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 14, borderTopWidth: i ? 0.5 : 0, borderTopColor: T.separator }}>
@@ -293,9 +293,9 @@ export function MapHomeScreen({ navigation }: Props) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <SF name="paperplane.fill" size={18} color="#fff" />
               <View style={{ flex: 1 }}>
-                <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>До «{target.name}»</Text>
+                <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>{tr('До')} «{target.name}»</Text>
                 <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>
-                  {routing ? 'ищу самый быстрый маршрут…' : rt ? `${fmtDist(rt.km)} · ${fmtDur(rt.min)}${routeIdx === 0 ? ' · самый быстрый' : ''}` : user ? `${fmtDist(haversineKm(user, { latitude: target.lat, longitude: target.lng }))} по прямой` : 'ждём GPS…'}
+                  {routing ? tr('ищу самый быстрый маршрут…') : rt ? `${fmtDist(rt.km)} · ${fmtDur(rt.min)}${routeIdx === 0 ? ' · ' + tr('самый быстрый') : ''}` : user ? `${fmtDist(haversineKm(user, { latitude: target.lat, longitude: target.lng }))} ${tr('по прямой')}` : tr('ждём GPS…')}
                 </Text>
               </View>
               <Pressable onPress={stopNav} hitSlop={8}><SF name="xmark" size={18} color="#fff" /></Pressable>
@@ -304,14 +304,14 @@ export function MapHomeScreen({ navigation }: Props) {
               <Pill label={t('car')} on={mode === 'car'} onPress={() => setMode('car')} />
               <Pill label={t('walk')} on={mode === 'foot'} onPress={() => setMode('foot')} />
               <View style={{ flex: 1 }} />
-              {routes.length > 1 ? <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.85)' }]}>ещё {routes.length - 1}</Text> : null}
+              {routes.length > 1 ? <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.85)' }]}>{tr('ещё')} {routes.length - 1}</Text> : null}
               <Pressable onPress={shareRoute} hitSlop={6}><SF name="square.and.arrow.up" size={17} color="#fff" /></Pressable>
             </View>
             {origin ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <SF name="smallcircle.filled.circle" size={13} color="rgba(255,255,255,0.9)" />
-                <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.9)', flex: 1 }]} numberOfLines={1}>Откуда: {origin.name}</Text>
-                <Pressable onPress={() => { setOrigin(null); routeReqRef.current = null; }} hitSlop={6}><Text style={[ty.caption2, { color: '#fff', textDecorationLine: 'underline' }]}>от меня</Text></Pressable>
+                <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.9)', flex: 1 }]} numberOfLines={1}>{tr('Откуда:')} {origin.name}</Text>
+                <Pressable onPress={() => { setOrigin(null); routeReqRef.current = null; }} hitSlop={6}><Text style={[ty.caption2, { color: '#fff', textDecorationLine: 'underline' }]}>{tr('от меня')}</Text></Pressable>
               </View>
             ) : null}
           </View>
@@ -356,10 +356,10 @@ export function MapHomeScreen({ navigation }: Props) {
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                 <Pressable onPress={() => startNav(sel)} style={{ flex: 1, height: 46, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-                  <SF name="paperplane.fill" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>Вести сюда</Text>
+                  <SF name="paperplane.fill" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>{tr('Вести сюда')}</Text>
                 </Pressable>
                 <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} style={{ width: 84, height: 46, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={[ty.headline, { color: T.brand }]}>Детали</Text>
+                  <Text style={[ty.headline, { color: T.brand }]}>{tr('Детали')}</Text>
                 </Pressable>
                 <Pressable onPress={() => toggleFav(sel.id)} style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
                   <SF name={isFav(sel.id) ? 'heart.fill' : 'heart'} size={18} color={isFav(sel.id) ? T.brand : T.label} />
@@ -391,10 +391,10 @@ export function MapHomeScreen({ navigation }: Props) {
               </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                 <Pressable onPress={() => navTo(searchPin)} style={{ flex: 1, height: 46, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-                  <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>Вести сюда</Text>
+                  <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>{tr('Вести сюда')}</Text>
                 </Pressable>
                 <Pressable onPress={() => externalRoute(searchPin)} style={{ width: 110, height: 46, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={[ty.headline, { color: T.brand }]}>Навигатор</Text>
+                  <Text style={[ty.headline, { color: T.brand }]}>{tr('Навигатор')}</Text>
                 </Pressable>
               </View>
             </View>
@@ -407,7 +407,7 @@ export function MapHomeScreen({ navigation }: Props) {
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setPickerOpen(false)} />
         <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '70%' }}>
           <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
-          <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 8 }]}>Выберите город</Text>
+          <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Выберите город')}</Text>
           <ScrollView contentContainerStyle={{ paddingBottom: 10 }}>
             {COUNTRIES.map((co) => (
               <View key={co.key}>

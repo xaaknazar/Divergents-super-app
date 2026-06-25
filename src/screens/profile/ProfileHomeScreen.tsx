@@ -15,7 +15,7 @@ import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
 import { useResume } from '../../state/useResume';
 import { useAppFlow } from '../../state/AppFlowContext';
-import { useLang } from '../../state/LanguageContext';
+import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useAchievements } from '../../data/achievements';
 import { GALLUP_DOMAIN_META, mbtiName, fmtList } from '../../data/talentslab';
@@ -52,7 +52,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const rz = profile?.resume ?? null;
 
   const tiles = [
-    { v: String(coursesInProgress), l: 'Курсов', icon: 'book.fill', c: T.brand },
+    { v: String(coursesInProgress), l: tr('Курсов'), icon: 'book.fill', c: T.brand },
     { v: `${ach.earned}`, l: 'Достижений', icon: 'rosette', c: T.orange },
     { v: challengeActive ? String(challenge.currentDay) : '—', l: 'День челленджа', icon: 'flame.fill', c: T.red },
   ];

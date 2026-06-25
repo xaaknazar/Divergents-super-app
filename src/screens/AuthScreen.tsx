@@ -10,7 +10,7 @@ import { ty } from '../components/ui';
 import { Logo } from '../components/Logo';
 import { RootStackParams } from '../navigation/types';
 import { useAppFlow } from '../state/AppFlowContext';
-import { useLang } from '../state/LanguageContext';
+import { useLang, tr } from '../state/LanguageContext';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Auth'>;
 
@@ -105,7 +105,7 @@ export function AuthScreen({}: Props) {
         if (res.status === 'complete') { await setActiveSignUp!({ session: res.createdSessionId }); }
         else if (res.status === 'missing_requirements') {
           const miss = [...(res.missingFields ?? []), ...(res.unverifiedFields ?? [])].join(', ');
-          setError(`Регистрация требует доп. полей в Clerk: ${miss || 'неизвестно'}. Оставьте обязательным только email.`);
+          setError(`${tr('Регистрация требует доп. полей в Clerk:')} ${miss || tr('неизвестно')}. ${tr('Оставьте обязательным только email.')}`);
         } else setError(t('err_code'));
       }
     } catch (e: any) {

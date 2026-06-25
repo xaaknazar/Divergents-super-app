@@ -109,9 +109,9 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
   const chaptersLoading = detailLoading[courseId] && course.lessons.length === 0;
 
   const meta = [
-    { v: String(course.chaptersCount ?? course.lessons.length), l: 'Уроков' },
-    { v: `${Math.round(p * 100)}%`, l: 'Пройдено' },
-    { v: course.category, l: 'Тема' },
+    { v: String(course.chaptersCount ?? course.lessons.length), l: tr('Уроков') },
+    { v: `${Math.round(p * 100)}%`, l: tr('Пройдено') },
+    { v: course.category, l: tr('Тема') },
   ];
 
   return (
@@ -203,9 +203,9 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
 
   const includes = [
     { icon: 'play.circle.fill', t: `${course.chaptersCount ?? course.lessons.length} видеоуроков` },
-    { icon: 'doc.fill', t: 'Материалы и конспекты' },
-    { icon: 'person.3.fill', t: 'Обсуждение с участниками' },
-    { icon: 'checkmark.seal.fill', t: 'Доступ на 1 год' },
+    { icon: 'doc.fill', t: tr('Материалы и конспекты') },
+    { icon: 'person.3.fill', t: tr('Обсуждение с участниками') },
+    { icon: 'checkmark.seal.fill', t: tr('Доступ на 1 год') },
   ];
 
   return (

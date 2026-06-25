@@ -61,16 +61,16 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
   const { challenge: c, teamPoints, myRank, pointsToday } = useChallenge();
   const open = () => navigation.navigate('ChallengeDetail', { challengeId: c.id });
   const stats = [
-    { v: `${c.currentDay} дн`, l: 'Серия' },
-    { v: `${teamPoints}`, l: 'Очки команды' },
-    { v: `${myRank} / ${c.teamCount}`, l: 'Место' },
+    { v: `${c.currentDay} дн`, l: tr('Серия') },
+    { v: `${teamPoints}`, l: tr('Очки команды') },
+    { v: `${myRank} / ${c.teamCount}`, l: tr('Место') },
   ];
   return (
     <Pressable onPress={open} style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', backgroundColor: T.cardBg, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="flame.fill" size={11} color="#fff" />{tr('Активный челлендж')}</Capsule>
-          <Capsule bg="rgba(255,255,255,0.22)" color="#fff">День {c.currentDay}/{c.totalDays}</Capsule>
+          <Capsule bg="rgba(255,255,255,0.22)" color="#fff">{tr('День')} {c.currentDay}/{c.totalDays}</Capsule>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
           <Logo size={22} body="#fff" head="#fff" />

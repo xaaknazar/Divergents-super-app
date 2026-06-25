@@ -51,7 +51,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
   const submit = () => {
     if (editing) {
       updatePlace(editing.id, { name: name.trim(), category: cat, lat: coord.latitude, lng: coord.longitude, tags, highlights: highlights.trim(), hours: hours.trim() || 'Не указано', photo });
-      Alert.alert('Сохранено', 'Изменения применены.', [{ text: 'Готово', onPress: () => navigation.goBack() }]);
+      Alert.alert('Сохранено', 'Изменения применены.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
       return;
     }
     const author = user?.firstName || user?.fullName || (user?.primaryEmailAddress?.emailAddress?.split('@')[0]) || 'Вы';
@@ -59,7 +59,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
       name: name.trim(), category: cat, country, city, lat: coord.latitude, lng: coord.longitude,
       tags, highlights: highlights.trim(), hours: hours.trim() || 'Не указано', approved: false, addedBy: author, photo,
     });
-    Alert.alert('Место добавлено', 'Спасибо! Метка появилась на карте сообщества.', [{ text: 'Готово', onPress: () => navigation.goBack() }]);
+    Alert.alert('Место добавлено', 'Спасибо! Метка появилась на карте сообщества.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
   };
 
   return (
