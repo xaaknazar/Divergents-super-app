@@ -15,6 +15,7 @@ import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
 import { useResume } from '../../state/useResume';
 import { useAppFlow } from '../../state/AppFlowContext';
+import { useLang } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useAchievements } from '../../data/achievements';
 import { GALLUP_DOMAIN_META, mbtiName, fmtList } from '../../data/talentslab';
@@ -25,6 +26,7 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 
 export function ProfileHomeScreen({ navigation }: Props) {
   const { T, mode, setMode } = useTheme();
+  const { t, lang, setLang } = useLang();
   const { challenge } = useChallenge();
   const { courses, progress, reload: reloadCourses } = useCourses();
   const { applied } = useCareer();
@@ -81,7 +83,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   return (
     <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await reload(); }}>
-      <NavBarLarge title="Профиль" />
+      <NavBarLarge title={t('profile')} />
 
       {/* Gradient hero card */}
       <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: '#1E337A', shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
@@ -105,7 +107,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
                 </View>
               ) : null}
             </View>
-            <Ring value={completeness / 100} size={62} color="#fff" label={`${completeness}%`} sub="анкета" textColor="#fff" />
+            <Ring value={completeness / 100} size={62} color="#fff" label={`${completeness}%`} sub={t('questionnaire')} textColor="#fff" />
           </View>
         </LinearGradient>
       </View>
@@ -122,7 +124,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       </View>
 
       {/* Achievements */}
-      <ListSection header={`Достижения · ${ach.earned}/${ach.total}`}>
+      <ListSection header={`${t('achievements_n')} · ${ach.earned}/${ach.total}`}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
           {ach.badges.map((b) => (
             <View key={b.id} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
@@ -130,18 +132,18 @@ export function ProfileHomeScreen({ navigation }: Props) {
             </View>
           ))}
         </ScrollView>
-        <ListRow title="Смотреть все достижения" valueColor={T.brand} chevron last onPress={() => navigation.navigate('Achievements')} />
+        <ListRow title={t('view_all_ach')} valueColor={T.brand} chevron last onPress={() => navigation.navigate('Achievements')} />
       </ListSection>
 
       {/* Strengths snapshot */}
       {(profile?.gallup ?? []).length > 0 ? (
         <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={[ty.title3, { color: T.label }]}>Сильные стороны · CliftonStrengths</Text>
+            <Text style={[ty.title3, { color: T.label }]}>{t('strengths')}</Text>
             {!live ? (
               <Pressable onPress={reload} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
-                <Text style={[ty.caption2Em, { color: T.labelSecondary }]}>демо · обновить</Text>
+                <Text style={[ty.caption2Em, { color: T.labelSecondary }]}>{t('demo_refresh')}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -160,25 +162,25 @@ export function ProfileHomeScreen({ navigation }: Props) {
       ) : null}
 
       {/* Account */}
-      <ListSection header="Аккаунт" style={{ marginTop: 18 }}>
-        <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />} title={email ?? 'Вы вошли'} subtitle="Divergents LMS · Talentslab" />
-        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title="Выйти" valueColor={T.red} last onPress={() => { finishRegistration(); signOut(); }} />
+      <ListSection header={t('account')} style={{ marginTop: 18 }}>
+        <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />} title={email ?? t('signed_in')} subtitle="Divergents LMS · Talentslab" />
+        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.red} last onPress={() => { finishRegistration(); signOut(); }} />
       </ListSection>
 
       {coursesInProgress > 0 ? (
-        <ListSection header="Продолжить">
-          <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />} title="Продолжить обучение" subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? 'курс в работе' : 'курса в работе'}`} chevron last onPress={goLearning} />
+        <ListSection header={t('continue_')}>
+          <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />} title={t('continue_learning')} subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? t('in_progress_1') : t('in_progress_n')}`} chevron last onPress={goLearning} />
         </ListSection>
       ) : null}
 
       {/* Resume data (Talentslab) */}
-      {Sec('Личные данные', personal)}
-      {Sec('Карьера и образование', career)}
-      {Sec('О себе', about)}
+      {Sec(t('personal_data'), personal)}
+      {Sec(t('career_education'), career)}
+      {Sec(t('about_me'), about)}
 
       {/* Reports */}
       {(profile?.reports ?? []).length > 0 ? (
-        <ListSection header="Отчёты">
+        <ListSection header={t('reports')}>
           {profile!.reports.map((r, i) => (
             <ListRow key={i} onPress={() => Linking.openURL(encodeURI(r.url))} leading={<SF name="doc.fill" size={20} color={T.brand} />} title={r.title} trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />} last={i === profile!.reports.length - 1} />
           ))}
@@ -186,7 +188,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       ) : null}
 
       {challengeActive ? (
-        <ListSection header="Активный челлендж">
+        <ListSection header={t('active_challenge')}>
           <Pressable onPress={goCareer} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
             <View style={{ flex: 1 }}>
               <Text style={[ty.body, { color: T.label }]}>{challenge.title}</Text>
@@ -197,20 +199,22 @@ export function ProfileHomeScreen({ navigation }: Props) {
       ) : null}
 
       {myApps.length > 0 ? (
-        <ListSection header={`Отклики на вакансии · ${myApps.length}`}>
+        <ListSection header={`${t('applications_n')} · ${myApps.length}`}>
           {myApps.map((j, i) => (
             <ListRow key={j.id} onPress={goCareer}
               leading={<View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
               title={j.title} subtitle={`${j.company} · ${j.city}`}
-              trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>Отправлен</Capsule>} last={i === myApps.length - 1} />
+              trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{t('sent_')}</Capsule>} last={i === myApps.length - 1} />
           ))}
         </ListSection>
       ) : null}
 
       {/* Appearance */}
-      <ListSection header="Внешний вид">
+      <ListSection header={t('appearance')}>
         <ListRow leading={<IconCircle icon="paintpalette.fill" color="#fff" bg={T.brand} size={30} />}
-          title="Персонализация" subtitle="Тема, акцентный цвет, фон" chevron last onPress={() => navigation.navigate('Personalize')} />
+          title={t('personalization')} subtitle={t('personalization_sub')} chevron onPress={() => navigation.navigate('Personalize')} />
+        <ListRow leading={<IconCircle icon="globe" color="#fff" bg={T.brand} size={30} />} title={t('language')}
+          trailing={<Segmented items={['РУС', 'ENG']} value={lang === 'ru' ? 0 : 1} onChange={(i) => setLang(i === 0 ? 'ru' : 'en')} />} last />
       </ListSection>
 
       <View style={{ height: 30 }} />

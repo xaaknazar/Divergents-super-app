@@ -40,7 +40,8 @@
         {
           "photosPermission": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества."
         }
-      ]
+      ],
+      "expo-localization"
     ]
   }
 }

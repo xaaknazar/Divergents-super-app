@@ -8,18 +8,20 @@ import { ty } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { SF, SFName } from '../components/SFIcon';
 import { hSelect } from '../lib/haptics';
+import { useLang } from '../state/LanguageContext';
 
-const TABS: Record<string, { label: string; on: SFName; off: SFName }> = {
-  LMSTab: { label: 'Обучение', on: 'book.fill', off: 'book' },
-  AITab: { label: 'AI', on: 'sparkles', off: 'sparkles' },
-  CommunityTab: { label: 'Сообщество', on: 'person.3.fill', off: 'person.3' },
-  MapTab: { label: 'Карта', on: 'map.fill', off: 'map' },
-  CareerTab: { label: 'Карьера', on: 'briefcase.fill', off: 'briefcase' },
-  ProfileTab: { label: 'Профиль', on: 'person.crop.circle.fill', off: 'person.crop.circle' },
+const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | 'tab_map' | 'tab_career' | 'tab_profile'; on: SFName; off: SFName }> = {
+  LMSTab: { label: 'tab_learn', on: 'book.fill', off: 'book' },
+  AITab: { label: 'tab_ai', on: 'sparkles', off: 'sparkles' },
+  CommunityTab: { label: 'tab_community', on: 'person.3.fill', off: 'person.3' },
+  MapTab: { label: 'tab_map', on: 'map.fill', off: 'map' },
+  CareerTab: { label: 'tab_career', on: 'briefcase.fill', off: 'briefcase' },
+  ProfileTab: { label: 'tab_profile', on: 'person.crop.circle.fill', off: 'person.crop.circle' },
 };
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { T, isDark } = useTheme();
+  const { t } = useLang();
   const insets = useSafeAreaInsets();
   // Hide the tab bar when a detail screen is pushed inside the active tab's
   // stack (nested index > 0) so bottom CTAs aren't covered by the bar.
@@ -45,7 +47,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
             }} style={{ flex: 1, alignItems: 'center', gap: 3, paddingHorizontal: 2 }}>
               <SF name={focused ? meta.on : meta.off} size={24} color={color} />
-              <Text numberOfLines={1} style={[ty.caption2, { color, fontWeight: '500', fontSize: 10, lineHeight: 13 }]}>{meta.label}</Text>
+              <Text numberOfLines={1} style={[ty.caption2, { color, fontWeight: '500', fontSize: 10, lineHeight: 13 }]}>{t(meta.label)}</Text>
             </Pressable>
           );
         })}

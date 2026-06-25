@@ -20,27 +20,29 @@ import { imgUrl } from '../../data/api';
 import { CHANNELS, channelById, postsByChannel } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
+import { useLang } from '../../state/LanguageContext';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
 
-const SECTIONS = ['Главная', 'Каналы', 'Челленджи', 'Поездки', 'Спорт'];
+const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_sport'] as const;
 
 export function CommunityHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
+  const { t } = useLang();
   const { unread } = useNotifications();
   const [seg, setSeg] = useState(0);
 
   return (
     <Screen largeTitle="Сообщество">
-      <NavBarLarge title="Сообщество" trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
+      <NavBarLarge title={t('community')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
-        <Text style={[ty.subhead, { color: T.labelSecondary }]}>Divergents · свои люди и общий рост</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary }]}>{t('community_tagline')}</Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
-        {SECTIONS.map((s, i) => <Chip key={s} label={s} active={seg === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(i); }} />)}
+        {SECTION_KEYS.map((k, i) => <Chip key={k} label={t(k)} active={seg === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(i); }} />)}
       </ScrollView>
 
       {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} />}
@@ -96,19 +98,20 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
 
 // ─── Главная ────────────────────────────────────────────────────────
 function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number) => void }) {
+  const { t } = useLang();
   const { T } = useTheme();
   return (
     <>
-      <SectionHeader title="Твой челлендж" />
+      <SectionHeader title={t('your_challenge')} />
       <ActiveChallengeCard navigation={navigation} />
 
-      <SectionHeader title="Предстоящие поездки" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
+      <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
         {TRIPS.map((t) => <TripCardH key={t.id} trip={t} navigation={navigation} />)}
       </ScrollView>
 
       <View style={{ marginTop: 18 }}>
-        <SectionHeader title="Спорт" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
+        <SectionHeader title={t('sec_sport')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
           {SPORT.map((sp) => (
             <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
@@ -122,7 +125,7 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
       </View>
 
       <View style={{ marginTop: 18 }}>
-        <SectionHeader title="Каналы" action="Все" onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(1); }} />
+        <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(1); }} />
         {CHANNELS.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
       </View>
 
@@ -247,9 +250,10 @@ function SportTab() {
 // ─── Каналы (Telegram-style список) ─────────────────────────────────
 function ChannelTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
+  const { t } = useLang();
   return (
     <View style={{ paddingHorizontal: 16 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Каналы сообщества</Text>
+      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{t('channels_of_community')}</Text>
       {CHANNELS.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
     </View>
   );
@@ -257,6 +261,7 @@ function ChannelTab({ navigation }: { navigation: Nav }) {
 
 function ChannelRow({ channel, navigation }: { channel: typeof CHANNELS[number]; navigation: Nav }) {
   const { T } = useTheme();
+  const { t } = useLang();
   const { isJoined, isPaid, unread } = useChannel();
   const joined = isJoined(channel.id) || isPaid(channel.id);
   const count = unread(channel.id);
@@ -273,7 +278,7 @@ function ChannelRow({ channel, navigation }: { channel: typeof CHANNELS[number];
           {channel.access === 'paid' ? <SF name="creditcard.fill" size={11} color={T.labelTertiary} /> : null}
         </View>
         <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>
-          {joined && last ? last.title : channel.access === 'request' ? 'Закрытый канал · по запросу' : channel.access === 'paid' ? `Платный · ${channel.price ? channel.price.toLocaleString('ru-RU') + ' ₸' : ''}` : `@${channel.handle}`}
+          {joined && last ? last.title : channel.access === 'request' ? t('closed_channel') : channel.access === 'paid' ? `${t('paid_label')} · ${channel.price ? channel.price.toLocaleString('ru-RU') + ' ₸' : ''}` : `@${channel.handle}`}
         </Text>
       </View>
       {joined && count > 0 ? (

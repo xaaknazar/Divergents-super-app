@@ -10,6 +10,7 @@ import { ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { channelById, getPost } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
+import { useLang } from '../../state/LanguageContext';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChannelPost'>;
@@ -26,12 +27,13 @@ export function ChannelPostScreen({ route, navigation }: Props) {
   const post = getPost(route.params.postId);
   const chan = post ? channelById(post.channelId) : undefined;
   const { isLiked, toggleLike } = useChannel();
+  const { t, lang } = useLang();
 
   if (!post) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back="Канал" onBack={() => navigation.goBack()} />
-        <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>Пост не найден</Text></View>
+        <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+        <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{lang === 'ru' ? 'Пост не найден' : 'Post not found'}</Text></View>
       </View>
     );
   }
@@ -40,12 +42,12 @@ export function ChannelPostScreen({ route, navigation }: Props) {
   const likeCount = post.likes + (liked ? 1 : 0);
   const share = () => Share.share({ message: `${chan?.name ?? 'Divergents'}: «${post.title}» — в приложении Divergents` });
 
-  if (post.type === 'audio') return <AudioPost post={post} chan={chan} liked={liked} likeCount={likeCount} onLike={() => toggleLike(post.id)} onShare={share} onBack={() => navigation.goBack()} T={T} insets={insets} />;
+  if (post.type === 'audio') return <AudioPost post={post} chan={chan} t={t} liked={liked} likeCount={likeCount} onLike={() => toggleLike(post.id)} onShare={share} onBack={() => navigation.goBack()} T={T} insets={insets} />;
 
   // Article
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Канал" onBack={() => navigation.goBack()} />
+      <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         {post.cover ? <Image source={{ uri: post.cover }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : null}
         <View style={{ padding: 20 }}>
@@ -56,7 +58,7 @@ export function ChannelPostScreen({ route, navigation }: Props) {
             <Text style={[ty.caption1, { color: T.labelTertiary }]}>· {post.date}</Text>
           </View>
           <Text style={[ty.title1, { color: T.label }]}>{post.title}</Text>
-          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 6 }]}>{post.readMins} мин чтения · {post.views} просмотров</Text>
+          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 6 }]}>{post.readMins} {t('min_read')} · {post.views} {t('views_')}</Text>
           <View style={{ height: 1, backgroundColor: T.separator, marginVertical: 16 }} />
           {(post.body ?? []).map((p, i) => (
             <Text key={i} style={[ty.body, { color: T.label, marginBottom: 14, lineHeight: 24 }]}>{p}</Text>
@@ -78,7 +80,7 @@ export function ChannelPostScreen({ route, navigation }: Props) {
 
 function onLikeFactory(id: string, toggle: (id: string) => void) { return () => toggle(id); }
 
-function AudioPost({ post, chan, liked, likeCount, onLike, onShare, onBack, T, insets }: any) {
+function AudioPost({ post, chan, t, liked, likeCount, onLike, onShare, onBack, T, insets }: any) {
   const player = useVideoPlayer(post.audioUrl ?? '', (p: any) => { p.loop = false; });
   const [playing, setPlaying] = useState(false);
   const [pos, setPos] = useState(0);
@@ -106,7 +108,7 @@ function AudioPost({ post, chan, liked, likeCount, onLike, onShare, onBack, T, i
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Канал" onBack={onBack} />
+      <BackNav back={t('sec_channels')} onBack={onBack} />
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
         <View style={{ alignItems: 'center', paddingTop: 16, paddingHorizontal: 24 }}>
           <View style={{ width: 220, height: 220, borderRadius: 28, overflow: 'hidden', backgroundColor: T.brandTinted, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 12 } }}>
@@ -114,11 +116,11 @@ function AudioPost({ post, chan, liked, likeCount, onLike, onShare, onBack, T, i
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 18 }}>
             <SF name="waveform" size={15} color={T.brand} />
-            <Text style={[ty.caption1, { color: T.brand }]}>АУДИО · {chan?.name}</Text>
+            <Text style={[ty.caption1, { color: T.brand }]}>{t('audio').toUpperCase()} · {chan?.name}</Text>
           </View>
           <Text style={[ty.title2, { color: T.label, textAlign: 'center', marginTop: 8 }]}>{post.title}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', marginTop: 6 }]}>{post.excerpt}</Text>
-          <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 6 }]}>{post.date} · {post.views} прослушиваний</Text>
+          <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 6 }]}>{post.date} · {post.views} {t('listens_')}</Text>
         </View>
 
         {/* Progress */}
