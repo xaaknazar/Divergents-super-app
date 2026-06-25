@@ -71,7 +71,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
-        <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 12 }]}>Город: {cityName}, {countryName} · нажмите на карту, чтобы поставить точку</Text>
+        <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 12 }]}>{tr('Город:')} {cityName}, {countryName} · {tr('нажмите на карту, чтобы поставить точку')}</Text>
 
         {/* Map picker */}
         <View style={{ borderRadius: 16, overflow: 'hidden', height: 220, marginBottom: 16 }}>

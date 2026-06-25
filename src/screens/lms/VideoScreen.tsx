@@ -85,7 +85,7 @@ export function VideoScreen({ route, navigation }: Props) {
             <SF name="chevron.down" size={18} color="#fff" />
           </Pressable>
           <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 8 }}>
-            <Text style={[ty.subheadEm, { color: '#fff' }]}>Урок {lesson.n}</Text>
+            <Text style={[ty.subheadEm, { color: '#fff' }]}>{tr('Урок')} {lesson.n}</Text>
             <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1}>{lesson.title}</Text>
           </View>
           {hls ? (
@@ -120,7 +120,7 @@ export function VideoScreen({ route, navigation }: Props) {
         </View>
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <Text style={[ty.title3, { color: T.label }]} numberOfLines={2}>{lesson.title}</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>Урок {lesson.n} из {course.lessons.length} · {course.title}</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{tr('Урок')} {lesson.n} {tr('из')} {course.lessons.length} · {course.title}</Text>
         </View>
         <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
           <Segmented items={['Заметки', 'Материалы', 'Обсуждение']} value={tab} onChange={setTab} />

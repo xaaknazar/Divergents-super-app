@@ -54,7 +54,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
           <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
             <SF name={meta.icon} size={120} color="#fff" />
           </View>
-          <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />Старт {meta.startLabel}</Capsule>
+          <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />{tr('Старт')} {meta.startLabel}</Capsule>
           <Text style={[ty.largeTitle, { color: '#fff', marginTop: 12 }]}>{meta.title}</Text>
           <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 4 }]}>{meta.durationDays} дней · 3 категории · {meta.maxFlags} 🚩 — вылет</Text>
         </View>
@@ -113,7 +113,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[ty.headline, { color: T.label }]}>{t.name}</Text>
-                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>Капитан: {t.captain} · советники: {t.advisors.join(', ')}</Text>
+                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{tr('Капитан:')} {t.captain} · {tr('советники:')} {t.advisors.join(', ')}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={[ty.subheadEm, { color: full ? T.emeraldText : T.label }]}>{t.members}/{t.capacity}</Text>
@@ -183,7 +183,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <Text style={{ fontSize: 18 }}>🎉</Text>
-          <Text style={[ty.headline, { color: '#fff' }]}>День закрыт! Серия {c.currentDay} 🔥</Text>
+          <Text style={[ty.headline, { color: '#fff' }]}>{tr('День закрыт! Серия')} {c.currentDay} 🔥</Text>
         </View>
       </Animated.View>
       <Screen tabPadding={false} topInset={false}>
@@ -197,7 +197,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           <Logo size={26} />
           <Text style={[ty.largeTitle, { color: T.label, flex: 1 }]}>{c.title}</Text>
         </View>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>Команда «{c.teamName}» · {c.members} участников · {c.startedLabel}</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')} · {c.startedLabel}</Text>
       </View>
 
       <View style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
@@ -232,7 +232,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         </View>
       </ListSection>
 
-      <ListSection header={`Сегодня · день ${c.currentDay}`} footer={`Бонусы за превышение нормы идут команде. +${pointsToday} pts сегодня${bonusToday > 0 ? ` (включая +${bonusToday} бонусных)` : ''}.`}>
+      <ListSection header={`${tr('Сегодня · день')} ${c.currentDay}`} footer={`${tr('Бонусы за превышение нормы идут команде.')} +${pointsToday} pts ${tr('сегодня')}${bonusToday > 0 ? ` (${tr('включая')} +${bonusToday} ${tr('бонусных')})` : ''}.`}>
         <View style={{ paddingHorizontal: 16 }}>
           {c.tasks.map((t, i) => (
             <ChallengeTaskRow key={t.id} task={t} divider={i < c.tasks.length - 1}
@@ -253,7 +253,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[ty.body, { color: T.label }]}>{row.name}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary }]}>День {row.day} · {row.points} pts</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('День')} {row.day} · {row.points} pts</Text>
               </View>
               {medal ? <SF name={medal.icon} size={16} color={medal.color} /> : <SF name="flame.fill" size={14} color={T.orange} />}
               {i < leaderboard.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 64, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}

@@ -125,7 +125,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         </Pressable>
 
         {/* Reviews */}
-        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]}>Отзывы · {place.reviews.length}</Text>
+        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Отзывы')} · {place.reviews.length}</Text>
         {place.reviews.map((rev) => (
           <View key={rev.id} style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: T.cardBg, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -53,7 +53,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
         <Text style={[ty.title3, { color: T.label }]}>{meta?.title}</Text>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]}>Старт {meta?.startLabel} · {meta?.durationDays} дней</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]}>{tr('Старт')} {meta?.startLabel} · {meta?.durationDays} {tr('дней')}</Text>
 
         {/* Nickname */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('НИКНЕЙМ (до 9 символов, близкий к ФИО)')}</Text>

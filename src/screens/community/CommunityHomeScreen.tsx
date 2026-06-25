@@ -76,7 +76,7 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
           <Logo size={22} body="#fff" head="#fff" />
           <Text style={[ty.title2, { color: '#fff' }]}>{c.title}</Text>
         </View>
-        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>Команда «{c.teamName}» · сегодня +{pointsToday} pts</Text>
+        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{tr('Команда')} «{c.teamName}» · {tr('сегодня')} +{pointsToday} pts</Text>
         <View style={{ marginTop: 12, height: 6, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
           <View style={{ width: `${(c.currentDay / c.totalDays) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6 }} />
         </View>
@@ -149,14 +149,14 @@ function ChallengesTab({ navigation }: { navigation: Nav }) {
               <SF name={ch.icon} size={28} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />Старт {ch.startLabel}</Capsule>
+              <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />{tr('Старт')} {ch.startLabel}</Capsule>
               <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]}>{ch.title}</Text>
             </View>
           </LinearGradient>
           <View style={{ padding: 14 }}>
             <Text style={[ty.subhead, { color: T.labelSecondary }]}>{ch.subtitle}</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-              <Capsule bg={T.brandTinted} color={T.brand}>через {daysUntil(ch.startISO)} дн.</Capsule>
+              <Capsule bg={T.brandTinted} color={T.brand}>{tr('через')} {daysUntil(ch.startISO)} {tr('дн.')}</Capsule>
               <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дней</Capsule>
               <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
             </View>

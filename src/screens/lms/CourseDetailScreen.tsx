@@ -146,8 +146,8 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
               <Text style={[ty.headline, { color: T.brand }]}>{Math.round(p * 100)}%</Text>
             </View>
             <View style={{ marginTop: 10 }}><ProgressBar value={p} /></View>
-            {curLesson ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>Урок {curLesson.n} — {curLesson.title}</Text> : null}
-            <PrimaryButton label={p > 0 ? 'Продолжить' : 'Начать курс'} icon="play.fill" style={{ marginTop: 14 }}
+            {curLesson ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>{tr('Урок')} {curLesson.n} — {curLesson.title}</Text> : null}
+            <PrimaryButton label={p > 0 ? tr('Продолжить') : tr('Начать курс')} icon="play.fill" style={{ marginTop: 14 }}
               onPress={() => curLesson && navigation.navigate('Video', { courseId, lessonId: curLesson.id })} />
           </View>
         ) : null}

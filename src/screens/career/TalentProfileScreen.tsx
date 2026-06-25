@@ -69,7 +69,7 @@ export function TalentProfileScreen({ navigation }: Props) {
           {!live ? <View style={{ marginTop: 6 }}><Capsule bg={T.fillTertiary} color={T.labelSecondary}>{tr('демо-данные')}</Capsule></View> : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
             {profile?.mbtiType ? <Capsule bg={T.brandTinted} color={T.brand}>MBTI · {profile.mbtiType}</Capsule> : null}
-            <Capsule bg={T.fillTertiary} color={T.label}>Анкета {profile?.completeness ?? 0}%</Capsule>
+            <Capsule bg={T.fillTertiary} color={T.label}>{tr('Анкета')} {profile?.completeness ?? 0}%</Capsule>
           </View>
         </View>
 
