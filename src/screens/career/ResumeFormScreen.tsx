@@ -8,12 +8,14 @@ import { PrimaryButton, ty } from '../../components/ui';
 import { RESUME_STEPS } from '../../data/resumeSchema';
 import { ResumeFieldInput } from '../../components/ResumeField';
 import { useResume } from '../../state/useResume';
+import { useLang, tr } from '../../state/LanguageContext';
 import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'Resume'>;
 
 export function ResumeFormScreen({ navigation }: Props) {
   const { T } = useTheme();
+  useLang();
   const insets = useSafeAreaInsets();
   const { answers, setField, completeness, submit, submitting } = useResume();
   const [step, setStep] = useState(0);
@@ -26,9 +28,9 @@ export function ResumeFormScreen({ navigation }: Props) {
   const finish = async () => {
     const ok = await submit();
     Alert.alert(
-      ok ? 'Анкета сохранена' : 'Сохранено локально',
-      ok ? 'Данные отправлены в Talentslab.' : 'Нет связи с Talentslab — данные сохранены в приложении и отправятся позже.',
-      [{ text: 'Готово', onPress: () => navigation.goBack() }],
+      ok ? tr('Анкета сохранена') : tr('Сохранено локально'),
+      ok ? tr('Данные отправлены в Talentslab.') : tr('Нет связи с Talentslab — данные сохранены в приложении и отправятся позже.'),
+      [{ text: tr('Готово'), onPress: () => navigation.goBack() }],
     );
   };
 
@@ -36,8 +38,8 @@ export function ResumeFormScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Header */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>Закрыть</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]}>Анкета · {completeness}%</Text>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Закрыть')}</Text></Pressable>
+        <Text style={[ty.headline, { color: T.label }]}>{tr('Анкета')} · {completeness}%</Text>
         <View style={{ width: 56 }} />
       </View>
 
@@ -57,7 +59,7 @@ export function ResumeFormScreen({ navigation }: Props) {
               <SF name={s.icon} size={20} color={T.brand} />
             </View>
             <View>
-              <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]}>Шаг {step + 1} из {total}</Text>
+              <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
               <Text style={[ty.title3, { color: T.label }]}>{s.title}</Text>
             </View>
           </View>
@@ -79,12 +81,12 @@ export function ResumeFormScreen({ navigation }: Props) {
         {/* Footer */}
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
           {step > 0 ? (
-            <PrimaryButton label="Назад" color="transparent" style={{ flex: 1 }} onPress={() => go(step - 1)} />
+            <PrimaryButton label={tr('Назад')} color="transparent" style={{ flex: 1 }} onPress={() => go(step - 1)} />
           ) : null}
           {last ? (
-            <PrimaryButton label="Сохранить" icon="checkmark" loading={submitting} style={{ flex: 2 }} onPress={finish} />
+            <PrimaryButton label={tr('Сохранить')} icon="checkmark" loading={submitting} style={{ flex: 2 }} onPress={finish} />
           ) : (
-            <PrimaryButton label="Далее" icon="arrow.right" style={{ flex: 2 }} onPress={() => go(step + 1)} />
+            <PrimaryButton label={tr('Далее')} icon="arrow.right" style={{ flex: 2 }} onPress={() => go(step + 1)} />
           )}
         </View>
       </KeyboardAvoidingView>
