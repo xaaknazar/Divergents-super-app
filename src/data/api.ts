@@ -306,3 +306,35 @@ export async function askAssistant(
     clearTimeout(t);
   }
 }
+
+// ───────── Community challenges (server-backed, admins see applications) ─────────
+export interface LiveChallengeTeam { id: string; name: string; capacity: number; captain?: string | null; _count?: { applications: number } }
+export interface LiveChallenge {
+  id: string; title: string; startISO?: string | null; durationDays: number; price?: string | null; status: string;
+  teams: LiveChallengeTeam[]; _count?: { applications: number };
+}
+
+export async function fetchLiveChallenges(): Promise<LiveChallenge[]> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges`, { signal: ctrl.signal });
+    if (!res.ok) return [];
+    const d = await res.json();
+    return Array.isArray(d?.challenges) ? d.challenges : [];
+  } catch { return []; } finally { clearTimeout(t); }
+}
+
+export async function applyToChallenge(token: string | null, challengeId: string, teamId: string | null): Promise<boolean> {
+  if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${challengeId}/apply`, {
+      method: 'POST', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ teamId }),
+    });
+    return res.ok;
+  } catch { return false; } finally { clearTimeout(t); }
+}

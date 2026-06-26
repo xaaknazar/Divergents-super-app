@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { PrimaryButton, ty } from '../../components/ui';
 import { getChallengeMeta, CHALLENGE_TEAMS } from '../../data/community';
+import { useAuth } from '@clerk/clerk-expo';
+import { applyToChallenge } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
@@ -16,7 +18,16 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
+  const { getToken } = useAuth();
+  const live = route.params.live;
   const meta = getChallengeMeta(route.params.challengeId);
+  const title = live ? live.title : meta?.title;
+  const startLabel = live ? (live.startISO ?? '') : meta?.startLabel;
+  const durationDays = live ? live.durationDays : meta?.durationDays;
+  const teams = live
+    ? live.teams.map((t) => ({ id: t.id, name: t.name, capacity: t.capacity, captain: t.captain ?? '—', members: t._count?.applications ?? 0 }))
+    : CHALLENGE_TEAMS;
+  const [busy, setBusy] = useState(false);
   const [nick, setNick] = useState('');
   const [teamId, setTeamId] = useState<string | null>(null);
   const [agree, setAgree] = useState(false);
@@ -25,7 +36,17 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
 
   const nickOk = nick.trim().length > 0 && nick.trim().length <= 9;
   const canSubmit = nickOk && !!teamId && agree && track;
-  const team = CHALLENGE_TEAMS.find((t) => t.id === teamId);
+  const team = teams.find((t) => t.id === teamId);
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    if (live && teamId) {
+      setBusy(true);
+      try { const token = await getToken(); await applyToChallenge(token, live.id, teamId); } catch {}
+      setBusy(false);
+    }
+    setSubmitted(true);
+  };
 
 
   if (submitted) {
@@ -36,7 +57,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         </View>
         <Text style={[ty.title2, { color: T.label, marginTop: 18, textAlign: 'center' }]}>{tr('Заявка отправлена!')}</Text>
         <Text style={[ty.body, { color: T.labelSecondary, marginTop: 8, textAlign: 'center' }]}>
-          Капитан команды «{team?.name}» рассмотрит вашу заявку на «{meta?.title}». С вами свяжутся в Telegram перед стартом {meta?.startLabel}.
+          Капитан команды «{team?.name}» рассмотрит вашу заявку на «{title}». С вами свяжутся в Telegram перед стартом {startLabel}.
         </Text>
         <PrimaryButton label={tr('Готово')} style={{ marginTop: 24, alignSelf: 'stretch' }} onPress={() => navigation.goBack()} />
       </View>
@@ -52,8 +73,8 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
-        <Text style={[ty.title3, { color: T.label }]}>{meta?.title}</Text>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]}>{tr('Старт')} {meta?.startLabel} · {meta?.durationDays} {tr('дней')}</Text>
+        <Text style={[ty.title3, { color: T.label }]}>{title}</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]}>{tr('Старт')} {startLabel} · {durationDays} {tr('дней')}</Text>
 
         {/* Nickname */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('НИКНЕЙМ (до 9 символов, близкий к ФИО)')}</Text>
@@ -73,13 +94,13 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         {/* Team */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('ВЫБЕРИТЕ КОМАНДУ')}</Text>
         <View style={{ backgroundColor: T.cardBg, borderRadius: 12, overflow: 'hidden' }}>
-          {CHALLENGE_TEAMS.map((t, i) => {
+          {teams.map((t, i) => {
             const full = t.members >= t.capacity;
             const sel = teamId === t.id;
             return (
               <Pressable key={t.id} disabled={full} onPress={() => setTeamId(t.id)}
                 accessibilityRole="button" accessibilityState={{ selected: sel, disabled: full }} accessibilityLabel={`Команда ${t.name}`}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, opacity: full ? 0.45 : 1, backgroundColor: sel ? T.brandTinted : 'transparent', borderBottomWidth: i < CHALLENGE_TEAMS.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, opacity: full ? 0.45 : 1, backgroundColor: sel ? T.brandTinted : 'transparent', borderBottomWidth: i < teams.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
                 <SF name={sel ? 'checkmark.circle.fill' : 'circle'} size={22} color={sel ? T.brand : T.labelTertiary} />
                 <View style={{ flex: 1 }}>
                   <Text style={[ty.body, { color: T.label }]}>{t.name}</Text>
@@ -113,7 +134,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label={tr('Отправить заявку')} icon="paperplane.fill" color={canSubmit ? T.brand : T.labelTertiary} onPress={() => canSubmit && setSubmitted(true)} />
+        <PrimaryButton label={tr('Отправить заявку')} icon="paperplane.fill" loading={busy} color={canSubmit ? T.brand : T.labelTertiary} onPress={submit} />
       </View>
     </View>
   );

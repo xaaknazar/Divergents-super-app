@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, LayoutAnimation, Alert } from 'react-native';
 import { Image } from 'expo-image';
@@ -16,7 +16,7 @@ import {
   CHALLENGES, daysUntil, TRIPS, SPORT, LECTURES,
   Trip, SportActivity, Lecture,
 } from '../../data/community';
-import { imgUrl } from '../../data/api';
+import { imgUrl, fetchLiveChallenges, LiveChallenge } from '../../data/api';
 import { CHANNELS, channelById, postsByChannel } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
@@ -136,11 +136,40 @@ function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number)
 // ─── Челленджи ──────────────────────────────────────────────────────
 function ChallengesTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
+  const [live, setLive] = useState<LiveChallenge[]>([]);
+  useEffect(() => { fetchLiveChallenges().then(setLive).catch(() => {}); }, []);
   return (
     <>
       <SectionHeader title={tr('Активный челлендж')} />
       <ActiveChallengeCard navigation={navigation} />
-      <SectionHeader title={tr('Открыт набор')} />
+      {live.length > 0 ? (
+        <>
+          <SectionHeader title={tr('Открыт набор')} />
+          {live.map((ch) => (
+            <Pressable key={ch.id} onPress={() => navigation.navigate('JoinChallenge', { challengeId: ch.id, live: ch })}
+              style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
+              <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 88, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
+                <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+                  <SF name="flag.fill" size={24} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[ty.title3, { color: '#fff' }]} numberOfLines={1}>{ch.title}</Text>
+                  <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{ch.durationDays} дней · команд: {ch.teams.length}{ch.price ? ` · ${ch.price}` : ''}</Text>
+                </View>
+              </LinearGradient>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 }}>
+                <Capsule bg={T.brandTinted} color={T.brand}><SF name="person.3.fill" size={11} color={T.brand} />{ch._count?.applications ?? 0} заявок</Capsule>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Подать заявку')}</Text>
+                  <SF name="chevron.forward" size={12} color={T.brand} />
+                </View>
+              </View>
+            </Pressable>
+          ))}
+        </>
+      ) : (
+        <SectionHeader title={tr('Открыт набор')} />
+      )}
       {CHALLENGES.filter((x) => x.status === 'upcoming').map((ch) => (
         <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
           style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
