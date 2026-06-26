@@ -142,20 +142,6 @@ export function AuthScreen({}: Props) {
       <LinearGradient colors={auroraTop as any} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={{ flex: 1, paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 16 }}>
-          {/* Language switcher */}
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-            <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 11, padding: 3 }}>
-              {(['ru', 'en'] as const).map((l) => {
-                const on = lang === l;
-                return (
-                  <Pressable key={l} onPress={() => setLang(l)} style={{ paddingVertical: 5, paddingHorizontal: 12, borderRadius: 9, backgroundColor: on ? T.cardBg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.1 : 0, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
-                    <Text style={[ty.footnoteEm, { color: on ? T.label : T.labelSecondary }]}>{l === 'ru' ? 'РУС' : 'ENG'}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
           {/* Hero */}
           <View style={{ alignItems: 'center', marginTop: 18, marginBottom: 22 }}>
             <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>

@@ -19,10 +19,16 @@ const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | '
   ProfileTab: { label: 'tab_profile', on: 'person.crop.circle.fill', off: 'person.crop.circle' },
 };
 
-// Per-tab root screens. The bar stays visible on these, and hides only on
-// pushed detail screens (which have their own back button + bottom CTAs).
-const ROOT_ROUTES = new Set([
-  'LMSHome', 'AIChat', 'CommunityHome', 'MapHome', 'CareerHome', 'ProfileHome',
+// Pushed detail / modal screens that hide the bar (they have their own back
+// button + bottom CTAs). Everything else — including tab roots and any state
+// that hasn't initialised yet — keeps the bar VISIBLE (fail-safe), so the bar
+// never disappears on the main screens.
+const DETAIL_ROUTES = new Set([
+  'Catalog', 'CourseDetail', 'Video',
+  'ChallengeDetail', 'JoinChallenge', 'TripDetail', 'Channel', 'ChannelPost',
+  'PlaceDetail', 'AddPlace', 'OfflineMap',
+  'VacancyDetail', 'Resume', 'TalentProfile',
+  'Achievements', 'Personalize',
 ]);
 
 // Walk to the currently focused leaf route inside a (possibly nested) navigator
@@ -43,7 +49,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const active = state.routes[state.index] as { name: string; state?: any };
   const leaf = focusedLeafName(active);
-  if (!ROOT_ROUTES.has(leaf)) return null;
+  if (DETAIL_ROUTES.has(leaf)) return null;
   return (
     <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{
       position: 'absolute', left: 0, right: 0, bottom: 0,

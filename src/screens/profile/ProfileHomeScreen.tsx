@@ -247,9 +247,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Appearance */}
       <ListSection header={t('appearance')}>
         <ListRow leading={<IconCircle icon="paintpalette.fill" color="#fff" bg={T.brand} size={30} />}
-          title={t('personalization')} subtitle={t('personalization_sub')} chevron onPress={() => navigation.navigate('Personalize')} />
-        <ListRow leading={<IconCircle icon="globe" color="#fff" bg={T.brand} size={30} />} title={t('language')}
-          trailing={<Segmented items={['РУС', 'ENG']} value={lang === 'ru' ? 0 : 1} onChange={(i) => setLang(i === 0 ? 'ru' : 'en')} />} last />
+          title={t('personalization')} subtitle={t('personalization_sub')} chevron onPress={() => navigation.navigate('Personalize')} last />
       </ListSection>
 
       <View style={{ height: 30 }} />
