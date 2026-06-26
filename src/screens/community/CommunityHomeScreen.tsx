@@ -11,13 +11,14 @@ import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, 
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useRole } from '../../state/useRole';
+import { useAuth } from '@clerk/clerk-expo';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
   CHALLENGES, daysUntil, TRIPS, SPORT, LECTURES,
   Trip, SportActivity, Lecture,
 } from '../../data/community';
-import { imgUrl, fetchLiveChallenges, LiveChallenge } from '../../data/api';
+import { imgUrl, fetchLiveChallenges, LiveChallenge, fetchLiveTrips, LiveTrip, applyToTrip } from '../../data/api';
 import { CHANNELS, channelById, postsByChannel } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
@@ -236,7 +237,33 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
 
 function TripsTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
+  const { getToken } = useAuth();
+  const [live, setLive] = useState<LiveTrip[]>([]);
+  const [appliedIds, setAppliedIds] = useState<string[]>([]);
+  useEffect(() => { fetchLiveTrips().then(setLive).catch(() => {}); }, []);
+  const apply = async (id: string) => {
+    setAppliedIds((p) => [...p, id]);
+    try { const token = await getToken(); const ok = await applyToTrip(token, id); if (!ok) setAppliedIds((p) => p.filter((x) => x !== id)); } catch { setAppliedIds((p) => p.filter((x) => x !== id)); }
+  };
   return (
+    <>
+      {live.length > 0 ? (
+        <ListSection header={tr('Новые поездки')}>
+          {live.map((t, i) => (
+            <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><SF name="airplane" size={22} color={T.brand} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{t.title}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{[t.region, t.date, t.price].filter(Boolean).join(' · ')}</Text>
+              </View>
+              <Pressable onPress={() => apply(t.id)} disabled={appliedIds.includes(t.id)} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: appliedIds.includes(t.id) ? T.fillSecondary : T.brand }}>
+                <Text style={[ty.footnoteEm, { color: appliedIds.includes(t.id) ? T.label : '#fff' }]}>{appliedIds.includes(t.id) ? 'Заявка ✓' : 'Записаться'}</Text>
+              </Pressable>
+              {i < live.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+            </View>
+          ))}
+        </ListSection>
+      ) : null}
     <ListSection header={tr('Все поездки')}>
       {TRIPS.map((t, i) => (
         <Pressable key={t.id} onPress={() => navigation.navigate('TripDetail', { tripId: t.id })}
@@ -252,6 +279,7 @@ function TripsTab({ navigation }: { navigation: Nav }) {
         </Pressable>
       ))}
     </ListSection>
+    </>
   );
 }
 
