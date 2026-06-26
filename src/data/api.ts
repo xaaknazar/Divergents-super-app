@@ -36,6 +36,7 @@ interface ApiCourseDetail {
   category: string | null;
   attachments: { id: string; name: string; url: string }[];
   chapters: ApiChapter[];
+  progress?: number; // 0..100, present on the owned-course detail endpoint
 }
 
 // Deterministic icon/tint per course so cards still look good without a cover.
@@ -85,7 +86,9 @@ function mapSummary(c: ApiCourseSummary): Course {
 
 function mapDetail(c: ApiCourseDetail): Course {
   const d = decor(c.id);
-  const lessons: Lesson[] = c.chapters.map((ch, i) => ({
+  // Guard against an unexpected 200 payload without a chapters array.
+  const chapters = Array.isArray(c.chapters) ? c.chapters : [];
+  const lessons: Lesson[] = chapters.map((ch, i) => ({
     id: ch.id,
     n: i + 1,
     title: ch.title,
@@ -173,8 +176,33 @@ export async function fetchMyCourses(token: string): Promise<Course[]> {
 
 // Owned course detail (chapters unlocked with Mux HLS for every chapter).
 export async function fetchOwnedDetail(id: string, token: string): Promise<Course & { owned: boolean }> {
-  const data = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
-  return { ...mapDetail(data), owned: true };
+  const data: ApiCourseDetail = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
+  return {
+    ...mapDetail(data),
+    owned: true,
+    ...(typeof data.progress === 'number' ? { serverProgress: data.progress } : {}),
+  };
+}
+
+// Best-effort: tell the website a lesson/chapter is completed so progress
+// syncs across devices. Silently ignored if the endpoint is unavailable.
+export async function markLessonComplete(
+  courseId: string, chapterId: string, token: string,
+): Promise<void> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    await fetch(`${API_BASE}/api/mobile/me/courses/${courseId}/chapters/${chapterId}/progress`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ completed: true }),
+    });
+  } catch {
+    // best-effort — local completion is already saved
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 // Strip HTML tags / decode common entities (chapter descriptions are rich text).
@@ -206,21 +234,22 @@ export interface ChapterComment {
   user: { id: string; firstName: string | null; lastName: string | null };
 }
 
+// Throws on a network/HTTP failure so callers can show an error/retry state
+// (a successful 200 with no comments resolves to an empty array instead).
 export async function fetchComments(courseId: string, chapterId: string): Promise<ChapterComment[]> {
-  try {
-    const data = await getJson(`/api/courses/${courseId}/chapters/${chapterId}/comments`);
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
+  const data = await getJson(`/api/courses/${courseId}/chapters/${chapterId}/comments`);
+  return Array.isArray(data) ? data : [];
 }
 
 export async function postComment(
   courseId: string, chapterId: string, content: string, token: string
 ): Promise<ChapterComment | null> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
   try {
     const res = await fetch(`${API_BASE}/api/courses/${courseId}/chapters/${chapterId}/comments`, {
       method: 'POST',
+      signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ content }),
     });
@@ -228,6 +257,8 @@ export async function postComment(
     return await res.json();
   } catch {
     return null;
+  } finally {
+    clearTimeout(t);
   }
 }
 

@@ -8,7 +8,9 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { Segmented, PrimaryButton, ty } from '../../components/ui';
+import { ErrorState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
+import { useMyCourses } from '../../state/useMyCourses';
 import { API_BASE, stripHtml, fetchComments, postComment, ChapterComment } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
@@ -32,37 +34,75 @@ export function VideoScreen({ route, navigation }: Props) {
   const { courseId, lessonId } = route.params;
   const { getCourse, completeLesson, isCompleted } = useCourses();
   const { isSignedIn, getToken } = useAuth();
+  const my = useMyCourses();
   const course = getCourse(courseId);
   const lesson = course?.lessons.find((l) => l.id === lessonId) ?? course?.lessons[0];
   const [tab, setTab] = useState(0);
 
+  // Ownership: free, purchased (in "Мои курсы"), or a non-live (local) course.
+  const isFreeCourse = (course?.price ?? 0) <= 0;
+  const ownedByApi = my.courses.some((c) => c.id === courseId);
+  const owned = isFreeCourse || ownedByApi || (course?.source !== 'live');
+
   const hls = lesson?.hlsUrl ?? null;
-  const locked = course?.source === 'live' && lesson?.isFree === false && !lesson?.hlsUrl;
+  // Distinguish "must buy" (not owned, paid, no free preview) from "video
+  // temporarily unavailable" (owned but HLS missing) — never a silent black screen.
+  const resolving = !!isSignedIn && !my.ready && !hls && lesson?.isFree === false;
+  const needsPurchase = !owned && course?.source === 'live' && lesson?.isFree === false && !hls && !resolving;
+  const unavailable = owned && !hls && !resolving;
   const player = useVideoPlayer(hls ?? '', (p) => { p.loop = false; });
   const videoRef = useRef<VideoView>(null);
 
   // discussion state
   const [comments, setComments] = useState<ChapterComment[] | null>(null);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [commentsError, setCommentsError] = useState(false);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
 
   const loadComments = useCallback(async () => {
     if (!lesson) return;
     setLoadingComments(true);
-    setComments(await fetchComments(courseId, lesson.id));
-    setLoadingComments(false);
+    setCommentsError(false);
+    try {
+      setComments(await fetchComments(courseId, lesson.id));
+    } catch {
+      setCommentsError(true);
+      setComments(null);
+    } finally {
+      setLoadingComments(false);
+    }
   }, [courseId, lesson]);
 
   useEffect(() => {
-    if (tab === 2 && comments === null) loadComments();
-  }, [tab, comments, loadComments]);
+    if (tab === 2 && comments === null && !commentsError) loadComments();
+  }, [tab, comments, commentsError, loadComments]);
 
   if (!course || !lesson) {
-    return <View style={{ flex: 1, backgroundColor: '#000', paddingTop: insets.top }} />;
+    return (
+      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 8 }}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={{ padding: 12 }}>
+          <SF name="chevron.left" size={22} color={T.brandAccent} />
+        </Pressable>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingBottom: 80, gap: 10 }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="play.slash" size={28} color={T.labelTertiary} />
+          </View>
+          <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]}>{tr('Урок недоступен')}</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Этот урок не найден или ещё не загружен. Вернитесь к курсу и попробуйте снова.')}</Text>
+          <PrimaryButton label={tr('Назад к курсу')} icon="chevron.left" onPress={() => navigation.goBack()} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />
+        </View>
+      </View>
+    );
   }
   const alreadyDone = isCompleted(courseId, lesson.id);
   const attachments = course.attachments ?? [];
+
+  const complete = async () => {
+    const token = isSignedIn ? await getToken() : null;
+    completeLesson(courseId, lesson.id, token);
+    navigation.goBack();
+  };
 
   const send = async () => {
     const text = draft.trim();
@@ -98,11 +138,19 @@ export function VideoScreen({ route, navigation }: Props) {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           {hls ? (
             <VideoView ref={videoRef} player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls allowsFullscreen />
-          ) : locked ? (
+          ) : resolving ? (
+            <ActivityIndicator color="#fff" />
+          ) : needsPurchase ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
               <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]}>{tr('Урок по подписке')}</Text>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Купите курс на сайте, чтобы открыть все уроки')}</Text>
+            </View>
+          ) : unavailable ? (
+            <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
+              <SF name="exclamationmark.triangle.fill" size={36} color="rgba(255,255,255,0.85)" />
+              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]}>{tr('Видео недоступно')}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Видео этого урока сейчас не загружается. Проверьте подключение или попробуйте позже.')}</Text>
             </View>
           ) : (
             <View style={{ alignItems: 'center' }}>
@@ -169,6 +217,8 @@ export function VideoScreen({ route, navigation }: Props) {
             <View style={{ paddingHorizontal: 16 }}>
               {loadingComments ? (
                 <View style={{ paddingVertical: 24, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
+              ) : commentsError ? (
+                <ErrorState message={tr('Не удалось загрузить обсуждение. Проверьте подключение.')} onRetry={loadComments} />
               ) : comments && comments.length > 0 ? (
                 comments.map((c) => (
                   <View key={c.id} style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
@@ -216,14 +266,14 @@ export function VideoScreen({ route, navigation }: Props) {
 
       {/* Bottom CTA */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        {locked ? (
+        {needsPurchase ? (
           <PrimaryButton label={tr('Открыть на сайте')} icon="globe" onPress={() => Linking.openURL(`${API_BASE}/courses/${courseId}`)} />
         ) : (
           <PrimaryButton
             label={alreadyDone ? 'Урок завершён ✓' : 'Завершить урок'}
             icon={alreadyDone ? 'checkmark' : undefined}
             color={alreadyDone ? T.green : T.brand}
-            onPress={() => { completeLesson(courseId, lesson.id); navigation.goBack(); }}
+            onPress={complete}
           />
         )}
       </View>

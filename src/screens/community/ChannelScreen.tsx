@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF, SFName } from '../../components/SFIcon';
 import { Capsule, ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
-import { channelById, postsByChannel, ChannelPost } from '../../data/channel';
+import { EmptyState } from '../../components/StateViews';
+import { ChannelPost } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { CommunityStackParams } from '../../navigation/types';
@@ -17,17 +18,27 @@ type Props = NativeStackScreenProps<CommunityStackParams, 'Channel'>;
 export function ChannelScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
-  const channel = channelById(route.params.channelId);
-  const { isJoined, isRequested, isApproved, isPaid, join, leave, request, approve, pay, markSeen } = useChannel();
+  const { channels, loading, getChannel, postsByChannel, isJoined, isRequested, isApproved, join, leave, request, approve, markSeen } = useChannel();
+  const channel = getChannel(route.params.channelId);
   const { t, lang } = useLang();
 
-  useEffect(() => { if (channel) markSeen(channel.id); }, [channel?.id]);
+  useEffect(() => { if (channel) markSeen(channel.id); }, [channel?.id, postsByChannel(route.params.channelId).length]);
+
+  // Still loading the channel list
+  if (loading && !channel) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+      </View>
+    );
+  }
 
   if (!channel) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
-        <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Канал не найден')}</Text></View>
+        <EmptyState icon="tray" title={tr('Канал не найден')} actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />
       </View>
     );
   }
@@ -35,34 +46,20 @@ export function ChannelScreen({ route, navigation }: Props) {
   const joined = isJoined(channel.id);
   const requested = isRequested(channel.id);
   const approved = isApproved(channel.id);
-  const paid = isPaid(channel.id);
-  const priceLabel = channel.price ? `${channel.price.toLocaleString('ru-RU')} ₸` : '';
 
-  const unlocked = channel.access === 'open' ? true : channel.access === 'paid' ? paid : joined;
+  const unlocked = channel.access === 'open' ? true : (joined || approved);
   const locked = !unlocked;
-  const subs = channel.baseSubscribers + (joined || paid ? 1 : 0);
+  const subs = channel.baseSubscribers + (joined ? 1 : 0);
   const posts = postsByChannel(channel.id);
-
-  const payFlow = () => Alert.alert(
-    t('pay_flow_title'),
-    lang === 'ru'
-      ? `Канал «${channel.name}» — ${priceLabel}.\nОплата через менеджера Divergents / платёжную систему. После подтверждения канал откроется.`
-      : `Channel “${channel.name}” — ${priceLabel}.\nPayment is handled via a Divergents manager / payment system. The channel opens after confirmation.`,
-    [{ text: t('cancel'), style: 'cancel' }, { text: t('paid_iv_paid'), onPress: () => pay(channel.id) }],
-  );
 
   // primary button by access + state
   let btnLabel = t('subscribe_group'); let btnIcon: SFName = 'plus'; let btnAction: () => void = () => join(channel.id); let btnMuted = false; let btnDisabled = false;
   if (channel.access === 'open') {
     if (joined) { btnLabel = t('subscribed'); btnIcon = 'checkmark'; btnAction = () => leave(channel.id); btnMuted = true; }
-  } else if (channel.access === 'request') {
+  } else { // request
     if (joined) { btnLabel = t('subscribed'); btnIcon = 'checkmark'; btnAction = () => leave(channel.id); btnMuted = true; }
+    else if (approved) { btnLabel = t('subscribe_group'); btnIcon = 'plus'; btnAction = () => join(channel.id); }
     else if (requested) { btnLabel = t('request_pending'); btnIcon = 'clock'; btnMuted = true; btnDisabled = true; btnAction = () => {}; }
-    else { btnLabel = t('request_access'); btnIcon = 'lock.fill'; btnAction = () => request(channel.id); }
-  } else { // paid
-    if (paid) { btnLabel = t('access_paid'); btnIcon = 'checkmark.seal.fill'; btnMuted = true; btnDisabled = true; btnAction = () => {}; }
-    else if (approved) { btnLabel = `${t('pay_access')} ${priceLabel}`; btnIcon = 'creditcard.fill'; btnAction = payFlow; }
-    else if (requested) { btnLabel = t('request_pending'); btnIcon = 'clock'; btnMuted = true; btnAction = () => approve(channel.id); }
     else { btnLabel = t('request_access'); btnIcon = 'lock.fill'; btnAction = () => request(channel.id); }
   }
 
@@ -84,7 +81,6 @@ export function ChannelScreen({ route, navigation }: Props) {
                 <SF name="person.2.fill" size={12} color={T.labelTertiary} />
                 <Text style={[ty.caption1, { color: T.labelTertiary }]}>{subs.toLocaleString(lang === 'ru' ? 'ru-RU' : 'en-US')} {t('subscribers')}</Text>
                 {channel.access === 'request' ? <Capsule bg={T.fillSecondary} color={T.labelSecondary}><SF name="lock.fill" size={9} color={T.labelSecondary} />{t('by_request')}</Capsule> : null}
-                {channel.access === 'paid' ? <Capsule bg={T.brandTinted} color={T.brand}><SF name="creditcard.fill" size={9} color={T.brand} />{priceLabel}</Capsule> : null}
               </View>
             </View>
           </View>
@@ -98,19 +94,15 @@ export function ChannelScreen({ route, navigation }: Props) {
         {locked ? (
           <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 }}>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
-              <SF name={channel.access === 'paid' && approved ? 'creditcard.fill' : 'lock.fill'} size={28} color={T.labelSecondary} />
+              <SF name="lock.fill" size={28} color={T.labelSecondary} />
             </View>
             <Text style={[ty.headline, { color: T.label, marginTop: 14 }]}>
-              {channel.access === 'paid'
-                ? (approved ? t('request_approved') : requested ? t('request_pending') : t('paid_closed_channel'))
-                : (requested ? t('request_pending') : t('access_by_request_title'))}
+              {requested ? t('request_pending') : t('access_by_request_title')}
             </Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>
-              {channel.access === 'paid'
-                ? (approved ? `${priceLabel} — ${t('paid_pay_now')}` : requested ? t('paid_after_approve') : `${t('paid_first_request')} ${priceLabel}.`)
-                : (requested ? t('locked_pending_body') : t('locked_request_body'))}
+              {requested ? t('locked_pending_body') : t('locked_request_body')}
             </Text>
-            {channel.access === 'paid' && requested && !approved ? (
+            {requested && !approved ? (
               <Pressable onPress={() => approve(channel.id)} style={{ marginTop: 16, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 12, backgroundColor: T.fillSecondary }}>
                 <Text style={[ty.footnoteEm, { color: T.brand }]}>{t('check_status')}</Text>
               </Pressable>
@@ -119,7 +111,9 @@ export function ChannelScreen({ route, navigation }: Props) {
         ) : (
           <>
             <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingTop: 18, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{t('publications')}</Text>
-            {posts.map((p) => <PostCard key={p.id} post={p} onPress={() => navigation.navigate('ChannelPost', { postId: p.id })} />)}
+            {posts.length === 0
+              ? <EmptyState icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Здесь появятся публикации канала.')} />
+              : posts.map((p) => <PostCard key={p.id} post={p} onPress={() => navigation.navigate('ChannelPost', { postId: p.id })} />)}
           </>
         )}
       </ScrollView>

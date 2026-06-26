@@ -66,6 +66,14 @@ export function mbtiName(t?: string | null): string {
 }
 
 // ─── Client ────────────────────────────────────────────────────────
+// Graceful "not configured / no auth" result: a found:false profile callers can
+// treat as an empty state (or fall back to MOCK_PROFILE) instead of crashing.
+export const EMPTY_TALENT_PROFILE: TalentProfile = {
+  found: false, fullName: null, email: null, phone: null, currentCity: null,
+  photoUrl: null, resumeStep: 0, completeness: 0, mbtiType: null, mbtiName: null,
+  resume: null, reportsText: null, gallup: [], gardner: [], reports: [],
+};
+
 async function reqJson(path: string, headers: Record<string, string>, timeoutMs = 12000): Promise<any> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -76,22 +84,35 @@ async function reqJson(path: string, headers: Record<string, string>, timeoutMs 
   } finally { clearTimeout(t); }
 }
 
-/** GET /api/mobile/profile — tries Clerk token first, then X-App-Key + email. */
-export async function fetchTalentProfile(token: string | null, email?: string | null): Promise<TalentProfile> {
+/**
+ * GET /api/mobile/profile — Clerk-token auth FIRST (Bearer), then the optional
+ * X-App-Key + email fallback (only when an app key is configured). When neither
+ * a Clerk token nor an app key is available this resolves to a graceful
+ * not-configured result (found:false) instead of throwing, so callers can show
+ * an empty/demo state rather than crash.
+ */
+export async function fetchTalentProfile(token?: string | null, email?: string | null): Promise<TalentProfile> {
   if (token) {
     try {
       const p = normalizeProfile(await reqJson('/api/mobile/profile', { Authorization: `Bearer ${token}` }));
       if (p.found) return p; // only accept the Clerk result if it matched a candidate
-    } catch { /* fall through to app-key path */ }
+    } catch { /* fall through to the optional app-key path */ }
   }
+  // Only send X-App-Key when an app key is actually configured (non-empty).
   if (email && TALENTSLAB_APP_KEY) {
-    return normalizeProfile(await reqJson(`/api/mobile/profile?email=${encodeURIComponent(email)}`, { 'X-App-Key': TALENTSLAB_APP_KEY }));
+    try {
+      return normalizeProfile(await reqJson(`/api/mobile/profile?email=${encodeURIComponent(email)}`, { 'X-App-Key': TALENTSLAB_APP_KEY }));
+    } catch { /* fall through to graceful not-configured result */ }
   }
-  throw new Error('talentslab: no auth');
+  return EMPTY_TALENT_PROFILE;
 }
 
-/** POST /api/mobile/resume — Clerk token first, then X-App-Key + email. */
-export async function submitResume(token: string | null, answers: ResumeAnswers, email?: string | null): Promise<boolean> {
+/**
+ * POST /api/mobile/resume — Clerk token FIRST, then the optional X-App-Key +
+ * email fallback (only when an app key is configured). Never throws: returns
+ * false when no auth path succeeds so the UI can stay responsive.
+ */
+export async function submitResume(token: string | null | undefined, answers: ResumeAnswers, email?: string | null): Promise<boolean> {
   const post = async (headers: Record<string, string>, body: any) => {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 15000);

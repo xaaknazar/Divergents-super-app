@@ -136,6 +136,11 @@ export function LMSHomeScreen({ navigation }: Props) {
                 ))}
               </ScrollView>
             </View>
+          ) : showSearch && my.isSignedIn && my.error && my.courses.length === 0 ? (
+            <View style={{ marginBottom: 18 }}>
+              <SectionHeader title={t('my_courses')} />
+              <ErrorState message="Не удалось загрузить ваши курсы. Проверьте подключение." onRetry={my.reload} />
+            </View>
           ) : null}
 
           {/* Featured (when nothing to continue) */}
@@ -164,7 +169,11 @@ export function LMSHomeScreen({ navigation }: Props) {
             ))}
           </View>
           {filtered.length === 0 ? (
-            <EmptyState icon="magnifyingglass" title={t('not_found_title')} subtitle={t('not_found_sub')} />
+            courses.length === 0 ? (
+              <EmptyState icon="book" title="Курсы скоро появятся" subtitle="Каталог обновляется — загляните чуть позже." />
+            ) : (
+              <EmptyState icon="magnifyingglass" title={t('not_found_title')} subtitle={t('not_found_sub')} />
+            )
           ) : null}
           <View style={{ height: 16 }} />
         </>

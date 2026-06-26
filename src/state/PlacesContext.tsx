@@ -1,14 +1,22 @@
-// Places state: selected country/city, mock + user-added places, user reviews.
-// User additions persist on-device.
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
-import { PLACES, Place, Review, PlaceTag } from '../data/places';
+// Places state: selected country/city, live (API) + user-added places, user reviews.
+// User additions persist on-device; the selected country/city filter also
+// persists across restarts. Live places come from the website API (admin
+// publishes them) — there is no hardcoded seed data.
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { Place, Review, PlaceTag, fetchPlaces } from '../data/places';
 import { loadJSON, saveJSON } from './persist';
+
+interface SavedLoc { country: string; city: string; manual: boolean }
 
 interface PlacesState {
   country: string;
   city: string;
-  setLocation: (country: string, city: string) => void;
-  places: Place[];                       // merged (mock + user), with ratings
+  locManual: boolean;                    // user explicitly picked a city (vs auto/GPS)
+  setLocation: (country: string, city: string, manual?: boolean) => void;
+  places: Place[];                       // merged (live + user), with ratings
+  placesLoading: boolean;
+  placesError: boolean;
+  reloadPlaces: () => void;
   getPlace: (id: string) => Place | undefined;
   addPlace: (p: Omit<Place, 'id' | 'reviews' | 'rating'> & { reviews?: Review[] }) => string;
   updatePlace: (id: string, patch: Partial<Place>) => void;
@@ -28,17 +36,45 @@ export function ratingOf(p: Place): number {
 export function PlacesProvider({ children }: { children: React.ReactNode }) {
   const [country, setCountry] = useState('kz');
   const [city, setCity] = useState('almaty');
+  const [locManual, setLocManual] = useState(false);
+  const manualRef = useRef(false);
+  const [remotePlaces, setRemotePlaces] = useState<Place[]>([]);
+  const [placesLoading, setPlacesLoading] = useState(true);
+  const [placesError, setPlacesError] = useState(false);
   const [userPlaces, setUserPlaces] = useState<Place[]>([]);
   const [userReviews, setUserReviews] = useState<Record<string, Review[]>>({});
   const [favs, setFavs] = useState<string[]>([]);
+
+  const reloadPlaces = useCallback(() => {
+    setPlacesLoading(true);
+    setPlacesError(false);
+    fetchPlaces()
+      .then((list) => { setRemotePlaces(list); setPlacesError(false); })
+      .catch(() => { setRemotePlaces([]); setPlacesError(true); })
+      .finally(() => setPlacesLoading(false));
+  }, []);
 
   useEffect(() => {
     loadJSON<Place[]>('dvg.userPlaces', []).then(setUserPlaces);
     loadJSON<Record<string, Review[]>>('dvg.placeReviews', {}).then(setUserReviews);
     loadJSON<string[]>('dvg.placeFavs', []).then(setFavs);
-  }, []);
+    loadJSON<SavedLoc | null>('dvg.placeLoc', null).then((saved) => {
+      if (saved && saved.country && saved.city) {
+        setCountry(saved.country);
+        setCity(saved.city);
+        if (saved.manual) { setLocManual(true); manualRef.current = true; }
+      }
+    });
+    reloadPlaces();
+  }, [reloadPlaces]);
 
-  const setLocation = useCallback((c: string, ci: string) => { setCountry(c); setCity(ci); }, []);
+  const setLocation = useCallback((c: string, ci: string, manual = false) => {
+    setCountry(c);
+    setCity(ci);
+    const isManual = manual || manualRef.current;
+    if (manual) { manualRef.current = true; setLocManual(true); }
+    saveJSON('dvg.placeLoc', { country: c, city: ci, manual: isManual } as SavedLoc);
+  }, []);
 
   const addPlace: PlacesState['addPlace'] = useCallback((p) => {
     const id = `u_${Date.now()}`;
@@ -65,16 +101,16 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const places = useMemo(() => {
-    const base = [...userPlaces, ...PLACES];
+    const base = [...userPlaces, ...remotePlaces];
     return base.map((p) => ({ ...p, reviews: [...(userReviews[p.id] ?? []), ...p.reviews] }));
-  }, [userPlaces, userReviews]);
+  }, [userPlaces, remotePlaces, userReviews]);
 
   const value = useMemo<PlacesState>(() => ({
-    country, city, setLocation, places,
+    country, city, locManual, setLocation, places, placesLoading, placesError, reloadPlaces,
     getPlace: (id) => places.find((p) => p.id === id),
     addPlace, updatePlace, addReview,
     favs, isFav: (id) => favs.includes(id), toggleFav,
-  }), [country, city, setLocation, places, addPlace, updatePlace, addReview, favs, toggleFav]);
+  }), [country, city, locManual, setLocation, places, placesLoading, placesError, reloadPlaces, addPlace, updatePlace, addReview, favs, toggleFav]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

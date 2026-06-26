@@ -1,31 +1,47 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { PrimaryButton, ty } from '../../components/ui';
-import { getChallengeMeta, CHALLENGE_TEAMS } from '../../data/community';
+import {
+  fetchChallenges, fetchTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam,
+} from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
 
+const NICK_MAX = 9;
 
 export function JoinChallengeScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
-  const meta = getChallengeMeta(route.params.challengeId);
+  const [meta, setMeta] = useState<ChallengeListItem | undefined>(undefined);
+  const [teams, setTeams] = useState<ChallengeTeam[]>([]);
+  const [loading, setLoading] = useState(true);
   const [nick, setNick] = useState('');
   const [teamId, setTeamId] = useState<string | null>(null);
   const [agree, setAgree] = useState(false);
   const [track, setTrack] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const nickOk = nick.trim().length > 0 && nick.trim().length <= 9;
+  useEffect(() => {
+    let alive = true;
+    Promise.all([fetchChallenges(), fetchTeams()]).then(([list, tms]) => {
+      if (!alive) return;
+      setMeta(getChallengeMeta(list, route.params.challengeId));
+      setTeams(tms);
+      setLoading(false);
+    });
+    return () => { alive = false; };
+  }, [route.params.challengeId]);
+
+  const nickOk = nick.trim().length > 0 && nick.trim().length <= NICK_MAX;
   const canSubmit = nickOk && !!teamId && agree && track;
-  const team = CHALLENGE_TEAMS.find((t) => t.id === teamId);
+  const team = teams.find((t) => t.id === teamId);
 
 
   if (submitted) {
@@ -60,26 +76,33 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: nick && !nickOk ? T.red : 'transparent' }}>
           <TextInput
             value={nick}
-            onChangeText={(t) => setNick(t.slice(0, 12))}
+            onChangeText={(t) => setNick(t.slice(0, NICK_MAX))}
+            maxLength={NICK_MAX}
             placeholder={tr('напр. Aknazar')}
             placeholderTextColor={T.labelTertiary}
             autoCapitalize="none"
             style={[ty.body, { flex: 1, paddingVertical: 12, color: T.label }]}
           />
-          <Text style={[ty.caption1, { color: nickOk || !nick ? T.labelTertiary : T.red }]}>{nick.trim().length}/9</Text>
+          <Text style={[ty.caption1, { color: nickOk || !nick ? T.labelTertiary : T.red }]}>{nick.trim().length}/{NICK_MAX}</Text>
         </View>
         {nick && !nickOk ? <Text style={[ty.caption1, { color: T.red, marginTop: 6, marginLeft: 4 }]}>{tr('Никнейм должен быть от 1 до 9 символов')}</Text> : null}
 
         {/* Team */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('ВЫБЕРИТЕ КОМАНДУ')}</Text>
         <View style={{ backgroundColor: T.cardBg, borderRadius: 12, overflow: 'hidden' }}>
-          {CHALLENGE_TEAMS.map((t, i) => {
+          {loading ? (
+            <View style={{ padding: 24, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
+          ) : teams.length === 0 ? (
+            <View style={{ padding: 18, alignItems: 'center' }}>
+              <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команды пока не сформированы.')}</Text>
+            </View>
+          ) : teams.map((t, i) => {
             const full = t.members >= t.capacity;
             const sel = teamId === t.id;
             return (
               <Pressable key={t.id} disabled={full} onPress={() => setTeamId(t.id)}
                 accessibilityRole="button" accessibilityState={{ selected: sel, disabled: full }} accessibilityLabel={`Команда ${t.name}`}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, opacity: full ? 0.45 : 1, backgroundColor: sel ? T.brandTinted : 'transparent', borderBottomWidth: i < CHALLENGE_TEAMS.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, opacity: full ? 0.45 : 1, backgroundColor: sel ? T.brandTinted : 'transparent', borderBottomWidth: i < teams.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
                 <SF name={sel ? 'checkmark.circle.fill' : 'circle'} size={22} color={sel ? T.brand : T.labelTertiary} />
                 <View style={{ flex: 1 }}>
                   <Text style={[ty.body, { color: T.label }]}>{t.name}</Text>

@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import {
   useFonts,
   Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
@@ -58,6 +58,33 @@ function Root() {
   );
 }
 
+// Data providers hold per-user in-memory state. Keying this subtree by the
+// signed-in Clerk user id forces a full remount on account change, so user B
+// never sees user A's in-memory courses/resume/applications/etc. Persisted
+// data is wiped separately via clearAllAppData() on sign-out / delete.
+function UserScopedProviders({ children }: { children: React.ReactNode }) {
+  const { userId } = useAuth();
+  return (
+    <React.Fragment key={userId ?? 'anon'}>
+      <CourseProvider>
+        <ChallengeProvider>
+          <CareerProvider>
+            <EnrollmentProvider>
+              <PlacesProvider>
+                <ChannelProvider>
+                  <NotificationsProvider>
+                    {children}
+                  </NotificationsProvider>
+                </ChannelProvider>
+              </PlacesProvider>
+            </EnrollmentProvider>
+          </CareerProvider>
+        </ChallengeProvider>
+      </CourseProvider>
+    </React.Fragment>
+  );
+}
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
@@ -70,21 +97,9 @@ export default function App() {
           <AppFlowProvider>
           <LanguageProvider>
           <SafeAreaProvider>
-            <CourseProvider>
-              <ChallengeProvider>
-                <CareerProvider>
-                  <EnrollmentProvider>
-                    <PlacesProvider>
-                    <ChannelProvider>
-                      <NotificationsProvider>
-                        {fontsLoaded ? <Root /> : <Loader />}
-                      </NotificationsProvider>
-                    </ChannelProvider>
-                    </PlacesProvider>
-                  </EnrollmentProvider>
-                </CareerProvider>
-              </ChallengeProvider>
-            </CourseProvider>
+            <UserScopedProviders>
+              {fontsLoaded ? <Root /> : <Loader />}
+            </UserScopedProviders>
           </SafeAreaProvider>
           </LanguageProvider>
           </AppFlowProvider>

@@ -7,23 +7,43 @@
     "scheme": "divergents",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#234088"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "kz.divergents.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.",
-        "NSPhotoLibraryUsageDescription": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.",
+        "NSPhotoLibraryUsageDescription": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества.",
+        "NSPhotoLibraryAddUsageDescription": "Divergents сохраняет фото в вашу медиатеку при работе с местами на карте сообщества.",
+        "NSCameraUsageDescription": "Divergents использует камеру, чтобы делать снимки для мест на карте сообщества."
       }
     },
     "android": {
       "package": "kz.divergents.app",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#234088"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ]
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ],
+      "config": {
+        "googleMaps": {
+          "comment": "TODO: REPLACE_WITH_GOOGLE_MAPS_ANDROID_KEY — set the real Android Google Maps API key here (or wire via app.config + env) before submitting to Google Play.",
+          "apiKey": "REPLACE_WITH_GOOGLE_MAPS_ANDROID_KEY"
+        }
+      }
     },
     "web": {
       "bundler": "metro"
@@ -38,7 +58,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества."
+          "photosPermission": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества.",
+          "cameraPermission": "Divergents использует камеру, чтобы делать снимки для мест на карте сообщества."
         }
       ],
       "expo-localization",

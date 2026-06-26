@@ -19,6 +19,11 @@ try { ML = require('@maplibre/maplibre-react-native'); } catch { ML = null; }
 
 type Props = NativeStackScreenProps<MapStackParams, 'OfflineMap'>;
 
+// MAP_STYLE_URL is empty when no MapTiler/Stadia key is configured. Fall back to
+// the public MapLibre demo style so the map still renders (basic, low-detail)
+// instead of crashing. We surface a notice so the user knows it's limited.
+const DEMO_STYLE = 'https://demotiles.maplibre.org/style.json';
+
 const AREAS = [
   { key: 'Район (~3 км)', km: 3 },
   { key: 'Город (~8 км)', km: 8 },
@@ -44,27 +49,36 @@ export function OfflineMapScreen({ navigation }: Props) {
   useEffect(() => { loadPacks(); }, [loadPacks]);
 
   const available = !!ML?.Map;
+  const styleUrl = MAP_STYLE_URL || DEMO_STYLE;
+  const noKey = !MAP_STYLE_URL;
   const selPlace = sel ? list.find((p) => p.id === sel) : null;
 
   const download = async (km: number, label: string) => {
     if (!ML?.OfflineManager) return;
-    setBusy(true); setPct(0);
+    setBusy(true); setPct(0); setSheet(false);
+    let done = false;
     try {
       const lat = center.lat, lng = center.lng;
       const dLat = km / 111;
       const dLng = km / (111 * Math.max(0.2, Math.cos((lat * Math.PI) / 180)));
       const bounds: [number, number, number, number] = [lng - dLng, lat - dLat, lng + dLng, lat + dLat];
+      // createPack returns immediately; the actual download runs via callbacks.
+      // Only report success when progress reaches 100% (true completion).
       await ML.OfflineManager.createPack(
-        { mapStyle: MAP_STYLE_URL, bounds, minZoom: 10, maxZoom: 16, metadata: { name: `${center.name} · ${label}`, createdAt: Date.now() } },
-        (_pack: any, status: any) => { setPct(Math.round(status.percentage)); if (status.percentage >= 100) { setBusy(false); loadPacks(); } },
-        () => { setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.')); },
+        { mapStyle: styleUrl, bounds, minZoom: 10, maxZoom: 16, metadata: { name: `${center.name} · ${label}`, createdAt: Date.now() } },
+        (_pack: any, status: any) => {
+          setPct(Math.round(status?.percentage ?? 0));
+          if (!done && (status?.percentage ?? 0) >= 100) {
+            done = true;
+            setBusy(false);
+            loadPacks();
+            Alert.alert(tr('Скачано'), tr('Область скачана для офлайн-доступа.'));
+          }
+        },
+        () => { if (!done) { done = true; setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.')); } },
       );
-      setSheet(false);
-      Alert.alert(tr('Скачано'), tr('Область скачана для офлайн-доступа.'));
-      loadPacks();
     } catch {
-      setBusy(false);
-      Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.'));
+      if (!done) { setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.')); }
     }
   };
 
@@ -93,7 +107,7 @@ export function OfflineMapScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <BackNav back={tr('Карта')} onBack={() => navigation.goBack()} />
       <View style={{ flex: 1 }}>
-        <Map style={{ flex: 1 }} mapStyle={MAP_STYLE_URL} compass logo={false} attribution={false}>
+        <Map style={{ flex: 1 }} mapStyle={styleUrl} compass logo={false} attribution={false}>
           <Camera ref={cameraRef} initialViewState={{ center: [center.lng, center.lat], zoom: 12 }} />
           <UserLocation />
           {list.map((p) => (
@@ -110,6 +124,11 @@ export function OfflineMapScreen({ navigation }: Props) {
             <ActivityIndicator color="#fff" />
             <Text style={[ty.subheadEm, { color: '#fff', flex: 1 }]}>{tr('Загрузка карты…')}</Text>
             <Text style={[ty.headline, { color: '#fff' }]}>{pct}%</Text>
+          </View>
+        ) : noKey ? (
+          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.cardBg, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
+            <SF name="map.fill" size={18} color={T.orange} />
+            <Text style={[ty.caption1, { color: T.labelSecondary, flex: 1 }]}>{tr('Базовая карта без ключа — детализация ограничена.')}</Text>
           </View>
         ) : null}
 

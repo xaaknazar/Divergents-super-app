@@ -12,7 +12,7 @@ import { MarkdownText } from '../../components/MarkdownText';
 import * as Clipboard from 'expo-clipboard';
 import { hSuccess } from '../../lib/haptics';
 import { useMyCourses } from '../../state/useMyCourses';
-import { askAssistant, askCourseAI, mdToText, AiTurn } from '../../data/api';
+import { askAssistant, askCourseAI, AiTurn } from '../../data/api';
 import { profileSummary } from '../../data/talentslab';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { AIStackParams } from '../../navigation/types';
@@ -37,7 +37,13 @@ export function AIChatScreen({}: Props) {
   const [byMode, setByMode] = useState<Record<string, Msg[]>>({});
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+
+  // The send action is locked while we await a response (busy) AND while the
+  // reply is still being streamed in (streaming) — sending mid-stream would
+  // splice a new message into history before the previous one finished.
+  const locked = busy || streaming;
 
   const activeCourse = my.courses.find((c) => c.id === mode);
   const isGeneral = mode === GENERAL;
@@ -46,19 +52,20 @@ export function AIChatScreen({}: Props) {
 
   const streamInto = (m: string, id: string, full: string) => {
     let i = 0;
+    setStreaming(true);
     const tick = () => {
       i = Math.min(full.length, i + 4);
       setByMode((p) => ({ ...p, [m]: (p[m] ?? []).map((msg) => (msg.id === id ? { ...msg, text: full.slice(0, i) } : msg)) }));
       if (i % 80 === 0) scrollRef.current?.scrollToEnd({ animated: true });
       if (i < full.length) setTimeout(tick, 16);
-      else scrollRef.current?.scrollToEnd({ animated: true });
+      else { setStreaming(false); scrollRef.current?.scrollToEnd({ animated: true }); }
     };
     tick();
   };
 
   const send = async (body: string) => {
     const q = body.trim();
-    if (!q || busy) return;
+    if (!q || locked) return;
     const userMsg: Msg = { id: uid(), role: 'user', text: q };
     setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), userMsg] }));
     setText('');
@@ -76,7 +83,12 @@ export function AIChatScreen({}: Props) {
       setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), { id: botId, role: 'bot', text: '' }] }));
       streamInto(mode, botId, full);
     } catch (e: any) {
-      const botMsg: Msg = { id: uid(), role: 'bot', text: e?.message ? `⚠️ ${e.message}` : '⚠️ Ошибка соединения.' };
+      // Surface server-sent Russian messages (e.g. «Нет доступа к этому курсу»);
+      // otherwise fall back to a Russian generic instead of a raw English
+      // network error like "Network request failed" / "Aborted".
+      const raw = typeof e?.message === 'string' ? e.message : '';
+      const msg = /[а-яА-ЯёЁ]/.test(raw) ? raw : 'Не удалось получить ответ. Проверьте подключение и попробуйте снова.';
+      const botMsg: Msg = { id: uid(), role: 'bot', text: `⚠️ ${msg}` };
       setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), botMsg] }));
     } finally {
       setBusy(false);
@@ -168,10 +180,10 @@ export function AIChatScreen({}: Props) {
               value={text} onChangeText={setText}
               placeholder={isGeneral ? 'Спросите наставника…' : 'Спросите о курсе…'} placeholderTextColor={T.labelTertiary}
               style={[ty.body, { flex: 1, backgroundColor: T.cardBg, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.separator, color: T.label }]}
-              onSubmitEditing={() => send(text)} returnKeyType="send" editable={!busy}
+              onSubmitEditing={() => send(text)} returnKeyType="send" editable={!locked}
             />
-            <Pressable onPress={() => send(text)} hitSlop={6} disabled={busy || !text.trim()}>
-              <SF name="arrow.up.circle.fill" size={32} color={text.trim() && !busy ? T.brand : T.labelTertiary} />
+            <Pressable onPress={() => send(text)} hitSlop={6} disabled={locked || !text.trim()}>
+              <SF name="arrow.up.circle.fill" size={32} color={text.trim() && !locked ? T.brand : T.labelTertiary} />
             </Pressable>
           </View>
         </View>

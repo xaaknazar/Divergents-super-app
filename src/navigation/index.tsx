@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import type { LinkingOptions } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 import {
   RootStackParams, TabParams, LMSStackParams, CommunityStackParams,
   AIStackParams, CareerStackParams, ProfileStackParams, MapStackParams,
@@ -8,6 +11,7 @@ import {
 import { TabBar } from './TabBar';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAppFlow } from '../state/AppFlowContext';
+import { useTheme } from '../theme/ThemeContext';
 
 import { LMSHomeScreen } from '../screens/lms/LMSHomeScreen';
 import { CatalogScreen } from '../screens/lms/CatalogScreen';
@@ -122,11 +126,64 @@ function Tabs() {
   );
 }
 
+// Deep-link / universal-link config. Exported so the NavigationContainer (in
+// App.tsx) can pass it via its `linking` prop. Supports divergents:// and the
+// website https origin, plus Expo dev URLs.
+export const linking: LinkingOptions<RootStackParams> = {
+  prefixes: [Linking.createURL('/'), 'divergents://', 'https://divergents-lms.kz'],
+  config: {
+    screens: {
+      Onboarding: 'onboarding',
+      Auth: 'auth',
+      Register: 'register',
+      Notifications: 'notifications',
+      Tabs: {
+        screens: {
+          LMSTab: {
+            screens: {
+              LMSHome: 'learn',
+              Catalog: 'catalog',
+              CourseDetail: 'course/:courseId',
+              Video: 'course/:courseId/lesson/:lessonId',
+            },
+          },
+          AITab: { screens: { AIChat: 'ai' } },
+          CommunityTab: {
+            screens: {
+              CommunityHome: 'community',
+              Channel: 'channel/:channelId',
+              ChannelPost: 'post/:postId',
+              ChallengeDetail: 'challenge/:challengeId',
+              TripDetail: 'trip/:tripId',
+            },
+          },
+          MapTab: { screens: { MapHome: 'map', PlaceDetail: 'place/:placeId' } },
+          CareerTab: {
+            screens: { CareerHome: 'career', VacancyDetail: 'vacancy/:jobId', TalentProfile: 'talent' },
+          },
+          ProfileTab: {
+            screens: { ProfileHome: 'profile', Achievements: 'achievements', Personalize: 'personalize' },
+          },
+        },
+      },
+    },
+  },
+};
+
+function NavLoader() {
+  const { T } = useTheme();
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.systemBg }}>
+      <ActivityIndicator color={T.brand} />
+    </View>
+  );
+}
+
 const Root = createNativeStackNavigator<RootStackParams>();
 export function RootNavigator() {
   const { isLoaded, isSignedIn } = useAuth();
   const { ready, onboarded, pendingRegistration } = useAppFlow();
-  if (!isLoaded || !ready) return null;
+  if (!isLoaded || !ready) return <NavLoader />;
   return (
     <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       {!onboarded ? (

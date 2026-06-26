@@ -1,7 +1,32 @@
-// Mock community data: the live 21-day challenge, trips, members, leaderboard.
+// Community data: challenge scoring rules + live content fetched from the
+// Divergents website API. The app is a client — real content (trips, sport,
+// lectures, teams, the active challenge and its leaderboard) is published by
+// the admin server-side and read here as JSON. On failure or empty response we
+// return [] / null and the screens render a proper Russian empty state; we
+// never fall back to fake/branded seed data.
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
+import { API_BASE } from './api';
 
+// ─── Small JSON fetch helper (returns null on any failure) ─────────────────
+async function getJson(path: string, timeoutMs = 12000): Promise<any | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ─── Challenge scoring model ───────────────────────────────────────────────
 export interface MetricTask {
   id: string;
   kind: 'metric';
@@ -41,24 +66,25 @@ export interface Challenge {
   tasks: ChallengeTask[];
 }
 
-// Bonus over the minimum rolls up to the team — exactly the mechanic the user
-// refined in the design chat.
-export const INITIAL_CHALLENGE: Challenge = {
-  id: 'no-sugar-21',
+// Neutral scaffold for the daily tracker before the server's active challenge
+// loads (and a graceful no-crash fallback when there is none). No fake team,
+// dates or user progress — just the program's three daily task definitions.
+export const DEFAULT_CHALLENGE: Challenge = {
+  id: 'divergents-daily',
   title: 'Divergents challenge',
-  teamName: 'Алматы Барсы',
+  teamName: '',
   totalDays: 21,
-  currentDay: 12,
-  members: 16,
-  startedLabel: 'стартовали 10 января',
-  teamRank: 2,
-  teamCount: 16,
-  trainer: 'Аида Сейтхан',
-  price: '12 000 ₸',
+  currentDay: 0,
+  members: 0,
+  startedLabel: '',
+  teamRank: 0,
+  teamCount: 0,
+  trainer: '',
+  price: '',
   tasks: [
-    { id: 'steps', kind: 'metric', title: '10 000 шагов', icon: 'figure.walk', unit: 'шагов', min: 10000, current: 13240, basePts: 10, unitSize: 100, ptsPerUnit: 1 },
-    { id: 'sugar', kind: 'binary', title: 'День без сахара', icon: 'cube.fill', done: true, basePts: 10 },
-    { id: 'reading', kind: 'metric', title: '10 страниц книги', icon: 'book.fill', unit: 'стр.', min: 10, current: 6, basePts: 10, unitSize: 1, ptsPerUnit: 2 },
+    { id: 'steps', kind: 'metric', title: '10 000 шагов', icon: 'figure.walk', unit: 'шагов', min: 10000, current: 0, basePts: 10, unitSize: 100, ptsPerUnit: 1 },
+    { id: 'sugar', kind: 'binary', title: 'День без сахара', icon: 'cube.fill', done: false, basePts: 10 },
+    { id: 'reading', kind: 'metric', title: '10 страниц книги', icon: 'book.fill', unit: 'стр.', min: 10, current: 0, basePts: 10, unitSize: 1, ptsPerUnit: 2 },
   ],
 };
 
@@ -96,14 +122,6 @@ export interface Member {
   isMe?: boolean;
 }
 
-export const TEAM_MEMBERS: Member[] = [
-  { id: 'm1', name: 'Айгерим Б.', weekBase: 412, day: 18 },
-  { id: 'me', name: 'Aknazar K.', weekBase: 316, day: 12, isMe: true },
-  { id: 'm3', name: 'Дамир А.', weekBase: 312, day: 11 },
-  { id: 'm4', name: 'Жанар К.', weekBase: 287, day: 10 },
-  { id: 'm5', name: 'Олжас Т.', weekBase: 245, day: 9 },
-];
-
 export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | null => {
   if (rank === 1) return { icon: 'crown.fill', color: '#D4AF37' };
   if (rank === 2) return { icon: 'medal.fill', color: '#A8A9AD' };
@@ -111,6 +129,19 @@ export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | 
   return null;
 };
 
+// Live active challenge + its full team leaderboard.
+export interface ActiveChallengeData { challenge: Challenge | null; members: Member[] }
+
+export async function fetchActiveChallenge(): Promise<ActiveChallengeData> {
+  const d = await getJson('/api/mobile/community/challenges/active');
+  if (!d || !d.challenge) return { challenge: null, members: [] };
+  return {
+    challenge: d.challenge as Challenge,
+    members: Array.isArray(d.members) ? (d.members as Member[]) : [],
+  };
+}
+
+// ─── Trips ─────────────────────────────────────────────────────────────────
 export interface ItineraryItem { day: string; title: string; note: string; icon: SFName; color: string; }
 export interface Trip {
   id: string;
@@ -132,93 +163,19 @@ export interface Trip {
   imageUrl?: string | null;
 }
 
-export const TRIPS: Trip[] = [
-  {
-    id: 'kolsai', title: 'Кольсайские озёра', region: 'Алматинская область · 300 км',
-    date: '11–13 июля', days: 3, going: 14, spots: 6, price: '95 000 ₸', difficulty: 'Средняя',
-    meta: '14 идут · 6 мест', tint: '#D4E5F0',
-    organizer: 'Айгерим Болатова', organizerType: 'Гипертим · 4 поездки в Кольсай',
-    description: 'Система из трёх горных озёр в Кунгей-Алатау на высоте 1800–2800 м. В программе — Кольсайские озёра и озеро Каинды с затопленным еловым лесом. Треккинг средней сложности, ночёвки в гостевом доме в селе Саты.',
-    itinerary: [
-      { day: 'День 1', title: 'Алматы → Саты', note: 'Выезд 7:00 · ~300 км · первое Кольсайское озеро', icon: 'mappin.circle.fill', color: T.brand },
-      { day: 'День 2', title: 'Каинды + второе озеро', note: 'Затопленный лес и треккинг ~10 км', icon: 'figure.walk', color: T.green },
-      { day: 'День 3', title: 'Возвращение', note: 'Завтрак в Саты · выезд в Алматы 10:00', icon: 'house.fill', color: T.orange },
-    ],
-    included: [
-      { icon: 'cart.fill', t: 'Трансфер Алматы ⇄ Саты' },
-      { icon: 'house.fill', t: '2 ночи в гостевом доме' },
-      { icon: 'leaf.fill', t: 'Питание + эко-сборы нацпарка' },
-      { icon: 'figure.walk', t: 'Гид и сопровождение' },
-    ],
-    imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2pYmkZsauSfwFVCcqZrDJOYvtM734Kxb0T29Le',
-  },
-  {
-    id: 'alakol', title: 'Алаколь', region: 'Восток КЗ · озеро · 560 км',
-    date: '2–6 августа', days: 5, going: 22, spots: 8, price: '150 000 ₸', difficulty: 'Лёгкая',
-    meta: '22 идут · 8 мест', tint: '#F0E4D4',
-    organizer: 'Дамир Ахметов', organizerType: 'Паранойял · 2 поездки',
-    description: 'Солёное озеро с лечебной чёрной галькой и минерализованной водой. Пляжный отдых на берегу в посёлке Акши: купание, прогулки на катере, закаты. Подходит для семей и спокойного восстановления.',
-    itinerary: [
-      { day: 'День 1', title: 'Переезд до Акши', note: 'Алматы → Ушарал → база на берегу', icon: 'cart.fill', color: T.brand },
-      { day: 'Дни 2–4', title: 'Пляж и озеро', note: 'Купание, чёрная галька, катер, закаты', icon: 'leaf.fill', color: T.green },
-      { day: 'День 5', title: 'Возвращение', note: 'Сборы и выезд в Алматы', icon: 'house.fill', color: T.orange },
-    ],
-    included: [
-      { icon: 'cart.fill', t: 'Трансфер до Алаколя и обратно' },
-      { icon: 'house.fill', t: '4 ночи у самого берега' },
-      { icon: 'leaf.fill', t: 'Завтраки и пляжная зона' },
-      { icon: 'person.3.fill', t: 'Куратор группы' },
-    ],
-    imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2pccwFts9j5azL0JSPdxV1RUqoZHK2TBFCGt6I',
-  },
-  {
-    id: 'srilanka', title: 'Шри-Ланка', region: 'Международная · 9 дней',
-    date: '12–20 сентября', days: 9, going: 11, spots: 9, price: '780 000 ₸', difficulty: 'Лёгкая',
-    meta: '11 идут · 9 мест', tint: '#E0F0D4',
-    organizer: 'Команда Divergents', organizerType: 'Международная поездка сообщества',
-    description: 'Девятидневное путешествие по острову: Канди и храм Зуба Будды, чайные плантации Эллы, сафари в нацпарке Яла и океанские пляжи Мириссы. Тёплый океан, культура и природа в кругу «своих».',
-    itinerary: [
-      { day: 'Дни 1–2', title: 'Коломбо → Канди', note: 'Прилёт, переезд, храм Зуба Будды', icon: 'globe', color: T.brand },
-      { day: 'Дни 3–4', title: 'Элла', note: 'Чайные плантации, девятиарочный мост', icon: 'leaf.fill', color: T.green },
-      { day: 'Дни 5–6', title: 'Сафари Яла', note: 'Леопарды, слоны, джип-сафари', icon: 'figure.walk', color: T.orange },
-      { day: 'Дни 7–9', title: 'Мирисса · океан', note: 'Пляжи, киты (сезон), вылет домой', icon: 'mappin.circle.fill', color: T.purple },
-    ],
-    included: [
-      { icon: 'globe', t: 'Авиаперелёт и трансферы' },
-      { icon: 'house.fill', t: '8 ночей в отелях' },
-      { icon: 'cart.fill', t: 'Джип-сафари в Яле' },
-      { icon: 'leaf.fill', t: 'Завтраки и гид' },
-    ],
-    imageUrl: 'https://jllxvk4wcx.ufs.sh/f/B1isCLwBCS2p8rSdIhgcGzNkP3Qp1tJFou5WlXa46ynLUReC',
-  },
-];
-
-export const getTrip = (id: string) => TRIPS.find((t) => t.id === id);
-
-export interface CommunityMember {
-  id: string;
-  name: string;
-  role: string;
-  initial: string;
-  psychotype: string;
-  level: number;
-  stats: { courses: number; books: number; challenges: number };
-  talents: string[];
+export async function fetchTrips(): Promise<Trip[]> {
+  const d = await getJson('/api/mobile/community/trips');
+  return Array.isArray(d?.trips) ? (d.trips as Trip[]) : [];
 }
 
-export const FEATURED_MEMBER: CommunityMember = {
-  id: 'ainur',
-  name: 'Айнур Касымова',
-  role: 'Маркетолог · Астана',
-  initial: 'А',
-  psychotype: 'Гипертим',
-  level: 11,
-  stats: { courses: 14, books: 52, challenges: 8 },
-  talents: ['Communication', 'Woo', 'Positivity', 'Strategic', 'Activator'],
-};
+export async function fetchTrip(id: string): Promise<Trip | null> {
+  const d = await getJson(`/api/mobile/community/trips/${id}`);
+  if (!d || !d.id) return null;
+  return d as Trip;
+}
 
 // ─────────────────────────────────────────────────────────────
-// Divergents Challenge — real 30-day rules
+// Divergents Challenge — static program rules (not fake content)
 // ─────────────────────────────────────────────────────────────
 export interface ChallengeCategory {
   key: 'R' | 'NS' | 'A';
@@ -260,6 +217,7 @@ export const ACTIVITY_CONVERSIONS: { label: string; value: string }[] = [
   { label: 'Йога / пилатес (для девушек)', value: '30 мин = 2000 шагов' },
 ];
 
+// ─── Teams (live) ────────────────────────────────────────────────────────
 export interface ChallengeTeam {
   id: string;
   name: string;
@@ -270,13 +228,16 @@ export interface ChallengeTeam {
   tint: string;
 }
 
-export const CHALLENGE_TEAMS: ChallengeTeam[] = [
-  { id: 't1', name: 'Алматы Барсы', members: 30, capacity: 30, captain: 'Айгерим Б.', advisors: ['Дамир А.', 'Жанар К.'], tint: '#E6ECFB' },
-  { id: 't2', name: 'Astana Wolves', members: 27, capacity: 30, captain: 'Олжас Т.', advisors: ['Санжар К.', 'Аружан М.'], tint: '#FDE7D9' },
-  { id: 't3', name: 'Көкше Тигр', members: 22, capacity: 30, captain: 'Ерлан С.', advisors: ['Мадина Е.'], tint: '#E0F0DA' },
-  { id: 't4', name: 'Shymkent Lions', members: 18, capacity: 30, captain: 'Нурлан Б.', advisors: ['Аян Т.'], tint: '#F0E2F2' },
-];
+export async function fetchTeams(): Promise<ChallengeTeam[]> {
+  const d = await getJson('/api/mobile/community/teams');
+  return Array.isArray(d?.teams) ? (d.teams as ChallengeTeam[]) : [];
+}
 
+export function teamsNeed(teams: ChallengeTeam[]): number {
+  return teams.reduce((s, t) => s + Math.max(0, t.capacity - t.members), 0);
+}
+
+// ─── Challenges catalog (live) ───────────────────────────────────────────
 export interface ChallengeListItem {
   id: string;
   title: string;
@@ -292,29 +253,19 @@ export interface ChallengeListItem {
   icon: SFName;
 }
 
-export const CHALLENGES: ChallengeListItem[] = [
-  {
-    id: '21days', title: '21 Days Challenge', subtitle: 'Чтение · No Sugar · Активность',
-    status: 'upcoming', startISO: '2026-08-15', startLabel: '15 августа', durationDays: 21,
-    maxFlags: 3, participants: 128, teams: CHALLENGE_TEAMS.length, tint: '#E6ECFB', icon: 'flame.fill',
-  },
-  {
-    id: 'no-sugar-21', title: 'Divergents challenge', subtitle: 'Ежедневный трекер баллов · бесплатно',
-    status: 'active', startLabel: 'идёт · день 12', durationDays: 21,
-    maxFlags: 3, participants: 16, teams: 1, tint: '#FDE7D9', icon: 'tag.fill',
-  },
-];
+export async function fetchChallenges(): Promise<ChallengeListItem[]> {
+  const d = await getJson('/api/mobile/community/challenges');
+  return Array.isArray(d?.challenges) ? (d.challenges as ChallengeListItem[]) : [];
+}
 
-export const getChallengeMeta = (id: string) => CHALLENGES.find((c) => c.id === id);
+export function getChallengeMeta(list: ChallengeListItem[], id: string) {
+  return list.find((c) => c.id === id);
+}
 
 export function daysUntil(iso?: string): number {
   if (!iso) return 0;
   const diff = Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
   return Math.max(0, diff);
-}
-
-export function teamsNeed(): number {
-  return CHALLENGE_TEAMS.reduce((s, t) => s + Math.max(0, t.capacity - t.members), 0);
 }
 
 // ─── Спорт ─────────────────────────────────────────────────────────
@@ -329,14 +280,12 @@ export interface SportActivity {
   tint: string;
 }
 
-export const SPORT: SportActivity[] = [
-  { id: 'football', title: 'Футбол 5×5', place: 'Almaty Arena', date: 'Каждую среду · 20:00', icon: 'soccerball', going: 14, spotsLabel: '6 мест', tint: '#E0F0DA' },
-  { id: 'tennis', title: 'Большой теннис', place: 'Esentai Tennis Club', date: 'Суббота · 10:00', icon: 'tennis.racket', going: 6, spotsLabel: '2 места', tint: '#E6ECFB' },
-  { id: 'marathon', title: 'Полумарафон 21 км', place: 'Парк Первого Президента', date: '7 сентября · 8:00', icon: 'figure.walk', going: 38, spotsLabel: 'Открыт сбор', tint: '#FDE7D9' },
-  { id: 'yoga', title: 'Йога на рассвете', place: 'Кок-Тобе', date: 'Воскресенье · 6:30', icon: 'figure.mind.and.body', going: 12, spotsLabel: '8 мест', tint: '#F0E2F2' },
-];
+export async function fetchSport(): Promise<SportActivity[]> {
+  const d = await getJson('/api/mobile/community/sport');
+  return Array.isArray(d?.activities) ? (d.activities as SportActivity[]) : [];
+}
 
-// ─── Встречи: онлайн-лекции Дандай Амокачи ─────────────────────────
+// ─── Встречи: онлайн-лекции ─────────────────────────────────────────
 export interface Lecture {
   id: string;
   title: string;
@@ -348,10 +297,7 @@ export interface Lecture {
   imageUrl: string;
 }
 
-const DANDAY_PHOTO = 'https://utfs.io/f/e23b25be-42e5-4ee4-87b6-94dcfc245071-x5cjij.jpg';
-
-export const LECTURES: Lecture[] = [
-  { id: 'lec1', title: 'Законы лидерства', speaker: 'Дандай Амокачи', date: 'Сегодня · 19:00', durationLabel: '90 мин', live: true, seatsLabel: '124 смотрят', imageUrl: DANDAY_PHOTO },
-  { id: 'lec2', title: 'Формирование команды', speaker: 'Дандай Амокачи', date: '25 июня · 19:00', durationLabel: '90 мин', live: false, seatsLabel: 'Открыта запись', imageUrl: DANDAY_PHOTO },
-  { id: 'lec3', title: 'Лайфхаки лидерства', speaker: 'Дандай Амокачи', date: '2 июля · 19:00', durationLabel: '75 мин', live: false, seatsLabel: 'Открыта запись', imageUrl: DANDAY_PHOTO },
-];
+export async function fetchLectures(): Promise<Lecture[]> {
+  const d = await getJson('/api/mobile/community/lectures');
+  return Array.isArray(d?.lectures) ? (d.lectures as Lecture[]) : [];
+}

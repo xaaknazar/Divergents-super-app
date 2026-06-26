@@ -40,6 +40,7 @@ export function BadgeTile({ b }: { b: EarnedBadge }) {
 
 export function AchievementsScreen({ navigation }: Props) {
   const { T } = useTheme();
+  const { lang } = useLang();
   const { badges, earned, total } = useAchievements();
   const pct = total ? earned / total : 0;
 
@@ -50,7 +51,7 @@ export function AchievementsScreen({ navigation }: Props) {
       <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
         <Text style={[ty.largeTitle, { color: T.label }]}>{tr('Достижения')}</Text>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>
-          Получено {earned} из {total} бейджей
+          {lang === 'ru' ? `Получено ${earned} из ${total} бейджей` : `Earned ${earned} of ${total} badges`}
         </Text>
         <View style={{ marginTop: 14 }}>
           <ProgressBar value={pct} height={8} />

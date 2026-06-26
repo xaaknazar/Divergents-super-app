@@ -19,15 +19,31 @@ const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | '
   ProfileTab: { label: 'tab_profile', on: 'person.crop.circle.fill', off: 'person.crop.circle' },
 };
 
+// Per-tab root screens. The bar stays visible on these, and hides only on
+// pushed detail screens (which have their own back button + bottom CTAs).
+const ROOT_ROUTES = new Set([
+  'LMSHome', 'AIChat', 'CommunityHome', 'MapHome', 'CareerHome', 'ProfileHome',
+]);
+
+// Walk to the currently focused leaf route inside a (possibly nested) navigator
+// state. Keying on the visible screen — rather than the active tab's stack
+// depth — keeps the bar correct after cross-tab navigation that leaves a tab's
+// stack non-empty in the background.
+function focusedLeafName(route: { name: string; state?: any }): string {
+  let r: any = route;
+  while (r?.state && typeof r.state.index === 'number' && Array.isArray(r.state.routes)) {
+    r = r.state.routes[r.state.index];
+  }
+  return r?.name ?? route.name;
+}
+
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { T, isDark } = useTheme();
   const { t } = useLang();
   const insets = useSafeAreaInsets();
-  // Hide the tab bar when a detail screen is pushed inside the active tab's
-  // stack (nested index > 0) so bottom CTAs aren't covered by the bar.
-  const active = state.routes[state.index] as any;
-  const nestedIndex = active?.state?.index ?? 0;
-  if (nestedIndex > 0) return null;
+  const active = state.routes[state.index] as { name: string; state?: any };
+  const leaf = focusedLeafName(active);
+  if (!ROOT_ROUTES.has(leaf)) return null;
   return (
     <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{
       position: 'absolute', left: 0, right: 0, bottom: 0,

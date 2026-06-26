@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, ScrollView, Pressable, Animated } from 'react-native';
+import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
 import { Screen } from '../../components/Screen';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
@@ -15,28 +14,49 @@ import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { hSuccess } from '../../lib/haptics';
 import { useChallenge } from '../../state/ChallengeContext';
 import {
-  MEDAL_FOR_RANK, getChallengeMeta, daysUntil,
-  CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, CHALLENGE_TEAMS, taskDone,
+  MEDAL_FOR_RANK, fetchChallenges, fetchTeams, getChallengeMeta, daysUntil, teamsNeed,
+  CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeDetail'>;
 
 export function ChallengeDetailScreen({ route, navigation }: Props) {
-  const challengeId = route.params?.challengeId ?? 'no-sugar-21';
-  const meta = getChallengeMeta(challengeId);
-  if (meta?.status === 'upcoming') {
-    return <UpcomingChallenge challengeId={challengeId} navigation={navigation} />;
+  const { T } = useTheme();
+  const challengeId = route.params?.challengeId ?? '';
+  const [list, setList] = useState<ChallengeListItem[] | null>(null);
+  const [teams, setTeams] = useState<ChallengeTeam[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([fetchChallenges(), fetchTeams()]).then(([l, t]) => {
+      if (!alive) return;
+      setList(l); setTeams(t);
+    });
+    return () => { alive = false; };
+  }, []);
+
+  if (list === null) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <BackNav back={tr('Сообщество')} onBack={() => navigation.goBack()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+      </View>
+    );
+  }
+
+  const meta = getChallengeMeta(list, challengeId);
+  if (meta && meta.status === 'upcoming') {
+    return <UpcomingChallenge meta={meta} teams={teams} navigation={navigation} />;
   }
   return <ActiveChallenge navigation={navigation} />;
 }
 
-// ─── Upcoming challenge (30 Days) — rules, teams, join ──────────────
-function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; navigation: Props['navigation'] }) {
+// ─── Upcoming challenge — rules, teams, join ──────────────
+function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListItem; teams: ChallengeTeam[]; navigation: Props['navigation'] }) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
-  const meta = getChallengeMeta(challengeId)!;
   const left = daysUntil(meta.startISO);
 
   return (
@@ -102,8 +122,12 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
         </ListSection>
 
         {/* Teams */}
-        <ListSection header={`Команды · нужно ещё ${CHALLENGE_TEAMS.reduce((s, t) => s + Math.max(0, t.capacity - t.members), 0)} человек`}>
-          {CHALLENGE_TEAMS.map((t, i) => {
+        <ListSection header={teams.length > 0 ? `Команды · нужно ещё ${teamsNeed(teams)} человек` : tr('Команды')}>
+          {teams.length === 0 ? (
+            <View style={{ padding: 18, alignItems: 'center' }}>
+              <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команды пока не сформированы.')}</Text>
+            </View>
+          ) : teams.map((t, i) => {
             const need = Math.max(0, t.capacity - t.members);
             const full = need === 0;
             return (
@@ -119,7 +143,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
                   <Text style={[ty.subheadEm, { color: full ? T.emeraldText : T.label }]}>{t.members}/{t.capacity}</Text>
                   <Text style={[ty.caption2, { color: full ? T.emeraldText : '#A85D00' }]}>{full ? 'набрана' : `нужно ${need}`}</Text>
                 </View>
-                {i < CHALLENGE_TEAMS.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 70, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+                {i < teams.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 70, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
               </View>
             );
           })}
@@ -141,7 +165,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
 
       {/* CTA */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label={tr('Подать заявку')} icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId })} />
+        <PrimaryButton label={tr('Подать заявку')} icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId: meta.id })} />
       </View>
     </View>
   );
@@ -173,9 +197,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
     prevDone.current = allDone;
   }, [allDone]);
   useEffect(() => { Animated.spring(cel, { toValue: celebrate ? 1 : 0, useNativeDriver: true, speed: 14, bounciness: 8 }).start(); }, [celebrate]);
-  const ringPct = c.currentDay / c.totalDays;
-  const r = 47;
-  const circ = 2 * Math.PI * r;
+  const ringPct = c.totalDays > 0 ? c.currentDay / c.totalDays : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
@@ -197,7 +219,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           <Logo size={26} />
           <Text style={[ty.largeTitle, { color: T.label, flex: 1 }]}>{c.title}</Text>
         </View>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')} · {c.startedLabel}</Text>
+        {c.teamName ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')}{c.startedLabel ? ` · ${c.startedLabel}` : ''}</Text> : null}
       </View>
 
       <View style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
@@ -243,8 +265,12 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         </View>
       </ListSection>
 
-      <ListSection header={`Команда «${c.teamName}» · вы ${myRank}-е место`}>
-        {leaderboard.map((row, i) => {
+      <ListSection header={c.teamName ? `Команда «${c.teamName}» · вы ${myRank}-е место` : tr('Команда')}>
+        {leaderboard.length === 0 ? (
+          <View style={{ padding: 18, alignItems: 'center' }}>
+            <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команда ещё формируется.')}</Text>
+          </View>
+        ) : leaderboard.map((row, i) => {
           const medal = MEDAL_FOR_RANK(row.rank);
           return (
             <View key={row.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16, backgroundColor: row.isMe ? T.brandTinted : 'transparent' }}>

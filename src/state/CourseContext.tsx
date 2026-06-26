@@ -1,9 +1,11 @@
 // Courses state: fetches the live catalog from the Divergents website, lazily
 // loads per-course detail (chapters), and tracks local lesson completion.
-// Falls back to bundled mock data if the website API is unreachable.
+// Content is API-driven only — there is no bundled fake catalog. When the
+// website API is unreachable or empty, the screens render proper Russian
+// loading / empty / error states instead of placeholder data.
 import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
-import { COURSES as MOCK_COURSES, Course } from '../data/courses';
-import { fetchCatalog, fetchCourseDetail, fetchOwnedDetail } from '../data/api';
+import { Course } from '../data/courses';
+import { fetchCatalog, fetchCourseDetail, fetchOwnedDetail, markLessonComplete } from '../data/api';
 import { loadJSON, saveJSON } from './persist';
 
 export type LessonStatus = 'done' | 'current' | 'available' | 'locked';
@@ -19,9 +21,12 @@ interface CourseState {
   getCourse: (id: string) => Course | undefined;
   loadDetail: (id: string, token?: string | null) => Promise<void>;
   detailLoading: Record<string, boolean>;
+  // Merge server-side progress (0..100) for owned courses into the catalog so
+  // progress() / the detail screen reflect what was completed on the website.
+  mergeServerProgress: (list: { id: string; serverProgress?: number }[]) => void;
 
   completed: Record<string, string[]>;
-  completeLesson: (courseId: string, lessonId: string) => void;
+  completeLesson: (courseId: string, lessonId: string, token?: string | null) => void;
   isCompleted: (courseId: string, lessonId: string) => boolean;
   completedCount: (courseId: string) => number;
   totalLessons: (courseId: string) => number;
@@ -31,8 +36,6 @@ interface CourseState {
 }
 
 const Ctx = createContext<CourseState | null>(null);
-
-const SEED: Record<string, string[]> = { leadership: ['l1', 'l2', 'l3'] };
 
 export function CourseProvider({ children }: { children: React.ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -53,17 +56,13 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const live = await fetchCatalog();
-      if (live.length > 0) {
-        setCourses(live);
-        setSource('live');
-        return;
-      }
-      // API reachable but empty — show mock so the app isn't blank.
-      setCourses(MOCK_COURSES);
-      setSource('mock');
+      // API-driven only: an empty catalog stays empty (screens show an empty
+      // state). We never substitute fake placeholder content.
+      setCourses(live);
+      setSource('live');
     } catch (e: any) {
-      setCourses(MOCK_COURSES);
-      setSource('mock');
+      setCourses([]);
+      setSource('live');
       setError(e?.message ?? 'network');
     }
   }, []);
@@ -90,12 +89,29 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const completeLesson = useCallback((courseId: string, lessonId: string) => {
+  const mergeServerProgress = useCallback((list: { id: string; serverProgress?: number }[]) => {
+    setCourses((prev) => {
+      let changed = false;
+      const next = prev.map((c) => {
+        const m = list.find((x) => x.id === c.id);
+        if (m && m.serverProgress != null && m.serverProgress !== c.serverProgress) {
+          changed = true;
+          return { ...c, serverProgress: m.serverProgress };
+        }
+        return c;
+      });
+      return changed ? next : prev;
+    });
+  }, []);
+
+  const completeLesson = useCallback((courseId: string, lessonId: string, token?: string | null) => {
     setCompleted((prev) => {
       const list = prev[courseId] ?? [];
       if (list.includes(lessonId)) return prev;
       return { ...prev, [courseId]: [...list, lessonId] };
     });
+    // Best-effort server sync so progress follows the user across devices.
+    if (token) markLessonComplete(courseId, lessonId, token);
   }, []);
 
   const value = useMemo<CourseState>(() => {
@@ -107,7 +123,11 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     };
     const progress = (id: string) => {
       const total = totalLessons(id);
-      return total ? Math.min(1, completedCount(id) / total) : 0;
+      const local = total ? Math.min(1, completedCount(id) / total) : 0;
+      // Owned courses carry server-side progress (0..100); use whichever is
+      // further along so a course completed on the website still shows real %.
+      const server = Math.min(1, Math.max(0, (getCourse(id)?.serverProgress ?? 0) / 100));
+      return Math.max(local, server);
     };
     const currentLessonIndex = (id: string) => {
       const c = getCourse(id);
@@ -130,11 +150,11 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
 
     return {
       courses, source, loading: source === 'loading', error, reload: load,
-      getCourse, loadDetail, detailLoading,
+      getCourse, loadDetail, detailLoading, mergeServerProgress,
       completed, completeLesson, isCompleted, completedCount, totalLessons,
       progress, currentLessonIndex, lessonStatus,
     };
-  }, [courses, source, error, load, loadDetail, detailLoading, completed, completeLesson]);
+  }, [courses, source, error, load, loadDetail, detailLoading, mergeServerProgress, completed, completeLesson]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -144,5 +164,3 @@ export function useCourses() {
   if (!c) throw new Error('useCourses must be used within CourseProvider');
   return c;
 }
-
-export { MOCK_COURSES as COURSES };

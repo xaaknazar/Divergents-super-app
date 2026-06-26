@@ -25,11 +25,27 @@ export function ResumeFormScreen({ navigation }: Props) {
 
   const go = (n: number) => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setStep(n); };
 
+  // Don't allow submitting an empty resume — require at least the name.
+  const nameFilled = typeof answers.full_name === 'string' && answers.full_name.trim().length > 0;
+
   const finish = async () => {
+    if (!nameFilled) {
+      Alert.alert(
+        tr('Заполните анкету'),
+        tr('Укажите хотя бы ФИО, чтобы сохранить анкету.'),
+        [{ text: tr('Готово'), onPress: () => go(0) }],
+      );
+      return;
+    }
     const ok = await submit();
+    // Truthful messaging: there is no automatic retry/queue. On success the data
+    // is in Talentslab; on failure it stays saved locally and the user can open
+    // the form and tap "Сохранить" again to retry.
     Alert.alert(
-      ok ? tr('Анкета сохранена') : tr('Сохранено локально'),
-      ok ? tr('Данные отправлены в Talentslab.') : tr('Нет связи с Talentslab — данные сохранены в приложении и отправятся позже.'),
+      ok ? tr('Анкета сохранена') : tr('Сохранено в приложении'),
+      ok
+        ? tr('Данные отправлены в Talentslab.')
+        : tr('Нет связи с Talentslab. Анкета сохранена в приложении — откройте её и нажмите «Сохранить» ещё раз, когда появится связь.'),
       [{ text: tr('Готово'), onPress: () => navigation.goBack() }],
     );
   };
@@ -84,7 +100,7 @@ export function ResumeFormScreen({ navigation }: Props) {
             <PrimaryButton label={tr('Назад')} color="transparent" style={{ flex: 1 }} onPress={() => go(step - 1)} />
           ) : null}
           {last ? (
-            <PrimaryButton label={tr('Сохранить')} icon="checkmark" loading={submitting} style={{ flex: 2 }} onPress={finish} />
+            <PrimaryButton label={tr('Сохранить')} icon="checkmark" loading={submitting} disabled={!nameFilled} style={{ flex: 2 }} onPress={finish} />
           ) : (
             <PrimaryButton label={tr('Далее')} icon="arrow.right" style={{ flex: 2 }} onPress={() => go(step + 1)} />
           )}

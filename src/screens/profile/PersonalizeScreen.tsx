@@ -16,7 +16,7 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'Personalize'>;
 
 export function PersonalizeScreen({ navigation }: Props) {
   const { T, scheme, mode, setMode, accent, setAccent, background, setBackground } = useTheme();
-  useLang();
+  const { lang } = useLang();
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
@@ -101,7 +101,9 @@ export function PersonalizeScreen({ navigation }: Props) {
         </View>
 
         <Text style={[ty.caption1, { color: T.labelTertiary, textAlign: 'center', paddingHorizontal: 30 }]}>
-          Настройки сохраняются на этом устройстве и применяются ко всему приложению.
+          {lang === 'ru'
+            ? 'Настройки сохраняются на этом устройстве и применяются ко всему приложению.'
+            : 'Settings are saved on this device and applied across the whole app.'}
         </Text>
       </Screen>
     </View>

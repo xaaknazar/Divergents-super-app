@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, Share, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, Share, Alert, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, ty } from '../../components/ui';
-import { getTrip } from '../../data/community';
+import { EmptyState } from '../../components/StateViews';
+import { fetchTrip, Trip } from '../../data/community';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { imgUrl } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
@@ -28,13 +29,63 @@ function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
 export function TripDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
-  const trip = getTrip(route.params.tripId)!;
   const { has, toggle, add } = useEnrollment();
+
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    fetchTrip(route.params.tripId).then((t) => { if (alive) { setTrip(t); setLoading(false); } });
+    return () => { alive = false; };
+  }, [route.params.tripId]);
+
+  // ── Loading ──
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top }}>
+        <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            <SF name="chevron.left" size={20} color={T.brand} />
+            <Text style={[ty.body, { color: T.brand }]}>{tr('Сообщество')}</Text>
+          </Pressable>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={T.brand} />
+        </View>
+      </View>
+    );
+  }
+
+  // ── Not found ──
+  if (!trip) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg, paddingTop: insets.top }}>
+        <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            <SF name="chevron.left" size={20} color={T.brand} />
+            <Text style={[ty.body, { color: T.brand }]}>{tr('Сообщество')}</Text>
+          </Pressable>
+        </View>
+        <EmptyState
+          icon="mappin.circle.fill"
+          title={tr('Поездка не найдена')}
+          subtitle={tr('Возможно, она завершилась или была снята с публикации.')}
+          actionLabel={tr('Назад')}
+          onAction={() => navigation.goBack()}
+        />
+      </View>
+    );
+  }
+
   const fav = has(`tripfav:${trip.id}`);
   const joined = has(`trip:${trip.id}`);
+  const goingCount = trip.going + (joined ? 1 : 0);
+  const spotsCount = Math.max(0, trip.spots - (joined ? 1 : 0));
   const stats = [
-    { v: String(trip.going), l: tr('Идут') },
-    { v: String(trip.spots), l: tr('Мест') },
+    { v: String(goingCount), l: tr('Идут') },
+    { v: String(spotsCount), l: tr('Мест') },
     { v: trip.price, l: tr('Стоимость') },
   ];
 
@@ -86,7 +137,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
 
         <ListSection header={tr('Организатор')}>
           <ListRow
-            leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
+            leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{(trip.organizer || '?').charAt(0)}</Text></View>}
             title={trip.organizer} subtitle={trip.organizerType} last />
         </ListSection>
 
@@ -113,9 +164,9 @@ export function TripDetailScreen({ route, navigation }: Props) {
           ))}
         </ListSection>
 
-        <ListSection header={`Идут · ${trip.going} человек`}>
+        <ListSection header={`Идут · ${goingCount} человек`}>
           <View style={{ padding: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {['А', 'Б', 'Д', 'Ж', 'М', 'О', 'К', 'С', 'Т', `+${Math.max(0, trip.going - 9)}`].map((n, i) => (
+            {['А', 'Б', 'Д', 'Ж', 'М', 'О', 'К', 'С', 'Т', `+${Math.max(0, goingCount - 9)}`].map((n, i) => (
               <View key={i} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: i === 9 ? T.fillTertiary : `hsl(${i * 40 + 200}, 55%, 65%)`, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.subheadEm, { color: i === 9 ? T.labelSecondary : '#fff' }]}>{n}</Text>
               </View>

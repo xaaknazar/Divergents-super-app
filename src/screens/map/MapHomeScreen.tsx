@@ -19,6 +19,11 @@ import { loadJSON, saveJSON } from '../../state/persist';
 type Props = NativeStackScreenProps<MapStackParams, 'MapHome'>;
 type LatLng = { latitude: number; longitude: number };
 
+// Public OSRM / Nominatim demo endpoints require an identifying User-Agent
+// (their usage policy rejects anonymous traffic). Best-effort: some platforms
+// override this header, but we send it where allowed.
+const NET_HEADERS = { 'User-Agent': 'DivergentsSuperApp/1.0 (https://divergents-lms.kz)' };
+
 function haversineKm(a: LatLng, b: LatLng): number {
   const R = 6371;
   const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
@@ -42,7 +47,7 @@ async function fetchRoutes(from: LatLng, to: LatLng, mode: 'car' | 'foot'): Prom
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 9000);
     try {
-      const res = await fetch(url, { signal: ctrl.signal });
+      const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json', ...NET_HEADERS } });
       if (!res.ok) { clearTimeout(t); continue; }
       const d = await res.json();
       const rs = Array.isArray(d?.routes) ? d.routes : [];
@@ -61,7 +66,7 @@ async function geocode(q: string, bias?: { lat: number; lng: number }): Promise<
   try {
     const vb = bias ? `&viewbox=${bias.lng - 0.7},${bias.lat + 0.5},${bias.lng + 0.7},${bias.lat - 0.5}&bounded=0` : '';
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ru&q=${encodeURIComponent(q)}${vb}`;
-    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
+    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json', ...NET_HEADERS } });
     if (!res.ok) return [];
     const d = await res.json();
     return (Array.isArray(d) ? d : [])
@@ -75,7 +80,8 @@ export function MapHomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
   const { t } = useLang();
-  const { country, city, setLocation, places, isFav, toggleFav } = usePlaces();
+  const { country, city, locManual, setLocation, places, placesLoading, placesError, reloadPlaces, isFav, toggleFav } = usePlaces();
+  const [locDenied, setLocDenied] = useState(false);
   const [cat, setCat] = useState<PlaceCategory | null>(null);
   const [tags, setTags] = useState<PlaceTag[]>([]);
   const [q, setQ] = useState('');
@@ -106,6 +112,9 @@ export function MapHomeScreen({ navigation }: Props) {
   const manualRef = useRef(false);
   const autoRef = useRef(false);
   useEffect(() => { loadJSON<{ name: string; lat: number; lng: number }[]>('dvg.mapRecent', []).then(setRecents); }, []);
+  // If the user previously picked a city by hand (persisted), don't let GPS
+  // auto-override it on launch.
+  useEffect(() => { if (locManual) manualRef.current = true; }, [locManual]);
 
   const center = cityCenter(country, city);
   const countryName = COUNTRIES.find((c) => c.key === country)?.name ?? '';
@@ -118,7 +127,9 @@ export function MapHomeScreen({ navigation }: Props) {
     let alive = true;
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted' || !alive) return;
+      if (!alive) return;
+      if (status !== 'granted') { setLocDenied(true); return; }
+      setLocDenied(false);
       subRef.current = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.Balanced, distanceInterval: 12, timeInterval: 3000 },
         (loc) => {
@@ -175,7 +186,22 @@ export function MapHomeScreen({ navigation }: Props) {
   }, [user]);
 
   const recenter = () => {
-    if (!user) return;
+    if (!user) {
+      // Explain why we can't recenter instead of doing nothing.
+      if (locDenied) {
+        Alert.alert(
+          tr('Геолокация выключена'),
+          tr('Разрешите доступ к геопозиции в настройках, чтобы видеть себя на карте.'),
+          [
+            { text: tr('Открыть настройки'), onPress: () => Linking.openSettings().catch(() => {}) },
+            { text: tr('Отмена'), style: 'cancel' },
+          ],
+        );
+      } else {
+        Alert.alert(tr('Определяем геопозицию'), tr('Ждём сигнал GPS… Попробуйте через секунду.'));
+      }
+      return;
+    }
     const nc = nearestCity(user.latitude, user.longitude);
     if (nc && (nc.country !== country || nc.city !== city)) setLocation(nc.country, nc.city);
     mapRef.current?.animateToRegion({ ...user, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 500);
@@ -318,6 +344,21 @@ export function MapHomeScreen({ navigation }: Props) {
         );
       })() : null}
 
+      {/* Empty / error notice for the live places list (no fake data) */}
+      {!placesLoading && !target && list.length === 0 ? (
+        <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 100, alignItems: 'center' }} pointerEvents="box-none">
+          <View style={{ backgroundColor: T.cardBg, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: 360, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+            <SF name={placesError ? 'wifi.slash' : 'mappin.circle.fill'} size={18} color={placesError ? T.red : T.labelSecondary} />
+            <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]}>
+              {placesError ? tr('Не удалось загрузить места.') : tr('Пока нет мест в этом городе.')}
+            </Text>
+            {placesError ? (
+              <Pressable onPress={reloadPlaces} hitSlop={8}><Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Повторить')}</Text></Pressable>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
+
       {/* Right floating buttons */}
       <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
         <Round icon="arrow.down.circle" onPress={() => navigation.navigate('OfflineMap')} T={T} />
@@ -416,7 +457,7 @@ export function MapHomeScreen({ navigation }: Props) {
                 {co.cities.map((ci) => {
                   const on = co.key === country && ci.key === city;
                   return (
-                    <Pressable key={ci.key} onPress={() => { manualRef.current = true; setLocation(co.key, ci.key); setPickerOpen(false); mapRef.current?.animateToRegion({ latitude: ci.lat, longitude: ci.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600); }}
+                    <Pressable key={ci.key} onPress={() => { manualRef.current = true; setLocation(co.key, ci.key, true); setPickerOpen(false); mapRef.current?.animateToRegion({ latitude: ci.lat, longitude: ci.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600); }}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 20, backgroundColor: on ? T.brandTinted : 'transparent' }}>
                       <SF name="mappin.circle.fill" size={18} color={on ? T.brand : T.labelTertiary} />
                       <Text style={[ty.body, { color: T.label, flex: 1 }]}>{ci.name}</Text>

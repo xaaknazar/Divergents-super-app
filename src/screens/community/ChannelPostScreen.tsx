@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, Share } from 'react-native';
+import { View, Text, Pressable, ScrollView, Share, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useVideoPlayer } from 'expo-video';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
-import { channelById, getPost } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { useLang } from '../../state/LanguageContext';
 import { CommunityStackParams } from '../../navigation/types';
@@ -24,10 +23,19 @@ function fmt(sec: number) {
 export function ChannelPostScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isLiked, toggleLike, getPost, getChannel, loading } = useChannel();
   const post = getPost(route.params.postId);
-  const chan = post ? channelById(post.channelId) : undefined;
-  const { isLiked, toggleLike } = useChannel();
+  const chan = post ? getChannel(post.channelId) : undefined;
   const { t, lang } = useLang();
+
+  if (!post && loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+      </View>
+    );
+  }
 
   if (!post) {
     return (

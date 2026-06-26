@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable } from 'react-native';
@@ -7,7 +7,8 @@ import { Screen } from '../../components/Screen';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
-import { getJob } from '../../data/career';
+import { ListSkeleton, EmptyState } from '../../components/StateViews';
+import { Job, fetchVacancy } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { talentMatch } from '../../data/talentslab';
@@ -18,10 +19,55 @@ type Props = NativeStackScreenProps<CareerStackParams, 'VacancyDetail'>;
 export function VacancyDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   useLang();
-  const job = getJob(route.params.jobId);
-  const { isApplied, isSaved, apply, toggleSave } = useCareer();
-  const { profile } = useTalentProfile();
-  if (!job) return <Screen gradient={['#EAF4EF', '#F2F2F7']}><View /></Screen>;
+  const { jobId } = route.params;
+  const { getJob, jobsLoading, hydrated, isApplied, isSaved, apply, toggleSave } = useCareer();
+  const { profile, live } = useTalentProfile();
+
+  const fromList = getJob(jobId);
+  const [fetched, setFetched] = useState<Job | null>(null);
+  const [loadingOne, setLoadingOne] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+
+  // If the vacancy isn't in the loaded list (deep link / stale list), fetch it
+  // directly once the list has settled.
+  useEffect(() => {
+    if (fromList || jobsLoading) return;
+    let active = true;
+    setLoadingOne(true);
+    setNotFound(false);
+    fetchVacancy(jobId).then((j) => {
+      if (!active) return;
+      if (j) setFetched(j); else setNotFound(true);
+      setLoadingOne(false);
+    });
+    return () => { active = false; };
+  }, [fromList, jobsLoading, jobId]);
+
+  const job = fromList ?? fetched;
+  const gallup = live ? profile?.gallup ?? [] : [];
+
+  // ── Not found ─────────────────────────────────────────────────────
+  if (notFound && !job) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} />
+        <EmptyState icon="briefcase" title={tr('Вакансия не найдена')}
+          subtitle={tr('Возможно, она уже снята с публикации.')}
+          actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />
+      </View>
+    );
+  }
+
+  // ── Loading ───────────────────────────────────────────────────────
+  if (!job) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} />
+        <View style={{ paddingTop: 16 }}><ListSkeleton rows={5} /></View>
+      </View>
+    );
+  }
+
   const applied = isApplied(job.id);
 
   return (
@@ -40,34 +86,38 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[ty.title2, { color: T.label }]}>{job.title}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{job.company} · {job.city}</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{job.company}{job.city ? ` · ${job.city}` : ''}</Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
-          <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule>
-          <Capsule bg={T.fillTertiary} color={T.label}>{job.salary}</Capsule>
-          <Capsule bg={T.fillTertiary} color={T.label}>{job.level}</Capsule>
-          <Capsule bg={T.fillTertiary} color={T.labelSecondary}>{job.postedLabel}</Capsule>
+          {job.format ? <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule> : null}
+          {job.salary ? <Capsule bg={T.fillTertiary} color={T.label}>{job.salary}</Capsule> : null}
+          {job.level ? <Capsule bg={T.fillTertiary} color={T.label}>{job.level}</Capsule> : null}
+          {job.postedLabel ? <Capsule bg={T.fillTertiary} color={T.labelSecondary}>{job.postedLabel}</Capsule> : null}
         </View>
       </View>
 
       {/* Match */}
-      <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-        <View style={{ alignItems: 'center', minWidth: 70 }}>
-          <Text style={[ty.largeTitle, { color: T.brand }]}>{job.match}<Text style={ty.title3}>%</Text></Text>
-          <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{tr('Совпадение')}</Text>
+      {job.match > 0 || job.reason ? (
+        <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          {job.match > 0 ? (
+            <View style={{ alignItems: 'center', minWidth: 70 }}>
+              <Text style={[ty.largeTitle, { color: T.brand }]}>{job.match}<Text style={ty.title3}>%</Text></Text>
+              <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{tr('Совпадение')}</Text>
+            </View>
+          ) : null}
+          {job.reason ? <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.reason}</Text> : null}
         </View>
-        <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.reason}</Text>
-      </View>
+      ) : null}
 
-      {/* Why you fit — talents (matched against your Gallup profile) */}
-      {(() => {
-        const m = talentMatch(job.talents, profile?.gallup ?? []);
+      {/* Why you fit — talents (matched against your live Gallup profile) */}
+      {job.talents.length > 0 ? (() => {
+        const m = talentMatch(job.talents, gallup);
         return (
           <ListSection header={tr('Почему вам подходит')}>
             <View style={{ padding: 14 }}>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]}>
-                Таланты Gallup для роли · совпадает {m.matched} из {m.total} ваших
+                {tr('Таланты Gallup для роли')} · {tr('совпадает')} {m.matched} {tr('из')} {m.total} {tr('ваших')}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {m.items.map((it) => (
@@ -79,46 +129,55 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
             </View>
           </ListSection>
         );
-      })()}
+      })() : null}
 
       {/* Good Boss / Good Company */}
-      <ListSection header="Good Boss">
-        <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
-          <SF name="person.crop.circle.fill" size={22} color={T.brand} />
-          <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.goodBoss}</Text>
-        </View>
-      </ListSection>
-      <ListSection header="Good Company">
-        <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
-          <SF name="building.2.fill" size={22} color={T.green} />
-          <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.goodCompany}</Text>
-        </View>
-      </ListSection>
+      {job.goodBoss ? (
+        <ListSection header="Good Boss">
+          <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
+            <SF name="person.crop.circle.fill" size={22} color={T.brand} />
+            <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.goodBoss}</Text>
+          </View>
+        </ListSection>
+      ) : null}
+      {job.goodCompany ? (
+        <ListSection header="Good Company">
+          <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
+            <SF name="building.2.fill" size={22} color={T.green} />
+            <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.goodCompany}</Text>
+          </View>
+        </ListSection>
+      ) : null}
 
       {/* Requirements */}
-      <ListSection header={tr('Требования')}>
-        <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
-          {job.requirements.map((r, i) => (
-            <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: i < job.requirements.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
-              <SF name="checkmark.circle.fill" size={18} color={T.green} />
-              <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{r}</Text>
-            </View>
-          ))}
-        </View>
-      </ListSection>
+      {job.requirements.length > 0 ? (
+        <ListSection header={tr('Требования')}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
+            {job.requirements.map((r, i) => (
+              <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: i < job.requirements.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
+                <SF name="checkmark.circle.fill" size={18} color={T.green} />
+                <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{r}</Text>
+              </View>
+            ))}
+          </View>
+        </ListSection>
+      ) : null}
 
       {/* About */}
-      <ListSection header={tr('О вакансии')}>
-        <View style={{ padding: 14 }}>
-          <Text style={[ty.body, { color: T.label }]}>{job.about}</Text>
-        </View>
-      </ListSection>
+      {job.about ? (
+        <ListSection header={tr('О вакансии')}>
+          <View style={{ padding: 14 }}>
+            <Text style={[ty.body, { color: T.label }]}>{job.about}</Text>
+          </View>
+        </ListSection>
+      ) : null}
 
       <View style={{ padding: 16, paddingTop: 20 }}>
         <PrimaryButton
-          label={applied ? 'Отклик отправлен ✓' : 'Откликнуться'}
+          label={applied ? tr('Отклик отправлен ✓') : tr('Откликнуться')}
           icon={applied ? 'checkmark' : 'paperplane.fill'}
           color={applied ? T.green : T.brand}
+          disabled={!hydrated}
           onPress={() => apply(job.id)}
         />
       </View>

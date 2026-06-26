@@ -9,7 +9,7 @@ import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, ListSection, ListRow, ty } from '../../components/ui';
 import { useTalentProfile } from '../../state/useTalentProfile';
-import { GALLUP_DOMAIN_META, GallupDomain, mbtiName, fmtList } from '../../data/talentslab';
+import { GALLUP_DOMAIN_META, GallupDomain, mbtiName, fmtList, MOCK_PROFILE } from '../../data/talentslab';
 import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'TalentProfile'>;
@@ -18,7 +18,11 @@ const DOMAIN_ORDER: GallupDomain[] = ['strategic', 'executing', 'influencing', '
 export function TalentProfileScreen({ navigation }: Props) {
   const { T } = useTheme();
   useLang();
-  const { profile, live } = useTalentProfile();
+  const { profile: realProfile, live } = useTalentProfile();
+  // When there is no live candidate record, preview the feature with an
+  // explicitly-labelled demo (the "демо-данные" badge below) instead of fake
+  // data masquerading as the user's real profile.
+  const profile = live ? realProfile : MOCK_PROFILE;
   const r = profile?.resume ?? null;
 
   const personal: [string, any][] = [
