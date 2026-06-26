@@ -260,7 +260,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Appearance */}
       <ListSection header={t('appearance')}>
         <ListRow leading={<IconCircle icon="paintpalette.fill" color="#fff" bg={T.brand} size={30} />}
-          title={t('personalization')} subtitle={t('personalization_sub')} chevron onPress={() => navigation.navigate('Personalize')} last />
+          title={t('personalization')} subtitle={t('personalization_sub')} chevron last onPress={() => navigation.navigate('Personalize')} />
+        {/* Язык РУС/ENG временно скрыт — английский перевод на паузе */}
       </ListSection>
 
       <View style={{ height: 30 }} />

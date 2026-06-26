@@ -28,26 +28,11 @@ import { hTap } from '../../lib/haptics';
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
 
-// Creator-only action sheet → the three creation modals. iOS uses the native
-// sheet; Android falls back to a buttoned Alert so the entry still works.
-type CreateTarget = 'CreateChallenge' | 'CreateTrip' | 'CreateChannel';
+// Creator-only entry → the unified content-creation screen, which has its own
+// challenge / trip / channel type selector.
 function openCreateSheet(navigation: Nav) {
   hTap();
-  const go = (t: CreateTarget) => navigation.navigate(t);
-  const labels = [tr('Челлендж'), tr('Поездка'), tr('Канал')];
-  if (Platform.OS === 'ios') {
-    ActionSheetIOS.showActionSheetWithOptions(
-      { options: [tr('Отмена'), ...labels], cancelButtonIndex: 0, title: tr('Что создать?') },
-      (i) => { if (i === 1) go('CreateChallenge'); else if (i === 2) go('CreateTrip'); else if (i === 3) go('CreateChannel'); },
-    );
-  } else {
-    Alert.alert(tr('Что создать?'), undefined, [
-      { text: labels[0], onPress: () => go('CreateChallenge') },
-      { text: labels[1], onPress: () => go('CreateTrip') },
-      { text: labels[2], onPress: () => go('CreateChannel') },
-      { text: tr('Отмена'), style: 'cancel' },
-    ]);
-  }
+  navigation.navigate('CreateContent');
 }
 
 const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_sport'] as const;
