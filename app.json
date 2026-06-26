@@ -2,6 +2,7 @@
   "expo": {
     "name": "Divergents",
     "slug": "divergents-super-app",
+    "owner": "xaknazar",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "divergents",
