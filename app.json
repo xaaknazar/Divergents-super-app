@@ -41,7 +41,6 @@
       ],
       "config": {
         "googleMaps": {
-          "comment": "TODO: REPLACE_WITH_GOOGLE_MAPS_ANDROID_KEY — set the real Android Google Maps API key here (or wire via app.config + env) before submitting to Google Play.",
           "apiKey": "REPLACE_WITH_GOOGLE_MAPS_ANDROID_KEY"
         }
       }

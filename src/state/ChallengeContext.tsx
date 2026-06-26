@@ -138,9 +138,10 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     const pointsToday = challengePointsToday(challenge.tasks);
     const bonusToday = challengeBonusToday(challenge.tasks);
 
-    // user's live points = season base + today's earned points
+    // user's live points = season base + today's earned points. Eliminated
+    // members are frozen (🏳️): their points never change, not even the user's.
     const ranked = members
-      .map((m) => ({ ...m, points: m.isMe ? m.weekBase + pointsToday : m.weekBase }))
+      .map((m) => ({ ...m, points: m.isMe && !m.eliminated ? m.weekBase + pointsToday : m.weekBase }))
       .sort((a, b) => b.points - a.points)
       .map((m, i) => ({ ...m, rank: i + 1 }));
 

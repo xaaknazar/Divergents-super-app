@@ -160,6 +160,15 @@ export interface BinaryTask {
 
 export type ChallengeTask = MetricTask | BinaryTask;
 
+// Per-category flag counts (🚩). Auto-scored server-side per the Divergents
+// rules: a missed daily norm adds a 🚩 to its category; 3 🚩 in one category
+// → 🏳️ and elimination (points frozen).
+export interface FlagCounts {
+  R: number;  // Reading
+  NS: number; // No Sugar
+  A: number;  // Activity
+}
+
 export interface Challenge {
   id: string;
   title: string;
@@ -173,6 +182,9 @@ export interface Challenge {
   trainer: string;
   price: string;
   tasks: ChallengeTask[];
+  // The signed-in user's own disciplinary state (server-computed).
+  flags?: FlagCounts;
+  eliminated?: boolean;
 }
 
 // Neutral scaffold for the daily tracker before the server's active challenge
@@ -229,6 +241,10 @@ export interface Member {
   weekBase: number;
   day: number;
   isMe?: boolean;
+  // Server-computed disciplinary state. flags are per-category 🚩 counts;
+  // eliminated freezes the member's points (🏳️ / «выбыл»).
+  flags?: FlagCounts;
+  eliminated?: boolean;
 }
 
 export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | null => {
@@ -256,14 +272,26 @@ interface RawActiveChallenge {
   id?: unknown; title?: unknown; teamName?: unknown; totalDays?: unknown;
   currentDay?: unknown; members?: unknown; startedLabel?: unknown;
   teamRank?: unknown; teamCount?: unknown; trainer?: unknown; price?: unknown;
-  tasks?: unknown;
+  tasks?: unknown; flags?: unknown; eliminated?: unknown;
 }
 interface RawActiveMember {
   id?: unknown; name?: unknown; weekBase?: unknown; day?: unknown; isMe?: unknown;
+  flags?: unknown; eliminated?: unknown;
 }
 
 const numOf = (v: unknown, d = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
 const strOf = (v: unknown, d = ''): string => (typeof v === 'string' ? v : d);
+
+// Safely read the per-category 🚩 counts ({ R, NS, A }) from a server payload,
+// defaulting every category to 0.
+function flagsOf(v: unknown): FlagCounts {
+  const f = (v ?? {}) as Record<string, unknown>;
+  return { R: numOf(f.R), NS: numOf(f.NS), A: numOf(f.A) };
+}
+
+export function totalFlags(f: FlagCounts | undefined): number {
+  return f ? f.R + f.NS + f.A : 0;
+}
 
 // Coerce a server icon string to the app's SFName type safely: keep any
 // non-empty string (SF() degrades unknown names to a neutral glyph), else use a
@@ -319,6 +347,8 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
     trainer: strOf(raw.trainer),
     price: strOf(raw.price),
     tasks,
+    flags: flagsOf(raw.flags),
+    eliminated: raw.eliminated === true,
   };
 }
 
@@ -331,6 +361,8 @@ function mapActiveMember(raw: RawActiveMember): Member | null {
     weekBase: numOf(raw.weekBase),
     day: numOf(raw.day),
     isMe: raw.isMe === true,
+    flags: flagsOf(raw.flags),
+    eliminated: raw.eliminated === true,
   };
 }
 
