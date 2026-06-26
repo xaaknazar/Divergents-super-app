@@ -27,12 +27,24 @@ export function ResumeFormScreen({ navigation }: Props) {
 
   // Don't allow submitting an empty resume — require at least the name.
   const nameFilled = typeof answers.full_name === 'string' && answers.full_name.trim().length > 0;
+  // If an email is entered, it must be a valid address (the field is optional,
+  // but an invalid value should never be saved).
+  const emailRaw = typeof answers.email === 'string' ? answers.email.trim() : '';
+  const emailValid = emailRaw === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw);
 
   const finish = async () => {
     if (!nameFilled) {
       Alert.alert(
         tr('Заполните анкету'),
         tr('Укажите хотя бы ФИО, чтобы сохранить анкету.'),
+        [{ text: tr('Готово'), onPress: () => go(0) }],
+      );
+      return;
+    }
+    if (!emailValid) {
+      Alert.alert(
+        tr('Проверьте email'),
+        tr('Укажите корректный email или оставьте поле пустым.'),
         [{ text: tr('Готово'), onPress: () => go(0) }],
       );
       return;
@@ -100,7 +112,7 @@ export function ResumeFormScreen({ navigation }: Props) {
             <PrimaryButton label={tr('Назад')} color="transparent" style={{ flex: 1 }} onPress={() => go(step - 1)} />
           ) : null}
           {last ? (
-            <PrimaryButton label={tr('Сохранить')} icon="checkmark" loading={submitting} disabled={!nameFilled} style={{ flex: 2 }} onPress={finish} />
+            <PrimaryButton label={tr('Сохранить')} icon="checkmark" loading={submitting} disabled={!nameFilled || !emailValid} style={{ flex: 2 }} onPress={finish} />
           ) : (
             <PrimaryButton label={tr('Далее')} icon="arrow.right" style={{ flex: 2 }} onPress={() => go(step + 1)} />
           )}

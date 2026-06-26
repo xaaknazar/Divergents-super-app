@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, ActivityIndicator, LayoutAnimation } from 'react-native';
+import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -59,6 +59,8 @@ export function CatalogScreen({ navigation }: Props) {
         <View style={{ paddingTop: 12 }}><ListSkeleton rows={5} /></View>
       ) : error && courses.length === 0 ? (
         <ErrorState onRetry={reload} />
+      ) : courses.length === 0 ? (
+        <EmptyState icon="book" title={tr('Курсы скоро появятся')} subtitle={tr('Каталог обновляется — потяните вниз, чтобы обновить.')} />
       ) : (
         <>
           {/* Category chips */}

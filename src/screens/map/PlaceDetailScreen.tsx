@@ -12,7 +12,7 @@ import { Capsule, PrimaryButton, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { BackNav } from '../../components/headers';
 import { usePlaces, ratingOf } from '../../state/PlacesContext';
-import { CATEGORY_META, TAG_META, isOpenNow } from '../../data/places';
+import { CATEGORY_META, TAG_META, isOpenNow, reportPlace, postReview } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<MapStackParams, 'PlaceDetail'>;
@@ -21,12 +21,13 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const { T, isDark } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const { getPlace, addReview, isFav, toggleFav } = usePlaces();
   const place = getPlace(route.params.placeId);
   const [stars, setStars] = useState(0);
   const [text, setText] = useState('');
+  const [reporting, setReporting] = useState(false);
 
   if (!place) {
     return (
@@ -43,17 +44,48 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const mine = place.id.startsWith('u_');
   const fav = isFav(place.id);
   const sharePlace = () => Share.share({ message: `${place.name} — ${meta.label}\n${place.highlights}\nhttps://2gis.kz/geo/${place.lng},${place.lat}` });
-  const report = () => Alert.alert('Сообщить о проблеме', `«${place.name}»`, [
-    { text: 'Закрыто / не существует', onPress: () => Alert.alert('Спасибо', 'Передали модераторам Divergents.') },
-    { text: 'Неверные данные', onPress: () => Alert.alert('Спасибо', 'Передали модераторам Divergents.') },
-    { text: tr('Отмена'), style: 'cancel' },
-  ]);
+
+  // Real report: requires sign-in, sends the chosen reason to moderators and
+  // reports the outcome honestly (no fake "thanks" when nothing was sent).
+  const sendReport = async (reason: string) => {
+    if (reporting) return;
+    setReporting(true);
+    try {
+      const token = await getToken().catch(() => null);
+      const okSent = await reportPlace(place.id, reason, token);
+      if (okSent) {
+        Alert.alert(tr('Спасибо'), tr('Передали модераторам Divergents.'));
+      } else {
+        Alert.alert(tr('Не удалось отправить'), tr('Попробуйте позже или проверьте соединение.'));
+      }
+    } finally {
+      setReporting(false);
+    }
+  };
+  const report = () => {
+    if (!isSignedIn) {
+      Alert.alert(tr('Войдите в аккаунт'), tr('Чтобы сообщить о проблеме, войдите в аккаунт Divergents.'));
+      return;
+    }
+    Alert.alert(tr('Сообщить о проблеме'), `«${place.name}»`, [
+      { text: tr('Закрыто / не существует'), onPress: () => sendReport('closed_or_missing') },
+      { text: tr('Неверные данные'), onPress: () => sendReport('wrong_info') },
+      { text: tr('Отмена'), style: 'cancel' },
+    ]);
+  };
 
   const submit = () => {
     if (!stars) return;
     const author = user?.firstName || user?.fullName || (user?.primaryEmailAddress?.emailAddress?.split('@')[0]) || 'Участник';
-    addReview(place.id, { author, rating: stars, text: text.trim() });
+    const rating = stars;
+    const body = text.trim();
+    // Optimistic local review (persists on-device) + best-effort server sync so
+    // other users can see it. A sync failure is silent — the local copy stays.
+    addReview(place.id, { author, rating, text: body });
     setStars(0); setText('');
+    (async () => {
+      try { const token = await getToken(); await postReview(place.id, { rating, text: body }, token); } catch {}
+    })();
   };
 
   return (

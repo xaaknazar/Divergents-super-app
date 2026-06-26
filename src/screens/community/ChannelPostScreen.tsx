@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
+import { ErrorState } from '../../components/StateViews';
 import { useChannel } from '../../state/ChannelContext';
 import { useLang } from '../../state/LanguageContext';
 import { CommunityStackParams } from '../../navigation/types';
@@ -23,7 +24,7 @@ function fmt(sec: number) {
 export function ChannelPostScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
-  const { isLiked, toggleLike, getPost, getChannel, loading } = useChannel();
+  const { isLiked, toggleLike, getPost, getChannel, loading, error, reload } = useChannel();
   const post = getPost(route.params.postId);
   const chan = post ? getChannel(post.channelId) : undefined;
   const { t, lang } = useLang();
@@ -41,7 +42,9 @@ export function ChannelPostScreen({ route, navigation }: Props) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
-        <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{lang === 'ru' ? 'Пост не найден' : 'Post not found'}</Text></View>
+        {error
+          ? <ErrorState onRetry={reload} />
+          : <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{lang === 'ru' ? 'Пост не найден' : 'Post not found'}</Text></View>}
       </View>
     );
   }

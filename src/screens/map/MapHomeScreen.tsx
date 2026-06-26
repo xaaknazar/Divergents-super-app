@@ -11,7 +11,7 @@ import { SF } from '../../components/SFIcon';
 import { Capsule, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
-import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, cityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
+import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, safeCityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
 import { loadJSON, saveJSON } from '../../state/persist';
@@ -116,9 +116,9 @@ export function MapHomeScreen({ navigation }: Props) {
   // auto-override it on launch.
   useEffect(() => { if (locManual) manualRef.current = true; }, [locManual]);
 
-  const center = cityCenter(country, city);
+  const center = safeCityCenter(country, city);
   const countryName = COUNTRIES.find((c) => c.key === country)?.name ?? '';
-  const cityName = center?.name ?? '';
+  const cityName = center.name;
   const list = useMemo(() => filterPlaces(places, country, city, cat, tags, q), [places, country, city, cat, tags, q]);
   const sel = selId ? places.find((p) => p.id === selId) : null;
 
@@ -230,7 +230,7 @@ export function MapHomeScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      {center ? (
+      {(
         <MapView
           ref={mapRef}
           style={{ flex: 1 }}
@@ -259,7 +259,7 @@ export function MapHomeScreen({ navigation }: Props) {
           {searchPin ? <Marker coordinate={{ latitude: searchPin.lat, longitude: searchPin.lng }} pinColor="#FF3B30" onPress={() => {}} /> : null}
           {path.length > 1 ? <Polyline coordinates={path} strokeColor={T.brandAccent} strokeWidth={5} /> : null}
         </MapView>
-      ) : null}
+      )}
 
       {/* Top overlay: search + location + filters */}
       <View style={{ position: 'absolute', top: insets.top + 6, left: 0, right: 0 }} pointerEvents="box-none">
@@ -286,10 +286,13 @@ export function MapHomeScreen({ navigation }: Props) {
             ))}
           </View>
         ) : null}
-        {q.trim().length >= 3 && (geoBusy || geo.length > 0) ? (
+        {q.trim().length >= 3 ? (
           <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             {geoBusy && geo.length === 0 ? (
               <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelSecondary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Поиск адресов…')}</Text></View>
+            ) : null}
+            {!geoBusy && geo.length === 0 ? (
+              <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelTertiary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Ничего не найдено')}</Text></View>
             ) : null}
             {geo.map((g, i) => (
               <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 14, borderTopWidth: i ? 0.5 : 0, borderTopColor: T.separator }}>

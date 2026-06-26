@@ -32,7 +32,7 @@ export function VideoScreen({ route, navigation }: Props) {
   useLang();
   const insets = useSafeAreaInsets();
   const { courseId, lessonId } = route.params;
-  const { getCourse, completeLesson, isCompleted } = useCourses();
+  const { getCourse, completeLesson, isCompleted, loadDetail } = useCourses();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
   const course = getCourse(courseId);
@@ -53,12 +53,35 @@ export function VideoScreen({ route, navigation }: Props) {
   const player = useVideoPlayer(hls ?? '', (p) => { p.loop = false; });
   const videoRef = useRef<VideoView>(null);
 
+  // Autoplay once a real HLS source is available (also covers the case where the
+  // owned HLS arrives after a late detail fetch). Guarded so an empty source never throws.
+  useEffect(() => {
+    if (!hls) return;
+    try { player.play(); } catch {}
+  }, [hls, player]);
+
+  // If the lesson's video URL isn't loaded yet (typically an owned/paid chapter
+  // whose Mux HLS only comes from the authed detail endpoint), fetch the course
+  // detail once with the user's token so the player can resolve a real source.
+  useEffect(() => {
+    if (!course || !lesson || lesson.hlsUrl || lesson.isFree || !isSignedIn) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!cancelled && token) loadDetail(courseId, token);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [courseId, lesson?.id, lesson?.hlsUrl, lesson?.isFree, isSignedIn]);
+
   // discussion state
   const [comments, setComments] = useState<ChapterComment[] | null>(null);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentsError, setCommentsError] = useState(false);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(false);
 
   const loadComments = useCallback(async () => {
     if (!lesson) return;
@@ -106,14 +129,23 @@ export function VideoScreen({ route, navigation }: Props) {
 
   const send = async () => {
     const text = draft.trim();
-    if (!text || !isSignedIn) return;
+    if (!text || !isSignedIn || sending) return;
     setSending(true);
-    const token = await getToken();
-    if (token) {
-      const created = await postComment(courseId, lesson.id, text, token);
-      if (created) { setComments((prev) => [created, ...(prev ?? [])]); setDraft(''); }
+    setSendError(false);
+    try {
+      const token = await getToken();
+      const created = token ? await postComment(courseId, lesson.id, text, token) : null;
+      if (created) {
+        setComments((prev) => [created, ...(prev ?? [])]);
+        setDraft('');
+      } else {
+        setSendError(true);
+      }
+    } catch {
+      setSendError(true);
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   return (
@@ -244,21 +276,31 @@ export function VideoScreen({ route, navigation }: Props) {
 
               {/* composer */}
               {isSignedIn ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
-                  <TextInput
-                    value={draft}
-                    onChangeText={setDraft}
-                    placeholder={tr('Написать комментарий…')}
-                    placeholderTextColor={T.labelTertiary}
-                    style={[ty.body, { flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14, color: T.label }]}
-                    onSubmitEditing={send}
-                    returnKeyType="send"
-                  />
-                  <Pressable onPress={send} disabled={sending || !draft.trim()} hitSlop={6}>
-                    {sending ? <ActivityIndicator color={T.brand} /> : <SF name="arrow.up.circle.fill" size={32} color={draft.trim() ? T.brand : T.labelTertiary} />}
-                  </Pressable>
+                <>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                    <TextInput
+                      value={draft}
+                      onChangeText={(v) => { setDraft(v); if (sendError) setSendError(false); }}
+                      placeholder={tr('Написать комментарий…')}
+                      placeholderTextColor={T.labelTertiary}
+                      style={[ty.body, { flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14, color: T.label }]}
+                      onSubmitEditing={send}
+                      returnKeyType="send"
+                      editable={!sending}
+                    />
+                    <Pressable onPress={send} disabled={sending || !draft.trim()} hitSlop={6}>
+                      {sending ? <ActivityIndicator color={T.brand} /> : <SF name="arrow.up.circle.fill" size={32} color={draft.trim() ? T.brand : T.labelTertiary} />}
+                    </Pressable>
+                  </View>
+                  {sendError ? (
+                    <Text style={[ty.caption1, { color: T.red, marginTop: 6 }]}>{tr('Не удалось отправить. Попробуйте ещё раз.')}</Text>
+                  ) : null}
+                </>
+              ) : (
+                <View style={{ paddingVertical: 14, alignItems: 'center' }}>
+                  <Text style={[ty.caption1, { color: T.labelTertiary, textAlign: 'center' }]}>{tr('Войдите, чтобы участвовать в обсуждении')}</Text>
                 </View>
-              ) : null}
+              )}
             </View>
           ) : null}
         </ScrollView>

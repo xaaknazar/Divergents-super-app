@@ -8,8 +8,15 @@ import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { API_BASE } from './api';
 
-// ─── Small JSON fetch helper (returns null on any failure) ─────────────────
-async function getJson(path: string, timeoutMs = 12000): Promise<any | null> {
+// ─── Small JSON fetch helper ───────────────────────────────────────────────
+// getJsonResult distinguishes a real failure (network error, timeout, non-2xx,
+// bad JSON → ok:false) from a valid-but-empty response (ok:true, data may be
+// null/[]). This lets screens show a proper ERROR + RETRY state instead of an
+// "empty" state when the server is unreachable. getJson keeps the simple
+// null-on-failure contract for callers that only need the payload.
+interface JsonResult { ok: boolean; data: any | null }
+
+async function getJsonResult(path: string, timeoutMs = 12000): Promise<JsonResult> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -17,13 +24,17 @@ async function getJson(path: string, timeoutMs = 12000): Promise<any | null> {
       signal: ctrl.signal,
       headers: { Accept: 'application/json' },
     });
-    if (!res.ok) return null;
-    return await res.json();
+    if (!res.ok) return { ok: false, data: null };
+    return { ok: true, data: await res.json() };
   } catch {
-    return null;
+    return { ok: false, data: null };
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function getJson(path: string, timeoutMs = 12000): Promise<any | null> {
+  return (await getJsonResult(path, timeoutMs)).data;
 }
 
 // ─── Challenge scoring model ───────────────────────────────────────────────
@@ -300,4 +311,47 @@ export interface Lecture {
 export async function fetchLectures(): Promise<Lecture[]> {
   const d = await getJson('/api/mobile/community/lectures');
   return Array.isArray(d?.lectures) ? (d.lectures as Lecture[]) : [];
+}
+
+// ─── Aggregated loaders (error-aware) ───────────────────────────────────────
+// These fetch several sections together and report `error: true` only when
+// EVERY underlying request failed (network down / server unreachable), so a
+// single empty section never masquerades as a connection error.
+export interface CommunityHomeData {
+  trips: Trip[];
+  sport: SportActivity[];
+  challenges: ChallengeListItem[];
+  error: boolean;
+}
+
+export async function fetchCommunityHome(): Promise<CommunityHomeData> {
+  const [t, s, c] = await Promise.all([
+    getJsonResult('/api/mobile/community/trips'),
+    getJsonResult('/api/mobile/community/sport'),
+    getJsonResult('/api/mobile/community/challenges'),
+  ]);
+  return {
+    trips: Array.isArray(t.data?.trips) ? (t.data.trips as Trip[]) : [],
+    sport: Array.isArray(s.data?.activities) ? (s.data.activities as SportActivity[]) : [],
+    challenges: Array.isArray(c.data?.challenges) ? (c.data.challenges as ChallengeListItem[]) : [],
+    error: !t.ok && !s.ok && !c.ok,
+  };
+}
+
+export interface ChallengesBundle {
+  challenges: ChallengeListItem[];
+  teams: ChallengeTeam[];
+  error: boolean;
+}
+
+export async function fetchChallengesAndTeams(): Promise<ChallengesBundle> {
+  const [c, t] = await Promise.all([
+    getJsonResult('/api/mobile/community/challenges'),
+    getJsonResult('/api/mobile/community/teams'),
+  ]);
+  return {
+    challenges: Array.isArray(c.data?.challenges) ? (c.data.challenges as ChallengeListItem[]) : [],
+    teams: Array.isArray(t.data?.teams) ? (t.data.teams as ChallengeTeam[]) : [],
+    error: !c.ok && !t.ok,
+  };
 }

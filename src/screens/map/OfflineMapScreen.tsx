@@ -7,7 +7,7 @@ import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { usePlaces, filterPlaces } from '../../state/PlacesContext';
-import { CATEGORY_META, cityCenter } from '../../data/places';
+import { CATEGORY_META, safeCityCenter } from '../../data/places';
 import { MAP_STYLE_URL } from '../../config';
 import { useLang, tr } from '../../state/LanguageContext';
 import { MapStackParams } from '../../navigation/types';
@@ -35,7 +35,7 @@ export function OfflineMapScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   useLang();
   const { country, city, places } = usePlaces();
-  const center = cityCenter(country, city)!;
+  const center = safeCityCenter(country, city);
   const list = filterPlaces(places, country, city, null, [], '');
   const cameraRef = useRef<any>(null);
 

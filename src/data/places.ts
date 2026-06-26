@@ -74,6 +74,16 @@ export const COUNTRIES: Country[] = [
 export function cityCenter(country: string, city: string): City | undefined {
   return COUNTRIES.find((c) => c.key === country)?.cities.find((ci) => ci.key === city);
 }
+// Never-undefined center: falls back to the first known city if the requested
+// country/city is missing (e.g. a stale persisted filter). Use this instead of
+// `cityCenter(...)!` so the UI can't crash on bad/legacy stored values.
+export function safeCityCenter(country: string, city: string): City {
+  return cityCenter(country, city) ?? COUNTRIES[0].cities[0];
+}
+// True only when country/city resolve to a real known city.
+export function isKnownCity(country: string, city: string): boolean {
+  return !!cityCenter(country, city);
+}
 export function nearestCity(lat: number, lng: number): { country: string; city: string } | null {
   let best: { country: string; city: string } | null = null;
   let bestD = Infinity;
@@ -184,6 +194,69 @@ export async function postPlace(
     return data?.id ? String(data.id) : null;
   } catch {
     return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// POST a review so other users can see it. Best-effort: the local optimistic
+// review (PlacesContext) is shown regardless. Returns true only on a real 2xx
+// (the caller may surface "synced" vs "saved locally" feedback honestly).
+export async function postReview(
+  placeId: string,
+  body: { rating: number; text: string },
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<boolean> {
+  if (!placeId) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}/review`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// Report a place to moderators. Returns true on a real 2xx so the UI can tell
+// the user honestly whether the report reached the server (vs. failed). The
+// endpoint is optional server-side (see BACKEND.md); on failure the caller
+// surfaces a retry/error message instead of a fake "thanks".
+export async function reportPlace(
+  placeId: string,
+  reason: string,
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<boolean> {
+  if (!placeId) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}/report`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ reason }),
+    });
+    return res.ok;
+  } catch {
+    return false;
   } finally {
     clearTimeout(t);
   }

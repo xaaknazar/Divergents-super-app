@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
@@ -6,8 +6,9 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { PrimaryButton, ty } from '../../components/ui';
+import { ErrorState } from '../../components/StateViews';
 import {
-  fetchChallenges, fetchTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam,
+  fetchChallengesAndTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -22,22 +23,27 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const [meta, setMeta] = useState<ChallengeListItem | undefined>(undefined);
   const [teams, setTeams] = useState<ChallengeTeam[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [nick, setNick] = useState('');
   const [teamId, setTeamId] = useState<string | null>(null);
   const [agree, setAgree] = useState(false);
   const [track, setTrack] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     let alive = true;
-    Promise.all([fetchChallenges(), fetchTeams()]).then(([list, tms]) => {
+    setLoading(true);
+    fetchChallengesAndTeams().then(({ challenges, teams: tms, error: err }) => {
       if (!alive) return;
-      setMeta(getChallengeMeta(list, route.params.challengeId));
+      setMeta(getChallengeMeta(challenges, route.params.challengeId));
       setTeams(tms);
+      setError(err);
       setLoading(false);
     });
     return () => { alive = false; };
   }, [route.params.challengeId]);
+
+  useEffect(() => load(), [load]);
 
   const nickOk = nick.trim().length > 0 && nick.trim().length <= NICK_MAX;
   const canSubmit = nickOk && !!teamId && agree && track;
@@ -92,6 +98,8 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         <View style={{ backgroundColor: T.cardBg, borderRadius: 12, overflow: 'hidden' }}>
           {loading ? (
             <View style={{ padding: 24, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
+          ) : error && teams.length === 0 ? (
+            <View style={{ paddingVertical: 12 }}><ErrorState onRetry={load} /></View>
           ) : teams.length === 0 ? (
             <View style={{ padding: 18, alignItems: 'center' }}>
               <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команды пока не сформированы.')}</Text>

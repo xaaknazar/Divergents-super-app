@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF, SFName } from '../../components/SFIcon';
 import { Capsule, ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
-import { EmptyState } from '../../components/StateViews';
+import { EmptyState, ErrorState } from '../../components/StateViews';
 import { ChannelPost } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { useLang, tr } from '../../state/LanguageContext';
@@ -18,7 +18,7 @@ type Props = NativeStackScreenProps<CommunityStackParams, 'Channel'>;
 export function ChannelScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
-  const { channels, loading, getChannel, postsByChannel, isJoined, isRequested, isApproved, join, leave, request, approve, markSeen } = useChannel();
+  const { channels, loading, error, reload, getChannel, postsByChannel, isJoined, isRequested, isApproved, join, leave, request, approve, markSeen } = useChannel();
   const channel = getChannel(route.params.channelId);
   const { t, lang } = useLang();
 
@@ -38,7 +38,9 @@ export function ChannelScreen({ route, navigation }: Props) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
-        <EmptyState icon="tray" title={tr('Канал не найден')} actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />
+        {error
+          ? <ErrorState onRetry={reload} />
+          : <EmptyState icon="tray" title={tr('Канал не найден')} actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />}
       </View>
     );
   }

@@ -38,7 +38,9 @@ export interface ChannelPost {
   views: string;
 }
 
-async function getJson(path: string, timeoutMs = 12000): Promise<any | null> {
+interface JsonResult { ok: boolean; data: any | null }
+
+async function getJsonResult(path: string, timeoutMs = 12000): Promise<JsonResult> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -46,21 +48,38 @@ async function getJson(path: string, timeoutMs = 12000): Promise<any | null> {
       signal: ctrl.signal,
       headers: { Accept: 'application/json' },
     });
-    if (!res.ok) return null;
-    return await res.json();
+    if (!res.ok) return { ok: false, data: null };
+    return { ok: true, data: await res.json() };
   } catch {
-    return null;
+    return { ok: false, data: null };
   } finally {
     clearTimeout(timer);
   }
 }
 
 export async function fetchChannels(): Promise<Channel[]> {
-  const d = await getJson('/api/mobile/community/channels');
-  return Array.isArray(d?.channels) ? (d.channels as Channel[]) : [];
+  const { data } = await getJsonResult('/api/mobile/community/channels');
+  return Array.isArray(data?.channels) ? (data.channels as Channel[]) : [];
 }
 
 export async function fetchChannelPosts(): Promise<ChannelPost[]> {
-  const d = await getJson('/api/mobile/community/posts');
-  return Array.isArray(d?.posts) ? (d.posts as ChannelPost[]) : [];
+  const { data } = await getJsonResult('/api/mobile/community/posts');
+  return Array.isArray(data?.posts) ? (data.posts as ChannelPost[]) : [];
+}
+
+// Loads channels + posts together and reports `error: true` only when both
+// requests failed (server unreachable), so screens can show a RETRY state
+// instead of an "empty" / "not found" one when the network is down.
+export interface ChannelData { channels: Channel[]; posts: ChannelPost[]; error: boolean }
+
+export async function fetchChannelData(): Promise<ChannelData> {
+  const [c, p] = await Promise.all([
+    getJsonResult('/api/mobile/community/channels'),
+    getJsonResult('/api/mobile/community/posts'),
+  ]);
+  return {
+    channels: Array.isArray(c.data?.channels) ? (c.data.channels as Channel[]) : [],
+    posts: Array.isArray(p.data?.posts) ? (p.data.posts as ChannelPost[]) : [],
+    error: !c.ok && !p.ok,
+  };
 }

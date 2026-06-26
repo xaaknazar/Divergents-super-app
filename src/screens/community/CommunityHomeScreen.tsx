@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, LayoutAnimation, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
@@ -8,13 +8,13 @@ import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, ty } from '../../components/ui';
-import { EmptyState } from '../../components/StateViews';
+import { EmptyState, ErrorState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
-  daysUntil, fetchTrips, fetchSport, fetchChallenges,
+  daysUntil, fetchCommunityHome,
   Trip, SportActivity, ChallengeListItem,
 } from '../../data/community';
 import { imgUrl } from '../../data/api';
@@ -32,22 +32,42 @@ export function CommunityHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
+  const { reload: reloadChannels } = useChannel();
   const [seg, setSeg] = useState(0);
 
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [sport, setSport] = useState<SportActivity[] | null>(null);
   const [challenges, setChallenges] = useState<ChallengeListItem[] | null>(null);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    const d = await fetchCommunityHome();
+    setTrips(d.trips);
+    setSport(d.sport);
+    setChallenges(d.challenges);
+    setError(d.error);
+  }, []);
 
   useEffect(() => {
     let alive = true;
-    fetchTrips().then((v) => { if (alive) setTrips(v); });
-    fetchSport().then((v) => { if (alive) setSport(v); });
-    fetchChallenges().then((v) => { if (alive) setChallenges(v); });
+    (async () => {
+      const d = await fetchCommunityHome();
+      if (!alive) return;
+      setTrips(d.trips);
+      setSport(d.sport);
+      setChallenges(d.challenges);
+      setError(d.error);
+    })();
     return () => { alive = false; };
   }, []);
 
+  const onRefresh = useCallback(async () => {
+    reloadChannels();
+    await load();
+  }, [load, reloadChannels]);
+
   return (
-    <Screen largeTitle={tr('Сообщество')}>
+    <Screen largeTitle={tr('Сообщество')} onRefresh={onRefresh}>
       <NavBarLarge title={t('community')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
@@ -58,11 +78,11 @@ export function CommunityHomeScreen({ navigation }: Props) {
         {SECTION_KEYS.map((k, i) => <Chip key={k} label={t(k)} active={seg === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(i); }} />)}
       </ScrollView>
 
-      {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} trips={trips} sport={sport} />}
+      {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} trips={trips} sport={sport} error={error} onRetry={load} />}
       {seg === 1 && <ChannelTab navigation={navigation} />}
-      {seg === 2 && <ChallengesTab navigation={navigation} challenges={challenges} />}
-      {seg === 3 && <TripsTab navigation={navigation} trips={trips} />}
-      {seg === 4 && <SportTab sport={sport} />}
+      {seg === 2 && <ChallengesTab navigation={navigation} challenges={challenges} error={error} onRetry={load} />}
+      {seg === 3 && <TripsTab navigation={navigation} trips={trips} error={error} onRetry={load} />}
+      {seg === 4 && <SportTab sport={sport} error={error} onRetry={load} />}
       <View style={{ height: 16 }} />
     </Screen>
   );
@@ -72,6 +92,12 @@ export function CommunityHomeScreen({ navigation }: Props) {
 function Loading() {
   const { T } = useTheme();
   return <View style={{ paddingVertical: 28, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>;
+}
+
+// Renders an ERROR + RETRY state when the load failed, otherwise the empty state.
+function EmptyOrError({ error, onRetry, icon, title, subtitle }: { error: boolean; onRetry?: () => void; icon: string; title: string; subtitle: string }) {
+  if (error) return <ErrorState onRetry={onRetry} />;
+  return <EmptyState icon={icon} title={title} subtitle={subtitle} />;
 }
 
 // ─── Active challenge card (only when there's a live one) ───────────
@@ -116,12 +142,12 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
 }
 
 // ─── Главная ────────────────────────────────────────────────────────
-function HomeFeed({ navigation, setSeg, trips, sport }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null }) {
+function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; error: boolean; onRetry: () => void }) {
   const { t } = useLang();
   const { T } = useTheme();
   const { challenge } = useChallenge();
   const hasActive = challenge.currentDay > 0 || challenge.tasks.length > 0;
-  const { channels } = useChannel();
+  const { channels, error: channelsError, reload: reloadChannels } = useChannel();
   return (
     <>
       <SectionHeader title={t('your_challenge')} />
@@ -131,7 +157,7 @@ function HomeFeed({ navigation, setSeg, trips, sport }: { navigation: Nav; setSe
 
       <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
       {trips === null ? <Loading /> : trips.length === 0 ? (
-        <EmptyState icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />
+        <EmptyOrError error={error} onRetry={onRetry} icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
           {trips.map((tp) => <TripCardH key={tp.id} trip={tp} navigation={navigation} />)}
@@ -141,7 +167,7 @@ function HomeFeed({ navigation, setSeg, trips, sport }: { navigation: Nav; setSe
       <View style={{ marginTop: 18 }}>
         <SectionHeader title={t('sec_sport')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
         {sport === null ? <Loading /> : sport.length === 0 ? (
-          <EmptyState icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />
+          <EmptyOrError error={error} onRetry={onRetry} icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
             {sport.map((sp) => (
@@ -159,7 +185,7 @@ function HomeFeed({ navigation, setSeg, trips, sport }: { navigation: Nav; setSe
       <View style={{ marginTop: 18 }}>
         <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(1); }} />
         {channels.length === 0
-          ? <EmptyState icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
+          ? <EmptyOrError error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
           : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
       </View>
     </>
@@ -167,7 +193,7 @@ function HomeFeed({ navigation, setSeg, trips, sport }: { navigation: Nav; setSe
 }
 
 // ─── Челленджи ──────────────────────────────────────────────────────
-function ChallengesTab({ navigation, challenges }: { navigation: Nav; challenges: ChallengeListItem[] | null }) {
+function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation: Nav; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
   const { challenge } = useChallenge();
   const hasActive = challenge.currentDay > 0 || challenge.tasks.length > 0;
@@ -180,7 +206,7 @@ function ChallengesTab({ navigation, challenges }: { navigation: Nav; challenges
         : <EmptyState icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />}
       <SectionHeader title={tr('Открыт набор')} />
       {challenges === null ? <Loading /> : upcoming.length === 0 ? (
-        <EmptyState icon="calendar" title={tr('Пока ничего нет')} subtitle={tr('Новые челленджи появятся здесь.')} />
+        <EmptyOrError error={error} onRetry={onRetry} icon="calendar" title={tr('Пока ничего нет')} subtitle={tr('Новые челленджи появятся здесь.')} />
       ) : upcoming.map((ch) => (
         <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
           style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
@@ -238,10 +264,10 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
   );
 }
 
-function TripsTab({ navigation, trips }: { navigation: Nav; trips: Trip[] | null }) {
+function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trips: Trip[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
   if (trips === null) return <Loading />;
-  if (trips.length === 0) return <EmptyState icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />;
+  if (trips.length === 0) return <EmptyOrError error={error} onRetry={onRetry} icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />;
   return (
     <ListSection header={tr('Все поездки')}>
       {trips.map((t, i) => (
@@ -262,11 +288,11 @@ function TripsTab({ navigation, trips }: { navigation: Nav; trips: Trip[] | null
 }
 
 // ─── Спорт ──────────────────────────────────────────────────────────
-function SportTab({ sport }: { sport: SportActivity[] | null }) {
+function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
   const { has, toggle } = useEnrollment();
   if (sport === null) return <Loading />;
-  if (sport.length === 0) return <EmptyState icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />;
+  if (sport.length === 0) return <EmptyOrError error={error} onRetry={onRetry} icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />;
   return (
     <ListSection header={tr('Спортивные активности')}>
       {sport.map((sp, i) => {
@@ -298,12 +324,12 @@ function SportTab({ sport }: { sport: SportActivity[] | null }) {
 function ChannelTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
   const { t } = useLang();
-  const { channels, loading } = useChannel();
+  const { channels, loading, error, reload } = useChannel();
   return (
     <View style={{ paddingHorizontal: 16 }}>
       <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{t('channels_of_community')}</Text>
       {loading && channels.length === 0 ? <Loading />
-        : channels.length === 0 ? <EmptyState icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
+        : channels.length === 0 ? <EmptyOrError error={error} onRetry={reload} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
         : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
     </View>
   );

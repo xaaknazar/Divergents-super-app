@@ -3,11 +3,12 @@
 // were cut for v1 — only free tiers ('open', 'request') remain.
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { loadJSON, saveJSON } from './persist';
-import { Channel, ChannelPost, fetchChannels, fetchChannelPosts } from '../data/channel';
+import { Channel, ChannelPost, fetchChannelData } from '../data/channel';
 
 interface ChannelState {
   channels: Channel[];
   loading: boolean;
+  error: boolean;
   reload: () => void;
   getChannel: (id: string) => Channel | undefined;
   postsByChannel: (id: string) => ChannelPost[];
@@ -35,6 +36,7 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [posts, setPosts] = useState<ChannelPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const [joined, setJoined] = useState<string[]>([]);
   const [requested, setRequested] = useState<string[]>([]);
@@ -44,10 +46,17 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
 
   const reload = useCallback(() => {
     setLoading(true);
-    Promise.all([fetchChannels(), fetchChannelPosts()])
-      .then(([ch, ps]) => { setChannels(ch); setPosts(ps); })
+    fetchChannelData()
+      .then(({ channels: ch, posts: ps, error: err }) => {
+        setChannels(ch);
+        setPosts(ps);
+        // Only flag an error when the request failed AND we have nothing to show,
+        // so a transient refresh failure never blanks already-loaded content.
+        setError(err && ch.length === 0);
+      })
+      .catch(() => setError((prev) => prev || channels.length === 0))
       .finally(() => setLoading(false));
-  }, []);
+  }, [channels.length]);
 
   useEffect(() => { reload(); }, [reload]);
 
@@ -76,14 +85,14 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
   }, [joined, seen, posts]);
 
   const value = useMemo<ChannelState>(() => ({
-    channels, loading, reload, getChannel, postsByChannel, getPost,
+    channels, loading, error, reload, getChannel, postsByChannel, getPost,
     joined, requested,
     isJoined: (id) => joined.includes(id),
     isRequested: (id) => requested.includes(id),
     join, leave, request, unread, markSeen,
     approved, isApproved: (id) => approved.includes(id), approve,
     likes, isLiked: (id) => likes.includes(id), toggleLike,
-  }), [channels, loading, reload, getChannel, postsByChannel, getPost, joined, requested, approved, seen, likes, join, leave, request, approve, unread, markSeen, toggleLike]);
+  }), [channels, loading, error, reload, getChannel, postsByChannel, getPost, joined, requested, approved, seen, likes, join, leave, request, approve, unread, markSeen, toggleLike]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -3,7 +3,7 @@
 // persists across restarts. Live places come from the website API (admin
 // publishes them) — there is no hardcoded seed data.
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { Place, Review, PlaceTag, fetchPlaces } from '../data/places';
+import { Place, Review, PlaceTag, fetchPlaces, isKnownCity } from '../data/places';
 import { loadJSON, saveJSON } from './persist';
 
 interface SavedLoc { country: string; city: string; manual: boolean }
@@ -59,7 +59,9 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     loadJSON<Record<string, Review[]>>('dvg.placeReviews', {}).then(setUserReviews);
     loadJSON<string[]>('dvg.placeFavs', []).then(setFavs);
     loadJSON<SavedLoc | null>('dvg.placeLoc', null).then((saved) => {
-      if (saved && saved.country && saved.city) {
+      // Ignore stale/invalid persisted filters (e.g. a city removed from the
+      // catalog) so the rest of the UI can rely on a real city center.
+      if (saved && saved.country && saved.city && isKnownCity(saved.country, saved.city)) {
         setCountry(saved.country);
         setCity(saved.city);
         if (saved.manual) { setLocManual(true); manualRef.current = true; }

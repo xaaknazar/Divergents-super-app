@@ -39,13 +39,18 @@ export function BadgeTile({ b }: { b: EarnedBadge }) {
 }
 
 export function AchievementsScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, isDark } = useTheme();
   const { lang } = useLang();
   const { badges, earned, total } = useAchievements();
   const pct = total ? earned / total : 0;
+  // Warm cream wash in light mode; a dark-friendly wash in dark mode so the
+  // light label text stays readable.
+  const gradient = isDark
+    ? [T.systemBg, T.systemBg, T.groupedBg]
+    : ['#FBF4E6', '#F6F4F1', '#F2F2F7'];
 
   return (
-    <Screen gradient={['#FBF4E6', '#F6F4F1', '#F2F2F7']} topInset={false}>
+    <Screen gradient={gradient} topInset={false}>
       <BackNav back={tr('Профиль')} onBack={() => navigation.goBack()} transparent />
 
       <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>

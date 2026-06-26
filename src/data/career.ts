@@ -122,6 +122,31 @@ export async function fetchVacancy(id: string): Promise<Job | null> {
   }
 }
 
+/**
+ * POST /api/mobile/vacancies/:id/apply — best-effort server-side application.
+ * Optional endpoint: the local optimistic "applied" state is the source of
+ * truth, so this never throws and resolves false when the sync isn't possible
+ * (no auth / unreachable / endpoint not yet implemented).
+ */
+export async function applyToVacancy(id: string, token: string | null | undefined): Promise<boolean> {
+  if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/vacancies/${encodeURIComponent(id)}/apply`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({}),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // The Career module's unique value: match by psychotype/talents, not just skills.
 // Generic guidance copy (no company branding) — safe to keep client-side.
 export const GOOD_FIT = {

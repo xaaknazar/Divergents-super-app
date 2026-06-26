@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, RefreshControl } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
+import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
 import { useNotifications } from '../../state/NotificationsContext';
 import { NotifTarget } from '../../data/notifications';
 import { RootStackParams } from '../../navigation/types';
@@ -18,6 +19,16 @@ export function NotificationsScreen({ navigation }: Props) {
   const { lang } = useLang();
   const insets = useSafeAreaInsets();
   const { items, unread, loading, error, refresh, markRead, markAllRead } = useNotifications();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await refresh(); } finally { setRefreshing(false); }
+  }, [refresh]);
+
+  // Re-fetch when the modal opens so the feed (and the unread badge) is fresh
+  // without requiring an app restart. Existing items stay visible meanwhile.
+  useEffect(() => { void refresh(); }, [refresh]);
 
   // Open the notification's target content. Dispatching navigate to the (lower)
   // 'Tabs' route pops this modal and jumps into the right tab + stack screen.
@@ -32,6 +43,9 @@ export function NotificationsScreen({ navigation }: Props) {
     );
   };
 
+  // Initial load only — pull-to-refresh shows its own spinner, never the skeleton.
+  const showSkeleton = loading && !refreshing && items.length === 0;
+
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
@@ -42,12 +56,16 @@ export function NotificationsScreen({ navigation }: Props) {
         </Pressable>
       </View>
 
-      {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={T.brand} />
+      {showSkeleton ? (
+        <View style={{ paddingTop: 12 }}>
+          <ListSkeleton rows={6} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: insets.bottom + 30, flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={{ paddingVertical: 8, paddingBottom: insets.bottom + 30, flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
+        >
           {items.map((it) => (
             <Pressable key={it.id} onPress={() => open(it.id, it.target)}
               style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
@@ -70,23 +88,23 @@ export function NotificationsScreen({ navigation }: Props) {
           ))}
 
           {items.length === 0 ? (
-            <View style={{ flex: 1, padding: 40, alignItems: 'center', justifyContent: 'center' }}>
-              <SF name={error ? 'wifi.slash' : 'bell.fill'} size={32} color={T.labelTertiary} />
-              <Text style={[ty.headline, { color: T.label, marginTop: 12, textAlign: 'center' }]}>
-                {error
-                  ? (lang === 'ru' ? 'Не удалось загрузить' : 'Couldn’t load')
-                  : tr('Уведомлений пока нет')}
-              </Text>
-              <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4, textAlign: 'center' }]}>
-                {error
-                  ? (lang === 'ru' ? 'Проверьте подключение и попробуйте снова.' : 'Check your connection and try again.')
-                  : (lang === 'ru' ? 'Здесь появятся новости, челленджи и события.' : 'News, challenges and events will appear here.')}
-              </Text>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
               {error ? (
-                <Pressable onPress={refresh} hitSlop={8} style={{ marginTop: 16, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 12, backgroundColor: T.brandTinted }}>
-                  <Text style={[ty.subheadEm, { color: T.brand }]}>{lang === 'ru' ? 'Повторить' : 'Retry'}</Text>
-                </Pressable>
-              ) : null}
+                <ErrorState
+                  message={lang === 'ru'
+                    ? 'Не удалось загрузить уведомления. Проверьте подключение и попробуйте снова.'
+                    : 'Couldn’t load notifications. Check your connection and try again.'}
+                  onRetry={onRefresh}
+                />
+              ) : (
+                <EmptyState
+                  icon="bell.fill"
+                  title={tr('Уведомлений пока нет')}
+                  subtitle={lang === 'ru'
+                    ? 'Здесь появятся новости, челленджи и события. Потяните вниз, чтобы обновить.'
+                    : 'News, challenges and events will appear here. Pull down to refresh.'}
+                />
+              )}
             </View>
           ) : null}
         </ScrollView>

@@ -165,13 +165,24 @@ export function TripDetailScreen({ route, navigation }: Props) {
         </ListSection>
 
         <ListSection header={`Идут · ${goingCount} человек`}>
-          <View style={{ padding: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {['А', 'Б', 'Д', 'Ж', 'М', 'О', 'К', 'С', 'Т', `+${Math.max(0, goingCount - 9)}`].map((n, i) => (
-              <View key={i} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: i === 9 ? T.fillTertiary : `hsl(${i * 40 + 200}, 55%, 65%)`, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={[ty.subheadEm, { color: i === 9 ? T.labelSecondary : '#fff' }]}>{n}</Text>
-              </View>
-            ))}
-          </View>
+          {goingCount === 0 ? (
+            <View style={{ padding: 16, alignItems: 'center' }}>
+              <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Пока никто не записался — будьте первым.')}</Text>
+            </View>
+          ) : (
+            <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+              {Array.from({ length: Math.min(goingCount, 9) }).map((_, i) => (
+                <View key={i} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                  <SF name="person.fill" size={18} color={T.brand} />
+                </View>
+              ))}
+              {goingCount > 9 ? (
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[ty.subheadEm, { color: T.labelSecondary }]}>+{goingCount - 9}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
         </ListSection>
       </ScrollView>
 

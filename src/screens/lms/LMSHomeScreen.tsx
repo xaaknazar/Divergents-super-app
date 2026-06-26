@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
@@ -64,7 +64,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   const showSearch = !query && cat === 'Все';
 
   return (
-    <Screen largeTitle={t('tab_learn')} onRefresh={async () => { reload(); await my.reload(); }}>
+    <Screen largeTitle={t('tab_learn')} onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
       <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingBottom: 14 }}>

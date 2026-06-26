@@ -13,7 +13,7 @@ import { SF } from '../../components/SFIcon';
 import { PrimaryButton, ty } from '../../components/ui';
 import { usePlaces } from '../../state/PlacesContext';
 import { Place, postPlace } from '../../data/places';
-import { CATEGORY_META, CATEGORIES, TAG_META, TAGS, PlaceCategory, PlaceTag, cityCenter, COUNTRIES } from '../../data/places';
+import { CATEGORY_META, CATEGORIES, TAG_META, TAGS, PlaceCategory, PlaceTag, safeCityCenter, COUNTRIES } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<MapStackParams, 'AddPlace'>;
@@ -44,9 +44,9 @@ export function AddPlaceScreen({ navigation, route }: Props) {
   const { country, city, addPlace, updatePlace, getPlace } = usePlaces();
   const editId = route.params?.editId;
   const editing: Place | undefined = editId ? getPlace(editId) : undefined;
-  const initLat = editing?.lat ?? route.params?.lat ?? cityCenter(country, city)!.lat;
-  const initLng = editing?.lng ?? route.params?.lng ?? cityCenter(country, city)!.lng;
-  const center = cityCenter(country, city)!;
+  const center = safeCityCenter(country, city);
+  const initLat = editing?.lat ?? route.params?.lat ?? center.lat;
+  const initLng = editing?.lng ?? route.params?.lng ?? center.lng;
   const cityName = center?.name ?? '';
   const countryName = COUNTRIES.find((c) => c.key === country)?.name ?? '';
 

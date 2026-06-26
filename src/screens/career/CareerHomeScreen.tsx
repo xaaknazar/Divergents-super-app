@@ -8,7 +8,7 @@ import { Screen } from '../../components/Screen';
 import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
-import { ListSkeleton, EmptyState } from '../../components/StateViews';
+import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
 import { Ring } from '../../components/talentUI';
 import { CAREER_FILTERS, GOOD_FIT, Job } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
@@ -34,7 +34,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
   const { t } = useLang();
   const [filter, setFilter] = useState(0);
-  const { applied, isApplied, jobs, jobsLoading, reloadJobs } = useCareer();
+  const { applied, isApplied, jobs, jobsLoading, jobsError, reloadJobs } = useCareer();
   const { profile, live, reload: reloadProfile } = useTalentProfile();
 
   // Only use real (live) Gallup talents for matching — never demo data.
@@ -48,7 +48,7 @@ export function CareerHomeScreen({ navigation }: Props) {
 
   const open = (id: string) => navigation.navigate('VacancyDetail', { jobId: id });
 
-  const empty = !jobsLoading && jobs.length === 0;
+  const empty = !jobsLoading && !jobsError && jobs.length === 0;
 
   return (
     <Screen largeTitle={t('tab_career')} onRefresh={async () => { await Promise.all([reloadProfile(), reloadJobs()]); }}>
@@ -63,7 +63,9 @@ export function CareerHomeScreen({ navigation }: Props) {
         {tr('Подобраны по вашему психотипу и талантам')}
       </Text>
 
-      {empty ? (
+      {jobsError && jobs.length === 0 ? (
+        <ErrorState message={tr('Не удалось загрузить вакансии. Проверьте подключение к интернету.')} onRetry={() => reloadJobs()} />
+      ) : empty ? (
         <EmptyState icon="briefcase" title={tr('Пока нет вакансий')}
           subtitle={tr('Здесь появятся вакансии, подобранные под ваш профиль. Загляните позже.')}
           actionLabel={tr('Обновить')} onAction={() => reloadJobs()} />

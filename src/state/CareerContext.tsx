@@ -1,9 +1,10 @@
 // Tracks saved + applied vacancies (persisted) and loads the live vacancy
 // catalog from the website API. No mock/branded data — empty when the API is
 // unreachable so screens can show a proper empty state.
-import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
-import { Job, fetchVacancies } from '../data/career';
+import { Job, fetchVacancies, applyToVacancy } from '../data/career';
 
 interface CareerState {
   applied: string[];
@@ -26,6 +27,10 @@ const Ctx = createContext<CareerState | null>(null);
 const uniq = (xs: string[]) => Array.from(new Set(xs));
 
 export function CareerProvider({ children }: { children: React.ReactNode }) {
+  const { getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
+
   const [applied, setApplied] = useState<string[]>([]);
   const [saved, setSaved] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -65,7 +70,17 @@ export function CareerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { reloadJobs(); }, [reloadJobs]);
 
   const apply = useCallback((id: string) =>
-    setApplied((p) => { if (p.includes(id)) return p; const n = [...p, id]; saveJSON('dvg.applied', n); return n; }), []);
+    setApplied((p) => {
+      if (p.includes(id)) return p;
+      const n = [...p, id];
+      saveJSON('dvg.applied', n);
+      // Best-effort server sync; the local optimistic state is the source of
+      // truth, so failure here is silent and never blocks the UI.
+      Promise.resolve(getTokenRef.current())
+        .then((tok) => applyToVacancy(id, tok))
+        .catch(() => {});
+      return n;
+    }), []);
   const toggleSave = useCallback((id: string) =>
     setSaved((p) => { const n = p.includes(id) ? p.filter((x) => x !== id) : [...p, id]; saveJSON('dvg.saved', n); return n; }), []);
 

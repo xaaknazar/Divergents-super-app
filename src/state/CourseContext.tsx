@@ -3,7 +3,7 @@
 // Content is API-driven only — there is no bundled fake catalog. When the
 // website API is unreachable or empty, the screens render proper Russian
 // loading / empty / error states instead of placeholder data.
-import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { Course } from '../data/courses';
 import { fetchCatalog, fetchCourseDetail, fetchOwnedDetail, markLessonComplete } from '../data/api';
 import { loadJSON, saveJSON } from './persist';
@@ -16,7 +16,7 @@ interface CourseState {
   source: DataSource;
   loading: boolean;
   error: string | null;
-  reload: () => void;
+  reload: () => Promise<void>;
 
   getCourse: (id: string) => Course | undefined;
   loadDetail: (id: string, token?: string | null) => Promise<void>;
@@ -44,6 +44,11 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
   const [completed, setCompleted] = useState<Record<string, string[]>>({});
   const [detailLoading, setDetailLoading] = useState<Record<string, boolean>>({});
   const [hydrated, setHydrated] = useState(false);
+  // Mirror of `courses` so reload() can tell an initial load (show skeleton,
+  // clear on failure) from a pull-to-refresh (keep content, keep spinner) without
+  // adding `courses` to the reload callback's deps (which would loop).
+  const coursesRef = useRef<Course[]>([]);
+  useEffect(() => { coursesRef.current = courses; }, [courses]);
 
   // Restore saved lesson progress, then persist on every change.
   useEffect(() => {
@@ -52,7 +57,9 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { if (hydrated) saveJSON('dvg.completed', completed); }, [completed, hydrated]);
 
   const load = useCallback(async () => {
-    setSource('loading');
+    // Only show the full skeleton on the very first load; a pull-to-refresh
+    // keeps the existing list visible under the RefreshControl spinner.
+    if (coursesRef.current.length === 0) setSource('loading');
     setError(null);
     try {
       const live = await fetchCatalog();
@@ -61,7 +68,10 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
       setCourses(live);
       setSource('live');
     } catch (e: any) {
-      setCourses([]);
+      // Keep any previously loaded catalog so a transient refresh failure
+      // doesn't blank the screen; the error drives the empty-state retry only
+      // when there is nothing to show.
+      if (coursesRef.current.length === 0) setCourses([]);
       setSource('live');
       setError(e?.message ?? 'network');
     }

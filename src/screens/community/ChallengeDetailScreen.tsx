@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator } from 'react-native';
@@ -11,10 +11,11 @@ import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
 import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ProgressBar, ty } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
+import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import { useChallenge } from '../../state/ChallengeContext';
 import {
-  MEDAL_FOR_RANK, fetchChallenges, fetchTeams, getChallengeMeta, daysUntil, teamsNeed,
+  MEDAL_FOR_RANK, fetchChallengesAndTeams, getChallengeMeta, daysUntil, teamsNeed,
   CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
@@ -24,17 +25,33 @@ type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeDetail'>;
 export function ChallengeDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const challengeId = route.params?.challengeId ?? '';
+  const { challenge: active } = useChallenge();
   const [list, setList] = useState<ChallengeListItem[] | null>(null);
   const [teams, setTeams] = useState<ChallengeTeam[]>([]);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    const { challenges, teams: tms, error: err } = await fetchChallengesAndTeams();
+    setList(challenges);
+    setTeams(tms);
+    setError(err);
+  }, []);
 
   useEffect(() => {
     let alive = true;
-    Promise.all([fetchChallenges(), fetchTeams()]).then(([l, t]) => {
+    (async () => {
+      const { challenges, teams: tms, error: err } = await fetchChallengesAndTeams();
       if (!alive) return;
-      setList(l); setTeams(t);
-    });
+      setList(challenges);
+      setTeams(tms);
+      setError(err);
+    })();
     return () => { alive = false; };
   }, []);
+
+  // The active/daily tracker is local state — always available, even offline.
+  const isActive = challengeId === active.id;
+  if (isActive) return <ActiveChallenge navigation={navigation} />;
 
   if (list === null) {
     return (
@@ -49,7 +66,18 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   if (meta && meta.status === 'upcoming') {
     return <UpcomingChallenge meta={meta} teams={teams} navigation={navigation} />;
   }
-  return <ActiveChallenge navigation={navigation} />;
+  // A server-side active challenge (matched by id) opens the daily tracker.
+  if (meta) return <ActiveChallenge navigation={navigation} />;
+
+  // Unknown id: distinguish a load failure (retry) from a genuinely missing one.
+  return (
+    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+      <BackNav back={tr('Сообщество')} onBack={() => navigation.goBack()} />
+      {error
+        ? <ErrorState onRetry={load} />
+        : <EmptyState icon="flag.fill" title={tr('Челлендж не найден')} subtitle={tr('Возможно, он завершился или ещё не опубликован.')} actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />}
+    </View>
+  );
 }
 
 // ─── Upcoming challenge — rules, teams, join ──────────────

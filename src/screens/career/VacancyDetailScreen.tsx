@@ -25,35 +25,36 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
 
   const fromList = getJob(jobId);
   const [fetched, setFetched] = useState<Job | null>(null);
-  const [loadingOne, setLoadingOne] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   // If the vacancy isn't in the loaded list (deep link / stale list), fetch it
   // directly once the list has settled.
   useEffect(() => {
     if (fromList || jobsLoading) return;
     let active = true;
-    setLoadingOne(true);
     setNotFound(false);
     fetchVacancy(jobId).then((j) => {
       if (!active) return;
       if (j) setFetched(j); else setNotFound(true);
-      setLoadingOne(false);
     });
     return () => { active = false; };
-  }, [fromList, jobsLoading, jobId]);
+  }, [fromList, jobsLoading, jobId, retry]);
 
   const job = fromList ?? fetched;
   const gallup = live ? profile?.gallup ?? [] : [];
 
-  // ── Not found ─────────────────────────────────────────────────────
+  // ── Not found / failed to load ────────────────────────────────────
+  // fetchVacancy resolves null both for a removed vacancy and a network
+  // failure, so the copy is honest about both and offers a retry. Back is
+  // always available in the nav bar.
   if (notFound && !job) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} />
-        <EmptyState icon="briefcase" title={tr('Вакансия не найдена')}
-          subtitle={tr('Возможно, она уже снята с публикации.')}
-          actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />
+        <EmptyState icon="briefcase" title={tr('Не удалось открыть вакансию')}
+          subtitle={tr('Возможно, она снята с публикации или нет связи. Повторите попытку или вернитесь к списку.')}
+          actionLabel={tr('Повторить')} onAction={() => setRetry((n) => n + 1)} />
       </View>
     );
   }
