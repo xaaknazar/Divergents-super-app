@@ -487,6 +487,72 @@ export async function fetchTrip(id: string): Promise<Trip | null> {
   return trips.find((t) => t.id === id) ?? null;
 }
 
+// ─── Creator/admin: publish new content (Clerk Bearer) ──────────────────────
+// Authenticated POST helper used by the in-app creation forms. Distinguishes a
+// permission failure (403 → the user isn't a creator) from other errors so the
+// UI can show a precise Russian message. Returns a normalized result instead of
+// throwing so screens stay crash-free.
+export interface CreateResult { ok: boolean; status: number; id?: string; error?: string }
+
+async function postAuthedJson(
+  path: string,
+  body: unknown,
+  token: string,
+  timeoutMs = 15000,
+): Promise<CreateResult> {
+  if (!token) return { ok: false, status: 401, error: 'no-token' };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    let data: any = null;
+    try { data = await res.json(); } catch { /* empty / non-JSON body */ }
+    if (!res.ok) return { ok: false, status: res.status, error: data?.error || data?.message };
+    return { ok: true, status: res.status, id: data?.id ?? data?.challenge?.id ?? data?.trip?.id };
+  } catch {
+    return { ok: false, status: 0, error: 'network' };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export interface NewChallengeTeam { name: string; capacity: number }
+export interface NewChallengeInput {
+  title: string;
+  startISO: string;
+  durationDays: number;
+  teams: NewChallengeTeam[];
+  price?: number | null;
+  categories?: string[];
+}
+
+// POST /api/mobile/challenges — daily tasks are seeded server-side, so the
+// payload only carries the program shell (title, dates, teams, price).
+export async function createChallenge(input: NewChallengeInput, token: string): Promise<CreateResult> {
+  return postAuthedJson('/api/mobile/challenges', input, token);
+}
+
+export interface NewTripInput {
+  title: string;
+  region: string;
+  date: string;
+  days: number;
+  price?: number | null;
+  spots: number;
+  difficulty?: string;
+  description?: string;
+}
+
+// POST /api/mobile/trips — publish a new community trip.
+export async function createTrip(input: NewTripInput, token: string): Promise<CreateResult> {
+  return postAuthedJson('/api/mobile/trips', input, token);
+}
+
 // ─────────────────────────────────────────────────────────────
 // Divergents Challenge — static program rules (not fake content)
 // ─────────────────────────────────────────────────────────────

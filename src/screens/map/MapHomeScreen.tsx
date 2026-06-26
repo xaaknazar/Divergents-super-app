@@ -400,16 +400,16 @@ export function MapHomeScreen({ navigation }: Props) {
                 </View>
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Pressable onPress={() => startNav(sel)} style={{ flex: 1, height: 46, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                <Pressable onPress={() => startNav(sel)} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
                   <SF name="paperplane.fill" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>{tr('Вести сюда')}</Text>
                 </Pressable>
-                <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} style={{ width: 84, height: 46, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} style={({ pressed }) => ({ width: 84, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <Text style={[ty.headline, { color: T.brand }]}>{tr('Детали')}</Text>
                 </Pressable>
-                <Pressable onPress={() => toggleFav(sel.id)} style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => toggleFav(sel.id)} style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name={isFav(sel.id) ? 'heart.fill' : 'heart'} size={18} color={isFav(sel.id) ? T.brand : T.label} />
                 </Pressable>
-                <Pressable onPress={() => Share.share({ message: `${sel.name} — ${CATEGORY_META[sel.category].label}\n${sel.highlights}\nhttps://2gis.kz/geo/${sel.lng},${sel.lat}` })} style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => Share.share({ message: `${sel.name} — ${CATEGORY_META[sel.category].label}\n${sel.highlights}\nhttps://2gis.kz/geo/${sel.lng},${sel.lat}` })} style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name="square.and.arrow.up" size={18} color={T.label} />
                 </Pressable>
               </View>
@@ -435,10 +435,10 @@ export function MapHomeScreen({ navigation }: Props) {
                 </View>
               </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Pressable onPress={() => navTo(searchPin)} style={{ flex: 1, height: 46, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                <Pressable onPress={() => navTo(searchPin)} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
                   <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>{tr('Вести сюда')}</Text>
                 </Pressable>
-                <Pressable onPress={() => externalRoute(searchPin)} style={{ width: 110, height: 46, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => externalRoute(searchPin)} style={({ pressed }) => ({ width: 110, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <Text style={[ty.headline, { color: T.brand }]}>{tr('Навигатор')}</Text>
                 </Pressable>
               </View>

@@ -216,8 +216,8 @@ export function AIChatScreen({}: Props) {
                   : <MarkdownText text={m.text} color={T.label} />}
               </View>
               {m.role === 'bot' && m.text.length > 0 ? (
-                <Pressable onPress={() => { Clipboard.setStringAsync(m.text); hSuccess(); }} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, paddingHorizontal: 4 }}>
-                  <SF name="square.and.arrow.up" size={12} color={T.labelTertiary} />
+                <Pressable onPress={() => { Clipboard.setStringAsync(m.text); hSuccess(); }} hitSlop={6} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5, paddingHorizontal: 6, opacity: pressed ? 0.5 : 1 })}>
+                  <SF name="doc.text" size={12} color={T.labelTertiary} />
                   <Text style={[ty.caption2, { color: T.labelTertiary }]}>{tr('Копировать')}</Text>
                 </Pressable>
               ) : null}
@@ -236,7 +236,8 @@ export function AIChatScreen({}: Props) {
           {messages.length === 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 10 }}>
               {quick.map((q) => (
-                <Pressable key={q} onPress={() => send(q)} disabled={locked} style={{ backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.separator, borderRadius: 18, paddingVertical: 7, paddingHorizontal: 14, opacity: locked ? 0.5 : 1 }}>
+                <Pressable key={q} onPress={() => send(q)} disabled={locked} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.separator, borderRadius: 18, paddingVertical: 7, paddingHorizontal: 14, opacity: locked ? 0.5 : pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+                  <SF name="sparkles" size={11} color={T.brand} />
                   <Text style={[ty.subhead, { color: T.label }]}>{tr(q)}</Text>
                 </Pressable>
               ))}

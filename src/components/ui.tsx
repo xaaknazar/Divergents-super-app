@@ -1,6 +1,6 @@
 // Shared iOS-style UI atoms — theme-aware via useTheme().
-import React from 'react';
-import { View, Text, Pressable, ActivityIndicator, StyleProp, ViewStyle } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, Pressable, ActivityIndicator, Animated, StyleProp, ViewStyle } from 'react-native';
 import { T as LIGHT, ty } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { hTap, hSelect } from '../lib/haptics';
@@ -71,10 +71,13 @@ export function IconSquircle({
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   const { T } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }}>
-      <Text style={[ty.title3, { color: T.label }]}>{title}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8, minHeight: 28 }}>
+      <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{title}</Text>
       {action ? (
-        <Pressable onPress={onAction} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{action}</Text></Pressable>
+        <Pressable onPress={onAction ? () => { hSelect(); onAction(); } : undefined} hitSlop={8} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 2, opacity: pressed ? 0.5 : 1 })}>
+          <Text style={[ty.subheadEm, { color: T.brandAccent }]}>{action}</Text>
+          <SF name="chevron.forward" size={12} color={T.brandAccent} />
+        </Pressable>
       ) : null}
     </View>
   );
@@ -168,12 +171,13 @@ export function Chip({
 }: { label: string; active?: boolean; icon?: SFName | string; onPress?: () => void }) {
   const { T } = useTheme();
   return (
-    <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} accessibilityRole="button" style={{
+    <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} accessibilityRole="button" accessibilityState={{ selected: active }} style={({ pressed }) => [{
       flexDirection: 'row', alignItems: 'center', gap: 5,
       paddingVertical: 7, paddingHorizontal: 14, borderRadius: 18,
       backgroundColor: active ? T.brand : T.cardBg,
       borderWidth: 0.5, borderColor: active ? 'transparent' : T.separator,
-    }}>
+      transform: [{ scale: pressed ? 0.96 : 1 }],
+    }, active ? { shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 } : null]}>
       {icon ? <SF name={icon} size={11} color={active ? '#fff' : T.brand} /> : null}
       <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]}>{label}</Text>
     </Pressable>
@@ -186,11 +190,17 @@ export function PrimaryButton({
   const { T } = useTheme();
   const _color = color ?? T.brand;
   const fg = textColor ?? (_color === 'transparent' ? T.brand : '#fff');
+  const solid = _color !== 'transparent';
+  // Soft, brand-tinted elevation gives the solid CTA tactile depth (HIG).
+  const shadow = solid ? {
+    shadowColor: _color, shadowOpacity: 0.22, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 3,
+  } : null;
   return (
     <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} style={({ pressed }) => [{
       height: 50, borderRadius: 14, backgroundColor: _color, flexDirection: 'row',
-      alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pressed || disabled ? 0.85 : 1,
-    }, style]}>
+      alignItems: 'center', justifyContent: 'center', gap: 8,
+      transform: [{ scale: pressed ? 0.98 : 1 }], opacity: pressed ? 0.92 : disabled ? 0.45 : 1,
+    }, shadow, style]}>
       {loading ? (
         <ActivityIndicator color={fg} />
       ) : (

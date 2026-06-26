@@ -8,12 +8,17 @@ export type LMSStackParams = {
 };
 
 export type CommunityStackParams = {
-  CommunityHome: undefined;
+  // `refresh` is a changing token a create modal sets on dismissal so the home
+  // screen reloads its lists once.
+  CommunityHome: { refresh?: number } | undefined;
   Channel: { channelId: string };
   ChannelPost: { postId: string };
   ChallengeDetail: { challengeId: string };
   JoinChallenge: { challengeId: string };
   TripDetail: { tripId: string };
+  CreateChallenge: undefined;
+  CreateTrip: undefined;
+  CreateChannel: undefined;
 };
 
 export type AIStackParams = { AIChat: undefined };

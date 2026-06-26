@@ -71,11 +71,11 @@ export function CatalogScreen({ navigation }: Props) {
           </ScrollView>
 
           {/* Stats strip */}
-          <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 14, flexDirection: 'row', paddingVertical: 12 }}>
+          <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 16, flexDirection: 'row', paddingVertical: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
             {strip.map((s, i) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < strip.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-                <Text style={[ty.title3, { color: T.label }]}>{s.v}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{s.l}</Text>
+                <Text style={[ty.title2, { color: i === 0 ? T.brand : T.label }]}>{s.v}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{s.l}</Text>
               </View>
             ))}
           </View>
@@ -99,6 +99,7 @@ export function CatalogScreen({ navigation }: Props) {
                       </View>
                     ) : null}
                   </View>
+                  <View style={{ alignSelf: 'center' }}><SF name="chevron.forward" size={14} color={T.labelTertiary} /></View>
                   {i < filtered.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 92, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
                 </Pressable>
               );

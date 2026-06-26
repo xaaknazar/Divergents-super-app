@@ -24,6 +24,9 @@ import { JoinChallengeScreen } from '../screens/community/JoinChallengeScreen';
 import { TripDetailScreen } from '../screens/community/TripDetailScreen';
 import { ChannelScreen } from '../screens/community/ChannelScreen';
 import { ChannelPostScreen } from '../screens/community/ChannelPostScreen';
+import { CreateChallengeScreen } from '../screens/community/CreateChallengeScreen';
+import { CreateTripScreen } from '../screens/community/CreateTripScreen';
+import { CreateChannelScreen } from '../screens/community/CreateChannelScreen';
 
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import { MapHomeScreen } from '../screens/map/MapHomeScreen';
@@ -64,6 +67,9 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="TripDetail" component={TripDetailScreen} />
       <CommunityStack.Screen name="Channel" component={ChannelScreen} />
       <CommunityStack.Screen name="ChannelPost" component={ChannelPostScreen} />
+      <CommunityStack.Screen name="CreateChallenge" component={CreateChallengeScreen} options={{ presentation: 'modal' }} />
+      <CommunityStack.Screen name="CreateTrip" component={CreateTripScreen} options={{ presentation: 'modal' }} />
+      <CommunityStack.Screen name="CreateChannel" component={CreateChannelScreen} options={{ presentation: 'modal' }} />
     </CommunityStack.Navigator>
   );
 }

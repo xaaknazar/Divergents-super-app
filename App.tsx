@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator, Platform, UIManager } from 'react-native';
+import { Platform, UIManager } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
@@ -22,18 +22,10 @@ import { CLERK_PUBLISHABLE_KEY } from './src/config';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { AppFlowProvider } from './src/state/AppFlowContext';
 import { LanguageProvider } from './src/state/LanguageContext';
+import { IntroSplash } from './src/screens/IntroSplash';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-function Loader() {
-  const { T } = useTheme();
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: T.systemBg }}>
-      <ActivityIndicator color={T.brand} />
-    </View>
-  );
 }
 
 function Root() {
@@ -89,6 +81,10 @@ export default function App() {
   const [fontsLoaded] = useFonts({
     Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
   });
+  // The animated intro stays mounted on top until it cross-fades itself out.
+  // It self-gates on `fontsLoaded` + a tasteful minimum duration, so the app
+  // (mounted underneath only once fonts are ready) is revealed without a flash.
+  const [introDone, setIntroDone] = React.useState(false);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -98,7 +94,10 @@ export default function App() {
           <LanguageProvider>
           <SafeAreaProvider>
             <UserScopedProviders>
-              {fontsLoaded ? <Root /> : <Loader />}
+              {fontsLoaded ? <Root /> : null}
+              {!introDone ? (
+                <IntroSplash fontsLoaded={fontsLoaded} onDone={() => setIntroDone(true)} />
+              ) : null}
             </UserScopedProviders>
           </SafeAreaProvider>
           </LanguageProvider>

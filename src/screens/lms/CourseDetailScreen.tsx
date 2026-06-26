@@ -3,6 +3,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, ActivityIndicator, Share, Linking } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
@@ -121,7 +122,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
           {course.imageUrl
             ? <Image source={imgUrl(course.imageUrl, 1080)} style={{ position: 'absolute', width: '100%', height: 230 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
             : <View style={{ position: 'absolute', width: '100%', height: 230, backgroundColor: course.tint }} />}
-          <View style={{ position: 'absolute', width: '100%', height: 230, backgroundColor: 'rgba(0,0,0,0.28)' }} />
+          <LinearGradient colors={['rgba(0,0,0,0.34)', 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0.55)']} locations={[0, 0.45, 1]} style={{ position: 'absolute', width: '100%', height: 230 }} />
           <HeroBar course={course} courseId={courseId} navigation={navigation} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             <Capsule bg="rgba(52,199,89,0.9)" color="#fff"><SF name="checkmark.seal.fill" size={11} color="#fff" />{tr('Курс открыт')}</Capsule>
@@ -140,10 +141,10 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
         </View>
 
         {course.lessons.length > 0 ? (
-          <View style={{ margin: 16, backgroundColor: T.groupedBg, borderRadius: 14, padding: 16 }}>
+          <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Text style={[ty.body, { color: T.label }]}>{tr('Ваш прогресс')}</Text>
-              <Text style={[ty.headline, { color: T.brand }]}>{Math.round(p * 100)}%</Text>
+              <Text style={[ty.title3, { color: T.brand }]}>{Math.round(p * 100)}%</Text>
             </View>
             <View style={{ marginTop: 10 }}><ProgressBar value={p} /></View>
             {curLesson ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>{tr('Урок')} {curLesson.n} — {curLesson.title}</Text> : null}
@@ -216,7 +217,7 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
           {course.imageUrl
             ? <Image source={imgUrl(course.imageUrl, 1080)} style={{ position: 'absolute', width: '100%', height: 300 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
             : <View style={{ position: 'absolute', width: '100%', height: 300, backgroundColor: course.tint }} />}
-          <View style={{ position: 'absolute', width: '100%', height: 300, backgroundColor: 'rgba(0,0,0,0.35)' }} />
+          <LinearGradient colors={['rgba(0,0,0,0.40)', 'rgba(0,0,0,0.08)', 'rgba(0,0,0,0.62)']} locations={[0, 0.42, 1]} style={{ position: 'absolute', width: '100%', height: 300 }} />
           <HeroBar course={course} courseId={courseId} navigation={navigation} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 22 }}>
             <Capsule bg="rgba(255,255,255,0.9)" color={T.brand}>{course.category}</Capsule>
@@ -226,7 +227,7 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
         </View>
 
         {/* Price card */}
-        <View style={{ margin: 16, backgroundColor: T.groupedBg, borderRadius: 16, padding: 18 }}>
+        <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
             <Text style={[ty.largeTitle, { color: T.label }]}>{formatPrice(course.price)}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('единоразово')}</Text>

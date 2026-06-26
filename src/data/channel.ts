@@ -205,3 +205,42 @@ export async function fetchChannelData(): Promise<ChannelData> {
   const { channels, posts } = parseChannels(res.data);
   return { channels, posts, error: !res.ok };
 }
+
+// ─── Creator/admin: create a channel (Clerk Bearer) ─────────────────────────
+// Returns a normalized result (never throws) so the form stays crash-free and
+// can show a precise message — e.g. 403 when the user isn't a creator.
+export interface CreateResult { ok: boolean; status: number; id?: string; error?: string }
+
+export interface NewChannelInput {
+  name: string;
+  handle?: string;
+  access: ChannelAccess; // 'open' | 'request'
+  bio?: string;
+  avatarUrl?: string;
+}
+
+export async function createChannel(
+  input: NewChannelInput,
+  token: string,
+  timeoutMs = 15000,
+): Promise<CreateResult> {
+  if (!token) return { ok: false, status: 401, error: 'no-token' };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/channels`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(input),
+    });
+    let data: any = null;
+    try { data = await res.json(); } catch { /* empty / non-JSON body */ }
+    if (!res.ok) return { ok: false, status: res.status, error: data?.error || data?.message };
+    return { ok: true, status: res.status, id: data?.id ?? data?.channel?.id };
+  } catch {
+    return { ok: false, status: 0, error: 'network' };
+  } finally {
+    clearTimeout(timer);
+  }
+}

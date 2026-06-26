@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, LayoutAnimation, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, LayoutAnimation, ActivityIndicator, ActionSheetIOS, Platform, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -22,18 +22,44 @@ import { Channel } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
+import { useRole } from '../../state/useRole';
+import { hTap } from '../../lib/haptics';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
 
+// Creator-only action sheet → the three creation modals. iOS uses the native
+// sheet; Android falls back to a buttoned Alert so the entry still works.
+type CreateTarget = 'CreateChallenge' | 'CreateTrip' | 'CreateChannel';
+function openCreateSheet(navigation: Nav) {
+  hTap();
+  const go = (t: CreateTarget) => navigation.navigate(t);
+  const labels = [tr('Челлендж'), tr('Поездка'), tr('Канал')];
+  if (Platform.OS === 'ios') {
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options: [tr('Отмена'), ...labels], cancelButtonIndex: 0, title: tr('Что создать?') },
+      (i) => { if (i === 1) go('CreateChallenge'); else if (i === 2) go('CreateTrip'); else if (i === 3) go('CreateChannel'); },
+    );
+  } else {
+    Alert.alert(tr('Что создать?'), undefined, [
+      { text: labels[0], onPress: () => go('CreateChallenge') },
+      { text: labels[1], onPress: () => go('CreateTrip') },
+      { text: labels[2], onPress: () => go('CreateChannel') },
+      { text: tr('Отмена'), style: 'cancel' },
+    ]);
+  }
+}
+
 const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_sport'] as const;
 
-export function CommunityHomeScreen({ navigation }: Props) {
+export function CommunityHomeScreen({ navigation, route }: Props) {
   const { T } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
   const { reload: reloadChannels } = useChannel();
+  const { canCreate } = useRole();
   const [seg, setSeg] = useState(0);
+  const refreshToken = route.params?.refresh;
 
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [sport, setSport] = useState<SportActivity[] | null>(null);
@@ -66,9 +92,22 @@ export function CommunityHomeScreen({ navigation }: Props) {
     await load();
   }, [load, reloadChannels]);
 
+  // A create modal sets route.params.refresh on dismissal — reload the lists
+  // once so newly published content shows immediately.
+  useEffect(() => {
+    if (refreshToken === undefined) return;
+    reloadChannels();
+    load();
+  }, [refreshToken, load, reloadChannels]);
+
   return (
     <Screen largeTitle={tr('Сообщество')} onRefresh={onRefresh}>
-      <NavBarLarge title={t('community')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
+      <NavBarLarge title={t('community')} trailing={(
+        <>
+          {canCreate ? <HeaderIcon name="plus" color={T.brand} onPress={() => openCreateSheet(navigation)} /> : null}
+          <HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+        </>
+      )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
         <Text style={[ty.subhead, { color: T.labelSecondary }]}>{t('community_tagline')}</Text>
