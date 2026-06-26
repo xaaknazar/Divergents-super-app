@@ -4,9 +4,10 @@
 // its full team are loaded from the website API; the user's daily inputs are
 // persisted on-device so progress survives app launches.
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useAuth } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
 import {
-  DEFAULT_CHALLENGE, Challenge, ChallengeTask, Member, fetchActiveChallenge,
+  DEFAULT_CHALLENGE, Challenge, ChallengeTask, Member, fetchActiveChallenge, postChallengeProgress,
   challengePointsToday, challengeBonusToday, taskPoints, taskBonus, taskDone,
 } from '../data/community';
 
@@ -56,10 +57,15 @@ function toSaved(c: Challenge): SavedProgress {
 }
 
 export function ChallengeProvider({ children }: { children: React.ReactNode }) {
+  const { getToken, isSignedIn } = useAuth();
   const [challenge, setChallenge] = useState<Challenge>(DEFAULT_CHALLENGE);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const savedRef = useRef<SavedProgress | null>(null);
+  // Keep the latest getToken in a ref so the load effect can run once without
+  // re-subscribing every time Clerk hands back a new function identity.
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
 
   // Load persisted progress first, then enrich with the server's active
   // challenge + leaderboard (re-applying the saved daily inputs by task id).
@@ -71,7 +77,8 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       if (alive && saved && saved.id === DEFAULT_CHALLENGE.id) {
         setChallenge(applyProgress(DEFAULT_CHALLENGE, saved));
       }
-      const { challenge: live, members: m } = await fetchActiveChallenge();
+      const token = isSignedIn ? await getTokenRef.current() : null;
+      const { challenge: live, members: m } = await fetchActiveChallenge(token);
       if (!alive) return;
       if (live) {
         setChallenge(applyProgress(live, savedRef.current));
@@ -80,6 +87,16 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     })();
     return () => { alive = false; };
+  }, [isSignedIn]);
+
+  // Best-effort server sync of a single daily task update. Local optimistic
+  // state stays the source of truth, so failures are ignored. The local-only
+  // DEFAULT_CHALLENGE has no server counterpart, so it never syncs.
+  const syncTask = useCallback((challengeId: string, body: { taskId: string; value?: number; done?: boolean }) => {
+    if (!challengeId || challengeId === DEFAULT_CHALLENGE.id) return;
+    Promise.resolve(getTokenRef.current())
+      .then((token) => postChallengeProgress(challengeId, body, token))
+      .catch(() => {});
   }, []);
 
   const persist = useCallback((c: Challenge) => {
@@ -89,16 +106,18 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setMetric = useCallback((taskId: string, value: number) => {
+    const safe = Math.max(0, value);
     setChallenge((prev) => {
       const next = {
         ...prev,
         tasks: prev.tasks.map((t) =>
-          t.id === taskId && t.kind === 'metric' ? { ...t, current: Math.max(0, value) } : t),
+          t.id === taskId && t.kind === 'metric' ? { ...t, current: safe } : t),
       };
       persist(next);
+      syncTask(next.id, { taskId, value: safe });
       return next;
     });
-  }, [persist]);
+  }, [persist, syncTask]);
 
   const toggleBinary = useCallback((taskId: string) => {
     setChallenge((prev) => {
@@ -107,10 +126,13 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
         tasks: prev.tasks.map((t) =>
           t.id === taskId && t.kind === 'binary' ? { ...t, done: !t.done } : t),
       };
+      const updated = next.tasks.find((t) => t.id === taskId);
+      const done = updated && updated.kind === 'binary' ? updated.done : undefined;
       persist(next);
+      if (done !== undefined) syncTask(next.id, { taskId, done });
       return next;
     });
-  }, [persist]);
+  }, [persist, syncTask]);
 
   const value = useMemo<ChallengeState>(() => {
     const pointsToday = challengePointsToday(challenge.tasks);

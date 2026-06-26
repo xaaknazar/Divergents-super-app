@@ -241,14 +241,156 @@ export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | 
 // Live active challenge + its full team leaderboard.
 export interface ActiveChallengeData { challenge: Challenge | null; members: Member[] }
 
-// The backend currently exposes no "active challenge" concept — there is no
-// daily-task / leaderboard model server-side. Return empty so the screen shows
-// its proper empty state.
-// DEFERRED: backend needs an active-challenge + per-member daily-task &
-// leaderboard model (deferred to the later full-backend phase) before this can
-// return live data.
-export async function fetchActiveChallenge(): Promise<ActiveChallengeData> {
-  return { challenge: null, members: [] };
+const EMPTY_ACTIVE: ActiveChallengeData = { challenge: null, members: [] };
+
+// ─── Raw server shapes (GET /api/mobile/challenges/active) ──────────────────
+// The server returns the exact { challenge, members } shape: challenge carries
+// the daily metric/binary task definitions (incl. the user's current values),
+// members is the full team leaderboard. We pass it through with light guards.
+interface RawActiveTask {
+  id?: unknown; kind?: unknown; title?: unknown; icon?: unknown;
+  unit?: unknown; min?: unknown; current?: unknown; basePts?: unknown;
+  unitSize?: unknown; ptsPerUnit?: unknown; done?: unknown;
+}
+interface RawActiveChallenge {
+  id?: unknown; title?: unknown; teamName?: unknown; totalDays?: unknown;
+  currentDay?: unknown; members?: unknown; startedLabel?: unknown;
+  teamRank?: unknown; teamCount?: unknown; trainer?: unknown; price?: unknown;
+  tasks?: unknown;
+}
+interface RawActiveMember {
+  id?: unknown; name?: unknown; weekBase?: unknown; day?: unknown; isMe?: unknown;
+}
+
+const numOf = (v: unknown, d = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+const strOf = (v: unknown, d = ''): string => (typeof v === 'string' ? v : d);
+
+// Coerce a server icon string to the app's SFName type safely: keep any
+// non-empty string (SF() degrades unknown names to a neutral glyph), else use a
+// kind-appropriate fallback so the card always renders an icon.
+function coerceIcon(raw: unknown, fallback: SFName): SFName {
+  return typeof raw === 'string' && raw.length > 0 ? (raw as SFName) : fallback;
+}
+
+function mapActiveTask(raw: RawActiveTask): ChallengeTask | null {
+  const id = strOf(raw.id);
+  if (!id) return null;
+  const title = strOf(raw.title);
+  if (raw.kind === 'binary') {
+    return {
+      id,
+      kind: 'binary',
+      title,
+      icon: coerceIcon(raw.icon, 'checkmark.circle.fill'),
+      done: raw.done === true,
+      basePts: numOf(raw.basePts, 10),
+    };
+  }
+  return {
+    id,
+    kind: 'metric',
+    title,
+    icon: coerceIcon(raw.icon, 'target'),
+    unit: strOf(raw.unit),
+    min: numOf(raw.min),
+    current: numOf(raw.current),
+    basePts: numOf(raw.basePts, 10),
+    unitSize: Math.max(1, numOf(raw.unitSize, 1)),
+    ptsPerUnit: numOf(raw.ptsPerUnit, 1),
+  };
+}
+
+function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
+  const id = strOf(raw.id);
+  if (!id) return null;
+  const tasks = (Array.isArray(raw.tasks) ? raw.tasks : [])
+    .map(mapActiveTask)
+    .filter((t): t is ChallengeTask => t !== null);
+  return {
+    id,
+    title: strOf(raw.title, 'Divergents challenge'),
+    teamName: strOf(raw.teamName),
+    totalDays: numOf(raw.totalDays, 21),
+    currentDay: numOf(raw.currentDay),
+    members: numOf(raw.members),
+    startedLabel: strOf(raw.startedLabel),
+    teamRank: numOf(raw.teamRank),
+    teamCount: numOf(raw.teamCount),
+    trainer: strOf(raw.trainer),
+    price: strOf(raw.price),
+    tasks,
+  };
+}
+
+function mapActiveMember(raw: RawActiveMember): Member | null {
+  const id = strOf(raw.id);
+  if (!id) return null;
+  return {
+    id,
+    name: strOf(raw.name, 'Участник'),
+    weekBase: numOf(raw.weekBase),
+    day: numOf(raw.day),
+    isMe: raw.isMe === true,
+  };
+}
+
+// GET /api/mobile/challenges/active (Clerk Bearer) — the live active challenge
+// for the signed-in user: its daily-task structure + the full team leaderboard.
+// Returns { challenge:null, members:[] } on failure / empty so the screen falls
+// back to the local DEFAULT_CHALLENGE tracker and a proper empty state.
+export async function fetchActiveChallenge(
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<ActiveChallengeData> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/active`, { signal: ctrl.signal, headers });
+    if (!res.ok) return EMPTY_ACTIVE;
+    const data = await res.json();
+    const challenge = data?.challenge ? mapActiveChallenge(data.challenge) : null;
+    const rawMembers: RawActiveMember[] = Array.isArray(data?.members) ? data.members : [];
+    const members = rawMembers
+      .map(mapActiveMember)
+      .filter((m): m is Member => m !== null);
+    // Backfill the members count from the roster when the challenge omits it.
+    if (challenge && challenge.members === 0 && members.length) challenge.members = members.length;
+    return { challenge, members };
+  } catch {
+    return EMPTY_ACTIVE;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// POST /api/mobile/challenges/:id/progress (Clerk Bearer) — best-effort sync of
+// a single daily task update ({ taskId, value } for metric, { taskId, done } for
+// binary). Local optimistic state is the source of truth, so this never throws
+// and simply resolves false when the sync isn't possible.
+export async function postChallengeProgress(
+  challengeId: string,
+  body: { taskId: string; value?: number; done?: boolean },
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<boolean> {
+  if (!challengeId || !body.taskId || !token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/progress`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 // ─── Trips ─────────────────────────────────────────────────────────────────
