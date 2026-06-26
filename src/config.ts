@@ -33,4 +33,4 @@ export const TALENTSLAB_APP_KEY =
 // URL that includes your API key, e.g.
 //   https://api.maptiler.com/maps/streets-v2/style.json?key=YOUR_KEY
 export const MAP_STYLE_URL =
-  process.env.EXPO_PUBLIC_MAP_STYLE_URL || 'https://demotiles.maplibre.org/style.json';
+  process.env.EXPO_PUBLIC_MAP_STYLE_URL || 'https://api.maptiler.com/maps/streets-v2/style.json?key=ssxkQpU5GD8bVLUBZlS5';
