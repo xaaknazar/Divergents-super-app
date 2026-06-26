@@ -5,7 +5,8 @@ import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge } from '../../components/headers';
+import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
 import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
 import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
@@ -36,6 +37,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const [filter, setFilter] = useState(0);
   const { applied, isApplied, jobs, jobsLoading, jobsError, reloadJobs, saved, getJob } = useCareer();
   const { profile, live, reload: reloadProfile } = useTalentProfile();
+  const { unread } = useNotifications();
 
   // Only use real (live) Gallup talents for matching — never demo data.
   const gallup: GallupTalent[] = live ? profile?.gallup ?? [] : [];
@@ -56,7 +58,9 @@ export function CareerHomeScreen({ navigation }: Props) {
 
   return (
     <Screen largeTitle={t('tab_career')} onRefresh={async () => { await Promise.all([reloadProfile(), reloadJobs()]); }}>
-      <NavBarLarge title={t('tab_career')} />
+      <NavBarLarge title={t('tab_career')} trailing={(
+        <HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+      )} />
 
       <ResumeHero navigation={navigation} completeness={live ? profile?.completeness ?? 0 : -1} />
       <TalentProfileCard navigation={navigation} profile={profile} live={live} />
