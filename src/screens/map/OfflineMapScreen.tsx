@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, Modal, Alert, ActivityIndicator } from 'react-native';
-import { Map, Camera, Marker, UserLocation, OfflineManager, OfflinePack, type CameraRef } from '@maplibre/maplibre-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
@@ -13,6 +12,11 @@ import { MAP_STYLE_URL } from '../../config';
 import { useLang, tr } from '../../state/LanguageContext';
 import { MapStackParams } from '../../navigation/types';
 
+// MapLibre is a native module — present only in dev/production builds, NOT in Expo Go.
+// Load it lazily so the app keeps working in Expo Go (offline map shows a notice).
+let ML: any = null;
+try { ML = require('@maplibre/maplibre-react-native'); } catch { ML = null; }
+
 type Props = NativeStackScreenProps<MapStackParams, 'OfflineMap'>;
 
 const AREAS = [
@@ -22,35 +26,37 @@ const AREAS = [
 ] as const;
 
 export function OfflineMapScreen({ navigation }: Props) {
-  const { T, isDark } = useTheme();
+  const { T } = useTheme();
   const insets = useSafeAreaInsets();
   useLang();
   const { country, city, places } = usePlaces();
   const center = cityCenter(country, city)!;
   const list = filterPlaces(places, country, city, null, [], '');
-  const cameraRef = useRef<CameraRef>(null);
+  const cameraRef = useRef<any>(null);
 
   const [sheet, setSheet] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState(0);
-  const [packs, setPacks] = useState<OfflinePack[]>([]);
+  const [packs, setPacks] = useState<any[]>([]);
   const [sel, setSel] = useState<string | null>(null);
 
-  const loadPacks = useCallback(() => { OfflineManager.getPacks().then(setPacks).catch(() => {}); }, []);
+  const loadPacks = useCallback(() => { ML?.OfflineManager?.getPacks?.().then(setPacks).catch(() => {}); }, []);
   useEffect(() => { loadPacks(); }, [loadPacks]);
 
+  const available = !!ML?.Map;
   const selPlace = sel ? list.find((p) => p.id === sel) : null;
 
   const download = async (km: number, label: string) => {
+    if (!ML?.OfflineManager) return;
     setBusy(true); setPct(0);
     try {
       const lat = center.lat, lng = center.lng;
       const dLat = km / 111;
       const dLng = km / (111 * Math.max(0.2, Math.cos((lat * Math.PI) / 180)));
       const bounds: [number, number, number, number] = [lng - dLng, lat - dLat, lng + dLng, lat + dLat];
-      await OfflineManager.createPack(
+      await ML.OfflineManager.createPack(
         { mapStyle: MAP_STYLE_URL, bounds, minZoom: 10, maxZoom: 16, metadata: { name: `${center.name} · ${label}`, createdAt: Date.now() } },
-        (_pack, status) => { setPct(Math.round(status.percentage)); if (status.percentage >= 100) { setBusy(false); loadPacks(); } },
+        (_pack: any, status: any) => { setPct(Math.round(status.percentage)); if (status.percentage >= 100) { setBusy(false); loadPacks(); } },
         () => { setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.')); },
       );
       setSheet(false);
@@ -62,8 +68,27 @@ export function OfflineMapScreen({ navigation }: Props) {
     }
   };
 
-  const removePack = (id: string) => OfflineManager.deletePack(id).then(loadPacks).catch(() => {});
+  const removePack = (id: string) => ML?.OfflineManager?.deletePack?.(id).then(loadPacks).catch(() => {});
 
+  // Expo Go (or any build without the native module): graceful notice.
+  if (!available) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <BackNav back={tr('Карта')} onBack={() => navigation.goBack()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="arrow.down.circle" size={34} color={T.brand} />
+          </View>
+          <Text style={[ty.title3, { color: T.label, marginTop: 16, textAlign: 'center' }]}>{tr('Офлайн-карта')}</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 8, textAlign: 'center' }]}>
+            {tr('Офлайн-карта доступна в полной версии приложения (релиз), а не в Expo Go.')}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  const { Map, Camera, Marker, UserLocation } = ML;
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <BackNav back={tr('Карта')} onBack={() => navigation.goBack()} />
@@ -80,7 +105,6 @@ export function OfflineMapScreen({ navigation }: Props) {
           ))}
         </Map>
 
-        {/* Download progress overlay */}
         {busy ? (
           <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <ActivityIndicator color="#fff" />
@@ -89,9 +113,8 @@ export function OfflineMapScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        {/* Right buttons */}
         <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
-          <Pressable onPress={() => cameraRef.current?.flyTo({ center: [center.lng, center.lat], zoom: 13, duration: 500 })}
+          <Pressable onPress={() => cameraRef.current?.flyTo?.({ center: [center.lng, center.lat], zoom: 13, duration: 500 })}
             style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
             <SF name="location.fill" size={20} color={T.brand} />
           </Pressable>
@@ -102,7 +125,6 @@ export function OfflineMapScreen({ navigation }: Props) {
         </View>
       </View>
 
-      {/* Place peek */}
       <Modal visible={!!selPlace} animationType="slide" transparent onRequestClose={() => setSel(null)}>
         <Pressable style={{ flex: 1 }} onPress={() => setSel(null)} />
         {selPlace ? (
@@ -124,7 +146,6 @@ export function OfflineMapScreen({ navigation }: Props) {
         ) : null}
       </Modal>
 
-      {/* Download sheet */}
       <Modal visible={sheet} animationType="slide" transparent onRequestClose={() => setSheet(false)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setSheet(false)} />
         <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '75%' }}>
