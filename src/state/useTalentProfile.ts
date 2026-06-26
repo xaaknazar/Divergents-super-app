@@ -6,7 +6,7 @@
 // it clearly as demo (see TalentProfileScreen).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-expo';
-import { fetchTalentProfile, TalentProfile } from '../data/talentslab';
+import { fetchTalentProfile, getTalentslabToken, TalentProfile } from '../data/talentslab';
 
 export function useTalentProfile() {
   const { isSignedIn, getToken } = useAuth();
@@ -21,7 +21,7 @@ export function useTalentProfile() {
   const run = useCallback(async () => {
     setLoading(true);
     try {
-      const token = isSignedIn ? await getTokenRef.current() : null;
+      const token = isSignedIn ? await getTalentslabToken(getTokenRef.current) : null;
       setProfile(await fetchTalentProfile(token, email));
     } catch {
       setProfile(null); // unreachable — no data (screens may show a marked demo)

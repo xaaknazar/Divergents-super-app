@@ -85,6 +85,20 @@ async function reqJson(path: string, headers: Record<string, string>, timeoutMs 
 }
 
 /**
+ * Get the Clerk token to send to Talentslab. Prefers a JWT minted from the
+ * 'talentslab' template (which carries an `email` claim) so the server can
+ * resolve the user WITHOUT a Clerk secret; falls back to the default session
+ * token (server then resolves email via the Clerk Backend API). See the
+ * talentslab repo's MOBILE_SETUP.md.
+ */
+export async function getTalentslabToken(
+  getToken: (opts?: { template?: string }) => Promise<string | null>,
+): Promise<string | null> {
+  try { const t = await getToken({ template: 'talentslab' }); if (t) return t; } catch { /* template not configured */ }
+  try { return await getToken(); } catch { return null; }
+}
+
+/**
  * GET /api/mobile/profile — Clerk-token auth FIRST (Bearer), then the optional
  * X-App-Key + email fallback (only when an app key is configured). When neither
  * a Clerk token nor an app key is available this resolves to a graceful

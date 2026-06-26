@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
-import { submitResume, ResumeAnswers } from '../data/talentslab';
+import { submitResume, getTalentslabToken, ResumeAnswers } from '../data/talentslab';
 import { REQUIRED_KEYS } from '../data/resumeSchema';
 
 const KEY = 'dvg.resume';
@@ -42,7 +42,7 @@ export function useResume() {
   const submit = useCallback(async () => {
     setSubmitting(true);
     try {
-      const token = await getTokenRef.current();
+      const token = await getTalentslabToken(getTokenRef.current);
       const email = user?.primaryEmailAddress?.emailAddress ?? null;
       return await submitResume(token, answers, email);
     } catch { return false; }
