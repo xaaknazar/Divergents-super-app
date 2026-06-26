@@ -8,6 +8,7 @@ import { Screen } from '../../components/Screen';
 import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Chip, ListSection, ty } from '../../components/ui';
+import { shadows } from '../../theme/tokens';
 import { ListSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { formatPrice, imgUrl } from '../../data/api';
@@ -71,7 +72,7 @@ export function CatalogScreen({ navigation }: Props) {
           </ScrollView>
 
           {/* Stats strip */}
-          <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 16, flexDirection: 'row', paddingVertical: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
+          <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 16, flexDirection: 'row', paddingVertical: 14, ...shadows.card }}>
             {strip.map((s, i) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < strip.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
                 <Text style={[ty.title2, { color: i === 0 ? T.brand : T.label }]}>{s.v}</Text>

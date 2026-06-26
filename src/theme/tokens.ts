@@ -1,6 +1,6 @@
 // Divergents design tokens — iOS 17/18 (Apple HIG) semantic colours + Dynamic Type.
 // Light + Dark palettes share the same keys; the active one is provided via ThemeContext.
-import { TextStyle } from 'react-native';
+import { TextStyle, ViewStyle } from 'react-native';
 
 const light = {
   // Brand
@@ -178,7 +178,31 @@ export function applyTextScale(scale: number): void {
   });
 }
 
+// ─── Spatial scales ────────────────────────────────────────────────
+// Coherent corner-radius and spacing ramps used across atoms/screens.
+// `xxl` is kept for backward compatibility; `pill` is the fully-rounded token.
 export const radius = { sm: 8, md: 10, lg: 12, xl: 14, xxl: 16, pill: 999 } as const;
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
+
+// ─── Elevation ─────────────────────────────────────────────────────
+// Soft iOS-style shadows. `shadows.*` are ready-to-spread presets;
+// `shadow()` builds a custom one (e.g. brand-tinted CTA glow).
+export type ShadowStyle = Pick<ViewStyle, 'shadowColor' | 'shadowOpacity' | 'shadowRadius' | 'shadowOffset' | 'elevation'>;
+
+export function shadow({
+  color = '#000', opacity = 0.08, radius: r = 10, y = 3, elevation,
+}: { color?: string; opacity?: number; radius?: number; y?: number; elevation?: number } = {}): ShadowStyle {
+  return {
+    shadowColor: color, shadowOpacity: opacity, shadowRadius: r,
+    shadowOffset: { width: 0, height: y }, elevation: elevation ?? Math.max(1, Math.round(r / 4)),
+  };
+}
+
+export const shadows = {
+  // Resting card / list surface.
+  card: shadow({ opacity: 0.06, radius: 10, y: 3, elevation: 2 }),
+  // Lifted surface — sticky bars, modals, FABs.
+  floating: shadow({ opacity: 0.14, radius: 18, y: 8, elevation: 6 }),
+} as const;
 
 export type ColorKey = keyof typeof light;

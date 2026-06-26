@@ -7,7 +7,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { ErrorState } from '../../components/StateViews';
 import { useChannel } from '../../state/ChannelContext';
 import { useLang } from '../../state/LanguageContext';
@@ -32,7 +32,7 @@ export function ChannelPostScreen({ route, navigation }: Props) {
   if (!post && loading) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={t('sec_channels')} onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       </View>
     );
@@ -41,7 +41,7 @@ export function ChannelPostScreen({ route, navigation }: Props) {
   if (!post) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={t('sec_channels')} onBack={() => navigation.goBack()} />
         {error
           ? <ErrorState onRetry={reload} />
           : <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{lang === 'ru' ? 'Пост не найден' : 'Post not found'}</Text></View>}
@@ -58,14 +58,14 @@ export function ChannelPostScreen({ route, navigation }: Props) {
   // Article
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={t('sec_channels')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         {post.cover ? <Image source={{ uri: post.cover }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : null}
         <View style={{ padding: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <Image source={{ uri: chan?.avatar }} style={{ width: 28, height: 28, borderRadius: 14 }} contentFit="cover" />
             <Text style={[ty.subheadEm, { color: T.label }]}>{chan?.name}</Text>
-            <SF name="checkmark.seal.fill" size={13} color="#0EA5E9" />
+            <SF name="checkmark.seal.fill" size={13} color={T.sky} />
             <Text style={[ty.caption1, { color: T.labelTertiary }]}>· {post.date}</Text>
           </View>
           <Text style={[ty.title1, { color: T.label }]}>{post.title}</Text>
@@ -119,7 +119,7 @@ function AudioPost({ post, chan, t, liked, likeCount, onLike, onShare, onBack, T
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={t('sec_channels')} onBack={onBack} />
+      <NavHeader backLabel={t('sec_channels')} onBack={onBack} />
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
         <View style={{ alignItems: 'center', paddingTop: 16, paddingHorizontal: 24 }}>
           <View style={{ width: 220, height: 220, borderRadius: 28, overflow: 'hidden', backgroundColor: T.brandTinted, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 20, shadowOffset: { width: 0, height: 12 } }}>

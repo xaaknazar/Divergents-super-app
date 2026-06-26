@@ -43,10 +43,23 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
   const goCareer = () => navigation.getParent()?.navigate('CareerTab' as never);
 
-  const handleSignOut = async () => {
-    finishRegistration();
-    try { await clearAllAppData(); } catch {}
-    try { await signOut(); } catch {}
+  const handleSignOut = () => {
+    Alert.alert(
+      'Выйти из аккаунта?',
+      undefined,
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Выйти',
+          style: 'destructive',
+          onPress: async () => {
+            finishRegistration();
+            try { await clearAllAppData(); } catch {}
+            try { await signOut(); } catch {}
+          },
+        },
+      ],
+    );
   };
 
   const handleDeleteAccount = () => {
@@ -120,7 +133,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       <NavBarLarge title={t('profile')} />
 
       {/* Gradient hero card */}
-      <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: '#1E337A', shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+      <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             {profile?.photoUrl ? (

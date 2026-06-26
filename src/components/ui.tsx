@@ -1,7 +1,7 @@
 // Shared iOS-style UI atoms — theme-aware via useTheme().
 import React, { useRef } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Animated, StyleProp, ViewStyle } from 'react-native';
-import { T as LIGHT, ty } from '../theme/tokens';
+import { T as LIGHT, ty, radius, space, shadows } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { hTap, hSelect } from '../lib/haptics';
 import { SF, SFName } from './SFIcon';
@@ -207,6 +207,51 @@ export function PrimaryButton({
         <>
           {icon ? <SF name={icon} size={16} color={fg} /> : null}
           <Text style={[ty.headline, { color: fg }]}>{label}</Text>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+// Rounded surface used to group content. Optional soft elevation + press state.
+export function Card({
+  children, onPress, padded = true, elevated = false, style,
+}: { children: React.ReactNode; onPress?: () => void; padded?: boolean; elevated?: boolean; style?: StyleProp<ViewStyle> }) {
+  const { T } = useTheme();
+  const base: ViewStyle = {
+    backgroundColor: T.cardBg, borderRadius: radius.lg, overflow: 'hidden',
+    ...(padded ? { padding: space.lg } : null),
+    ...(elevated ? shadows.card : { borderWidth: 0.5, borderColor: T.cardBorder }),
+  };
+  if (onPress) {
+    return (
+      <Pressable onPress={onPress} style={({ pressed }) => [base, { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }, style]}>
+        {children}
+      </Pressable>
+    );
+  }
+  return <View style={[base, style]}>{children}</View>;
+}
+
+// Tinted / outline companion to PrimaryButton for lower-emphasis actions.
+export function SecondaryButton({
+  label, icon, onPress, color, tinted = true, style, loading, disabled,
+}: { label: string; icon?: SFName | string; onPress?: () => void; color?: string; tinted?: boolean; style?: StyleProp<ViewStyle>; loading?: boolean; disabled?: boolean }) {
+  const { T } = useTheme();
+  const accent = color ?? T.brand;
+  return (
+    <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} style={({ pressed }) => [{
+      height: 50, borderRadius: radius.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: tinted ? T.brandTinted : 'transparent',
+      borderWidth: tinted ? 0 : 1, borderColor: accent,
+      transform: [{ scale: pressed ? 0.98 : 1 }], opacity: pressed ? 0.9 : disabled ? 0.45 : 1,
+    }, style]}>
+      {loading ? (
+        <ActivityIndicator color={accent} />
+      ) : (
+        <>
+          {icon ? <SF name={icon} size={16} color={accent} /> : null}
+          <Text style={[ty.headline, { color: accent }]}>{label}</Text>
         </>
       )}
     </Pressable>

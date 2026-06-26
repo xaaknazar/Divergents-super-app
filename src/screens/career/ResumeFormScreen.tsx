@@ -4,6 +4,7 @@ import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Pla
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
+import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
 import { RESUME_STEPS } from '../../data/resumeSchema';
 import { ResumeFieldInput } from '../../components/ResumeField';
@@ -65,11 +66,7 @@ export function ResumeFormScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Header */}
-      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Закрыть')}</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]}>{tr('Анкета')} · {completeness}%</Text>
-        <View style={{ width: 56 }} />
-      </View>
+      <NavHeader title={`${tr('Анкета')} · ${completeness}%`} backLabel={tr('Закрыть')} onBack={() => navigation.goBack()} />
 
       {/* Stepper */}
       <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingVertical: 12 }}>

@@ -5,7 +5,7 @@ import { View, Text, ScrollView, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Capsule, ListSection, ListRow, ty } from '../../components/ui';
 import { useTalentProfile } from '../../state/useTalentProfile';
@@ -62,7 +62,7 @@ export function TalentProfileScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Hero */}
         <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16 }}>

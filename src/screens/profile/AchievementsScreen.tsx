@@ -4,7 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { Screen } from '../../components/Screen';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, ty } from '../../components/ui';
 import { useAchievements, EarnedBadge } from '../../data/achievements';
@@ -51,16 +51,17 @@ export function AchievementsScreen({ navigation }: Props) {
 
   return (
     <Screen gradient={gradient} topInset={false}>
-      <BackNav back={tr('Профиль')} onBack={() => navigation.goBack()} transparent />
+      <NavHeader
+        largeTitle
+        title={tr('Достижения')}
+        subtitle={lang === 'ru' ? `Получено ${earned} из ${total} бейджей` : `Earned ${earned} of ${total} badges`}
+        backLabel={tr('Профиль')}
+        onBack={() => navigation.goBack()}
+        transparent
+      />
 
-      <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
-        <Text style={[ty.largeTitle, { color: T.label }]}>{tr('Достижения')}</Text>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>
-          {lang === 'ru' ? `Получено ${earned} из ${total} бейджей` : `Earned ${earned} of ${total} badges`}
-        </Text>
-        <View style={{ marginTop: 14 }}>
-          <ProgressBar value={pct} height={8} />
-        </View>
+      <View style={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 18 }}>
+        <ProgressBar value={pct} height={8} />
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16, justifyContent: 'space-between' }}>

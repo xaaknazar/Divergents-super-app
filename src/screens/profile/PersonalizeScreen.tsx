@@ -5,7 +5,7 @@ import { View, Text, Pressable, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Capsule, PrimaryButton, Segmented, ProgressBar, ty } from '../../components/ui';
 import { Ring } from '../../components/talentUI';
@@ -47,7 +47,7 @@ export function PersonalizeScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Профиль')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={tr('Профиль')} onBack={() => navigation.goBack()} />
       <Screen tabPadding={false} topInset={false} contentStyle={{ paddingBottom: 44 }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 }}>
           <Text style={[ty.largeTitle, { color: T.label }]}>{tr('Персонализация')}</Text>

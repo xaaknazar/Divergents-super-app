@@ -34,7 +34,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
   const { t } = useLang();
   const [filter, setFilter] = useState(0);
-  const { applied, isApplied, jobs, jobsLoading, jobsError, reloadJobs } = useCareer();
+  const { applied, isApplied, jobs, jobsLoading, jobsError, reloadJobs, saved, getJob } = useCareer();
   const { profile, live, reload: reloadProfile } = useTalentProfile();
 
   // Only use real (live) Gallup talents for matching — never demo data.
@@ -45,6 +45,10 @@ export function CareerHomeScreen({ navigation }: Props) {
   const filtered = useMemo(() => sorted.filter((j) => matchesFilter(j, CAREER_FILTERS[filter])), [filter, sorted]);
   const rest = best ? filtered.filter((j) => j.id !== best.id || filter !== 0) : filtered;
   const myJobs = jobs.filter((j) => applied.includes(j.id));
+  // Saved vacancies, resolved against the loaded catalog. Ones that are no
+  // longer published (getJob → undefined) are dropped so bookmarks never become
+  // a dead, untappable row.
+  const savedJobs = useMemo(() => saved.map((id) => getJob(id)).filter((j): j is Job => !!j), [saved, jobs, getJob]);
 
   const open = (id: string) => navigation.navigate('VacancyDetail', { jobId: id });
 
@@ -111,6 +115,18 @@ export function CareerHomeScreen({ navigation }: Props) {
             </ListSection>
           ) : null}
 
+          {savedJobs.length > 0 ? (
+            <ListSection header={`${tr('Сохранённые')} · ${savedJobs.length}`}>
+              {savedJobs.map((j, i) => (
+                <ListRow key={j.id} onPress={() => open(j.id)}
+                  leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
+                  title={j.title} subtitle={`${j.company} · ${j.city}`}
+                  trailing={<SF name="bookmark.fill" size={15} color={T.brandAccent} />}
+                  last={i === savedJobs.length - 1} />
+              ))}
+            </ListSection>
+          ) : null}
+
           <SectionHeader title={filter === 0 ? tr('Ещё подходящие') : `${tr('Найдено')}: ${rest.length}`} />
           {rest.map((j) => <JobCard key={j.id} job={j} onPress={() => open(j.id)} applied={isApplied(j.id)} gallup={gallup} />)}
           {rest.length === 0 ? (
@@ -131,7 +147,7 @@ function ResumeHero({ navigation, completeness: live }: { navigation: Nav; compl
   const completeness = live >= 0 ? live : local;
   const filled = completeness > 0;
   return (
-    <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 20, overflow: 'hidden', shadowColor: '#1E337A', shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+    <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 20, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <Ring value={completeness / 100} size={64} color="#fff" label={`${completeness}%`} textColor="#fff" />
@@ -145,8 +161,8 @@ function ResumeHero({ navigation, completeness: live }: { navigation: Nav; compl
         <View style={{ marginTop: 16 }}>
           <Pressable onPress={() => navigation.navigate('Resume')}
             style={{ height: 46, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-            <SF name={filled ? 'square.and.arrow.up' : 'plus'} size={15} color="#1E337A" />
-            <Text style={[ty.headline, { color: '#1E337A' }]}>{filled ? tr('Редактировать анкету') : tr('Заполнить анкету')}</Text>
+            <SF name={filled ? 'square.and.arrow.up' : 'plus'} size={15} color={T.brand} />
+            <Text style={[ty.headline, { color: T.brand }]}>{filled ? tr('Редактировать анкету') : tr('Заполнить анкету')}</Text>
           </Pressable>
         </View>
       </LinearGradient>

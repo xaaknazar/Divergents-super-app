@@ -388,7 +388,7 @@ function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{channel.name}</Text>
-          {channel.verified ? <SF name="checkmark.seal.fill" size={14} color="#0EA5E9" /> : null}
+          {channel.verified ? <SF name="checkmark.seal.fill" size={14} color={T.sky} /> : null}
           {channel.access === 'request' ? <SF name="lock.fill" size={11} color={T.labelTertiary} /> : null}
         </View>
         <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>

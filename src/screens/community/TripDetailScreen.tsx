@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, Share, Alert, ActivityIndicator } from 'react-native';
+import { tr } from '../../state/LanguageContext';
+import { View, Text, ScrollView, Share, Alert, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 import { SF } from '../../components/SFIcon';
+import { NavHeader, NavRoundButton } from '../../components/NavHeader';
 import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, ty } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { fetchTrip, Trip } from '../../data/community';
@@ -15,16 +16,6 @@ import { imgUrl } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
-
-function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
-  const { T } = useTheme();
-  useLang();
-  return (
-    <Pressable onPress={onPress} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center' }}>
-      <SF name={icon} size={16} color={T.label} />
-    </Pressable>
-  );
-}
 
 export function TripDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
@@ -44,13 +35,8 @@ export function TripDetailScreen({ route, navigation }: Props) {
   // ── Loading ──
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top }}>
-        <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
-          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <SF name="chevron.left" size={20} color={T.brand} />
-            <Text style={[ty.body, { color: T.brand }]}>{tr('Сообщество')}</Text>
-          </Pressable>
-        </View>
+      <View style={{ flex: 1, backgroundColor: T.systemBg }}>
+        <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color={T.brand} />
         </View>
@@ -61,13 +47,8 @@ export function TripDetailScreen({ route, navigation }: Props) {
   // ── Not found ──
   if (!trip) {
     return (
-      <View style={{ flex: 1, backgroundColor: T.groupedBg, paddingTop: insets.top }}>
-        <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
-          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <SF name="chevron.left" size={20} color={T.brand} />
-            <Text style={[ty.body, { color: T.brand }]}>{tr('Сообщество')}</Text>
-          </Pressable>
-        </View>
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
         <EmptyState
           icon="mappin.circle.fill"
           title={tr('Поездка не найдена')}
@@ -105,13 +86,14 @@ export function TripDetailScreen({ route, navigation }: Props) {
               <Polygon points="0,230 60,170 130,210 200,140 280,200 340,170 400,210 400,280 0,280" fill="rgba(255,255,255,0.3)" />
             </Svg>
           )}
-          <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <RoundBtn icon="chevron.left" onPress={() => navigation.goBack()} />
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <RoundBtn icon={fav ? 'heart.fill' : 'heart'} onPress={() => toggle(`tripfav:${trip.id}`)} />
-              <RoundBtn icon="square.and.arrow.up" onPress={() => Share.share({ message: `${trip.title} — поездка Divergents · ${trip.region} · ${trip.date}` })} />
-            </View>
-          </View>
+          <NavHeader
+            variant="overlay" overlayScheme="light"
+            backLabel={tr('Сообщество')} onBack={() => navigation.goBack()}
+            trailing={<>
+              <NavRoundButton icon={fav ? 'heart.fill' : 'heart'} scheme="light" accessibilityLabel={tr('В избранное')} onPress={() => toggle(`tripfav:${trip.id}`)} />
+              <NavRoundButton icon="square.and.arrow.up" scheme="light" accessibilityLabel={tr('Поделиться')} onPress={() => Share.share({ message: `${trip.title} — поездка Divergents · ${trip.region} · ${trip.date}` })} />
+            </>}
+          />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             <Capsule bg="rgba(255,255,255,0.75)" color={T.label}><SF name="calendar" size={11} color={T.brand} />{trip.date} · {trip.days} дн.</Capsule>
             <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]}>{trip.title}</Text>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -10,6 +10,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
+import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
 import { usePlaces } from '../../state/PlacesContext';
 import { Place, postPlace } from '../../data/places';
@@ -90,13 +91,10 @@ export function AddPlaceScreen({ navigation, route }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Отмена')}</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]}>{editing ? 'Редактировать' : 'Новое место'}</Text>
-        <View style={{ width: 56 }} />
-      </View>
+      <NavHeader title={editing ? 'Редактировать' : 'Новое место'} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 12 }]}>{tr('Город:')} {cityName}, {countryName} · {tr('нажмите на карту, чтобы поставить точку')}</Text>
 
         {/* Map picker */}
@@ -156,6 +154,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
           </Pressable>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
         <PrimaryButton label={editing ? 'Сохранить' : 'Добавить место'} icon="checkmark" disabled={!ok} onPress={submit} />

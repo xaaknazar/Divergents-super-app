@@ -6,7 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF, SFName } from '../../components/SFIcon';
 import { Capsule, ty } from '../../components/ui';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { ChannelPost } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
@@ -28,7 +28,7 @@ export function ChannelScreen({ route, navigation }: Props) {
   if (loading && !channel) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={t('sec_channels')} onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       </View>
     );
@@ -37,7 +37,7 @@ export function ChannelScreen({ route, navigation }: Props) {
   if (!channel) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={t('sec_channels')} onBack={() => navigation.goBack()} />
         {error
           ? <ErrorState onRetry={reload} />
           : <EmptyState icon="tray" title={tr('Канал не найден')} actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />}
@@ -67,7 +67,7 @@ export function ChannelScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={t('sec_channels')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={t('sec_channels')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }}>
         {/* Header */}
         <View style={{ backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
@@ -76,7 +76,7 @@ export function ChannelScreen({ route, navigation }: Props) {
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{channel.name}</Text>
-                {channel.verified ? <SF name="checkmark.seal.fill" size={15} color="#0EA5E9" /> : null}
+                {channel.verified ? <SF name="checkmark.seal.fill" size={15} color={T.sky} /> : null}
               </View>
               <Text style={[ty.caption1, { color: T.labelSecondary }]}>@{channel.handle}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>

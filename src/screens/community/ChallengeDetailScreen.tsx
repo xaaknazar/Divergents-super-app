@@ -6,7 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Screen } from '../../components/Screen';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
 import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ProgressBar, ty } from '../../components/ui';
@@ -57,7 +57,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   if (list === null) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={tr('Сообщество')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       </View>
     );
@@ -73,7 +73,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   // Unknown id: distinguish a load failure (retry) from a genuinely missing one.
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Сообщество')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
       {error
         ? <ErrorState onRetry={load} />
         : <EmptyState icon="flag.fill" title={tr('Челлендж не найден')} subtitle={tr('Возможно, он завершился или ещё не опубликован.')} actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />}
@@ -91,14 +91,11 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Gradient hero background */}
-      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: insets.top }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4 }}>
-          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
-            <SF name="chevron.left" size={20} color="#fff" />
-            <Text style={[ty.body, { color: '#fff' }]}>{tr('Сообщество')}</Text>
-          </Pressable>
-          <SF name="square.and.arrow.up" size={20} color="#fff" />
-        </View>
+      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <NavHeader
+          transparent tint="#fff" backLabel={tr('Сообщество')} onBack={() => navigation.goBack()}
+          trailing={<SF name="square.and.arrow.up" size={20} color="#fff" />}
+        />
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 22, position: 'relative' }}>
           <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
             <SF name={meta.icon} size={120} color="#fff" />
@@ -170,7 +167,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={[ty.subheadEm, { color: full ? T.emeraldText : T.label }]}>{t.members}/{t.capacity}</Text>
-                  <Text style={[ty.caption2, { color: full ? T.emeraldText : '#A85D00' }]}>{full ? 'набрана' : `нужно ${need}`}</Text>
+                  <Text style={[ty.caption2, { color: full ? T.emeraldText : T.orange }]}>{full ? 'набрана' : `нужно ${need}`}</Text>
                 </View>
                 {i < teams.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 70, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
               </View>
@@ -233,7 +230,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
+      <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <Text style={{ fontSize: 18 }}>🎉</Text>

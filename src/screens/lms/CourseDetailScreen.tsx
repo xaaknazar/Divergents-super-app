@@ -7,7 +7,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
+import { NavHeader, NavRoundButton } from '../../components/NavHeader';
 import { ProgressBar, Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
+import { shadows } from '../../theme/tokens';
 import { ErrorState, EmptyState } from '../../components/StateViews';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { useCourses } from '../../state/CourseContext';
@@ -20,34 +22,30 @@ import { LMSStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<LMSStackParams, 'CourseDetail'>;
 type Nav = Props['navigation'];
 
-function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
-  const { T } = useTheme();
-  useLang();
-  return (
-    <Pressable onPress={onPress} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' }}>
-      <SF name={icon} size={16} color="#fff" />
-    </Pressable>
-  );
-}
-
-function HeroBar({ course, courseId, navigation }: { course: Course; courseId: string; navigation: Nav }) {
+// Floating translucent header over the course hero image (dark scrim buttons).
+function HeroNav({ course, courseId, navigation }: { course: Course; courseId: string; navigation: Nav }) {
   const { has, toggle } = useEnrollment();
-  const insets = useSafeAreaInsets();
   const bookmarked = has(`bookmark:${courseId}`);
   return (
-    <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <RoundBtn icon="chevron.left" onPress={() => navigation.goBack()} />
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <RoundBtn icon="square.and.arrow.up" onPress={() => Share.share({ message: `${course.title} — Divergents\n${API_BASE}/courses/${courseId}` })} />
-        <RoundBtn icon={bookmarked ? 'bookmark.fill' : 'bookmark'} onPress={() => toggle(`bookmark:${courseId}`)} />
-      </View>
-    </View>
+    <NavHeader
+      variant="overlay"
+      overlayScheme="dark"
+      onBack={() => navigation.goBack()}
+      trailing={
+        <>
+          <NavRoundButton icon="square.and.arrow.up" scheme="dark" accessibilityLabel="Поделиться"
+            onPress={() => Share.share({ message: `${course.title} — Divergents\n${API_BASE}/courses/${courseId}` })} />
+          <NavRoundButton icon={bookmarked ? 'bookmark.fill' : 'bookmark'} scheme="dark" accessibilityLabel="В закладки"
+            onPress={() => toggle(`bookmark:${courseId}`)} />
+        </>
+      }
+    />
   );
 }
 
 export function CourseDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
-  const insets = useSafeAreaInsets();
+  useLang();
   const { courseId } = route.params;
   const { getCourse, loadDetail, loading, error, reload } = useCourses();
   const course = getCourse(courseId);
@@ -63,10 +61,8 @@ export function CourseDetailScreen({ route, navigation }: Props) {
 
   if (!course) {
     return (
-      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 8 }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={{ padding: 12 }}>
-          <SF name="chevron.left" size={22} color={T.brandAccent} />
-        </Pressable>
+      <View style={{ flex: 1, backgroundColor: T.systemBg }}>
+        <NavHeader transparent hideBackLabel onBack={() => navigation.goBack()} />
         {loading ? (
           <View style={{ paddingTop: 60, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
         ) : (
@@ -85,10 +81,8 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   // Avoid the "not purchased" flash: wait until owned courses are resolved.
   if (!isFree && course.source === 'live' && my.isSignedIn && !my.ready) {
     return (
-      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 8 }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={{ padding: 12 }}>
-          <SF name="chevron.left" size={22} color={T.brandAccent} />
-        </Pressable>
+      <View style={{ flex: 1, backgroundColor: T.systemBg }}>
+        <NavHeader transparent hideBackLabel onBack={() => navigation.goBack()} />
         <View style={{ paddingTop: 60, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
       </View>
     );
@@ -123,7 +117,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
             ? <Image source={imgUrl(course.imageUrl, 1080)} style={{ position: 'absolute', width: '100%', height: 230 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
             : <View style={{ position: 'absolute', width: '100%', height: 230, backgroundColor: course.tint }} />}
           <LinearGradient colors={['rgba(0,0,0,0.34)', 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0.55)']} locations={[0, 0.45, 1]} style={{ position: 'absolute', width: '100%', height: 230 }} />
-          <HeroBar course={course} courseId={courseId} navigation={navigation} />
+          <HeroNav course={course} courseId={courseId} navigation={navigation} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             <Capsule bg="rgba(52,199,89,0.9)" color="#fff"><SF name="checkmark.seal.fill" size={11} color="#fff" />{tr('Курс открыт')}</Capsule>
             <Text style={[ty.title1, { color: '#fff', marginTop: 10 }]}>{course.title}</Text>
@@ -141,7 +135,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
         </View>
 
         {course.lessons.length > 0 ? (
-          <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 }}>
+          <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, ...shadows.card }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Text style={[ty.body, { color: T.label }]}>{tr('Ваш прогресс')}</Text>
               <Text style={[ty.title3, { color: T.brand }]}>{Math.round(p * 100)}%</Text>
@@ -218,7 +212,7 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
             ? <Image source={imgUrl(course.imageUrl, 1080)} style={{ position: 'absolute', width: '100%', height: 300 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
             : <View style={{ position: 'absolute', width: '100%', height: 300, backgroundColor: course.tint }} />}
           <LinearGradient colors={['rgba(0,0,0,0.40)', 'rgba(0,0,0,0.08)', 'rgba(0,0,0,0.62)']} locations={[0, 0.42, 1]} style={{ position: 'absolute', width: '100%', height: 300 }} />
-          <HeroBar course={course} courseId={courseId} navigation={navigation} />
+          <HeroNav course={course} courseId={courseId} navigation={navigation} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 22 }}>
             <Capsule bg="rgba(255,255,255,0.9)" color={T.brand}>{course.category}</Capsule>
             <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]}>{course.title}</Text>
@@ -227,7 +221,7 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
         </View>
 
         {/* Price card */}
-        <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
+        <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, ...shadows.card }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
             <Text style={[ty.largeTitle, { color: T.label }]}>{formatPrice(course.price)}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('единоразово')}</Text>

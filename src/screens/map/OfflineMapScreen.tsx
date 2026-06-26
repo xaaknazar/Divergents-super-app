@@ -5,7 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { usePlaces, filterPlaces } from '../../state/PlacesContext';
 import { CATEGORY_META, safeCityCenter } from '../../data/places';
 import { MAP_STYLE_URL } from '../../config';
@@ -88,7 +88,7 @@ export function OfflineMapScreen({ navigation }: Props) {
   if (!available) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={tr('Карта')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={tr('Карта')} onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="arrow.down.circle" size={34} color={T.brand} />
@@ -105,7 +105,7 @@ export function OfflineMapScreen({ navigation }: Props) {
   const { Map, Camera, Marker, UserLocation } = ML;
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Карта')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={tr('Карта')} onBack={() => navigation.goBack()} />
       <View style={{ flex: 1 }}>
         <Map style={{ flex: 1 }} mapStyle={styleUrl} compass logo={false} attribution={false}>
           <Camera ref={cameraRef} initialViewState={{ center: [center.lng, center.lat], zoom: 12 }} />

@@ -2,13 +2,14 @@
 // server-side, so this form only captures the program shell — title, start
 // date, duration, teams (each capped at 30), optional price and categories.
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { SF } from '../../components/SFIcon';
+import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
 import { createChallenge, NewChallengeTeam } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
@@ -139,15 +140,7 @@ export function CreateChallengeScreen({ navigation }: Props) {
 
 // ─── Shared modal-form atoms (match AddPlaceScreen's iOS form style) ─────────
 export function FormHeader({ title, onCancel }: { title: string; onCancel: () => void }) {
-  const { T } = useTheme();
-  const insets = useSafeAreaInsets();
-  return (
-    <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-      <Pressable onPress={onCancel} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Отмена')}</Text></Pressable>
-      <Text style={[ty.headline, { color: T.label }]}>{title}</Text>
-      <View style={{ width: 56 }} />
-    </View>
-  );
+  return <NavHeader title={title} backLabel={tr('Отмена')} onBack={onCancel} />;
 }
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {

@@ -4,7 +4,7 @@ import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
 import { ListSkeleton, EmptyState } from '../../components/StateViews';
@@ -17,7 +17,7 @@ import { CareerStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<CareerStackParams, 'VacancyDetail'>;
 
 export function VacancyDetailScreen({ route, navigation }: Props) {
-  const { T } = useTheme();
+  const { T, isDark } = useTheme();
   useLang();
   const { jobId } = route.params;
   const { getJob, jobsLoading, hydrated, isApplied, isSaved, apply, toggleSave } = useCareer();
@@ -51,7 +51,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
   if (notFound && !job) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} />
         <EmptyState icon="briefcase" title={tr('Не удалось открыть вакансию')}
           subtitle={tr('Возможно, она снята с публикации или нет связи. Повторите попытку или вернитесь к списку.')}
           actionLabel={tr('Повторить')} onAction={() => setRetry((n) => n + 1)} />
@@ -63,7 +63,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
   if (!job) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} />
         <View style={{ paddingTop: 16 }}><ListSkeleton rows={5} /></View>
       </View>
     );
@@ -72,9 +72,9 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
   const applied = isApplied(job.id);
 
   return (
-    <Screen gradient={['#EAF4EF', '#F3F6F4', '#F2F2F7']} topInset={false} tabPadding={false}>
-      <BackNav back={tr('Карьера')} onBack={() => navigation.goBack()} trailing={
-        <Pressable onPress={() => toggleSave(job.id)} hitSlop={8}>
+    <Screen gradient={isDark ? [T.systemBg, T.groupedBg, T.secondaryBg] : ['#EAF4EF', '#F3F6F4', '#F2F2F7']} topInset={false} tabPadding={false}>
+      <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} transparent trailing={
+        <Pressable onPress={() => toggleSave(job.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Сохранить')}>
           <SF name={isSaved(job.id) ? 'bookmark.fill' : 'bookmark'} size={20} color={T.brandAccent} />
         </Pressable>
       } />

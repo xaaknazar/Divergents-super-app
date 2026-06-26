@@ -10,7 +10,7 @@ import { useAuth, useUser } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { Capsule, PrimaryButton, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { usePlaces, ratingOf } from '../../state/PlacesContext';
 import { CATEGORY_META, TAG_META, isOpenNow, reportPlace, postReview } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
@@ -32,7 +32,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   if (!place) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={tr('Места')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={tr('Места')} onBack={() => navigation.goBack()} />
         <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Место не найдено')}</Text></View>
       </View>
     );
@@ -90,7 +90,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Места')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={tr('Места')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
         {place.photo ? <Image source={{ uri: place.photo }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : null}
         {/* Hero */}
@@ -102,10 +102,10 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={[ty.title2, { color: T.label }]} numberOfLines={2}>{place.name}</Text>
-                {place.approved ? <SF name="checkmark.seal.fill" size={18} color="#0EA5E9" /> : null}
+                {place.approved ? <SF name="checkmark.seal.fill" size={18} color={T.sky} /> : null}
               </View>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{meta.label} · {place.hours}</Text>
-              {open.known ? <Text style={[ty.caption1, { color: open.open ? '#16A34A' : '#EF4444', marginTop: 2 }]}>{open.label}</Text> : null}
+              {open.known ? <Text style={[ty.caption1, { color: open.open ? T.green : T.red, marginTop: 2 }]}>{open.label}</Text> : null}
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
@@ -117,7 +117,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </View>
           {place.approved ? (
             <View style={{ marginTop: 10 }}>
-              <Capsule bg="rgba(14,165,233,0.14)" color="#0EA5E9"><SF name="checkmark.seal.fill" size={11} color="#0EA5E9" />Divergents Approved</Capsule>
+              <Capsule bg={T.skyBadgeBg} color={T.sky}><SF name="checkmark.seal.fill" size={11} color={T.sky} />Divergents Approved</Capsule>
             </View>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>

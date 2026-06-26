@@ -5,6 +5,7 @@ import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
+import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import {
@@ -67,11 +68,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Отмена')}</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]}>{tr('Заявка')}</Text>
-        <View style={{ width: 56 }} />
-      </View>
+      <NavHeader title={tr('Заявка')} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
         <Text style={[ty.title3, { color: T.label }]}>{meta?.title}</Text>
@@ -116,7 +113,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
                   <Text style={[ty.body, { color: T.label }]}>{t.name}</Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary }]}>{t.members}/{t.capacity} · капитан {t.captain}</Text>
                 </View>
-                <Text style={[ty.caption2Em, { color: full ? T.emeraldText : '#A85D00' }]}>{full ? 'набрана' : `нужно ${t.capacity - t.members}`}</Text>
+                <Text style={[ty.caption2Em, { color: full ? T.emeraldText : T.orange }]}>{full ? 'набрана' : `нужно ${t.capacity - t.members}`}</Text>
               </Pressable>
             );
           })}

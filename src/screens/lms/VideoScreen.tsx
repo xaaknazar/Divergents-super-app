@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
+import { NavHeader } from '../../components/NavHeader';
 import { Segmented, PrimaryButton, ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
@@ -103,10 +104,8 @@ export function VideoScreen({ route, navigation }: Props) {
 
   if (!course || !lesson) {
     return (
-      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 8 }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={{ padding: 12 }}>
-          <SF name="chevron.left" size={22} color={T.brandAccent} />
-        </Pressable>
+      <View style={{ flex: 1, backgroundColor: T.systemBg }}>
+        <NavHeader transparent hideBackLabel onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingBottom: 80, gap: 10 }}>
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="play.slash" size={28} color={T.labelTertiary} />
