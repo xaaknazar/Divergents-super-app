@@ -10,6 +10,7 @@ import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
 import { Capsule, IconCircle, ListSection, ListRow, Segmented, ty } from '../../components/ui';
 import { Ring } from '../../components/talentUI';
+import { GardnerChart } from '../../components/GardnerChart';
 import { JOBS } from '../../data/career';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
@@ -181,6 +182,16 @@ export function ProfileHomeScreen({ navigation }: Props) {
                 </View>
               );
             })}
+          </View>
+        </View>
+      ) : null}
+
+      {/* Gardner — множественный интеллект */}
+      {(profile?.gardner ?? []).length > 0 ? (
+        <View style={{ marginTop: 18 }}>
+          <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Множественный интеллект')}</Text>
+          <View style={{ marginHorizontal: 16 }}>
+            <GardnerChart data={profile!.gardner} compact />
           </View>
         </View>
       ) : null}

@@ -1,19 +1,27 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, ScrollView, Linking } from 'react-native';
+import { View, Text, ScrollView, Linking, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { ProgressBar, Capsule, ListSection, ListRow, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, ty } from '../../components/ui';
+import { GardnerChart } from '../../components/GardnerChart';
 import { useTalentProfile } from '../../state/useTalentProfile';
-import { GALLUP_DOMAIN_META, GallupDomain, mbtiName, fmtList, MOCK_PROFILE } from '../../data/talentslab';
+import {
+  GALLUP_DOMAIN_META, mbtiName, fmtList, MOCK_PROFILE,
+  loadGallupOrder, saveGallupOrder, applyGallupOrder, gallupId,
+} from '../../data/talentslab';
+import { RESUME_STEPS } from '../../data/resumeSchema';
+import { hSelect } from '../../lib/haptics';
 import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'TalentProfile'>;
-const DOMAIN_ORDER: GallupDomain[] = ['strategic', 'executing', 'influencing', 'relationship'];
+
+// RESUME_STEPS index whose `key` matches — computed, never hardcoded.
+const stepIndex = (key: string) => Math.max(0, RESUME_STEPS.findIndex((s) => s.key === key));
 
 export function TalentProfileScreen({ navigation }: Props) {
   const { T } = useTheme();
@@ -24,6 +32,28 @@ export function TalentProfileScreen({ navigation }: Props) {
   // data masquerading as the user's real profile.
   const profile = live ? realProfile : MOCK_PROFILE;
   const r = profile?.resume ?? null;
+
+  // Navigate to the resume form at the step that matches a schema key.
+  const editStep = (key: string) => navigation.navigate('Resume', { step: stepIndex(key) });
+
+  // Editable Gallup: locally-saved talent order, applied to the displayed list.
+  const [gallupOrder, setGallupOrder] = useState<string[] | null>(null);
+  const [editGallup, setEditGallup] = useState(false);
+  useEffect(() => { loadGallupOrder().then(setGallupOrder); }, []);
+  const baseGallup = profile?.gallup ?? [];
+  const orderedGallup = useMemo(
+    () => applyGallupOrder(baseGallup, gallupOrder),
+    [baseGallup, gallupOrder],
+  );
+  const moveGallup = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= orderedGallup.length) return;
+    const ids = orderedGallup.map(gallupId);
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    hSelect();
+    setGallupOrder(ids);
+    saveGallupOrder(ids);
+  };
 
   const personal: [string, any][] = [
     ['Город', r?.current_city], ['Телефон', r?.phone], ['Дата рождения', r?.birth_date],
@@ -45,24 +75,53 @@ export function TalentProfileScreen({ navigation }: Props) {
     .map(([label, v]) => [label, Array.isArray(v) ? fmtList(v) : (v == null ? '' : String(v))] as [string, string])
     .filter(([, v]) => v !== '' && v !== 'undefined');
 
-  const Section = ({ header, items }: { header: string; items: [string, any][] }) => {
+  // iOS grouped-header row with an optional inline «Изменить» affordance.
+  const GroupHeader = ({ label, action, accessibilityLabel, onPress }: {
+    label: string; action?: string; accessibilityLabel?: string; onPress?: () => void;
+  }) => (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6 }}>
+      <Text style={[ty.footnote, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4, flex: 1 }]} numberOfLines={1}>{label}</Text>
+      {onPress ? (
+        <Pressable onPress={() => { hSelect(); onPress(); }} hitSlop={8} accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel ?? action ?? tr('Изменить')}
+          style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
+          <Text style={[ty.footnoteEm, { color: T.brandAccent }]}>{action ?? tr('Изменить')}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+
+  const Section = ({ label, items, editKey }: { label: string; items: [string, any][]; editKey?: string }) => {
     const data = rows(items);
     if (data.length === 0) return null;
     return (
-      <ListSection header={header}>
-        {data.map(([label, value], i) => (
-          <ListRow key={label} title={label} detail={value.length > 22 ? undefined : value} last={i === data.length - 1}
-            subtitle={value.length > 22 ? value : undefined} />
-        ))}
-      </ListSection>
+      <View>
+        <GroupHeader label={label}
+          action={editKey ? tr('Изменить') : undefined}
+          accessibilityLabel={editKey ? `${tr('Изменить')} · ${label}` : undefined}
+          onPress={editKey ? () => editStep(editKey) : undefined} />
+        <ListSection>
+          {data.map(([rowLabel, value], i) => (
+            <ListRow key={rowLabel} title={rowLabel} detail={value.length > 22 ? undefined : value} last={i === data.length - 1}
+              subtitle={value.length > 22 ? value : undefined} />
+          ))}
+        </ListSection>
+      </View>
     );
   };
 
-  const byDomain = (d: GallupDomain) => (profile?.gallup ?? []).filter((g) => g.domain === d);
-
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} />
+      <NavHeader title={tr('Моя анкета')} backLabel={tr('Карьера')} onBack={() => navigation.goBack()}
+        trailing={
+          // DEFERRED: SFIcon has no 'pencil'/'square.and.pencil' glyph, so the
+          // edit affordance is a standard iOS text button (avoids a blank icon).
+          <Pressable onPress={() => { hSelect(); navigation.navigate('Resume'); }} hitSlop={8}
+            accessibilityRole="button" accessibilityLabel={tr('Редактировать анкета')}
+            style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.5 : 1 })}>
+            <Text style={[ty.body, { color: T.brandAccent }]}>{tr('Править')}</Text>
+          </Pressable>
+        } />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Hero */}
         <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16 }}>
@@ -77,9 +136,9 @@ export function TalentProfileScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <Section header={tr('Личные данные')} items={personal} />
-        <Section header={tr('Карьера и образование')} items={career} />
-        <Section header={tr('О себе')} items={about} />
+        <Section label={tr('Личные данные')} items={personal} editKey="personal" />
+        <Section label={tr('Карьера и образование')} items={career} editKey="education" />
+        <Section label={tr('О себе')} items={about} editKey="additional" />
 
         {/* Work experience list */}
         {(() => {
@@ -109,48 +168,60 @@ export function TalentProfileScreen({ navigation }: Props) {
           </ListSection>
         ) : null}
 
-        {/* All Gallup talents grouped by domain */}
-        {(profile?.gallup ?? []).length > 0 ? (
-          <ListSection header={`Таланты Gallup · ${profile!.gallup.length}`}>
-            <View style={{ padding: 14, gap: 14 }}>
-              {DOMAIN_ORDER.map((d) => {
-                const items = byDomain(d);
-                if (items.length === 0) return null;
-                const meta = GALLUP_DOMAIN_META[d];
+        {/* All Gallup talents — flat, in the user's (locally-saved) order.
+            Tap «Изменить» to reorder via up/down controls. */}
+        {orderedGallup.length > 0 ? (
+          <View>
+            <GroupHeader label={`${tr('Таланты Gallup')} · ${orderedGallup.length}`}
+              action={editGallup ? tr('Готово') : tr('Изменить')}
+              accessibilityLabel={tr('Изменить порядок талантов Gallup')}
+              onPress={() => setEditGallup((v) => !v)} />
+            <ListSection>
+              {orderedGallup.map((g, i) => {
+                const meta = GALLUP_DOMAIN_META[g.domain];
+                const last = i === orderedGallup.length - 1;
                 return (
-                  <View key={d}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <ListRow key={gallupId(g)} last={last}
+                    leading={
+                      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={[ty.caption2Em, { color: meta.color }]}>{i + 1}</Text>
+                      </View>
+                    }
+                    title={g.name}
+                    subtitle={meta.label}
+                    trailing={editGallup ? (
+                      <View style={{ flexDirection: 'row', gap: 6 }}>
+                        <Pressable onPress={() => moveGallup(i, -1)} disabled={i === 0} hitSlop={6}
+                          accessibilityRole="button" accessibilityLabel={`${tr('Выше')}: ${g.name}`}
+                          style={({ pressed }) => ({ opacity: i === 0 ? 0.3 : pressed ? 0.5 : 1 })}>
+                          <SF name="arrow.up.circle.fill" size={26} color={T.brandAccent} />
+                        </Pressable>
+                        <Pressable onPress={() => moveGallup(i, 1)} disabled={last} hitSlop={6}
+                          accessibilityRole="button" accessibilityLabel={`${tr('Ниже')}: ${g.name}`}
+                          style={({ pressed }) => ({ opacity: last ? 0.3 : pressed ? 0.5 : 1 })}>
+                          <SF name="arrow.down.circle" size={26} color={T.brandAccent} />
+                        </Pressable>
+                      </View>
+                    ) : (
                       <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
-                      <Text style={[ty.footnoteEm, { color: meta.color, textTransform: 'uppercase' }]}>{meta.label}</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                      {items.map((g) => (
-                        <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, backgroundColor: meta.color + '18' }}>
-                          <Text style={[ty.caption2Em, { color: meta.color }]}>{g.rank}</Text>
-                          <Text style={[ty.footnoteEm, { color: T.label }]}>{g.name}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
+                    )} />
                 );
               })}
-            </View>
-          </ListSection>
+            </ListSection>
+            <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 36, paddingTop: 6 }]}>
+              {tr('Порядок талантов сохраняется только на этом устройстве. Официальный отчёт Talentslab формируется на сайте и не меняется.')}
+            </Text>
+          </View>
         ) : null}
 
-        {/* Gardner */}
+        {/* Gardner — multiple-intelligences chart (Talentslab design) */}
         {(profile?.gardner ?? []).length > 0 ? (
-          <ListSection header={tr('Множественный интеллект (Гарднер)')}>
-            <View style={{ padding: 14 }}>
-              {profile!.gardner.slice().sort((a, b) => b.score - a.score).map((gr, i) => (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <Text style={[ty.caption1, { color: T.label, width: 170 }]} numberOfLines={1}>{gr.category}</Text>
-                  <View style={{ flex: 1 }}><ProgressBar value={gr.score / 100} /></View>
-                  <Text style={[ty.caption2Em, { color: T.labelSecondary, width: 32, textAlign: 'right' }]}>{gr.score}</Text>
-                </View>
-              ))}
+          <View>
+            <GroupHeader label={tr('Множественный интеллект (Гарднер)')} />
+            <View style={{ marginHorizontal: 16 }}>
+              <GardnerChart data={profile!.gardner} />
             </View>
-          </ListSection>
+          </View>
         ) : null}
 
         {/* Reports */}
