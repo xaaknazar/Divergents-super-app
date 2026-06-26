@@ -3,6 +3,12 @@
 // The LLM runs entirely server-side. The app only sends the running
 // conversation and renders the returned text (simulating streaming locally on
 // the client). No model logic, prompts or secrets live here.
+//
+// DEFERRED: the course-specific tutor (POST /api/ai/chat with
+// { courseId, message, history } → { answer, sources }) lives in
+// src/data/api.ts (askCourseAI), not here. That route is OUTSIDE
+// /api/mobile and was not part of the server scan — verify /api/ai/chat
+// actually exists/returns this shape on divergents-lms.kz before relying on it.
 import { API_BASE } from '../config';
 
 export type AiRole = 'user' | 'assistant';
@@ -41,14 +47,24 @@ export async function askAi(
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
+    // Server contract (POST /api/mobile/ai): { message, history?, profileContext? }
+    // → { answer }. The caller hands us the full running conversation (history
+    // turns followed by the new user message); we split it into the latest
+    // `message` and the prior `history` the server expects.
+    const recent = messages.slice(-12);
+    const last = recent[recent.length - 1];
+    const message = last?.content ?? '';
+    const history = recent
+      .slice(0, -1)
+      .map((m) => ({ role: m.role, content: m.content }));
+
     const res = await fetch(`${API_BASE}/api/mobile/ai`, {
       method: 'POST',
       signal: ctrl.signal,
       headers,
-      // BACKEND.md: body is `{ messages }`. profileContext is optional extra
-      // context the server may use or ignore.
       body: JSON.stringify({
-        messages: messages.slice(-12),
+        message,
+        ...(history.length ? { history } : {}),
         ...(opts.profileContext ? { profileContext: opts.profileContext } : {}),
       }),
     });

@@ -1,12 +1,13 @@
 // Community data: challenge scoring rules + live content fetched from the
-// Divergents website API. The app is a client — real content (trips, sport,
-// lectures, teams, the active challenge and its leaderboard) is published by
-// the admin server-side and read here as JSON. On failure or empty response we
-// return [] / null and the screens render a proper Russian empty state; we
-// never fall back to fake/branded seed data.
+// Divergents website API. The app is a client — real content (trips, teams and
+// the challenges catalog) is published by the admin server-side and read here
+// as JSON, then MAPPED from the server's raw shapes into the view-model shapes
+// the community screens already consume. On failure or empty response we return
+// [] / null and the screens render a proper Russian empty/error state; we never
+// fall back to fake/branded seed data.
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
-import { API_BASE } from './api';
+import { API_BASE, formatPrice } from './api';
 
 // ─── Small JSON fetch helper ───────────────────────────────────────────────
 // getJsonResult distinguishes a real failure (network error, timeout, non-2xx,
@@ -35,6 +36,103 @@ async function getJsonResult(path: string, timeoutMs = 12000): Promise<JsonResul
 
 async function getJson(path: string, timeoutMs = 12000): Promise<any | null> {
   return (await getJsonResult(path, timeoutMs)).data;
+}
+
+// ─── Raw server shapes (GET /api/mobile/challenges, /api/mobile/trips) ───────
+interface RawTeam {
+  id: string;
+  name: string;
+  capacity: number;
+  captain: string | null;
+  _count?: { applications?: number } | null;
+}
+interface RawChallenge {
+  id: string;
+  title: string;
+  startISO: string | null;
+  durationDays: number;
+  categories: string[] | string | null;
+  rules: string | null;
+  price: number | null;
+  status: 'open' | 'active' | 'archived' | string;
+  teams?: RawTeam[] | null;
+  _count?: { applications?: number } | null;
+}
+interface RawTrip {
+  id: string;
+  title: string;
+  region: string | null;
+  date: string | null;
+  days: number;
+  price: number | null;
+  spots: number;
+  difficulty: string | null;
+  description: string | null;
+  status: string;
+  createdBy: string | null;
+  _count?: { applications?: number } | null;
+}
+
+// ─── Deterministic decoration (icon/tint by index) ──────────────────────────
+// Reuse the soft iOS-tinted palette the cards already render against.
+const TINTS = ['#E8ECFB', '#E5DCEC', '#DEF0DF', '#FEEAD0', '#FCE2E2', '#E1E7F8'];
+const CHALLENGE_ICONS: SFName[] = ['flame.fill', 'figure.walk', 'bolt.fill', 'star.fill', 'target', 'trophy.fill'];
+const tintAt = (i: number): string => TINTS[((i % TINTS.length) + TINTS.length) % TINTS.length];
+const challengeIconAt = (i: number): SFName => CHALLENGE_ICONS[((i % CHALLENGE_ICONS.length) + CHALLENGE_ICONS.length) % CHALLENGE_ICONS.length];
+
+// ─── Russian date / text helpers ────────────────────────────────────────────
+const RU_MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+
+function ruShortDate(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getDate()} ${RU_MONTHS[d.getMonth()]}`;
+}
+
+// Trips may carry a free-form date string ("12–15 августа") or an ISO date.
+function tripDateLabel(raw: string | null | undefined): string {
+  if (!raw) return '';
+  return ruShortDate(raw) || String(raw);
+}
+
+function applicationsOf(c: { _count?: { applications?: number } | null } | null | undefined): number {
+  const n = c?._count?.applications;
+  return typeof n === 'number' && Number.isFinite(n) ? n : 0;
+}
+
+function categoriesText(categories: string[] | string | null | undefined): string {
+  if (Array.isArray(categories)) return categories.filter(Boolean).join(' · ');
+  if (typeof categories === 'string') return categories;
+  return '';
+}
+
+function rulesSnippet(rules: string | null | undefined): string {
+  if (!rules) return '';
+  const s = rules.trim();
+  return s.length > 80 ? `${s.slice(0, 77)}…` : s;
+}
+
+// maxFlags defaults to 3; if the rules text mentions "N 🚩" / "N флаг" use it.
+function parseMaxFlags(rules: string | null | undefined): number {
+  if (!rules) return 3;
+  const m = rules.match(/(\d+)\s*🚩/) || rules.match(/(\d+)\s*флаг/i);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (Number.isFinite(n) && n > 0 && n < 100) return n;
+  }
+  return 3;
+}
+
+function mapStatus(status: string): 'upcoming' | 'active' | 'finished' {
+  if (status === 'open') return 'upcoming';
+  if (status === 'active') return 'active';
+  return 'finished';
+}
+
+function challengeStartLabel(c: RawChallenge): string {
+  if (c.status === 'active') return 'идёт';
+  return ruShortDate(c.startISO) || 'скоро';
 }
 
 // ─── Challenge scoring model ───────────────────────────────────────────────
@@ -143,13 +241,14 @@ export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | 
 // Live active challenge + its full team leaderboard.
 export interface ActiveChallengeData { challenge: Challenge | null; members: Member[] }
 
+// The backend currently exposes no "active challenge" concept — there is no
+// daily-task / leaderboard model server-side. Return empty so the screen shows
+// its proper empty state.
+// DEFERRED: backend needs an active-challenge + per-member daily-task &
+// leaderboard model (deferred to the later full-backend phase) before this can
+// return live data.
 export async function fetchActiveChallenge(): Promise<ActiveChallengeData> {
-  const d = await getJson('/api/mobile/community/challenges/active');
-  if (!d || !d.challenge) return { challenge: null, members: [] };
-  return {
-    challenge: d.challenge as Challenge,
-    members: Array.isArray(d.members) ? (d.members as Member[]) : [],
-  };
+  return { challenge: null, members: [] };
 }
 
 // ─── Trips ─────────────────────────────────────────────────────────────────
@@ -174,15 +273,44 @@ export interface Trip {
   imageUrl?: string | null;
 }
 
-export async function fetchTrips(): Promise<Trip[]> {
-  const d = await getJson('/api/mobile/community/trips');
-  return Array.isArray(d?.trips) ? (d.trips as Trip[]) : [];
+function mapTrip(raw: RawTrip, index: number): Trip {
+  const region = raw.region ?? '';
+  const dateLabel = tripDateLabel(raw.date);
+  const meta = [region, dateLabel].filter(Boolean).join(' · ');
+  return {
+    id: raw.id,
+    date: dateLabel,
+    title: raw.title ?? '',
+    region,
+    meta,
+    tint: tintAt(index),
+    days: typeof raw.days === 'number' ? raw.days : 0,
+    going: applicationsOf(raw),
+    spots: typeof raw.spots === 'number' ? raw.spots : 0,
+    price: formatPrice(raw.price),
+    difficulty: raw.difficulty ?? '—',
+    organizer: raw.createdBy ?? '',
+    organizerType: 'Divergents',
+    description: raw.description ?? '',
+    itinerary: [],
+    included: [],
+    imageUrl: null,
+  };
 }
 
+function mapTrips(data: any): Trip[] {
+  const arr: RawTrip[] = Array.isArray(data?.trips) ? data.trips : [];
+  return arr.map(mapTrip);
+}
+
+export async function fetchTrips(): Promise<Trip[]> {
+  return mapTrips(await getJson('/api/mobile/trips'));
+}
+
+// The server has no trip-detail endpoint — fetch the list and find by id.
 export async function fetchTrip(id: string): Promise<Trip | null> {
-  const d = await getJson(`/api/mobile/community/trips/${id}`);
-  if (!d || !d.id) return null;
-  return d as Trip;
+  const trips = await fetchTrips();
+  return trips.find((t) => t.id === id) ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -239,9 +367,30 @@ export interface ChallengeTeam {
   tint: string;
 }
 
+function mapTeam(raw: RawTeam, index: number): ChallengeTeam {
+  return {
+    id: raw.id,
+    name: raw.name ?? '',
+    members: applicationsOf(raw),
+    capacity: typeof raw.capacity === 'number' ? raw.capacity : 0,
+    captain: raw.captain ?? '—',
+    advisors: [],
+    tint: tintAt(index),
+  };
+}
+
+// The teams (join) screen lists the teams of the first joinable challenge:
+// prefer an 'open' challenge, else the 'active' one.
+function teamsFromChallenges(list: RawChallenge[]): ChallengeTeam[] {
+  const target = list.find((c) => c.status === 'open') || list.find((c) => c.status === 'active');
+  const teams = target?.teams;
+  return Array.isArray(teams) ? teams.map(mapTeam) : [];
+}
+
 export async function fetchTeams(): Promise<ChallengeTeam[]> {
-  const d = await getJson('/api/mobile/community/teams');
-  return Array.isArray(d?.teams) ? (d.teams as ChallengeTeam[]) : [];
+  const d = await getJson('/api/mobile/challenges');
+  const list: RawChallenge[] = Array.isArray(d?.challenges) ? d.challenges : [];
+  return teamsFromChallenges(list);
 }
 
 export function teamsNeed(teams: ChallengeTeam[]): number {
@@ -264,9 +413,30 @@ export interface ChallengeListItem {
   icon: SFName;
 }
 
+function mapChallenge(raw: RawChallenge, index: number): ChallengeListItem {
+  return {
+    id: raw.id,
+    title: raw.title ?? '',
+    subtitle: categoriesText(raw.categories) || rulesSnippet(raw.rules),
+    status: mapStatus(raw.status),
+    startISO: raw.startISO ?? undefined,
+    startLabel: challengeStartLabel(raw),
+    durationDays: typeof raw.durationDays === 'number' ? raw.durationDays : 0,
+    maxFlags: parseMaxFlags(raw.rules),
+    participants: applicationsOf(raw),
+    teams: Array.isArray(raw.teams) ? raw.teams.length : 0,
+    tint: tintAt(index),
+    icon: challengeIconAt(index),
+  };
+}
+
+function mapChallenges(data: any): ChallengeListItem[] {
+  const arr: RawChallenge[] = Array.isArray(data?.challenges) ? data.challenges : [];
+  return arr.map(mapChallenge);
+}
+
 export async function fetchChallenges(): Promise<ChallengeListItem[]> {
-  const d = await getJson('/api/mobile/community/challenges');
-  return Array.isArray(d?.challenges) ? (d.challenges as ChallengeListItem[]) : [];
+  return mapChallenges(await getJson('/api/mobile/challenges'));
 }
 
 export function getChallengeMeta(list: ChallengeListItem[], id: string) {
@@ -291,9 +461,10 @@ export interface SportActivity {
   tint: string;
 }
 
+// No server endpoint for sport activities — return empty (screen empty state).
+// DEFERRED: backend needs a sport-activities model/endpoint to populate this.
 export async function fetchSport(): Promise<SportActivity[]> {
-  const d = await getJson('/api/mobile/community/sport');
-  return Array.isArray(d?.activities) ? (d.activities as SportActivity[]) : [];
+  return [];
 }
 
 // ─── Встречи: онлайн-лекции ─────────────────────────────────────────
@@ -308,15 +479,17 @@ export interface Lecture {
   imageUrl: string;
 }
 
+// No server endpoint for lectures — return empty (screen empty state).
+// DEFERRED: backend needs an online-lectures model/endpoint to populate this.
 export async function fetchLectures(): Promise<Lecture[]> {
-  const d = await getJson('/api/mobile/community/lectures');
-  return Array.isArray(d?.lectures) ? (d.lectures as Lecture[]) : [];
+  return [];
 }
 
 // ─── Aggregated loaders (error-aware) ───────────────────────────────────────
 // These fetch several sections together and report `error: true` only when
-// EVERY underlying request failed (network down / server unreachable), so a
-// single empty section never masquerades as a connection error.
+// EVERY underlying (existing) request failed (network down / server
+// unreachable), so a single empty section never masquerades as a connection
+// error. Sport has no endpoint, so it is always [] and never affects `error`.
 export interface CommunityHomeData {
   trips: Trip[];
   sport: SportActivity[];
@@ -325,16 +498,15 @@ export interface CommunityHomeData {
 }
 
 export async function fetchCommunityHome(): Promise<CommunityHomeData> {
-  const [t, s, c] = await Promise.all([
-    getJsonResult('/api/mobile/community/trips'),
-    getJsonResult('/api/mobile/community/sport'),
-    getJsonResult('/api/mobile/community/challenges'),
+  const [t, c] = await Promise.all([
+    getJsonResult('/api/mobile/trips'),
+    getJsonResult('/api/mobile/challenges'),
   ]);
   return {
-    trips: Array.isArray(t.data?.trips) ? (t.data.trips as Trip[]) : [],
-    sport: Array.isArray(s.data?.activities) ? (s.data.activities as SportActivity[]) : [],
-    challenges: Array.isArray(c.data?.challenges) ? (c.data.challenges as ChallengeListItem[]) : [],
-    error: !t.ok && !s.ok && !c.ok,
+    trips: mapTrips(t.data),
+    sport: [],
+    challenges: mapChallenges(c.data),
+    error: !t.ok && !c.ok,
   };
 }
 
@@ -345,13 +517,11 @@ export interface ChallengesBundle {
 }
 
 export async function fetchChallengesAndTeams(): Promise<ChallengesBundle> {
-  const [c, t] = await Promise.all([
-    getJsonResult('/api/mobile/community/challenges'),
-    getJsonResult('/api/mobile/community/teams'),
-  ]);
+  const c = await getJsonResult('/api/mobile/challenges');
+  const list: RawChallenge[] = Array.isArray(c.data?.challenges) ? c.data.challenges : [];
   return {
-    challenges: Array.isArray(c.data?.challenges) ? (c.data.challenges as ChallengeListItem[]) : [],
-    teams: Array.isArray(t.data?.teams) ? (t.data.teams as ChallengeTeam[]) : [],
-    error: !c.ok && !t.ok,
+    challenges: list.map(mapChallenge),
+    teams: teamsFromChallenges(list),
+    error: !c.ok,
   };
 }
