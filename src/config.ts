@@ -25,3 +25,12 @@ export const TALENTSLAB_BASE =
 // Clerk-only auth in production. Override via EXPO_PUBLIC_TALENTSLAB_APP_KEY.
 export const TALENTSLAB_APP_KEY =
   process.env.EXPO_PUBLIC_TALENTSLAB_APP_KEY || 'd200c5a5f643d4c7fffe0207ac75a361535970cc6604db40';
+
+
+// MapLibre style URL for the offline-capable map. The default (MapLibre demo
+// tiles) works without a key but is low-detail. For street-level maps AND
+// offline downloads, set EXPO_PUBLIC_MAP_STYLE_URL to a MapTiler/Stadia style
+// URL that includes your API key, e.g.
+//   https://api.maptiler.com/maps/streets-v2/style.json?key=YOUR_KEY
+export const MAP_STYLE_URL =
+  process.env.EXPO_PUBLIC_MAP_STYLE_URL || 'https://demotiles.maplibre.org/style.json';

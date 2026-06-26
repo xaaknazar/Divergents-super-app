@@ -25,6 +25,7 @@ import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import { MapHomeScreen } from '../screens/map/MapHomeScreen';
 import { PlaceDetailScreen } from '../screens/map/PlaceDetailScreen';
 import { AddPlaceScreen } from '../screens/map/AddPlaceScreen';
+import { OfflineMapScreen } from '../screens/map/OfflineMapScreen';
 import { CareerHomeScreen } from '../screens/career/CareerHomeScreen';
 import { VacancyDetailScreen } from '../screens/career/VacancyDetailScreen';
 import { ResumeFormScreen } from '../screens/career/ResumeFormScreen';
@@ -79,6 +80,7 @@ function MapNavigator() {
       <MapStack.Screen name="MapHome" component={MapHomeScreen} />
       <MapStack.Screen name="PlaceDetail" component={PlaceDetailScreen} />
       <MapStack.Screen name="AddPlace" component={AddPlaceScreen} options={{ presentation: 'modal' }} />
+      <MapStack.Screen name="OfflineMap" component={OfflineMapScreen} />
     </MapStack.Navigator>
   );
 }

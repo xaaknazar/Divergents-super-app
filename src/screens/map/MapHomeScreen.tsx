@@ -320,6 +320,7 @@ export function MapHomeScreen({ navigation }: Props) {
 
       {/* Right floating buttons */}
       <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
+        <Round icon="arrow.down.circle" onPress={() => navigation.navigate('OfflineMap')} T={T} />
         <Round icon="location.fill" onPress={recenter} T={T} />
         <Round icon="plus" brand onPress={() => navigation.navigate('AddPlace')} T={T} />
       </View>

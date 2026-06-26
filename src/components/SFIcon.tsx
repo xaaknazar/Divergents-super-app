@@ -12,7 +12,7 @@ export type SFName =
   | 'checkmark' | 'checkmark.seal.fill' | 'plus' | 'plus.circle' | 'plus.circle.fill'
   | 'xmark' | 'gearshape' | 'bell.fill' | 'bell.badge.fill' | 'envelope.fill' | 'phone.fill'
   | 'mappin.circle.fill' | 'mappin.and.ellipse' | 'person.fill' | 'building.2.fill'
-  | 'cart.fill' | 'cart' | 'target' | 'location.fill' | 'bolt.fill' | 'clock' | 'creditcard.fill' | 'clock.arrow.circlepath' | 'lock.open.fill' | 'photo' | 'smallcircle.filled.circle' | 'xmark.circle.fill' | 'waveform' | 'doc.text.fill' | 'headphones' | 'eye.fill' | 'person.2.fill' | 'figure.run' | 'brain.head.profile'
+  | 'cart.fill' | 'cart' | 'target' | 'location.fill' | 'bolt.fill' | 'clock' | 'arrow.down.circle' | 'square.and.arrow.down' | 'trash.fill' | 'creditcard.fill' | 'clock.arrow.circlepath' | 'lock.open.fill' | 'photo' | 'smallcircle.filled.circle' | 'xmark.circle.fill' | 'waveform' | 'doc.text.fill' | 'headphones' | 'eye.fill' | 'person.2.fill' | 'figure.run' | 'brain.head.profile'
   | 'heart.text.square.fill' | 'leaf.fill' | 'arrow.up.circle.fill' | 'bookmark'
   | 'bookmark.fill' | 'square.and.arrow.up' | 'ellipsis' | 'lock.fill' | 'lock'
   | 'doc.text' | 'doc.fill' | 'circle.fill' | 'circle' | 'list.bullet' | 'map.fill' | 'map'
@@ -52,7 +52,7 @@ const MAP: Record<string, [Lib, string]> = {
   'target': ['mci', 'target'], 'location.fill': ['ion', 'locate'],
   'waveform': ['mci', 'waveform'], 'doc.text.fill': ['ion', 'document-text'], 'headphones': ['ion', 'headset'], 'eye.fill': ['ion', 'eye'], 'person.2.fill': ['ion', 'people'],
 
-  'clock': ['ion', 'time-outline'], 'creditcard.fill': ['ion', 'card'], 'clock.arrow.circlepath': ['ion', 'time-outline'], 'lock.open.fill': ['ion', 'lock-open'], 'photo': ['ion', 'image'], 'smallcircle.filled.circle': ['ion', 'ellipse'], 'xmark.circle.fill': ['ion', 'close-circle'],
+  'clock': ['ion', 'time-outline'], 'arrow.down.circle': ['ion', 'arrow-down-circle-outline'], 'square.and.arrow.down': ['ion', 'download'], 'trash.fill': ['ion', 'trash'], 'creditcard.fill': ['ion', 'card'], 'clock.arrow.circlepath': ['ion', 'time-outline'], 'lock.open.fill': ['ion', 'lock-open'], 'photo': ['ion', 'image'], 'smallcircle.filled.circle': ['ion', 'ellipse'], 'xmark.circle.fill': ['ion', 'close-circle'],
  'bolt.fill': ['ion', 'flash'],
   'figure.run': ['mci', 'run'], 'brain.head.profile': ['mci', 'brain'],
   'heart.text.square.fill': ['mci', 'heart-box'], 'leaf.fill': ['ion', 'leaf'],
