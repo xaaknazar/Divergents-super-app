@@ -1,6 +1,6 @@
 // Divergents design tokens — iOS 17/18 (Apple HIG) semantic colours + Dynamic Type.
 // Light + Dark palettes share the same keys; the active one is provided via ThemeContext.
-import { TextStyle } from 'react-native';
+import { TextStyle, ViewStyle } from 'react-native';
 
 const light = {
   // Brand
@@ -123,7 +123,9 @@ export const FF = FONT.regular;
 
 type TY = Record<string, TextStyle>;
 
-export const ty: TY = {
+// Canonical (1×) type scale — the single source of truth. `ty` is derived from
+// this and can be re-scaled at runtime by the text-size personalization setting.
+const TY_BASE: TY = {
   largeTitle: { fontFamily: FONT.extrabold, fontSize: 34, lineHeight: 41, letterSpacing: 0.2 },
   title1:     { fontFamily: FONT.extrabold, fontSize: 28, lineHeight: 34, letterSpacing: 0.2 },
   title2:     { fontFamily: FONT.extrabold, fontSize: 22, lineHeight: 28, letterSpacing: 0.2 },
@@ -140,7 +142,67 @@ export const ty: TY = {
   caption2Em: { fontFamily: FONT.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0.1 },
 };
 
+// Live type scale. NOTE: the object reference is stable — existing
+// `import { ty } from '../theme/tokens'` consumers keep working. When the user
+// changes the text-size setting, each entry is replaced with a freshly-scaled
+// copy, so anything reading `ty.body` inline at render picks up the new size on
+// the next render (ThemeContext re-render cascades through every useTheme()).
+export const ty: TY = (Object.keys(TY_BASE) as (keyof TY)[]).reduce((acc, k) => {
+  acc[k] = { ...TY_BASE[k] };
+  return acc;
+}, {} as TY);
+
+// Curated text-size presets (≈ iOS Dynamic Type). 'md' is the design baseline.
+export const TEXT_SIZES = [
+  { key: 'sm', name: 'Мелкий',  scale: 0.92 },
+  { key: 'md', name: 'Обычный', scale: 1.0 },
+  { key: 'lg', name: 'Крупный', scale: 1.12 },
+  { key: 'xl', name: 'Крупнее', scale: 1.24 },
+] as const;
+export type TextSizeKey = (typeof TEXT_SIZES)[number]['key'];
+
+let _textScale = 1;
+export function getTextScale(): number { return _textScale; }
+
+// Re-scale the shared `ty` in place. Idempotent for a given scale.
+export function applyTextScale(scale: number): void {
+  if (scale === _textScale) return;
+  _textScale = scale;
+  (Object.keys(TY_BASE) as (keyof TY)[]).forEach((k) => {
+    const b = TY_BASE[k];
+    ty[k] = {
+      ...b,
+      ...(typeof b.fontSize === 'number' ? { fontSize: Math.round(b.fontSize * scale) } : null),
+      ...(typeof b.lineHeight === 'number' ? { lineHeight: Math.round(b.lineHeight * scale) } : null),
+    };
+  });
+}
+
+// ─── Spatial scales ────────────────────────────────────────────────
+// Coherent corner-radius and spacing ramps used across atoms/screens.
+// `xxl` is kept for backward compatibility; `pill` is the fully-rounded token.
 export const radius = { sm: 8, md: 10, lg: 12, xl: 14, xxl: 16, pill: 999 } as const;
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
+
+// ─── Elevation ─────────────────────────────────────────────────────
+// Soft iOS-style shadows. `shadows.*` are ready-to-spread presets;
+// `shadow()` builds a custom one (e.g. brand-tinted CTA glow).
+export type ShadowStyle = Pick<ViewStyle, 'shadowColor' | 'shadowOpacity' | 'shadowRadius' | 'shadowOffset' | 'elevation'>;
+
+export function shadow({
+  color = '#000', opacity = 0.08, radius: r = 10, y = 3, elevation,
+}: { color?: string; opacity?: number; radius?: number; y?: number; elevation?: number } = {}): ShadowStyle {
+  return {
+    shadowColor: color, shadowOpacity: opacity, shadowRadius: r,
+    shadowOffset: { width: 0, height: y }, elevation: elevation ?? Math.max(1, Math.round(r / 4)),
+  };
+}
+
+export const shadows = {
+  // Resting card / list surface.
+  card: shadow({ opacity: 0.06, radius: 10, y: 3, elevation: 2 }),
+  // Lifted surface — sticky bars, modals, FABs.
+  floating: shadow({ opacity: 0.14, radius: 18, y: 8, elevation: 6 }),
+} as const;
 
 export type ColorKey = keyof typeof light;

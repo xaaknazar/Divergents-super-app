@@ -20,7 +20,9 @@
         "buildType": "apk"
       }
     },
-    "production": {},
+    "production": {
+      "autoIncrement": true
+    },
     "development-device": {
       "developmentClient": true,
       "distribution": "internal",
@@ -33,6 +35,17 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "_comment": "TODO: replace ascAppId (App Store Connect app id) and appleTeamId with real values before `eas submit -p ios`.",
+        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
+        "appleTeamId": "REPLACE_WITH_APPLE_TEAM_ID"
+      },
+      "android": {
+        "_comment": "TODO: place the Play service account JSON at the path below (do not commit it) before `eas submit -p android`.",
+        "serviceAccountKeyPath": "./REPLACE-play-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }

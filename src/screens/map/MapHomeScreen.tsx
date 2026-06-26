@@ -11,13 +11,18 @@ import { SF } from '../../components/SFIcon';
 import { Capsule, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
-import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, cityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
+import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, safeCityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
 import { loadJSON, saveJSON } from '../../state/persist';
 
 type Props = NativeStackScreenProps<MapStackParams, 'MapHome'>;
 type LatLng = { latitude: number; longitude: number };
+
+// Public OSRM / Nominatim demo endpoints require an identifying User-Agent
+// (their usage policy rejects anonymous traffic). Best-effort: some platforms
+// override this header, but we send it where allowed.
+const NET_HEADERS = { 'User-Agent': 'DivergentsSuperApp/1.0 (https://divergents-lms.kz)' };
 
 function haversineKm(a: LatLng, b: LatLng): number {
   const R = 6371;
@@ -42,7 +47,7 @@ async function fetchRoutes(from: LatLng, to: LatLng, mode: 'car' | 'foot'): Prom
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 9000);
     try {
-      const res = await fetch(url, { signal: ctrl.signal });
+      const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json', ...NET_HEADERS } });
       if (!res.ok) { clearTimeout(t); continue; }
       const d = await res.json();
       const rs = Array.isArray(d?.routes) ? d.routes : [];
@@ -61,7 +66,7 @@ async function geocode(q: string, bias?: { lat: number; lng: number }): Promise<
   try {
     const vb = bias ? `&viewbox=${bias.lng - 0.7},${bias.lat + 0.5},${bias.lng + 0.7},${bias.lat - 0.5}&bounded=0` : '';
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ru&q=${encodeURIComponent(q)}${vb}`;
-    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
+    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json', ...NET_HEADERS } });
     if (!res.ok) return [];
     const d = await res.json();
     return (Array.isArray(d) ? d : [])
@@ -75,7 +80,8 @@ export function MapHomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
   const { t } = useLang();
-  const { country, city, setLocation, places, isFav, toggleFav } = usePlaces();
+  const { country, city, locManual, setLocation, places, placesLoading, placesError, reloadPlaces, isFav, toggleFav } = usePlaces();
+  const [locDenied, setLocDenied] = useState(false);
   const [cat, setCat] = useState<PlaceCategory | null>(null);
   const [tags, setTags] = useState<PlaceTag[]>([]);
   const [q, setQ] = useState('');
@@ -106,10 +112,13 @@ export function MapHomeScreen({ navigation }: Props) {
   const manualRef = useRef(false);
   const autoRef = useRef(false);
   useEffect(() => { loadJSON<{ name: string; lat: number; lng: number }[]>('dvg.mapRecent', []).then(setRecents); }, []);
+  // If the user previously picked a city by hand (persisted), don't let GPS
+  // auto-override it on launch.
+  useEffect(() => { if (locManual) manualRef.current = true; }, [locManual]);
 
-  const center = cityCenter(country, city);
+  const center = safeCityCenter(country, city);
   const countryName = COUNTRIES.find((c) => c.key === country)?.name ?? '';
-  const cityName = center?.name ?? '';
+  const cityName = center.name;
   const list = useMemo(() => filterPlaces(places, country, city, cat, tags, q), [places, country, city, cat, tags, q]);
   const sel = selId ? places.find((p) => p.id === selId) : null;
 
@@ -118,7 +127,9 @@ export function MapHomeScreen({ navigation }: Props) {
     let alive = true;
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted' || !alive) return;
+      if (!alive) return;
+      if (status !== 'granted') { setLocDenied(true); return; }
+      setLocDenied(false);
       subRef.current = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.Balanced, distanceInterval: 12, timeInterval: 3000 },
         (loc) => {
@@ -175,7 +186,22 @@ export function MapHomeScreen({ navigation }: Props) {
   }, [user]);
 
   const recenter = () => {
-    if (!user) return;
+    if (!user) {
+      // Explain why we can't recenter instead of doing nothing.
+      if (locDenied) {
+        Alert.alert(
+          tr('Геолокация выключена'),
+          tr('Разрешите доступ к геопозиции в настройках, чтобы видеть себя на карте.'),
+          [
+            { text: tr('Открыть настройки'), onPress: () => Linking.openSettings().catch(() => {}) },
+            { text: tr('Отмена'), style: 'cancel' },
+          ],
+        );
+      } else {
+        Alert.alert(tr('Определяем геопозицию'), tr('Ждём сигнал GPS… Попробуйте через секунду.'));
+      }
+      return;
+    }
     const nc = nearestCity(user.latitude, user.longitude);
     if (nc && (nc.country !== country || nc.city !== city)) setLocation(nc.country, nc.city);
     mapRef.current?.animateToRegion({ ...user, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 500);
@@ -204,7 +230,7 @@ export function MapHomeScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      {center ? (
+      {(
         <MapView
           ref={mapRef}
           style={{ flex: 1 }}
@@ -233,7 +259,7 @@ export function MapHomeScreen({ navigation }: Props) {
           {searchPin ? <Marker coordinate={{ latitude: searchPin.lat, longitude: searchPin.lng }} pinColor="#FF3B30" onPress={() => {}} /> : null}
           {path.length > 1 ? <Polyline coordinates={path} strokeColor={T.brandAccent} strokeWidth={5} /> : null}
         </MapView>
-      ) : null}
+      )}
 
       {/* Top overlay: search + location + filters */}
       <View style={{ position: 'absolute', top: insets.top + 6, left: 0, right: 0 }} pointerEvents="box-none">
@@ -260,10 +286,13 @@ export function MapHomeScreen({ navigation }: Props) {
             ))}
           </View>
         ) : null}
-        {q.trim().length >= 3 && (geoBusy || geo.length > 0) ? (
+        {q.trim().length >= 3 ? (
           <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             {geoBusy && geo.length === 0 ? (
               <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelSecondary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Поиск адресов…')}</Text></View>
+            ) : null}
+            {!geoBusy && geo.length === 0 ? (
+              <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelTertiary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Ничего не найдено')}</Text></View>
             ) : null}
             {geo.map((g, i) => (
               <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 14, borderTopWidth: i ? 0.5 : 0, borderTopColor: T.separator }}>
@@ -318,6 +347,21 @@ export function MapHomeScreen({ navigation }: Props) {
         );
       })() : null}
 
+      {/* Empty / error notice for the live places list (no fake data) */}
+      {!placesLoading && !target && list.length === 0 ? (
+        <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 100, alignItems: 'center' }} pointerEvents="box-none">
+          <View style={{ backgroundColor: T.cardBg, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: 360, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+            <SF name={placesError ? 'wifi.slash' : 'mappin.circle.fill'} size={18} color={placesError ? T.red : T.labelSecondary} />
+            <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]}>
+              {placesError ? tr('Не удалось загрузить места.') : tr('Пока нет мест в этом городе.')}
+            </Text>
+            {placesError ? (
+              <Pressable onPress={reloadPlaces} hitSlop={8}><Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Повторить')}</Text></Pressable>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
+
       {/* Right floating buttons */}
       <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
         <Round icon="arrow.down.circle" onPress={() => navigation.navigate('OfflineMap')} T={T} />
@@ -356,16 +400,16 @@ export function MapHomeScreen({ navigation }: Props) {
                 </View>
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Pressable onPress={() => startNav(sel)} style={{ flex: 1, height: 46, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                <Pressable onPress={() => startNav(sel)} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
                   <SF name="paperplane.fill" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>{tr('Вести сюда')}</Text>
                 </Pressable>
-                <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} style={{ width: 84, height: 46, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} style={({ pressed }) => ({ width: 84, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <Text style={[ty.headline, { color: T.brand }]}>{tr('Детали')}</Text>
                 </Pressable>
-                <Pressable onPress={() => toggleFav(sel.id)} style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => toggleFav(sel.id)} style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name={isFav(sel.id) ? 'heart.fill' : 'heart'} size={18} color={isFav(sel.id) ? T.brand : T.label} />
                 </Pressable>
-                <Pressable onPress={() => Share.share({ message: `${sel.name} — ${CATEGORY_META[sel.category].label}\n${sel.highlights}\nhttps://2gis.kz/geo/${sel.lng},${sel.lat}` })} style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => Share.share({ message: `${sel.name} — ${CATEGORY_META[sel.category].label}\n${sel.highlights}\nhttps://2gis.kz/geo/${sel.lng},${sel.lat}` })} style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name="square.and.arrow.up" size={18} color={T.label} />
                 </Pressable>
               </View>
@@ -391,10 +435,10 @@ export function MapHomeScreen({ navigation }: Props) {
                 </View>
               </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Pressable onPress={() => navTo(searchPin)} style={{ flex: 1, height: 46, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                <Pressable onPress={() => navTo(searchPin)} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
                   <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>{tr('Вести сюда')}</Text>
                 </Pressable>
-                <Pressable onPress={() => externalRoute(searchPin)} style={{ width: 110, height: 46, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => externalRoute(searchPin)} style={({ pressed }) => ({ width: 110, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <Text style={[ty.headline, { color: T.brand }]}>{tr('Навигатор')}</Text>
                 </Pressable>
               </View>
@@ -416,7 +460,7 @@ export function MapHomeScreen({ navigation }: Props) {
                 {co.cities.map((ci) => {
                   const on = co.key === country && ci.key === city;
                   return (
-                    <Pressable key={ci.key} onPress={() => { manualRef.current = true; setLocation(co.key, ci.key); setPickerOpen(false); mapRef.current?.animateToRegion({ latitude: ci.lat, longitude: ci.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600); }}
+                    <Pressable key={ci.key} onPress={() => { manualRef.current = true; setLocation(co.key, ci.key, true); setPickerOpen(false); mapRef.current?.animateToRegion({ latitude: ci.lat, longitude: ci.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600); }}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 20, backgroundColor: on ? T.brandTinted : 'transparent' }}>
                       <SF name="mappin.circle.fill" size={18} color={on ? T.brand : T.labelTertiary} />
                       <Text style={[ty.body, { color: T.label, flex: 1 }]}>{ci.name}</Text>

@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, ActivityIndicator, LayoutAnimation } from 'react-native';
+import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, Chip, ListSection, ty } from '../../components/ui';
+import { shadows } from '../../theme/tokens';
 import { ListSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { formatPrice, imgUrl } from '../../data/api';
@@ -59,6 +60,8 @@ export function CatalogScreen({ navigation }: Props) {
         <View style={{ paddingTop: 12 }}><ListSkeleton rows={5} /></View>
       ) : error && courses.length === 0 ? (
         <ErrorState onRetry={reload} />
+      ) : courses.length === 0 ? (
+        <EmptyState icon="book" title={tr('Курсы скоро появятся')} subtitle={tr('Каталог обновляется — потяните вниз, чтобы обновить.')} />
       ) : (
         <>
           {/* Category chips */}
@@ -69,11 +72,11 @@ export function CatalogScreen({ navigation }: Props) {
           </ScrollView>
 
           {/* Stats strip */}
-          <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 14, flexDirection: 'row', paddingVertical: 12 }}>
+          <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 16, flexDirection: 'row', paddingVertical: 14, ...shadows.card }}>
             {strip.map((s, i) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < strip.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-                <Text style={[ty.title3, { color: T.label }]}>{s.v}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{s.l}</Text>
+                <Text style={[ty.title2, { color: i === 0 ? T.brand : T.label }]}>{s.v}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{s.l}</Text>
               </View>
             ))}
           </View>
@@ -97,6 +100,7 @@ export function CatalogScreen({ navigation }: Props) {
                       </View>
                     ) : null}
                   </View>
+                  <View style={{ alignSelf: 'center' }}><SF name="chevron.forward" size={14} color={T.labelTertiary} /></View>
                   {i < filtered.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 92, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
                 </Pressable>
               );

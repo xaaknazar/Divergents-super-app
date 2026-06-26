@@ -1,55 +1,101 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, ScrollView, Pressable, Animated } from 'react-native';
+import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, Modal } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
 import { Screen } from '../../components/Screen';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
 import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ProgressBar, ty } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
+import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import { useChallenge } from '../../state/ChallengeContext';
 import {
-  MEDAL_FOR_RANK, getChallengeMeta, daysUntil,
-  CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, CHALLENGE_TEAMS, taskDone,
+  MEDAL_FOR_RANK, fetchChallengesAndTeams, getChallengeMeta, daysUntil, teamsNeed,
+  CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
+  FlagCounts, totalFlags, ChallengeTask,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeDetail'>;
 
 export function ChallengeDetailScreen({ route, navigation }: Props) {
-  const challengeId = route.params?.challengeId ?? 'no-sugar-21';
-  const meta = getChallengeMeta(challengeId);
-  if (meta?.status === 'upcoming') {
-    return <UpcomingChallenge challengeId={challengeId} navigation={navigation} />;
+  const { T } = useTheme();
+  const challengeId = route.params?.challengeId ?? '';
+  const { challenge: active } = useChallenge();
+  const [list, setList] = useState<ChallengeListItem[] | null>(null);
+  const [teams, setTeams] = useState<ChallengeTeam[]>([]);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    const { challenges, teams: tms, error: err } = await fetchChallengesAndTeams();
+    setList(challenges);
+    setTeams(tms);
+    setError(err);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { challenges, teams: tms, error: err } = await fetchChallengesAndTeams();
+      if (!alive) return;
+      setList(challenges);
+      setTeams(tms);
+      setError(err);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // The active/daily tracker is local state — always available, even offline.
+  const isActive = challengeId === active.id;
+  if (isActive) return <ActiveChallenge navigation={navigation} />;
+
+  if (list === null) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+      </View>
+    );
   }
-  return <ActiveChallenge navigation={navigation} />;
+
+  const meta = getChallengeMeta(list, challengeId);
+  if (meta && meta.status === 'upcoming') {
+    return <UpcomingChallenge meta={meta} teams={teams} navigation={navigation} />;
+  }
+  // A server-side active challenge (matched by id) opens the daily tracker.
+  if (meta) return <ActiveChallenge navigation={navigation} />;
+
+  // Unknown id: distinguish a load failure (retry) from a genuinely missing one.
+  return (
+    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+      <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
+      {error
+        ? <ErrorState onRetry={load} />
+        : <EmptyState icon="flag.fill" title={tr('Челлендж не найден')} subtitle={tr('Возможно, он завершился или ещё не опубликован.')} actionLabel={tr('Назад')} onAction={() => navigation.goBack()} />}
+    </View>
+  );
 }
 
-// ─── Upcoming challenge (30 Days) — rules, teams, join ──────────────
-function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; navigation: Props['navigation'] }) {
+// ─── Upcoming challenge — rules, teams, join ──────────────
+function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListItem; teams: ChallengeTeam[]; navigation: Props['navigation'] }) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
-  const meta = getChallengeMeta(challengeId)!;
   const left = daysUntil(meta.startISO);
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Gradient hero background */}
-      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: insets.top }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4 }}>
-          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
-            <SF name="chevron.left" size={20} color="#fff" />
-            <Text style={[ty.body, { color: '#fff' }]}>{tr('Сообщество')}</Text>
-          </Pressable>
-          <SF name="square.and.arrow.up" size={20} color="#fff" />
-        </View>
+      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <NavHeader
+          transparent tint="#fff" backLabel={tr('Сообщество')} onBack={() => navigation.goBack()}
+          trailing={<SF name="square.and.arrow.up" size={20} color="#fff" />}
+        />
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 22, position: 'relative' }}>
           <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
             <SF name={meta.icon} size={120} color="#fff" />
@@ -102,8 +148,12 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
         </ListSection>
 
         {/* Teams */}
-        <ListSection header={`Команды · нужно ещё ${CHALLENGE_TEAMS.reduce((s, t) => s + Math.max(0, t.capacity - t.members), 0)} человек`}>
-          {CHALLENGE_TEAMS.map((t, i) => {
+        <ListSection header={teams.length > 0 ? `Команды · нужно ещё ${teamsNeed(teams)} человек` : tr('Команды')}>
+          {teams.length === 0 ? (
+            <View style={{ padding: 18, alignItems: 'center' }}>
+              <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команды пока не сформированы.')}</Text>
+            </View>
+          ) : teams.map((t, i) => {
             const need = Math.max(0, t.capacity - t.members);
             const full = need === 0;
             return (
@@ -117,9 +167,9 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={[ty.subheadEm, { color: full ? T.emeraldText : T.label }]}>{t.members}/{t.capacity}</Text>
-                  <Text style={[ty.caption2, { color: full ? T.emeraldText : '#A85D00' }]}>{full ? 'набрана' : `нужно ${need}`}</Text>
+                  <Text style={[ty.caption2, { color: full ? T.emeraldText : T.orange }]}>{full ? 'набрана' : `нужно ${need}`}</Text>
                 </View>
-                {i < CHALLENGE_TEAMS.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 70, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+                {i < teams.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 70, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
               </View>
             );
           })}
@@ -141,7 +191,7 @@ function UpcomingChallenge({ challengeId, navigation }: { challengeId: string; n
 
       {/* CTA */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label={tr('Подать заявку')} icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId })} />
+        <PrimaryButton label={tr('Подать заявку')} icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId: meta.id })} />
       </View>
     </View>
   );
@@ -166,6 +216,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const insets = useSafeAreaInsets();
   const allDone = c.tasks.every(taskDone);
   const [celebrate, setCelebrate] = useState(false);
+  const [showConv, setShowConv] = useState(false);
+  const myFlags = c.flags;
+  const myEliminated = c.eliminated === true;
   const prevDone = useRef(allDone);
   const cel = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -173,13 +226,11 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
     prevDone.current = allDone;
   }, [allDone]);
   useEffect(() => { Animated.spring(cel, { toValue: celebrate ? 1 : 0, useNativeDriver: true, speed: 14, bounciness: 8 }).start(); }, [celebrate]);
-  const ringPct = c.currentDay / c.totalDays;
-  const r = 47;
-  const circ = 2 * Math.PI * r;
+  const ringPct = c.totalDays > 0 ? c.currentDay / c.totalDays : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
+      <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <Text style={{ fontSize: 18 }}>🎉</Text>
@@ -197,8 +248,27 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           <Logo size={26} />
           <Text style={[ty.largeTitle, { color: T.label, flex: 1 }]}>{c.title}</Text>
         </View>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')} · {c.startedLabel}</Text>
+        {c.teamName ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')}{c.startedLabel ? ` · ${c.startedLabel}` : ''}</Text> : null}
       </View>
+
+      {/* Elimination banner — points are frozen for the user (🏳️) */}
+      {myEliminated ? (
+        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: 'rgba(255,59,48,0.10)', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 0.5, borderColor: 'rgba(255,59,48,0.25)' }}>
+          <Text style={{ fontSize: 24 }}>🏳️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.red }]}>{tr('Вы выбыли из челленджа')}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{tr('Набрано 3 🚩 в одной категории. Очки зафиксированы.')}</Text>
+          </View>
+        </View>
+      ) : null}
+
+      {/* The user's own per-category flag counts */}
+      {myFlags && totalFlags(myFlags) > 0 ? (
+        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, marginBottom: 10 }]}>{tr('Мои флаги')} 🚩</Text>
+          <MyFlagRow flags={myFlags} />
+        </View>
+      ) : null}
 
       <View style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
         <View style={{ flexDirection: 'row' }}>
@@ -238,32 +308,97 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
             <ChallengeTaskRow key={t.id} task={t} divider={i < c.tasks.length - 1}
               onToggle={() => toggleBinary(t.id)}
               onAdjust={t.kind === 'metric' ? (d) => setMetric(t.id, t.current + d) : undefined}
-              step={t.kind === 'metric' ? (t.id === 'steps' ? 500 : 1) : 1} />
+              step={t.kind === 'metric' ? (isActivityTask(t) ? 500 : 1) : 1} />
           ))}
+          {/* Activity step-conversions reference (бег / плавание / силовые…) */}
+          <Pressable onPress={() => setShowConv(true)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, opacity: pressed ? 0.6 : 1 })}>
+            <SF name="info.circle" size={16} color={T.brand} />
+            <Text style={[ty.subhead, { color: T.brand, flex: 1 }]}>{tr('Как засчитать активность в шагах?')}</Text>
+            <SF name="chevron.right" size={13} color={T.labelTertiary} />
+          </Pressable>
         </View>
       </ListSection>
 
-      <ListSection header={`Команда «${c.teamName}» · вы ${myRank}-е место`}>
-        {leaderboard.map((row, i) => {
+      <ListSection header={c.teamName ? `Команда «${c.teamName}» · вы ${myRank}-е место` : tr('Команда')}>
+        {leaderboard.length === 0 ? (
+          <View style={{ padding: 18, alignItems: 'center' }}>
+            <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команда ещё формируется.')}</Text>
+          </View>
+        ) : leaderboard.map((row, i) => {
           const medal = MEDAL_FOR_RANK(row.rank);
+          const out = row.eliminated === true;
+          const flagN = totalFlags(row.flags);
           return (
-            <View key={row.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16, backgroundColor: row.isMe ? T.brandTinted : 'transparent' }}>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={[ty.subheadEm, { color: '#fff' }]}>{row.name.charAt(0)}</Text>
+            <View key={row.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16, backgroundColor: row.isMe ? T.brandTinted : 'transparent', opacity: out ? 0.6 : 1 }}>
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: out ? T.labelTertiary : T.brand, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={[ty.subheadEm, { color: '#fff' }]}>{out ? '🏳️' : row.name.charAt(0)}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[ty.body, { color: T.label }]}>{row.name}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('День')} {row.day} · {row.points} pts</Text>
+                <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>
+                  {row.name}{out ? <Text style={[ty.caption1, { color: T.red }]}>{`  · ${tr('выбыл')}`}</Text> : null}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 1 }}>
+                  <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('День')} {row.day} · {row.points} pts</Text>
+                  {flagN > 0 && row.flags ? (
+                    <Text style={[ty.caption1, { color: T.red }]}>{`  · 🚩 R${row.flags.R} NS${row.flags.NS} A${row.flags.A}`}</Text>
+                  ) : null}
+                </View>
               </View>
-              {medal ? <SF name={medal.icon} size={16} color={medal.color} /> : <SF name="flame.fill" size={14} color={T.orange} />}
+              {out
+                ? <Text style={{ fontSize: 16 }}>🏳️</Text>
+                : medal ? <SF name={medal.icon} size={16} color={medal.color} /> : <SF name="flame.fill" size={14} color={T.orange} />}
               {i < leaderboard.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 64, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
             </View>
           );
         })}
       </ListSection>
 
+      {/* Activity step-conversions sheet (from the Divergents rules) */}
+      <Modal visible={showConv} transparent animationType="slide" onRequestClose={() => setShowConv(false)}>
+        <Pressable onPress={() => setShowConv(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
+          <Pressable onPress={() => {}} style={{ backgroundColor: T.cardBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 10, paddingBottom: insets.bottom + 20 }}>
+            <View style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillTertiary, marginBottom: 14 }} />
+            <Text style={[ty.title3, { color: T.label }]}>{tr('Пересчёт активности в шаги')}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 4, marginBottom: 8 }]}>{tr('Минимум 5 000 шагов нужно набрать аэробной нагрузкой. 400 шагов = 1 балл.')}</Text>
+            {ACTIVITY_CONVERSIONS.map((a, i) => (
+              <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: i < ACTIVITY_CONVERSIONS.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
+                <Text style={[ty.body, { color: T.label, flex: 1 }]}>{a.label}</Text>
+                <Text style={[ty.subhead, { color: T.labelSecondary }]}>{a.value}</Text>
+              </View>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <View style={{ height: 30 }} />
       </Screen>
+    </View>
+  );
+}
+
+// The activity (steps) metric task — used to pick a larger stepper and to anchor
+// the conversions reference. Matches the local 'steps' id or a server steps unit.
+function isActivityTask(t: ChallengeTask): boolean {
+  if (t.kind !== 'metric') return false;
+  return t.id === 'steps' || /^(a|activity)$/i.test(t.id) || /шаг/i.test(t.unit);
+}
+
+// The user's own per-category 🚩 counts (R / NS / A), tinted per category.
+function MyFlagRow({ flags }: { flags: FlagCounts }) {
+  const { T } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      {CHALLENGE_CATEGORIES.map((cat) => {
+        const n = flags[cat.key];
+        const danger = n >= 3;
+        return (
+          <View key={cat.key} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, backgroundColor: T.fillTertiary, borderWidth: danger ? 1 : 0, borderColor: T.red }}>
+            <SF name={cat.icon} size={16} color={danger ? T.red : cat.color} />
+            <Text style={[ty.title3, { color: danger ? T.red : T.label, marginTop: 4 }]}>{`${n} 🚩`}</Text>
+            <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]}>{cat.title}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 }

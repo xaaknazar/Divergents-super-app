@@ -10,9 +10,9 @@ import { useAuth, useUser } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { Capsule, PrimaryButton, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { usePlaces, ratingOf } from '../../state/PlacesContext';
-import { CATEGORY_META, TAG_META, isOpenNow } from '../../data/places';
+import { CATEGORY_META, TAG_META, isOpenNow, reportPlace, postReview } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<MapStackParams, 'PlaceDetail'>;
@@ -21,17 +21,18 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const { T, isDark } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const { getPlace, addReview, isFav, toggleFav } = usePlaces();
   const place = getPlace(route.params.placeId);
   const [stars, setStars] = useState(0);
   const [text, setText] = useState('');
+  const [reporting, setReporting] = useState(false);
 
   if (!place) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back={tr('Места')} onBack={() => navigation.goBack()} />
+        <NavHeader backLabel={tr('Места')} onBack={() => navigation.goBack()} />
         <View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Место не найдено')}</Text></View>
       </View>
     );
@@ -43,22 +44,53 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const mine = place.id.startsWith('u_');
   const fav = isFav(place.id);
   const sharePlace = () => Share.share({ message: `${place.name} — ${meta.label}\n${place.highlights}\nhttps://2gis.kz/geo/${place.lng},${place.lat}` });
-  const report = () => Alert.alert('Сообщить о проблеме', `«${place.name}»`, [
-    { text: 'Закрыто / не существует', onPress: () => Alert.alert('Спасибо', 'Передали модераторам Divergents.') },
-    { text: 'Неверные данные', onPress: () => Alert.alert('Спасибо', 'Передали модераторам Divergents.') },
-    { text: tr('Отмена'), style: 'cancel' },
-  ]);
+
+  // Real report: requires sign-in, sends the chosen reason to moderators and
+  // reports the outcome honestly (no fake "thanks" when nothing was sent).
+  const sendReport = async (reason: string) => {
+    if (reporting) return;
+    setReporting(true);
+    try {
+      const token = await getToken().catch(() => null);
+      const okSent = await reportPlace(place.id, reason, token);
+      if (okSent) {
+        Alert.alert(tr('Спасибо'), tr('Передали модераторам Divergents.'));
+      } else {
+        Alert.alert(tr('Не удалось отправить'), tr('Попробуйте позже или проверьте соединение.'));
+      }
+    } finally {
+      setReporting(false);
+    }
+  };
+  const report = () => {
+    if (!isSignedIn) {
+      Alert.alert(tr('Войдите в аккаунт'), tr('Чтобы сообщить о проблеме, войдите в аккаунт Divergents.'));
+      return;
+    }
+    Alert.alert(tr('Сообщить о проблеме'), `«${place.name}»`, [
+      { text: tr('Закрыто / не существует'), onPress: () => sendReport('closed_or_missing') },
+      { text: tr('Неверные данные'), onPress: () => sendReport('wrong_info') },
+      { text: tr('Отмена'), style: 'cancel' },
+    ]);
+  };
 
   const submit = () => {
     if (!stars) return;
     const author = user?.firstName || user?.fullName || (user?.primaryEmailAddress?.emailAddress?.split('@')[0]) || 'Участник';
-    addReview(place.id, { author, rating: stars, text: text.trim() });
+    const rating = stars;
+    const body = text.trim();
+    // Optimistic local review (persists on-device) + best-effort server sync so
+    // other users can see it. A sync failure is silent — the local copy stays.
+    addReview(place.id, { author, rating, text: body });
     setStars(0); setText('');
+    (async () => {
+      try { const token = await getToken(); await postReview(place.id, { rating, text: body }, token); } catch {}
+    })();
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Места')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={tr('Места')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
         {place.photo ? <Image source={{ uri: place.photo }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : null}
         {/* Hero */}
@@ -70,10 +102,10 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={[ty.title2, { color: T.label }]} numberOfLines={2}>{place.name}</Text>
-                {place.approved ? <SF name="checkmark.seal.fill" size={18} color="#0EA5E9" /> : null}
+                {place.approved ? <SF name="checkmark.seal.fill" size={18} color={T.sky} /> : null}
               </View>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{meta.label} · {place.hours}</Text>
-              {open.known ? <Text style={[ty.caption1, { color: open.open ? '#16A34A' : '#EF4444', marginTop: 2 }]}>{open.label}</Text> : null}
+              {open.known ? <Text style={[ty.caption1, { color: open.open ? T.green : T.red, marginTop: 2 }]}>{open.label}</Text> : null}
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
@@ -85,7 +117,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </View>
           {place.approved ? (
             <View style={{ marginTop: 10 }}>
-              <Capsule bg="rgba(14,165,233,0.14)" color="#0EA5E9"><SF name="checkmark.seal.fill" size={11} color="#0EA5E9" />Divergents Approved</Capsule>
+              <Capsule bg={T.skyBadgeBg} color={T.sky}><SF name="checkmark.seal.fill" size={11} color={T.sky} />Divergents Approved</Capsule>
             </View>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>

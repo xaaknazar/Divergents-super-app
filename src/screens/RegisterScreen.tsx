@@ -18,7 +18,7 @@ type Props = NativeStackScreenProps<RootStackParams, 'Register'>;
 
 export function RegisterScreen({ navigation }: Props) {
   const { T } = useTheme();
-  useLang();
+  const { lang } = useLang();
   const insets = useSafeAreaInsets();
   const { answers, setField, completeness, submit, submitting } = useResume();
   const [step, setStep] = useState(0);
@@ -51,7 +51,10 @@ export function RegisterScreen({ navigation }: Props) {
     });
     if (missing.length) { Alert.alert(tr('Заполните обязательные поля'), missing.map((m) => `• ${m.label}`).join('\n')); return; }
     const ok = await submit();
-    setTlPct(ok ? completeness : completeness);
+    // Show local completeness immediately; if the submit reached Talentslab we
+    // refine it below with the server-reported value. (Previously both ternary
+    // branches were identical — a no-op.)
+    setTlPct(completeness);
     setDone(true);
     if (ok) {
       try {
@@ -127,7 +130,9 @@ export function RegisterScreen({ navigation }: Props) {
             <View style={{ marginTop: 8, backgroundColor: T.brandTinted, borderRadius: 12, padding: 14, flexDirection: 'row', gap: 10 }}>
               <SF name="doc.fill" size={18} color={T.brand} />
               <Text style={[ty.caption1, { color: T.label, flex: 1 }]}>
-                Тесты Gallup, MBTI и Гарднера проходятся на Talentslab — после обработки результаты появятся в разделе «Карьера».
+                {lang === 'ru'
+                  ? 'Тесты Gallup, MBTI и Гарднера проходятся на Talentslab — после обработки результаты появятся в разделе «Карьера».'
+                  : 'The Gallup, MBTI and Gardner tests are taken on Talentslab — after processing the results appear in the Career section.'}
               </Text>
             </View>
           ) : null}

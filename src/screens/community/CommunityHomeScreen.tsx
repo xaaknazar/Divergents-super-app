@@ -1,49 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, LayoutAnimation, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, LayoutAnimation, ActivityIndicator, ActionSheetIOS, Platform, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
-import { SF, SFName } from '../../components/SFIcon';
-import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, ty } from '../../components/ui';
+import { SF } from '../../components/SFIcon';
+import { SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, ty } from '../../components/ui';
+import { EmptyState, ErrorState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
-import { useRole } from '../../state/useRole';
-import { useAuth } from '@clerk/clerk-expo';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
-  CHALLENGES, daysUntil, TRIPS, SPORT, LECTURES,
-  Trip, SportActivity, Lecture,
+  daysUntil, fetchCommunityHome,
+  Trip, SportActivity, ChallengeListItem,
 } from '../../data/community';
-import { imgUrl, fetchLiveChallenges, LiveChallenge, fetchLiveTrips, LiveTrip, applyToTrip } from '../../data/api';
-import { CHANNELS, channelById, postsByChannel } from '../../data/channel';
+import { imgUrl } from '../../data/api';
+import { Channel } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
 import { CommunityStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
+import { useRole } from '../../state/useRole';
+import { hTap } from '../../lib/haptics';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
 
+// Creator-only entry → the unified content-creation screen, which has its own
+// challenge / trip / channel type selector.
+function openCreateSheet(navigation: Nav) {
+  hTap();
+  navigation.navigate('CreateContent');
+}
+
 const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_sport'] as const;
 
-export function CommunityHomeScreen({ navigation }: Props) {
+export function CommunityHomeScreen({ navigation, route }: Props) {
   const { T } = useTheme();
   const { t } = useLang();
-  const { canCreate } = useRole();
   const { unread } = useNotifications();
+  const { reload: reloadChannels } = useChannel();
+  const { canCreate } = useRole();
   const [seg, setSeg] = useState(0);
+  const refreshToken = route.params?.refresh;
+
+  const [trips, setTrips] = useState<Trip[] | null>(null);
+  const [sport, setSport] = useState<SportActivity[] | null>(null);
+  const [challenges, setChallenges] = useState<ChallengeListItem[] | null>(null);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    const d = await fetchCommunityHome();
+    setTrips(d.trips);
+    setSport(d.sport);
+    setChallenges(d.challenges);
+    setError(d.error);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const d = await fetchCommunityHome();
+      if (!alive) return;
+      setTrips(d.trips);
+      setSport(d.sport);
+      setChallenges(d.challenges);
+      setError(d.error);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    reloadChannels();
+    await load();
+  }, [load, reloadChannels]);
+
+  // A create modal sets route.params.refresh on dismissal — reload the lists
+  // once so newly published content shows immediately.
+  useEffect(() => {
+    if (refreshToken === undefined) return;
+    reloadChannels();
+    load();
+  }, [refreshToken, load, reloadChannels]);
 
   return (
-    <Screen largeTitle={tr('Сообщество')}>
-      <NavBarLarge title={t('community')} trailing={
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {canCreate ? <HeaderIcon name="plus.circle.fill" color={T.brand} onPress={() => navigation.navigate('CreateContent')} /> : null}
+    <Screen largeTitle={tr('Сообщество')} onRefresh={onRefresh}>
+      <NavBarLarge title={t('community')} trailing={(
+        <>
+          {canCreate ? <HeaderIcon name="plus" color={T.brand} onPress={() => openCreateSheet(navigation)} /> : null}
           <HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
-        </View>
-      } />
+        </>
+      )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
         <Text style={[ty.subhead, { color: T.labelSecondary }]}>{t('community_tagline')}</Text>
@@ -53,17 +102,29 @@ export function CommunityHomeScreen({ navigation }: Props) {
         {SECTION_KEYS.map((k, i) => <Chip key={k} label={t(k)} active={seg === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(i); }} />)}
       </ScrollView>
 
-      {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} />}
+      {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} trips={trips} sport={sport} error={error} onRetry={load} />}
       {seg === 1 && <ChannelTab navigation={navigation} />}
-      {seg === 2 && <ChallengesTab navigation={navigation} />}
-      {seg === 3 && <TripsTab navigation={navigation} />}
-      {seg === 4 && <SportTab />}
+      {seg === 2 && <ChallengesTab navigation={navigation} challenges={challenges} error={error} onRetry={load} />}
+      {seg === 3 && <TripsTab navigation={navigation} trips={trips} error={error} onRetry={load} />}
+      {seg === 4 && <SportTab sport={sport} error={error} onRetry={load} />}
       <View style={{ height: 16 }} />
     </Screen>
   );
 }
 
-// ─── Active challenge card (redesigned, enterable) ──────────────────
+// Small inline loading spinner row.
+function Loading() {
+  const { T } = useTheme();
+  return <View style={{ paddingVertical: 28, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>;
+}
+
+// Renders an ERROR + RETRY state when the load failed, otherwise the empty state.
+function EmptyOrError({ error, onRetry, icon, title, subtitle }: { error: boolean; onRetry?: () => void; icon: string; title: string; subtitle: string }) {
+  if (error) return <ErrorState onRetry={onRetry} />;
+  return <EmptyState icon={icon} title={title} subtitle={subtitle} />;
+}
+
+// ─── Active challenge card (only when there's a live one) ───────────
 function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
   const { challenge: c, teamPoints, myRank, pointsToday } = useChallenge();
@@ -84,9 +145,9 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
           <Logo size={22} body="#fff" head="#fff" />
           <Text style={[ty.title2, { color: '#fff' }]}>{c.title}</Text>
         </View>
-        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{tr('Команда')} «{c.teamName}» · {tr('сегодня')} +{pointsToday} pts</Text>
+        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{c.teamName ? `${tr('Команда')} «${c.teamName}» · ` : ''}{tr('сегодня')} +{pointsToday} pts</Text>
         <View style={{ marginTop: 12, height: 6, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
-          <View style={{ width: `${(c.currentDay / c.totalDays) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6 }} />
+          <View style={{ width: `${(c.totalDays > 0 ? c.currentDay / c.totalDays : 0) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6 }} />
         </View>
       </LinearGradient>
       <View style={{ flexDirection: 'row', paddingVertical: 14 }}>
@@ -105,80 +166,72 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
 }
 
 // ─── Главная ────────────────────────────────────────────────────────
-function HomeFeed({ navigation, setSeg }: { navigation: Nav; setSeg: (i: number) => void }) {
+function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; error: boolean; onRetry: () => void }) {
   const { t } = useLang();
   const { T } = useTheme();
+  const { challenge } = useChallenge();
+  const hasActive = challenge.currentDay > 0 || challenge.tasks.length > 0;
+  const { channels, error: channelsError, reload: reloadChannels } = useChannel();
   return (
     <>
       <SectionHeader title={t('your_challenge')} />
-      <ActiveChallengeCard navigation={navigation} />
+      {hasActive
+        ? <ActiveChallengeCard navigation={navigation} />
+        : <EmptyState icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />}
 
       <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
-        {TRIPS.map((t) => <TripCardH key={t.id} trip={t} navigation={navigation} />)}
-      </ScrollView>
+      {trips === null ? <Loading /> : trips.length === 0 ? (
+        <EmptyOrError error={error} onRetry={onRetry} icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
+          {trips.map((tp) => <TripCardH key={tp.id} trip={tp} navigation={navigation} />)}
+        </ScrollView>
+      )}
 
       <View style={{ marginTop: 18 }}>
         <SectionHeader title={t('sec_sport')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
-          {SPORT.map((sp) => (
-            <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
-              <IconSquircle icon={sp.icon} bg={T.brand} size={34} />
-              <Text style={[ty.headline, { color: T.label, marginTop: 10 }]} numberOfLines={1}>{sp.title}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}</Text>
-              <Text style={[ty.caption2, { color: T.brand, marginTop: 6 }]}>{sp.date}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        {sport === null ? <Loading /> : sport.length === 0 ? (
+          <EmptyOrError error={error} onRetry={onRetry} icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
+            {sport.map((sp) => (
+              <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
+                <IconSquircle icon={sp.icon} bg={T.brand} size={34} />
+                <Text style={[ty.headline, { color: T.label, marginTop: 10 }]} numberOfLines={1}>{sp.title}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}</Text>
+                <Text style={[ty.caption2, { color: T.brand, marginTop: 6 }]}>{sp.date}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
       </View>
 
       <View style={{ marginTop: 18 }}>
         <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(1); }} />
-        {CHANNELS.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
+        {channels.length === 0
+          ? <EmptyOrError error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
+          : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
       </View>
-
     </>
   );
 }
 
 // ─── Челленджи ──────────────────────────────────────────────────────
-function ChallengesTab({ navigation }: { navigation: Nav }) {
+function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation: Nav; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
-  const [live, setLive] = useState<LiveChallenge[]>([]);
-  useEffect(() => { fetchLiveChallenges().then(setLive).catch(() => {}); }, []);
+  const { challenge } = useChallenge();
+  const hasActive = challenge.currentDay > 0 || challenge.tasks.length > 0;
+  const upcoming = (challenges ?? []).filter((x) => x.status === 'upcoming');
   return (
     <>
       <SectionHeader title={tr('Активный челлендж')} />
-      <ActiveChallengeCard navigation={navigation} />
-      {live.length > 0 ? (
-        <>
-          <SectionHeader title={tr('Открыт набор')} />
-          {live.map((ch) => (
-            <Pressable key={ch.id} onPress={() => navigation.navigate('JoinChallenge', { challengeId: ch.id, live: ch })}
-              style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
-              <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 88, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
-                <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-                  <SF name="flag.fill" size={24} color="#fff" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[ty.title3, { color: '#fff' }]} numberOfLines={1}>{ch.title}</Text>
-                  <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{ch.durationDays} дней · команд: {ch.teams.length}{ch.price ? ` · ${ch.price}` : ''}</Text>
-                </View>
-              </LinearGradient>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 }}>
-                <Capsule bg={T.brandTinted} color={T.brand}><SF name="person.3.fill" size={11} color={T.brand} />{ch._count?.applications ?? 0} заявок</Capsule>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Подать заявку')}</Text>
-                  <SF name="chevron.forward" size={12} color={T.brand} />
-                </View>
-              </View>
-            </Pressable>
-          ))}
-        </>
-      ) : (
-        <SectionHeader title={tr('Открыт набор')} />
-      )}
-      {CHALLENGES.filter((x) => x.status === 'upcoming').map((ch) => (
+      {hasActive
+        ? <ActiveChallengeCard navigation={navigation} />
+        : <EmptyState icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />}
+      <SectionHeader title={tr('Открыт набор')} />
+      {challenges === null ? <Loading /> : upcoming.length === 0 ? (
+        <EmptyOrError error={error} onRetry={onRetry} icon="calendar" title={tr('Пока ничего нет')} subtitle={tr('Новые челленджи появятся здесь.')} />
+      ) : upcoming.map((ch) => (
         <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
           style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
           <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
@@ -235,37 +288,13 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
   );
 }
 
-function TripsTab({ navigation }: { navigation: Nav }) {
+function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trips: Trip[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
-  const { getToken } = useAuth();
-  const [live, setLive] = useState<LiveTrip[]>([]);
-  const [appliedIds, setAppliedIds] = useState<string[]>([]);
-  useEffect(() => { fetchLiveTrips().then(setLive).catch(() => {}); }, []);
-  const apply = async (id: string) => {
-    setAppliedIds((p) => [...p, id]);
-    try { const token = await getToken(); const ok = await applyToTrip(token, id); if (!ok) setAppliedIds((p) => p.filter((x) => x !== id)); } catch { setAppliedIds((p) => p.filter((x) => x !== id)); }
-  };
+  if (trips === null) return <Loading />;
+  if (trips.length === 0) return <EmptyOrError error={error} onRetry={onRetry} icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />;
   return (
-    <>
-      {live.length > 0 ? (
-        <ListSection header={tr('Новые поездки')}>
-          {live.map((t, i) => (
-            <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
-              <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><SF name="airplane" size={22} color={T.brand} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{t.title}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{[t.region, t.date, t.price].filter(Boolean).join(' · ')}</Text>
-              </View>
-              <Pressable onPress={() => apply(t.id)} disabled={appliedIds.includes(t.id)} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: appliedIds.includes(t.id) ? T.fillSecondary : T.brand }}>
-                <Text style={[ty.footnoteEm, { color: appliedIds.includes(t.id) ? T.label : '#fff' }]}>{appliedIds.includes(t.id) ? 'Заявка ✓' : 'Записаться'}</Text>
-              </Pressable>
-              {i < live.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
-            </View>
-          ))}
-        </ListSection>
-      ) : null}
     <ListSection header={tr('Все поездки')}>
-      {TRIPS.map((t, i) => (
+      {trips.map((t, i) => (
         <Pressable key={t.id} onPress={() => navigation.navigate('TripDetail', { tripId: t.id })}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
           <Image source={imgUrl(t.imageUrl, 256)} style={{ width: 64, height: 64, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
@@ -275,38 +304,42 @@ function TripsTab({ navigation }: { navigation: Nav }) {
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{t.date} · {t.meta} · {t.price}</Text>
           </View>
           <SF name="chevron.forward" size={14} color={T.labelTertiary} />
-          {i < TRIPS.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 88, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+          {i < trips.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 88, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
         </Pressable>
       ))}
     </ListSection>
-    </>
   );
 }
 
 // ─── Спорт ──────────────────────────────────────────────────────────
-function SportTab() {
+function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
   const { has, toggle } = useEnrollment();
+  if (sport === null) return <Loading />;
+  if (sport.length === 0) return <EmptyOrError error={error} onRetry={onRetry} icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />;
   return (
     <ListSection header={tr('Спортивные активности')}>
-      {SPORT.map((sp, i) => (
-        <View key={sp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: sp.tint, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name={sp.icon} size={22} color={T.brand} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]}>{sp.title}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{sp.place} · {sp.date}</Text>
-            <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]}>{sp.going} идут · {sp.spotsLabel}</Text>
-          </View>
-          {(() => { const k = `sport:${sp.id}`; const on = has(k); return (
+      {sport.map((sp, i) => {
+        const k = `sport:${sp.id}`;
+        const on = has(k);
+        const going = sp.going + (on ? 1 : 0);
+        return (
+          <View key={sp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
+            <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: sp.tint, alignItems: 'center', justifyContent: 'center' }}>
+              <SF name={sp.icon} size={22} color={T.brand} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[ty.headline, { color: T.label }]}>{sp.title}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{sp.place} · {sp.date}</Text>
+              <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]}>{going} идут · {sp.spotsLabel}</Text>
+            </View>
             <Pressable onPress={() => toggle(k)} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
               <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]}>{on ? 'Вы идёте' : 'Участвую'}</Text>
             </Pressable>
-          ); })()}
-          {i < SPORT.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
-        </View>
-      ))}
+            {i < sport.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+          </View>
+        );
+      })}
     </ListSection>
   );
 }
@@ -315,19 +348,22 @@ function SportTab() {
 function ChannelTab({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
   const { t } = useLang();
+  const { channels, loading, error, reload } = useChannel();
   return (
     <View style={{ paddingHorizontal: 16 }}>
       <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{t('channels_of_community')}</Text>
-      {CHANNELS.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
+      {loading && channels.length === 0 ? <Loading />
+        : channels.length === 0 ? <EmptyOrError error={error} onRetry={reload} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
+        : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
     </View>
   );
 }
 
-function ChannelRow({ channel, navigation }: { channel: typeof CHANNELS[number]; navigation: Nav }) {
+function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav }) {
   const { T } = useTheme();
   const { t } = useLang();
-  const { isJoined, isPaid, unread } = useChannel();
-  const joined = isJoined(channel.id) || isPaid(channel.id);
+  const { isJoined, unread, postsByChannel } = useChannel();
+  const joined = isJoined(channel.id);
   const count = unread(channel.id);
   const last = postsByChannel(channel.id)[0];
   return (
@@ -337,12 +373,11 @@ function ChannelRow({ channel, navigation }: { channel: typeof CHANNELS[number];
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{channel.name}</Text>
-          {channel.verified ? <SF name="checkmark.seal.fill" size={14} color="#0EA5E9" /> : null}
+          {channel.verified ? <SF name="checkmark.seal.fill" size={14} color={T.sky} /> : null}
           {channel.access === 'request' ? <SF name="lock.fill" size={11} color={T.labelTertiary} /> : null}
-          {channel.access === 'paid' ? <SF name="creditcard.fill" size={11} color={T.labelTertiary} /> : null}
         </View>
         <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>
-          {joined && last ? last.title : channel.access === 'request' ? t('closed_channel') : channel.access === 'paid' ? `${t('paid_label')} · ${channel.price ? channel.price.toLocaleString('ru-RU') + ' ₸' : ''}` : `@${channel.handle}`}
+          {joined && last ? last.title : channel.access === 'request' ? t('closed_channel') : `@${channel.handle}`}
         </Text>
       </View>
       {joined && count > 0 ? (

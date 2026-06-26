@@ -4,7 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { Screen } from '../../components/Screen';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { ProgressBar, ty } from '../../components/ui';
 import { useAchievements, EarnedBadge } from '../../data/achievements';
@@ -39,22 +39,29 @@ export function BadgeTile({ b }: { b: EarnedBadge }) {
 }
 
 export function AchievementsScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, isDark } = useTheme();
+  const { lang } = useLang();
   const { badges, earned, total } = useAchievements();
   const pct = total ? earned / total : 0;
+  // Warm cream wash in light mode; a dark-friendly wash in dark mode so the
+  // light label text stays readable.
+  const gradient = isDark
+    ? [T.systemBg, T.systemBg, T.groupedBg]
+    : ['#FBF4E6', '#F6F4F1', '#F2F2F7'];
 
   return (
-    <Screen gradient={['#FBF4E6', '#F6F4F1', '#F2F2F7']} topInset={false}>
-      <BackNav back={tr('Профиль')} onBack={() => navigation.goBack()} transparent />
+    <Screen gradient={gradient} topInset={false}>
+      <NavHeader
+        largeTitle
+        title={tr('Достижения')}
+        subtitle={lang === 'ru' ? `Получено ${earned} из ${total} бейджей` : `Earned ${earned} of ${total} badges`}
+        backLabel={tr('Профиль')}
+        onBack={() => navigation.goBack()}
+        transparent
+      />
 
-      <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
-        <Text style={[ty.largeTitle, { color: T.label }]}>{tr('Достижения')}</Text>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>
-          Получено {earned} из {total} бейджей
-        </Text>
-        <View style={{ marginTop: 14 }}>
-          <ProgressBar value={pct} height={8} />
-        </View>
+      <View style={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 18 }}>
+        <ProgressBar value={pct} height={8} />
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16, justifyContent: 'space-between' }}>

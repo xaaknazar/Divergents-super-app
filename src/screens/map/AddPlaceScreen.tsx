@@ -1,33 +1,53 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 import MapView, { Marker } from 'react-native-maps';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useUser } from '@clerk/clerk-expo';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
+import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
 import { usePlaces } from '../../state/PlacesContext';
-import { Place } from '../../data/places';
-import { CATEGORY_META, CATEGORIES, TAG_META, TAGS, PlaceCategory, PlaceTag, cityCenter, COUNTRIES } from '../../data/places';
+import { Place, postPlace } from '../../data/places';
+import { CATEGORY_META, CATEGORIES, TAG_META, TAGS, PlaceCategory, PlaceTag, safeCityCenter, COUNTRIES } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<MapStackParams, 'AddPlace'>;
+
+// Picked images live in the OS cache and are purged after restart, breaking
+// the photo. Copy into the app's document directory (persistent) and store
+// that file:// path instead. Best-effort: falls back to the original uri.
+async function persistImage(uri: string): Promise<string> {
+  try {
+    if (!uri.startsWith('file:') || !FileSystem.documentDirectory) return uri;
+    const dir = `${FileSystem.documentDirectory}places/`;
+    await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
+    const ext = (uri.split('?')[0].split('.').pop() || 'jpg').slice(0, 5);
+    const dest = `${dir}place_${Date.now()}.${ext}`;
+    await FileSystem.copyAsync({ from: uri, to: dest });
+    return dest;
+  } catch {
+    return uri;
+  }
+}
 
 export function AddPlaceScreen({ navigation, route }: Props) {
   const { T, isDark } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { user } = useUser();
+  const { getToken } = useAuth();
   const { country, city, addPlace, updatePlace, getPlace } = usePlaces();
   const editId = route.params?.editId;
   const editing: Place | undefined = editId ? getPlace(editId) : undefined;
-  const initLat = editing?.lat ?? route.params?.lat ?? cityCenter(country, city)!.lat;
-  const initLng = editing?.lng ?? route.params?.lng ?? cityCenter(country, city)!.lng;
-  const center = cityCenter(country, city)!;
+  const center = safeCityCenter(country, city);
+  const initLat = editing?.lat ?? route.params?.lat ?? center.lat;
+  const initLng = editing?.lng ?? route.params?.lng ?? center.lng;
   const cityName = center?.name ?? '';
   const countryName = COUNTRIES.find((c) => c.key === country)?.name ?? '';
 
@@ -44,7 +64,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { Alert.alert('Нет доступа к фото', 'Разрешите доступ к галерее в настройках.'); return; }
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, allowsEditing: true, aspect: [4, 3] });
-    if (!r.canceled && r.assets?.[0]?.uri) setPhoto(r.assets[0].uri);
+    if (!r.canceled && r.assets?.[0]?.uri) setPhoto(await persistImage(r.assets[0].uri));
   };
   const ok = name.trim().length > 1 && highlights.trim().length > 2;
 
@@ -55,22 +75,26 @@ export function AddPlaceScreen({ navigation, route }: Props) {
       return;
     }
     const author = user?.firstName || user?.fullName || (user?.primaryEmailAddress?.emailAddress?.split('@')[0]) || 'Вы';
-    addPlace({
+    const draft = {
       name: name.trim(), category: cat, country, city, lat: coord.latitude, lng: coord.longitude,
-      tags, highlights: highlights.trim(), hours: hours.trim() || 'Не указано', approved: false, addedBy: author, photo,
-    });
-    Alert.alert('Место добавлено', 'Спасибо! Метка появилась на карте сообщества.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
+      tags, highlights: highlights.trim(), hours: hours.trim() || 'Не указано', addedBy: author, photo,
+    };
+    // Always keep the place on-device so the author sees it immediately.
+    addPlace({ ...draft, approved: false });
+    // Best-effort publish so other users can see it once the admin approves.
+    // Failure is silent — the local copy still works offline.
+    (async () => {
+      try { const token = await getToken(); await postPlace(draft, token); } catch {}
+    })();
+    Alert.alert('Место добавлено', 'Спасибо! Метка появилась на карте сообщества. После модерации её увидят все участники.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Отмена')}</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]}>{editing ? 'Редактировать' : 'Новое место'}</Text>
-        <View style={{ width: 56 }} />
-      </View>
+      <NavHeader title={editing ? 'Редактировать' : 'Новое место'} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 12 }]}>{tr('Город:')} {cityName}, {countryName} · {tr('нажмите на карту, чтобы поставить точку')}</Text>
 
         {/* Map picker */}
@@ -130,6 +154,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
           </Pressable>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
         <PrimaryButton label={editing ? 'Сохранить' : 'Добавить место'} icon="checkmark" disabled={!ok} onPress={submit} />

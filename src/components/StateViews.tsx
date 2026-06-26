@@ -61,22 +61,45 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
   );
 }
 
+// Gentle fade + rise on mount — gives empty/error states a soft, deliberate
+// entrance instead of popping in.
+function useEntrance() {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration: 340, useNativeDriver: true }).start();
+  }, [v]);
+  return {
+    opacity: v,
+    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+  };
+}
+
+// Layered glyph badge: tinted outer halo + inner disc for quiet depth.
+function GlyphBadge({ icon, tint, fg }: { icon: SFName | string; tint: string; fg: string }) {
+  return (
+    <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+        <SF name={icon} size={28} color={fg} />
+      </View>
+    </View>
+  );
+}
+
 // ── Empty state ──────────────────────────────────────────────────────────
 export function EmptyState({
   icon = 'tray', title, subtitle, actionLabel, onAction,
 }: { icon?: SFName | string; title: string; subtitle?: string; actionLabel?: string; onAction?: () => void }) {
   const { T } = useTheme();
+  const anim = useEntrance();
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 40, gap: 10 }}>
-      <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
-        <SF name={icon} size={28} color={T.labelTertiary} />
-      </View>
-      <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]}>{title}</Text>
-      {subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{subtitle}</Text> : null}
+    <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 40, gap: 10 }, anim]}>
+      <GlyphBadge icon={icon} tint={T.fillTertiary} fg={T.labelTertiary} />
+      <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 6 }]}>{title}</Text>
+      {subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', lineHeight: 20 }]}>{subtitle}</Text> : null}
       {actionLabel && onAction ? (
         <PrimaryButton label={actionLabel} onPress={onAction} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -85,16 +108,15 @@ export function ErrorState({
   message = 'Не удалось загрузить данные. Проверьте подключение к интернету.', onRetry,
 }: { message?: string; onRetry?: () => void }) {
   const { T } = useTheme();
+  const anim = useEntrance();
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 40, gap: 10 }}>
-      <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255,59,48,0.12)', alignItems: 'center', justifyContent: 'center' }}>
-        <SF name="wifi.slash" size={28} color={T.red} />
-      </View>
-      <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]}>Ошибка сети</Text>
-      <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{message}</Text>
+    <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 40, gap: 10 }, anim]}>
+      <GlyphBadge icon="wifi.slash" tint="rgba(255,59,48,0.12)" fg={T.red} />
+      <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 6 }]}>Ошибка сети</Text>
+      <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', lineHeight: 20 }]}>{message}</Text>
       {onRetry ? (
         <PrimaryButton label="Повторить" icon="arrow.clockwise" onPress={onRetry} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />
       ) : null}
-    </View>
+    </Animated.View>
   );
 }

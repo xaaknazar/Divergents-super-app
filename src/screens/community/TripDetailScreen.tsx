@@ -1,40 +1,72 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, Share, Alert } from 'react-native';
+import { tr } from '../../state/LanguageContext';
+import { View, Text, ScrollView, Share, Alert, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 import { SF } from '../../components/SFIcon';
+import { NavHeader, NavRoundButton } from '../../components/NavHeader';
 import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, ty } from '../../components/ui';
-import { getTrip } from '../../data/community';
+import { EmptyState } from '../../components/StateViews';
+import { fetchTrip, Trip } from '../../data/community';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { imgUrl } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
 
-function RoundBtn({ icon, onPress }: { icon: string; onPress?: () => void }) {
-  const { T } = useTheme();
-  useLang();
-  return (
-    <Pressable onPress={onPress} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center' }}>
-      <SF name={icon} size={16} color={T.label} />
-    </Pressable>
-  );
-}
-
 export function TripDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
-  const trip = getTrip(route.params.tripId)!;
   const { has, toggle, add } = useEnrollment();
+
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    fetchTrip(route.params.tripId).then((t) => { if (alive) { setTrip(t); setLoading(false); } });
+    return () => { alive = false; };
+  }, [route.params.tripId]);
+
+  // ── Loading ──
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.systemBg }}>
+        <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={T.brand} />
+        </View>
+      </View>
+    );
+  }
+
+  // ── Not found ──
+  if (!trip) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
+        <EmptyState
+          icon="mappin.circle.fill"
+          title={tr('Поездка не найдена')}
+          subtitle={tr('Возможно, она завершилась или была снята с публикации.')}
+          actionLabel={tr('Назад')}
+          onAction={() => navigation.goBack()}
+        />
+      </View>
+    );
+  }
+
   const fav = has(`tripfav:${trip.id}`);
   const joined = has(`trip:${trip.id}`);
+  const goingCount = trip.going + (joined ? 1 : 0);
+  const spotsCount = Math.max(0, trip.spots - (joined ? 1 : 0));
   const stats = [
-    { v: String(trip.going), l: tr('Идут') },
-    { v: String(trip.spots), l: tr('Мест') },
+    { v: String(goingCount), l: tr('Идут') },
+    { v: String(spotsCount), l: tr('Мест') },
     { v: trip.price, l: tr('Стоимость') },
   ];
 
@@ -54,13 +86,14 @@ export function TripDetailScreen({ route, navigation }: Props) {
               <Polygon points="0,230 60,170 130,210 200,140 280,200 340,170 400,210 400,280 0,280" fill="rgba(255,255,255,0.3)" />
             </Svg>
           )}
-          <View style={{ paddingTop: insets.top + 6, paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <RoundBtn icon="chevron.left" onPress={() => navigation.goBack()} />
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <RoundBtn icon={fav ? 'heart.fill' : 'heart'} onPress={() => toggle(`tripfav:${trip.id}`)} />
-              <RoundBtn icon="square.and.arrow.up" onPress={() => Share.share({ message: `${trip.title} — поездка Divergents · ${trip.region} · ${trip.date}` })} />
-            </View>
-          </View>
+          <NavHeader
+            variant="overlay" overlayScheme="light"
+            backLabel={tr('Сообщество')} onBack={() => navigation.goBack()}
+            trailing={<>
+              <NavRoundButton icon={fav ? 'heart.fill' : 'heart'} scheme="light" accessibilityLabel={tr('В избранное')} onPress={() => toggle(`tripfav:${trip.id}`)} />
+              <NavRoundButton icon="square.and.arrow.up" scheme="light" accessibilityLabel={tr('Поделиться')} onPress={() => Share.share({ message: `${trip.title} — поездка Divergents · ${trip.region} · ${trip.date}` })} />
+            </>}
+          />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             <Capsule bg="rgba(255,255,255,0.75)" color={T.label}><SF name="calendar" size={11} color={T.brand} />{trip.date} · {trip.days} дн.</Capsule>
             <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]}>{trip.title}</Text>
@@ -86,7 +119,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
 
         <ListSection header={tr('Организатор')}>
           <ListRow
-            leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
+            leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{(trip.organizer || '?').charAt(0)}</Text></View>}
             title={trip.organizer} subtitle={trip.organizerType} last />
         </ListSection>
 
@@ -113,14 +146,25 @@ export function TripDetailScreen({ route, navigation }: Props) {
           ))}
         </ListSection>
 
-        <ListSection header={`Идут · ${trip.going} человек`}>
-          <View style={{ padding: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {['А', 'Б', 'Д', 'Ж', 'М', 'О', 'К', 'С', 'Т', `+${Math.max(0, trip.going - 9)}`].map((n, i) => (
-              <View key={i} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: i === 9 ? T.fillTertiary : `hsl(${i * 40 + 200}, 55%, 65%)`, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={[ty.subheadEm, { color: i === 9 ? T.labelSecondary : '#fff' }]}>{n}</Text>
-              </View>
-            ))}
-          </View>
+        <ListSection header={`Идут · ${goingCount} человек`}>
+          {goingCount === 0 ? (
+            <View style={{ padding: 16, alignItems: 'center' }}>
+              <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Пока никто не записался — будьте первым.')}</Text>
+            </View>
+          ) : (
+            <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+              {Array.from({ length: Math.min(goingCount, 9) }).map((_, i) => (
+                <View key={i} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                  <SF name="person.fill" size={18} color={T.brand} />
+                </View>
+              ))}
+              {goingCount > 9 ? (
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[ty.subheadEm, { color: T.labelSecondary }]}>+{goingCount - 9}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
         </ListSection>
       </ScrollView>
 

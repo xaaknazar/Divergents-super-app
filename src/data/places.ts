@@ -1,6 +1,11 @@
 // Community places & ratings ("2GIS для своих"). Divergents drop pins for cafes,
 // hotels, tourism spots etc. with community-values tags; others rate & comment.
+//
+// The live list is published server-side (admin) and fetched from the website
+// API; there is NO hardcoded seed content. On failure or empty the fetch
+// returns [] and screens render a Russian empty state — never fake data.
 import { SFName } from '../components/SFIcon';
+import { API_BASE } from '../config';
 
 export type PlaceCategory =
   | 'cafe' | 'restaurant' | 'hotel' | 'guesthouse' | 'resort' | 'park' | 'gym' | 'picnic' | 'tourism';
@@ -69,6 +74,16 @@ export const COUNTRIES: Country[] = [
 export function cityCenter(country: string, city: string): City | undefined {
   return COUNTRIES.find((c) => c.key === country)?.cities.find((ci) => ci.key === city);
 }
+// Never-undefined center: falls back to the first known city if the requested
+// country/city is missing (e.g. a stale persisted filter). Use this instead of
+// `cityCenter(...)!` so the UI can't crash on bad/legacy stored values.
+export function safeCityCenter(country: string, city: string): City {
+  return cityCenter(country, city) ?? COUNTRIES[0].cities[0];
+}
+// True only when country/city resolve to a real known city.
+export function isKnownCity(country: string, city: string): boolean {
+  return !!cityCenter(country, city);
+}
 export function nearestCity(lat: number, lng: number): { country: string; city: string } | null {
   let best: { country: string; city: string } | null = null;
   let bestD = Infinity;
@@ -85,106 +100,167 @@ export function citiesOf(country: string): City[] {
   return COUNTRIES.find((c) => c.key === country)?.cities ?? [];
 }
 
-const rv = (id: string, author: string, rating: number, text: string, date: string): Review => ({ id, author, rating, text, date });
+// ─── Live places API ──────────────────────────────────────────────────────
+// Real, admin-published places fetched from the website. No local seed data.
+interface ApiReview { id?: string; author?: string; rating?: number; text?: string; date?: string }
+interface ApiPlace {
+  id?: string; name?: string; category?: string; country?: string; city?: string;
+  lat?: number; lng?: number; tags?: string[]; highlights?: string; hours?: string;
+  approved?: boolean; addedBy?: string; photo?: string | null; reviews?: ApiReview[];
+}
 
-export const PLACES: Place[] = [
-  {
-    id: 'p1', name: 'Qara Brew Coffee', category: 'cafe', country: 'kz', city: 'almaty',
-    lat: 43.2389, lng: 76.8897, tags: ['halal', 'no_alcohol', 'clean', 'prayer_room'],
-    highlights: 'Отличный колд брю, тихо, есть розетки и зона для работы', hours: '08:00–23:00',
-    approved: true, addedBy: 'Айгерим Б.', photo: null,
-    reviews: [
-      rv('r1', 'Дамир А.', 5, 'Кофе топ, персонал приветливый, есть намазхана рядом.', '12 июн'),
-      rv('r2', 'Жанар К.', 4, 'Уютно и чисто, но днём многолюдно.', '3 июн'),
-    ],
-  },
-  {
-    id: 'p2', name: 'Халяль Plov Center', category: 'restaurant', country: 'kz', city: 'almaty',
-    lat: 43.2451, lng: 76.9120, tags: ['halal', 'no_alcohol', 'family', 'kids_zone'],
-    highlights: 'Настоящий плов, большие порции, детская комната', hours: '10:00–22:00',
-    approved: true, addedBy: 'Команда Divergents',
-    reviews: [rv('r3', 'Олжас Т.', 5, 'Семьёй ходим каждую неделю, детям нравится.', '8 июн')],
-  },
-  {
-    id: 'p3', name: 'Кок-Тобе Парк', category: 'tourism', country: 'kz', city: 'almaty',
-    lat: 43.2330, lng: 76.9760, tags: ['family', 'kids_zone', 'clean'],
-    highlights: 'Виды на город, канатка, прогулки с семьёй', hours: '10:00–00:00',
-    approved: false, addedBy: 'Нурлан Б.',
-    reviews: [rv('r4', 'Аян Т.', 5, 'Закат отсюда — огонь. Чисто и безопасно.', '1 июн')],
-  },
-  {
-    id: 'p4', name: 'FitZone Halal Gym', category: 'gym', country: 'kz', city: 'almaty',
-    lat: 43.2200, lng: 76.8500, tags: ['no_alcohol', 'clean', 'prayer_room'],
-    highlights: 'Раздельные часы, намазхана, новое оборудование', hours: '06:00–23:00',
-    approved: false, addedBy: 'Санжар К.', reviews: [],
-  },
-  {
-    id: 'p5', name: 'Family Guest House', category: 'guesthouse', country: 'kz', city: 'astana',
-    lat: 51.1280, lng: 71.4300, tags: ['halal', 'family', 'no_alcohol', 'clean'],
-    highlights: 'Тихий район, завтрак халяль, для семейного отдыха', hours: 'Круглосуточно',
-    approved: true, addedBy: 'Команда Divergents',
-    reviews: [rv('r5', 'Мадина Е.', 5, 'Чисто, спокойно, хозяева приветливые.', '20 мая')],
-  },
-  {
-    id: 'p6', name: 'Specialty Coffee Astana', category: 'cafe', country: 'kz', city: 'astana',
-    lat: 51.1700, lng: 71.4400, tags: ['no_alcohol', 'clean'],
-    highlights: 'Хорошая обжарка, фильтр-кофе, спокойно по утрам', hours: '08:00–22:00',
-    approved: false, addedBy: 'Ерлан С.', reviews: [],
-  },
-  {
-    id: 'p8', name: 'Brew Lab', category: 'cafe', country: 'kz', city: 'oskemen',
-    lat: 49.9740, lng: 82.6100, tags: ['no_alcohol', 'clean', 'prayer_room'],
-    highlights: 'Спешелти-кофе, фильтр и колд брю, тихо по утрам, есть розетки', hours: '08:00–22:00',
-    approved: true, addedBy: 'Команда Divergents',
-    reviews: [rv('r7', 'Ержан К.', 5, 'Лучший кофе в городе, чисто и уютно.', '10 июн')],
-  },
-  {
-    id: 'p9', name: 'Халяль Kitchen', category: 'restaurant', country: 'kz', city: 'oskemen',
-    lat: 49.9685, lng: 82.6155, tags: ['halal', 'no_alcohol', 'family', 'kids_zone'],
-    highlights: 'Домашняя кухня, всё халяль, детская комната, большие порции', hours: '10:00–23:00',
-    approved: true, addedBy: 'Айгерим Б.',
-    reviews: [rv('r8', 'Мадина Е.', 5, 'Ходим всей семьёй, детям нравится зона.', '6 июн')],
-  },
-  {
-    id: 'p10', name: 'Набережная Иртыша', category: 'park', country: 'kz', city: 'oskemen',
-    lat: 49.9620, lng: 82.6090, tags: ['family', 'kids_zone', 'clean'],
-    highlights: 'Прогулки вдоль реки, велодорожки, виды на закат', hours: 'Круглосуточно',
-    approved: false, addedBy: 'Нурлан Б.', reviews: [],
-  },
-  {
-    id: 'p11', name: 'Altai Family Hotel', category: 'hotel', country: 'kz', city: 'oskemen',
-    lat: 49.9775, lng: 82.6035, tags: ['halal', 'family', 'no_alcohol', 'clean'],
-    highlights: 'Семейный отель, завтрак халяль, тихий район, парковка', hours: 'Круглосуточно',
-    approved: true, addedBy: 'Команда Divergents',
-    reviews: [rv('r9', 'Дамир А.', 4, 'Чисто и спокойно, удобно с детьми.', '28 мая')],
-  },
-  {
-    id: 'p12', name: 'PowerZone Gym', category: 'gym', country: 'kz', city: 'oskemen',
-    lat: 49.9710, lng: 82.5980, tags: ['no_alcohol', 'clean', 'prayer_room'],
-    highlights: 'Новое оборудование, раздельные часы, есть намазхана', hours: '06:00–23:00',
-    approved: false, addedBy: 'Санжар К.', reviews: [],
-  },
-  {
-    id: 'p13', name: 'Гостевой дом «Тихий двор»', category: 'guesthouse', country: 'kz', city: 'oskemen',
-    lat: 49.9805, lng: 82.6200, tags: ['family', 'no_alcohol', 'clean'],
-    highlights: 'Уютный гостевой дом, домашняя атмосфера, для семей', hours: 'Круглосуточно',
-    approved: false, addedBy: 'Жанар К.', reviews: [],
-  },
-  {
-    id: 'p14', name: 'Гора Аблакетка', category: 'tourism', country: 'kz', city: 'oskemen',
-    lat: 49.9300, lng: 82.5600, tags: ['family', 'clean'],
-    highlights: 'Панорама города, лёгкий треккинг, точка для фото', hours: '08:00–21:00',
-    approved: false, addedBy: 'Аян Т.',
-    reviews: [rv('r10', 'Олжас Т.', 5, 'Виды супер, идеально для прогулки.', '2 июн')],
-  },
-  {
-    id: 'p7', name: 'Sultanahmet Halal Food', category: 'restaurant', country: 'tr', city: 'istanbul',
-    lat: 41.0054, lng: 28.9768, tags: ['halal', 'no_alcohol', 'family'],
-    highlights: 'Турецкая кухня, всё халяль, рядом с Голубой мечетью', hours: '09:00–23:00',
-    approved: true, addedBy: 'Команда Divergents',
-    reviews: [rv('r6', 'Аружан М.', 5, 'Вкусно и аутентично, удобно для туристов.', '15 апр')],
-  },
-];
+const VALID_CATS = new Set<string>(CATEGORIES);
+const VALID_TAGS = new Set<string>(TAGS);
+
+function mapReview(r: ApiReview, i: number): Review {
+  return {
+    id: String(r.id ?? `sr_${i}`),
+    author: String(r.author ?? 'Участник'),
+    rating: Math.max(0, Math.min(5, Math.round(Number(r.rating) || 0))),
+    text: String(r.text ?? ''),
+    date: String(r.date ?? ''),
+  };
+}
+
+function mapApiPlace(p: ApiPlace): Place | null {
+  if (!p || !p.id || typeof p.lat !== 'number' || typeof p.lng !== 'number') return null;
+  if (!isFinite(p.lat) || !isFinite(p.lng)) return null;
+  const category = (VALID_CATS.has(String(p.category)) ? p.category : 'cafe') as PlaceCategory;
+  const tags = (Array.isArray(p.tags) ? p.tags : []).filter((t) => VALID_TAGS.has(t)) as PlaceTag[];
+  const reviews = (Array.isArray(p.reviews) ? p.reviews : []).map(mapReview);
+  return {
+    id: String(p.id),
+    name: String(p.name ?? ''),
+    category,
+    country: String(p.country ?? ''),
+    city: String(p.city ?? ''),
+    lat: p.lat,
+    lng: p.lng,
+    tags,
+    highlights: String(p.highlights ?? ''),
+    hours: String(p.hours ?? ''),
+    approved: !!p.approved,
+    addedBy: String(p.addedBy ?? 'Сообщество'),
+    photo: p.photo ?? null,
+    reviews,
+  };
+}
+
+// Fetch the live, admin-published catalog of places. Returns [] on any
+// failure (network, non-2xx, bad JSON) so callers render an empty state
+// instead of crashing or showing stale fake data.
+export async function fetchPlaces(timeoutMs = 12000): Promise<Place[]> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places`, {
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const list: ApiPlace[] = Array.isArray(data) ? data : Array.isArray(data?.places) ? data.places : [];
+    return list.map(mapApiPlace).filter((p): p is Place => p !== null);
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// POST a user-added place so other users can see it once the admin approves it.
+// Best-effort: returns the created place id (or null on failure). The on-device
+// "add place" flow keeps working regardless via PlacesContext local storage.
+export async function postPlace(
+  body: Omit<Place, 'id' | 'reviews' | 'approved'>,
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<string | null> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    return data?.id ? String(data.id) : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// POST a review so other users can see it. Best-effort: the local optimistic
+// review (PlacesContext) is shown regardless. Returns true only on a real 2xx
+// (the caller may surface "synced" vs "saved locally" feedback honestly).
+export async function postReview(
+  placeId: string,
+  body: { rating: number; text: string },
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<boolean> {
+  if (!placeId) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}/review`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// Report a place to moderators. Returns true on a real 2xx so the UI can tell
+// the user honestly whether the report reached the server (vs. failed). The
+// endpoint is optional server-side (see BACKEND.md); on failure the caller
+// surfaces a retry/error message instead of a fake "thanks".
+export async function reportPlace(
+  placeId: string,
+  reason: string,
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<boolean> {
+  if (!placeId) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}/report`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ reason }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 
 // Open-now status from an hours string like "09:00–23:00" or "Круглосуточно".

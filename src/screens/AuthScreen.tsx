@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../theme/ThemeContext';
-import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,10 +10,15 @@ import { SF } from '../components/SFIcon';
 import { ty } from '../components/ui';
 import { Logo } from '../components/Logo';
 import { RootStackParams } from '../navigation/types';
+import { API_BASE } from '../data/api';
 import { useAppFlow } from '../state/AppFlowContext';
 import { useLang, tr } from '../state/LanguageContext';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Auth'>;
+
+const TERMS_URL = `${API_BASE}/terms`;
+const PRIVACY_URL = `${API_BASE}/privacy`;
+const openUrl = (url: string) => { WebBrowser.openBrowserAsync(url).catch(() => {}); };
 
 export function AuthScreen({}: Props) {
   const { T, isDark } = useTheme();
@@ -96,21 +102,37 @@ export function AuthScreen({}: Props) {
     if (!isLoaded || code.trim().length < 4) return;
     setBusy(true); setError(null);
     try {
+      // A wrong code throws (caught below); a non-'complete' status here means
+      // the code was accepted but Clerk needs a further step (2FA / extra
+      // fields) — so we must NOT mislabel it as «Неверный код».
+      const needMore = lang === 'ru'
+        ? 'Код принят, но нужен дополнительный шаг подтверждения. Свяжитесь с поддержкой.'
+        : 'Code accepted, but an extra verification step is required. Please contact support.';
       if (mode === 'in') {
         const res = await signIn!.attemptFirstFactor({ strategy: 'email_code', code: code.trim() });
         if (res.status === 'complete') { finishRegistration(); await setActiveSignIn!({ session: res.createdSessionId }); }
-        else setError(t('err_code'));
+        else setError(needMore);
       } else {
         const res = await signUp!.attemptEmailAddressVerification({ code: code.trim() });
         if (res.status === 'complete') { await setActiveSignUp!({ session: res.createdSessionId }); }
         else if (res.status === 'missing_requirements') {
           const miss = [...(res.missingFields ?? []), ...(res.unverifiedFields ?? [])].join(', ');
           setError(`${tr('Регистрация требует доп. полей в Clerk:')} ${miss || tr('неизвестно')}. ${tr('Оставьте обязательным только email.')}`);
-        } else setError(t('err_code'));
+        } else setError(needMore);
       }
     } catch (e: any) {
       setError(e?.errors?.[0]?.message || t('err_code'));
     } finally { setBusy(false); }
+  };
+
+  // Passwordless "forgot" path: there is no password to reset — recovery just
+  // means sending a fresh sign-in code. If the email is filled we send it right
+  // away; otherwise we prompt the user to enter their email first.
+  const recover = () => {
+    setError(null);
+    if (!email.trim()) { setInfo(t('recover_body')); return; }
+    setIntent('in'); setInfo(null);
+    sendCode();
   };
 
   const auroraTop = isDark ? ['rgba(35,64,136,0.35)', 'rgba(35,64,136,0)'] : ['rgba(35,64,136,0.14)', 'rgba(35,64,136,0)'];
@@ -120,20 +142,6 @@ export function AuthScreen({}: Props) {
       <LinearGradient colors={auroraTop as any} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={{ flex: 1, paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 16 }}>
-          {/* Language switcher */}
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-            <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 11, padding: 3 }}>
-              {(['ru', 'en'] as const).map((l) => {
-                const on = lang === l;
-                return (
-                  <Pressable key={l} onPress={() => setLang(l)} style={{ paddingVertical: 5, paddingHorizontal: 12, borderRadius: 9, backgroundColor: on ? T.cardBg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.1 : 0, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
-                    <Text style={[ty.footnoteEm, { color: on ? T.label : T.labelSecondary }]}>{l === 'ru' ? 'РУС' : 'ENG'}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
           {/* Hero */}
           <View style={{ alignItems: 'center', marginTop: 18, marginBottom: 22 }}>
             <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
@@ -174,6 +182,7 @@ export function AuthScreen({}: Props) {
                 </View>
 
                 {error ? <Text style={[ty.footnote, { color: T.red, marginTop: 10, marginLeft: 2 }]}>{error}</Text> : null}
+                {!error && info ? <Text style={[ty.footnote, { color: T.brandAccent, marginTop: 10, marginLeft: 2 }]}>{info}</Text> : null}
 
                 <GradientButton label={t('cont')} icon="arrow.right" loading={busy} onPress={sendCode} T={T} style={{ marginTop: 16 }} />
 
@@ -227,13 +236,22 @@ export function AuthScreen({}: Props) {
           </View>
 
           {step === 'email' ? (
-            <Pressable onPress={() => Alert.alert(t('recover'), t('recover_body'), [{ text: t('ok') }])} style={{ alignItems: 'center', marginTop: 18 }}>
+            <Pressable onPress={recover} disabled={busy} style={{ alignItems: 'center', marginTop: 18 }}>
               <Text style={[ty.subhead, { color: T.brandAccent }]}>{t('recover')}</Text>
             </Pressable>
           ) : null}
 
           <View style={{ flex: 1 }} />
           <Text style={[ty.caption2, { color: T.labelTertiary, textAlign: 'center', paddingHorizontal: 16 }]}>{t('terms')}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 6 }}>
+            <Pressable onPress={() => openUrl(TERMS_URL)} hitSlop={8}>
+              <Text style={[ty.caption2Em, { color: T.brandAccent }]}>{lang === 'ru' ? 'Условия использования' : 'Terms of Service'}</Text>
+            </Pressable>
+            <Text style={[ty.caption2, { color: T.labelTertiary }]}>·</Text>
+            <Pressable onPress={() => openUrl(PRIVACY_URL)} hitSlop={8}>
+              <Text style={[ty.caption2Em, { color: T.brandAccent }]}>{lang === 'ru' ? 'Политика конфиденциальности' : 'Privacy Policy'}</Text>
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </View>

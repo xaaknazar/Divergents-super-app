@@ -19,15 +19,37 @@ const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | '
   ProfileTab: { label: 'tab_profile', on: 'person.crop.circle.fill', off: 'person.crop.circle' },
 };
 
+// Pushed detail / modal screens that hide the bar (they have their own back
+// button + bottom CTAs). Everything else — including tab roots and any state
+// that hasn't initialised yet — keeps the bar VISIBLE (fail-safe), so the bar
+// never disappears on the main screens.
+const DETAIL_ROUTES = new Set([
+  'Catalog', 'CourseDetail', 'Video',
+  'ChallengeDetail', 'JoinChallenge', 'TripDetail', 'Channel', 'ChannelPost',
+  'PlaceDetail', 'AddPlace', 'OfflineMap',
+  'VacancyDetail', 'Resume', 'TalentProfile',
+  'Achievements', 'Personalize',
+]);
+
+// Walk to the currently focused leaf route inside a (possibly nested) navigator
+// state. Keying on the visible screen — rather than the active tab's stack
+// depth — keeps the bar correct after cross-tab navigation that leaves a tab's
+// stack non-empty in the background.
+function focusedLeafName(route: { name: string; state?: any }): string {
+  let r: any = route;
+  while (r?.state && typeof r.state.index === 'number' && Array.isArray(r.state.routes)) {
+    r = r.state.routes[r.state.index];
+  }
+  return r?.name ?? route.name;
+}
+
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { T, isDark } = useTheme();
   const { t } = useLang();
   const insets = useSafeAreaInsets();
-  // Hide the tab bar when a detail screen is pushed inside the active tab's
-  // stack (nested index > 0) so bottom CTAs aren't covered by the bar.
-  const active = state.routes[state.index] as any;
-  const nestedIndex = active?.state?.index ?? 0;
-  if (nestedIndex > 0) return null;
+  const active = state.routes[state.index] as { name: string; state?: any };
+  const leaf = focusedLeafName(active);
+  if (DETAIL_ROUTES.has(leaf)) return null;
   return (
     <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{
       position: 'absolute', left: 0, right: 0, bottom: 0,

@@ -1,10 +1,16 @@
-// Founder + community channels (Telegram-style). Posts live inside each channel.
+// Community channels (Telegram-style) and their posts. Content is published by
+// the admin on the Divergents website and read here as JSON — no hardcoded
+// channels, authors or sample media. The server EMBEDS every channel's posts
+// inside the single GET /api/mobile/channels response (there is no separate
+// /posts endpoint), so the channel list and the flattened post feed both derive
+// from that one call. On failure or empty response we return [] and the screens
+// render a Russian empty / error state.
 import { SFName } from '../components/SFIcon';
+import { API_BASE } from './api';
 
-const DANDAY_PHOTO = 'https://utfs.io/f/e23b25be-42e5-4ee4-87b6-94dcfc245071-x5cjij.jpg';
-const WOMENS_PHOTO = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80';
-
-export type ChannelAccess = 'open' | 'request' | 'paid';
+// Only free access tiers remain for v1 ('open' = anyone, 'request' = approval).
+// The paid channel was removed, so the server's 'paid' tier maps to 'request'.
+export type ChannelAccess = 'open' | 'request';
 
 export interface Channel {
   id: string;
@@ -15,28 +21,7 @@ export interface Channel {
   baseSubscribers: number;
   bio: string;
   access: ChannelAccess;
-  price?: number; // тенге, для платных каналов
 }
-
-export const CHANNELS: Channel[] = [
-  {
-    id: 'danday', handle: 'danday.amokachi', name: 'Danday Amokachi', avatar: DANDAY_PHOTO,
-    verified: true, baseSubscribers: 2480, access: 'open',
-    bio: 'Авторские аудио и статьи о лидерстве, мышлении и личном развитии.',
-  },
-  {
-    id: 'womens', handle: 'womens.club', name: 'Women’s club', avatar: WOMENS_PHOTO,
-    verified: true, baseSubscribers: 860, access: 'request',
-    bio: 'Закрытое женское сообщество Divergents: поддержка, встречи и обсуждения. Доступ по запросу.',
-  },
-  {
-    id: 'managers', handle: 'managers.club', name: 'Канал для Управляющих и коммерсов', avatar: DANDAY_PHOTO,
-    verified: true, baseSubscribers: 320, access: 'paid', price: 500000,
-    bio: 'Закрытый платный канал от Дандай Амокачи для управляющих и коммерсантов: стратегии масштабирования, разборы кейсов и закрытые материалы. Доступ — после одобрения запроса и оплаты.',
-  },
-];
-
-export const channelById = (id: string) => CHANNELS.find((c) => c.id === id);
 
 export type PostType = 'audio' | 'article';
 
@@ -57,44 +42,205 @@ export interface ChannelPost {
   views: string;
 }
 
-// NOTE: audioUrl — демонстрационные mp3. Замените на реальные записи автора.
-export const CHANNEL_POSTS: ChannelPost[] = [
-  { id: 'p_audio_1', channelId: 'danday', type: 'audio', title: 'Дисциплина важнее мотивации', date: 'Сегодня · 09:12', icon: 'waveform', audioUrl: 'https://download.samplelib.com/mp3/sample-15s.mp3', durationLabel: '14:20', excerpt: 'Почему ежедневные маленькие действия побеждают вспышки вдохновения.', likes: 312, views: '1.8k' },
-  { id: 'p_article_1', channelId: 'danday', type: 'article', title: '5 законов лидерства Divergents', date: 'Вчера · 20:40', icon: 'doc.text.fill', cover: DANDAY_PHOTO, readMins: 6, excerpt: 'Лидерство — это не должность, а ежедневный выбор брать ответственность.', body: [
-      'Лидерство начинается не с команды, а с управления самим собой. Прежде чем вести других, научитесь вести себя: режим, слово, обязательства.',
-      '1. Ответственность. Лидер не ищет виноватых — он первым берёт ответственность за результат, даже когда это неудобно.',
-      '2. Ясность. Люди идут за тем, кто ясно видит цель и умеет объяснить её простыми словами.',
-      '3. Пример. Ваши действия говорят громче слов. Команда копирует не то, что вы говорите, а то, что вы делаете.',
-      '4. Забота. Сильная команда строится на доверии. Узнавайте людей, помогайте расти, защищайте их.',
-      '5. Постоянство. Большие результаты — это сумма маленьких ежедневных шагов, повторённых сотни раз.',
-    ], likes: 540, views: '3.2k' },
-  { id: 'p_audio_2', channelId: 'danday', type: 'audio', title: 'Как принимать сложные решения', date: '2 дня назад', icon: 'waveform', audioUrl: 'https://download.samplelib.com/mp3/sample-12s.mp3', durationLabel: '11:05', excerpt: 'Фреймворк, который убирает страх и помогает выбирать.', likes: 221, views: '1.3k' },
-  { id: 'p_article_2', channelId: 'danday', type: 'article', title: 'Мышление роста: практика недели', date: '4 дня назад', icon: 'doc.text.fill', cover: DANDAY_PHOTO, readMins: 4, excerpt: 'Три упражнения, чтобы перестать бояться ошибок и начать расти.', body: [
-      'Мышление роста — это убеждение, что способности развиваются через усилие и практику, а не даются от рождения.',
-      'Упражнение 1. Каждый вечер записывайте одну ошибку дня и один урок из неё.',
-      'Упражнение 2. Замените «я не умею» на «я пока не умею».',
-      'Упражнение 3. Раз в неделю беритесь за то, что даётся трудно — там и есть рост.',
-    ], likes: 168, views: '980' },
-  { id: 'p_audio_3', channelId: 'danday', type: 'audio', title: 'Энергия и фокус с утра', date: 'На прошлой неделе', icon: 'waveform', audioUrl: 'https://download.samplelib.com/mp3/sample-9s.mp3', durationLabel: '08:47', excerpt: 'Утренний ритуал, который задаёт тон всему дню.', likes: 195, views: '1.1k' },
+// ─── Raw server shapes (GET /api/mobile/channels) ──────────────────
+interface ApiChannelPost {
+  id: string;
+  type: 'article' | 'audio';
+  title: string;
+  body: string | null;
+  audioUrl: string | null;
+  createdAt: string;
+}
 
-  // Women's club (доступ по запросу)
-  { id: 'w_article_1', channelId: 'womens', type: 'article', title: 'Баланс: семья, дело и забота о себе', date: 'Сегодня · 11:00', icon: 'doc.text.fill', cover: WOMENS_PHOTO, readMins: 5, excerpt: 'Как не выгорать, совмещая роли — мягкие практики для женщин Divergents.', body: [
-      'Забота о себе — не эгоизм, а условие, при котором у вас есть силы заботиться о других.',
-      'Начните с маленького: 20 минут в день только для себя, без чувства вины.',
-      'Окружение решает: женский круг поддержки помогает проходить трудные периоды легче.',
-    ], likes: 142, views: '720' },
-  { id: 'w_audio_1', channelId: 'womens', type: 'audio', title: 'Женская энергия и границы', date: 'Вчера', icon: 'waveform', audioUrl: 'https://download.samplelib.com/mp3/sample-12s.mp3', durationLabel: '16:30', excerpt: 'Как мягко, но твёрдо выстраивать личные границы.', likes: 98, views: '540' },
-];
+interface ApiChannel {
+  id: string;
+  handle: string | null;
+  name: string;
+  access: 'open' | 'request' | 'paid';
+  price: number | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  status: string;
+  createdBy: string | null;
+  createdAt: string;
+  posts: ApiChannelPost[];
+  _count: { posts: number };
+}
 
-// Канал для Управляющих и коммерсов (платный)
-CHANNEL_POSTS.push(
-  { id: 'm_audio_1', channelId: 'managers', type: 'audio', title: 'Как масштабировать команду до 100 человек', date: 'Сегодня · 08:00', icon: 'waveform', audioUrl: 'https://download.samplelib.com/mp3/sample-15s.mp3', durationLabel: '24:10', excerpt: 'Системы, найм и делегирование на этапе быстрого роста.', likes: 86, views: '210' },
-  { id: 'm_article_1', channelId: 'managers', type: 'article', title: 'Юнит-экономика простыми словами', date: 'Вчера', icon: 'doc.text.fill', cover: DANDAY_PHOTO, readMins: 8, excerpt: 'Как считать прибыль на одного клиента и не уйти в минус при росте.', body: [
-      'Юнит-экономика показывает, зарабатываете ли вы на одном клиенте больше, чем тратите на его привлечение и обслуживание.',
-      'Ключевые метрики: LTV (сколько приносит клиент за всё время) и CAC (сколько стоит его привлечь). Здоровое правило — LTV не меньше 3× CAC.',
-      'Сначала добейтесь положительной экономики на одном клиенте, и только потом масштабируйте рекламу и команду.',
-    ], likes: 64, views: '180' },
-);
+interface JsonResult { ok: boolean; data: any | null }
 
-export const postsByChannel = (channelId: string) => CHANNEL_POSTS.filter((p) => p.channelId === channelId);
-export const getPost = (id: string) => CHANNEL_POSTS.find((p) => p.id === id);
+async function getJsonResult(path: string, timeoutMs = 12000): Promise<JsonResult> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return { ok: false, data: null };
+    return { ok: true, data: await res.json() };
+  } catch {
+    return { ok: false, data: null };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ─── Mapping helpers ───────────────────────────────────────────────
+const MONTHS_RU = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+
+// Short Russian relative/absolute label the post screens render verbatim.
+function relativeRu(iso: string): string {
+  const ms = Date.parse(iso);
+  if (!isFinite(ms)) return '';
+  const diff = Date.now() - ms;
+  if (diff < 0) return 'только что';
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'только что';
+  if (min < 60) return `${min} мин назад`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours} ч назад`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} дн назад`;
+  const d = new Date(ms);
+  const label = `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
+  return d.getFullYear() === new Date().getFullYear() ? label : `${label} ${d.getFullYear()}`;
+}
+
+// Split rich-text body into paragraphs for the article reader's body[] shape.
+function toParagraphs(body: string | null): string[] | undefined {
+  if (!body) return undefined;
+  const parts = body
+    .split(/\n{2,}/)
+    .map((p) => p.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts : undefined;
+}
+
+function excerptFrom(paras: string[] | undefined): string | undefined {
+  if (!paras || paras.length === 0) return undefined;
+  const text = paras.join(' ');
+  return text.length > 140 ? `${text.slice(0, 139).trimEnd()}…` : text;
+}
+
+function readMinsFrom(paras: string[] | undefined): number {
+  if (!paras || paras.length === 0) return 1;
+  const words = paras.join(' ').split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 180));
+}
+
+function mapAccess(access: ApiChannel['access']): ChannelAccess {
+  // 'paid' was removed from the app — surface it as a request-to-join channel.
+  return access === 'open' ? 'open' : 'request';
+}
+
+function mapChannel(c: ApiChannel): Channel {
+  return {
+    id: String(c.id ?? ''),
+    handle: c.handle ?? '',
+    name: c.name || 'Без названия',
+    avatar: c.avatarUrl ?? '',
+    verified: false,
+    baseSubscribers: 0,
+    bio: c.bio ?? '',
+    access: mapAccess(c.access),
+  };
+}
+
+function mapPost(p: ApiChannelPost, channelId: string): ChannelPost {
+  const isAudio = p.type === 'audio';
+  const paras = toParagraphs(p.body);
+  const base: ChannelPost = {
+    id: String(p.id ?? ''),
+    channelId,
+    type: isAudio ? 'audio' : 'article',
+    title: p.title || 'Без названия',
+    date: relativeRu(p.createdAt),
+    icon: isAudio ? 'waveform' : 'doc.text.fill',
+    excerpt: excerptFrom(paras),
+    body: paras,
+    likes: 0,
+    views: '0',
+  };
+  if (isAudio) {
+    if (p.audioUrl) base.audioUrl = p.audioUrl;
+    // durationLabel omitted — unknown until the player reports it.
+  } else {
+    base.readMins = readMinsFrom(paras);
+  }
+  return base;
+}
+
+// Parse the single /api/mobile/channels payload into both view models.
+function parseChannels(data: any): { channels: Channel[]; posts: ChannelPost[] } {
+  const raw: ApiChannel[] = Array.isArray(data?.channels) ? data.channels : [];
+  const valid = raw.filter((c) => c && c.id != null);
+  const channels = valid.map(mapChannel);
+  const posts = valid.flatMap((c) =>
+    (Array.isArray(c.posts) ? c.posts : [])
+      .filter((p) => p && p.id != null)
+      .map((p) => mapPost(p, String(c.id))),
+  );
+  return { channels, posts };
+}
+
+export async function fetchChannels(): Promise<Channel[]> {
+  const { data } = await getJsonResult('/api/mobile/channels');
+  return parseChannels(data).channels;
+}
+
+// Flattens the posts embedded in the single /channels response (no /posts call).
+export async function fetchChannelPosts(): Promise<ChannelPost[]> {
+  const { data } = await getJsonResult('/api/mobile/channels');
+  return parseChannels(data).posts;
+}
+
+// Loads channels + posts together from one request and reports `error: true`
+// only when the request failed (server unreachable), so screens can show a
+// RETRY state instead of an "empty" / "not found" one when the network is down.
+export interface ChannelData { channels: Channel[]; posts: ChannelPost[]; error: boolean }
+
+export async function fetchChannelData(): Promise<ChannelData> {
+  const res = await getJsonResult('/api/mobile/channels');
+  const { channels, posts } = parseChannels(res.data);
+  return { channels, posts, error: !res.ok };
+}
+
+// ─── Creator/admin: create a channel (Clerk Bearer) ─────────────────────────
+// Returns a normalized result (never throws) so the form stays crash-free and
+// can show a precise message — e.g. 403 when the user isn't a creator.
+export interface CreateResult { ok: boolean; status: number; id?: string; error?: string }
+
+export interface NewChannelInput {
+  name: string;
+  handle?: string;
+  access: ChannelAccess; // 'open' | 'request'
+  bio?: string;
+  avatarUrl?: string;
+}
+
+export async function createChannel(
+  input: NewChannelInput,
+  token: string,
+  timeoutMs = 15000,
+): Promise<CreateResult> {
+  if (!token) return { ok: false, status: 401, error: 'no-token' };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/channels`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(input),
+    });
+    let data: any = null;
+    try { data = await res.json(); } catch { /* empty / non-JSON body */ }
+    if (!res.ok) return { ok: false, status: res.status, error: data?.error || data?.message };
+    return { ok: true, status: res.status, id: data?.id ?? data?.channel?.id };
+  } catch {
+    return { ok: false, status: 0, error: 'network' };
+  } finally {
+    clearTimeout(timer);
+  }
+}

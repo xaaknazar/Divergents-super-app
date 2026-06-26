@@ -1,23 +1,50 @@
-import React, { useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, RefreshControl } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
+import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
 import { useNotifications } from '../../state/NotificationsContext';
+import { NotifTarget } from '../../data/notifications';
 import { RootStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParams, 'Notifications'>;
 
 export function NotificationsScreen({ navigation }: Props) {
   const { T } = useTheme();
-  useLang();
+  const { lang } = useLang();
   const insets = useSafeAreaInsets();
-  const { items, unread, markRead, markAllRead } = useNotifications();
+  const { items, unread, loading, error, refresh, markRead, markAllRead } = useNotifications();
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => () => { markAllRead(); }, []); // mark all read when leaving
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await refresh(); } finally { setRefreshing(false); }
+  }, [refresh]);
+
+  // Re-fetch when the modal opens so the feed (and the unread badge) is fresh
+  // without requiring an app restart. Existing items stay visible meanwhile.
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  // Open the notification's target content. Dispatching navigate to the (lower)
+  // 'Tabs' route pops this modal and jumps into the right tab + stack screen.
+  const open = (id: string, target?: NotifTarget | null) => {
+    markRead(id);
+    if (!target) return;
+    navigation.dispatch(
+      CommonActions.navigate({
+        name: 'Tabs',
+        params: { screen: target.tab, params: { screen: target.screen, params: target.params } },
+      }),
+    );
+  };
+
+  // Initial load only — pull-to-refresh shows its own spinner, never the skeleton.
+  const showSkeleton = loading && !refreshing && items.length === 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
@@ -29,31 +56,59 @@ export function NotificationsScreen({ navigation }: Props) {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: insets.bottom + 30 }} showsVerticalScrollIndicator={false}>
-        {items.map((it) => (
-          <Pressable key={it.id} onPress={() => markRead(it.id)}
-            style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
-            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: it.color + '33', alignItems: 'center', justifyContent: 'center' }}>
-              <SF name={it.icon} size={20} color={it.color} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[ty.headline, { color: T.label, flex: 1 }]} numberOfLines={1}>{it.title}</Text>
-                {!it.read ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: T.brand }} /> : null}
+      {showSkeleton ? (
+        <View style={{ paddingTop: 12 }}>
+          <ListSkeleton rows={6} />
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={{ paddingVertical: 8, paddingBottom: insets.bottom + 30, flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
+        >
+          {items.map((it) => (
+            <Pressable key={it.id} onPress={() => open(it.id, it.target)}
+              style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
+              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: it.color + '33', alignItems: 'center', justifyContent: 'center' }}>
+                <SF name={it.icon} size={20} color={it.color} />
               </View>
-              <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{it.body}</Text>
-              <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 4 }]}>{it.date}</Text>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={[ty.headline, { color: T.label, flex: 1 }]} numberOfLines={1}>{it.title}</Text>
+                  {!it.read ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: T.brand }} /> : null}
+                </View>
+                <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{it.body}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                  <Text style={[ty.caption2, { color: T.labelTertiary }]}>{it.date}</Text>
+                  {it.target ? <SF name="chevron.right" size={12} color={T.labelTertiary} /> : null}
+                </View>
+              </View>
+              <View style={{ position: 'absolute', bottom: 0, left: 68, right: 0, height: 0.5, backgroundColor: T.separator }} />
+            </Pressable>
+          ))}
+
+          {items.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              {error ? (
+                <ErrorState
+                  message={lang === 'ru'
+                    ? 'Не удалось загрузить уведомления. Проверьте подключение и попробуйте снова.'
+                    : 'Couldn’t load notifications. Check your connection and try again.'}
+                  onRetry={onRefresh}
+                />
+              ) : (
+                <EmptyState
+                  icon="bell.fill"
+                  title={tr('Уведомлений пока нет')}
+                  subtitle={lang === 'ru'
+                    ? 'Здесь появятся новости, челленджи и события. Потяните вниз, чтобы обновить.'
+                    : 'News, challenges and events will appear here. Pull down to refresh.'}
+                />
+              )}
             </View>
-            <View style={{ position: 'absolute', bottom: 0, left: 68, right: 0, height: 0.5, backgroundColor: T.separator }} />
-          </Pressable>
-        ))}
-        {items.length === 0 ? (
-          <View style={{ padding: 40, alignItems: 'center' }}>
-            <SF name="bell.fill" size={32} color={T.labelTertiary} />
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 10 }]}>{tr('Уведомлений пока нет')}</Text>
-          </View>
-        ) : null}
-      </ScrollView>
+          ) : null}
+        </ScrollView>
+      )}
     </View>
   );
 }

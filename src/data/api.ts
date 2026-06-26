@@ -36,6 +36,7 @@ interface ApiCourseDetail {
   category: string | null;
   attachments: { id: string; name: string; url: string }[];
   chapters: ApiChapter[];
+  progress?: number; // 0..100, present on the owned-course detail endpoint
 }
 
 // Deterministic icon/tint per course so cards still look good without a cover.
@@ -64,15 +65,17 @@ function plural(n: number, one: string, few: string, many: string) {
 const lessonsLabel = (n: number) => plural(n, 'урок', 'урока', 'уроков');
 
 function mapSummary(c: ApiCourseSummary): Course {
-  const d = decor(c.id);
+  const id = String(c?.id ?? '');
+  const d = decor(id);
+  const count = typeof c?.chaptersCount === 'number' && c.chaptersCount >= 0 ? c.chaptersCount : 0;
   return {
-    id: c.id,
-    title: c.title,
-    author: c.category || 'Divergents',
-    category: c.category || 'Курсы',
-    description: c.description || '',
-    lessonsLabel: lessonsLabel(c.chaptersCount),
-    chaptersCount: c.chaptersCount,
+    id,
+    title: c?.title || 'Без названия',
+    author: c?.category || 'Divergents',
+    category: c?.category || 'Курсы',
+    description: c?.description || '',
+    lessonsLabel: lessonsLabel(count),
+    chaptersCount: count,
     imageUrl: c.imageUrl,
     price: c.price,
     icon: d.icon,
@@ -84,33 +87,40 @@ function mapSummary(c: ApiCourseSummary): Course {
 }
 
 function mapDetail(c: ApiCourseDetail): Course {
-  const d = decor(c.id);
-  const lessons: Lesson[] = c.chapters.map((ch, i) => ({
-    id: ch.id,
+  const safe = (c ?? {}) as ApiCourseDetail;
+  const id = String(safe.id ?? '');
+  const d = decor(id);
+  // Guard against an unexpected 200 payload without a chapters array.
+  const chapters = Array.isArray(safe.chapters) ? safe.chapters.filter(Boolean) : [];
+  const lessons: Lesson[] = chapters.map((ch, i) => ({
+    id: String(ch.id ?? `ch-${i}`),
     n: i + 1,
-    title: ch.title,
+    title: ch.title || `Урок ${i + 1}`,
     duration: ch.isFree ? 'Видео · бесплатно' : 'Видео',
     minutes: 0,
-    isFree: ch.isFree,
-    playbackId: ch.playbackId,
-    hlsUrl: ch.hlsUrl,
-    description: ch.description,
+    isFree: ch.isFree === true,
+    playbackId: ch.playbackId ?? null,
+    hlsUrl: ch.hlsUrl ?? null,
+    description: ch.description ?? null,
   }));
+  const attachments = Array.isArray(safe.attachments)
+    ? safe.attachments.filter((a) => a && a.id != null && a.url != null)
+    : [];
   return {
-    id: c.id,
-    title: c.title,
-    author: c.category || 'Divergents',
-    category: c.category || 'Курсы',
-    description: c.description || '',
+    id,
+    title: safe.title || 'Без названия',
+    author: safe.category || 'Divergents',
+    category: safe.category || 'Курсы',
+    description: safe.description || '',
     lessonsLabel: lessonsLabel(lessons.length),
     chaptersCount: lessons.length,
-    imageUrl: c.imageUrl,
-    price: c.price,
+    imageUrl: safe.imageUrl ?? null,
+    price: safe.price ?? null,
     icon: d.icon,
     tint: d.tint,
     iconColor: d.iconColor,
     lessons,
-    attachments: c.attachments ?? [],
+    attachments,
     source: 'live',
   };
 }
@@ -132,8 +142,8 @@ async function getJson(path: string, timeoutMs = 12000): Promise<any> {
 
 export async function fetchCatalog(): Promise<Course[]> {
   const data = await getJson('/api/mobile/courses');
-  const list: ApiCourseSummary[] = data?.courses ?? [];
-  return list.map(mapSummary);
+  const raw = Array.isArray(data?.courses) ? data.courses : Array.isArray(data) ? data : [];
+  return raw.filter((c: any) => c && c.id != null).map(mapSummary);
 }
 
 export async function fetchCourseDetail(id: string): Promise<Course> {
@@ -167,14 +177,47 @@ interface ApiOwnedCourse extends ApiCourseSummary { progress: number; owned: boo
 
 export async function fetchMyCourses(token: string): Promise<Course[]> {
   const data = await getJsonAuthed('/api/mobile/me/courses', token);
-  const list: ApiOwnedCourse[] = data?.courses ?? [];
-  return list.map((c) => ({ ...mapSummary(c), serverProgress: c.progress, source: 'live' as const }));
+  const raw = Array.isArray(data?.courses) ? data.courses : Array.isArray(data) ? data : [];
+  return raw
+    .filter((c: any) => c && c.id != null)
+    .map((c: ApiOwnedCourse) => ({
+      ...mapSummary(c),
+      serverProgress: typeof c.progress === 'number' ? c.progress : undefined,
+      source: 'live' as const,
+    }));
 }
 
 // Owned course detail (chapters unlocked with Mux HLS for every chapter).
 export async function fetchOwnedDetail(id: string, token: string): Promise<Course & { owned: boolean }> {
-  const data = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
-  return { ...mapDetail(data), owned: true };
+  const data: ApiCourseDetail = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
+  return {
+    ...mapDetail(data),
+    owned: true,
+    ...(typeof data.progress === 'number' ? { serverProgress: data.progress } : {}),
+  };
+}
+
+// Best-effort: tell the website a lesson/chapter is completed so progress
+// syncs across devices. Silently ignored if the endpoint is unavailable
+// (local completion is already saved). Matches BACKEND.md:
+//   POST /api/mobile/me/courses/:id/progress  body { lessonId, completed }
+export async function markLessonComplete(
+  courseId: string, lessonId: string, token: string,
+): Promise<void> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    await fetch(`${API_BASE}/api/mobile/me/courses/${courseId}/progress`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lessonId, completed: true }),
+    });
+  } catch {
+    // best-effort — local completion is already saved
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 // Strip HTML tags / decode common entities (chapter descriptions are rich text).
@@ -206,28 +249,60 @@ export interface ChapterComment {
   user: { id: string; firstName: string | null; lastName: string | null };
 }
 
+// Throws on a network/HTTP failure so callers can show an error/retry state
+// (a successful 200 with no comments resolves to an empty array instead).
 export async function fetchComments(courseId: string, chapterId: string): Promise<ChapterComment[]> {
-  try {
-    const data = await getJson(`/api/courses/${courseId}/chapters/${chapterId}/comments`);
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
+  const data = await getJson(`/api/courses/${courseId}/chapters/${chapterId}/comments`);
+  const raw = Array.isArray(data) ? data : Array.isArray(data?.comments) ? data.comments : [];
+  return raw
+    .filter((c: any) => c && c.id != null)
+    .map((c: any): ChapterComment => ({
+      id: String(c.id),
+      content: typeof c.content === 'string' ? c.content : '',
+      isPinned: c.isPinned === true,
+      createdAt: c.createdAt ?? '',
+      likesCount: typeof c.likesCount === 'number' ? c.likesCount : 0,
+      isLikedByCurrentUser: c.isLikedByCurrentUser === true,
+      user: {
+        id: String(c.user?.id ?? ''),
+        firstName: c.user?.firstName ?? null,
+        lastName: c.user?.lastName ?? null,
+      },
+    }));
 }
 
 export async function postComment(
   courseId: string, chapterId: string, content: string, token: string
 ): Promise<ChapterComment | null> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
   try {
     const res = await fetch(`${API_BASE}/api/courses/${courseId}/chapters/${chapterId}/comments`, {
       method: 'POST',
+      signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ content }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    const c = await res.json();
+    if (!c || c.id == null) return null;
+    return {
+      id: String(c.id),
+      content: typeof c.content === 'string' ? c.content : content,
+      isPinned: c.isPinned === true,
+      createdAt: c.createdAt ?? new Date().toISOString(),
+      likesCount: typeof c.likesCount === 'number' ? c.likesCount : 0,
+      isLikedByCurrentUser: c.isLikedByCurrentUser === true,
+      user: {
+        id: String(c.user?.id ?? ''),
+        firstName: c.user?.firstName ?? null,
+        lastName: c.user?.lastName ?? null,
+      },
+    };
   } catch {
     return null;
+  } finally {
+    clearTimeout(t);
   }
 }
 
