@@ -10,6 +10,7 @@ import { SF, SFName } from '../../components/SFIcon';
 import { ProgressBar, SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, ty } from '../../components/ui';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
+import { useRole } from '../../state/useRole';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
@@ -30,12 +31,18 @@ const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips',
 export function CommunityHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
   const { t } = useLang();
+  const { canCreate } = useRole();
   const { unread } = useNotifications();
   const [seg, setSeg] = useState(0);
 
   return (
     <Screen largeTitle={tr('Сообщество')}>
-      <NavBarLarge title={t('community')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
+      <NavBarLarge title={t('community')} trailing={
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {canCreate ? <HeaderIcon name="plus.circle.fill" color={T.brand} onPress={() => navigation.navigate('CreateContent')} /> : null}
+          <HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+        </View>
+      } />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
         <Text style={[ty.subhead, { color: T.labelSecondary }]}>{t('community_tagline')}</Text>

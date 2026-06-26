@@ -11,6 +11,7 @@ export type CommunityStackParams = {
   CommunityHome: undefined;
   Channel: { channelId: string };
   ChannelPost: { postId: string };
+  CreateContent: undefined;
   ChallengeDetail: { challengeId: string };
   JoinChallenge: { challengeId: string; live?: { id: string; title: string; durationDays: number; startISO?: string | null; teams: { id: string; name: string; capacity: number; captain?: string | null; _count?: { applications: number } }[] } };
   TripDetail: { tripId: string };

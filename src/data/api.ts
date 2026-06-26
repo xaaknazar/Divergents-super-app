@@ -338,3 +338,37 @@ export async function applyToChallenge(token: string | null, challengeId: string
     return res.ok;
   } catch { return false; } finally { clearTimeout(t); }
 }
+
+// ───────── Creator role + create content (challenges/trips/channels) ─────────
+export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; email?: string | null }> {
+  if (!token) return { canCreate: false };
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/me/role`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return { canCreate: false };
+    return await res.json();
+  } catch { return { canCreate: false }; }
+}
+
+async function postAuthed(path: string, token: string | null, body: any): Promise<boolean> {
+  if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch { return false; } finally { clearTimeout(t); }
+}
+
+export const createChallenge = (token: string | null, data: any) => postAuthed('/api/mobile/challenges', token, data);
+export const createTrip = (token: string | null, data: any) => postAuthed('/api/mobile/trips', token, data);
+export const createChannel = (token: string | null, data: any) => postAuthed('/api/mobile/channels', token, data);
+
+export interface LiveTrip { id: string; title: string; region?: string | null; date?: string | null; days: number; price?: string | null; spots: number; difficulty?: string | null; description?: string | null; _count?: { applications: number } }
+export async function fetchLiveTrips(): Promise<LiveTrip[]> {
+  try { const res = await fetch(`${API_BASE}/api/mobile/trips`); if (!res.ok) return []; const d = await res.json(); return Array.isArray(d?.trips) ? d.trips : []; } catch { return []; }
+}
+export const applyToTrip = (token: string | null, tripId: string) => postAuthed(`/api/mobile/trips/${tripId}/apply`, token, {});
