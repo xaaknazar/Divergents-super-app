@@ -8,7 +8,8 @@ export type Lang = 'ru' | 'en';
 const KEY = 'dvg.lang';
 
 function systemDefault(): Lang {
-  try { return getLocales()[0]?.languageCode === 'ru' ? 'ru' : 'en'; } catch { return 'ru'; }
+  // English translation paused — lock the app to Russian for now.
+  return 'ru';
 }
 
 type Pair = { ru: string; en: string };
@@ -148,7 +149,7 @@ const Ctx = createContext<LangState | null>(null);
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>(systemDefault());
   _lang = lang;
-  useEffect(() => { SecureStore.getItemAsync(KEY).then((v) => { if (v === 'en' || v === 'ru') setLangState(v); }).catch(() => {}); }, []);
+  useEffect(() => { SecureStore.getItemAsync(KEY).then((v) => { if (v === 'ru') setLangState(v); }).catch(() => {}); }, []); // EN paused: only restore 'ru'
   const setLang = useCallback((l: Lang) => { setLangState(l); SecureStore.setItemAsync(KEY, l).catch(() => {}); }, []);
   const t = useCallback((k: keyof typeof STR) => (STR[k] ? STR[k][lang] : String(k)), [lang]);
   const tr = useCallback((ru: string) => (lang === 'en' ? (RU2EN[ru] ?? ru) : ru), [lang]);
