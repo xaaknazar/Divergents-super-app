@@ -180,7 +180,7 @@ export function VideoScreen({ route, navigation }: Props) {
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           {hls ? (
-            <VideoView ref={videoRef} player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls allowsFullscreen />
+            <VideoView ref={videoRef} player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls fullscreenOptions={{ enable: true }} />
           ) : resolving ? (
             <ActivityIndicator color="#fff" />
           ) : needsPurchase ? (
