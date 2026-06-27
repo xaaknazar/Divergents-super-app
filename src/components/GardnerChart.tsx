@@ -135,7 +135,7 @@ export function GardnerChart({
         {items.map((it, i) => (
           <View key={i} style={{ width: colW, alignItems: 'center', paddingHorizontal: 2 }}>
             <Text style={{ fontSize: compact ? 15 : 17, marginBottom: 2 }}>{it.cfg.emoji}</Text>
-            <Text numberOfLines={1} style={[ty.caption2, { color: T.labelSecondary, textAlign: 'center' }]}>
+            <Text numberOfLines={2} style={[ty.caption2, { color: T.labelSecondary, textAlign: 'center', minHeight: 26, lineHeight: 13 }]}>
               {it.cfg.short}
             </Text>
           </View>

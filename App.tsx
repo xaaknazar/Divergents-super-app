@@ -13,6 +13,7 @@ import { CareerProvider } from './src/state/CareerContext';
 import { EnrollmentProvider } from './src/state/EnrollmentContext';
 import { PlacesProvider } from './src/state/PlacesContext';
 import { ChannelProvider } from './src/state/ChannelContext';
+import { DownloadsProvider } from './src/state/DownloadsContext';
 import { NotificationsProvider } from './src/state/NotificationsContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
@@ -61,9 +62,11 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
             <EnrollmentProvider>
               <PlacesProvider>
                 <ChannelProvider>
+                  <DownloadsProvider>
                   <NotificationsProvider>
                     {children}
                   </NotificationsProvider>
+                  </DownloadsProvider>
                 </ChannelProvider>
               </PlacesProvider>
             </EnrollmentProvider>

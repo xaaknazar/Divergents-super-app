@@ -108,6 +108,7 @@ function ProfileNavigator() {
       <ProfileStack.Screen name="ProfileHome" component={ProfileHomeScreen} />
       <ProfileStack.Screen name="Achievements" component={AchievementsScreen} />
       <ProfileStack.Screen name="Personalize" component={PersonalizeScreen} />
+      <ProfileStack.Screen name="Downloads" component={DownloadsScreen} />
     </ProfileStack.Navigator>
   );
 }

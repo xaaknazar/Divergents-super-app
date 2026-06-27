@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -12,7 +12,8 @@ import { Segmented, PrimaryButton, ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
-import { API_BASE, stripHtml, fetchComments, postComment, ChapterComment } from '../../data/api';
+import { useDownloads } from '../../state/DownloadsContext';
+import { API_BASE, stripHtml, fetchComments, postComment, ChapterComment, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Video'>;
@@ -118,6 +119,17 @@ export function VideoScreen({ route, navigation }: Props) {
     );
   }
   const alreadyDone = isCompleted(courseId, lesson.id);
+  const { isDownloaded, download, remove, downloading } = useDownloads();
+  const audioUrl = lessonAudioUrl(lesson);
+  const dlKey = `${courseId}:${lesson.id}`;
+  const downloaded = isDownloaded(courseId, lesson.id);
+  const dlBusy = downloading === dlKey;
+  const onDownloadAudio = async () => {
+    if (downloaded) { await remove(dlKey); return; }
+    if (!audioUrl) { Alert.alert('Аудио недоступно', 'Для этого урока пока нет аудиоверсии.'); return; }
+    const okDl = await download({ courseId, courseTitle: course.title, lessonId: lesson.id, title: lesson.title, audioUrl });
+    if (!okDl) Alert.alert('Не удалось скачать', 'Проверьте подключение и попробуйте снова.');
+  };
   const attachments = course.attachments ?? [];
 
   const complete = async () => {
@@ -200,6 +212,12 @@ export function VideoScreen({ route, navigation }: Props) {
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <Text style={[ty.title3, { color: T.label }]} numberOfLines={2}>{lesson.title}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{tr('Урок')} {lesson.n} {tr('из')} {course.lessons.length} · {course.title}</Text>
+          {owned && audioUrl ? (
+            <Pressable onPress={onDownloadAudio} disabled={dlBusy} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: downloaded ? T.brandTinted : T.fillSecondary, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 }}>
+              {dlBusy ? <ActivityIndicator color={T.brand} /> : <SF name={downloaded ? 'checkmark.circle.fill' : 'arrow.down.circle'} size={16} color={T.brand} />}
+              <Text style={[ty.footnoteEm, { color: T.brand }]}>{dlBusy ? 'Скачивание…' : downloaded ? 'Аудио скачано · удалить' : 'Скачать аудио (офлайн)'}</Text>
+            </Pressable>
+          ) : null}
         </View>
         <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
           <Segmented items={['Заметки', 'Материалы', 'Обсуждение']} value={tab} onChange={setTab} />
