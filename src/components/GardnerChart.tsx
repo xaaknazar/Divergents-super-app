@@ -82,7 +82,7 @@ export function GardnerChart({
   const MIN_BAR = 6;            // keep low scores visible
   const plotInner = PLOT_H - VALUE_H;
   const GUTTER = 22;            // left axis-labels column
-  const minCol = compact ? 46 : 58;
+  const minCol = compact ? 52 : 66;
   const n = items.length;
 
   const onLayout = (e: LayoutChangeEvent) => setPlotW(e.nativeEvent.layout.width);
@@ -135,8 +135,8 @@ export function GardnerChart({
         {items.map((it, i) => (
           <View key={i} style={{ width: colW, alignItems: 'center', paddingHorizontal: 2 }}>
             <Text style={{ fontSize: compact ? 15 : 17, marginBottom: 2 }}>{it.cfg.emoji}</Text>
-            <Text numberOfLines={2} style={[ty.caption2, { color: T.labelSecondary, textAlign: 'center', minHeight: 26, lineHeight: 13 }]}>
-              {it.cfg.short}
+            <Text numberOfLines={2} style={[ty.caption2, { color: T.labelSecondary, textAlign: 'center', fontSize: 10, lineHeight: 12, minHeight: 24 }]}>
+              {it.cfg.name || it.cfg.short}
             </Text>
           </View>
         ))}
