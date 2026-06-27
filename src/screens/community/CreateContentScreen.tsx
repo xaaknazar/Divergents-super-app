@@ -9,6 +9,7 @@ import { PrimaryButton, ty } from '../../components/ui';
 import { createChallenge, createTrip, createChannel, createSport, uploadFile } from '../../data/api';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import MapView, { Marker } from 'react-native-maps';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CreateContent'>;
@@ -27,6 +28,9 @@ export function CreateContentScreen({ navigation }: Props) {
   const [teams, setTeams] = useState('Команда А, Команда Б');
   const [region, setRegion] = useState('');
   const [place, setPlace] = useState('');
+  const [meetPlace, setMeetPlace] = useState('');
+  const [meetAt, setMeetAt] = useState('');
+  const [meetCoord, setMeetCoord] = useState<{ latitude: number; longitude: number } | null>(null);
   const [date, setDate] = useState('');
   const [spots, setSpots] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -57,7 +61,7 @@ export function CreateContentScreen({ navigation }: Props) {
       if (kind === 'challenge') {
         success = await createChallenge(token, { title: title.trim(), durationDays: Number(days) || 21, price: price.trim() || null, teams: teams.split(',').map((t) => t.trim()).filter(Boolean) });
       } else if (kind === 'trip') {
-        success = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null });
+        success = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null, meetPlace: meetPlace.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
       } else if (kind === 'sport') {
         success = await createSport(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null });
       } else {
@@ -102,6 +106,16 @@ export function CreateContentScreen({ navigation }: Props) {
               </View>
               <Field label="ЦЕНА"><TextInput value={price} onChangeText={setPrice} placeholder="напр. 45 000 ₸" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
               <Field label="СЛОЖНОСТЬ"><TextInput value={difficulty} onChangeText={setDifficulty} placeholder="напр. средняя" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
+              <Field label="МЕСТО ВСТРЕЧИ"><TextInput value={meetPlace} onChangeText={setMeetPlace} placeholder="напр. у входа в парк" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
+              <Field label="ВРЕМЯ ВСТРЕЧИ"><TextInput value={meetAt} onChangeText={setMeetAt} placeholder="ГГГГ-ММ-ДД ЧЧ:ММ — напр. 2026-07-12 09:00" placeholderTextColor={T.labelTertiary} autoCapitalize="none" style={inp} /></Field>
+              <Field label="ТОЧКА ВСТРЕЧИ НА КАРТЕ">
+                <View style={{ borderRadius: 14, overflow: 'hidden', height: 180 }}>
+                  <MapView style={{ flex: 1 }} initialRegion={{ latitude: meetCoord?.latitude ?? 43.238, longitude: meetCoord?.longitude ?? 76.889, latitudeDelta: 0.06, longitudeDelta: 0.06 }} onPress={(e) => setMeetCoord(e.nativeEvent.coordinate)}>
+                    {meetCoord ? <Marker coordinate={meetCoord} pinColor="#2f5bd6" /> : null}
+                  </MapView>
+                </View>
+                <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 6 }]}>{meetCoord ? 'Точка выбрана ✓ — нажмите, чтобы изменить' : 'Нажмите на карту, чтобы поставить точку встречи'}</Text>
+              </Field>
               <Field label="ОПИСАНИЕ"><TextInput value={desc} onChangeText={setDesc} multiline placeholder="Кратко о поездке" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 90, textAlignVertical: 'top' }]} /></Field>
             </>
           ) : kind === 'sport' ? (

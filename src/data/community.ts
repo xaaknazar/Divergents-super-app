@@ -699,6 +699,7 @@ export interface SportActivity {
   going: number;
   spotsLabel: string;
   tint: string;
+  note?: string;
 }
 
 // Server-backed sport activities (GET /api/mobile/sport).
@@ -717,6 +718,7 @@ export async function fetchSport(): Promise<SportActivity[]> {
       going: x?._count?.applications ?? 0,
       spotsLabel: x.spots ? `${x.spots} мест` : 'Открыто',
       tint: 'rgba(35,64,136,0.12)',
+      note: x.description ?? undefined,
     }));
   } catch { return []; }
 }

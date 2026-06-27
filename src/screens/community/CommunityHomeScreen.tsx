@@ -335,6 +335,7 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
               <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{sp.title}</Text>
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place} · {sp.date}</Text>
               <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{going} идут · {sp.spotsLabel}</Text>
+              {sp.note ? <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 2 }]} numberOfLines={2}>{sp.note}</Text> : null}
             </View>
             <Pressable onPress={async () => { toggle(k); if (!on) { try { const tk = await getToken(); await joinSport(tk, sp.id); } catch {} } }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
               <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{on ? 'Вы идёте' : 'Участвую'}</Text>

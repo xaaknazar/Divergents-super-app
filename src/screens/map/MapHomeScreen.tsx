@@ -12,6 +12,7 @@ import { Capsule, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
 import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, safeCityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
+import { fetchLiveTrips, fetchMyTripIds, LiveTrip } from '../../data/api';
 import { MapStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
 import { loadJSON, saveJSON } from '../../state/persist';
@@ -78,7 +79,7 @@ async function geocode(q: string, bias?: { lat: number; lng: number }): Promise<
 export function MapHomeScreen({ navigation }: Props) {
   const { T, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const { t } = useLang();
   const { country, city, locManual, setLocation, places, placesLoading, placesError, reloadPlaces, isFav, toggleFav } = usePlaces();
   const [locDenied, setLocDenied] = useState(false);
@@ -112,6 +113,20 @@ export function MapHomeScreen({ navigation }: Props) {
   const manualRef = useRef(false);
   const autoRef = useRef(false);
   useEffect(() => { loadJSON<{ name: string; lat: number; lng: number }[]>('dvg.mapRecent', []).then(setRecents); }, []);
+  const [meetings, setMeetings] = useState<LiveTrip[]>([]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const token = isSignedIn ? await getToken() : null;
+        const [trips, myIds] = await Promise.all([fetchLiveTrips(), fetchMyTripIds(token)]);
+        const now = Date.now();
+        const mine = trips.filter((t) => myIds.includes(t.id) && t.meetLat != null && t.meetLng != null && (() => { const d = t.meetAt ? Date.parse(t.meetAt.replace(' ', 'T')) : NaN; return isNaN(d) ? true : d >= now; })());
+        if (alive) setMeetings(mine);
+      } catch {}
+    })();
+    return () => { alive = false; };
+  }, [isSignedIn]);
   // If the user previously picked a city by hand (persisted), don't let GPS
   // auto-override it on launch.
   useEffect(() => { if (locManual) manualRef.current = true; }, [locManual]);
@@ -260,6 +275,17 @@ export function MapHomeScreen({ navigation }: Props) {
             : target && user ? <Polyline coordinates={[user, { latitude: target.lat, longitude: target.lng }]} strokeColor={T.brand} strokeWidth={3} lineDashPattern={[8, 6]} /> : null}
           {searchPin ? <Marker coordinate={{ latitude: searchPin.lat, longitude: searchPin.lng }} pinColor="#FF3B30" onPress={() => {}} /> : null}
           {path.length > 1 ? <Polyline coordinates={path} strokeColor={T.brandAccent} strokeWidth={5} /> : null}
+          {meetings.map((m) => (
+            <Marker key={`meet_${m.id}`} coordinate={{ latitude: m.meetLat!, longitude: m.meetLng! }} anchor={{ x: 0.5, y: 1 }}
+              title={`Встреча · ${m.title}`} description={`${m.meetPlace ?? ''}${m.meetAt ? ` · ${m.meetAt}` : ''}`.trim().replace(/^· /, '')}>
+              <View style={{ alignItems: 'center' }}>
+                <View style={{ backgroundColor: '#2f5bd6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <SF name="flag.fill" size={11} color="#fff" />
+                  <Text style={[ty.caption2Em, { color: '#fff' }]} numberOfLines={1}>{m.meetAt ? m.meetAt.split(' ').slice(-1)[0] : 'Встреча'}</Text>
+                </View>
+              </View>
+            </Marker>
+          ))}
         </MapView>
       )}
 

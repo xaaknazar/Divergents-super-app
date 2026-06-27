@@ -465,7 +465,11 @@ export const createChallenge = (token: string | null, data: any) => postAuthed('
 export const createTrip = (token: string | null, data: any) => postAuthed('/api/mobile/trips', token, data);
 export const createChannel = (token: string | null, data: any) => postAuthed('/api/mobile/channels', token, data);
 
-export interface LiveTrip { id: string; title: string; region?: string | null; date?: string | null; days: number; price?: string | null; spots: number; difficulty?: string | null; description?: string | null; _count?: { applications: number } }
+export interface LiveTrip { id: string; title: string; region?: string | null; date?: string | null; days: number; price?: string | null; spots: number; difficulty?: string | null; description?: string | null; meetPlace?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
+export async function fetchMyTripIds(token: string | null): Promise<string[]> {
+  if (!token) return [];
+  try { const r = await fetch(`${API_BASE}/api/mobile/me/trips`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.tripIds) ? d.tripIds : []; } catch { return []; }
+}
 export async function fetchLiveTrips(): Promise<LiveTrip[]> {
   try { const res = await fetch(`${API_BASE}/api/mobile/trips`); if (!res.ok) return []; const d = await res.json(); return Array.isArray(d?.trips) ? d.trips : []; } catch { return []; }
 }
