@@ -12,6 +12,7 @@ import { EmptyState, ErrorState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useEnrollment } from '../../state/EnrollmentContext';
+import { joinSport } from '../../data/api';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
   daysUntil, fetchCommunityHome,
@@ -315,6 +316,7 @@ function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trip
 function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
   const { has, toggle } = useEnrollment();
+  const { getToken } = useAuth();
   if (sport === null) return <Loading />;
   if (sport.length === 0) return <EmptyOrError error={error} onRetry={onRetry} icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />;
   return (
@@ -333,7 +335,7 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place} · {sp.date}</Text>
               <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{going} идут · {sp.spotsLabel}</Text>
             </View>
-            <Pressable onPress={() => toggle(k)} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
+            <Pressable onPress={async () => { toggle(k); if (!on) { try { const tk = await getToken(); await joinSport(tk, sp.id); } catch {} } }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
               <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{on ? 'Вы идёте' : 'Участвую'}</Text>
             </Pressable>
             {i < sport.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}

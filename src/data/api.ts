@@ -563,3 +563,11 @@ export function webAuthedUrl(ticket: string | null, path: string): string {
   if (ticket) return `${API_BASE}/sign-in?__clerk_ticket=${encodeURIComponent(ticket)}&redirect_url=${encodeURIComponent(path)}`;
   return `${API_BASE}${path}`;
 }
+
+// ───────── Sport (server) ─────────
+export interface LiveSport { id: string; title: string; place?: string | null; date?: string | null; spots: number; description?: string | null; _count?: { applications: number } }
+export async function fetchLiveSport(): Promise<LiveSport[]> {
+  try { const r = await fetch(`${API_BASE}/api/mobile/sport`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sport) ? d.sport : []; } catch { return []; }
+}
+export const createSport = (token: string | null, data: any) => postAuthed('/api/mobile/sport', token, data);
+export const joinSport = (token: string | null, id: string) => postAuthed(`/api/mobile/sport/${id}/join`, token, {});

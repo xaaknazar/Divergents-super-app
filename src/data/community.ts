@@ -701,10 +701,24 @@ export interface SportActivity {
   tint: string;
 }
 
-// No server endpoint for sport activities — return empty (screen empty state).
-// DEFERRED: backend needs a sport-activities model/endpoint to populate this.
+// Server-backed sport activities (GET /api/mobile/sport).
 export async function fetchSport(): Promise<SportActivity[]> {
-  return [];
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/sport`);
+    if (!res.ok) return [];
+    const d = await res.json();
+    const arr = Array.isArray(d?.sport) ? d.sport : [];
+    return arr.map((x: any): SportActivity => ({
+      id: String(x.id),
+      title: String(x.title ?? ''),
+      place: String(x.place ?? ''),
+      date: String(x.date ?? ''),
+      icon: 'figure.run',
+      going: x?._count?.applications ?? 0,
+      spotsLabel: x.spots ? `${x.spots} мест` : 'Открыто',
+      tint: 'rgba(35,64,136,0.12)',
+    }));
+  } catch { return []; }
 }
 
 // ─── Встречи: онлайн-лекции ─────────────────────────────────────────

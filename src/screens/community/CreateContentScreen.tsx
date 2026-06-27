@@ -6,13 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { PrimaryButton, ty } from '../../components/ui';
-import { createChallenge, createTrip, createChannel, uploadFile } from '../../data/api';
+import { createChallenge, createTrip, createChannel, createSport, uploadFile } from '../../data/api';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CreateContent'>;
-type Kind = 'challenge' | 'trip' | 'channel';
+type Kind = 'challenge' | 'trip' | 'channel' | 'sport';
 
 export function CreateContentScreen({ navigation }: Props) {
   const { T } = useTheme();
@@ -26,6 +26,7 @@ export function CreateContentScreen({ navigation }: Props) {
   const [price, setPrice] = useState('');
   const [teams, setTeams] = useState('Команда А, Команда Б');
   const [region, setRegion] = useState('');
+  const [place, setPlace] = useState('');
   const [date, setDate] = useState('');
   const [spots, setSpots] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -57,6 +58,8 @@ export function CreateContentScreen({ navigation }: Props) {
         success = await createChallenge(token, { title: title.trim(), durationDays: Number(days) || 21, price: price.trim() || null, teams: teams.split(',').map((t) => t.trim()).filter(Boolean) });
       } else if (kind === 'trip') {
         success = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null });
+      } else if (kind === 'sport') {
+        success = await createSport(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null });
       } else {
         success = await createChannel(token, { name: title.trim(), access, price: access === 'paid' ? price.trim() || null : null, bio: bio.trim() || null, avatarUrl: avatar || undefined });
       }
@@ -77,10 +80,10 @@ export function CreateContentScreen({ navigation }: Props) {
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 8}>
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
-          <Seg items={[{ k: 'challenge', label: 'Челлендж' }, { k: 'trip', label: 'Поездка' }, { k: 'channel', label: 'Группа' }]} value={kind} onChange={setKind} />
+          <Seg items={[{ k: 'challenge', label: 'Челлендж' }, { k: 'trip', label: 'Поездка' }, { k: 'sport', label: 'Спорт' }, { k: 'channel', label: 'Группа' }]} value={kind} onChange={setKind} />
 
           <Field label={kind === 'channel' ? 'НАЗВАНИЕ ГРУППЫ' : 'НАЗВАНИЕ'}>
-            <TextInput value={title} onChangeText={setTitle} placeholder={kind === 'trip' ? 'напр. Кольсай и Каинды' : kind === 'channel' ? 'напр. Women’s club' : 'напр. Divergents challenge'} placeholderTextColor={T.labelTertiary} style={inp} />
+            <TextInput value={title} onChangeText={setTitle} placeholder={kind === 'trip' ? 'напр. Кольсай и Каинды' : kind === 'sport' ? 'напр. Футбол по субботам' : kind === 'channel' ? 'напр. Women’s club' : 'напр. Divergents challenge'} placeholderTextColor={T.labelTertiary} style={inp} />
           </Field>
 
           {kind === 'challenge' ? (
@@ -100,6 +103,13 @@ export function CreateContentScreen({ navigation }: Props) {
               <Field label="ЦЕНА"><TextInput value={price} onChangeText={setPrice} placeholder="напр. 45 000 ₸" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
               <Field label="СЛОЖНОСТЬ"><TextInput value={difficulty} onChangeText={setDifficulty} placeholder="напр. средняя" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
               <Field label="ОПИСАНИЕ"><TextInput value={desc} onChangeText={setDesc} multiline placeholder="Кратко о поездке" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 90, textAlignVertical: 'top' }]} /></Field>
+            </>
+          ) : kind === 'sport' ? (
+            <>
+              <Field label="МЕСТО"><TextInput value={place} onChangeText={setPlace} placeholder="напр. Манеж, Алматы" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
+              <Field label="ДАТА/ВРЕМЯ"><TextInput value={date} onChangeText={setDate} placeholder="напр. сб 10:00" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
+              <Field label="МЕСТ"><TextInput value={spots} onChangeText={(t) => setSpots(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" style={inp} /></Field>
+              <Field label="ОПИСАНИЕ"><TextInput value={desc} onChangeText={setDesc} multiline placeholder="Кратко" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 80, textAlignVertical: 'top' }]} /></Field>
             </>
           ) : (
             <>
