@@ -25,7 +25,8 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.",
         "NSPhotoLibraryUsageDescription": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества.",
         "NSPhotoLibraryAddUsageDescription": "Divergents сохраняет фото в вашу медиатеку при работе с местами на карте сообщества.",
-        "NSCameraUsageDescription": "Divergents использует камеру, чтобы делать снимки для мест на карте сообщества."
+        "NSCameraUsageDescription": "Divergents использует камеру, чтобы делать снимки для мест на карте сообщества.",
+        "NSMicrophoneUsageDescription": "Divergents использует микрофон для записи голосовых постов в каналах."
       }
     },
     "android": {
@@ -66,7 +67,8 @@
         }
       ],
       "expo-localization",
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      "expo-notifications"
     ]
   }
 }

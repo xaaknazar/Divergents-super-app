@@ -509,3 +509,18 @@ export async function actChannelRequest(token: string | null, id: string, userId
 export async function createChannelPost(token: string | null, id: string, data: { type: 'audio' | 'article'; title: string; body?: string; audioUrl?: string }): Promise<boolean> {
   return postAuthed(`/api/mobile/channels/${id}/posts`, token, data);
 }
+
+// ───────── Upload (voice notes) + push token register ─────────
+export async function uploadFile(token: string | null, uri: string, name: string, mime: string): Promise<string | null> {
+  if (!token) return null;
+  try {
+    const form = new FormData();
+    form.append('file', { uri, name, type: mime } as any);
+    const res = await fetch(`${API_BASE}/api/mobile/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form as any });
+    if (!res.ok) return null;
+    const d = await res.json();
+    return d?.url ?? null;
+  } catch { return null; }
+}
+export const registerPush = (token: string | null, expoToken: string, platform: string) =>
+  postAuthed('/api/mobile/push/register', token, { token: expoToken, platform });

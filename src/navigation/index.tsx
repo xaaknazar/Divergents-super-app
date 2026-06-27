@@ -8,6 +8,7 @@ import {
 import { TabBar } from './TabBar';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAppFlow } from '../state/AppFlowContext';
+import { usePush } from '../state/usePush';
 
 import { LMSHomeScreen } from '../screens/lms/LMSHomeScreen';
 import { CatalogScreen } from '../screens/lms/CatalogScreen';
@@ -133,6 +134,7 @@ const Root = createNativeStackNavigator<RootStackParams>();
 export function RootNavigator() {
   const { isLoaded, isSignedIn } = useAuth();
   const { ready, onboarded, pendingRegistration } = useAppFlow();
+  usePush();
   if (!isLoaded || !ready) return null;
   return (
     <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useVideoPlayer } from 'expo-video';
+import { Audio } from 'expo-av';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
@@ -11,7 +12,7 @@ import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
 import {
   fetchServerChannels, fetchMyChannelMemberships, joinChannel, fetchChannelRequests,
-  actChannelRequest, createChannelPost, ServerChannel, ServerChannelPost, ChannelRequest,
+  actChannelRequest, createChannelPost, uploadFile, ServerChannel, ServerChannelPost, ChannelRequest,
 } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -175,12 +176,44 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
   const [body, setBody] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
   const [busy, setBusy] = useState(false);
-  const ok = title.trim().length > 1 && (type === 'article' ? body.trim().length > 0 : audioUrl.trim().length > 5);
+  const recRef = useRef<Audio.Recording | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [recSec, setRecSec] = useState(0);
+  const [recordedUri, setRecordedUri] = useState<string | null>(null);
+  const recTimer = useRef<any>(null);
+  const ok = title.trim().length > 1 && (type === 'article' ? body.trim().length > 0 : (!!recordedUri || audioUrl.trim().length > 5));
+
+  const startRec = async () => {
+    try {
+      const perm = await Audio.requestPermissionsAsync();
+      if (!perm.granted) { Alert.alert('Нет доступа к микрофону', 'Разрешите запись в настройках.'); return; }
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const r = new Audio.Recording();
+      await r.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await r.startAsync();
+      recRef.current = r; setRecording(true); setRecSec(0); setRecordedUri(null);
+      recTimer.current = setInterval(() => setRecSec((x) => x + 1), 1000);
+    } catch { Alert.alert('Ошибка записи', 'Не удалось начать запись.'); }
+  };
+  const stopRec = async () => {
+    clearInterval(recTimer.current); setRecording(false);
+    try { const r = recRef.current; if (r) { await r.stopAndUnloadAsync(); setRecordedUri(r.getURI() ?? null); } } catch {}
+    recRef.current = null;
+  };
   const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
   const submit = async () => {
     if (!ok) return; setBusy(true);
-    try { const token = await getToken(); const r = await createChannelPost(token, channelId, { type, title: title.trim(), body: type === 'article' ? body.trim() : undefined, audioUrl: type === 'audio' ? audioUrl.trim() : undefined }); if (r) onDone(); else Alert.alert('Не удалось', 'Проверьте подключение и права.'); }
-    finally { setBusy(false); }
+    try {
+      const token = await getToken();
+      let finalAudio = audioUrl.trim();
+      if (type === 'audio' && recordedUri) {
+        const url = await uploadFile(token, recordedUri, `voice_${Date.now()}.m4a`, 'audio/m4a');
+        if (!url) { Alert.alert('Не удалось загрузить аудио', 'Проверьте подключение.'); setBusy(false); return; }
+        finalAudio = url;
+      }
+      const r = await createChannelPost(token, channelId, { type, title: title.trim(), body: type === 'article' ? body.trim() : undefined, audioUrl: type === 'audio' ? finalAudio : undefined });
+      if (r) onDone(); else Alert.alert('Не удалось', 'Проверьте подключение и права.');
+    } finally { setBusy(false); }
   };
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
@@ -197,7 +230,17 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
         <TextInput value={title} onChangeText={setTitle} placeholder="Заголовок" placeholderTextColor={T.labelTertiary} style={[inp, { marginBottom: 10 }]} />
         {type === 'article'
           ? <TextInput value={body} onChangeText={setBody} placeholder="Текст" placeholderTextColor={T.labelTertiary} multiline style={[inp, { minHeight: 110, textAlignVertical: 'top' }]} />
-          : <TextInput value={audioUrl} onChangeText={setAudioUrl} placeholder="Ссылка на аудио (mp3/m4a)" placeholderTextColor={T.labelTertiary} autoCapitalize="none" style={inp} />}
+          : (
+            <View>
+              <Pressable onPress={recording ? stopRec : startRec} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: recording ? '#EF4444' : T.brandTinted, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14 }}>
+                <SF name={recording ? 'pause.fill' : 'waveform'} size={18} color={recording ? '#fff' : T.brand} />
+                <Text style={[ty.subheadEm, { color: recording ? '#fff' : T.brand }]}>{recording ? `Остановить · ${recSec}s` : recordedUri ? 'Записать заново' : 'Записать голос'}</Text>
+              </Pressable>
+              {recordedUri ? <Text style={[ty.caption1, { color: T.green, marginTop: 6 }]}>Голос записан ✓</Text> : null}
+              <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 10, marginBottom: 4 }]}>или вставьте ссылку:</Text>
+              <TextInput value={audioUrl} onChangeText={setAudioUrl} placeholder="Ссылка на аудио (mp3/m4a)" placeholderTextColor={T.labelTertiary} autoCapitalize="none" style={inp} />
+            </View>
+          )}
         <Pressable onPress={submit} disabled={!ok || busy} style={{ marginTop: 14, height: 48, borderRadius: 14, backgroundColor: ok ? T.brand : T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
           {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: ok ? '#fff' : T.labelTertiary }]}>Опубликовать</Text>}
         </Pressable>
