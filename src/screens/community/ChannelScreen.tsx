@@ -10,6 +10,7 @@ import { NavHeader } from '../../components/NavHeader';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { ChannelPost } from '../../data/channel';
 import { useChannel } from '../../state/ChannelContext';
+import { groupNum } from '../../data/api';
 import { useLang, tr } from '../../state/LanguageContext';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -81,7 +82,7 @@ export function ChannelScreen({ route, navigation }: Props) {
               <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>@{channel.handle}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
                 <SF name="person.2.fill" size={12} color={T.labelTertiary} />
-                <Text style={[ty.caption1, { color: T.labelTertiary }]} numberOfLines={1}>{subs.toLocaleString(lang === 'ru' ? 'ru-RU' : 'en-US')} {t('subscribers')}</Text>
+                <Text style={[ty.caption1, { color: T.labelTertiary }]} numberOfLines={1}>{groupNum(subs)} {t('subscribers')}</Text>
                 {channel.access === 'request' ? <Capsule bg={T.fillSecondary} color={T.labelSecondary}><SF name="lock.fill" size={9} color={T.labelSecondary} />{t('by_request')}</Capsule> : null}
               </View>
             </View>

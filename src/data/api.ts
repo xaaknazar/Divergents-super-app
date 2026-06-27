@@ -170,9 +170,14 @@ export async function fetchCourseDetail(id: string): Promise<Course> {
 }
 
 // Format a ₸ price (or "Бесплатно").
+// Group thousands with a regular space. (toLocaleString uses a non-breaking
+// space that renders inconsistently in the Gotham font and breaks layouts.)
+export function groupNum(n: number): string {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
 export function formatPrice(price: number | null | undefined): string {
   if (price == null || price <= 0) return 'Бесплатно';
-  return `${Math.round(price).toLocaleString('ru-RU')} ₸`;
+  return `${groupNum(price)} ₸`;
 }
 
 // ─── Authenticated (Clerk) endpoints ──────────────────────────────

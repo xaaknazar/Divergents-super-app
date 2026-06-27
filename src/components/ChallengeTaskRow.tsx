@@ -9,7 +9,8 @@ import { SF } from './SFIcon';
 import { Capsule } from './ui';
 import { ChallengeTask, taskBonus, taskDone, taskPoints } from '../data/community';
 
-const fmt = (n: number) => n.toLocaleString('ru-RU');
+import { groupNum } from '../data/api';
+const fmt = (n: number) => groupNum(n);
 
 export function ChallengeTaskRow({
   task, divider, onToggle, onAdjust, step = 1,

@@ -249,8 +249,8 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
         {/* Price card */}
         <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, ...shadows.card }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-            <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{formatPrice(course.price)}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{tr('единоразово')}</Text>
+            <Text style={[ty.title1, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{formatPrice(course.price)}</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{tr('единоразово')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
             <SF name="lock.fill" size={12} color={T.labelSecondary} />
