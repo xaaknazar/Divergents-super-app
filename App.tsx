@@ -5,10 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
-import {
-  useFonts,
-  Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
-} from '@expo-google-fonts/nunito';
+import { useFonts } from 'expo-font';
 import { RootNavigator } from './src/navigation';
 import { CourseProvider } from './src/state/CourseContext';
 import { ChallengeProvider } from './src/state/ChallengeContext';
@@ -79,7 +76,14 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold,
+    'GothamRnd-Light': require('./assets/fonts/gothamrnd_light.otf'),
+    'GothamRnd-Book': require('./assets/fonts/gothamrnd_book.otf'),
+    'GothamRnd-Medium': require('./assets/fonts/gothamrnd_medium.otf'),
+    'GothamRnd-Bold': require('./assets/fonts/gothamrnd_bold.otf'),
+    'GothamRnd-LightItalic': require('./assets/fonts/gothamrnd_lightitalic.otf'),
+    'GothamRnd-BookItalic': require('./assets/fonts/gothamrnd_bookitalic.otf'),
+    'GothamRnd-MediumItalic': require('./assets/fonts/gothamrnd_mediumitalic.otf'),
+    'GothamRnd-BoldItalic': require('./assets/fonts/gothamrnd_bolditalic.otf'),
   });
   // The animated intro stays mounted on top until it cross-fades itself out.
   // It self-gates on `fontsLoaded` + a tasteful minimum duration, so the app

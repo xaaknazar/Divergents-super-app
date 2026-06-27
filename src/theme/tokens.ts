@@ -112,12 +112,13 @@ export const darkTheme: Theme = dark;
 // Back-compat default export (light). Components should prefer useTheme().
 export const T: Theme = light;
 
-// Native rounded brand typeface (Nunito ≈ Gotham Rounded). Loaded in App.tsx.
+// Brand typeface: Gotham Rounded. Loaded in App.tsx via expo-font.
 export const FONT = {
-  regular: 'Nunito_400Regular',
-  semibold: 'Nunito_600SemiBold',
-  bold: 'Nunito_700Bold',
-  extrabold: 'Nunito_800ExtraBold',
+  light: 'GothamRnd-Light',
+  regular: 'GothamRnd-Book',
+  semibold: 'GothamRnd-Medium',
+  bold: 'GothamRnd-Bold',
+  extrabold: 'GothamRnd-Bold',
 } as const;
 export const FF = FONT.regular;
 
