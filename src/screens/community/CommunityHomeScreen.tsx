@@ -13,6 +13,7 @@ import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { joinSport } from '../../data/api';
+import { useAuth } from '@clerk/clerk-expo';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
   daysUntil, fetchCommunityHome,
