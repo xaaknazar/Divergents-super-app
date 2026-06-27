@@ -470,3 +470,42 @@ export async function fetchLiveTrips(): Promise<LiveTrip[]> {
   try { const res = await fetch(`${API_BASE}/api/mobile/trips`); if (!res.ok) return []; const d = await res.json(); return Array.isArray(d?.trips) ? d.trips : []; } catch { return []; }
 }
 export const applyToTrip = (token: string | null, tripId: string) => postAuthed(`/api/mobile/trips/${tripId}/apply`, token, {});
+
+// ───────── Server channels (Telegram-style): membership, requests, posts ─────────
+export interface ServerChannelPost { id: string; type: 'audio' | 'article'; title: string; body?: string | null; audioUrl?: string | null; createdAt: string }
+export interface ServerChannel {
+  id: string; name: string; handle?: string | null; access: 'open' | 'request' | 'paid'; price?: string | null;
+  bio?: string | null; avatarUrl?: string | null; createdBy?: string | null;
+  posts: ServerChannelPost[]; _count?: { posts: number; members: number };
+}
+
+export async function fetchServerChannels(): Promise<ServerChannel[]> {
+  try { const r = await fetch(`${API_BASE}/api/mobile/channels`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.channels) ? d.channels : []; } catch { return []; }
+}
+export async function joinChannel(token: string | null, id: string): Promise<string | null> {
+  if (!token) return null;
+  try {
+    const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/join`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return null; const d = await r.json(); return d?.state ?? null;
+  } catch { return null; }
+}
+export async function fetchMyChannelMemberships(token: string | null): Promise<Record<string, string>> {
+  if (!token) return {};
+  try {
+    const r = await fetch(`${API_BASE}/api/mobile/me/channels`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return {}; const d = await r.json();
+    const m: Record<string, string> = {}; (d?.memberships ?? []).forEach((x: any) => { m[x.channelId] = x.state; }); return m;
+  } catch { return {}; }
+}
+export interface ChannelRequest { id: string; userId: string; userEmail: string; userName?: string | null; profile?: any }
+export async function fetchChannelRequests(token: string | null, id: string): Promise<ChannelRequest[]> {
+  if (!token) return [];
+  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/requests`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return d?.requests ?? []; } catch { return []; }
+}
+export async function actChannelRequest(token: string | null, id: string, userId: string, action: 'approve' | 'reject'): Promise<boolean> {
+  if (!token) return false;
+  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/requests`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ userId, action }) }); return r.ok; } catch { return false; }
+}
+export async function createChannelPost(token: string | null, id: string, data: { type: 'audio' | 'article'; title: string; body?: string; audioUrl?: string }): Promise<boolean> {
+  return postAuthed(`/api/mobile/channels/${id}/posts`, token, data);
+}

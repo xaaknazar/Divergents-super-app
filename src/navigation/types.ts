@@ -13,6 +13,7 @@ export type CommunityStackParams = {
   // screen reloads its lists once.
   CommunityHome: { refresh?: number } | undefined;
   Channel: { channelId: string };
+  ServerChannel: { channelId: string };
   ChannelPost: { postId: string };
   CreateContent: undefined;
   ChallengeDetail: { challengeId: string };

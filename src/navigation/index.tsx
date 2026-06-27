@@ -20,6 +20,7 @@ import { ChallengeDetailScreen } from '../screens/community/ChallengeDetailScree
 import { JoinChallengeScreen } from '../screens/community/JoinChallengeScreen';
 import { TripDetailScreen } from '../screens/community/TripDetailScreen';
 import { ChannelScreen } from '../screens/community/ChannelScreen';
+import { ServerChannelScreen } from '../screens/community/ServerChannelScreen';
 import { ChannelPostScreen } from '../screens/community/ChannelPostScreen';
 import { CreateContentScreen } from '../screens/community/CreateContentScreen';
 
@@ -62,6 +63,7 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="JoinChallenge" component={JoinChallengeScreen} options={{ presentation: 'modal' }} />
       <CommunityStack.Screen name="TripDetail" component={TripDetailScreen} />
       <CommunityStack.Screen name="Channel" component={ChannelScreen} />
+      <CommunityStack.Screen name="ServerChannel" component={ServerChannelScreen} />
       <CommunityStack.Screen name="ChannelPost" component={ChannelPostScreen} />
       <CommunityStack.Screen name="CreateContent" component={CreateContentScreen} options={{ presentation: 'modal' }} />
     </CommunityStack.Navigator>

@@ -367,7 +367,7 @@ function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav
   const count = unread(channel.id);
   const last = postsByChannel(channel.id)[0];
   return (
-    <Pressable onPress={() => navigation.navigate('Channel', { channelId: channel.id })}
+    <Pressable onPress={() => navigation.navigate('ServerChannel', { channelId: channel.id })}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 16, padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: T.cardBorder }}>
       <Image source={{ uri: channel.avatar }} style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
       <View style={{ flex: 1 }}>
