@@ -23,6 +23,9 @@ export function RegisterScreen({ navigation }: Props) {
   const { answers, setField, completeness, submit, submitting } = useResume();
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
+  // Did submit() actually reach Talentslab? false → saved on-device only, so the
+  // done screen must not claim it was sent to the server.
+  const [savedRemote, setSavedRemote] = useState(false);
   const [tlPct, setTlPct] = useState<number | null>(null);
   const { getToken } = useAuth();
   const { user } = useUser();
@@ -55,6 +58,7 @@ export function RegisterScreen({ navigation }: Props) {
     // refine it below with the server-reported value. (Previously both ternary
     // branches were identical — a no-op.)
     setTlPct(completeness);
+    setSavedRemote(ok);
     setDone(true);
     if (ok) {
       try {
@@ -75,7 +79,9 @@ export function RegisterScreen({ navigation }: Props) {
             <SF name="checkmark.seal.fill" size={48} color={T.brand} />
           </View>
           <Text style={[ty.title1, { color: T.label, marginTop: 18, textAlign: 'center' }]}>{tr('Регистрация завершена')}</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>{tr('Анкета сохранена в Talentslab. Заполните её до 100%, чтобы пройти Gallup, MBTI и тест Гарднера.')}</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>{savedRemote
+            ? tr('Анкета сохранена в Talentslab. Заполните её до 100%, чтобы пройти Gallup, MBTI и тест Гарднера.')
+            : tr('Анкета сохранена на устройстве — отправим в Talentslab, как только появится связь. Продолжить заполнение можно в разделе «Карьера».')}</Text>
         </View>
         <View style={{ marginTop: 28, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>

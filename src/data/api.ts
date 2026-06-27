@@ -4,7 +4,11 @@ import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { Course, Lesson } from './courses';
 
-export const API_BASE = 'https://divergents-lms.kz';
+// Single source of truth lives in src/config.ts; imported for internal use and
+// re-exported so the many `from './api'` importers keep working without a
+// second hardcoded literal.
+import { API_BASE } from '../config';
+export { API_BASE };
 
 // A Lesson that also carries an optional offline-audio URL (Mux audio.m4a).
 // Kept local to avoid touching the shared courses.ts Lesson interface; values
@@ -196,6 +200,19 @@ async function getJsonAuthed(path: string, token: string, timeoutMs = 12000): Pr
   }
 }
 
+// fetch() with an abort-timeout. React Native's fetch has NO built-in timeout,
+// so a stalled socket otherwise hangs the caller — and its loading spinner —
+// forever. Every bare network helper below routes through this.
+async function timedFetch(url: string, init?: RequestInit, timeoutMs = 12000): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 interface ApiOwnedCourse extends ApiCourseSummary { progress: number; owned: boolean }
 
 export async function fetchMyCourses(token: string): Promise<Course[]> {
@@ -364,8 +381,8 @@ export async function askCourseAI(
       if (res.status === 401) throw new Error('Войдите, чтобы пользоваться ассистентом');
       throw new Error(`Ошибка ${res.status}`);
     }
-    const d = await res.json();
-    return { answer: d.answer ?? '', sources: d.sources ?? [] };
+    const d = await res.json().catch(() => null);
+    return { answer: d?.answer ?? '', sources: d?.sources ?? [] };
   } finally {
     clearTimeout(t);
   }
@@ -398,8 +415,8 @@ export async function askAssistant(
       body: JSON.stringify({ message, history: history.slice(-8), profileContext: profileContext || undefined }),
     });
     if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-    const d = await res.json();
-    return { answer: d.answer ?? '' };
+    const d = await res.json().catch(() => null);
+    return { answer: d?.answer ?? '' };
   } finally {
     clearTimeout(t);
   }
@@ -441,7 +458,7 @@ export async function applyToChallenge(token: string | null, challengeId: string
 export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; email?: string | null }> {
   if (!token) return { canCreate: false };
   try {
-    const res = await fetch(`${API_BASE}/api/mobile/me/role`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await timedFetch(`${API_BASE}/api/mobile/me/role`, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) return { canCreate: false };
     return await res.json();
   } catch { return { canCreate: false }; }
@@ -468,10 +485,10 @@ export const createChannel = (token: string | null, data: any) => postAuthed('/a
 export interface LiveTrip { id: string; title: string; region?: string | null; date?: string | null; days: number; price?: string | null; spots: number; difficulty?: string | null; description?: string | null; meetPlace?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
 export async function fetchMyTripIds(token: string | null): Promise<string[]> {
   if (!token) return [];
-  try { const r = await fetch(`${API_BASE}/api/mobile/me/trips`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.tripIds) ? d.tripIds : []; } catch { return []; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/me/trips`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.tripIds) ? d.tripIds : []; } catch { return []; }
 }
 export async function fetchLiveTrips(): Promise<LiveTrip[]> {
-  try { const res = await fetch(`${API_BASE}/api/mobile/trips`); if (!res.ok) return []; const d = await res.json(); return Array.isArray(d?.trips) ? d.trips : []; } catch { return []; }
+  try { const res = await timedFetch(`${API_BASE}/api/mobile/trips`); if (!res.ok) return []; const d = await res.json(); return Array.isArray(d?.trips) ? d.trips : []; } catch { return []; }
 }
 export const applyToTrip = (token: string | null, tripId: string) => postAuthed(`/api/mobile/trips/${tripId}/apply`, token, {});
 
@@ -484,19 +501,19 @@ export interface ServerChannel {
 }
 
 export async function fetchServerChannels(): Promise<ServerChannel[]> {
-  try { const r = await fetch(`${API_BASE}/api/mobile/channels`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.channels) ? d.channels : []; } catch { return []; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/channels`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.channels) ? d.channels : []; } catch { return []; }
 }
 export async function joinChannel(token: string | null, id: string): Promise<string | null> {
   if (!token) return null;
   try {
-    const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/join`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const r = await timedFetch(`${API_BASE}/api/mobile/channels/${id}/join`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) return null; const d = await r.json(); return d?.state ?? null;
   } catch { return null; }
 }
 export async function fetchMyChannelMemberships(token: string | null): Promise<Record<string, string>> {
   if (!token) return {};
   try {
-    const r = await fetch(`${API_BASE}/api/mobile/me/channels`, { headers: { Authorization: `Bearer ${token}` } });
+    const r = await timedFetch(`${API_BASE}/api/mobile/me/channels`, { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) return {}; const d = await r.json();
     const m: Record<string, string> = {}; (d?.memberships ?? []).forEach((x: any) => { m[x.channelId] = x.state; }); return m;
   } catch { return {}; }
@@ -504,11 +521,11 @@ export async function fetchMyChannelMemberships(token: string | null): Promise<R
 export interface ChannelRequest { id: string; userId: string; userEmail: string; userName?: string | null; profile?: any }
 export async function fetchChannelRequests(token: string | null, id: string): Promise<ChannelRequest[]> {
   if (!token) return [];
-  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/requests`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return d?.requests ?? []; } catch { return []; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/channels/${id}/requests`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return d?.requests ?? []; } catch { return []; }
 }
 export async function actChannelRequest(token: string | null, id: string, userId: string, action: 'approve' | 'reject'): Promise<boolean> {
   if (!token) return false;
-  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/requests`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ userId, action }) }); return r.ok; } catch { return false; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/channels/${id}/requests`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ userId, action }) }); return r.ok; } catch { return false; }
 }
 export async function createChannelPost(token: string | null, id: string, data: { type: 'audio' | 'article'; title: string; body?: string; audioUrl?: string }): Promise<boolean> {
   return postAuthed(`/api/mobile/channels/${id}/posts`, token, data);
@@ -520,7 +537,7 @@ export async function uploadFile(token: string | null, uri: string, name: string
   try {
     const form = new FormData();
     form.append('file', { uri, name, type: mime } as any);
-    const res = await fetch(`${API_BASE}/api/mobile/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form as any });
+    const res = await timedFetch(`${API_BASE}/api/mobile/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form as any }, 30000);
     if (!res.ok) return null;
     const d = await res.json();
     return d?.url ?? null;
@@ -535,30 +552,30 @@ export const updateChannel = (token: string | null, id: string, data: { name?: s
   postAuthedMethod('PATCH', `/api/mobile/channels/${id}`, token, data);
 export async function fetchChannelMembers(token: string | null, id: string): Promise<ChannelMemberRow[]> {
   if (!token) return [];
-  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/members`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return d?.members ?? []; } catch { return []; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/channels/${id}/members`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return d?.members ?? []; } catch { return []; }
 }
 export async function removeChannelMember(token: string | null, id: string, userId: string): Promise<boolean> {
   if (!token) return false;
-  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/members`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ userId }) }); return r.ok; } catch { return false; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/channels/${id}/members`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ userId }) }); return r.ok; } catch { return false; }
 }
 export async function createChannelInvite(token: string | null, id: string): Promise<{ code: string; url: string } | null> {
   if (!token) return null;
-  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/invite`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return null; return await r.json(); } catch { return null; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/channels/${id}/invite`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return null; return await r.json(); } catch { return null; }
 }
 export async function joinByInvite(token: string | null, code: string): Promise<string | null> {
   if (!token) return null;
-  try { const r = await fetch(`${API_BASE}/api/mobile/channels/invite/join`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ code }) }); if (!r.ok) return null; const d = await r.json(); return d?.channelId ?? null; } catch { return null; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/channels/invite/join`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ code }) }); if (!r.ok) return null; const d = await r.json(); return d?.channelId ?? null; } catch { return null; }
 }
 async function postAuthedMethod(method: string, path: string, token: string | null, body: any): Promise<boolean> {
   if (!token) return false;
-  try { const r = await fetch(`${API_BASE}${path}`, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) }); return r.ok; } catch { return false; }
+  try { const r = await timedFetch(`${API_BASE}${path}`, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) }); return r.ok; } catch { return false; }
 }
 
 // One-time Clerk sign-in token → open the website already authenticated.
 export async function getSignInTicket(token: string | null): Promise<string | null> {
   if (!token) return null;
   try {
-    const r = await fetch(`${API_BASE}/api/mobile/signin-ticket`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const r = await timedFetch(`${API_BASE}/api/mobile/signin-ticket`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) return null; const d = await r.json(); return d?.token ?? null;
   } catch { return null; }
 }
@@ -572,10 +589,10 @@ export function webAuthedUrl(ticket: string | null, path: string): string {
 export interface LiveSport { id: string; title: string; place?: string | null; date?: string | null; spots: number; description?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
 export async function fetchMySportIds(token: string | null): Promise<string[]> {
   if (!token) return [];
-  try { const r = await fetch(`${API_BASE}/api/mobile/me/sport`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sportIds) ? d.sportIds : []; } catch { return []; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/me/sport`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sportIds) ? d.sportIds : []; } catch { return []; }
 }
 export async function fetchLiveSport(): Promise<LiveSport[]> {
-  try { const r = await fetch(`${API_BASE}/api/mobile/sport`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sport) ? d.sport : []; } catch { return []; }
+  try { const r = await timedFetch(`${API_BASE}/api/mobile/sport`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sport) ? d.sport : []; } catch { return []; }
 }
 export const createSport = (token: string | null, data: any) => postAuthed('/api/mobile/sport', token, data);
 export const joinSport = (token: string | null, id: string) => postAuthed(`/api/mobile/sport/${id}/join`, token, {});

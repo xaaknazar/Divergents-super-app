@@ -5,6 +5,7 @@
 //   - dvg.onboarded   (onboarding completed — don't re-onboard)
 //   - dvg.lang        (language preference)
 //   - dvg.themeMode / dvg.accent / dvg.background (appearance)
+import { deleteAsync, documentDirectory } from 'expo-file-system/legacy';
 import { clearKeys } from './persist';
 
 // Every user-scoped persisted key in the app. Grep the codebase for "dvg." to
@@ -33,6 +34,16 @@ export const USER_DATA_KEYS: string[] = [
   'dvg.channelLikes.v2',
   // Registration flow (анкета after sign-up) — reset for the next account
   'dvg.pendingRegistration',
+  // Offline downloads — metadata registry (the .m4a files themselves are
+  // deleted from disk in clearAllAppData below; keep this key in sync with
+  // state/downloads.ts STORE_KEY).
+  'downloads.audio.v1',
+];
+
+// Document-directory folders holding user-scoped binary files (purchased audio).
+// Deleted on sign-out so the next account on a shared device can't access them.
+const USER_DATA_DIRS: string[] = [
+  `${documentDirectory ?? ''}downloads/`, // state/downloads.ts DIR
 ];
 
 /**
@@ -42,4 +53,9 @@ export const USER_DATA_KEYS: string[] = [
  */
 export async function clearAllAppData(): Promise<void> {
   await clearKeys(USER_DATA_KEYS);
+  // Remove downloaded audio files from disk. Idempotent; failures (e.g. folder
+  // never created) are swallowed so sign-out never blocks on cleanup.
+  await Promise.all(
+    USER_DATA_DIRS.map((dir) => deleteAsync(dir, { idempotent: true }).catch(() => {})),
+  );
 }

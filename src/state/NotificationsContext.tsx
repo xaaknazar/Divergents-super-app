@@ -34,8 +34,9 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       const data = await fetchNotifications(token);
       setList(data);
     } catch {
+      // Keep any already-loaded notifications on a transient refresh failure
+      // (this same fn backs pull-to-refresh) — only flag the error state.
       setError(true);
-      setList([]);
     } finally {
       setLoading(false);
     }

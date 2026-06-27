@@ -48,6 +48,11 @@ export function AIChatScreen({}: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const loadedRef = useRef(false);
   const lastQueryRef = useRef('');
+  // Active stream timer + mounted flag so the simulated typewriter stops (and
+  // never calls setState) once the screen is unmounted.
+  const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; if (streamTimerRef.current) clearTimeout(streamTimerRef.current); }, []);
 
   // Restore the persisted conversation history once, on mount.
   useEffect(() => {
@@ -104,10 +109,11 @@ export function AIChatScreen({}: Props) {
     let i = 0;
     setStreaming(true);
     const tick = () => {
+      if (!mountedRef.current) return;
       i = Math.min(full.length, i + 4);
       setByMode((p) => ({ ...p, [m]: (p[m] ?? []).map((msg) => (msg.id === id ? { ...msg, text: full.slice(0, i) } : msg)) }));
       if (i % 80 === 0) scrollRef.current?.scrollToEnd({ animated: true });
-      if (i < full.length) setTimeout(tick, 16);
+      if (i < full.length) streamTimerRef.current = setTimeout(tick, 16);
       else { setStreaming(false); scrollRef.current?.scrollToEnd({ animated: true }); }
     };
     tick();
@@ -225,7 +231,7 @@ export function AIChatScreen({}: Props) {
                   : <MarkdownText text={m.text} color={T.label} />}
               </View>
               {m.role === 'bot' && m.text.length > 0 ? (
-                <Pressable onPress={() => { Clipboard.setStringAsync(m.text); hSuccess(); }} hitSlop={6} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5, paddingHorizontal: 6, opacity: pressed ? 0.5 : 1 })}>
+                <Pressable onPress={() => { Clipboard.setStringAsync(m.text).then(hSuccess).catch(() => {}); }} hitSlop={6} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5, paddingHorizontal: 6, opacity: pressed ? 0.5 : 1 })}>
                   <SF name="doc.text" size={12} color={T.labelTertiary} />
                   <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{tr('Копировать')}</Text>
                 </Pressable>

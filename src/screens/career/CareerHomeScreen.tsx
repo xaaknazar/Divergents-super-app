@@ -59,7 +59,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   return (
     <Screen largeTitle={t('tab_career')} onRefresh={async () => { await Promise.all([reloadProfile(), reloadJobs()]); }}>
       <NavBarLarge title={t('tab_career')} trailing={(
-        <HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+        <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
       <ResumeHero navigation={navigation} completeness={live ? profile?.completeness ?? 0 : -1} profile={profile} liveData={live} />

@@ -75,7 +75,10 @@ async function load() {
       }
     }),
   );
-  registry = checked;
+  // Merge rather than replace: a download may have completed and written into
+  // `registry` while this async load was in flight — wholesale assignment would
+  // drop it. Disk-checked entries fill in anything not already present live.
+  registry = { ...checked, ...registry };
   ready = true;
   notify();
   if (Object.keys(checked).length !== Object.keys(saved || {}).length) persist();

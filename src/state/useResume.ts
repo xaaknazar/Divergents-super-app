@@ -19,13 +19,28 @@ export function useResume() {
 
   useEffect(() => {
     loadJSON<ResumeAnswers>(KEY, {}).then((v) => {
-      // prefill email/full name from Clerk if empty
+      // prefill email/full name from Clerk if empty AND already available
       const email = user?.primaryEmailAddress?.emailAddress;
       const name = user?.fullName;
       setAnswers({ ...(email && !v.email ? { email } : {}), ...(name && !v.full_name ? { full_name: name } : {}), ...v });
       setHydrated(true);
     });
   }, []);
+
+  // Clerk's `user` often arrives AFTER the mount effect above ran with user=null,
+  // so email/full_name would never prefill. Backfill once it's available, without
+  // clobbering anything the user has since typed.
+  useEffect(() => {
+    if (!hydrated || !user) return;
+    const email = user.primaryEmailAddress?.emailAddress;
+    const name = user.fullName;
+    setAnswers((p) => {
+      const next = { ...p };
+      if (email && !p.email) next.email = email;
+      if (name && !p.full_name) next.full_name = name;
+      return next;
+    });
+  }, [hydrated, user]);
 
   const setField = useCallback((key: string, value: any) => {
     setAnswers((p) => { const n = { ...p, [key]: value }; saveJSON(KEY, n); return n; });

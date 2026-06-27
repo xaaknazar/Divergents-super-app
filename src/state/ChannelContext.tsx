@@ -1,7 +1,7 @@
 // Channels + posts (loaded from the website API), plus per-channel
 // subscriptions, join requests, unread tracking and post likes. Paid channels
 // were cut for v1 — only free tiers ('open', 'request') remain.
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { loadJSON, saveJSON } from './persist';
 import { Channel, ChannelPost, fetchChannelData } from '../data/channel';
 
@@ -44,19 +44,24 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
   const [seen, setSeen] = useState<Record<string, number>>({});
   const [likes, setLikes] = useState<string[]>([]);
 
+  // Mirror the latest channels into a ref so reload() can read the current count
+  // on failure without depending on `channels.length` — that dependency made the
+  // mount effect re-run reload() on every fetch, double-fetching the list.
+  const channelsRef = useRef<Channel[]>([]);
   const reload = useCallback(() => {
     setLoading(true);
     fetchChannelData()
       .then(({ channels: ch, posts: ps, error: err }) => {
+        channelsRef.current = ch;
         setChannels(ch);
         setPosts(ps);
         // Only flag an error when the request failed AND we have nothing to show,
         // so a transient refresh failure never blanks already-loaded content.
         setError(err && ch.length === 0);
       })
-      .catch(() => setError((prev) => prev || channels.length === 0))
+      .catch(() => setError((prev) => prev || channelsRef.current.length === 0))
       .finally(() => setLoading(false));
-  }, [channels.length]);
+  }, []);
 
   useEffect(() => { reload(); }, [reload]);
 

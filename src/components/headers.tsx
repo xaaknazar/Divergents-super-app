@@ -38,13 +38,13 @@ export function BackNav({
 }
 
 // Trailing icon button helper
-export function HeaderIcon({ name, color, size = 20, onPress, badge }: {
-  name: string; color?: string; size?: number; onPress?: () => void; badge?: number;
+export function HeaderIcon({ name, color, size = 20, onPress, badge, label }: {
+  name: string; color?: string; size?: number; onPress?: () => void; badge?: number; label?: string;
 }) {
   const { T } = useTheme();
   const _color = color ?? T.brandAccent;
   return (
-    <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" accessibilityLabel={name} style={{ position: 'relative' }}>
+    <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" accessibilityLabel={label ?? 'Кнопка'} style={{ position: 'relative' }}>
       <SF name={name} size={size} color={_color} />
       {badge ? (
         <View style={{ position: 'absolute', top: -4, right: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>

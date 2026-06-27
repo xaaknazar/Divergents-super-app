@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
@@ -11,6 +11,10 @@ const PROJECT_ID = (Constants.expoConfig as any)?.extra?.eas?.projectId
 
 export function usePush() {
   const { isSignedIn, getToken } = useAuth();
+  // Keep the latest getToken in a ref so the effect can depend only on
+  // isSignedIn without re-subscribing each time Clerk hands back a new function.
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -20,7 +24,7 @@ export function usePush() {
         if (status !== 'granted') { const r = await Notifications.requestPermissionsAsync(); status = r.status; }
         if (status !== 'granted') return;
         const tok = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
-        const authToken = await getToken();
+        const authToken = await getTokenRef.current();
         if (alive && tok?.data) await registerPush(authToken, tok.data, Platform.OS);
       } catch {}
     })();

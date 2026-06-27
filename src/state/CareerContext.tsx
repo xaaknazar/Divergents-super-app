@@ -60,7 +60,8 @@ export function CareerProvider({ children }: { children: React.ReactNode }) {
       const list = await fetchVacancies();
       setJobs(list);
     } catch {
-      setJobs([]);
+      // Keep already-loaded vacancies on a transient refresh failure — only
+      // flag the error state so the screen can offer retry.
       setJobsError(true);
     } finally {
       setJobsLoading(false);

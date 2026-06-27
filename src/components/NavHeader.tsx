@@ -56,7 +56,7 @@ export function NavRoundButton({
       onPress={onPress ? () => { hSelect(); onPress(); } : undefined}
       hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? icon}
+      accessibilityLabel={accessibilityLabel ?? 'Кнопка'}
       style={({ pressed }) => ({
         width: size, height: size, borderRadius: size / 2,
         backgroundColor: dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.72)',

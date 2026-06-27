@@ -4,6 +4,7 @@ import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityInd
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer } from 'expo-video';
+import { useEvent } from 'expo';
 import { Audio } from 'expo-av';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,6 +39,10 @@ export function ServerChannelScreen({ route, navigation }: Props) {
 
   const player = useVideoPlayer(null, (p) => { p.loop = false; });
   const [playingId, setPlayingId] = useState<string | null>(null);
+  // Reset the "Играет" indicator when a track finishes, so the next tap restarts
+  // it instead of getting stuck showing pause forever.
+  const endEvent = useEvent(player, 'playToEnd', null);
+  useEffect(() => { if (endEvent) setPlayingId(null); }, [endEvent]);
 
   const owner = !!(ch?.createdBy && email && ch.createdBy.toLowerCase() === email.toLowerCase());
 
@@ -68,7 +73,10 @@ export function ServerChannelScreen({ route, navigation }: Props) {
 
   const playPost = (p: ServerChannelPost) => {
     if (!p.audioUrl) return;
-    try { player.replace(p.audioUrl); player.play(); setPlayingId(p.id); } catch {}
+    try {
+      if (playingId === p.id) { player.pause(); setPlayingId(null); return; } // toggle off
+      player.replace(p.audioUrl); player.play(); setPlayingId(p.id);
+    } catch {}
   };
 
   if (loading) {

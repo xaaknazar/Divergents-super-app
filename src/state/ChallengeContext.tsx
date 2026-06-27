@@ -72,19 +72,26 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const saved = await loadJSON<SavedProgress | null>(PROGRESS_KEY, null);
-      savedRef.current = saved;
-      if (alive && saved && saved.id === DEFAULT_CHALLENGE.id) {
-        setChallenge(applyProgress(DEFAULT_CHALLENGE, saved));
+      try {
+        const saved = await loadJSON<SavedProgress | null>(PROGRESS_KEY, null);
+        savedRef.current = saved;
+        if (alive && saved && saved.id === DEFAULT_CHALLENGE.id) {
+          setChallenge(applyProgress(DEFAULT_CHALLENGE, saved));
+        }
+        const token = isSignedIn ? await getTokenRef.current() : null;
+        const { challenge: live, members: m } = await fetchActiveChallenge(token);
+        if (!alive) return;
+        if (live) {
+          setChallenge(applyProgress(live, savedRef.current));
+          setMembers(m);
+        }
+      } catch {
+        // best-effort: keep the locally-restored challenge on any failure
+      } finally {
+        // Always clear loading, even if getToken()/fetch throws — otherwise the
+        // screen would spin forever.
+        if (alive) setLoading(false);
       }
-      const token = isSignedIn ? await getTokenRef.current() : null;
-      const { challenge: live, members: m } = await fetchActiveChallenge(token);
-      if (!alive) return;
-      if (live) {
-        setChallenge(applyProgress(live, savedRef.current));
-        setMembers(m);
-      }
-      setLoading(false);
     })();
     return () => { alive = false; };
   }, [isSignedIn]);

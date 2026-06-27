@@ -44,6 +44,11 @@ export function OfflineMapScreen({ navigation }: Props) {
   const [pct, setPct] = useState(0);
   const [packs, setPacks] = useState<any[]>([]);
   const [sel, setSel] = useState<string | null>(null);
+  // Stall-watchdog: MapLibre's createPack never reports an error on a silently
+  // stalled download, so the "Загрузка карты…" banner could hang forever. We arm
+  // a timer that's reset on every progress tick; no progress for 25s → give up.
+  const dlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (dlTimerRef.current) clearTimeout(dlTimerRef.current); }, []);
 
   const loadPacks = useCallback(() => { ML?.OfflineManager?.getPacks?.().then(setPacks).catch(() => {}); }, []);
   useEffect(() => { loadPacks(); }, [loadPacks]);
@@ -57,6 +62,14 @@ export function OfflineMapScreen({ navigation }: Props) {
     if (!ML?.OfflineManager) return;
     setBusy(true); setPct(0); setSheet(false);
     let done = false;
+    const clearWatchdog = () => { if (dlTimerRef.current) { clearTimeout(dlTimerRef.current); dlTimerRef.current = null; } };
+    const armWatchdog = () => {
+      clearWatchdog();
+      dlTimerRef.current = setTimeout(() => {
+        if (!done) { done = true; setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Загрузка прервана из-за слабой сети. Попробуйте позже.')); }
+      }, 25000);
+    };
+    armWatchdog();
     try {
       const lat = center.lat, lng = center.lng;
       const dLat = km / 111;
@@ -67,18 +80,21 @@ export function OfflineMapScreen({ navigation }: Props) {
       await ML.OfflineManager.createPack(
         { mapStyle: styleUrl, bounds, minZoom: 10, maxZoom: 16, metadata: { name: `${center.name} · ${label}`, createdAt: Date.now() } },
         (_pack: any, status: any) => {
+          if (done) return;
+          armWatchdog(); // progress arrived → reset the stall timer
           setPct(Math.round(status?.percentage ?? 0));
-          if (!done && (status?.percentage ?? 0) >= 100) {
+          if ((status?.percentage ?? 0) >= 100) {
             done = true;
+            clearWatchdog();
             setBusy(false);
             loadPacks();
             Alert.alert(tr('Скачано'), tr('Область скачана для офлайн-доступа.'));
           }
         },
-        () => { if (!done) { done = true; setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.')); } },
+        () => { if (!done) { done = true; clearWatchdog(); setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.')); } },
       );
     } catch {
-      if (!done) { setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.')); }
+      if (!done) { done = true; clearWatchdog(); setBusy(false); Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать область.')); }
     }
   };
 

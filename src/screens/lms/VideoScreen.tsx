@@ -12,7 +12,7 @@ import { Segmented, PrimaryButton, ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
-import { useDownloads } from '../../state/DownloadsContext';
+import { useDownloads } from '../../state/downloads';
 import { API_BASE, stripHtml, fetchComments, postComment, ChapterComment, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
@@ -53,6 +53,9 @@ export function VideoScreen({ route, navigation }: Props) {
   const needsPurchase = !owned && course?.source === 'live' && lesson?.isFree === false && !hls && !resolving;
   const unavailable = owned && !hls && !resolving;
   const player = useVideoPlayer(hls ?? '', (p) => { p.loop = false; });
+  // Offline-audio store. Called unconditionally (before any early return) so the
+  // hook count stays stable across renders — see Rules of Hooks.
+  const { isDownloaded, downloadLesson, removeDownload, isDownloading } = useDownloads();
   const videoRef = useRef<VideoView>(null);
 
   // Autoplay once a real HLS source is available (also covers the case where the
@@ -119,16 +122,14 @@ export function VideoScreen({ route, navigation }: Props) {
     );
   }
   const alreadyDone = isCompleted(courseId, lesson.id);
-  const { isDownloaded, download, remove, downloading } = useDownloads();
   const audioUrl = lessonAudioUrl(lesson);
-  const dlKey = `${courseId}:${lesson.id}`;
-  const downloaded = isDownloaded(courseId, lesson.id);
-  const dlBusy = downloading === dlKey;
+  const downloaded = isDownloaded(lesson.id);
+  const dlBusy = isDownloading(lesson.id);
   const onDownloadAudio = async () => {
-    if (downloaded) { await remove(dlKey); return; }
-    if (!audioUrl) { Alert.alert('Аудио недоступно', 'Для этого урока пока нет аудиоверсии.'); return; }
-    const okDl = await download({ courseId, courseTitle: course.title, lessonId: lesson.id, title: lesson.title, audioUrl });
-    if (!okDl) Alert.alert('Не удалось скачать', 'Проверьте подключение и попробуйте снова.');
+    if (downloaded) { await removeDownload(lesson.id); return; }
+    if (!audioUrl) { Alert.alert(tr('Аудио недоступно'), tr('Для этого урока пока нет аудиоверсии.')); return; }
+    const okDl = await downloadLesson({ lessonId: lesson.id, courseId, courseTitle: course.title, title: lesson.title, n: lesson.n, owned: true }, audioUrl);
+    if (!okDl) Alert.alert(tr('Не удалось скачать'), tr('Проверьте подключение и попробуйте снова.'));
   };
   const attachments = course.attachments ?? [];
 
@@ -164,7 +165,7 @@ export function VideoScreen({ route, navigation }: Props) {
       {/* Video area */}
       <View style={{ paddingTop: insets.top, height: 240 + insets.top, backgroundColor: '#0E1729' }}>
         <View style={{ position: 'absolute', top: insets.top + 12, left: 12, right: 12, zIndex: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Pressable onPress={() => navigation.goBack()} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Закрыть')} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
             <SF name="chevron.down" size={18} color="#fff" />
           </Pressable>
           <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 8 }}>
@@ -215,7 +216,7 @@ export function VideoScreen({ route, navigation }: Props) {
           {owned && audioUrl ? (
             <Pressable onPress={onDownloadAudio} disabled={dlBusy} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: downloaded ? T.brandTinted : T.fillSecondary, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 }}>
               {dlBusy ? <ActivityIndicator color={T.brand} /> : <SF name={downloaded ? 'checkmark.circle.fill' : 'arrow.down.circle'} size={16} color={T.brand} />}
-              <Text style={[ty.footnoteEm, { color: T.brand }]}>{dlBusy ? 'Скачивание…' : downloaded ? 'Аудио скачано · удалить' : 'Скачать аудио (офлайн)'}</Text>
+              <Text style={[ty.footnoteEm, { color: T.brand }]}>{dlBusy ? tr('Скачивание…') : downloaded ? tr('Аудио скачано · удалить') : tr('Скачать аудио (офлайн)')}</Text>
             </Pressable>
           ) : null}
         </View>

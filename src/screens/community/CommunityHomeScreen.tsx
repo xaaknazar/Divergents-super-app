@@ -91,8 +91,8 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
     <Screen largeTitle={tr('Сообщество')} onRefresh={onRefresh}>
       <NavBarLarge title={t('community')} trailing={(
         <>
-          {canCreate ? <HeaderIcon name="plus" color={T.brand} onPress={() => openCreateSheet(navigation)} /> : null}
-          <HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+          {canCreate ? <HeaderIcon name="plus" color={T.brand} label="Создать" onPress={() => openCreateSheet(navigation)} /> : null}
+          <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
         </>
       )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
@@ -337,7 +337,15 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
               <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{going} идут · {sp.spotsLabel}</Text>
               {sp.note ? <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 2 }]} numberOfLines={2}>{sp.note}</Text> : null}
             </View>
-            <Pressable onPress={async () => { toggle(k); if (!on) { try { const tk = await getToken(); await joinSport(tk, sp.id); } catch {} } }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
+            <Pressable onPress={async () => {
+              const joining = !on;
+              toggle(k); // optimistic
+              if (joining) {
+                let okJoin = false;
+                try { const tk = await getToken(); okJoin = await joinSport(tk, sp.id); } catch { okJoin = false; }
+                if (!okJoin) { toggle(k); Alert.alert(tr('Не удалось записаться'), tr('Проверьте подключение и попробуйте снова.')); }
+              }
+            }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
               <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{on ? 'Вы идёте' : 'Участвую'}</Text>
             </Pressable>
             {i < sport.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}

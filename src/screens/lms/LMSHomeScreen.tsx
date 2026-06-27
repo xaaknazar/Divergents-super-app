@@ -33,7 +33,7 @@ export function LMSHomeScreen({ navigation }: Props) {
     const m: Record<string, number> = {};
     my.courses.forEach((c) => { m[c.id] = Math.max(Math.round(c.serverProgress ?? 0), Math.round(progress(c.id) * 100)); });
     return m;
-  }, [my.courses]);
+  }, [my.courses, progress]);
 
   const categories = useMemo(
     () => ['Все', ...Array.from(new Set(courses.map((c) => c.category).filter(Boolean)))],
@@ -65,7 +65,7 @@ export function LMSHomeScreen({ navigation }: Props) {
 
   return (
     <Screen largeTitle={t('tab_learn')} onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
-      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
+      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 16 }}>
         <Logo size={36} />

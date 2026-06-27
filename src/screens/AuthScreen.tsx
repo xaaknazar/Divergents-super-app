@@ -61,11 +61,14 @@ export function AuthScreen({}: Props) {
     setMode('up');
   };
 
-  const sendCode = async () => {
+  const sendCode = async (forceIntent?: 'in' | 'up') => {
     if (!isLoaded || !email.trim()) return;
+    // `recover()` flips intent and calls this synchronously, so the closure's
+    // `intent` is still stale — accept an explicit override.
+    const useIntent = forceIntent ?? intent;
     setBusy(true); setError(null); setInfo(null);
     try {
-      if (intent === 'in') {
+      if (useIntent === 'in') {
         try { await prepSignIn(); }
         catch (e: any) {
           if (e?.errors?.[0]?.code === 'form_identifier_not_found') { await prepSignUp(); setInfo(t('note_new')); }
@@ -132,7 +135,7 @@ export function AuthScreen({}: Props) {
     setError(null);
     if (!email.trim()) { setInfo(t('recover_body')); return; }
     setIntent('in'); setInfo(null);
-    sendCode();
+    sendCode('in');
   };
 
   const auroraTop = isDark ? ['rgba(35,64,136,0.35)', 'rgba(35,64,136,0)'] : ['rgba(35,64,136,0.14)', 'rgba(35,64,136,0)'];
@@ -176,7 +179,7 @@ export function AuthScreen({}: Props) {
                     placeholder={t('email_ph')} placeholderTextColor={T.labelTertiary}
                     autoCapitalize="none" keyboardType="email-address" autoCorrect={false} autoFocus
                     style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]}
-                    onSubmitEditing={sendCode} returnKeyType="go"
+                    onSubmitEditing={() => sendCode()} returnKeyType="go"
                   />
                   {email.length > 0 ? <Pressable onPress={() => setEmail('')} hitSlop={8}><SF name="xmark.circle.fill" size={17} color={T.labelTertiary} /></Pressable> : null}
                 </View>
@@ -184,7 +187,7 @@ export function AuthScreen({}: Props) {
                 {error ? <Text style={[ty.footnote, { color: T.red, marginTop: 10, marginLeft: 2 }]}>{error}</Text> : null}
                 {!error && info ? <Text style={[ty.footnote, { color: T.brandAccent, marginTop: 10, marginLeft: 2 }]}>{info}</Text> : null}
 
-                <GradientButton label={t('cont')} icon="arrow.right" loading={busy} onPress={sendCode} T={T} style={{ marginTop: 16 }} />
+                <GradientButton label={t('cont')} icon="arrow.right" loading={busy} disabled={!isLoaded || !email.trim()} onPress={() => sendCode()} T={T} style={{ marginTop: 16 }} />
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14 }}>
                   <SF name="lock.open.fill" size={12} color={T.labelTertiary} />
@@ -258,11 +261,11 @@ export function AuthScreen({}: Props) {
   );
 }
 
-function GradientButton({ label, icon, loading, onPress, T, style }: { label: string; icon?: any; loading?: boolean; onPress: () => void; T: any; style?: any }) {
+function GradientButton({ label, icon, loading, disabled, onPress, T, style }: { label: string; icon?: any; loading?: boolean; disabled?: boolean; onPress: () => void; T: any; style?: any }) {
   return (
-    <Pressable onPress={onPress} disabled={loading} style={style}>
+    <Pressable onPress={onPress} disabled={loading || disabled} style={style}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={{ height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: loading ? 0.7 : 1, shadowColor: T.brand, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } }}>
+        style={{ height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: loading || disabled ? 0.5 : 1, shadowColor: T.brand, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } }}>
         <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
         {icon && !loading ? <SF name={icon} size={16} color="#fff" /> : null}
       </LinearGradient>

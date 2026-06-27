@@ -73,7 +73,7 @@ export function BooksCatalogScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <BackNav back="Обучение" onBack={() => navigation.goBack()}
-        trailing={<HeaderIcon name="sparkles" color={T.brand} onPress={() => navigation.navigate('BookAI')} />} />
+        trailing={<HeaderIcon name="sparkles" color={T.brand} label="AI-помощник" onPress={() => navigation.navigate('BookAI')} />} />
       <Screen topInset={false} aurora={false} onRefresh={load}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
           <Text style={[ty.largeTitle, { color: T.label }]}>Книги</Text>

@@ -63,7 +63,7 @@ export function CreateContentScreen({ navigation }: Props) {
       } else if (kind === 'trip') {
         success = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null, meetPlace: meetPlace.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
       } else if (kind === 'sport') {
-        success = await createSport(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: date.trim() || null });
+        success = await createSport(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
       } else {
         success = await createChannel(token, { name: title.trim(), access, price: access === 'paid' ? price.trim() || null : null, bio: bio.trim() || null, avatarUrl: avatar || undefined });
       }
@@ -121,7 +121,8 @@ export function CreateContentScreen({ navigation }: Props) {
           ) : kind === 'sport' ? (
             <>
               <Field label="МЕСТО"><TextInput value={place} onChangeText={setPlace} placeholder="напр. Манеж, Алматы" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
-              <Field label="ДАТА/ВРЕМЯ"><TextInput value={date} onChangeText={setDate} placeholder="напр. сб 10:00" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
+              <Field label="ДАТА (ТЕКСТОМ)"><TextInput value={date} onChangeText={setDate} placeholder="напр. сб 10:00" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
+              <Field label="ВРЕМЯ ВСТРЕЧИ"><TextInput value={meetAt} onChangeText={setMeetAt} placeholder="ГГГГ-ММ-ДД ЧЧ:ММ — напр. 2026-07-12 09:00" placeholderTextColor={T.labelTertiary} autoCapitalize="none" style={inp} /></Field>
               <Field label="МЕСТ"><TextInput value={spots} onChangeText={(t) => setSpots(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" style={inp} /></Field>
               <Field label="ОПИСАНИЕ"><TextInput value={desc} onChangeText={setDesc} multiline placeholder="Кратко" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 80, textAlignVertical: 'top' }]} /></Field>
               <Field label="МЕСТО НА КАРТЕ">

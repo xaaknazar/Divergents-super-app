@@ -37,7 +37,7 @@ export function ChallengeTaskRow({
     );
   }
 
-  const pct = task.current / task.min;
+  const pct = task.min > 0 ? task.current / task.min : 0;
   const over = pct > 1;
   const bonus = taskBonus(task);
 

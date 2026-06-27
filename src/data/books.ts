@@ -51,11 +51,23 @@ export interface BookDetailResponse {
 
 export interface ShelfEntry { status: ShelfStatus; progress: number; book: { id: string; title: string; author: string; imageUrl?: string | null; rating?: number | null } }
 
+// fetch() with an abort-timeout — RN's fetch never times out on its own, so a
+// stalled socket would hang the catalog screen's spinner forever.
+async function timedFetch(url: string, init?: RequestInit, timeoutMs = 12000): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function authedGet<T>(path: string, token: string | null, fallback: T): Promise<T> {
   try {
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (token) headers.Authorization = `Bearer ${token}`;
-    const r = await fetch(`${API_BASE}${path}`, { headers });
+    const r = await timedFetch(`${API_BASE}${path}`, { headers });
     if (!r.ok) return fallback;
     return (await r.json()) as T;
   } catch { return fallback; }
@@ -64,7 +76,7 @@ async function authedGet<T>(path: string, token: string | null, fallback: T): Pr
 async function authedPost(path: string, token: string | null, body: any): Promise<any | null> {
   if (!token) return null;
   try {
-    const r = await fetch(`${API_BASE}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+    const r = await timedFetch(`${API_BASE}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
     if (!r.ok) return null;
     return await r.json();
   } catch { return null; }

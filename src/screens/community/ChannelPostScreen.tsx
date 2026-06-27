@@ -65,7 +65,7 @@ export function ChannelPostScreen({ route, navigation }: Props) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <Image source={{ uri: chan?.avatar }} style={{ width: 28, height: 28, borderRadius: 14 }} contentFit="cover" />
             <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{chan?.name}</Text>
-            <SF name="checkmark.seal.fill" size={13} color={T.sky} />
+            {chan?.verified ? <SF name="checkmark.seal.fill" size={13} color={T.sky} /> : null}
             <Text style={[ty.caption1, { color: T.labelTertiary }]} numberOfLines={1}>· {post.date}</Text>
           </View>
           <Text style={[ty.title1, { color: T.label }]}>{post.title}</Text>

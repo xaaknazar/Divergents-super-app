@@ -107,7 +107,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   return (
     <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await reload(); }}>
       <NavBarLarge title={t('profile')} trailing={(
-        <HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+        <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
       {/* Gradient hero card */}

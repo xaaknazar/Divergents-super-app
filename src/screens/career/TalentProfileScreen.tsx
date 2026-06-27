@@ -251,7 +251,7 @@ export function TalentProfileScreen({ navigation }: Props) {
         {(profile?.reports ?? []).length > 0 ? (
           <ListSection header={tr('Отчёты')}>
             {profile!.reports.map((rep, i) => (
-              <ListRow key={i} onPress={() => Linking.openURL(encodeURI(rep.url))}
+              <ListRow key={i} onPress={() => Linking.openURL(encodeURI(rep.url)).catch(() => Alert.alert(tr('Не удалось открыть отчёт'), tr('Проверьте подключение и попробуйте снова.')))}
                 leading={<SF name="doc.fill" size={20} color={T.brand} />} title={rep.title}
                 trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />}
                 last={i === profile!.reports.length - 1} />

@@ -123,6 +123,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
             title={trip.organizer} subtitle={trip.organizerType} last />
         </ListSection>
 
+        {trip.itinerary.length > 0 ? (
         <ListSection header={`Маршрут · ${trip.days} дн.`}>
           {trip.itinerary.map((r, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
@@ -138,13 +139,16 @@ export function TripDetailScreen({ route, navigation }: Props) {
             </View>
           ))}
         </ListSection>
+        ) : null}
 
+        {trip.included.length > 0 ? (
         <ListSection header={tr('Что включено')}>
           {trip.included.map((it, i) => (
             <ListRow key={i} leading={<SF name={it.icon} size={18} color={T.brand} />} title={it.t}
               trailing={<SF name="checkmark" size={16} color={T.green} />} last={i === trip.included.length - 1} />
           ))}
         </ListSection>
+        ) : null}
 
         <ListSection header={`Идут · ${goingCount} человек`}>
           {goingCount === 0 ? (

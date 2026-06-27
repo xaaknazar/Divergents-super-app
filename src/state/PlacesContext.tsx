@@ -50,7 +50,9 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     setPlacesError(false);
     fetchPlaces()
       .then((list) => { setRemotePlaces(list); setPlacesError(false); })
-      .catch(() => { setRemotePlaces([]); setPlacesError(true); })
+      // Keep already-loaded places on a transient refresh failure — only flag
+      // the error so the screen can offer retry without blanking the map/list.
+      .catch(() => { setPlacesError(true); })
       .finally(() => setPlacesLoading(false));
   }, []);
 

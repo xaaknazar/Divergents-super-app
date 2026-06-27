@@ -64,7 +64,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           if (!meta) return null;
           const color = focused ? T.brand : T.labelTertiary;
           return (
-            <Pressable key={route.key} onPress={() => {
+            <Pressable key={route.key}
+              accessibilityRole="button"
+              accessibilityState={{ selected: focused }}
+              accessibilityLabel={t(meta.label)}
+              onPress={() => {
               const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
               if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
             }} style={{ flex: 1, alignItems: 'center', gap: 3, paddingHorizontal: 2 }}>
