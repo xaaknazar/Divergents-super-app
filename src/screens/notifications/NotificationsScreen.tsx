@@ -49,10 +49,10 @@ export function NotificationsScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Закрыть')}</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]}>{tr('Уведомления')}</Text>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]} numberOfLines={1}>{tr('Закрыть')}</Text></Pressable>
+        <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Уведомления')}</Text>
         <Pressable onPress={markAllRead} hitSlop={8} disabled={unread === 0}>
-          <Text style={[ty.subhead, { color: unread ? T.brandAccent : T.labelTertiary }]}>{tr('Прочитать')}</Text>
+          <Text style={[ty.subhead, { color: unread ? T.brandAccent : T.labelTertiary }]} numberOfLines={1}>{tr('Прочитать')}</Text>
         </Pressable>
       </View>
 

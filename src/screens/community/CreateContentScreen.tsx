@@ -58,7 +58,7 @@ export function CreateContentScreen({ navigation }: Props) {
         const on = value === it.k;
         return (
           <Pressable key={it.k} onPress={() => onChange(it.k)} style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? T.cardBg : 'transparent' }}>
-            <Text style={[ty.footnoteEm, { color: on ? T.brand : T.labelSecondary }]}>{it.label}</Text>
+            <Text style={[ty.footnoteEm, { color: on ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{it.label}</Text>
           </Pressable>
         );
       })}
@@ -66,7 +66,7 @@ export function CreateContentScreen({ navigation }: Props) {
   );
   const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <View style={{ marginTop: 14 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{label}</Text>
+      <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{label}</Text>
       {children}
     </View>
   );
@@ -76,7 +76,7 @@ export function CreateContentScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]}>Отмена</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]}>Создать</Text>
+        <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Создать</Text>
         <View style={{ width: 56 }} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 8}>

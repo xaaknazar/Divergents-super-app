@@ -110,7 +110,7 @@ export function VideoScreen({ route, navigation }: Props) {
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="play.slash" size={28} color={T.labelTertiary} />
           </View>
-          <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]}>{tr('Урок недоступен')}</Text>
+          <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Урок недоступен')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Этот урок не найден или ещё не загружен. Вернитесь к курсу и попробуйте снова.')}</Text>
           <PrimaryButton label={tr('Назад к курсу')} icon="chevron.left" onPress={() => navigation.goBack()} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />
         </View>
@@ -156,7 +156,7 @@ export function VideoScreen({ route, navigation }: Props) {
             <SF name="chevron.down" size={18} color="#fff" />
           </Pressable>
           <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 8 }}>
-            <Text style={[ty.subheadEm, { color: '#fff' }]}>{tr('Урок')} {lesson.n}</Text>
+            <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>{tr('Урок')} {lesson.n}</Text>
             <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1}>{lesson.title}</Text>
           </View>
           {hls ? (
@@ -174,19 +174,19 @@ export function VideoScreen({ route, navigation }: Props) {
           ) : needsPurchase ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]}>{tr('Урок по подписке')}</Text>
+              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Урок по подписке')}</Text>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Купите курс на сайте, чтобы открыть все уроки')}</Text>
             </View>
           ) : unavailable ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="exclamationmark.triangle.fill" size={36} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]}>{tr('Видео недоступно')}</Text>
+              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Видео недоступно')}</Text>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Видео этого урока сейчас не загружается. Проверьте подключение или попробуйте позже.')}</Text>
             </View>
           ) : (
             <View style={{ alignItems: 'center' }}>
               <SF name="play.circle.fill" size={64} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.6)', marginTop: 10 }]}>{tr('Демо-урок без видео')}</Text>
+              <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.6)', marginTop: 10 }]} numberOfLines={1}>{tr('Демо-урок без видео')}</Text>
             </View>
           )}
         </View>
@@ -199,7 +199,7 @@ export function VideoScreen({ route, navigation }: Props) {
         </View>
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <Text style={[ty.title3, { color: T.label }]} numberOfLines={2}>{lesson.title}</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{tr('Урок')} {lesson.n} {tr('из')} {course.lessons.length} · {course.title}</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{tr('Урок')} {lesson.n} {tr('из')} {course.lessons.length} · {course.title}</Text>
         </View>
         <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
           <Segmented items={['Заметки', 'Материалы', 'Обсуждение']} value={tab} onChange={setTab} />
@@ -258,7 +258,7 @@ export function VideoScreen({ route, navigation }: Props) {
                     </View>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={[ty.subheadEm, { color: T.label }]}>{fullName(c)}</Text>
+                        <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{fullName(c)}</Text>
                         <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtDate(c.createdAt)}</Text>
                         {c.isPinned ? <SF name="bookmark.fill" size={11} color={T.orange} /> : null}
                       </View>

@@ -69,7 +69,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
             }} style={{ flex: 1, alignItems: 'center', gap: 3, paddingHorizontal: 2 }}>
               <SF name={focused ? meta.on : meta.off} size={24} color={color} />
-              <Text numberOfLines={1} style={[ty.caption2, { color, fontWeight: '500', fontSize: 10, lineHeight: 13 }]}>{t(meta.label)}</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[ty.caption2, { color, fontWeight: '500', fontSize: 10, lineHeight: 13 }]}>{t(meta.label)}</Text>
             </Pressable>
           );
         })}

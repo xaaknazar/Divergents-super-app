@@ -127,10 +127,12 @@ type TY = Record<string, TextStyle>;
 // Canonical (1×) type scale — the single source of truth. `ty` is derived from
 // this and can be re-scaled at runtime by the text-size personalization setting.
 const TY_BASE: TY = {
-  largeTitle: { fontFamily: FONT.extrabold, fontSize: 34, lineHeight: 41, letterSpacing: 0.2 },
-  title1:     { fontFamily: FONT.extrabold, fontSize: 28, lineHeight: 34, letterSpacing: 0.2 },
-  title2:     { fontFamily: FONT.extrabold, fontSize: 22, lineHeight: 28, letterSpacing: 0.2 },
-  title3:     { fontFamily: FONT.bold, fontSize: 20, lineHeight: 25, letterSpacing: 0.2 },
+  // Gotham Rounded carries more inherent width than Nunito, so the large/title
+  // styles drop the positive tracking (would otherwise push labels to wrap).
+  largeTitle: { fontFamily: FONT.extrabold, fontSize: 34, lineHeight: 41, letterSpacing: 0 },
+  title1:     { fontFamily: FONT.extrabold, fontSize: 28, lineHeight: 34, letterSpacing: 0 },
+  title2:     { fontFamily: FONT.extrabold, fontSize: 22, lineHeight: 28, letterSpacing: 0 },
+  title3:     { fontFamily: FONT.bold, fontSize: 20, lineHeight: 25, letterSpacing: 0 },
   headline:   { fontFamily: FONT.bold, fontSize: 17, lineHeight: 22, letterSpacing: -0.2 },
   body:       { fontFamily: FONT.regular, fontSize: 17, lineHeight: 23, letterSpacing: -0.2 },
   callout:    { fontFamily: FONT.regular, fontSize: 16, lineHeight: 21, letterSpacing: -0.2 },
@@ -139,8 +141,8 @@ const TY_BASE: TY = {
   footnote:   { fontFamily: FONT.regular, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
   footnoteEm: { fontFamily: FONT.bold, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
   caption1:   { fontFamily: FONT.regular, fontSize: 12, lineHeight: 16, letterSpacing: 0 },
-  caption2:   { fontFamily: FONT.semibold, fontSize: 11, lineHeight: 14, letterSpacing: 0.1 },
-  caption2Em: { fontFamily: FONT.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0.1 },
+  caption2:   { fontFamily: FONT.semibold, fontSize: 11, lineHeight: 14, letterSpacing: 0 },
+  caption2Em: { fontFamily: FONT.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0 },
 };
 
 // Live type scale. NOTE: the object reference is stable — existing

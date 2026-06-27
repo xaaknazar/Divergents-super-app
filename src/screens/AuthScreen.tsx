@@ -147,7 +147,7 @@ export function AuthScreen({}: Props) {
             <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
               <Logo size={50} />
             </View>
-            <Text style={[ty.largeTitle, { color: T.label, marginTop: 18 }]}>{t('welcome')}</Text>
+            <Text style={[ty.largeTitle, { color: T.label, marginTop: 18 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t('welcome')}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center', paddingHorizontal: 8 }]}>{t('auth_sub')}</Text>
           </View>
 
@@ -161,7 +161,7 @@ export function AuthScreen({}: Props) {
                     const on = intent === k;
                     return (
                       <Pressable key={k} onPress={() => { setIntent(k); setError(null); }} style={{ flex: 1, paddingVertical: 9, borderRadius: 10, alignItems: 'center', backgroundColor: on ? T.cardBg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.1 : 0, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                        <Text style={[ty.subheadEm, { color: on ? T.brand : T.labelSecondary }]}>{k === 'in' ? t('tab_signin') : t('tab_signup')}</Text>
+                        <Text style={[ty.subheadEm, { color: on ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{k === 'in' ? t('tab_signin') : t('tab_signup')}</Text>
                       </Pressable>
                     );
                   })}
@@ -195,10 +195,10 @@ export function AuthScreen({}: Props) {
               <>
                 <Pressable onPress={() => { setStep('email'); setCode(''); setError(null); }} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginBottom: 14 }}>
                   <SF name="chevron.left" size={15} color={T.brandAccent} />
-                  <Text style={[ty.body, { color: T.brandAccent }]}>{t('change_email')}</Text>
+                  <Text style={[ty.body, { color: T.brandAccent }]} numberOfLines={1}>{t('change_email')}</Text>
                 </Pressable>
 
-                <Text style={[ty.title3, { color: T.label }]}>{t('code_title')}</Text>
+                <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t('code_title')}</Text>
                 <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{t('code_sent')} <Text style={[ty.subheadEm, { color: T.label }]}>{email}</Text></Text>
                 {info ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 12, backgroundColor: T.brandTinted, borderRadius: 11, paddingVertical: 9, paddingHorizontal: 12 }}>
@@ -227,7 +227,7 @@ export function AuthScreen({}: Props) {
                 <GradientButton label={mode === 'up' ? t('verify_up') : t('verify_in')} icon="checkmark" loading={busy} onPress={verify} T={T} style={{ marginTop: 18 }} />
 
                 <Pressable onPress={resend} disabled={left > 0 || busy} style={{ alignItems: 'center', marginTop: 16 }}>
-                  <Text style={[ty.subhead, { color: left > 0 ? T.labelTertiary : T.brandAccent }]}>
+                  <Text style={[ty.subhead, { color: left > 0 ? T.labelTertiary : T.brandAccent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                     {left > 0 ? `${t('resend_in')} 0:${left.toString().padStart(2, '0')}` : t('resend')}
                   </Text>
                 </Pressable>
@@ -237,7 +237,7 @@ export function AuthScreen({}: Props) {
 
           {step === 'email' ? (
             <Pressable onPress={recover} disabled={busy} style={{ alignItems: 'center', marginTop: 18 }}>
-              <Text style={[ty.subhead, { color: T.brandAccent }]}>{t('recover')}</Text>
+              <Text style={[ty.subhead, { color: T.brandAccent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t('recover')}</Text>
             </Pressable>
           ) : null}
 
@@ -263,7 +263,7 @@ function GradientButton({ label, icon, loading, onPress, T, style }: { label: st
     <Pressable onPress={onPress} disabled={loading} style={style}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={{ height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: loading ? 0.7 : 1, shadowColor: T.brand, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } }}>
-        <Text style={[ty.headline, { color: '#fff' }]}>{label}</Text>
+        <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
         {icon && !loading ? <SF name={icon} size={16} color="#fff" /> : null}
       </LinearGradient>
     </Pressable>

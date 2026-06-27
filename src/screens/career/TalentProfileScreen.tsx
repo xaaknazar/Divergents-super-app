@@ -97,7 +97,7 @@ export function TalentProfileScreen({ navigation }: Props) {
         <Pressable onPress={() => { hSelect(); onPress(); }} hitSlop={8} accessibilityRole="button"
           accessibilityLabel={accessibilityLabel ?? action ?? tr('Изменить')}
           style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
-          <Text style={[ty.footnoteEm, { color: T.brandAccent }]}>{action ?? tr('Изменить')}</Text>
+          <Text style={[ty.footnoteEm, { color: T.brandAccent }]} numberOfLines={1}>{action ?? tr('Изменить')}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -151,7 +151,7 @@ export function TalentProfileScreen({ navigation }: Props) {
           {profile?.photoUrl
             ? <Image source={{ uri: profile.photoUrl }} style={{ width: 88, height: 88, borderRadius: 24 }} contentFit="cover" cachePolicy="memory-disk" />
             : <View style={{ width: 88, height: 88, borderRadius: 24, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.largeTitle, { color: '#fff' }]}>{(profile?.fullName ?? 'D').charAt(0)}</Text></View>}
-          <Text style={[ty.title2, { color: T.label, marginTop: 12 }]}>{profile?.fullName ?? '—'}</Text>
+          <Text style={[ty.title2, { color: T.label, marginTop: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{profile?.fullName ?? '—'}</Text>
           {!live ? <View style={{ marginTop: 6 }}><Capsule bg={T.fillTertiary} color={T.labelSecondary}>{tr('демо-данные')}</Capsule></View> : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
             {profile?.mbtiType ? <Capsule bg={T.brandTinted} color={T.brand}>MBTI · {profile.mbtiType}</Capsule> : null}
@@ -186,7 +186,7 @@ export function TalentProfileScreen({ navigation }: Props) {
               <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.headline, { color: '#fff' }]}>{profile.mbtiType}</Text>
               </View>
-              <Text style={[ty.body, { color: T.label, flex: 1 }]}>{profile.mbtiName || mbtiName(profile.mbtiType) || 'Тип личности'}</Text>
+              <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{profile.mbtiName || mbtiName(profile.mbtiType) || 'Тип личности'}</Text>
             </View>
           </ListSection>
         ) : null}

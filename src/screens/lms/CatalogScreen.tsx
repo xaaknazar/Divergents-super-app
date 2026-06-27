@@ -75,8 +75,8 @@ export function CatalogScreen({ navigation }: Props) {
           <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.cardBg, borderRadius: 16, flexDirection: 'row', paddingVertical: 14, ...shadows.card }}>
             {strip.map((s, i) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < strip.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-                <Text style={[ty.title2, { color: i === 0 ? T.brand : T.label }]}>{s.v}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{s.l}</Text>
+                <Text style={[ty.title2, { color: i === 0 ? T.brand : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.v}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.3 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.l}</Text>
               </View>
             ))}
           </View>
@@ -91,12 +91,12 @@ export function CatalogScreen({ navigation }: Props) {
                   <Cover course={c} />
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={[ty.headline, { color: T.label, lineHeight: 20 }]} numberOfLines={2}>{c.title}</Text>
-                    <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{c.category}</Text>
-                    <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{c.lessonsLabel} · {formatPrice(c.price)}</Text>
+                    <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{c.category}</Text>
+                    <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{c.lessonsLabel} · {formatPrice(c.price)}</Text>
                     {p > 0 ? (
                       <View style={{ marginTop: 8 }}>
                         <ProgressBar value={p} height={3} />
-                        <Text style={[ty.caption2, { color: T.brand, marginTop: 4 }]}>{Math.round(p * 100)}% завершено</Text>
+                        <Text style={[ty.caption2, { color: T.brand, marginTop: 4 }]} numberOfLines={1}>{Math.round(p * 100)}% завершено</Text>
                       </View>
                     ) : null}
                   </View>

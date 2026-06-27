@@ -78,10 +78,10 @@ export function ChannelScreen({ route, navigation }: Props) {
                 <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{channel.name}</Text>
                 {channel.verified ? <SF name="checkmark.seal.fill" size={15} color={T.sky} /> : null}
               </View>
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>@{channel.handle}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>@{channel.handle}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
                 <SF name="person.2.fill" size={12} color={T.labelTertiary} />
-                <Text style={[ty.caption1, { color: T.labelTertiary }]}>{subs.toLocaleString(lang === 'ru' ? 'ru-RU' : 'en-US')} {t('subscribers')}</Text>
+                <Text style={[ty.caption1, { color: T.labelTertiary }]} numberOfLines={1}>{subs.toLocaleString(lang === 'ru' ? 'ru-RU' : 'en-US')} {t('subscribers')}</Text>
                 {channel.access === 'request' ? <Capsule bg={T.fillSecondary} color={T.labelSecondary}><SF name="lock.fill" size={9} color={T.labelSecondary} />{t('by_request')}</Capsule> : null}
               </View>
             </View>
@@ -89,7 +89,7 @@ export function ChannelScreen({ route, navigation }: Props) {
           <Text style={[ty.subhead, { color: T.label, marginTop: 12 }]}>{channel.bio}</Text>
           <Pressable onPress={btnAction} disabled={btnDisabled} style={{ marginTop: 14, height: 46, borderRadius: 14, backgroundColor: btnMuted ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name={btnIcon} size={16} color={btnMuted ? T.label : '#fff'} />
-            <Text style={[ty.headline, { color: btnMuted ? T.label : '#fff' }]}>{btnLabel}</Text>
+            <Text style={[ty.headline, { color: btnMuted ? T.label : '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{btnLabel}</Text>
           </Pressable>
         </View>
 
@@ -98,7 +98,7 @@ export function ChannelScreen({ route, navigation }: Props) {
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
               <SF name="lock.fill" size={28} color={T.labelSecondary} />
             </View>
-            <Text style={[ty.headline, { color: T.label, marginTop: 14 }]}>
+            <Text style={[ty.headline, { color: T.label, marginTop: 14 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               {requested ? t('request_pending') : t('access_by_request_title')}
             </Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>
@@ -137,7 +137,7 @@ function PostCard({ post, onPress }: { post: ChannelPost; onPress: () => void })
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Capsule bg={T.brandTinted} color={T.brand}><SF name={audio ? 'waveform' : 'doc.text.fill'} size={10} color={T.brand} />{audio ? tt('audio') : tt('article')}</Capsule>
-            <Text style={[ty.caption2, { color: T.labelTertiary }]}>{post.date}</Text>
+            <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{post.date}</Text>
           </View>
           <Text style={[ty.subheadEm, { color: T.label, marginTop: 6 }]} numberOfLines={2}>{post.title}</Text>
           <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 3 }]} numberOfLines={2}>{post.excerpt}</Text>
@@ -157,7 +157,7 @@ function Meta({ icon, text }: { icon: SFName; text: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       <SF name={icon} size={12} color={T.labelTertiary} />
-      <Text style={[ty.caption2, { color: T.labelTertiary }]}>{text}</Text>
+      <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{text}</Text>
     </View>
   );
 }

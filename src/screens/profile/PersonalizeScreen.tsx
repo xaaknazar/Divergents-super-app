@@ -19,7 +19,7 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'Personalize'>;
 function SectionLabel({ children }: { children: string }) {
   const { T } = useTheme();
   return (
-    <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 20, marginBottom: 10 }]}>
+    <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 20, marginBottom: 10 }]} numberOfLines={1}>
       {children}
     </Text>
   );
@@ -60,7 +60,7 @@ export function PersonalizeScreen({ navigation }: Props) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <Ring value={0.72} size={64} color="#fff" label="72%" textColor="#fff" />
               <View style={{ flex: 1 }}>
-                <Text style={[ty.title3, { color: '#fff' }]} numberOfLines={1}>{tr('Предпросмотр')}</Text>
+                <Text style={[ty.title3, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Предпросмотр')}</Text>
                 <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={2}>{tr('Так выглядит ваша тема')}</Text>
                 <View style={{ flexDirection: 'row', gap: 6, marginTop: 9 }}>
                   <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="sparkles" size={11} color="#fff" />{accObj.name}</Capsule>
@@ -116,7 +116,7 @@ export function PersonalizeScreen({ navigation }: Props) {
                     {on ? <SF name="checkmark" size={20} color="#fff" /> : null}
                   </LinearGradient>
                 </View>
-                <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>{a.name}</Text>
+                <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{a.name}</Text>
               </Pressable>
             );
           })}
@@ -151,7 +151,7 @@ export function PersonalizeScreen({ navigation }: Props) {
                     {on ? <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' }}><SF name="checkmark" size={15} color="#111" /></View> : null}
                   </LinearGradient>
                 </View>
-                <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, textAlign: 'center', marginTop: 5 }]} numberOfLines={1}>{b.name}</Text>
+                <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, textAlign: 'center', marginTop: 5 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{b.name}</Text>
               </Pressable>
             );
           })}

@@ -79,7 +79,7 @@ export function RegisterScreen({ navigation }: Props) {
         </View>
         <View style={{ marginTop: 28, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
-            <Text style={[ty.subheadEm, { color: T.label }]}>{tr('Заполненность анкеты Talentslab')}</Text>
+            <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{tr('Заполненность анкеты Talentslab')}</Text>
             <Text style={[ty.title3, { color: T.brand }]}>{pct}%</Text>
           </View>
           <View style={{ height: 10, borderRadius: 5, backgroundColor: T.fillSecondary, overflow: 'hidden' }}>
@@ -98,7 +98,7 @@ export function RegisterScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
         <View style={{ width: 64 }} />
-        <Text style={[ty.headline, { color: T.label }]}>{tr('Регистрация')} · {completeness}%</Text>
+        <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Регистрация')} · {completeness}%</Text>
         <Pressable onPress={enter} hitSlop={8} style={{ width: 64, alignItems: 'flex-end' }}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Позже')}</Text></Pressable>
       </View>
 
@@ -116,9 +116,9 @@ export function RegisterScreen({ navigation }: Props) {
             <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={s.icon} size={20} color={T.brand} />
             </View>
-            <View>
-              <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
-              <Text style={[ty.title3, { color: T.label }]}>{s.title}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
+              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{s.title}</Text>
             </View>
           </View>
 

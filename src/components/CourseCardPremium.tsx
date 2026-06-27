@@ -63,11 +63,11 @@ export function CourseCardPremium({
             </View>
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
                 <SF name="book.fill" size={12} color={T.labelTertiary} />
-                <Text style={[ty.caption1, { color: T.labelSecondary }]}>{count}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{count}</Text>
               </View>
-              <Text style={[ty.subheadEm, { color: T.brand }]}>{formatPrice(course.price)}</Text>
+              <Text style={[ty.subheadEm, { color: T.brand, flexShrink: 0, marginLeft: 8 }]} numberOfLines={1}>{formatPrice(course.price)}</Text>
             </View>
           )}
         </View>
@@ -102,17 +102,17 @@ export function FeaturedCard({
         </View>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
           <SF name="book.fill" size={13} color={T.labelSecondary} />
-          <Text style={[ty.subhead, { color: T.labelSecondary }]}>{lessonsWord(count)}</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{lessonsWord(count)}</Text>
         </View>
         {owned ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 }}>
             <SF name="play.circle.fill" size={18} color={T.brand} />
-            <Text style={[ty.subheadEm, { color: T.brand }]}>{pct > 0 ? `Продолжить · ${pct}%` : 'Начать'}</Text>
+            <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{pct > 0 ? `Продолжить · ${pct}%` : 'Начать'}</Text>
           </View>
         ) : (
-          <Text style={[ty.headline, { color: T.brand }]}>{formatPrice(course.price)}</Text>
+          <Text style={[ty.headline, { color: T.brand, flexShrink: 0, marginLeft: 8 }]} numberOfLines={1}>{formatPrice(course.price)}</Text>
         )}
       </View>
     </PressableScale>

@@ -126,7 +126,7 @@ export function DownloadsScreen({ navigation }: Props) {
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={[ty.body, { color: T.label }]} numberOfLines={2}>{rec.n ? `${rec.n}. ` : ''}{rec.title}</Text>
-                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>
+                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
                         {[fmtSize(rec.size), tr('Доступно офлайн')].filter(Boolean).join(' · ')}
                       </Text>
                     </View>
@@ -157,7 +157,7 @@ export function DownloadsScreen({ navigation }: Props) {
           </View>
           {/* Seek bar */}
           <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38, textAlign: 'right' }]}>{fmtTime(currentTime)}</Text>
+            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38, textAlign: 'right' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{fmtTime(currentTime)}</Text>
             <View
               onLayout={(e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width)}
               onStartShouldSetResponder={() => true}
@@ -168,7 +168,7 @@ export function DownloadsScreen({ navigation }: Props) {
                 <View style={{ width: `${frac * 100}%`, height: '100%', borderRadius: 2, backgroundColor: T.brand }} />
               </View>
             </View>
-            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38 }]}>{fmtTime(duration)}</Text>
+            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{fmtTime(duration)}</Text>
           </View>
         </View>
       ) : null}

@@ -64,12 +64,12 @@ export function ChannelPostScreen({ route, navigation }: Props) {
         <View style={{ padding: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <Image source={{ uri: chan?.avatar }} style={{ width: 28, height: 28, borderRadius: 14 }} contentFit="cover" />
-            <Text style={[ty.subheadEm, { color: T.label }]}>{chan?.name}</Text>
+            <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{chan?.name}</Text>
             <SF name="checkmark.seal.fill" size={13} color={T.sky} />
-            <Text style={[ty.caption1, { color: T.labelTertiary }]}>· {post.date}</Text>
+            <Text style={[ty.caption1, { color: T.labelTertiary }]} numberOfLines={1}>· {post.date}</Text>
           </View>
           <Text style={[ty.title1, { color: T.label }]}>{post.title}</Text>
-          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 6 }]}>{post.readMins} {t('min_read')} · {post.views} {t('views_')}</Text>
+          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>{post.readMins} {t('min_read')} · {post.views} {t('views_')}</Text>
           <View style={{ height: 1, backgroundColor: T.separator, marginVertical: 16 }} />
           {(post.body ?? []).map((p, i) => (
             <Text key={i} style={[ty.body, { color: T.label, marginBottom: 14, lineHeight: 24 }]}>{p}</Text>
@@ -127,11 +127,11 @@ function AudioPost({ post, chan, t, liked, likeCount, onLike, onShare, onBack, T
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 18 }}>
             <SF name="waveform" size={15} color={T.brand} />
-            <Text style={[ty.caption1, { color: T.brand }]}>{t('audio').toUpperCase()} · {chan?.name}</Text>
+            <Text style={[ty.caption1, { color: T.brand }]} numberOfLines={1}>{t('audio').toUpperCase()} · {chan?.name}</Text>
           </View>
           <Text style={[ty.title2, { color: T.label, textAlign: 'center', marginTop: 8 }]}>{post.title}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', marginTop: 6 }]}>{post.excerpt}</Text>
-          <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 6 }]}>{post.date} · {post.views} {t('listens_')}</Text>
+          <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 6 }]} numberOfLines={1}>{post.date} · {post.views} {t('listens_')}</Text>
         </View>
 
         {/* Progress */}

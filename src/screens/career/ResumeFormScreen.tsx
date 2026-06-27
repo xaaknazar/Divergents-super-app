@@ -84,8 +84,8 @@ export function ResumeFormScreen({ navigation, route }: Props) {
               <SF name={s.icon} size={20} color={T.brand} />
             </View>
             <View>
-              <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
-              <Text style={[ty.title3, { color: T.label }]}>{s.title}</Text>
+              <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
+              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.title}</Text>
             </View>
           </View>
 

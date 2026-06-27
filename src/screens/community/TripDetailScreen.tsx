@@ -96,8 +96,8 @@ export function TripDetailScreen({ route, navigation }: Props) {
           />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             <Capsule bg="rgba(255,255,255,0.75)" color={T.label}><SF name="calendar" size={11} color={T.brand} />{trip.date} · {trip.days} дн.</Capsule>
-            <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]}>{trip.title}</Text>
-            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]}>{trip.region} · сложность: {trip.difficulty}</Text>
+            <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{trip.title}</Text>
+            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={1}>{trip.region} · сложность: {trip.difficulty}</Text>
           </View>
         </View>
 
@@ -105,8 +105,8 @@ export function TripDetailScreen({ route, navigation }: Props) {
         <View style={{ flexDirection: 'row', paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
           {stats.map((s, i) => (
             <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < stats.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-              <Text style={[ty.headline, { color: T.label }]}>{s.v}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{s.l}</Text>
+              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.v}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.l}</Text>
             </View>
           ))}
         </View>
@@ -131,8 +131,8 @@ export function TripDetailScreen({ route, navigation }: Props) {
                 {i < trip.itinerary.length - 1 ? <View style={{ width: 2, flex: 1, backgroundColor: T.fillTertiary }} /> : null}
               </View>
               <View style={{ flex: 1, paddingBottom: i < trip.itinerary.length - 1 ? 12 : 0 }}>
-                <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{r.day}</Text>
-                <Text style={[ty.body, { color: T.label, marginTop: 2 }]}>{r.title}</Text>
+                <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{r.day}</Text>
+                <Text style={[ty.body, { color: T.label, marginTop: 2 }]} numberOfLines={1}>{r.title}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{r.note}</Text>
               </View>
             </View>

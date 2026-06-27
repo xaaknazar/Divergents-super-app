@@ -57,7 +57,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: 'rgba(52,199,89,0.15)', alignItems: 'center', justifyContent: 'center' }}>
           <SF name="checkmark.circle.fill" size={56} color={T.green} />
         </View>
-        <Text style={[ty.title2, { color: T.label, marginTop: 18, textAlign: 'center' }]}>{tr('Заявка отправлена!')}</Text>
+        <Text style={[ty.title2, { color: T.label, marginTop: 18, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Заявка отправлена!')}</Text>
         <Text style={[ty.body, { color: T.labelSecondary, marginTop: 8, textAlign: 'center' }]}>
           Капитан команды «{team?.name}» рассмотрит вашу заявку на «{meta?.title}». С вами свяжутся в Telegram перед стартом {meta?.startLabel}.
         </Text>
@@ -71,8 +71,8 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
       <NavHeader title={tr('Заявка')} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
-        <Text style={[ty.title3, { color: T.label }]}>{meta?.title}</Text>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]}>{tr('Старт')} {meta?.startLabel} · {meta?.durationDays} {tr('дней')}</Text>
+        <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{meta?.title}</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]} numberOfLines={1}>{tr('Старт')} {meta?.startLabel} · {meta?.durationDays} {tr('дней')}</Text>
 
         {/* Nickname */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('НИКНЕЙМ (до 9 символов, близкий к ФИО)')}</Text>
@@ -110,10 +110,10 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, opacity: full ? 0.45 : 1, backgroundColor: sel ? T.brandTinted : 'transparent', borderBottomWidth: i < teams.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
                 <SF name={sel ? 'checkmark.circle.fill' : 'circle'} size={22} color={sel ? T.brand : T.labelTertiary} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[ty.body, { color: T.label }]}>{t.name}</Text>
-                  <Text style={[ty.caption1, { color: T.labelSecondary }]}>{t.members}/{t.capacity} · капитан {t.captain}</Text>
+                  <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{t.name}</Text>
+                  <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{t.members}/{t.capacity} · капитан {t.captain}</Text>
                 </View>
-                <Text style={[ty.caption2Em, { color: full ? T.emeraldText : T.orange }]}>{full ? 'набрана' : `нужно ${t.capacity - t.members}`}</Text>
+                <Text style={[ty.caption2Em, { color: full ? T.emeraldText : T.orange }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{full ? 'набрана' : `нужно ${t.capacity - t.members}`}</Text>
               </Pressable>
             );
           })}
@@ -127,7 +127,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
             <SF name="figure.walk" size={20} color={T.brand} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[ty.subheadEm, { color: T.label }]}>{tr('Разрешить отслеживание шагов')}</Text>
+            <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{tr('Разрешить отслеживание шагов')}</Text>
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{tr('Приложение будет считать шаги и, при наличии, подключится к вашим часам (Apple Watch / Google Fit) для авто-учёта активности.')}</Text>
           </View>
           <SF name={track ? 'checkmark.circle.fill' : 'circle'} size={24} color={track ? T.brand : T.labelTertiary} />
