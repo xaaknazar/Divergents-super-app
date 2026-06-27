@@ -1,7 +1,7 @@
 import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, LayoutAnimation } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, LayoutAnimation, Keyboard } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
@@ -44,6 +44,7 @@ export function AIChatScreen({}: Props) {
   const [busy, setBusy] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
+  const [kbShown, setKbShown] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const loadedRef = useRef(false);
   const lastQueryRef = useRef('');
@@ -80,6 +81,14 @@ export function AIChatScreen({}: Props) {
     }, 700);
     return () => clearTimeout(id);
   }, [byMode]);
+
+  // Track keyboard visibility so the input bar can sit right above the keyboard
+  // (no tab-bar gap) while typing, and clear the tab bar when it's hidden.
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKbShown(true));
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKbShown(false));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   // The send action is locked while we await a response (busy) AND while the
   // reply is still being streamed in (streaming) — sending mid-stream would
@@ -162,7 +171,7 @@ export function AIChatScreen({}: Props) {
             <Text style={[ty.headline, { color: T.label }]}>Divergents AI</Text>
             <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>
               {isGeneral
-                ? (isSignedIn ? tr('Наставник · знает ваш профиль') : tr('Персональный наставник'))
+                ? (isSignedIn ? tr('Ассистент · знает ваш профиль') : tr('Персональный ассистент'))
                 : `${tr('Знает материалы курса')} «${activeCourse?.title ?? ''}»`}
             </Text>
           </View>
@@ -182,7 +191,7 @@ export function AIChatScreen({}: Props) {
           <EmptyState
             icon="sparkles"
             title={tr('AI скоро будет доступен')}
-            subtitle={tr('Наставник Divergents появится в ближайшем обновлении. Загляните позже.')}
+            subtitle={tr('Ассистент Divergents появится в ближайшем обновлении. Загляните позже.')}
             actionLabel={tr('Повторить')}
             onAction={retryUnavailable}
           />
@@ -195,7 +204,7 @@ export function AIChatScreen({}: Props) {
               <Capsule bg={T.brandTinted} color={T.brand}><SF name="sparkles" size={11} color={T.brand} />{isGeneral ? tr('Спросите что угодно') : tr('Спросите о курсе')}</Capsule>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 14, textAlign: 'center', paddingHorizontal: 20 }]}>
                 {isGeneral
-                  ? tr('Наставник Divergents поможет с курсами, психотипами, талантами, карьерой и развитием.')
+                  ? tr('Ассистент Divergents поможет с курсами, психотипами, талантами, карьерой и развитием.')
                   : `${tr('Вопросы по материалам курса')} «${activeCourse?.title ?? ''}» — ${tr('отвечаю по урокам с таймкодами.')}`}
               </Text>
             </View>
@@ -232,7 +241,7 @@ export function AIChatScreen({}: Props) {
           ) : null}
         </ScrollView>
 
-        <View style={{ borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: T.cardBg, paddingTop: 8, paddingBottom: insets.bottom + 70 }}>
+        <View style={{ borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: T.cardBg, paddingTop: 8, paddingBottom: kbShown ? 10 : insets.bottom + 70 }}>
           {messages.length === 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 10 }}>
               {quick.map((q) => (
@@ -246,7 +255,7 @@ export function AIChatScreen({}: Props) {
           <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, alignItems: 'center' }}>
             <TextInput
               value={text} onChangeText={setText}
-              placeholder={isGeneral ? tr('Спросите наставника…') : tr('Спросите о курсе…')} placeholderTextColor={T.labelTertiary}
+              placeholder={isGeneral ? tr('Спросите ассистента…') : tr('Спросите о курсе…')} placeholderTextColor={T.labelTertiary}
               style={[ty.body, { flex: 1, backgroundColor: T.cardBg, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.separator, color: T.label }]}
               onSubmitEditing={() => send(text)} returnKeyType="send" editable={!locked}
             />

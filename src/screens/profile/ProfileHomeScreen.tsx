@@ -5,10 +5,12 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge } from '../../components/headers';
+import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
 import { Capsule, IconCircle, ListSection, ListRow, Segmented, ty } from '../../components/ui';
 import { Ring } from '../../components/talentUI';
+import { GardnerChart } from '../../components/GardnerChart';
 import { JOBS } from '../../data/career';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
@@ -27,7 +29,8 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 
 export function ProfileHomeScreen({ navigation }: Props) {
   const { T, mode, setMode } = useTheme();
-  const { t, lang, setLang } = useLang();
+  const { t } = useLang();
+  const { unread } = useNotifications();
   const { challenge } = useChallenge();
   const { courses, progress, reload: reloadCourses } = useCourses();
   const { applied } = useCareer();
@@ -56,33 +59,6 @@ export function ProfileHomeScreen({ navigation }: Props) {
             finishRegistration();
             try { await clearAllAppData(); } catch {}
             try { await signOut(); } catch {}
-          },
-        },
-      ],
-    );
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Удалить аккаунт',
-      'Удалить аккаунт и все данные? Это действие необратимо.',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Удалить',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await user?.delete();
-              finishRegistration();
-              try { await clearAllAppData(); } catch {}
-              try { await signOut(); } catch {}
-            } catch {
-              Alert.alert(
-                'Не удалось удалить аккаунт',
-                'Произошла ошибка. Проверьте подключение к интернету и попробуйте ещё раз.',
-              );
-            }
           },
         },
       ],
@@ -130,7 +106,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   return (
     <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await reload(); }}>
-      <NavBarLarge title={t('profile')} />
+      <NavBarLarge title={t('profile')} trailing={(
+        <HeaderIcon name="bell.fill" color={T.brand} badge={unread} onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+      )} />
 
       {/* Gradient hero card */}
       <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
@@ -208,11 +186,20 @@ export function ProfileHomeScreen({ navigation }: Props) {
         </View>
       ) : null}
 
+      {/* Gardner — множественный интеллект */}
+      {(profile?.gardner ?? []).length > 0 ? (
+        <View style={{ marginTop: 18 }}>
+          <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Множественный интеллект')}</Text>
+          <View style={{ marginHorizontal: 16 }}>
+            <GardnerChart data={profile!.gardner} compact />
+          </View>
+        </View>
+      ) : null}
+
       {/* Account */}
       <ListSection header={t('account')} style={{ marginTop: 18 }}>
         <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />} title={email ?? t('signed_in')} subtitle="Divergents LMS · Talentslab" />
-        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.red} onPress={handleSignOut} />
-        <ListRow leading={<SF name="trash.fill" size={20} color={T.red} />} title="Удалить аккаунт" valueColor={T.red} last onPress={handleDeleteAccount} />
+        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.red} last onPress={handleSignOut} />
       </ListSection>
 
       {coursesInProgress > 0 ? (

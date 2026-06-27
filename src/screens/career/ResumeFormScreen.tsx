@@ -14,13 +14,13 @@ import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'Resume'>;
 
-export function ResumeFormScreen({ navigation }: Props) {
+export function ResumeFormScreen({ navigation, route }: Props) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { answers, setField, completeness, submit, submitting } = useResume();
-  const [step, setStep] = useState(0);
   const total = RESUME_STEPS.length;
+  const [step, setStep] = useState(Math.min(Math.max(route.params?.step ?? 0, 0), total - 1));
   const s = RESUME_STEPS[step];
   const last = step === total - 1;
 

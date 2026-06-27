@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, TextInput, Modal, Linking, Platform, Share, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Modal, Linking, Platform, Share, Alert, Keyboard } from 'react-native';
 import { Image } from 'expo-image';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -238,6 +238,8 @@ export function MapHomeScreen({ navigation }: Props) {
           userInterfaceStyle={isDark ? 'dark' : 'light'}
           showsUserLocation
           showsMyLocationButton={false}
+          onPress={() => Keyboard.dismiss()}
+          onPanDrag={() => Keyboard.dismiss()}
           onLongPress={(e) => longMenu(e.nativeEvent.coordinate)}
           onRegionChangeComplete={(r) => { setZoomDelta(r.latitudeDelta); setTracks(true); clearTimeout(tracksTimer.current); tracksTimer.current = setTimeout(() => setTracks(false), 500); }}
         >

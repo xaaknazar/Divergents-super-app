@@ -2,6 +2,7 @@
 // talents, MBTI, Gardner results and report files. Matched by email server-side
 // from the Clerk session token. Falls back to a demo profile until the API is live.
 import { TALENTSLAB_BASE, TALENTSLAB_APP_KEY } from '../config';
+import { loadJSON, saveJSON } from '../state/persist';
 
 // ─── Types (mirror the Talentslab data model) ──────────────────────
 export type GallupDomain = 'executing' | 'influencing' | 'relationship' | 'strategic';
@@ -249,6 +250,43 @@ export function talentMatch(jobTalents: string[], userGallup: { name: string }[]
   const set = new Set(userGallup.map((g) => gallupCanon(g.name)));
   const items = jobTalents.map((t) => ({ name: t, has: set.has(gallupCanon(t)) }));
   return { items, matched: items.filter((i) => i.has).length, total: items.length };
+}
+
+// ─── Editable Gallup order (local-only) ────────────────────────────
+// The user can reorder their Gallup talents in the app; the chosen order is
+// persisted locally (SecureStore) so the displayed list — and career matching —
+// can reflect their priorities. This is a LOCAL preference only: the official
+// Talentslab report (PDF) is still generated server-side on the website.
+// DEFERRED: server-side report regeneration on talentslab when Gallup changes.
+export const GALLUP_ORDER_KEY = 'dvg.gallup.order';
+
+/** Stable id for a talent — its canonical theme key (falls back to the name). */
+export function gallupId(g: { name: string }): string {
+  return gallupCanon(g.name);
+}
+
+/** Load the locally-saved Gallup talent order (list of ids). Empty if unset. */
+export function loadGallupOrder(): Promise<string[]> {
+  return loadJSON<string[]>(GALLUP_ORDER_KEY, []);
+}
+
+/** Persist the chosen Gallup talent order (list of ids) locally. */
+export function saveGallupOrder(ids: string[]): Promise<void> {
+  return saveJSON(GALLUP_ORDER_KEY, ids);
+}
+
+/**
+ * Apply a saved id-order to a Gallup array (does not mutate). Talents listed in
+ * `order` come first, in that order; any not listed keep their original rank
+ * order at the end. Returns the array unchanged when no order is saved.
+ */
+export function applyGallupOrder(
+  gallup: GallupTalent[], order: string[] | null | undefined,
+): GallupTalent[] {
+  if (!order || order.length === 0) return gallup.slice();
+  const idx = new Map(order.map((id, i) => [id, i] as const));
+  const pos = (g: GallupTalent) => (idx.has(gallupId(g)) ? idx.get(gallupId(g))! : Number.MAX_SAFE_INTEGER);
+  return gallup.slice().sort((a, b) => (pos(a) - pos(b)) || (a.rank - b.rank));
 }
 
 // ─── Resume formatting helpers ─────────────────────────────────────

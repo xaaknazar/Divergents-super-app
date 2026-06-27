@@ -42,9 +42,21 @@ export function useResume() {
   const submit = useCallback(async () => {
     setSubmitting(true);
     try {
+      // Defensive: make sure the latest answers are persisted locally BEFORE we
+      // attempt the network call, so nothing is lost if the submit fails and the
+      // user reopens the анкета to retry.
+      saveJSON(KEY, answers);
       const token = await getTalentslabToken(getTokenRef.current);
       const email = user?.primaryEmailAddress?.emailAddress ?? null;
-      return await submitResume(token, answers, email);
+      // submitResume never throws (returns false on failure). Retry once after a
+      // short delay so a single transient network blip doesn't drop the resume —
+      // the server is idempotent (upserts the Candidate by email).
+      let ok = await submitResume(token, answers, email);
+      if (!ok) {
+        await new Promise((r) => setTimeout(r, 1200));
+        ok = await submitResume(token, answers, email);
+      }
+      return ok;
     } catch { return false; }
     finally { setSubmitting(false); }
   }, [answers]);

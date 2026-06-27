@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, ActivityIndicator, Share, Linking } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator, Share, Linking, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,8 +15,9 @@ import { useEnrollment } from '../../state/EnrollmentContext';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useAuth } from '@clerk/clerk-expo';
-import { formatPrice, stripHtml, API_BASE, imgUrl } from '../../data/api';
-import { Course } from '../../data/courses';
+import { formatPrice, stripHtml, API_BASE, imgUrl, lessonAudioUrl } from '../../data/api';
+import { useDownloads } from '../../state/downloads';
+import { Course, Lesson } from '../../data/courses';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'CourseDetail'>;
@@ -33,6 +34,8 @@ function HeroNav({ course, courseId, navigation }: { course: Course; courseId: s
       onBack={() => navigation.goBack()}
       trailing={
         <>
+          <NavRoundButton icon="arrow.down.circle" scheme="dark" accessibilityLabel="Загрузки"
+            onPress={() => navigation.navigate('Downloads')} />
           <NavRoundButton icon="square.and.arrow.up" scheme="dark" accessibilityLabel="Поделиться"
             onPress={() => Share.share({ message: `${course.title} — Divergents\n${API_BASE}/courses/${courseId}` })} />
           <NavRoundButton icon={bookmarked ? 'bookmark.fill' : 'bookmark'} scheme="dark" accessibilityLabel="В закладки"
@@ -98,10 +101,33 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { detailLoading, progress, currentLessonIndex, lessonStatus } = useCourses();
+  const dl = useDownloads();
   const p = progress(courseId);
   const curIdx = currentLessonIndex(courseId);
   const curLesson = course.lessons[curIdx];
   const chaptersLoading = detailLoading[courseId] && course.lessons.length === 0;
+
+  // Owned course → audio can be downloaded for offline listening.
+  const startDownload = async (l: Lesson) => {
+    const audioUrl = lessonAudioUrl(l);
+    const ok = await dl.downloadLesson(
+      { lessonId: l.id, courseId, courseTitle: course.title, title: l.title, n: l.n, owned: true },
+      audioUrl,
+    );
+    if (!ok && !dl.isDownloaded(l.id) && !dl.isDownloading(l.id)) {
+      Alert.alert(
+        tr('Не удалось скачать'),
+        tr('Аудио этого урока сейчас недоступно. Попробуйте позже.'),
+        [{ text: tr('Отмена'), style: 'cancel' }, { text: tr('Повторить'), onPress: () => startDownload(l) }],
+      );
+    }
+  };
+  const confirmRemove = (l: Lesson) => {
+    Alert.alert(tr('Удалить загрузку?'), l.title, [
+      { text: tr('Отмена'), style: 'cancel' },
+      { text: tr('Удалить'), style: 'destructive', onPress: () => dl.removeDownload(l.id) },
+    ]);
+  };
 
   const meta = [
     { v: String(course.chaptersCount ?? course.lessons.length), l: tr('Уроков') },
