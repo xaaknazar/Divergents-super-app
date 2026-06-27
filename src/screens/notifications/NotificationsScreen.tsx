@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, Pressable, FlatList, RefreshControl } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,19 @@ import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateView
 import { useNotifications } from '../../state/NotificationsContext';
 import { NotifTarget } from '../../data/notifications';
 import { RootStackParams } from '../../navigation/types';
+
+function fmtDate(iso: string, ru: boolean): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const diff = Date.now() - d.getTime();
+  const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), days = Math.floor(diff / 86400000);
+  if (m < 1) return ru ? 'только что' : 'just now';
+  if (m < 60) return ru ? `${m} мин назад` : `${m} min ago`;
+  if (h < 24) return ru ? `${h} ч назад` : `${h}h ago`;
+  if (days < 7) return ru ? `${days} дн назад` : `${days}d ago`;
+  return d.toLocaleDateString(ru ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short' });
+}
 
 type Props = NativeStackScreenProps<RootStackParams, 'Notifications'>;
 
@@ -61,33 +74,20 @@ export function NotificationsScreen({ navigation }: Props) {
           <ListSkeleton rows={6} />
         </View>
       ) : (
-        <ScrollView
+        <FlatList
+          data={items}
+          keyExtractor={(it) => it.id}
           contentContainerStyle={{ paddingVertical: 8, paddingBottom: insets.bottom + 30, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={7}
+          removeClippedSubviews
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
-        >
-          {items.map((it) => (
-            <Pressable key={it.id} onPress={() => open(it.id, it.target)}
-              style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
-              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: it.color + '33', alignItems: 'center', justifyContent: 'center' }}>
-                <SF name={it.icon} size={20} color={it.color} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={[ty.headline, { color: T.label, flex: 1 }]} numberOfLines={1}>{it.title}</Text>
-                  {!it.read ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: T.brand }} /> : null}
-                </View>
-                <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{it.body}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                  <Text style={[ty.caption2, { color: T.labelTertiary }]}>{it.date}</Text>
-                  {it.target ? <SF name="chevron.right" size={12} color={T.labelTertiary} /> : null}
-                </View>
-              </View>
-              <View style={{ position: 'absolute', bottom: 0, left: 68, right: 0, height: 0.5, backgroundColor: T.separator }} />
-            </Pressable>
-          ))}
-
-          {items.length === 0 ? (
+          renderItem={({ item: it }) => (
+            <NotifRow it={it} T={T} ru={lang === 'ru'} onPress={() => open(it.id, it.target)} />
+          )}
+          ListEmptyComponent={
             <View style={{ flex: 1, justifyContent: 'center' }}>
               {error ? (
                 <ErrorState
@@ -106,9 +106,33 @@ export function NotificationsScreen({ navigation }: Props) {
                 />
               )}
             </View>
-          ) : null}
-        </ScrollView>
+          }
+        />
       )}
     </View>
   );
 }
+
+// Memoized row — keeps FlatList re-renders cheap so opening the modal stays smooth.
+const NotifRow = React.memo(function NotifRow({ it, T, ru, onPress }: { it: any; T: any; ru: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress}
+      style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
+      <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: it.color + '33', alignItems: 'center', justifyContent: 'center' }}>
+        <SF name={it.icon} size={20} color={it.color} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={[ty.headline, { color: T.label, flex: 1 }]} numberOfLines={1}>{it.title}</Text>
+          {!it.read ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: T.brand }} /> : null}
+        </View>
+        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={3}>{it.body}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+          <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtDate(it.date, ru)}</Text>
+          {it.target ? <SF name="chevron.right" size={12} color={T.labelTertiary} /> : null}
+        </View>
+      </View>
+      <View style={{ position: 'absolute', bottom: 0, left: 68, right: 0, height: 0.5, backgroundColor: T.separator }} />
+    </Pressable>
+  );
+});
