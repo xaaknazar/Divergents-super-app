@@ -10,7 +10,7 @@ export function NavBarLarge({ title, trailing }: { title: string; trailing?: Rea
   const { T } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 8, minHeight: 48 }}>
-      <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={1}>{title}</Text>
+      <Text style={[ty.largeTitle, { color: T.label, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{title}</Text>
       {trailing ? <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', paddingLeft: 12 }}>{trailing}</View> : null}
     </View>
   );
@@ -30,7 +30,7 @@ export function BackNav({
     }}>
       <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" accessibilityLabel={back} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
         <SF name="chevron.left" size={20} color={T.brandAccent} />
-        <Text style={[ty.body, { color: T.brandAccent }]}>{back}</Text>
+        <Text style={[ty.body, { color: T.brandAccent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{back}</Text>
       </Pressable>
       <View style={{ flexDirection: 'row', gap: 16, paddingRight: 6, alignItems: 'center' }}>{trailing}</View>
     </View>

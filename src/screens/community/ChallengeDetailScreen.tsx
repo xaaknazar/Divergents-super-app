@@ -101,8 +101,8 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
             <SF name={meta.icon} size={120} color="#fff" />
           </View>
           <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />{tr('Старт')} {meta.startLabel}</Capsule>
-          <Text style={[ty.largeTitle, { color: '#fff', marginTop: 12 }]}>{meta.title}</Text>
-          <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 4 }]}>{meta.durationDays} дней · 3 категории · {meta.maxFlags} 🚩 — вылет</Text>
+          <Text style={[ty.largeTitle, { color: '#fff', marginTop: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{meta.title}</Text>
+          <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 4 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{meta.durationDays} дней · 3 категории · {meta.maxFlags} 🚩 — вылет</Text>
         </View>
       </LinearGradient>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 90 }}>
@@ -110,8 +110,8 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         {/* Countdown */}
         <View style={{ marginHorizontal: 16, marginBottom: 18, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 18 }}>
           <View style={{ alignItems: 'center', minWidth: 86 }}>
-            <Text style={[ty.largeTitle, { color: T.brand }]}>{left}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('дней до старта')}</Text>
+            <Text style={[ty.largeTitle, { color: T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{left}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('дней до старта')}</Text>
           </View>
           <View style={{ flex: 1, gap: 6 }}>
             <Row icon="calendar" label={tr('Старт')} value={meta.startLabel} />
@@ -126,7 +126,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
             <View key={cat.key} style={{ flexDirection: 'row', gap: 12, padding: 14, position: 'relative' }}>
               <IconSquircle icon={cat.icon} bg={cat.color} size={36} />
               <View style={{ flex: 1 }}>
-                <Text style={[ty.headline, { color: T.label }]}>{cat.title} <Text style={[ty.caption1, { color: T.labelTertiary }]}>· {cat.key}</Text></Text>
+                <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{cat.title} <Text style={[ty.caption1, { color: T.labelTertiary }]}>· {cat.key}</Text></Text>
                 <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>{cat.norm}</Text>
                 <Text style={[ty.caption1, { color: T.label, marginTop: 3 }]}>{cat.scoring}</Text>
               </View>
@@ -140,8 +140,8 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
           <View style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
             {ACTIVITY_CONVERSIONS.map((a, i) => (
               <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 9, borderBottomWidth: i < ACTIVITY_CONVERSIONS.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
-                <Text style={[ty.body, { color: T.label }]}>{a.label}</Text>
-                <Text style={[ty.subhead, { color: T.labelSecondary }]}>{a.value}</Text>
+                <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{a.label}</Text>
+                <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{a.value}</Text>
               </View>
             ))}
           </View>
@@ -162,12 +162,12 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
                   <SF name="person.3.fill" size={20} color={T.brand} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[ty.headline, { color: T.label }]}>{t.name}</Text>
-                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{tr('Капитан:')} {t.captain} · {tr('советники:')} {t.advisors.join(', ')}</Text>
+                  <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{t.name}</Text>
+                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{tr('Капитан:')} {t.captain} · {tr('советники:')} {t.advisors.join(', ')}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={[ty.subheadEm, { color: full ? T.emeraldText : T.label }]}>{t.members}/{t.capacity}</Text>
-                  <Text style={[ty.caption2, { color: full ? T.emeraldText : T.orange }]}>{full ? 'набрана' : `нужно ${need}`}</Text>
+                  <Text style={[ty.subheadEm, { color: full ? T.emeraldText : T.label }]} numberOfLines={1}>{t.members}/{t.capacity}</Text>
+                  <Text style={[ty.caption2, { color: full ? T.emeraldText : T.orange }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{full ? 'набрана' : `нужно ${need}`}</Text>
                 </View>
                 {i < teams.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 70, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
               </View>
@@ -202,8 +202,8 @@ function Row({ icon, label, value }: { icon: any; label: string; value: string }
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <SF name={icon} size={14} color={T.labelSecondary} />
-      <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]}>{label}</Text>
-      <Text style={[ty.subheadEm, { color: T.label }]}>{value}</Text>
+      <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>{label}</Text>
+      <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{value}</Text>
     </View>
   );
 }
@@ -246,9 +246,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
           <Logo size={26} />
-          <Text style={[ty.largeTitle, { color: T.label, flex: 1 }]}>{c.title}</Text>
+          <Text style={[ty.largeTitle, { color: T.label, flex: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{c.title}</Text>
         </View>
-        {c.teamName ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')}{c.startedLabel ? ` · ${c.startedLabel}` : ''}</Text> : null}
+        {c.teamName ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]} numberOfLines={1}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')}{c.startedLabel ? ` · ${c.startedLabel}` : ''}</Text> : null}
       </View>
 
       {/* Elimination banner — points are frozen for the user (🏳️) */}
@@ -278,8 +278,8 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
             { v: `${teamPoints}`, l: tr('Очки команды') },
           ].map((st, i, arr) => (
             <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < arr.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-              <Text style={[ty.title2, { color: T.label }]}>{st.v}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{st.l}</Text>
+              <Text style={[ty.title2, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{st.v}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{st.l}</Text>
             </View>
           ))}
         </View>
@@ -313,7 +313,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           {/* Activity step-conversions reference (бег / плавание / силовые…) */}
           <Pressable onPress={() => setShowConv(true)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, opacity: pressed ? 0.6 : 1 })}>
             <SF name="info.circle" size={16} color={T.brand} />
-            <Text style={[ty.subhead, { color: T.brand, flex: 1 }]}>{tr('Как засчитать активность в шагах?')}</Text>
+            <Text style={[ty.subhead, { color: T.brand, flex: 1 }]} numberOfLines={1}>{tr('Как засчитать активность в шагах?')}</Text>
             <SF name="chevron.right" size={13} color={T.labelTertiary} />
           </Pressable>
         </View>
@@ -358,12 +358,12 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         <Pressable onPress={() => setShowConv(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
           <Pressable onPress={() => {}} style={{ backgroundColor: T.cardBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 10, paddingBottom: insets.bottom + 20 }}>
             <View style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillTertiary, marginBottom: 14 }} />
-            <Text style={[ty.title3, { color: T.label }]}>{tr('Пересчёт активности в шаги')}</Text>
+            <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Пересчёт активности в шаги')}</Text>
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 4, marginBottom: 8 }]}>{tr('Минимум 5 000 шагов нужно набрать аэробной нагрузкой. 400 шагов = 1 балл.')}</Text>
             {ACTIVITY_CONVERSIONS.map((a, i) => (
               <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: i < ACTIVITY_CONVERSIONS.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
-                <Text style={[ty.body, { color: T.label, flex: 1 }]}>{a.label}</Text>
-                <Text style={[ty.subhead, { color: T.labelSecondary }]}>{a.value}</Text>
+                <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{a.label}</Text>
+                <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{a.value}</Text>
               </View>
             ))}
           </Pressable>
@@ -394,8 +394,8 @@ function MyFlagRow({ flags }: { flags: FlagCounts }) {
         return (
           <View key={cat.key} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, backgroundColor: T.fillTertiary, borderWidth: danger ? 1 : 0, borderColor: T.red }}>
             <SF name={cat.icon} size={16} color={danger ? T.red : cat.color} />
-            <Text style={[ty.title3, { color: danger ? T.red : T.label, marginTop: 4 }]}>{`${n} 🚩`}</Text>
-            <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]}>{cat.title}</Text>
+            <Text style={[ty.title3, { color: danger ? T.red : T.label, marginTop: 4 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{`${n} 🚩`}</Text>
+            <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{cat.title}</Text>
           </View>
         );
       })}

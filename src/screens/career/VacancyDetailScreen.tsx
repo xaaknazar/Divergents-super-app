@@ -87,7 +87,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[ty.title2, { color: T.label }]}>{job.title}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{job.company}{job.city ? ` · ${job.city}` : ''}</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{job.company}{job.city ? ` · ${job.city}` : ''}</Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
@@ -103,8 +103,8 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           {job.match > 0 ? (
             <View style={{ alignItems: 'center', minWidth: 70 }}>
-              <Text style={[ty.largeTitle, { color: T.brand }]}>{job.match}<Text style={ty.title3}>%</Text></Text>
-              <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{tr('Совпадение')}</Text>
+              <Text style={[ty.largeTitle, { color: T.brand }]} numberOfLines={1}>{job.match}<Text style={ty.title3}>%</Text></Text>
+              <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Совпадение')}</Text>
             </View>
           ) : null}
           {job.reason ? <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.reason}</Text> : null}

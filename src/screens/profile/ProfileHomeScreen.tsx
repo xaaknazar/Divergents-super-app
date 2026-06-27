@@ -122,8 +122,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
               </View>
             )}
             <View style={{ flex: 1 }}>
-              <Text style={[ty.title2, { color: '#fff' }]} numberOfLines={1}>{name}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.85)', marginTop: 2 }]} numberOfLines={1}>
+              <Text style={[ty.title2, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.85)', marginTop: 2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {email ?? 'Divergents'}
               </Text>
               {profile?.mbtiType ? (
@@ -142,8 +142,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
         {tiles.map((t, i) => (
           <View key={i} style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
             <SF name={t.icon} size={18} color={t.c} />
-            <Text style={[ty.title2, { color: T.label, marginTop: 8 }]}>{t.v}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{t.l}</Text>
+            <Text style={[ty.title2, { color: T.label, marginTop: 8 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t.v}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t.l}</Text>
           </View>
         ))}
       </View>
@@ -164,11 +164,11 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {(profile?.gallup ?? []).length > 0 ? (
         <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={[ty.title3, { color: T.label }]}>{t('strengths')}</Text>
+            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{t('strengths')}</Text>
             {!live ? (
               <Pressable onPress={reload} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
-                <Text style={[ty.caption2Em, { color: T.labelSecondary }]}>{t('demo_refresh')}</Text>
+                <Text style={[ty.caption2Em, { color: T.labelSecondary }]} numberOfLines={1}>{t('demo_refresh')}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -178,7 +178,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
               return (
                 <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c + '18' }}>
                   <Text style={[ty.caption2Em, { color: c }]}>{g.rank}</Text>
-                  <Text style={[ty.footnoteEm, { color: T.label }]}>{g.name}</Text>
+                  <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{g.name}</Text>
                 </View>
               );
             })}
@@ -226,7 +226,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
         <ListSection header={t('active_challenge')}>
           <Pressable onPress={goCareer} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
             <View style={{ flex: 1 }}>
-              <Text style={[ty.body, { color: T.label }]}>{challenge.title}</Text>
+              <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{challenge.title}</Text>
             </View>
             <Text style={[ty.subheadEm, { color: T.labelSecondary }]}>{challenge.currentDay}/{challenge.totalDays}</Text>
           </Pressable>

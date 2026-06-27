@@ -110,7 +110,7 @@ export function LMSHomeScreen({ navigation }: Props) {
           {source === 'mock' ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 20, marginBottom: 12, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(255,149,0,0.12)' }}>
               <SF name="wifi.slash" size={11} color={T.orange} />
-              <Text style={[ty.caption2Em, { color: T.orange }]}>{t('demo_mode')}</Text>
+              <Text style={[ty.caption2Em, { color: T.orange }]} numberOfLines={1}>{t('demo_mode')}</Text>
             </View>
           ) : null}
 

@@ -146,16 +146,16 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
           <HeroNav course={course} courseId={courseId} navigation={navigation} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             <Capsule bg="rgba(52,199,89,0.9)" color="#fff"><SF name="checkmark.seal.fill" size={11} color="#fff" />{tr('Курс открыт')}</Capsule>
-            <Text style={[ty.title1, { color: '#fff', marginTop: 10 }]}>{course.title}</Text>
-            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{course.author} · Divergents</Text>
+            <Text style={[ty.title1, { color: '#fff', marginTop: 10 }]} numberOfLines={2}>{course.title}</Text>
+            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>{course.author} · Divergents</Text>
           </View>
         </View>
 
         <View style={{ flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
           {meta.map((m, i) => (
             <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < meta.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{m.v}</Text>
-              <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]}>{m.l}</Text>
+              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{m.v}</Text>
+              <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{m.l}</Text>
             </View>
           ))}
         </View>
@@ -163,8 +163,8 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
         {course.lessons.length > 0 ? (
           <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, ...shadows.card }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Text style={[ty.body, { color: T.label }]}>{tr('Ваш прогресс')}</Text>
-              <Text style={[ty.title3, { color: T.brand }]}>{Math.round(p * 100)}%</Text>
+              <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{tr('Ваш прогресс')}</Text>
+              <Text style={[ty.title3, { color: T.brand }]} numberOfLines={1}>{Math.round(p * 100)}%</Text>
             </View>
             <View style={{ marginTop: 10 }}><ProgressBar value={p} /></View>
             {curLesson ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>{tr('Урок')} {curLesson.n} — {curLesson.title}</Text> : null}
@@ -183,7 +183,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
                 ? <SF name="checkmark.circle.fill" size={26} color={T.green} />
                 : (
                   <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: status === 'current' ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={[ty.footnoteEm, { color: status === 'current' ? '#fff' : T.labelSecondary }]}>{l.n}</Text>
+                    <Text style={[ty.footnoteEm, { color: status === 'current' ? '#fff' : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{l.n}</Text>
                   </View>
                 );
               return (
@@ -192,7 +192,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
                   {indicator}
                   <View style={{ flex: 1 }}>
                     <Text style={[ty.body, { color: T.label }]} numberOfLines={2}>{l.title}</Text>
-                    <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{status === 'done' ? 'Пройдено' : l.duration}</Text>
+                    <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{status === 'done' ? 'Пройдено' : l.duration}</Text>
                   </View>
                   <SF name="play.circle.fill" size={22} color={T.brand} />
                   {i < course.lessons.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 54, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
@@ -241,16 +241,16 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
           <HeroNav course={course} courseId={courseId} navigation={navigation} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 22 }}>
             <Capsule bg="rgba(255,255,255,0.9)" color={T.brand}>{course.category}</Capsule>
-            <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]}>{course.title}</Text>
-            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]}>{course.author} · Divergents</Text>
+            <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]} numberOfLines={2}>{course.title}</Text>
+            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={1}>{course.author} · Divergents</Text>
           </View>
         </View>
 
         {/* Price card */}
         <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, ...shadows.card }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-            <Text style={[ty.largeTitle, { color: T.label }]}>{formatPrice(course.price)}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('единоразово')}</Text>
+            <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{formatPrice(course.price)}</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{tr('единоразово')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
             <SF name="lock.fill" size={12} color={T.labelSecondary} />
@@ -275,7 +275,7 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
           {includes.map((it, i) => (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
               <SF name={it.icon} size={20} color={T.brand} />
-              <Text style={[ty.body, { color: T.label, flex: 1 }]}>{it.t}</Text>
+              <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{it.t}</Text>
               {i < includes.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 48, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
             </View>
           ))}
@@ -297,7 +297,7 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
                     : <SF name="lock.fill" size={20} color={T.labelTertiary} />}
                   <View style={{ flex: 1 }}>
                     <Text style={[ty.body, { color: free ? T.label : T.labelSecondary }]} numberOfLines={2}>{l.n}. {l.title}</Text>
-                    <Text style={[ty.caption1, { color: free ? T.green : T.labelTertiary, marginTop: 1 }]}>{free ? 'Смотреть бесплатно' : 'Откроется после покупки'}</Text>
+                    <Text style={[ty.caption1, { color: free ? T.green : T.labelTertiary, marginTop: 1 }]} numberOfLines={1}>{free ? 'Смотреть бесплатно' : 'Откроется после покупки'}</Text>
                   </View>
                   {i < course.lessons.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 48, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
                 </Pressable>
@@ -310,8 +310,8 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
       {/* Sticky buy bar */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View>
-          <Text style={[ty.title3, { color: T.label }]}>{formatPrice(course.price)}</Text>
-          <Text style={[ty.caption2, { color: T.labelSecondary }]}>{tr('оплата на divergents-lms.kz')}</Text>
+          <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{formatPrice(course.price)}</Text>
+          <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{tr('оплата на divergents-lms.kz')}</Text>
         </View>
         <PrimaryButton label={tr('Купить курс')} icon="cart.fill" style={{ flex: 1 }} onPress={buy} />
       </View>

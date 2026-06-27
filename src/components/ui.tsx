@@ -31,7 +31,7 @@ export function Capsule({
       paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: _bg,
     }, style]}>
       {(typeof children === 'string' || typeof children === 'number')
-        ? <Text style={[ty.caption2Em, { color: _color }]}>{children}</Text>
+        ? <Text style={[ty.caption2Em, { color: _color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{children}</Text>
         : <CapsuleContent color={_color}>{children}</CapsuleContent>}
     </View>
   );
@@ -72,7 +72,7 @@ export function SectionHeader({ title, action, onAction }: { title: string; acti
   const { T } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8, minHeight: 28 }}>
-      <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{title}</Text>
+      <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{title}</Text>
       {action ? (
         <Pressable onPress={onAction ? () => { hSelect(); onAction(); } : undefined} hitSlop={8} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 2, opacity: pressed ? 0.5 : 1 })}>
           <Text style={[ty.subheadEm, { color: T.brandAccent }]}>{action}</Text>
@@ -117,7 +117,7 @@ export function ListRow({
     <>
       {leading}
       <View style={{ flex: 1, minWidth: 0 }}>
-        {title ? <Text style={[ty.body, { color: T.label }]}>{title}</Text> : null}
+        {title ? <Text style={[ty.body, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{title}</Text> : null}
         {subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>{subtitle}</Text> : null}
       </View>
       {detail ? <Text style={[ty.body, { color: valueColor ?? T.labelSecondary }]}>{detail}</Text> : null}
@@ -158,7 +158,7 @@ export function Segmented({
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
           }}>
             {leadingIcons ? <SF name={leadingIcons[i]} size={12} color={T.label} /> : null}
-            <Text style={[ty.footnoteEm, { color: T.label }]}>{s}</Text>
+            <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s}</Text>
           </Pressable>
         );
       })}
@@ -179,7 +179,7 @@ export function Chip({
       transform: [{ scale: pressed ? 0.96 : 1 }],
     }, active ? { shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 } : null]}>
       {icon ? <SF name={icon} size={11} color={active ? '#fff' : T.brand} /> : null}
-      <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]}>{label}</Text>
+      <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
     </Pressable>
   );
 }
@@ -206,7 +206,7 @@ export function PrimaryButton({
       ) : (
         <>
           {icon ? <SF name={icon} size={16} color={fg} /> : null}
-          <Text style={[ty.headline, { color: fg }]}>{label}</Text>
+          <Text style={[ty.headline, { color: fg }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
         </>
       )}
     </Pressable>
@@ -251,7 +251,7 @@ export function SecondaryButton({
       ) : (
         <>
           {icon ? <SF name={icon} size={16} color={accent} /> : null}
-          <Text style={[ty.headline, { color: accent }]}>{label}</Text>
+          <Text style={[ty.headline, { color: accent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
         </>
       )}
     </Pressable>

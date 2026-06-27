@@ -279,7 +279,7 @@ export function MapHomeScreen({ navigation }: Props) {
         </View>
         {searchFocused && q.trim().length < 3 && recents.length > 0 ? (
           <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
-            <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }]}>{t('recent_')}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }]} numberOfLines={1}>{t('recent_')}</Text>
             {recents.map((g, i) => (
               <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14 }}>
                 <SF name="clock.arrow.circlepath" size={15} color={T.labelSecondary} />
@@ -316,7 +316,7 @@ export function MapHomeScreen({ navigation }: Props) {
         const rt = routes[routeIdx];
         const Pill = ({ label, on, onPress }: { label: string; on?: boolean; onPress: () => void }) => (
           <Pressable onPress={onPress} hitSlop={4} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: on ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.14)' }}>
-            <Text style={[ty.footnoteEm, { color: '#fff' }]}>{label}</Text>
+            <Text style={[ty.footnoteEm, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
           </Pressable>
         );
         return (
@@ -325,7 +325,7 @@ export function MapHomeScreen({ navigation }: Props) {
               <SF name="paperplane.fill" size={18} color="#fff" />
               <View style={{ flex: 1 }}>
                 <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>{tr('До')} «{target.name}»</Text>
-                <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]}>
+                <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.9)' }]} numberOfLines={1}>
                   {routing ? tr('ищу самый быстрый маршрут…') : rt ? `${fmtDist(rt.km)} · ${fmtDur(rt.min)}${routeIdx === 0 ? ' · ' + tr('самый быстрый') : ''}` : user ? `${fmtDist(haversineKm(user, { latitude: target.lat, longitude: target.lng }))} ${tr('по прямой')}` : tr('ждём GPS…')}
                 </Text>
               </View>
@@ -335,14 +335,14 @@ export function MapHomeScreen({ navigation }: Props) {
               <Pill label={t('car')} on={mode === 'car'} onPress={() => setMode('car')} />
               <Pill label={t('walk')} on={mode === 'foot'} onPress={() => setMode('foot')} />
               <View style={{ flex: 1 }} />
-              {routes.length > 1 ? <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.85)' }]}>{tr('ещё')} {routes.length - 1}</Text> : null}
+              {routes.length > 1 ? <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.85)' }]} numberOfLines={1}>{tr('ещё')} {routes.length - 1}</Text> : null}
               <Pressable onPress={shareRoute} hitSlop={6}><SF name="square.and.arrow.up" size={17} color="#fff" /></Pressable>
             </View>
             {origin ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <SF name="smallcircle.filled.circle" size={13} color="rgba(255,255,255,0.9)" />
                 <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.9)', flex: 1 }]} numberOfLines={1}>{tr('Откуда:')} {origin.name}</Text>
-                <Pressable onPress={() => { setOrigin(null); routeReqRef.current = null; }} hitSlop={6}><Text style={[ty.caption2, { color: '#fff', textDecorationLine: 'underline' }]}>{tr('от меня')}</Text></Pressable>
+                <Pressable onPress={() => { setOrigin(null); routeReqRef.current = null; }} hitSlop={6}><Text style={[ty.caption2, { color: '#fff', textDecorationLine: 'underline' }]} numberOfLines={1}>{tr('от меня')}</Text></Pressable>
               </View>
             ) : null}
           </View>
@@ -358,7 +358,7 @@ export function MapHomeScreen({ navigation }: Props) {
               {placesError ? tr('Не удалось загрузить места.') : tr('Пока нет мест в этом городе.')}
             </Text>
             {placesError ? (
-              <Pressable onPress={reloadPlaces} hitSlop={8}><Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Повторить')}</Text></Pressable>
+              <Pressable onPress={reloadPlaces} hitSlop={8}><Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Повторить')}</Text></Pressable>
             ) : null}
           </View>
         </View>
@@ -388,12 +388,12 @@ export function MapHomeScreen({ navigation }: Props) {
                     <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{sel.name}</Text>
                     {sel.approved ? <SF name="checkmark.seal.fill" size={15} color="#0EA5E9" /> : null}
                   </View>
-                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>
+                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
                     {CATEGORY_META[sel.category].label} · {sel.hours}{distTo(sel) ? ` · ${distTo(sel)}` : ''}
                   </Text>
-                  {isOpenNow(sel.hours).known ? <Text style={[ty.caption1, { color: isOpenNow(sel.hours).open ? '#16A34A' : '#EF4444', marginTop: 2 }]}>{isOpenNow(sel.hours).label}</Text> : null}
+                  {isOpenNow(sel.hours).known ? <Text style={[ty.caption1, { color: isOpenNow(sel.hours).open ? '#16A34A' : '#EF4444', marginTop: 2 }]} numberOfLines={1}>{isOpenNow(sel.hours).label}</Text> : null}
                 </View>
-                {ratingOf(sel) > 0 ? <View style={{ alignItems: 'flex-end' }}><Text style={[ty.headline, { color: T.label }]}>{ratingOf(sel).toFixed(1)}</Text><Stars value={ratingOf(sel)} size={11} /></View> : null}
+                {ratingOf(sel) > 0 ? <View style={{ alignItems: 'flex-end' }}><Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{ratingOf(sel).toFixed(1)}</Text><Stars value={ratingOf(sel)} size={11} /></View> : null}
               </View>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 12 }]} numberOfLines={3}>{sel.highlights}</Text>
               {sel.tags.length > 0 ? (
@@ -403,10 +403,10 @@ export function MapHomeScreen({ navigation }: Props) {
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                 <Pressable onPress={() => startNav(sel)} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
-                  <SF name="paperplane.fill" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>{tr('Вести сюда')}</Text>
+                  <SF name="paperplane.fill" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Вести сюда')}</Text>
                 </Pressable>
                 <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} style={({ pressed }) => ({ width: 84, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-                  <Text style={[ty.headline, { color: T.brand }]}>{tr('Детали')}</Text>
+                  <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Детали')}</Text>
                 </Pressable>
                 <Pressable onPress={() => toggleFav(sel.id)} style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name={isFav(sel.id) ? 'heart.fill' : 'heart'} size={18} color={isFav(sel.id) ? T.brand : T.label} />
@@ -438,10 +438,10 @@ export function MapHomeScreen({ navigation }: Props) {
               </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                 <Pressable onPress={() => navTo(searchPin)} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
-                  <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>{tr('Вести сюда')}</Text>
+                  <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Вести сюда')}</Text>
                 </Pressable>
                 <Pressable onPress={() => externalRoute(searchPin)} style={({ pressed }) => ({ width: 110, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-                  <Text style={[ty.headline, { color: T.brand }]}>{tr('Навигатор')}</Text>
+                  <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Навигатор')}</Text>
                 </Pressable>
               </View>
             </View>
@@ -454,18 +454,18 @@ export function MapHomeScreen({ navigation }: Props) {
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setPickerOpen(false)} />
         <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '70%' }}>
           <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
-          <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Выберите город')}</Text>
+          <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Выберите город')}</Text>
           <ScrollView contentContainerStyle={{ paddingBottom: 10 }}>
             {COUNTRIES.map((co) => (
               <View key={co.key}>
-                <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 }]}>{co.name}</Text>
+                <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 }]} numberOfLines={1}>{co.name}</Text>
                 {co.cities.map((ci) => {
                   const on = co.key === country && ci.key === city;
                   return (
                     <Pressable key={ci.key} onPress={() => { manualRef.current = true; setLocation(co.key, ci.key, true); setPickerOpen(false); mapRef.current?.animateToRegion({ latitude: ci.lat, longitude: ci.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600); }}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 20, backgroundColor: on ? T.brandTinted : 'transparent' }}>
                       <SF name="mappin.circle.fill" size={18} color={on ? T.brand : T.labelTertiary} />
-                      <Text style={[ty.body, { color: T.label, flex: 1 }]}>{ci.name}</Text>
+                      <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{ci.name}</Text>
                       {on ? <SF name="checkmark" size={16} color={T.brand} /> : null}
                     </Pressable>
                   );
@@ -483,7 +483,7 @@ function FChip({ label, icon, active, onPress, T }: { label: string; icon?: any;
   return (
     <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 18, backgroundColor: active ? T.brand : T.cardBg, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
       {icon ? <SF name={icon} size={12} color={active ? '#fff' : T.brand} /> : null}
-      <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]}>{label}</Text>
+      <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
     </Pressable>
   );
 }

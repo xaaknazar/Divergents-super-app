@@ -26,7 +26,7 @@ export function BadgeTile({ b }: { b: EarnedBadge }) {
         {b.earned ? <SF name="checkmark.circle.fill" size={20} color={b.color} />
                   : <SF name="lock.fill" size={15} color={T.labelTertiary} />}
       </View>
-      <Text style={[ty.headline, { color: T.label, marginTop: 12 }]}>{b.title}</Text>
+      <Text style={[ty.headline, { color: T.label, marginTop: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{b.title}</Text>
       <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={2}>{b.desc}</Text>
       {!b.earned && b.goal > 1 ? (
         <View style={{ marginTop: 10 }}>

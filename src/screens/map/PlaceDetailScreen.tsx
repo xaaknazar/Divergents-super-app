@@ -104,15 +104,15 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                 <Text style={[ty.title2, { color: T.label }]} numberOfLines={2}>{place.name}</Text>
                 {place.approved ? <SF name="checkmark.seal.fill" size={18} color={T.sky} /> : null}
               </View>
-              <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{meta.label} · {place.hours}</Text>
-              {open.known ? <Text style={[ty.caption1, { color: open.open ? T.green : T.red, marginTop: 2 }]}>{open.label}</Text> : null}
+              <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{meta.label} · {place.hours}</Text>
+              {open.known ? <Text style={[ty.caption1, { color: open.open ? T.green : T.red, marginTop: 2 }]} numberOfLines={1}>{open.label}</Text> : null}
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
-            {r > 0 ? <Text style={[ty.title1, { color: T.label }]}>{r.toFixed(1)}</Text> : null}
-            <View>
+            {r > 0 ? <Text style={[ty.title1, { color: T.label }]} numberOfLines={1}>{r.toFixed(1)}</Text> : null}
+            <View style={{ flexShrink: 1 }}>
               <Stars value={r} size={16} />
-              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{place.reviews.length} отзывов · добавил {place.addedBy}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{place.reviews.length} отзывов · добавил {place.addedBy}</Text>
             </View>
           </View>
           {place.approved ? (
@@ -138,7 +138,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
         {/* Highlights */}
         <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 6 }]}>{tr('Чем хорошо')}</Text>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 6 }]} numberOfLines={1}>{tr('Чем хорошо')}</Text>
           <Text style={[ty.body, { color: T.label }]}>{place.highlights}</Text>
         </View>
 
@@ -153,16 +153,16 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         <Pressable onPress={() => Linking.openURL(`https://2gis.kz/geo/${place.lng},${place.lat}`)}
           style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 12, backgroundColor: T.brandTinted }}>
           <SF name="map.fill" size={15} color={T.brand} />
-          <Text style={[ty.headline, { color: T.brand }]}>{tr('Открыть на карте')}</Text>
+          <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1}>{tr('Открыть на карте')}</Text>
         </Pressable>
 
         {/* Reviews */}
-        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Отзывы')} · {place.reviews.length}</Text>
+        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Отзывы')} · {place.reviews.length}</Text>
         {place.reviews.map((rev) => (
           <View key={rev.id} style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: T.cardBg, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={[ty.subheadEm, { color: T.label }]}>{rev.author}</Text>
-              <Text style={[ty.caption2, { color: T.labelTertiary }]}>{rev.date}</Text>
+              <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
+              <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{rev.date}</Text>
             </View>
             <View style={{ marginTop: 4 }}><Stars value={rev.rating} size={12} /></View>
             {rev.text ? <Text style={[ty.body, { color: T.label, marginTop: 6 }]}>{rev.text}</Text> : null}
@@ -175,7 +175,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         {/* Add review */}
         {isSignedIn ? (
           <View style={{ marginHorizontal: 16, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-            <Text style={[ty.headline, { color: T.label, marginBottom: 10 }]}>{tr('Ваш отзыв')}</Text>
+            <Text style={[ty.headline, { color: T.label, marginBottom: 10 }]} numberOfLines={1}>{tr('Ваш отзыв')}</Text>
             <Stars value={stars} size={28} onChange={setStars} />
             <TextInput value={text} onChangeText={setText} placeholder={tr('Чем понравилось / что улучшить')} placeholderTextColor={T.labelTertiary} multiline
               style={[ty.body, { backgroundColor: T.fillTertiary, borderRadius: 12, padding: 12, color: T.label, minHeight: 70, textAlignVertical: 'top', marginTop: 12 }]} />
@@ -192,7 +192,7 @@ function ActBtn({ icon, label, active, onPress, T }: { icon: any; label: string;
   return (
     <Pressable onPress={onPress} style={{ flex: 1, height: 58, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
       <SF name={icon} size={18} color={active ? T.brand : T.label} />
-      <Text style={[ty.caption2, { color: active ? T.brand : T.labelSecondary }]}>{label}</Text>
+      <Text style={[ty.caption2, { color: active ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
     </Pressable>
   );
 }

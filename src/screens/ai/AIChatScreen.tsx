@@ -168,7 +168,7 @@ export function AIChatScreen({}: Props) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Logo size={22} />
           <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]}>Divergents AI</Text>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Divergents AI</Text>
             <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>
               {isGeneral
                 ? (isSignedIn ? tr('Ассистент · знает ваш профиль') : tr('Персональный ассистент'))
@@ -227,7 +227,7 @@ export function AIChatScreen({}: Props) {
               {m.role === 'bot' && m.text.length > 0 ? (
                 <Pressable onPress={() => { Clipboard.setStringAsync(m.text); hSuccess(); }} hitSlop={6} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5, paddingHorizontal: 6, opacity: pressed ? 0.5 : 1 })}>
                   <SF name="doc.text" size={12} color={T.labelTertiary} />
-                  <Text style={[ty.caption2, { color: T.labelTertiary }]}>{tr('Копировать')}</Text>
+                  <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{tr('Копировать')}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -236,7 +236,7 @@ export function AIChatScreen({}: Props) {
           {busy ? (
             <View style={{ backgroundColor: T.fillTertiary, alignSelf: 'flex-start', borderRadius: 18, borderBottomLeftRadius: 4, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <ActivityIndicator color={T.labelSecondary} />
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>{isGeneral ? tr('Думаю…') : tr('Ищу в материалах курса…')}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{isGeneral ? tr('Думаю…') : tr('Ищу в материалах курса…')}</Text>
             </View>
           ) : null}
         </ScrollView>
@@ -247,7 +247,7 @@ export function AIChatScreen({}: Props) {
               {quick.map((q) => (
                 <Pressable key={q} onPress={() => send(q)} disabled={locked} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.separator, borderRadius: 18, paddingVertical: 7, paddingHorizontal: 14, opacity: locked ? 0.5 : pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
                   <SF name="sparkles" size={11} color={T.brand} />
-                  <Text style={[ty.subhead, { color: T.label }]}>{tr(q)}</Text>
+                  <Text style={[ty.subhead, { color: T.label }]} numberOfLines={1}>{tr(q)}</Text>
                 </Pressable>
               ))}
             </ScrollView>

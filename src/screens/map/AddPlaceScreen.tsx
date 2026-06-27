@@ -110,27 +110,27 @@ export function AddPlaceScreen({ navigation, route }: Props) {
 
         <Field label={tr('НАЗВАНИЕ')}><TextInput value={name} onChangeText={setName} placeholder={tr('напр. Coffee BOOM')} placeholderTextColor={T.labelTertiary} style={inp(T)} /></Field>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('КАТЕГОРИЯ')}</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{tr('КАТЕГОРИЯ')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
           {CATEGORIES.map((c) => {
             const on = cat === c;
             return (
               <Pressable key={c} onPress={() => setCat(c)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 13, borderRadius: 18, backgroundColor: on ? T.brand : T.cardBg, borderWidth: 0.5, borderColor: on ? 'transparent' : T.separator }}>
                 <SF name={CATEGORY_META[c].icon} size={12} color={on ? '#fff' : T.brand} />
-                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]}>{CATEGORY_META[c].label}</Text>
+                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{CATEGORY_META[c].label}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('ОСОБЕННОСТИ')}</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{tr('ОСОБЕННОСТИ')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
           {TAGS.map((t) => {
             const on = tags.includes(t);
             return (
               <Pressable key={t} onPress={() => toggle(t)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 13, borderRadius: 18, backgroundColor: on ? T.brand : T.cardBg, borderWidth: 0.5, borderColor: on ? 'transparent' : T.separator }}>
                 <SF name={TAG_META[t].icon} size={12} color={on ? '#fff' : T.brand} />
-                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]}>{TAG_META[t].label}</Text>
+                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAG_META[t].label}</Text>
               </Pressable>
             );
           })}
@@ -139,18 +139,18 @@ export function AddPlaceScreen({ navigation, route }: Props) {
         <Field label={tr('ЧЕМ ХОРОШО')}><TextInput value={highlights} onChangeText={setHighlights} placeholder={tr('напр. Вкусный колд брю, тихо, есть розетки')} placeholderTextColor={T.labelTertiary} multiline style={[inp(T), { minHeight: 80, textAlignVertical: 'top' }]} /></Field>
         <Field label={tr('ЧАСЫ РАБОТЫ')}><TextInput value={hours} onChangeText={setHours} placeholder={tr('напр. 09:00–23:00')} placeholderTextColor={T.labelTertiary} style={inp(T)} /></Field>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('ФОТО')}</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{tr('ФОТО')}</Text>
         {photo ? (
           <View style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
             <Image source={{ uri: photo }} style={{ width: '100%', height: 180 }} contentFit="cover" />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-              <Pressable onPress={pickPhoto} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brand }]}>{tr('Заменить')}</Text></Pressable>
-              <Pressable onPress={() => setPhoto(null)} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]}>{tr('Удалить')}</Text></Pressable>
+              <Pressable onPress={pickPhoto} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Заменить')}</Text></Pressable>
+              <Pressable onPress={() => setPhoto(null)} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Удалить')}</Text></Pressable>
             </View>
           </View>
         ) : (
           <Pressable onPress={pickPhoto} style={{ height: 90, borderRadius: 14, borderWidth: 1, borderColor: T.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexDirection: 'row' }}>
-            <SF name="photo" size={18} color={T.brand} /><Text style={[ty.subhead, { color: T.brand }]}>{tr('Добавить фото')}</Text>
+            <SF name="photo" size={18} color={T.brand} /><Text style={[ty.subhead, { color: T.brand }]} numberOfLines={1}>{tr('Добавить фото')}</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -167,7 +167,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   const { T } = useTheme();
   return (
     <View style={{ marginBottom: 16 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{label}</Text>
+      <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{label}</Text>
       {children}
     </View>
   );

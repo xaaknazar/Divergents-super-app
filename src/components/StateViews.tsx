@@ -94,7 +94,7 @@ export function EmptyState({
   return (
     <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 40, gap: 10 }, anim]}>
       <GlyphBadge icon={icon} tint={T.fillTertiary} fg={T.labelTertiary} />
-      <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 6 }]}>{title}</Text>
+      <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{title}</Text>
       {subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', lineHeight: 20 }]}>{subtitle}</Text> : null}
       {actionLabel && onAction ? (
         <PrimaryButton label={actionLabel} onPress={onAction} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />
@@ -112,7 +112,7 @@ export function ErrorState({
   return (
     <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 40, gap: 10 }, anim]}>
       <GlyphBadge icon="wifi.slash" tint="rgba(255,59,48,0.12)" fg={T.red} />
-      <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 6 }]}>Ошибка сети</Text>
+      <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>Ошибка сети</Text>
       <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', lineHeight: 20 }]}>{message}</Text>
       {onRetry ? (
         <PrimaryButton label="Повторить" icon="arrow.clockwise" onPress={onRetry} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />

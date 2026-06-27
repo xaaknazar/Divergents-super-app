@@ -95,7 +95,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
-        <Text style={[ty.subhead, { color: T.labelSecondary }]}>{t('community_tagline')}</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>{t('community_tagline')}</Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
@@ -143,9 +143,9 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
           <Logo size={22} body="#fff" head="#fff" />
-          <Text style={[ty.title2, { color: '#fff' }]}>{c.title}</Text>
+          <Text style={[ty.title2, { color: '#fff', flex: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{c.title}</Text>
         </View>
-        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{c.teamName ? `${tr('Команда')} «${c.teamName}» · ` : ''}{tr('сегодня')} +{pointsToday} pts</Text>
+        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>{c.teamName ? `${tr('Команда')} «${c.teamName}» · ` : ''}{tr('сегодня')} +{pointsToday} pts</Text>
         <View style={{ marginTop: 12, height: 6, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
           <View style={{ width: `${(c.totalDays > 0 ? c.currentDay / c.totalDays : 0) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6 }} />
         </View>
@@ -153,8 +153,8 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
       <View style={{ flexDirection: 'row', paddingVertical: 14 }}>
         {stats.map((st, i) => (
           <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < stats.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-            <Text style={[ty.title3, { color: T.label }]}>{st.v}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{st.l}</Text>
+            <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{st.v}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{st.l}</Text>
           </View>
         ))}
       </View>
@@ -199,7 +199,7 @@ function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { naviga
                 <IconSquircle icon={sp.icon} bg={T.brand} size={34} />
                 <Text style={[ty.headline, { color: T.label, marginTop: 10 }]} numberOfLines={1}>{sp.title}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}</Text>
-                <Text style={[ty.caption2, { color: T.brand, marginTop: 6 }]}>{sp.date}</Text>
+                <Text style={[ty.caption2, { color: T.brand, marginTop: 6 }]} numberOfLines={1}>{sp.date}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -240,7 +240,7 @@ function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation:
             </View>
             <View style={{ flex: 1 }}>
               <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />{tr('Старт')} {ch.startLabel}</Capsule>
-              <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]}>{ch.title}</Text>
+              <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{ch.title}</Text>
             </View>
           </LinearGradient>
           <View style={{ padding: 14 }}>
@@ -251,9 +251,9 @@ function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation:
               <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
-              <Text style={[ty.caption1, { color: T.red }]}>{tr('3 пропуска (🚩) — вылет')}</Text>
+              <Text style={[ty.caption1, { color: T.red, flexShrink: 1 }]} numberOfLines={1}>{tr('3 пропуска (🚩) — вылет')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Подробнее')}</Text>
+                <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Подробнее')}</Text>
                 <SF name="chevron.forward" size={12} color={T.brand} />
               </View>
             </View>
@@ -280,8 +280,8 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
         <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{trip.title}</Text>
         <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{trip.region}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-          <Text style={[ty.caption1, { color: T.labelSecondary }]}>{trip.meta}</Text>
-          <Text style={[ty.subheadEm, { color: T.brand }]}>{trip.price}</Text>
+          <Text style={[ty.caption1, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{trip.meta}</Text>
+          <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{trip.price}</Text>
         </View>
       </View>
     </Pressable>
@@ -299,9 +299,9 @@ function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trip
           style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
           <Image source={imgUrl(t.imageUrl, 256)} style={{ width: 64, height: 64, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
           <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]}>{t.title}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{t.region} · {t.difficulty}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{t.date} · {t.meta} · {t.price}</Text>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{t.title}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{t.region} · {t.difficulty}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{t.date} · {t.meta} · {t.price}</Text>
           </View>
           <SF name="chevron.forward" size={14} color={T.labelTertiary} />
           {i < trips.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 88, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
@@ -329,12 +329,12 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
               <SF name={sp.icon} size={22} color={T.brand} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[ty.headline, { color: T.label }]}>{sp.title}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{sp.place} · {sp.date}</Text>
-              <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]}>{going} идут · {sp.spotsLabel}</Text>
+              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{sp.title}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place} · {sp.date}</Text>
+              <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{going} идут · {sp.spotsLabel}</Text>
             </View>
             <Pressable onPress={() => toggle(k)} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
-              <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]}>{on ? 'Вы идёте' : 'Участвую'}</Text>
+              <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{on ? 'Вы идёте' : 'Участвую'}</Text>
             </Pressable>
             {i < sport.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
           </View>

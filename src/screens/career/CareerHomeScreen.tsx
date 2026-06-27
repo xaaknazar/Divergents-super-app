@@ -94,12 +94,12 @@ export function CareerHomeScreen({ navigation }: Props) {
               <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
                 <View style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
                   <SF name="person.crop.circle.fill" size={22} color={T.brand} />
-                  <Text style={[ty.subheadEm, { color: T.label, marginTop: 8 }]}>{GOOD_FIT.bossTitle}</Text>
+                  <Text style={[ty.subheadEm, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{GOOD_FIT.bossTitle}</Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 4 }]}>{GOOD_FIT.bossText}</Text>
                 </View>
                 <View style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
                   <SF name="building.2.fill" size={22} color={T.green} />
-                  <Text style={[ty.subheadEm, { color: T.label, marginTop: 8 }]}>{GOOD_FIT.companyTitle}</Text>
+                  <Text style={[ty.subheadEm, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{GOOD_FIT.companyTitle}</Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 4 }]}>{GOOD_FIT.companyText}</Text>
                 </View>
               </View>
@@ -166,8 +166,8 @@ function ResumeHero({ navigation, completeness: live, profile, liveData }: {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
             <Ring value={completeness / 100} size={64} color="#fff" label={`${completeness}%`} textColor="#fff" />
             <View style={{ flex: 1 }}>
-              <Text style={[ty.title3, { color: '#fff' }]}>{tr('Моя анкета')}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>
+              <Text style={[ty.title3, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Моя анкета')}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {subtitle}
               </Text>
             </View>
@@ -191,7 +191,7 @@ function JobCard({ job, onPress, applied, best, gallup }: {
       {best ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 12 }}>
           <SF name="bolt.fill" size={12} color={T.orange} />
-          <Text style={[ty.caption2Em, { color: T.orange, textTransform: 'uppercase' }]}>{tr('Лучшее совпадение')}</Text>
+          <Text style={[ty.caption2Em, { color: T.orange, textTransform: 'uppercase' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Лучшее совпадение')}</Text>
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
@@ -200,7 +200,7 @@ function JobCard({ job, onPress, applied, best, gallup }: {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{job.title}</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{job.company}{job.city ? ` · ${job.city}` : ''}</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{job.company}{job.city ? ` · ${job.city}` : ''}</Text>
         </View>
         {job.match > 0 ? <Ring value={job.match / 100} size={52} stroke={5} color={T.brand} label={`${job.match}%`} /> : null}
       </View>
