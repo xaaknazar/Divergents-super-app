@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Share } from 'react-native';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer } from 'expo-video';
 import { Audio } from 'expo-av';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -12,7 +14,7 @@ import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
 import {
   fetchServerChannels, fetchMyChannelMemberships, joinChannel, fetchChannelRequests,
-  actChannelRequest, createChannelPost, uploadFile, ServerChannel, ServerChannelPost, ChannelRequest,
+  actChannelRequest, createChannelPost, uploadFile, updateChannel, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
 } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -31,6 +33,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [postOpen, setPostOpen] = useState(false);
   const [reqOpen, setReqOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
   const [requests, setRequests] = useState<ChannelRequest[]>([]);
 
   const player = useVideoPlayer(null, (p) => { p.loop = false; });
@@ -81,6 +84,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }}>
         {/* Header */}
         <View style={{ backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
+          {ch.avatarUrl ? <Image source={{ uri: ch.avatarUrl }} style={{ width: 64, height: 64, borderRadius: 18, marginBottom: 10 }} contentFit="cover" cachePolicy="memory-disk" /> : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{ch.name}</Text>
             {ch.access === 'request' ? <SF name="lock.fill" size={13} color={T.labelTertiary} /> : null}
@@ -100,6 +104,9 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                   <SF name="person.2.fill" size={15} color={T.label} /><Text style={[ty.subheadEm, { color: T.label }]}>Запросы{requests.length ? ` · ${requests.length}` : ''}</Text>
                 </Pressable>
               ) : null}
+              <Pressable onPress={() => setManageOpen(true)} style={{ height: 44, paddingHorizontal: 14, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <SF name="gearshape.fill" size={16} color={T.label} />
+              </Pressable>
             </View>
           ) : (
             <Pressable onPress={join} disabled={busy || state === 'requested'} style={{ marginTop: 14, height: 46, borderRadius: 14, backgroundColor: state === 'subscribed' || state === 'approved' ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
@@ -141,6 +148,11 @@ export function ServerChannelScreen({ route, navigation }: Props) {
       {/* Create post modal (owner) */}
       <Modal visible={postOpen} animationType="slide" transparent onRequestClose={() => setPostOpen(false)}>
         <CreatePost channelId={id} onClose={() => setPostOpen(false)} onDone={() => { setPostOpen(false); load(); }} />
+      </Modal>
+
+      {/* Manage modal (owner) */}
+      <Modal visible={manageOpen} animationType="slide" transparent onRequestClose={() => setManageOpen(false)}>
+        <ManageChannel channel={ch} onClose={() => setManageOpen(false)} onSaved={() => { setManageOpen(false); load(); }} />
       </Modal>
 
       {/* Requests modal (owner) */}
@@ -244,6 +256,91 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
         <Pressable onPress={submit} disabled={!ok || busy} style={{ marginTop: 14, height: 48, borderRadius: 14, backgroundColor: ok ? T.brand : T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
           {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: ok ? '#fff' : T.labelTertiary }]}>Опубликовать</Text>}
         </Pressable>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+function ManageChannel({ channel, onClose, onSaved }: { channel: ServerChannel; onClose: () => void; onSaved: () => void }) {
+  const { T } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { getToken } = useAuth();
+  const [name, setName] = useState(channel.name);
+  const [bio, setBio] = useState(channel.bio ?? '');
+  const [avatar, setAvatar] = useState<string | null>(channel.avatarUrl ?? null);
+  const [busy, setBusy] = useState(false);
+  const [avBusy, setAvBusy] = useState(false);
+  const [members, setMembers] = useState<ChannelMemberRow[]>([]);
+
+  useEffect(() => { (async () => { const t = await getToken(); setMembers(await fetchChannelMembers(t, channel.id)); })(); }, []);
+
+  const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
+
+  const pickAvatar = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Нет доступа к фото', 'Разрешите доступ к галерее.'); return; }
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, allowsEditing: true, aspect: [1, 1] });
+    if (r.canceled || !r.assets?.[0]?.uri) return;
+    setAvBusy(true);
+    try { const t = await getToken(); const url = await uploadFile(t, r.assets[0].uri, 'avatar.jpg', 'image/jpeg'); if (url) setAvatar(url); else Alert.alert('Не удалось загрузить фото'); }
+    finally { setAvBusy(false); }
+  };
+  const save = async () => {
+    setBusy(true);
+    try { const t = await getToken(); const ok = await updateChannel(t, channel.id, { name: name.trim(), bio: bio.trim(), avatarUrl: avatar ?? undefined }); if (ok) onSaved(); else Alert.alert('Не удалось сохранить'); }
+    finally { setBusy(false); }
+  };
+  const invite = async () => {
+    const t = await getToken(); const inv = await createChannelInvite(t, channel.id);
+    if (inv) Share.share({ message: `Присоединяйся к каналу «${name}» в Divergents: ${inv.url}` });
+    else Alert.alert('Не удалось создать ссылку');
+  };
+  const remove = async (uid: string, label: string) => {
+    Alert.alert('Удалить участника', label, [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить', style: 'destructive', onPress: async () => { const t = await getToken(); await removeChannelMember(t, channel.id, uid); setMembers((m) => m.filter((x) => x.userId !== uid)); } },
+    ]);
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
+      <Pressable style={{ flex: 1 }} onPress={onClose} />
+      <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '88%' }}>
+        <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }} keyboardShouldPersistTaps="handled">
+          <Text style={[ty.title3, { color: T.label, marginBottom: 12 }]}>Настройки канала</Text>
+
+          <Pressable onPress={pickAvatar} style={{ alignSelf: 'center', marginBottom: 14 }}>
+            {avatar ? <Image source={{ uri: avatar }} style={{ width: 88, height: 88, borderRadius: 24 }} contentFit="cover" />
+              : <View style={{ width: 88, height: 88, borderRadius: 24, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="photo" size={26} color={T.labelSecondary} /></View>}
+            <Text style={[ty.caption1, { color: T.brand, textAlign: 'center', marginTop: 6 }]}>{avBusy ? 'Загрузка…' : 'Изменить фото'}</Text>
+          </Pressable>
+
+          <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>НАЗВАНИЕ</Text>
+          <TextInput value={name} onChangeText={setName} style={[inp, { marginBottom: 12 }]} />
+          <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>ОПИСАНИЕ</Text>
+          <TextInput value={bio} onChangeText={setBio} multiline style={[inp, { minHeight: 80, textAlignVertical: 'top' }]} />
+
+          <Pressable onPress={invite} style={{ marginTop: 14, height: 46, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="square.and.arrow.up" size={16} color={T.brand} />
+            <Text style={[ty.subheadEm, { color: T.brand }]}>Пригласительная ссылка</Text>
+          </Pressable>
+
+          <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 18, marginBottom: 8, marginLeft: 4, textTransform: 'uppercase' }]}>Участники · {members.length}</Text>
+          {members.length === 0 ? <Text style={[ty.subhead, { color: T.labelTertiary, marginLeft: 4 }]}>Пока нет участников.</Text> : members.map((m) => (
+            <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.cardBg, borderRadius: 12, padding: 12, marginBottom: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{m.userName || m.userEmail}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{m.userEmail}</Text>
+              </View>
+              <Pressable onPress={() => remove(m.userId, m.userName || m.userEmail)} hitSlop={8}><SF name="xmark.circle.fill" size={20} color={T.red} /></Pressable>
+            </View>
+          ))}
+
+          <Pressable onPress={save} disabled={busy} style={{ marginTop: 18, height: 50, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]}>Сохранить</Text>}
+          </Pressable>
+        </ScrollView>
       </View>
     </KeyboardAvoidingView>
   );

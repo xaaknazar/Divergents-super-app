@@ -524,3 +524,28 @@ export async function uploadFile(token: string | null, uri: string, name: string
 }
 export const registerPush = (token: string | null, expoToken: string, platform: string) =>
   postAuthed('/api/mobile/push/register', token, { token: expoToken, platform });
+
+// ───────── Channel management (owner) ─────────
+export interface ChannelMemberRow { id: string; userId: string; userEmail: string; userName?: string | null; state: string }
+export const updateChannel = (token: string | null, id: string, data: { name?: string; bio?: string; avatarUrl?: string }) =>
+  postAuthedMethod('PATCH', `/api/mobile/channels/${id}`, token, data);
+export async function fetchChannelMembers(token: string | null, id: string): Promise<ChannelMemberRow[]> {
+  if (!token) return [];
+  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/members`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return d?.members ?? []; } catch { return []; }
+}
+export async function removeChannelMember(token: string | null, id: string, userId: string): Promise<boolean> {
+  if (!token) return false;
+  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/members`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ userId }) }); return r.ok; } catch { return false; }
+}
+export async function createChannelInvite(token: string | null, id: string): Promise<{ code: string; url: string } | null> {
+  if (!token) return null;
+  try { const r = await fetch(`${API_BASE}/api/mobile/channels/${id}/invite`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return null; return await r.json(); } catch { return null; }
+}
+export async function joinByInvite(token: string | null, code: string): Promise<string | null> {
+  if (!token) return null;
+  try { const r = await fetch(`${API_BASE}/api/mobile/channels/invite/join`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ code }) }); if (!r.ok) return null; const d = await r.json(); return d?.channelId ?? null; } catch { return null; }
+}
+async function postAuthedMethod(method: string, path: string, token: string | null, body: any): Promise<boolean> {
+  if (!token) return false;
+  try { const r = await fetch(`${API_BASE}${path}`, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) }); return r.ok; } catch { return false; }
+}

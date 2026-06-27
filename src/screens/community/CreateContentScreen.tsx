@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { PrimaryButton, ty } from '../../components/ui';
-import { createChallenge, createTrip, createChannel } from '../../data/api';
+import { createChallenge, createTrip, createChannel, uploadFile } from '../../data/api';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CreateContent'>;
@@ -30,8 +32,20 @@ export function CreateContentScreen({ navigation }: Props) {
   const [desc, setDesc] = useState('');
   const [access, setAccess] = useState<'open' | 'request' | 'paid'>('open');
   const [bio, setBio] = useState('');
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avBusy, setAvBusy] = useState(false);
 
   const ok = title.trim().length > 1;
+
+  const pickAvatar = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Нет доступа к фото', 'Разрешите доступ к галерее.'); return; }
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, allowsEditing: true, aspect: [1, 1] });
+    if (r.canceled || !r.assets?.[0]?.uri) return;
+    setAvBusy(true);
+    try { const token = await getToken(); const url = await uploadFile(token, r.assets[0].uri, 'avatar.jpg', 'image/jpeg'); if (url) setAvatar(url); else Alert.alert('Не удалось загрузить фото'); }
+    finally { setAvBusy(false); }
+  };
 
   const submit = async () => {
     if (!ok) return;
@@ -44,7 +58,7 @@ export function CreateContentScreen({ navigation }: Props) {
       } else if (kind === 'trip') {
         success = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null });
       } else {
-        success = await createChannel(token, { name: title.trim(), access, price: access === 'paid' ? price.trim() || null : null, bio: bio.trim() || null });
+        success = await createChannel(token, { name: title.trim(), access, price: access === 'paid' ? price.trim() || null : null, bio: bio.trim() || null, avatarUrl: avatar || undefined });
       }
     } catch {}
     setBusy(false);
@@ -107,6 +121,13 @@ export function CreateContentScreen({ navigation }: Props) {
             </>
           ) : (
             <>
+              <View style={{ alignItems: 'center', marginBottom: 6 }}>
+                <Pressable onPress={pickAvatar}>
+                  {avatar ? <Image source={{ uri: avatar }} style={{ width: 84, height: 84, borderRadius: 22 }} contentFit="cover" />
+                    : <View style={{ width: 84, height: 84, borderRadius: 22, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="photo" size={24} color={T.labelSecondary} /></View>}
+                  <Text style={[ty.caption1, { color: T.brand, textAlign: 'center', marginTop: 6 }]}>{avBusy ? 'Загрузка…' : 'Фото канала'}</Text>
+                </Pressable>
+              </View>
               <Field label="ТИП ДОСТУПА">
                 <Seg items={[{ k: 'open', label: 'Открытая' }, { k: 'request', label: 'По запросу' }, { k: 'paid', label: 'Платная' }]} value={access} onChange={setAccess} />
               </Field>
