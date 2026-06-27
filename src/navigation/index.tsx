@@ -13,6 +13,9 @@ import { useInviteLinks } from '../state/useInviteLinks';
 
 import { LMSHomeScreen } from '../screens/lms/LMSHomeScreen';
 import { CatalogScreen } from '../screens/lms/CatalogScreen';
+import { BooksCatalogScreen } from '../screens/lms/BooksCatalogScreen';
+import { BookDetailScreen } from '../screens/lms/BookDetailScreen';
+import { BookAIScreen } from '../screens/lms/BookAIScreen';
 import { CourseDetailScreen } from '../screens/lms/CourseDetailScreen';
 import { VideoScreen } from '../screens/lms/VideoScreen';
 import { DownloadsScreen } from '../screens/lms/DownloadsScreen';
@@ -52,6 +55,9 @@ function LMSNavigator() {
       <LMSStack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <LMSStack.Screen name="Video" component={VideoScreen} options={{ presentation: 'fullScreenModal' }} />
       <LMSStack.Screen name="Downloads" component={DownloadsScreen} />
+      <LMSStack.Screen name="Books" component={BooksCatalogScreen} />
+      <LMSStack.Screen name="BookDetail" component={BookDetailScreen} />
+      <LMSStack.Screen name="BookAI" component={BookAIScreen} options={{ presentation: 'modal' }} />
     </LMSStack.Navigator>
   );
 }

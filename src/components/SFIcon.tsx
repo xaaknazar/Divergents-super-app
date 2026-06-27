@@ -12,7 +12,7 @@ export type SFName =
   | 'checkmark' | 'checkmark.seal.fill' | 'plus' | 'plus.circle' | 'plus.circle.fill'
   | 'xmark' | 'gearshape' | 'bell.fill' | 'bell.badge.fill' | 'envelope.fill' | 'phone.fill'
   | 'mappin.circle.fill' | 'mappin.and.ellipse' | 'person.fill' | 'building.2.fill'
-  | 'cart.fill' | 'cart' | 'target' | 'location.fill' | 'bolt.fill' | 'clock' | 'airplane' | 'arrow.down.circle' | 'square.and.arrow.down' | 'trash.fill' | 'creditcard.fill' | 'clock.arrow.circlepath' | 'lock.open.fill' | 'photo' | 'smallcircle.filled.circle' | 'xmark.circle.fill' | 'waveform' | 'doc.text.fill' | 'headphones' | 'eye.fill' | 'person.2.fill' | 'figure.run' | 'brain.head.profile'
+  | 'cart.fill' | 'cart' | 'target' | 'location.fill' | 'bolt.fill' | 'clock' | 'airplane' | 'arrow.down.circle' | 'square.and.arrow.down' | 'trash.fill' | 'creditcard.fill' | 'clock.arrow.circlepath' | 'lock.open.fill' | 'photo' | 'smallcircle.filled.circle' | 'xmark.circle.fill' | 'waveform' | 'doc.text.fill' | 'headphones' | 'eye.fill' | 'person.2.fill' | 'figure.run' | 'brain.head.profile' | 'quote.bubble.fill' | 'quote.bubble' | 'bubble.left' | 'bubble.left.fill' | 'arrow.up'
   | 'heart.text.square.fill' | 'leaf.fill' | 'arrow.up.circle.fill' | 'bookmark'
   | 'bookmark.fill' | 'square.and.arrow.up' | 'ellipsis' | 'lock.fill' | 'lock'
   | 'doc.text' | 'doc.fill' | 'circle.fill' | 'circle' | 'list.bullet' | 'map.fill' | 'map'
@@ -39,6 +39,9 @@ const MAP: Record<string, [Lib, string]> = {
   'flame.fill': ['ion', 'flame'], 'trophy.fill': ['ion', 'trophy'],
   'crown.fill': ['mci', 'crown'], 'medal.fill': ['mci', 'medal'],
   'star.fill': ['ion', 'star'], 'star': ['ion', 'star-outline'],
+  'quote.bubble.fill': ['ion', 'chatbubble-ellipses'], 'quote.bubble': ['ion', 'chatbubble-ellipses-outline'],
+  'bubble.left.fill': ['ion', 'chatbubble'], 'bubble.left': ['ion', 'chatbubble-outline'],
+  'arrow.up': ['ion', 'arrow-up'],
   'heart.fill': ['ion', 'heart'], 'heart': ['ion', 'heart-outline'],
   'checkmark.circle.fill': ['ion', 'checkmark-circle'], 'checkmark': ['ion', 'checkmark'],
   'checkmark.seal.fill': ['mci', 'check-decagram'],

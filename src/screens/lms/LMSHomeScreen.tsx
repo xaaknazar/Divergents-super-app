@@ -101,6 +101,19 @@ export function LMSHomeScreen({ navigation }: Props) {
         {categories.map((c) => <Chip key={c} label={c} active={cat === c} onPress={() => setCat(c)} />)}
       </ScrollView>
 
+      {/* Books library entry */}
+      <Pressable onPress={() => navigation.navigate('Books')}
+        style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.brandTintedStrong }}>
+        <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+          <SF name="book.fill" size={23} color="#fff" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Библиотека книг</Text>
+          <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>Каталог, рецензии и ИИ-советник по книгам под ваш профиль</Text>
+        </View>
+        <SF name="chevron.right" size={15} color={T.labelTertiary} />
+      </Pressable>
+
       {loading ? (
         <View style={{ paddingTop: 8 }}><CourseGridSkeleton count={4} /></View>
       ) : error && courses.length === 0 ? (

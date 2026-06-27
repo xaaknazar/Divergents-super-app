@@ -24,7 +24,7 @@ const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | '
 // that hasn't initialised yet — keeps the bar VISIBLE (fail-safe), so the bar
 // never disappears on the main screens.
 const DETAIL_ROUTES = new Set([
-  'Catalog', 'CourseDetail', 'Video',
+  'Catalog', 'CourseDetail', 'Video', 'Books', 'BookDetail', 'BookAI',
   'ChallengeDetail', 'JoinChallenge', 'TripDetail', 'Channel', 'ChannelPost',
   'PlaceDetail', 'AddPlace', 'OfflineMap',
   'VacancyDetail', 'Resume', 'TalentProfile',
