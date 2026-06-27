@@ -549,3 +549,17 @@ async function postAuthedMethod(method: string, path: string, token: string | nu
   if (!token) return false;
   try { const r = await fetch(`${API_BASE}${path}`, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) }); return r.ok; } catch { return false; }
 }
+
+// One-time Clerk sign-in token → open the website already authenticated.
+export async function getSignInTicket(token: string | null): Promise<string | null> {
+  if (!token) return null;
+  try {
+    const r = await fetch(`${API_BASE}/api/mobile/signin-ticket`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return null; const d = await r.json(); return d?.token ?? null;
+  } catch { return null; }
+}
+// Build a website URL that auto-signs-in via the ticket, then lands on `path`.
+export function webAuthedUrl(ticket: string | null, path: string): string {
+  if (ticket) return `${API_BASE}/sign-in?__clerk_ticket=${encodeURIComponent(ticket)}&redirect_url=${encodeURIComponent(path)}`;
+  return `${API_BASE}${path}`;
+}

@@ -15,7 +15,7 @@ import { useEnrollment } from '../../state/EnrollmentContext';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useAuth } from '@clerk/clerk-expo';
-import { formatPrice, stripHtml, API_BASE, imgUrl, lessonAudioUrl } from '../../data/api';
+import { formatPrice, stripHtml, API_BASE, imgUrl, lessonAudioUrl, getSignInTicket, webAuthedUrl } from '../../data/api';
 import { useDownloads } from '../../state/downloads';
 import { Course, Lesson } from '../../data/courses';
 import { LMSStackParams } from '../../navigation/types';
@@ -216,9 +216,14 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
 // ─── Locked / paid course → sales landing page ─────────────────────
 function SalesCourse({ course, courseId, navigation }: { course: Course; courseId: string; navigation: Nav }) {
   const { T } = useTheme();
+  const { getToken } = useAuth();
   const insets = useSafeAreaInsets();
   const { detailLoading } = useCourses();
-  const buy = () => Linking.openURL(`${API_BASE}/courses/${courseId}`);
+  const buy = async () => {
+    const path = `/courses/${courseId}`;
+    try { const t = await getToken(); const ticket = await getSignInTicket(t); Linking.openURL(webAuthedUrl(ticket, path)); }
+    catch { Linking.openURL(`${API_BASE}${path}`); }
+  };
   const freeLesson = course.lessons.find((l) => l.isFree);
   const chaptersLoading = detailLoading[courseId] && course.lessons.length === 0;
 
