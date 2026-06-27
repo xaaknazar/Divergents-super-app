@@ -66,24 +66,6 @@ export function CreateContentScreen({ navigation }: Props) {
     else Alert.alert('Не удалось создать', 'Проверьте подключение и права (нужен email-куратор).');
   };
 
-  const Seg = ({ items, value, onChange }: { items: { k: string; label: string }[]; value: string; onChange: (k: any) => void }) => (
-    <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 12, padding: 4 }}>
-      {items.map((it) => {
-        const on = value === it.k;
-        return (
-          <Pressable key={it.k} onPress={() => onChange(it.k)} style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? T.cardBg : 'transparent' }}>
-            <Text style={[ty.footnoteEm, { color: on ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{it.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <View style={{ marginTop: 14 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{label}</Text>
-      {children}
-    </View>
-  );
   const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
 
   return (
@@ -140,6 +122,33 @@ export function CreateContentScreen({ navigation }: Props) {
           <PrimaryButton label="Опубликовать" icon="checkmark" loading={busy} disabled={!ok} onPress={submit} />
         </View>
       </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+
+function Seg({ items, value, onChange }: { items: { k: string; label: string }[]; value: string; onChange: (k: any) => void }) {
+  const { T } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 12, padding: 4 }}>
+      {items.map((it) => {
+        const on = value === it.k;
+        return (
+          <Pressable key={it.k} onPress={() => onChange(it.k)} style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? T.cardBg : 'transparent' }}>
+            <Text style={[ty.footnoteEm, { color: on ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{it.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const { T } = useTheme();
+  return (
+    <View style={{ marginTop: 14 }}>
+      <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{label}</Text>
+      {children}
     </View>
   );
 }
