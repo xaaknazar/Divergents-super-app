@@ -7,10 +7,10 @@ function Inline({ text, color, bold }: { text: string; color: string; bold?: boo
   // split by **bold**
   const parts = text.split(/(\*\*[^*]+\*\*)/g).filter((p) => p !== '');
   return (
-    <Text style={[ty.body, { color, ...(bold ? { fontFamily: 'Nunito_700Bold' } : null) } as TextStyle]}>
+    <Text style={[ty.body, { color, ...(bold ? { fontFamily: 'GothamRnd-Bold' } : null) } as TextStyle]}>
       {parts.map((p, i) =>
         p.startsWith('**') && p.endsWith('**')
-          ? <Text key={i} style={{ fontFamily: 'Nunito_700Bold' }}>{p.slice(2, -2)}</Text>
+          ? <Text key={i} style={{ fontFamily: 'GothamRnd-Bold' }}>{p.slice(2, -2)}</Text>
           : <Text key={i}>{p}</Text>
       )}
     </Text>
@@ -39,7 +39,7 @@ export function MarkdownText({ text, color }: { text: string; color: string }) {
         const n = line.match(/^\s*(\d+)\.\s+(.*)$/);
         if (n) return (
           <View key={i} style={{ flexDirection: 'row', gap: 6, marginVertical: 1 }}>
-            <Text style={[ty.body, { color, fontFamily: 'Nunito_700Bold' }]}>{n[1]}.</Text>
+            <Text style={[ty.body, { color, fontFamily: 'GothamRnd-Bold' }]}>{n[1]}.</Text>
             <View style={{ flex: 1 }}><Inline text={n[2]} color={color} /></View>
           </View>
         );
