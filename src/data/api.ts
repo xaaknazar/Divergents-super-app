@@ -6,6 +6,16 @@ import { Course, Lesson } from './courses';
 
 export const API_BASE = 'https://divergents-lms.kz';
 
+// A Lesson that also carries an optional offline-audio URL (Mux audio.m4a).
+// Kept local to avoid touching the shared courses.ts Lesson interface; values
+// are read back through `lessonAudioUrl()` so callers stay type-safe.
+export type LessonWithAudio = Lesson & { audioUrl?: string | null };
+
+// Safe accessor for a lesson's optional offline-audio URL.
+export function lessonAudioUrl(lesson: Lesson): string | null {
+  return (lesson as LessonWithAudio).audioUrl ?? null;
+}
+
 interface ApiCourseSummary {
   id: string;
   title: string;
@@ -25,6 +35,9 @@ interface ApiChapter {
   isFree: boolean;
   playbackId: string | null;
   hlsUrl: string | null;
+  // Optional Mux audio rendition (audio.m4a) for offline audio downloads.
+  // Only present on the owned-course detail endpoint (/api/mobile/me/courses/:id).
+  audioUrl?: string | null;
 }
 
 interface ApiCourseDetail {
@@ -92,7 +105,11 @@ function mapDetail(c: ApiCourseDetail): Course {
   const d = decor(id);
   // Guard against an unexpected 200 payload without a chapters array.
   const chapters = Array.isArray(safe.chapters) ? safe.chapters.filter(Boolean) : [];
-  const lessons: Lesson[] = chapters.map((ch, i) => ({
+  // `audioUrl` is carried alongside the standard Lesson fields. Until the shared
+  // Lesson interface (data/courses.ts) gains the field, we type the mapped array
+  // with a local extension so the literal stays type-checked. Read it back with
+  // the `lessonAudioUrl()` helper below.
+  const lessons: LessonWithAudio[] = chapters.map((ch, i) => ({
     id: String(ch.id ?? `ch-${i}`),
     n: i + 1,
     title: ch.title || `Урок ${i + 1}`,
@@ -102,6 +119,7 @@ function mapDetail(c: ApiCourseDetail): Course {
     playbackId: ch.playbackId ?? null,
     hlsUrl: ch.hlsUrl ?? null,
     description: ch.description ?? null,
+    audioUrl: ch.audioUrl ?? null,
   }));
   const attachments = Array.isArray(safe.attachments)
     ? safe.attachments.filter((a) => a && a.id != null && a.url != null)

@@ -13,6 +13,7 @@ import { LMSHomeScreen } from '../screens/lms/LMSHomeScreen';
 import { CatalogScreen } from '../screens/lms/CatalogScreen';
 import { CourseDetailScreen } from '../screens/lms/CourseDetailScreen';
 import { VideoScreen } from '../screens/lms/VideoScreen';
+import { DownloadsScreen } from '../screens/lms/DownloadsScreen';
 
 import { CommunityHomeScreen } from '../screens/community/CommunityHomeScreen';
 import { ChallengeDetailScreen } from '../screens/community/ChallengeDetailScreen';
@@ -47,6 +48,7 @@ function LMSNavigator() {
       <LMSStack.Screen name="Catalog" component={CatalogScreen} />
       <LMSStack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <LMSStack.Screen name="Video" component={VideoScreen} options={{ presentation: 'fullScreenModal' }} />
+      <LMSStack.Screen name="Downloads" component={DownloadsScreen} />
     </LMSStack.Navigator>
   );
 }

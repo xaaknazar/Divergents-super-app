@@ -18,6 +18,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "kz.divergents.app",
       "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ],
         "NSLocationWhenInUseUsageDescription": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.",
         "NSPhotoLibraryUsageDescription": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества.",

@@ -5,6 +5,7 @@ export type LMSStackParams = {
   Catalog: undefined;
   CourseDetail: { courseId: string };
   Video: { courseId: string; lessonId: string };
+  Downloads: undefined;
 };
 
 export type CommunityStackParams = {
