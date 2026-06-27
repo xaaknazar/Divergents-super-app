@@ -700,6 +700,9 @@ export interface SportActivity {
   spotsLabel: string;
   tint: string;
   note?: string;
+  meetLat?: number | null;
+  meetLng?: number | null;
+  meetAt?: string | null;
 }
 
 // Server-backed sport activities (GET /api/mobile/sport).
@@ -719,6 +722,9 @@ export async function fetchSport(): Promise<SportActivity[]> {
       spotsLabel: x.spots ? `${x.spots} мест` : 'Открыто',
       tint: 'rgba(35,64,136,0.12)',
       note: x.description ?? undefined,
+      meetLat: x.meetLat ?? null,
+      meetLng: x.meetLng ?? null,
+      meetAt: x.meetAt ?? null,
     }));
   } catch { return []; }
 }

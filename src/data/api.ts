@@ -569,7 +569,11 @@ export function webAuthedUrl(ticket: string | null, path: string): string {
 }
 
 // ───────── Sport (server) ─────────
-export interface LiveSport { id: string; title: string; place?: string | null; date?: string | null; spots: number; description?: string | null; _count?: { applications: number } }
+export interface LiveSport { id: string; title: string; place?: string | null; date?: string | null; spots: number; description?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
+export async function fetchMySportIds(token: string | null): Promise<string[]> {
+  if (!token) return [];
+  try { const r = await fetch(`${API_BASE}/api/mobile/me/sport`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sportIds) ? d.sportIds : []; } catch { return []; }
+}
 export async function fetchLiveSport(): Promise<LiveSport[]> {
   try { const r = await fetch(`${API_BASE}/api/mobile/sport`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sport) ? d.sport : []; } catch { return []; }
 }

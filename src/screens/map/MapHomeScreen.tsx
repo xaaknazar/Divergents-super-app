@@ -12,7 +12,7 @@ import { Capsule, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
 import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, safeCityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
-import { fetchLiveTrips, fetchMyTripIds, LiveTrip } from '../../data/api';
+import { fetchLiveTrips, fetchMyTripIds, LiveTrip, fetchLiveSport, fetchMySportIds, LiveSport } from '../../data/api';
 import { MapStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
 import { loadJSON, saveJSON } from '../../state/persist';
@@ -114,6 +114,7 @@ export function MapHomeScreen({ navigation }: Props) {
   const autoRef = useRef(false);
   useEffect(() => { loadJSON<{ name: string; lat: number; lng: number }[]>('dvg.mapRecent', []).then(setRecents); }, []);
   const [meetings, setMeetings] = useState<LiveTrip[]>([]);
+  const [sportMeets, setSportMeets] = useState<LiveSport[]>([]);
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -123,6 +124,13 @@ export function MapHomeScreen({ navigation }: Props) {
         const now = Date.now();
         const mine = trips.filter((t) => myIds.includes(t.id) && t.meetLat != null && t.meetLng != null && (() => { const d = t.meetAt ? Date.parse(t.meetAt.replace(' ', 'T')) : NaN; return isNaN(d) ? true : d >= now; })());
         if (alive) setMeetings(mine);
+      } catch {}
+      try {
+        const token = isSignedIn ? await getToken() : null;
+        const [sport, mySportIds] = await Promise.all([fetchLiveSport(), fetchMySportIds(token)]);
+        const now2 = Date.now();
+        const mineS = sport.filter((sp) => mySportIds.includes(sp.id) && sp.meetLat != null && sp.meetLng != null && (() => { const d = sp.meetAt ? Date.parse(sp.meetAt.replace(' ', 'T')) : NaN; return isNaN(d) ? true : d >= now2; })());
+        if (alive) setSportMeets(mineS);
       } catch {}
     })();
     return () => { alive = false; };
@@ -282,6 +290,17 @@ export function MapHomeScreen({ navigation }: Props) {
                 <View style={{ backgroundColor: '#2f5bd6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <SF name="flag.fill" size={11} color="#fff" />
                   <Text style={[ty.caption2Em, { color: '#fff' }]} numberOfLines={1}>{m.meetAt ? m.meetAt.split(' ').slice(-1)[0] : 'Встреча'}</Text>
+                </View>
+              </View>
+            </Marker>
+          ))}
+          {sportMeets.map((m) => (
+            <Marker key={`sport_${m.id}`} coordinate={{ latitude: m.meetLat!, longitude: m.meetLng! }} anchor={{ x: 0.5, y: 1 }}
+              title={`Спорт · ${m.title}`} description={`${m.place ?? ''}${m.meetAt ? ` · ${m.meetAt}` : ''}`.trim().replace(/^· /, '')}>
+              <View style={{ alignItems: 'center' }}>
+                <View style={{ backgroundColor: '#1f9d55', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <SF name="figure.run" size={11} color="#fff" />
+                  <Text style={[ty.caption2Em, { color: '#fff' }]} numberOfLines={1}>{m.meetAt ? m.meetAt.split(' ').slice(-1)[0] : 'Спорт'}</Text>
                 </View>
               </View>
             </Marker>
