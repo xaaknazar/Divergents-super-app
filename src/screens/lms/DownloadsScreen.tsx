@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, Alert, GestureResponderEvent, LayoutChangeEvent } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert, ActivityIndicator, GestureResponderEvent, LayoutChangeEvent } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVideoPlayer } from 'expo-video';
@@ -11,6 +11,9 @@ import { NavHeader } from '../../components/NavHeader';
 import { ListSection, ty } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { useDownloads, DownloadRecord } from '../../state/downloads';
+import { useAuth } from '@clerk/clerk-expo';
+import { useMyCourses } from '../../state/useMyCourses';
+import { fetchOwnedDetail, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Downloads'>;
@@ -31,8 +34,44 @@ export function DownloadsScreen({ navigation }: Props) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
-  const { items, removeDownload } = useDownloads();
+  const { items, removeDownload, downloadLesson, isDownloaded, isDownloading, progress } = useDownloads();
+  const { getToken, isSignedIn } = useAuth();
+  const my = useMyCourses();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [avail, setAvail] = useState<{ courseId: string; courseTitle: string; lessons: { id: string; n: number; title: string; audioUrl: string }[] }[]>([]);
+  const [loadingAvail, setLoadingAvail] = useState(false);
+
+  // Load downloadable lessons (audio) from the user's purchased/owned courses,
+  // so the user can grab them right here without hunting through each lesson.
+  const loadAvail = useCallback(async () => {
+    if (!isSignedIn || my.courses.length === 0) { setAvail([]); return; }
+    setLoadingAvail(true);
+    try {
+      const token = await getToken();
+      if (!token) { setAvail([]); return; }
+      const details = await Promise.all(my.courses.map((c) => fetchOwnedDetail(c.id, token).catch(() => null)));
+      const groups = details.filter(Boolean).map((d: any) => ({
+        courseId: d.id,
+        courseTitle: d.title,
+        lessons: (d.lessons || [])
+          .map((l: any) => ({ id: String(l.id), n: Number(l.n) || 0, title: String(l.title), audioUrl: lessonAudioUrl(l) || '' }))
+          .filter((l: any) => !!l.audioUrl),
+      })).filter((g) => g.lessons.length > 0);
+      setAvail(groups);
+    } catch { setAvail([]); } finally { setLoadingAvail(false); }
+  }, [getToken, isSignedIn, my.courses]);
+
+  useEffect(() => { loadAvail(); }, [loadAvail]);
+
+  const onDownload = async (g: { courseId: string; courseTitle: string }, l: { id: string; n: number; title: string; audioUrl: string }) => {
+    const ok = await downloadLesson({ lessonId: l.id, courseId: g.courseId, courseTitle: g.courseTitle, title: l.title, n: l.n, owned: true }, l.audioUrl);
+    if (!ok) Alert.alert(tr('Не удалось скачать'), tr('Попробуйте ещё раз позже.'));
+  };
+
+  // Available = owned-course audio lessons not already downloaded.
+  const availFiltered = useMemo(() => avail
+    .map((g) => ({ ...g, lessons: g.lessons.filter((l) => !isDownloaded(l.id)) }))
+    .filter((g) => g.lessons.length > 0), [avail, items]);
 
   // Single audio player reused for whichever lesson is tapped. Audio-only m4a
   // plays fine through expo-video; background playback keeps it going off-screen.
@@ -108,12 +147,20 @@ export function DownloadsScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.systemBg }}>
       <NavHeader title={tr('Загрузки')} onBack={() => navigation.goBack()} hairline />
 
-      {items.length === 0 ? (
+      {items.length === 0 && availFiltered.length === 0 ? (
         <View style={{ flex: 1 }}>
-          <EmptyState icon="arrow.down.circle" title={tr('Нет загрузок')} subtitle={tr('Скачайте аудио уроков из открытого курса, чтобы слушать их без интернета.')} />
+          {loadingAvail ? (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+          ) : (
+            <EmptyState icon="arrow.down.circle" title={tr('Нет загрузок')} subtitle={tr('Скачайте аудио уроков из купленного курса, чтобы слушать их без интернета.')} />
+          )}
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 4, paddingBottom: insets.bottom + (selected ? 150 : 30) }}>
+          {/* Downloaded (offline) */}
+          {groups.length > 0 ? (
+            <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Скачано')} · {items.length}</Text>
+          ) : null}
           {groups.map((g, gi) => (
             <ListSection key={gi} header={g.title}>
               {g.rows.map((rec, i) => {
@@ -130,11 +177,41 @@ export function DownloadsScreen({ navigation }: Props) {
                         {[fmtSize(rec.size), tr('Доступно офлайн')].filter(Boolean).join(' · ')}
                       </Text>
                     </View>
-                    <Pressable onPress={() => confirmDelete(rec)} hitSlop={10}>
-                      <SF name="trash" size={18} color={T.labelTertiary} />
+                    <Pressable onPress={() => confirmDelete(rec)} hitSlop={10} style={{ padding: 4 }}>
+                      <SF name="trash" size={18} color={T.red} />
                     </Pressable>
                     {i < g.rows.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
                   </Pressable>
+                );
+              })}
+            </ListSection>
+          ))}
+
+          {/* Available to download (from purchased courses) */}
+          {availFiltered.length > 0 ? (
+            <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Доступно для скачивания')}</Text>
+          ) : null}
+          {availFiltered.map((g, gi) => (
+            <ListSection key={`av${gi}`} header={g.courseTitle}>
+              {g.lessons.map((l, i) => {
+                const pct = progress[l.id];
+                const downloading = isDownloading(l.id);
+                return (
+                  <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
+                    <View style={{ width: 38, height: 38, borderRadius: 9, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+                      <SF name="headphones" size={16} color={T.labelSecondary} />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={[ty.body, { color: T.label }]} numberOfLines={2}>{l.n ? `${l.n}. ` : ''}{l.title}</Text>
+                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
+                        {downloading ? `${tr('Скачивание')} ${Math.round((pct ?? 0) * 100)}%` : tr('Аудио для офлайна')}
+                      </Text>
+                    </View>
+                    <Pressable onPress={() => onDownload(g, l)} disabled={downloading} hitSlop={10} style={{ padding: 4 }}>
+                      {downloading ? <ActivityIndicator size="small" color={T.brand} /> : <SF name="arrow.down.circle" size={24} color={T.brand} />}
+                    </Pressable>
+                    {i < g.lessons.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+                  </View>
                 );
               })}
             </ListSection>

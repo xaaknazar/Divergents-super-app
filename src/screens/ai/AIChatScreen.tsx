@@ -1,18 +1,19 @@
 import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, LayoutAnimation, Keyboard } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { Capsule, Chip, ty } from '../../components/ui';
+import { Capsule, ty } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
 import { MarkdownText } from '../../components/MarkdownText';
 import * as Clipboard from 'expo-clipboard';
 import { hSuccess } from '../../lib/haptics';
 import { useMyCourses } from '../../state/useMyCourses';
+import { useCourses } from '../../state/CourseContext';
 import { askCourseAI } from '../../data/api';
 import { askAi, AiMessage, AiUnavailableError } from '../../data/ai';
 import { profileSummary } from '../../data/talentslab';
@@ -37,8 +38,9 @@ export function AIChatScreen({}: Props) {
   const insets = useSafeAreaInsets();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
+  const { courses } = useCourses();
   const { profile } = useTalentProfile();
-  const [mode, setMode] = useState<string>(GENERAL); // 'general' | courseId
+  const [mode] = useState<string>(GENERAL); // always general — one assistant that knows everything
   const [byMode, setByMode] = useState<Record<string, Msg[]>>({});
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -104,6 +106,16 @@ export function AIChatScreen({}: Props) {
   const isGeneral = mode === GENERAL;
   const messages = useMemo(() => byMode[mode] ?? [], [byMode, mode]);
   const quick = isGeneral ? QUICK_GENERAL : QUICK_COURSE;
+  // Full course catalog (titles + categories + short descriptions) so the
+  // general assistant knows every Divergents course by default.
+  const coursesContext = useMemo(() => {
+    if (!courses.length) return '';
+    const lines = courses.slice(0, 120).map((c) => {
+      const desc = (c.description || '').replace(/\s+/g, ' ').trim().slice(0, 220);
+      return `- "${c.title}"${c.category ? ` [${c.category}]` : ''}${c.chaptersCount ? ` · ${c.chaptersCount} уроков` : ''}${desc ? `: ${desc}` : ''}`;
+    });
+    return 'Каталог курсов Divergents (полный, с кратким описанием — отвечай о любом из них):\n' + lines.join('\n');
+  }, [courses]);
 
   const streamInto = (m: string, id: string, full: string) => {
     let i = 0;
@@ -133,7 +145,7 @@ export function AIChatScreen({}: Props) {
       const history: AiMessage[] = (byMode[mode] ?? []).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       const turns: AiMessage[] = [...history, { role: 'user', content: q }];
       const answer = isGeneral
-        ? (await askAi(turns, token, { profileContext: profileSummary(profile) })).answer
+        ? (await askAi(turns, token, { profileContext: [profileSummary(profile), coursesContext].filter(Boolean).join('\n\n') })).answer
         : (await askCourseAI(mode, q, turns, token ?? '')).answer;
       const full = (answer && answer.trim()) ? answer : tr('Не удалось получить ответ. Попробуйте переформулировать вопрос.');
       const botId = uid();
@@ -177,19 +189,11 @@ export function AIChatScreen({}: Props) {
             <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Divergents AI</Text>
             <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>
               {isGeneral
-                ? (isSignedIn ? tr('Ассистент · знает ваш профиль') : tr('Персональный ассистент'))
+                ? (isSignedIn ? tr('Знает все курсы и ваш профиль') : tr('Знает все курсы Divergents'))
                 : `${tr('Знает материалы курса')} «${activeCourse?.title ?? ''}»`}
             </Text>
           </View>
         </View>
-        {/* Mode selector: general + owned courses */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 10 }}>
-          <Chip label={tr('Общий')} icon="sparkles" active={isGeneral} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setUnavailable(false); setMode(GENERAL); }} />
-          {my.courses.map((c) => (
-            <Chip key={c.id} label={c.title.length > 20 ? c.title.slice(0, 19) + '…' : c.title}
-              active={c.id === mode} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setUnavailable(false); setMode(c.id); }} />
-          ))}
-        </ScrollView>
       </View>
 
       {unavailable ? (

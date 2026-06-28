@@ -244,10 +244,14 @@ export function ProfileHomeScreen({ navigation }: Props) {
         </ListSection>
       ) : null}
 
+      {/* Offline downloads — its own section */}
+      <ListSection header={tr('Офлайн')}>
+        <ListRow leading={<IconCircle icon="arrow.down.circle" color="#fff" bg={T.brand} size={30} />}
+          title={tr('Загрузки')} subtitle={tr('Скачанные аудио-уроки и доступные к скачиванию')} chevron last onPress={() => navigation.navigate('Downloads')} />
+      </ListSection>
+
       {/* Appearance */}
       <ListSection header={t('appearance')}>
-        <ListRow leading={<IconCircle icon="arrow.down.circle" color="#fff" bg={T.brand} size={30} />}
-          title="Загрузки" subtitle="Скачанные аудио-уроки (офлайн)" chevron onPress={() => navigation.navigate('Downloads')} />
         <ListRow leading={<IconCircle icon="paintpalette.fill" color="#fff" bg={T.brand} size={30} />}
           title={t('personalization')} subtitle={t('personalization_sub')} chevron last onPress={() => navigation.navigate('Personalize')} />
         {/* Язык РУС/ENG временно скрыт — английский перевод на паузе */}
