@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, Alert, ActivityIndicator, GestureResponderEvent, LayoutChangeEvent } from 'react-native';
@@ -41,27 +41,33 @@ export function DownloadsScreen({ navigation }: Props) {
   const [avail, setAvail] = useState<{ courseId: string; courseTitle: string; lessons: { id: string; n: number; title: string; audioUrl: string }[] }[]>([]);
   const [loadingAvail, setLoadingAvail] = useState(false);
 
-  // Load downloadable lessons (audio) from the user's purchased/owned courses,
-  // so the user can grab them right here without hunting through each lesson.
-  const loadAvail = useCallback(async () => {
-    if (!isSignedIn || my.courses.length === 0) { setAvail([]); return; }
-    setLoadingAvail(true);
-    try {
-      const token = await getToken();
-      if (!token) { setAvail([]); return; }
-      const details = await Promise.all(my.courses.map((c) => fetchOwnedDetail(c.id, token).catch(() => null)));
-      const groups = details.filter(Boolean).map((d: any) => ({
-        courseId: d.id,
-        courseTitle: d.title,
-        lessons: (d.lessons || [])
-          .map((l: any) => ({ id: String(l.id), n: Number(l.n) || 0, title: String(l.title), audioUrl: lessonAudioUrl(l) || '' }))
-          .filter((l: any) => !!l.audioUrl),
-      })).filter((g) => g.lessons.length > 0);
-      setAvail(groups);
-    } catch { setAvail([]); } finally { setLoadingAvail(false); }
-  }, [getToken, isSignedIn, my.courses]);
-
-  useEffect(() => { loadAvail(); }, [loadAvail]);
+  // Load downloadable lessons (audio) from the user's purchased/owned courses.
+  // Key the effect on a STABLE string of course ids (my.courses is a fresh array
+  // every render, which would otherwise loop the effect forever).
+  const courseIdsKey = my.courses.map((c) => c.id).join(',');
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!isSignedIn || !courseIdsKey) { if (alive) setAvail([]); return; }
+      setLoadingAvail(true);
+      try {
+        const token = await getToken();
+        if (!token) { if (alive) setAvail([]); return; }
+        const ids = courseIdsKey.split(',');
+        const details = await Promise.all(ids.map((id) => fetchOwnedDetail(id, token).catch(() => null)));
+        const groups = details.filter(Boolean).map((d: any) => ({
+          courseId: d.id,
+          courseTitle: d.title,
+          lessons: (d.lessons || [])
+            .map((l: any) => ({ id: String(l.id), n: Number(l.n) || 0, title: String(l.title), audioUrl: lessonAudioUrl(l) || '' }))
+            .filter((l: any) => !!l.audioUrl),
+        })).filter((g) => g.lessons.length > 0);
+        if (alive) setAvail(groups);
+      } catch { if (alive) setAvail([]); } finally { if (alive) setLoadingAvail(false); }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseIdsKey, isSignedIn]);
 
   const onDownload = async (g: { courseId: string; courseTitle: string }, l: { id: string; n: number; title: string; audioUrl: string }) => {
     const ok = await downloadLesson({ lessonId: l.id, courseId: g.courseId, courseTitle: g.courseTitle, title: l.title, n: l.n, owned: true }, l.audioUrl);
