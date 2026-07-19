@@ -13,6 +13,7 @@ import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
+import { useModeration } from '../../state/ModerationContext';
 import {
   fetchServerChannels, fetchMyChannelMemberships, joinChannel, fetchChannelRequests,
   actChannelRequest, createChannelPost, uploadFile, updateChannel, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
@@ -45,6 +46,16 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   useEffect(() => { if (endEvent) setPlayingId(null); }, [endEvent]);
 
   const owner = !!(ch?.createdBy && email && ch.createdBy.toLowerCase() === email.toLowerCase());
+  const { block } = useModeration();
+  // UGC moderation (App Store 1.2): report the channel or block its author.
+  const moderateChannel = () => {
+    if (!ch?.createdBy) return;
+    Alert.alert('Канал', 'Пожаловаться на канал или скрыть его автора?', [
+      { text: 'Пожаловаться', onPress: () => Alert.alert('Спасибо', 'Мы проверим этот канал.') },
+      { text: 'Заблокировать автора', style: 'destructive', onPress: () => { block(ch.createdBy!); Alert.alert('Автор заблокирован', 'Его каналы и записи скрыты для вас.'); navigation.goBack(); } },
+      { text: 'Отмена', style: 'cancel' },
+    ]);
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,9 +105,15 @@ export function ServerChannelScreen({ route, navigation }: Props) {
         <View style={{ backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           {ch.avatarUrl ? <Image source={{ uri: ch.avatarUrl }} style={{ width: 64, height: 64, borderRadius: 18, marginBottom: 10 }} contentFit="cover" cachePolicy="memory-disk" /> : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{ch.name}</Text>
+            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{ch.name}</Text>
             {ch.access === 'request' ? <SF name="lock.fill" size={13} color={T.labelTertiary} /> : null}
             {ch.access === 'paid' ? <SF name="creditcard.fill" size={13} color={T.labelTertiary} /> : null}
+            <View style={{ flex: 1 }} />
+            {!owner ? (
+              <Pressable onPress={moderateChannel} hitSlop={10} accessibilityLabel="Пожаловаться или заблокировать">
+                <SF name="ellipsis" size={16} color={T.labelTertiary} />
+              </Pressable>
+            ) : null}
           </View>
           {ch.handle ? <Text style={[ty.caption1, { color: T.labelSecondary }]}>@{ch.handle}</Text> : null}
           <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 3 }]}>{ch._count?.members ?? 0} участников · {ch._count?.posts ?? 0} публикаций{ch.access === 'paid' && ch.price ? ` · ${ch.price}` : ''}</Text>
