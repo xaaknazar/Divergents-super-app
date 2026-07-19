@@ -90,9 +90,10 @@ export async function fetchNotifications(token?: string | null): Promise<AppNoti
       ? data.notifications
       : Array.isArray(data) ? data : [];
     return list.map(mapNotification).filter((x): x is AppNotification => x !== null);
-  } catch {
-    return [];
   } finally {
+    // NB: we intentionally do NOT swallow errors here — the caller
+    // (NotificationsContext) catches them to drive its retryable error state.
+    // A successful-but-empty response still resolves to [].
     clearTimeout(timer);
   }
 }

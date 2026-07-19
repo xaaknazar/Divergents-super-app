@@ -41,5 +41,6 @@ export interface Course {
   chaptersCount?: number;     // published chapters count
   source?: 'live' | 'mock';
   serverProgress?: number; // 0..100 from the website (owned courses)
+  owned?: boolean;         // true once the owned-course detail endpoint confirmed access
   attachments?: { id: string; name: string; url: string }[];
 }

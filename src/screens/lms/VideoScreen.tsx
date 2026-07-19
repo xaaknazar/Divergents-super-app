@@ -41,9 +41,11 @@ export function VideoScreen({ route, navigation }: Props) {
   const lesson = course?.lessons.find((l) => l.id === lessonId) ?? course?.lessons[0];
   const [tab, setTab] = useState(0);
 
-  // Ownership: free, purchased (in "Мои курсы"), or a non-live (local) course.
+  // Ownership: free, purchased (in "Мои курсы" OR confirmed by owned-detail
+  // endpoint), or a non-live (local) course. course.owned survives a failed
+  // list fetch, so a bought lesson never shows a false paywall.
   const isFreeCourse = (course?.price ?? 0) <= 0;
-  const ownedByApi = my.courses.some((c) => c.id === courseId);
+  const ownedByApi = my.courses.some((c) => c.id === courseId) || course?.owned === true;
   const owned = isFreeCourse || ownedByApi || (course?.source !== 'live');
 
   const hls = lesson?.hlsUrl ?? null;

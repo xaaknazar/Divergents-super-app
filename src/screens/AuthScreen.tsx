@@ -147,7 +147,7 @@ export function AuthScreen({}: Props) {
         <View style={{ flex: 1, paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 16 }}>
           {/* Hero */}
           <View style={{ alignItems: 'center', marginTop: 18, marginBottom: 22 }}>
-            <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
+            <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
               <Logo size={50} />
             </View>
             <Text style={[ty.largeTitle, { color: T.label, marginTop: 18 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t('welcome')}</Text>
@@ -177,7 +177,7 @@ export function AuthScreen({}: Props) {
                     value={email} onChangeText={setEmail}
                     onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
                     placeholder={t('email_ph')} placeholderTextColor={T.labelTertiary}
-                    autoCapitalize="none" keyboardType="email-address" autoCorrect={false} autoFocus
+                    autoCapitalize="none" keyboardType="email-address" autoCorrect={false}
                     style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]}
                     onSubmitEditing={() => sendCode()} returnKeyType="go"
                   />
@@ -266,7 +266,7 @@ function GradientButton({ label, icon, loading, disabled, onPress, T, style }: {
     <Pressable onPress={onPress} disabled={loading || disabled} style={style}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={{ height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: loading || disabled ? 0.5 : 1, shadowColor: T.brand, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } }}>
-        <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
+        <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{label}</Text>
         {icon && !loading ? <SF name={icon} size={16} color="#fff" /> : null}
       </LinearGradient>
     </Pressable>

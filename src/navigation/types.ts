@@ -42,6 +42,7 @@ export type RootStackParams = {
   Onboarding: undefined;
   Auth: undefined;
   Register: undefined;
+  ResumeGate: undefined;
   Tabs: NavigatorScreenParams<TabParams>;
   Notifications: undefined;
 };

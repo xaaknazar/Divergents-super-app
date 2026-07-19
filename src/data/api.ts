@@ -457,11 +457,12 @@ export async function applyToChallenge(token: string | null, challengeId: string
 // ───────── Creator role + create content (challenges/trips/channels) ─────────
 export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; email?: string | null }> {
   if (!token) return { canCreate: false };
-  try {
-    const res = await timedFetch(`${API_BASE}/api/mobile/me/role`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) return { canCreate: false };
-    return await res.json();
-  } catch { return { canCreate: false }; }
+  // A non-2xx is a legitimate "not an admin" → canCreate:false. A network/timeout
+  // error THROWS so the caller (useRole) can retry instead of silently hiding
+  // admin controls on a transient blip.
+  const res = await timedFetch(`${API_BASE}/api/mobile/me/role`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) return { canCreate: false };
+  return await res.json();
 }
 
 async function postAuthed(path: string, token: string | null, body: any): Promise<boolean> {

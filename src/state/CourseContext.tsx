@@ -83,15 +83,18 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     setDetailLoading((p) => ({ ...p, [id]: true }));
     try {
       let detail;
+      let ownedConfirmed = false;
       if (token) {
         // Signed in: try the owned-course endpoint (unlocks Mux HLS); if the
         // user doesn't own it (403) fall back to the public catalog detail.
-        try { detail = await fetchOwnedDetail(id, token); }
+        // A successful owned-detail is itself proof of ownership — record it so
+        // access survives even when the "Мои курсы" list fetch failed.
+        try { detail = await fetchOwnedDetail(id, token); ownedConfirmed = true; }
         catch { detail = await fetchCourseDetail(id); }
       } else {
         detail = await fetchCourseDetail(id);
       }
-      setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...detail } : c)));
+      setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...detail, ...(ownedConfirmed ? { owned: true } : {}) } : c)));
     } catch {
       // keep whatever we have (mock courses already include lessons)
     } finally {

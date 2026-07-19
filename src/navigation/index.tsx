@@ -8,6 +8,7 @@ import {
 import { TabBar } from './TabBar';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAppFlow } from '../state/AppFlowContext';
+import { useResumeGate } from '../state/ResumeGateContext';
 import { usePush } from '../state/usePush';
 import { useInviteLinks } from '../state/useInviteLinks';
 
@@ -44,6 +45,7 @@ import { PersonalizeScreen } from '../screens/profile/PersonalizeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
+import { ResumeGateScreen } from '../screens/ResumeGateScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 
 const LMSStack = createNativeStackNavigator<LMSStackParams>();
@@ -141,6 +143,7 @@ const Root = createNativeStackNavigator<RootStackParams>();
 export function RootNavigator() {
   const { isLoaded, isSignedIn } = useAuth();
   const { ready, onboarded, pendingRegistration } = useAppFlow();
+  const { complete: resumeComplete } = useResumeGate();
   usePush();
   useInviteLinks();
   if (!isLoaded || !ready) return null;
@@ -152,6 +155,9 @@ export function RootNavigator() {
         <Root.Screen name="Auth" component={AuthScreen} />
       ) : pendingRegistration ? (
         <Root.Screen name="Register" component={RegisterScreen} />
+      ) : !resumeComplete ? (
+        // Mandatory: no entry to the app until the Talentslab resume is 100% filled.
+        <Root.Screen name="ResumeGate" component={ResumeGateScreen} />
       ) : (
         <>
           <Root.Screen name="Tabs" component={Tabs} />

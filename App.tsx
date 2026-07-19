@@ -19,6 +19,7 @@ import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { AppFlowProvider } from './src/state/AppFlowContext';
+import { ResumeGateProvider } from './src/state/ResumeGateContext';
 import { LanguageProvider } from './src/state/LanguageContext';
 import { IntroSplash } from './src/screens/IntroSplash';
 
@@ -63,7 +64,9 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
               <PlacesProvider>
                 <ChannelProvider>
                   <NotificationsProvider>
-                    {children}
+                    <ResumeGateProvider>
+                      {children}
+                    </ResumeGateProvider>
                   </NotificationsProvider>
                 </ChannelProvider>
               </PlacesProvider>
