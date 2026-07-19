@@ -17,6 +17,7 @@ import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
 import { useResume } from '../../state/useResume';
 import { useAppFlow } from '../../state/AppFlowContext';
+import { useModeration } from '../../state/ModerationContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { clearAllAppData } from '../../state/reset';
@@ -42,6 +43,15 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const { finishRegistration } = useAppFlow();
+  const { blocked, unblock } = useModeration();
+
+  // Let users review and lift blocks (App Store 1.2 requires blocking be reversible).
+  const manageBlocked = () => {
+    Alert.alert('Заблокированные', blocked.join('\n'), [
+      { text: 'Разблокировать всех', style: 'destructive', onPress: () => blocked.forEach((b) => unblock(b)) },
+      { text: tr('Готово'), style: 'cancel' },
+    ]);
+  };
 
   const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
   const goCareer = () => navigation.getParent()?.navigate('CareerTab' as never);
@@ -199,6 +209,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Account */}
       <ListSection header={t('account')} style={{ marginTop: 18 }}>
         <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />} title={email ?? t('signed_in')} subtitle="Divergents LMS · Talentslab" />
+        {blocked.length > 0 ? (
+          <ListRow leading={<IconCircle icon="hand.raised.fill" color="#fff" bg={T.labelSecondary} size={30} />} title="Заблокированные" detail={String(blocked.length)} chevron onPress={manageBlocked} />
+        ) : null}
         <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.red} last onPress={handleSignOut} />
       </ListSection>
 

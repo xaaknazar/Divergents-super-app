@@ -12,6 +12,7 @@ import { Capsule, PrimaryButton, ty } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { NavHeader } from '../../components/NavHeader';
 import { usePlaces, ratingOf } from '../../state/PlacesContext';
+import { useModeration } from '../../state/ModerationContext';
 import { CATEGORY_META, TAG_META, isOpenNow, reportPlace, postReview } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
@@ -24,10 +25,20 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const { getPlace, addReview, isFav, toggleFav } = usePlaces();
+  const { isBlocked, block } = useModeration();
   const place = getPlace(route.params.placeId);
   const [stars, setStars] = useState(0);
   const [text, setText] = useState('');
   const [reporting, setReporting] = useState(false);
+
+  // UGC moderation (App Store 1.2): report a review or block its author.
+  const moderateReview = (author: string) => {
+    Alert.alert(author, tr('Пожаловаться на отзыв или скрыть автора?'), [
+      { text: tr('Пожаловаться'), onPress: () => Alert.alert(tr('Спасибо'), tr('Мы проверим этот отзыв.')) },
+      { text: tr('Заблокировать автора'), style: 'destructive', onPress: () => { block(author); Alert.alert(tr('Автор заблокирован'), tr('Его отзывы и записи скрыты для вас.')); } },
+      { text: tr('Отмена'), style: 'cancel' },
+    ]);
+  };
 
   if (!place) {
     return (
@@ -156,21 +167,33 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1}>{tr('Открыть на карте')}</Text>
         </Pressable>
 
-        {/* Reviews */}
-        <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Отзывы')} · {place.reviews.length}</Text>
-        {place.reviews.map((rev) => (
-          <View key={rev.id} style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: T.cardBg, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
-              <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{rev.date}</Text>
-            </View>
-            <View style={{ marginTop: 4 }}><Stars value={rev.rating} size={12} /></View>
-            {rev.text ? <Text style={[ty.body, { color: T.label, marginTop: 6 }]}>{rev.text}</Text> : null}
-          </View>
-        ))}
-        {place.reviews.length === 0 ? (
-          <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Пока нет отзывов — оставь первый.')}</Text>
-        ) : null}
+        {/* Reviews (blocked authors filtered out) */}
+        {(() => {
+          const visibleReviews = place.reviews.filter((r) => !isBlocked(r.author));
+          return (
+            <>
+              <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Отзывы')} · {visibleReviews.length}</Text>
+              {visibleReviews.map((rev) => (
+                <View key={rev.id} style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: T.cardBg, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{rev.date}</Text>
+                      <Pressable onPress={() => moderateReview(rev.author)} hitSlop={10} accessibilityLabel={tr('Пожаловаться или заблокировать')}>
+                        <SF name="ellipsis" size={16} color={T.labelTertiary} />
+                      </Pressable>
+                    </View>
+                  </View>
+                  <View style={{ marginTop: 4 }}><Stars value={rev.rating} size={12} /></View>
+                  {rev.text ? <Text style={[ty.body, { color: T.label, marginTop: 6 }]}>{rev.text}</Text> : null}
+                </View>
+              ))}
+              {visibleReviews.length === 0 ? (
+                <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Пока нет отзывов — оставь первый.')}</Text>
+              ) : null}
+            </>
+          );
+        })()}
 
         {/* Add review */}
         {isSignedIn ? (
