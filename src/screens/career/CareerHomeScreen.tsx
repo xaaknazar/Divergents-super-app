@@ -15,6 +15,7 @@ import { Ring } from '../../components/talentUI';
 import { CAREER_FILTERS, GOOD_FIT, Job } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
+import { useRole } from '../../state/useRole';
 import { talentMatch, GallupTalent } from '../../data/talentslab';
 import { CareerStackParams } from '../../navigation/types';
 
@@ -38,6 +39,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const { applied, isApplied, jobs, jobsLoading, jobsError, reloadJobs, saved, getJob } = useCareer();
   const { profile, live, reload: reloadProfile } = useTalentProfile();
   const { unread } = useNotifications();
+  const { canCreate } = useRole();
 
   // Only use real (live) Gallup talents for matching — never demo data.
   const gallup: GallupTalent[] = live ? profile?.gallup ?? [] : [];
@@ -92,7 +94,7 @@ export function CareerHomeScreen({ navigation }: Props) {
       </ListSection>
 
       {/* Vacancies */}
-      <SectionHeader title={t('vacancies')} />
+      <SectionHeader title={t('vacancies')} action={canCreate ? '+ Создать' : undefined} onAction={canCreate ? () => navigation.navigate('CreateVacancy') : undefined} />
       <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 12, marginTop: -4 }]}>
         {tr('Подобраны по вашему психотипу и талантам')}
       </Text>

@@ -26,7 +26,7 @@ export type CommunityStackParams = {
 
 export type AIStackParams = { AIChat: undefined };
 export type MapStackParams = { MapHome: undefined; PlaceDetail: { placeId: string }; AddPlace: { lat?: number; lng?: number; editId?: string } | undefined; OfflineMap: undefined };
-export type CareerStackParams = { CareerHome: undefined; VacancyDetail: { jobId: string }; Resume: { step?: number } | undefined; TalentProfile: undefined };
+export type CareerStackParams = { CareerHome: undefined; VacancyDetail: { jobId: string }; Resume: { step?: number } | undefined; TalentProfile: undefined; CreateVacancy: undefined };
 export type ProfileStackParams = { ProfileHome: undefined; Achievements: undefined; Personalize: undefined; Downloads: undefined; Resume: { step?: number } | undefined };
 
 export type TabParams = {
