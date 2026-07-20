@@ -14,6 +14,7 @@ import { ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
 import { useModeration } from '../../state/ModerationContext';
+import { loadJSON, saveJSON } from '../../state/persist';
 import {
   fetchServerChannels, fetchMyChannelMemberships, joinChannel, fetchChannelRequests,
   actChannelRequest, createChannelPost, uploadFile, updateChannel, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
@@ -21,6 +22,21 @@ import {
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ServerChannel'>;
+
+const REACTIONS = ['👍', '❤️', '🔥', '👏', '🙏'];
+function fmtTime(iso?: string) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+// Deterministic bar heights for a voice-message waveform (stable per post).
+function waveHeights(seed: string, n = 22): number[] {
+  let h = 0; for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) { h = (h * 1103515245 + 12345) >>> 0; out.push(5 + (h % 15)); }
+  return out;
+}
 
 export function ServerChannelScreen({ route, navigation }: Props) {
   const { T } = useTheme();
@@ -46,6 +62,15 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   useEffect(() => { if (endEvent) setPlayingId(null); }, [endEvent]);
   // Ensure voice posts play even with the iOS mute switch on.
   useEffect(() => { Audio.setAudioModeAsync({ playsInSilentModeIOS: true }).catch(() => {}); }, []);
+
+  // Reactions to posts. Stored locally per-device (dvg.channelReactions) — a
+  // shared, cross-user count needs a backend reactions endpoint (not yet available).
+  const [reactions, setReactions] = useState<Record<string, string>>({});
+  useEffect(() => { loadJSON<Record<string, string>>('dvg.channelReactions', {}).then((v) => setReactions(v || {})); }, []);
+  const react = (postId: string, emoji: string) => setReactions((p) => {
+    const n = { ...p }; if (n[postId] === emoji) delete n[postId]; else n[postId] = emoji;
+    saveJSON('dvg.channelReactions', n); return n;
+  });
 
   const owner = !!(ch?.createdBy && email && ch.createdBy.toLowerCase() === email.toLowerCase());
   const { block } = useModeration();
@@ -155,17 +180,40 @@ export function ServerChannelScreen({ route, navigation }: Props) {
           <>
             <Text style={[ty.footnote, { color: T.labelSecondary, paddingTop: 18, paddingBottom: 10, paddingHorizontal: 4, textTransform: 'uppercase' }]}>Публикации</Text>
             {ch.posts.length === 0 ? <Text style={[ty.subhead, { color: T.labelTertiary, paddingHorizontal: 4 }]}>Пока нет публикаций.</Text> : ch.posts.map((p) => (
-              <View key={p.id} style={{ backgroundColor: T.cardBg, borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <SF name={p.type === 'audio' ? 'waveform' : 'doc.text.fill'} size={14} color={T.brand} />
-                  <Text style={[ty.subheadEm, { color: T.label, flex: 1 }]} numberOfLines={2}>{p.title}</Text>
-                </View>
+              <View key={p.id} style={{ backgroundColor: T.cardBg, borderRadius: 18, borderTopLeftRadius: 6, padding: 14, marginBottom: 12, borderWidth: 0.5, borderColor: T.cardBorder, alignSelf: 'flex-start', maxWidth: '94%' }}>
+                {p.title ? <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={2}>{p.title}</Text> : null}
+
                 {p.type === 'audio' && p.audioUrl ? (
-                  <Pressable onPress={() => playPost(p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, backgroundColor: T.brandTinted, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, alignSelf: 'flex-start' }}>
-                    <SF name={playingId === p.id ? 'pause.fill' : 'play.fill'} size={16} color={T.brand} />
-                    <Text style={[ty.footnoteEm, { color: T.brand }]}>{playingId === p.id ? 'Играет' : 'Слушать'}</Text>
+                  <Pressable onPress={() => playPost(p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+                      <SF name={playingId === p.id ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 22 }}>
+                        {waveHeights(p.id).map((hh, i) => (
+                          <View key={i} style={{ width: 3, height: hh, borderRadius: 2, backgroundColor: playingId === p.id ? T.brand : T.labelTertiary }} />
+                        ))}
+                      </View>
+                      <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 3 }]}>{playingId === p.id ? 'Играет…' : 'Голосовое сообщение'}</Text>
+                    </View>
                   </Pressable>
                 ) : p.body ? <Text style={[ty.body, { color: T.label, marginTop: 8 }]}>{p.body}</Text> : null}
+
+                {/* Reactions + time (Telegram-style) */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
+                  {REACTIONS.map((e) => {
+                    const on = reactions[p.id] === e;
+                    return (
+                      <Pressable key={e} onPress={() => react(p.id, e)} hitSlop={4}
+                        style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 14, backgroundColor: on ? T.brandTinted : T.fillSecondary, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                        <Text style={{ fontSize: 14 }}>{e}</Text>
+                        {on ? <Text style={[ty.caption2Em, { color: T.brand }]}>1</Text> : null}
+                      </Pressable>
+                    );
+                  })}
+                  <View style={{ flex: 1 }} />
+                  <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtTime(p.createdAt)}</Text>
+                </View>
               </View>
             ))}
           </>
