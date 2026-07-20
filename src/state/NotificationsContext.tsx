@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { AppNotification, fetchNotifications } from '../data/notifications';
 import { loadJSON, saveJSON } from './persist';
@@ -20,6 +20,12 @@ const KEY = 'dvg.readNotifs';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { getToken, isSignedIn } = useAuth();
+  // Clerk hands back a NEW getToken function every render. Keep it in a ref so
+  // `refresh` (and the effects that depend on it) stay stable — otherwise the
+  // mount effect re-runs on every render → an endless refetch loop that made the
+  // notifications screen flicker between empty/list and freeze.
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
   const [list, setList] = useState<AppNotification[]>([]);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +41,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     if (!silent) setLoading(true);
     setError(false);
     try {
-      const token = isSignedIn ? await getToken() : null;
+      const token = isSignedIn ? await getTokenRef.current() : null;
       const data = await fetchNotifications(token);
       setList(data);
     } catch {
@@ -45,7 +51,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [getToken, isSignedIn]);
+  }, [isSignedIn]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
