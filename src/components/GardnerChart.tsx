@@ -159,7 +159,8 @@ export function GardnerChart({
           </View>
           <View style={{ flex: 1 }} onLayout={onLayout}>
             {needScroll ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <ScrollView horizontal showsHorizontalScrollIndicator persistentScrollbar
+                contentContainerStyle={{ paddingBottom: 6 }}>
                 {bars}
               </ScrollView>
             ) : bars}

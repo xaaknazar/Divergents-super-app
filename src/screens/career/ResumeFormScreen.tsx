@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, LayoutAnimation } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
@@ -10,9 +9,10 @@ import { RESUME_STEPS } from '../../data/resumeSchema';
 import { ResumeFieldInput } from '../../components/ResumeField';
 import { useResume } from '../../state/useResume';
 import { useLang, tr } from '../../state/LanguageContext';
-import { CareerStackParams } from '../../navigation/types';
-
-type Props = NativeStackScreenProps<CareerStackParams, 'Resume'>;
+// Registered in BOTH the Career stack and the Profile stack, so its props are
+// typed permissively (it only needs navigation.goBack + route.params.step).
+// This lets "Редактировать анкету" opened from Profile close back to Profile.
+type Props = { navigation: { goBack: () => void }; route: { params?: { step?: number } } };
 
 export function ResumeFormScreen({ navigation, route }: Props) {
   const { T } = useTheme();

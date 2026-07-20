@@ -55,8 +55,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
   const goCareer = () => navigation.getParent()?.navigate('CareerTab' as never);
-  // Open the anketa (resume) editor in the Career tab.
-  const editAnketa = () => (navigation.getParent() as any)?.navigate('CareerTab', { screen: 'Resume' });
+  // Open the anketa (resume) editor within the Profile stack so closing it
+  // returns to the profile (not the Career tab).
+  const editAnketa = () => navigation.navigate('Resume' as never);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -184,7 +185,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {(profile?.gallup ?? []).length > 0 ? (
         <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{t('strengths')}</Text>
+            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('strengths')}</Text>
             {!live ? (
               <Pressable onPress={reload} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />

@@ -10,7 +10,7 @@ interface NotifState {
   unread: number;
   loading: boolean;
   error: boolean;
-  refresh: () => Promise<void>;
+  refresh: (silent?: boolean) => Promise<void>;
   markRead: (id: string) => void;
   markAllRead: () => void;
 }
@@ -27,8 +27,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => { loadJSON<string[]>(KEY, []).then(setReadIds); }, []);
 
-  const refresh = useCallback(async () => {
-    setLoading(true); setError(false);
+  // `silent` skips the global `loading` toggle. The bell badge lives on several
+  // screens via useNotifications, so toggling `loading` re-renders all of them —
+  // that churn (during the modal-open animation) is what made opening the
+  // notifications screen janky. Screen-open + pull-to-refresh pass silent=true.
+  const refresh = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    setError(false);
     try {
       const token = isSignedIn ? await getToken() : null;
       const data = await fetchNotifications(token);
@@ -38,7 +43,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       // (this same fn backs pull-to-refresh) — only flag the error state.
       setError(true);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [getToken, isSignedIn]);
 

@@ -36,14 +36,16 @@ export function NotificationsScreen({ navigation }: Props) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    try { await refresh(); } finally { setRefreshing(false); }
+    // Silent: the pull-to-refresh spinner is our own; don't toggle global loading
+    // (which would re-render every screen with a bell badge).
+    try { await refresh(true); } finally { setRefreshing(false); }
   }, [refresh]);
 
   // Re-fetch when the modal opens — but only AFTER the open animation finishes,
   // so the network call + re-render never janks the modal slide-up (fixes the
   // "lag on open"). Existing items stay visible meanwhile.
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => { void refresh(); });
+    const task = InteractionManager.runAfterInteractions(() => { void refresh(true); });
     return () => task.cancel();
   }, [refresh]);
 

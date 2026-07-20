@@ -63,12 +63,13 @@ export function CareerHomeScreen({ navigation }: Props) {
 
       {/* Offers from companies (invitations / job offers) */}
       <ListSection header={tr('Офферы')}>
-        <View style={{ padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="envelope.badge.fill" size={20} color={T.brand} />
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="gift.fill" size={24} color={T.brand} />
           </View>
-          <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]}>
-            {tr('Пока нет офферов. Здесь появятся приглашения и офферы от компаний.')}
+          <Text style={[ty.subheadEm, { color: T.label, marginTop: 12 }]}>{tr('Пока нет офферов')}</Text>
+          <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 4, textAlign: 'center' }]}>
+            {tr('Здесь появятся приглашения и офферы от компаний.')}
           </Text>
         </View>
       </ListSection>
