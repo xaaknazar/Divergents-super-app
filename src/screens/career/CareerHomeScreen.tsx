@@ -8,6 +8,7 @@ import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
+import { Logo } from '../../components/Logo';
 import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
 import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
 import { Ring } from '../../components/talentUI';
@@ -66,7 +67,7 @@ export function CareerHomeScreen({ navigation }: Props) {
       <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder }}>
         <LinearGradient colors={[T.brandTinted, T.cardBg]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
-            <SF name="gift.fill" size={26} color="#fff" />
+            <Logo size={30} body="#fff" head="#fff" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Пока нет офферов')}</Text>
