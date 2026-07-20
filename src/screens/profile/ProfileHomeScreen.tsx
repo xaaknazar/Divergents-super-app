@@ -125,8 +125,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
-      {/* Gradient hero card */}
-      <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+      {/* Gradient hero card — tap to edit the anketa (single edit entry) */}
+      <Pressable onPress={editAnketa} accessibilityRole="button" accessibilityLabel="Редактировать анкету"
+        style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             {profile?.photoUrl ? (
@@ -149,8 +150,12 @@ export function ProfileHomeScreen({ navigation }: Props) {
             </View>
             <Ring value={completeness / 100} size={62} color="#fff" label={`${completeness}%`} sub={t('questionnaire')} textColor="#fff" />
           </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 14, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.22)' }}>
+            <Text style={[ty.footnoteEm, { color: '#fff' }]}>Редактировать анкету</Text>
+            <SF name="chevron.right" size={12} color="rgba(255,255,255,0.85)" />
+          </View>
         </LinearGradient>
-      </View>
+      </Pressable>
 
       {/* Stat tiles */}
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
@@ -225,11 +230,6 @@ export function ProfileHomeScreen({ navigation }: Props) {
           <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />} title={t('continue_learning')} subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? t('in_progress_1') : t('in_progress_n')}`} chevron last onPress={goLearning} />
         </ListSection>
       ) : null}
-
-      {/* Edit anketa */}
-      <ListSection header="Анкета" style={{ marginTop: 18 }}>
-        <ListRow leading={<IconCircle icon="person.text.rectangle" color="#fff" bg={T.brand} size={30} />} title="Редактировать анкету" chevron last onPress={editAnketa} />
-      </ListSection>
 
       {/* Resume data (Talentslab) */}
       {Sec(t('personal_data'), personal)}
