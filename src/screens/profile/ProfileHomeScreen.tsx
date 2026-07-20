@@ -55,6 +55,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
   const goCareer = () => navigation.getParent()?.navigate('CareerTab' as never);
+  // Open the anketa (resume) editor in the Career tab.
+  const editAnketa = () => (navigation.getParent() as any)?.navigate('CareerTab', { screen: 'Resume' });
 
   const handleSignOut = () => {
     Alert.alert(
@@ -77,7 +79,10 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   const coursesInProgress = courses.filter((c) => progress(c.id) > 0).length;
   const email = user?.primaryEmailAddress?.emailAddress;
+  // Prefer a real name: Clerk name → Talentslab anketa full_name → email prefix.
+  // Email-code sign-up doesn't collect a name, so the anketa is the real source.
   const name = user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(' ')
+    || (live && profile?.fullName ? profile.fullName : null)
     || (email ? email.split('@')[0] : 'Divergents');
   const initial = (name?.trim()?.[0] ?? 'D').toUpperCase();
   const challengeActive = challenge.currentDay > 0;
@@ -220,6 +225,11 @@ export function ProfileHomeScreen({ navigation }: Props) {
           <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />} title={t('continue_learning')} subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? t('in_progress_1') : t('in_progress_n')}`} chevron last onPress={goLearning} />
         </ListSection>
       ) : null}
+
+      {/* Edit anketa */}
+      <ListSection header="Анкета" style={{ marginTop: 18 }}>
+        <ListRow leading={<IconCircle icon="person.text.rectangle" color="#fff" bg={T.brand} size={30} />} title="Редактировать анкету" chevron last onPress={editAnketa} />
+      </ListSection>
 
       {/* Resume data (Talentslab) */}
       {Sec(t('personal_data'), personal)}

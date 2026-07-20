@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, FlatList, RefreshControl } from 'react-native';
+import { View, Text, Pressable, FlatList, RefreshControl, InteractionManager } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,13 +39,17 @@ export function NotificationsScreen({ navigation }: Props) {
     try { await refresh(); } finally { setRefreshing(false); }
   }, [refresh]);
 
-  // Re-fetch when the modal opens so the feed (and the unread badge) is fresh
-  // without requiring an app restart. Existing items stay visible meanwhile.
-  useEffect(() => { void refresh(); }, [refresh]);
+  // Re-fetch when the modal opens — but only AFTER the open animation finishes,
+  // so the network call + re-render never janks the modal slide-up (fixes the
+  // "lag on open"). Existing items stay visible meanwhile.
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => { void refresh(); });
+    return () => task.cancel();
+  }, [refresh]);
 
-  // Open the notification's target content. Dispatching navigate to the (lower)
-  // 'Tabs' route pops this modal and jumps into the right tab + stack screen.
-  const open = (id: string, target?: NotifTarget | null) => {
+  // Open the notification's target content. Stable (useCallback) so the memoized
+  // rows aren't invalidated every render — that was defeating React.memo.
+  const open = useCallback((id: string, target?: NotifTarget | null) => {
     markRead(id);
     if (!target) return;
     navigation.dispatch(
@@ -54,7 +58,7 @@ export function NotificationsScreen({ navigation }: Props) {
         params: { screen: target.tab, params: { screen: target.screen, params: target.params } },
       }),
     );
-  };
+  }, [markRead, navigation]);
 
   // Initial load only — pull-to-refresh shows its own spinner, never the skeleton.
   const showSkeleton = loading && !refreshing && items.length === 0;
@@ -79,13 +83,13 @@ export function NotificationsScreen({ navigation }: Props) {
           keyExtractor={(it) => it.id}
           contentContainerStyle={{ paddingVertical: 8, paddingBottom: insets.bottom + 30, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
           windowSize={7}
           removeClippedSubviews
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
           renderItem={({ item: it }) => (
-            <NotifRow it={it} T={T} ru={lang === 'ru'} onPress={() => open(it.id, it.target)} />
+            <NotifRow it={it} T={T} ru={lang === 'ru'} onPress={open} />
           )}
           ListEmptyComponent={
             <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -114,9 +118,9 @@ export function NotificationsScreen({ navigation }: Props) {
 }
 
 // Memoized row — keeps FlatList re-renders cheap so opening the modal stays smooth.
-const NotifRow = React.memo(function NotifRow({ it, T, ru, onPress }: { it: any; T: any; ru: boolean; onPress: () => void }) {
+const NotifRow = React.memo(function NotifRow({ it, T, ru, onPress }: { it: any; T: any; ru: boolean; onPress: (id: string, target?: any) => void }) {
   return (
-    <Pressable onPress={onPress}
+    <Pressable onPress={() => onPress(it.id, it.target)}
       style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
       <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: it.color + '33', alignItems: 'center', justifyContent: 'center' }}>
         <SF name={it.icon} size={20} color={it.color} />

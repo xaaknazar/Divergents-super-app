@@ -12,6 +12,7 @@ import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useNotifications } from '../../state/NotificationsContext';
 import { useLang, tr } from '../../state/LanguageContext';
+import { useTalentProfile } from '../../state/useTalentProfile';
 import { useUser } from '@clerk/clerk-expo';
 import { Logo } from '../../components/Logo';
 import { LMSStackParams } from '../../navigation/types';
@@ -25,7 +26,11 @@ export function LMSHomeScreen({ navigation }: Props) {
   const { unread } = useNotifications();
   const { t } = useLang();
   const { user } = useUser();
-  const displayName = user?.firstName || user?.fullName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
+  const { profile, live } = useTalentProfile();
+  // Prefer a real name (Clerk → anketa full_name); email prefix only as a last resort.
+  const displayName = user?.firstName || user?.fullName
+    || (live && profile?.fullName ? profile.fullName.split(' ')[0] : null)
+    || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('Все');
 

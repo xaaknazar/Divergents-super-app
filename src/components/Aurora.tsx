@@ -8,8 +8,8 @@ import { hexToRgba } from '../theme/personalization';
 export function Aurora({ height = 560 }: { height?: number }) {
   const { isDark, auroraColors } = useTheme();
   if (!auroraColors) return null;
-  const a = isDark ? 0.24 : 0.16;
-  const a2 = isDark ? 0.20 : 0.12;
+  const a = isDark ? 0.30 : 0.20;
+  const a2 = isDark ? 0.22 : 0.13;
   const [c1, c2, c3] = auroraColors;
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height }}>
