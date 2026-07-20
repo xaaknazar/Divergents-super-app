@@ -33,6 +33,9 @@ export function NotificationsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { items, unread, loading, error, refresh, markRead, markAllRead } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
+  // Render the (heavy) list only AFTER the modal open animation finishes — a
+  // lightweight skeleton shows during the slide-up so the transition stays 60fps.
+  const [ready, setReady] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -45,7 +48,7 @@ export function NotificationsScreen({ navigation }: Props) {
   // so the network call + re-render never janks the modal slide-up (fixes the
   // "lag on open"). Existing items stay visible meanwhile.
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => { void refresh(true); });
+    const task = InteractionManager.runAfterInteractions(() => { setReady(true); void refresh(true); });
     return () => task.cancel();
   }, [refresh]);
 
@@ -62,8 +65,8 @@ export function NotificationsScreen({ navigation }: Props) {
     );
   }, [markRead, navigation]);
 
-  // Initial load only — pull-to-refresh shows its own spinner, never the skeleton.
-  const showSkeleton = loading && !refreshing && items.length === 0;
+  // Skeleton during the open animation, and during the very first load.
+  const showSkeleton = !ready || (loading && !refreshing && items.length === 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>

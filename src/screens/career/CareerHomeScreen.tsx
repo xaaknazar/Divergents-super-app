@@ -62,17 +62,20 @@ export function CareerHomeScreen({ navigation }: Props) {
       )} />
 
       {/* Offers from companies (invitations / job offers) */}
-      <ListSection header={tr('Офферы')}>
-        <View style={{ padding: 20, alignItems: 'center' }}>
-          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="gift.fill" size={24} color={T.brand} />
+      <SectionHeader title={tr('Офферы')} />
+      <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <LinearGradient colors={[T.brandTinted, T.cardBg]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
+            <SF name="gift.fill" size={26} color="#fff" />
           </View>
-          <Text style={[ty.subheadEm, { color: T.label, marginTop: 12 }]}>{tr('Пока нет офферов')}</Text>
-          <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 4, textAlign: 'center' }]}>
-            {tr('Здесь появятся приглашения и офферы от компаний.')}
-          </Text>
-        </View>
-      </ListSection>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Пока нет офферов')}</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 3 }]}>
+              {tr('Здесь появятся приглашения и офферы от компаний, которым вы подойдёте по талантам.')}
+            </Text>
+          </View>
+        </LinearGradient>
+      </View>
 
       {/* Application history */}
       <ListSection header={`${tr('История откликов')} · ${myJobs.length}`}>
