@@ -107,16 +107,16 @@ export function LMSHomeScreen({ navigation }: Props) {
         {categories.map((c) => <Chip key={c} label={c} active={cat === c} onPress={() => setCat(c)} />)}
       </ScrollView>
 
-      {/* Books library entry — same style as the Career "Офферы" card */}
+      {/* Books library entry — compact card with a gradient background */}
       <Pressable onPress={() => navigation.navigate('Books')}
-        style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder }}>
-        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
-            <SF name="book.fill" size={26} color="#fff" />
+        style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
+        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="book.fill" size={23} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Библиотека книг</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 3 }]} numberOfLines={2}>Каталог, рецензии и ИИ-советник по книгам под ваш профиль</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>Каталог, рецензии и ИИ-советник по книгам под ваш профиль</Text>
           </View>
           <SF name="chevron.right" size={15} color={T.labelTertiary} />
         </LinearGradient>

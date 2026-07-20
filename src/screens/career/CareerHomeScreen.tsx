@@ -62,16 +62,16 @@ export function CareerHomeScreen({ navigation }: Props) {
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
-      {/* Offers from companies (invitations / job offers) */}
+      {/* Offers — same compact gradient card as «Библиотека книг», with the logo */}
       <SectionHeader title={tr('Офферы')} />
-      <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder }}>
-        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
-            <Logo size={30} body="#fff" head="#fff" />
+      <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
+        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <Logo size={26} body="#fff" head="#fff" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Пока нет офферов')}</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 3 }]}>
+            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>
               {tr('Здесь появятся приглашения и офферы от компаний, которым вы подойдёте по талантам.')}
             </Text>
           </View>
