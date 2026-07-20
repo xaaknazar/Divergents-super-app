@@ -7,7 +7,7 @@ import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { Chip, ty } from '../../components/ui';
 import { MarkdownText } from '../../components/MarkdownText';
-import { askAi, AiMessage } from '../../data/ai';
+import { askAi, AiMessage, AiUnavailableError } from '../../data/ai';
 import { profileSummary } from '../../data/talentslab';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { LMSStackParams } from '../../navigation/types';
@@ -53,8 +53,13 @@ export function BookAIScreen({ navigation }: Props) {
       const { answer } = await askAi(turns, token, { profileContext: profileSummary(profile) });
       const full = (answer && answer.trim()) ? answer : 'Не удалось получить ответ. Попробуйте переформулировать.';
       setMsgs((p) => [...p, { id: uid(), role: 'bot', text: full }]);
-    } catch {
-      setMsgs((p) => [...p, { id: uid(), role: 'bot', text: '⚠️ Не удалось получить ответ. Проверьте подключение и попробуйте снова.' }]);
+    } catch (e: unknown) {
+      // Distinguish "AI not deployed yet" and server-sent Russian errors (auth/
+      // rate-limit) from a generic network failure.
+      const msg = e instanceof AiUnavailableError
+        ? 'AI скоро будет доступен. Загляните позже.'
+        : (e instanceof Error && /[а-яА-ЯёЁ]/.test(e.message) ? e.message : 'Не удалось получить ответ. Проверьте подключение и попробуйте снова.');
+      setMsgs((p) => [...p, { id: uid(), role: 'bot', text: `⚠️ ${msg}` }]);
     } finally {
       setBusy(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);

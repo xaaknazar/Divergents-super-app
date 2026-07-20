@@ -53,10 +53,12 @@ export function BookDetailScreen({ route, navigation }: Props) {
 
   const onRate = async (n: number) => {
     if (!isSignedIn) return requireAuth();
+    const prev = data?.myRating;
     setData((p) => p ? { ...p, myRating: n } : p);
     const token = await getToken();
     const r = await rateBook(bookId, token, n);
-    if (r?.ratingAvg != null && data) setData((p) => p ? { ...p, myRating: n, book: { ...p.book, ratingAvg: r.ratingAvg, ratingCount: r.ratingCount } } : p);
+    if (r?.ratingAvg != null) setData((p) => p ? { ...p, myRating: n, book: { ...p.book, ratingAvg: r.ratingAvg, ratingCount: r.ratingCount } } : p);
+    else { setData((p) => p ? { ...p, myRating: prev ?? null } : p); Alert.alert('Не удалось сохранить оценку', 'Проверьте подключение и попробуйте снова.'); }
   };
 
   const onShelf = async (status: ShelfStatus, progress?: number) => {
@@ -68,6 +70,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
     const r = await setBookShelf(bookId, token, next as any, progress);
     setBusyShelf(false);
     if (r) setData((p) => p ? { ...p, myShelf: r.shelf } : p);
+    else Alert.alert('Не удалось обновить полку', 'Проверьте подключение и попробуйте снова.');
   };
 
   const onSend = async () => {

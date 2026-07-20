@@ -189,7 +189,7 @@ export function AIChatScreen({}: Props) {
             <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Divergents AI</Text>
             <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>
               {isGeneral
-                ? (isSignedIn ? tr('Знает все курсы и ваш профиль') : tr('Знает все курсы Divergents'))
+                ? (isSignedIn && profile?.found ? tr('Знает все курсы и ваш профиль') : tr('Знает все курсы Divergents'))
                 : `${tr('Знает материалы курса')} «${activeCourse?.title ?? ''}»`}
             </Text>
           </View>

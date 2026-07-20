@@ -398,29 +398,9 @@ export function mdToText(s: string): string {
     .trim();
 }
 
-// General Divergents assistant (works without a course; token optional).
-export async function askAssistant(
-  message: string,
-  history: AiTurn[],
-  token?: string | null,
-  profileContext?: string | null,
-): Promise<{ answer: string }> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 60000);
-  try {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/api/mobile/ai`, {
-      method: 'POST', signal: ctrl.signal, headers,
-      body: JSON.stringify({ message, history: history.slice(-8), profileContext: profileContext || undefined }),
-    });
-    if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-    const d = await res.json().catch(() => null);
-    return { answer: d?.answer ?? '' };
-  } finally {
-    clearTimeout(t);
-  }
-}
+// NB: the general Divergents assistant lives in src/data/ai.ts (askAi). A
+// duplicate askAssistant() client used to live here with a divergent contract
+// and no callers — removed to avoid drift.
 
 // ───────── Community challenges (server-backed, admins see applications) ─────────
 export interface LiveChallengeTeam { id: string; name: string; capacity: number; captain?: string | null; _count?: { applications: number } }
