@@ -44,6 +44,8 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   // it instead of getting stuck showing pause forever.
   const endEvent = useEvent(player, 'playToEnd', null);
   useEffect(() => { if (endEvent) setPlayingId(null); }, [endEvent]);
+  // Ensure voice posts play even with the iOS mute switch on.
+  useEffect(() => { Audio.setAudioModeAsync({ playsInSilentModeIOS: true }).catch(() => {}); }, []);
 
   const owner = !!(ch?.createdBy && email && ch.createdBy.toLowerCase() === email.toLowerCase());
   const { block } = useModeration();
@@ -236,6 +238,10 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
     clearInterval(recTimer.current); setRecording(false);
     try { const r = recRef.current; if (r) { await r.stopAndUnloadAsync(); setRecordedUri(r.getURI() ?? null); } } catch {}
     recRef.current = null;
+    // Reset the iOS audio session OUT of record mode, otherwise playback of the
+    // recorded voice (and lesson videos) stays silent. playsInSilentModeIOS lets
+    // it sound even with the mute switch on.
+    try { await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }); } catch {}
   };
   const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
   const submit = async () => {
