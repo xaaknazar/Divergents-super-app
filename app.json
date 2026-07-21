@@ -71,6 +71,11 @@
       "expo-localization",
       "@maplibre/maplibre-react-native",
       "expo-notifications"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "82fb2253-cb48-4275-853e-c39b13b41e80"
+      }
+    }
   }
 }
