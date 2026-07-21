@@ -8,13 +8,14 @@ import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
+import { Logo } from '../../components/Logo';
 import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
 import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
 import { Ring } from '../../components/talentUI';
 import { CAREER_FILTERS, GOOD_FIT, Job } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
-import { useResume } from '../../state/useResume';
 import { useTalentProfile } from '../../state/useTalentProfile';
+import { useRole } from '../../state/useRole';
 import { talentMatch, GallupTalent } from '../../data/talentslab';
 import { CareerStackParams } from '../../navigation/types';
 
@@ -38,6 +39,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   const { applied, isApplied, jobs, jobsLoading, jobsError, reloadJobs, saved, getJob } = useCareer();
   const { profile, live, reload: reloadProfile } = useTalentProfile();
   const { unread } = useNotifications();
+  const { canCreate } = useRole();
 
   // Only use real (live) Gallup talents for matching — never demo data.
   const gallup: GallupTalent[] = live ? profile?.gallup ?? [] : [];
@@ -62,10 +64,37 @@ export function CareerHomeScreen({ navigation }: Props) {
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
-      <ResumeHero navigation={navigation} completeness={live ? profile?.completeness ?? 0 : -1} profile={profile} liveData={live} />
+      {/* Offers — same compact gradient card as «Библиотека книг», with the logo */}
+      <SectionHeader title={tr('Офферы')} />
+      <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
+        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <Logo size={26} body="#fff" head="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Пока нет офферов')}</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>
+              {tr('Здесь появятся приглашения и офферы от компаний, которым вы подойдёте по талантам.')}
+            </Text>
+          </View>
+        </LinearGradient>
+      </View>
+
+      {/* Application history */}
+      <ListSection header={`${tr('История откликов')} · ${myJobs.length}`}>
+        {myJobs.length > 0 ? myJobs.map((j, i) => (
+          <ListRow key={j.id} onPress={() => open(j.id)}
+            leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
+            title={j.title} subtitle={`${j.company} · ${j.city}`}
+            trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отправлен')}</Capsule>}
+            last={i === myJobs.length - 1} />
+        )) : (
+          <View style={{ padding: 16 }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Вы ещё не откликались на вакансии.')}</Text></View>
+        )}
+      </ListSection>
 
       {/* Vacancies */}
-      <SectionHeader title={t('vacancies')} />
+      <SectionHeader title={t('vacancies')} action={canCreate ? '+ Создать' : undefined} onAction={canCreate ? () => navigation.navigate('CreateVacancy') : undefined} />
       <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 12, marginTop: -4 }]}>
         {tr('Подобраны по вашему психотипу и талантам')}
       </Text>
@@ -106,18 +135,6 @@ export function CareerHomeScreen({ navigation }: Props) {
             </>
           ) : null}
 
-          {myJobs.length > 0 ? (
-            <ListSection header={`${tr('Мои отклики')} · ${myJobs.length}`}>
-              {myJobs.map((j, i) => (
-                <ListRow key={j.id} onPress={() => open(j.id)}
-                  leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
-                  title={j.title} subtitle={`${j.company} · ${j.city}`}
-                  trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отправлен')}</Capsule>}
-                  last={i === myJobs.length - 1} />
-              ))}
-            </ListSection>
-          ) : null}
-
           {savedJobs.length > 0 ? (
             <ListSection header={`${tr('Сохранённые')} · ${savedJobs.length}`}>
               {savedJobs.map((j, i) => (
@@ -139,43 +156,6 @@ export function CareerHomeScreen({ navigation }: Props) {
       )}
       <View style={{ height: 16 }} />
     </Screen>
-  );
-}
-
-// ─── Resume completeness hero (gradient) — single «Моя анкета» entry ─
-// `completeness` < 0 means "no live profile" → use the local resume %.
-// The whole card is tappable → TalentProfile (editing lives inside it).
-function ResumeHero({ navigation, completeness: live, profile, liveData }: {
-  navigation: Nav; completeness: number;
-  profile: ReturnType<typeof useTalentProfile>['profile']; liveData: boolean;
-}) {
-  const { T } = useTheme();
-  const { completeness: local } = useResume();
-  const completeness = live >= 0 ? live : local;
-  const filled = completeness > 0;
-  const mbti = liveData ? profile?.mbtiType : null;
-  const talents = liveData ? profile?.gallup.length ?? 0 : 0;
-  const subtitle = liveData
-    ? [mbti ? `MBTI · ${mbti}` : null, talents > 0 ? `${talents} ${tr('талантов Gallup')}` : null].filter(Boolean).join(' · ')
-      || tr('Дополните профиль для точного подбора')
-    : (filled ? tr('Дополните профиль для точного подбора') : tr('Заполните анкету — подберём роли по талантам'));
-  return (
-    <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 20, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
-      <Pressable onPress={() => navigation.navigate('TalentProfile')}>
-        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-            <Ring value={completeness / 100} size={64} color="#fff" label={`${completeness}%`} textColor="#fff" />
-            <View style={{ flex: 1 }}>
-              <Text style={[ty.title3, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Моя анкета')}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                {subtitle}
-              </Text>
-            </View>
-            <SF name="chevron.right" size={17} color="rgba(255,255,255,0.85)" />
-          </View>
-        </LinearGradient>
-      </Pressable>
-    </View>
   );
 }
 

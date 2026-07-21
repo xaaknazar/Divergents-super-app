@@ -394,17 +394,13 @@ export function MapHomeScreen({ navigation }: Props) {
         );
       })() : null}
 
-      {/* Empty / error notice for the live places list (no fake data) */}
-      {!placesLoading && !target && list.length === 0 ? (
+      {/* Error notice only (no "empty city" state) — with retry on load failure */}
+      {!placesLoading && !target && list.length === 0 && placesError ? (
         <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 100, alignItems: 'center' }} pointerEvents="box-none">
           <View style={{ backgroundColor: T.cardBg, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: 360, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
-            <SF name={placesError ? 'wifi.slash' : 'mappin.circle.fill'} size={18} color={placesError ? T.red : T.labelSecondary} />
-            <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]}>
-              {placesError ? tr('Не удалось загрузить места.') : tr('Пока нет мест в этом городе.')}
-            </Text>
-            {placesError ? (
-              <Pressable onPress={reloadPlaces} hitSlop={8}><Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Повторить')}</Text></Pressable>
-            ) : null}
+            <SF name="wifi.slash" size={18} color={T.red} />
+            <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]}>{tr('Не удалось загрузить места.')}</Text>
+            <Pressable onPress={reloadPlaces} hitSlop={8}><Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Повторить')}</Text></Pressable>
           </View>
         </View>
       ) : null}

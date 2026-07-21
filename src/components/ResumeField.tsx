@@ -16,13 +16,25 @@ export function ResumeFieldInput({ field, value, onChange }: { field: ResumeFiel
   const inputStyle = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label };
 
   if (field.type === 'bool') {
-    const on = value === true;
+    // Explicit Да/Нет so "No" (false) is a real answer, distinct from
+    // "not answered yet" (undefined). Otherwise a single checkbox makes
+    // "No" indistinguishable from "unanswered" and blocks the resume gate.
+    const opts: [string, boolean][] = [['Да', true], ['Нет', false]];
     return (
-      <Pressable onPress={() => onChange(!on)} accessibilityRole="checkbox" accessibilityState={{ checked: on }}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, padding: 14, marginBottom: 14 }}>
-        <Text style={[ty.body, { color: T.label, flex: 1 }]}>{field.label}</Text>
-        <SF name={on ? 'checkmark.circle.fill' : 'circle'} size={24} color={on ? T.brand : T.labelTertiary} />
-      </Pressable>
+      <View style={{ marginBottom: 14 }}>
+        {labelEl}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {opts.map(([lbl, val]) => {
+            const on = value === val;
+            return (
+              <Pressable key={lbl} onPress={() => onChange(val)} accessibilityRole="radio" accessibilityState={{ selected: on }}
+                style={{ flex: 1, paddingVertical: 11, borderRadius: 12, alignItems: 'center', backgroundColor: on ? T.brand : T.cardBg, borderWidth: 0.5, borderColor: on ? 'transparent' : T.separator }}>
+                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]}>{lbl}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
     );
   }
 

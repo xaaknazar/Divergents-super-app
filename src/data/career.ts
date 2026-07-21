@@ -147,6 +147,35 @@ export async function applyToVacancy(id: string, token: string | null | undefine
   }
 }
 
+export interface NewVacancy {
+  title: string; company: string; city: string; format: string;
+  salary: string; level: string; about: string; requirements: string[];
+}
+
+/**
+ * POST /api/mobile/vacancies — create a vacancy (admin/role-gated). Requires a
+ * Clerk token; the server authorizes by role. Returns true on success, false
+ * otherwise. Never throws.
+ */
+export async function createVacancy(token: string | null | undefined, data: NewVacancy): Promise<boolean> {
+  if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/vacancies`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // The Career module's unique value: match by psychotype/talents, not just skills.
 // Generic guidance copy (no company branding) — safe to keep client-side.
 export const GOOD_FIT = {

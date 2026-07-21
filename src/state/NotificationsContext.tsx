@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { AppNotification, fetchNotifications } from '../data/notifications';
 import { loadJSON, saveJSON } from './persist';
@@ -10,7 +10,7 @@ interface NotifState {
   unread: number;
   loading: boolean;
   error: boolean;
-  refresh: () => Promise<void>;
+  refresh: (silent?: boolean) => Promise<void>;
   markRead: (id: string) => void;
   markAllRead: () => void;
 }
@@ -20,6 +20,12 @@ const KEY = 'dvg.readNotifs';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { getToken, isSignedIn } = useAuth();
+  // Clerk hands back a NEW getToken function every render. Keep it in a ref so
+  // `refresh` (and the effects that depend on it) stay stable — otherwise the
+  // mount effect re-runs on every render → an endless refetch loop that made the
+  // notifications screen flicker between empty/list and freeze.
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
   const [list, setList] = useState<AppNotification[]>([]);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,10 +33,15 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => { loadJSON<string[]>(KEY, []).then(setReadIds); }, []);
 
-  const refresh = useCallback(async () => {
-    setLoading(true); setError(false);
+  // `silent` skips the global `loading` toggle. The bell badge lives on several
+  // screens via useNotifications, so toggling `loading` re-renders all of them —
+  // that churn (during the modal-open animation) is what made opening the
+  // notifications screen janky. Screen-open + pull-to-refresh pass silent=true.
+  const refresh = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    setError(false);
     try {
-      const token = isSignedIn ? await getToken() : null;
+      const token = isSignedIn ? await getTokenRef.current() : null;
       const data = await fetchNotifications(token);
       setList(data);
     } catch {
@@ -38,9 +49,9 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       // (this same fn backs pull-to-refresh) — only flag the error state.
       setError(true);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [getToken, isSignedIn]);
+  }, [isSignedIn]);
 
   useEffect(() => { refresh(); }, [refresh]);
 

@@ -8,6 +8,7 @@ import {
 import { TabBar } from './TabBar';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAppFlow } from '../state/AppFlowContext';
+import { useResumeGate } from '../state/ResumeGateContext';
 import { usePush } from '../state/usePush';
 import { useInviteLinks } from '../state/useInviteLinks';
 
@@ -38,12 +39,14 @@ import { CareerHomeScreen } from '../screens/career/CareerHomeScreen';
 import { VacancyDetailScreen } from '../screens/career/VacancyDetailScreen';
 import { ResumeFormScreen } from '../screens/career/ResumeFormScreen';
 import { TalentProfileScreen } from '../screens/career/TalentProfileScreen';
+import { CreateVacancyScreen } from '../screens/career/CreateVacancyScreen';
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
 import { AchievementsScreen } from '../screens/profile/AchievementsScreen';
 import { PersonalizeScreen } from '../screens/profile/PersonalizeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
+import { ResumeGateScreen } from '../screens/ResumeGateScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 
 const LMSStack = createNativeStackNavigator<LMSStackParams>();
@@ -107,6 +110,7 @@ function CareerNavigator() {
       <CareerStack.Screen name="VacancyDetail" component={VacancyDetailScreen} />
       <CareerStack.Screen name="Resume" component={ResumeFormScreen} options={{ presentation: 'modal' }} />
       <CareerStack.Screen name="TalentProfile" component={TalentProfileScreen} />
+      <CareerStack.Screen name="CreateVacancy" component={CreateVacancyScreen} options={{ presentation: 'modal' }} />
     </CareerStack.Navigator>
   );
 }
@@ -119,6 +123,7 @@ function ProfileNavigator() {
       <ProfileStack.Screen name="Achievements" component={AchievementsScreen} />
       <ProfileStack.Screen name="Personalize" component={PersonalizeScreen} />
       <ProfileStack.Screen name="Downloads" component={DownloadsScreen} />
+      <ProfileStack.Screen name="Resume" component={ResumeFormScreen} options={{ presentation: 'modal' }} />
     </ProfileStack.Navigator>
   );
 }
@@ -141,6 +146,7 @@ const Root = createNativeStackNavigator<RootStackParams>();
 export function RootNavigator() {
   const { isLoaded, isSignedIn } = useAuth();
   const { ready, onboarded, pendingRegistration } = useAppFlow();
+  const { complete: resumeComplete } = useResumeGate();
   usePush();
   useInviteLinks();
   if (!isLoaded || !ready) return null;
@@ -152,6 +158,9 @@ export function RootNavigator() {
         <Root.Screen name="Auth" component={AuthScreen} />
       ) : pendingRegistration ? (
         <Root.Screen name="Register" component={RegisterScreen} />
+      ) : !resumeComplete ? (
+        // Mandatory: no entry to the app until the Talentslab resume is 100% filled.
+        <Root.Screen name="ResumeGate" component={ResumeGateScreen} />
       ) : (
         <>
           <Root.Screen name="Tabs" component={Tabs} />

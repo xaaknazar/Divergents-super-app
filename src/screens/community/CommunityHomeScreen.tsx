@@ -176,19 +176,30 @@ function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { naviga
   const { channels, error: channelsError, reload: reloadChannels } = useChannel();
   return (
     <>
-      <SectionHeader title={t('your_challenge')} />
-      {hasActive
-        ? <ActiveChallengeCard navigation={navigation} />
-        : <EmptyState icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />}
+      {/* Channels first */}
+      <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(1); }} />
+      {channels.length === 0
+        ? <EmptyOrError error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
+        : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
 
-      <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
-      {trips === null ? <Loading /> : trips.length === 0 ? (
-        <EmptyOrError error={error} onRetry={onRetry} icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />
-      ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
-          {trips.map((tp) => <TripCardH key={tp.id} trip={tp} navigation={navigation} />)}
-        </ScrollView>
-      )}
+      {/* Then your challenge */}
+      <View style={{ marginTop: 18 }}>
+        <SectionHeader title={t('your_challenge')} />
+        {hasActive
+          ? <ActiveChallengeCard navigation={navigation} />
+          : <EmptyState icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />}
+      </View>
+
+      <View style={{ marginTop: 18 }}>
+        <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
+        {trips === null ? <Loading /> : trips.length === 0 ? (
+          <EmptyOrError error={error} onRetry={onRetry} icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
+            {trips.map((tp) => <TripCardH key={tp.id} trip={tp} navigation={navigation} />)}
+          </ScrollView>
+        )}
+      </View>
 
       <View style={{ marginTop: 18 }}>
         <SectionHeader title={t('sec_sport')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
@@ -206,13 +217,6 @@ function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { naviga
             ))}
           </ScrollView>
         )}
-      </View>
-
-      <View style={{ marginTop: 18 }}>
-        <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(1); }} />
-        {channels.length === 0
-          ? <EmptyOrError error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
-          : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
       </View>
     </>
   );

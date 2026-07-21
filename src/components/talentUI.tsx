@@ -22,7 +22,7 @@ export function Ring({
           strokeDasharray={`${pct * circ} ${circ}`} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
       </Svg>
       <View style={{ position: 'absolute', alignItems: 'center' }}>
-        {label ? <Text style={[ty.headline, { color: textColor ?? T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text> : null}
+        {label ? <Text style={[ty.subheadEm, { color: textColor ?? T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{label}</Text> : null}
         {sub ? <Text style={[ty.caption2, { color: textColor ?? T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{sub}</Text> : null}
       </View>
     </View>

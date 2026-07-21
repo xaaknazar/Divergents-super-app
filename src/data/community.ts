@@ -760,13 +760,14 @@ export interface CommunityHomeData {
 }
 
 export async function fetchCommunityHome(): Promise<CommunityHomeData> {
-  const [t, c] = await Promise.all([
+  const [t, c, sport] = await Promise.all([
     getJsonResult('/api/mobile/trips'),
     getJsonResult('/api/mobile/challenges'),
+    fetchSport(),
   ]);
   return {
     trips: mapTrips(t.data),
-    sport: [],
+    sport,
     challenges: mapChallenges(c.data),
     error: !t.ok && !c.ok,
   };

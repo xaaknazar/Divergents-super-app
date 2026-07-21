@@ -14,6 +14,7 @@ import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
 import { usePlaces } from '../../state/PlacesContext';
 import { Place, postPlace } from '../../data/places';
+import { uploadFile } from '../../data/api';
 import { CATEGORY_META, CATEGORIES, TAG_META, TAGS, PlaceCategory, PlaceTag, safeCityCenter, COUNTRIES } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
@@ -67,13 +68,16 @@ export function AddPlaceScreen({ navigation, route }: Props) {
     if (!r.canceled && r.assets?.[0]?.uri) setPhoto(await persistImage(r.assets[0].uri));
   };
   const ok = name.trim().length > 1 && highlights.trim().length > 2;
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
+    if (submitting) return;
     if (editing) {
       updatePlace(editing.id, { name: name.trim(), category: cat, lat: coord.latitude, lng: coord.longitude, tags, highlights: highlights.trim(), hours: hours.trim() || 'Не указано', photo });
       Alert.alert('Сохранено', 'Изменения применены.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
       return;
     }
+    setSubmitting(true);
     const author = user?.firstName || user?.fullName || (user?.primaryEmailAddress?.emailAddress?.split('@')[0]) || 'Вы';
     const draft = {
       name: name.trim(), category: cat, country, city, lat: coord.latitude, lng: coord.longitude,
@@ -81,12 +85,30 @@ export function AddPlaceScreen({ navigation, route }: Props) {
     };
     // Always keep the place on-device so the author sees it immediately.
     addPlace({ ...draft, approved: false });
-    // Best-effort publish so other users can see it once the admin approves.
-    // Failure is silent — the local copy still works offline.
-    (async () => {
-      try { const token = await getToken(); await postPlace(draft, token); } catch {}
-    })();
-    Alert.alert('Место добавлено', 'Спасибо! Метка появилась на карте сообщества. После модерации её увидят все участники.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
+    // Publish to the server. Upload the photo first (a local file:// path is
+    // useless to other users) and send the resulting URL. Message is HONEST:
+    // only promise "everyone will see it after moderation" when the server
+    // actually accepted the place.
+    let published = false;
+    try {
+      const token = await getToken();
+      let serverPhoto: string | null = photo && photo.startsWith('file:') ? null : (photo ?? null);
+      if (photo && photo.startsWith('file:')) {
+        const fname = photo.split('/').pop() || `place_${Date.now()}.jpg`;
+        serverPhoto = await uploadFile(token, photo, fname, 'image/jpeg');
+      }
+      const id = await postPlace({ ...draft, photo: serverPhoto }, token);
+      published = !!id;
+    } catch {
+      published = false;
+    } finally {
+      setSubmitting(false);
+    }
+    if (published) {
+      Alert.alert('Место добавлено', 'Спасибо! После модерации метку увидят все участники сообщества.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
+    } else {
+      Alert.alert('Сохранено у вас', 'Метка добавлена на вашей карте, но отправить её на модерацию не удалось — проверьте связь и попробуйте позже.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
+    }
   };
 
   return (
@@ -157,7 +179,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
       </KeyboardAvoidingView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label={editing ? 'Сохранить' : 'Добавить место'} icon="checkmark" disabled={!ok} onPress={submit} />
+        <PrimaryButton label={editing ? 'Сохранить' : 'Добавить место'} icon="checkmark" loading={submitting} disabled={!ok || submitting} onPress={submit} />
       </View>
     </View>
   );

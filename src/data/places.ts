@@ -147,8 +147,9 @@ function mapApiPlace(p: ApiPlace): Place | null {
 }
 
 // Fetch the live, admin-published catalog of places. Returns [] on any
-// failure (network, non-2xx, bad JSON) so callers render an empty state
-// instead of crashing or showing stale fake data.
+// failure (network, non-2xx, bad JSON) it THROWS, so the caller (PlacesContext)
+// can distinguish "connection failed → offer retry" from "connected, no places
+// here → empty state". A successful-but-empty response resolves to [].
 export async function fetchPlaces(timeoutMs = 12000): Promise<Place[]> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -157,12 +158,10 @@ export async function fetchPlaces(timeoutMs = 12000): Promise<Place[]> {
       signal: ctrl.signal,
       headers: { Accept: 'application/json' },
     });
-    if (!res.ok) return [];
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const list: ApiPlace[] = Array.isArray(data) ? data : Array.isArray(data?.places) ? data.places : [];
     return list.map(mapApiPlace).filter((p): p is Place => p !== null);
-  } catch {
-    return [];
   } finally {
     clearTimeout(t);
   }

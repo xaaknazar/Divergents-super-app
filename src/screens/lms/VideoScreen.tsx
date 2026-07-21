@@ -12,6 +12,7 @@ import { Segmented, PrimaryButton, ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
+import { useModeration } from '../../state/ModerationContext';
 import { useDownloads } from '../../state/downloads';
 import { API_BASE, stripHtml, fetchComments, postComment, ChapterComment, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
@@ -41,9 +42,11 @@ export function VideoScreen({ route, navigation }: Props) {
   const lesson = course?.lessons.find((l) => l.id === lessonId) ?? course?.lessons[0];
   const [tab, setTab] = useState(0);
 
-  // Ownership: free, purchased (in "Мои курсы"), or a non-live (local) course.
+  // Ownership: free, purchased (in "Мои курсы" OR confirmed by owned-detail
+  // endpoint), or a non-live (local) course. course.owned survives a failed
+  // list fetch, so a bought lesson never shows a false paywall.
   const isFreeCourse = (course?.price ?? 0) <= 0;
-  const ownedByApi = my.courses.some((c) => c.id === courseId);
+  const ownedByApi = my.courses.some((c) => c.id === courseId) || course?.owned === true;
   const owned = isFreeCourse || ownedByApi || (course?.source !== 'live');
 
   const hls = lesson?.hlsUrl ?? null;
@@ -85,6 +88,15 @@ export function VideoScreen({ route, navigation }: Props) {
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentsError, setCommentsError] = useState(false);
   const [draft, setDraft] = useState('');
+  const { isBlocked, block } = useModeration();
+  // UGC moderation (App Store 1.2): report a comment or block its author.
+  const moderateComment = (author: string) => {
+    Alert.alert(author, tr('Пожаловаться на комментарий или скрыть автора?'), [
+      { text: tr('Пожаловаться'), onPress: () => Alert.alert(tr('Спасибо'), tr('Мы проверим этот комментарий.')) },
+      { text: tr('Заблокировать автора'), style: 'destructive', onPress: () => { block(author); Alert.alert(tr('Автор заблокирован'), tr('Его комментарии и записи скрыты для вас.')); } },
+      { text: tr('Отмена'), style: 'cancel' },
+    ]);
+  };
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(false);
 
@@ -269,8 +281,8 @@ export function VideoScreen({ route, navigation }: Props) {
                 <View style={{ paddingVertical: 24, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
               ) : commentsError ? (
                 <ErrorState message={tr('Не удалось загрузить обсуждение. Проверьте подключение.')} onRetry={loadComments} />
-              ) : comments && comments.length > 0 ? (
-                comments.map((c) => (
+              ) : (comments ?? []).filter((c) => !isBlocked(fullName(c))).length > 0 ? (
+                (comments ?? []).filter((c) => !isBlocked(fullName(c))).map((c) => (
                   <View key={c.id} style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
                     <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={[ty.caption2Em, { color: '#fff' }]}>{initials(c)}</Text>
@@ -280,6 +292,10 @@ export function VideoScreen({ route, navigation }: Props) {
                         <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{fullName(c)}</Text>
                         <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtDate(c.createdAt)}</Text>
                         {c.isPinned ? <SF name="bookmark.fill" size={11} color={T.orange} /> : null}
+                        <View style={{ flex: 1 }} />
+                        <Pressable onPress={() => moderateComment(fullName(c))} hitSlop={10} accessibilityLabel={tr('Пожаловаться или заблокировать')}>
+                          <SF name="ellipsis" size={15} color={T.labelTertiary} />
+                        </Pressable>
                       </View>
                       <Text style={[ty.body, { color: T.label, marginTop: 2 }]}>{c.content}</Text>
                     </View>

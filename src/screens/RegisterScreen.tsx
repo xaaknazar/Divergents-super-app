@@ -8,11 +8,21 @@ import { PrimaryButton, ty } from '../components/ui';
 import { ResumeFieldInput } from '../components/ResumeField';
 import { RESUME_STEPS } from '../data/resumeSchema';
 import { useResume } from '../state/useResume';
-import { useAuth, useUser } from '@clerk/clerk-expo';
+import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { fetchTalentProfile } from '../data/talentslab';
+import { clearAllAppData } from '../state/reset';
 import { useAppFlow } from '../state/AppFlowContext';
+import { useResumeGate } from '../state/ResumeGateContext';
 import { useLang, tr } from '../state/LanguageContext';
 import { RootStackParams } from '../navigation/types';
+
+// Required fields that are still empty, grouped so we can point the user to the
+// first incomplete step.
+const missingRequired = (fields: typeof RESUME_STEPS[number]['fields'], answers: Record<string, any>) =>
+  fields.filter((f) => !f.optional).filter((f) => {
+    const v = answers[f.key];
+    return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+  });
 
 type Props = NativeStackScreenProps<RootStackParams, 'Register'>;
 
@@ -29,30 +39,59 @@ export function RegisterScreen({ navigation }: Props) {
   const [tlPct, setTlPct] = useState<number | null>(null);
   const { getToken } = useAuth();
   const { user } = useUser();
+  const { signOut } = useClerk();
   const { finishRegistration } = useAppFlow();
+  const { markComplete } = useResumeGate();
   const total = RESUME_STEPS.length;
   const s = RESUME_STEPS[step];
   const last = step === total - 1;
 
   const go = (n: number) => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setStep(n); };
-  const enter = () => finishRegistration();
+
+  // «Назад ко входу»: выйти из аккаунта и вернуться на экран логина/регистрации.
+  // Регистрация ещё не завершена — сбрасываем флаг и локальные данные, затем signOut
+  // (RootNavigator покажет AuthScreen, т.к. isSignedIn станет false).
+  const backToLogin = () => {
+    Alert.alert(
+      tr('Вернуться ко входу?'),
+      tr('Регистрация не завершена. Вы выйдете из аккаунта и вернётесь на экран входа.'),
+      [
+        { text: tr('Отмена'), style: 'cancel' },
+        {
+          text: tr('Выйти'),
+          style: 'destructive',
+          onPress: async () => {
+            finishRegistration();
+            try { await clearAllAppData(); } catch {}
+            try { await signOut(); } catch {}
+          },
+        },
+      ],
+    );
+  };
+  // The резюме is fully filled by the time we reach the done screen (finish
+  // enforces every required field), so mark the gate satisfied and enter.
+  const enter = () => { markComplete(); finishRegistration(); };
 
   const next = () => {
-    // require non-optional fields of the current step
-    const missing = s.fields.filter((f) => !f.optional).filter((f) => {
-      const v = answers[f.key];
-      return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
-    });
+    const missing = missingRequired(s.fields, answers);
     if (missing.length) { Alert.alert(tr('Заполните обязательные поля'), missing.map((m) => `• ${m.label}`).join('\n')); return; }
     go(step + 1);
   };
 
   const finish = async () => {
-    const missing = s.fields.filter((f) => !f.optional).filter((f) => {
-      const v = answers[f.key];
-      return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
-    });
-    if (missing.length) { Alert.alert(tr('Заполните обязательные поля'), missing.map((m) => `• ${m.label}`).join('\n')); return; }
+    // Enforce EVERY required field across all steps — the stepper lets the user
+    // jump ahead, so validating only the current step would let gaps through.
+    const firstGap = RESUME_STEPS.findIndex((st) => missingRequired(st.fields, answers).length > 0);
+    if (firstGap >= 0) {
+      const missing = missingRequired(RESUME_STEPS[firstGap].fields, answers);
+      Alert.alert(
+        tr('Заполните обязательные поля'),
+        missing.map((m) => `• ${m.label}`).join('\n'),
+        [{ text: tr('Готово'), onPress: () => go(firstGap) }],
+      );
+      return;
+    }
     const ok = await submit();
     // Show local completeness immediately; if the submit reached Talentslab we
     // refine it below with the server-reported value. (Previously both ternary
@@ -80,8 +119,8 @@ export function RegisterScreen({ navigation }: Props) {
           </View>
           <Text style={[ty.title1, { color: T.label, marginTop: 18, textAlign: 'center' }]}>{tr('Регистрация завершена')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>{savedRemote
-            ? tr('Анкета сохранена в Talentslab. Заполните её до 100%, чтобы пройти Gallup, MBTI и тест Гарднера.')
-            : tr('Анкета сохранена на устройстве — отправим в Talentslab, как только появится связь. Продолжить заполнение можно в разделе «Карьера».')}</Text>
+            ? tr('Анкета заполнена и сохранена в Talentslab. Результаты Gallup, MBTI и Гарднера появятся в разделе «Карьера».')
+            : tr('Анкета сохранена на устройстве — отправим в Talentslab, как только появится связь.')}</Text>
         </View>
         <View style={{ marginTop: 28, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
@@ -103,9 +142,12 @@ export function RegisterScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <View style={{ width: 64 }} />
+        <Pressable onPress={backToLogin} hitSlop={8} style={{ width: 64, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+          <SF name="chevron.left" size={15} color={T.brandAccent} />
+          <Text style={[ty.body, { color: T.brandAccent }]} numberOfLines={1}>{tr('Вход')}</Text>
+        </Pressable>
         <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Регистрация')} · {completeness}%</Text>
-        <Pressable onPress={enter} hitSlop={8} style={{ width: 64, alignItems: 'flex-end' }}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Позже')}</Text></Pressable>
+        <View style={{ width: 64 }} />
       </View>
 
       <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingVertical: 12 }}>

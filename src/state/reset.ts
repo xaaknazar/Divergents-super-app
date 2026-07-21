@@ -18,6 +18,9 @@ export const USER_DATA_KEYS: string[] = [
   'dvg.applied',            // CareerContext — applied jobs
   'dvg.saved',              // CareerContext — saved jobs
   'dvg.resume',             // useResume — local resume answers (Talentslab)
+  'dvg.resumeComplete',     // ResumeGateContext — cached "resume 100% filled" flag
+  'dvg.resumePending',      // useResume — failed-submit resend flag
+  'dvg.blockedAuthors',     // ModerationContext — blocked UGC authors
   // Notifications
   'dvg.readNotifs',         // NotificationsContext — read notification ids
   // Places / map

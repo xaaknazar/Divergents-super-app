@@ -12,7 +12,8 @@ import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, ty } from '..
 import { EmptyState } from '../../components/StateViews';
 import { fetchTrip, Trip } from '../../data/community';
 import { useEnrollment } from '../../state/EnrollmentContext';
-import { imgUrl } from '../../data/api';
+import { imgUrl, applyToTrip } from '../../data/api';
+import { useAuth } from '@clerk/clerk-expo';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
@@ -21,9 +22,11 @@ export function TripDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { has, toggle, add } = useEnrollment();
+  const { getToken } = useAuth();
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -176,11 +179,25 @@ export function TripDetailScreen({ route, navigation }: Props) {
         <PrimaryButton
           label={joined ? 'Вы записаны ✓' : `Записаться · ${trip.price}`}
           icon={joined ? 'checkmark' : 'paperplane.fill'}
+          loading={joining}
           color={joined ? T.green : T.brand}
-          onPress={() => {
-            if (joined) return;
-            add(`trip:${trip.id}`);
-            Alert.alert('Заявка принята', `Мы свяжемся с вами по деталям поездки «${trip.title}».`);
+          onPress={async () => {
+            if (joined || joining) return;
+            setJoining(true);
+            try {
+              const token = await getToken();
+              const ok = await applyToTrip(token, trip.id);
+              if (ok) {
+                add(`trip:${trip.id}`);
+                Alert.alert('Заявка принята', `Мы свяжемся с вами по деталям поездки «${trip.title}».`);
+              } else {
+                Alert.alert('Не удалось записаться', 'Проверьте подключение и попробуйте снова.');
+              }
+            } catch {
+              Alert.alert('Не удалось записаться', 'Проверьте подключение и попробуйте снова.');
+            } finally {
+              setJoining(false);
+            }
           }}
         />
       </View>

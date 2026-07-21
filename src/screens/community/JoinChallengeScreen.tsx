@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
@@ -11,6 +12,7 @@ import { ErrorState } from '../../components/StateViews';
 import {
   fetchChallengesAndTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam,
 } from '../../data/community';
+import { applyToChallenge } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
@@ -30,6 +32,8 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const [agree, setAgree] = useState(false);
   const [track, setTrack] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const { getToken } = useAuth();
 
   const load = useCallback(() => {
     let alive = true;
@@ -49,6 +53,23 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const nickOk = nick.trim().length > 0 && nick.trim().length <= NICK_MAX;
   const canSubmit = nickOk && !!teamId && agree && track;
   const team = teams.find((t) => t.id === teamId);
+
+  // Real submit: send the application to the server; only show success when the
+  // server actually accepted it, otherwise surface a retryable error.
+  const submit = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    try {
+      const token = await getToken();
+      const ok = await applyToChallenge(token, route.params.challengeId, teamId);
+      if (ok) setSubmitted(true);
+      else Alert.alert(tr('Не удалось отправить заявку'), tr('Проверьте подключение и попробуйте снова.'));
+    } catch {
+      Alert.alert(tr('Не удалось отправить заявку'), tr('Проверьте подключение и попробуйте снова.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
 
   if (submitted) {
@@ -141,7 +162,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label={tr('Отправить заявку')} icon="paperplane.fill" color={canSubmit ? T.brand : T.labelTertiary} onPress={() => canSubmit && setSubmitted(true)} />
+        <PrimaryButton label={tr('Отправить заявку')} icon="paperplane.fill" loading={submitting} color={canSubmit ? T.brand : T.labelTertiary} onPress={submit} />
       </View>
     </View>
   );

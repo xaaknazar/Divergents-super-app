@@ -17,6 +17,7 @@ import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
 import { useResume } from '../../state/useResume';
 import { useAppFlow } from '../../state/AppFlowContext';
+import { useModeration } from '../../state/ModerationContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { clearAllAppData } from '../../state/reset';
@@ -42,9 +43,21 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const { finishRegistration } = useAppFlow();
+  const { blocked, unblock } = useModeration();
+
+  // Let users review and lift blocks (App Store 1.2 requires blocking be reversible).
+  const manageBlocked = () => {
+    Alert.alert('Заблокированные', blocked.join('\n'), [
+      { text: 'Разблокировать всех', style: 'destructive', onPress: () => blocked.forEach((b) => unblock(b)) },
+      { text: tr('Готово'), style: 'cancel' },
+    ]);
+  };
 
   const goLearning = () => navigation.getParent()?.navigate('LMSTab' as never);
   const goCareer = () => navigation.getParent()?.navigate('CareerTab' as never);
+  // Open the anketa (resume) editor within the Profile stack so closing it
+  // returns to the profile (not the Career tab).
+  const editAnketa = () => navigation.navigate('Resume' as never);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -67,7 +80,10 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   const coursesInProgress = courses.filter((c) => progress(c.id) > 0).length;
   const email = user?.primaryEmailAddress?.emailAddress;
+  // Prefer a real name: Clerk name → Talentslab anketa full_name → email prefix.
+  // Email-code sign-up doesn't collect a name, so the anketa is the real source.
   const name = user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(' ')
+    || (live && profile?.fullName ? profile.fullName : null)
     || (email ? email.split('@')[0] : 'Divergents');
   const initial = (name?.trim()?.[0] ?? 'D').toUpperCase();
   const challengeActive = challenge.currentDay > 0;
@@ -110,8 +126,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
-      {/* Gradient hero card */}
-      <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+      {/* Gradient hero card — tap to edit the anketa (single edit entry) */}
+      <Pressable onPress={editAnketa} accessibilityRole="button" accessibilityLabel="Редактировать анкету"
+        style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             {profile?.photoUrl ? (
@@ -134,8 +151,12 @@ export function ProfileHomeScreen({ navigation }: Props) {
             </View>
             <Ring value={completeness / 100} size={62} color="#fff" label={`${completeness}%`} sub={t('questionnaire')} textColor="#fff" />
           </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 14, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.22)' }}>
+            <Text style={[ty.footnoteEm, { color: '#fff' }]}>Редактировать анкету</Text>
+            <SF name="chevron.right" size={12} color="rgba(255,255,255,0.85)" />
+          </View>
         </LinearGradient>
-      </View>
+      </Pressable>
 
       {/* Stat tiles */}
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
@@ -164,7 +185,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {(profile?.gallup ?? []).length > 0 ? (
         <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{t('strengths')}</Text>
+            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('strengths')}</Text>
             {!live ? (
               <Pressable onPress={reload} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
@@ -199,6 +220,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Account */}
       <ListSection header={t('account')} style={{ marginTop: 18 }}>
         <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />} title={email ?? t('signed_in')} subtitle="Divergents LMS · Talentslab" />
+        {blocked.length > 0 ? (
+          <ListRow leading={<IconCircle icon="hand.raised.fill" color="#fff" bg={T.labelSecondary} size={30} />} title="Заблокированные" detail={String(blocked.length)} chevron onPress={manageBlocked} />
+        ) : null}
         <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.red} last onPress={handleSignOut} />
       </ListSection>
 

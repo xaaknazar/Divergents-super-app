@@ -7,11 +7,11 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ListRow, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, PrimaryButton, ty } from '../../components/ui';
 import { GardnerChart } from '../../components/GardnerChart';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import {
-  GALLUP_DOMAIN_META, mbtiName, fmtList, MOCK_PROFILE,
+  GALLUP_DOMAIN_META, mbtiName, fmtList,
   loadGallupOrder, saveGallupOrder, applyGallupOrder, gallupId,
 } from '../../data/talentslab';
 import { RESUME_STEPS } from '../../data/resumeSchema';
@@ -27,11 +27,11 @@ const stepIndex = (key: string) => Math.max(0, RESUME_STEPS.findIndex((s) => s.k
 export function TalentProfileScreen({ navigation }: Props) {
   const { T } = useTheme();
   useLang();
-  const { profile: realProfile, live } = useTalentProfile();
-  // When there is no live candidate record, preview the feature with an
-  // explicitly-labelled demo (the "демо-данные" badge below) instead of fake
-  // data masquerading as the user's real profile.
-  const profile = live ? realProfile : MOCK_PROFILE;
+  const { profile: realProfile, live, loading } = useTalentProfile();
+  // Only ever show the user's OWN data — never a demo profile masquerading as
+  // theirs. When there is no live candidate record we render an empty CTA
+  // (see the early return below), not fake "Aknazar K." data.
+  const profile = realProfile;
   const r = profile?.resume ?? null;
 
   // Navigate to the resume form at the step that matches a schema key.
@@ -122,6 +122,26 @@ export function TalentProfileScreen({ navigation }: Props) {
     );
   };
 
+  // No live candidate record → loading spinner or a CTA to fill the resume.
+  // Never fall back to demo data.
+  if (!live) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <NavHeader title={tr('Моя анкета')} backLabel={tr('Карьера')} onBack={() => navigation.goBack()} />
+        {loading ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+        ) : (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+            <SF name="person.text.rectangle" size={44} color={T.labelTertiary} />
+            <Text style={[ty.title3, { color: T.label, marginTop: 14, textAlign: 'center' }]}>{tr('Анкета не заполнена')}</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>{tr('Заполните анкету, чтобы увидеть свой профиль талантов.')}</Text>
+            <PrimaryButton label={tr('Заполнить анкету')} icon="arrow.right" style={{ marginTop: 20 }} onPress={() => navigation.navigate('Resume')} />
+          </View>
+        )}
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader title={tr('Моя анкета')} backLabel={tr('Карьера')} onBack={() => navigation.goBack()}
@@ -152,7 +172,6 @@ export function TalentProfileScreen({ navigation }: Props) {
             ? <Image source={{ uri: profile.photoUrl }} style={{ width: 88, height: 88, borderRadius: 24 }} contentFit="cover" cachePolicy="memory-disk" />
             : <View style={{ width: 88, height: 88, borderRadius: 24, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.largeTitle, { color: '#fff' }]}>{(profile?.fullName ?? 'D').charAt(0)}</Text></View>}
           <Text style={[ty.title2, { color: T.label, marginTop: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{profile?.fullName ?? '—'}</Text>
-          {!live ? <View style={{ marginTop: 6 }}><Capsule bg={T.fillTertiary} color={T.labelSecondary}>{tr('демо-данные')}</Capsule></View> : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
             {profile?.mbtiType ? <Capsule bg={T.brandTinted} color={T.brand}>MBTI · {profile.mbtiType}</Capsule> : null}
             <Capsule bg={T.fillTertiary} color={T.label}>{tr('Анкета')} {profile?.completeness ?? 0}%</Capsule>
@@ -179,14 +198,14 @@ export function TalentProfileScreen({ navigation }: Props) {
           );
         })()}
 
-        {/* MBTI */}
+        {/* MBTI — plain text (no boxed square) */}
         {profile?.mbtiType ? (
           <ListSection header={tr('Тип личности (MBTI)')}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
-              <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={[ty.headline, { color: '#fff' }]}>{profile.mbtiType}</Text>
-              </View>
-              <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{profile.mbtiName || mbtiName(profile.mbtiType) || 'Тип личности'}</Text>
+            <View style={{ padding: 16 }}>
+              <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>
+                {profile.mbtiType}
+                {(profile.mbtiName || mbtiName(profile.mbtiType)) ? ` · ${profile.mbtiName || mbtiName(profile.mbtiType)}` : ''}
+              </Text>
             </View>
           </ListSection>
         ) : null}

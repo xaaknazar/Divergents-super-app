@@ -12,8 +12,10 @@ import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useNotifications } from '../../state/NotificationsContext';
 import { useLang, tr } from '../../state/LanguageContext';
+import { useTalentProfile } from '../../state/useTalentProfile';
 import { useUser } from '@clerk/clerk-expo';
 import { Logo } from '../../components/Logo';
+import { LinearGradient } from 'expo-linear-gradient';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
@@ -25,7 +27,11 @@ export function LMSHomeScreen({ navigation }: Props) {
   const { unread } = useNotifications();
   const { t } = useLang();
   const { user } = useUser();
-  const displayName = user?.firstName || user?.fullName || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
+  const { profile, live } = useTalentProfile();
+  // Prefer a real name (Clerk → anketa full_name); email prefix only as a last resort.
+  const displayName = user?.firstName || user?.fullName
+    || (live && profile?.fullName ? profile.fullName.split(' ')[0] : null)
+    || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('Все');
 
@@ -101,17 +107,19 @@ export function LMSHomeScreen({ navigation }: Props) {
         {categories.map((c) => <Chip key={c} label={c} active={cat === c} onPress={() => setCat(c)} />)}
       </ScrollView>
 
-      {/* Books library entry */}
+      {/* Books library entry — compact card with a gradient background */}
       <Pressable onPress={() => navigation.navigate('Books')}
-        style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.brandTintedStrong }}>
-        <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-          <SF name="book.fill" size={23} color="#fff" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Библиотека книг</Text>
-          <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>Каталог, рецензии и ИИ-советник по книгам под ваш профиль</Text>
-        </View>
-        <SF name="chevron.right" size={15} color={T.labelTertiary} />
+        style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
+        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="book.fill" size={23} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Библиотека книг</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>Каталог, рецензии и ИИ-советник по книгам под ваш профиль</Text>
+          </View>
+          <SF name="chevron.right" size={15} color={T.labelTertiary} />
+        </LinearGradient>
       </Pressable>
 
       {loading ? (

@@ -39,7 +39,7 @@ function resolve(mode: ThemeMode, sys: ColorSchemeName): Scheme {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>('system');
   const [accent, setAccentState] = useState<string>('divergents');
-  const [background, setBgState] = useState<string>('accent');
+  const [background, setBgState] = useState<string>('none');
   const [textSize, setTextSizeState] = useState<TextSizeKey>('md');
   const [sys, setSys] = useState<ColorSchemeName>(Appearance.getColorScheme());
 

@@ -75,7 +75,10 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   }
 
   const isFree = (course.price ?? 0) <= 0;
-  const ownedByApi = my.courses.some((c) => c.id === courseId);
+  // Ownership from the "Мои курсы" list OR confirmed by the owned-detail endpoint
+  // (course.owned) — the latter survives a failed list fetch, so a purchased
+  // course never wrongly drops to the "Buy" landing.
+  const ownedByApi = my.courses.some((c) => c.id === courseId) || course.owned === true;
   // Free, owned, or local demo courses → learning view. Paid live courses you
   // don't own → sales/landing view.
   const owned = isFree || ownedByApi || course.source !== 'live';
