@@ -14,10 +14,9 @@ import { ty } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
 import { useModeration } from '../../state/ModerationContext';
-import { loadJSON, saveJSON } from '../../state/persist';
 import {
   fetchServerChannels, fetchMyChannelMemberships, joinChannel, fetchChannelRequests,
-  actChannelRequest, createChannelPost, uploadFile, updateChannel, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
+  actChannelRequest, createChannelPost, reactChannelPost, uploadFile, updateChannel, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
 } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -63,14 +62,13 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   // Ensure voice posts play even with the iOS mute switch on.
   useEffect(() => { Audio.setAudioModeAsync({ playsInSilentModeIOS: true }).catch(() => {}); }, []);
 
-  // Reactions to posts. Stored locally per-device (dvg.channelReactions) — a
-  // shared, cross-user count needs a backend reactions endpoint (not yet available).
-  const [reactions, setReactions] = useState<Record<string, string>>({});
-  useEffect(() => { loadJSON<Record<string, string>>('dvg.channelReactions', {}).then((v) => setReactions(v || {})); }, []);
-  const react = (postId: string, emoji: string) => setReactions((p) => {
-    const n = { ...p }; if (n[postId] === emoji) delete n[postId]; else n[postId] = emoji;
-    saveJSON('dvg.channelReactions', n); return n;
-  });
+  // Server-backed reactions: toggle on the backend, then patch the post in place
+  // with the returned counts + the user's current reaction.
+  const react = async (postId: string, emoji: string) => {
+    const token = await getToken();
+    const res = await reactChannelPost(token, id, postId, emoji);
+    if (res) setCh((c) => c ? { ...c, posts: c.posts.map((p) => p.id === postId ? { ...p, reactions: res.reactions, myReaction: res.myReaction } : p) } : c);
+  };
 
   const owner = !!(ch?.createdBy && email && ch.createdBy.toLowerCase() === email.toLowerCase());
   const { block } = useModeration();
@@ -202,12 +200,13 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                 {/* Reactions + time (Telegram-style) */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
                   {REACTIONS.map((e) => {
-                    const on = reactions[p.id] === e;
+                    const on = p.myReaction === e;
+                    const count = p.reactions?.[e] ?? 0;
                     return (
                       <Pressable key={e} onPress={() => react(p.id, e)} hitSlop={4}
                         style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 14, backgroundColor: on ? T.brandTinted : T.fillSecondary, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                         <Text style={{ fontSize: 14 }}>{e}</Text>
-                        {on ? <Text style={[ty.caption2Em, { color: T.brand }]}>1</Text> : null}
+                        {count > 0 ? <Text style={[ty.caption2Em, { color: on ? T.brand : T.labelSecondary }]}>{count}</Text> : null}
                       </Pressable>
                     );
                   })}

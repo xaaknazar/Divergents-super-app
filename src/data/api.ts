@@ -474,7 +474,22 @@ export async function fetchLiveTrips(): Promise<LiveTrip[]> {
 export const applyToTrip = (token: string | null, tripId: string) => postAuthed(`/api/mobile/trips/${tripId}/apply`, token, {});
 
 // ───────── Server channels (Telegram-style): membership, requests, posts ─────────
-export interface ServerChannelPost { id: string; type: 'audio' | 'article'; title: string; body?: string | null; audioUrl?: string | null; createdAt: string }
+export interface ServerChannelPost { id: string; type: 'audio' | 'article'; title: string; body?: string | null; audioUrl?: string | null; createdAt: string; reactions?: Record<string, number>; myReaction?: string | null }
+
+// Toggle a reaction on a channel post. Returns the updated counts + the user's
+// current reaction, or null on failure. Server set: 👍 ❤️ 🔥 👏 🙏.
+export async function reactChannelPost(token: string | null, channelId: string, postId: string, emoji: string): Promise<{ reactions: Record<string, number>; myReaction: string | null } | null> {
+  if (!token) return null;
+  try {
+    const r = await timedFetch(`${API_BASE}/api/mobile/channels/${channelId}/posts/${postId}/react`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ emoji }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return { reactions: d?.reactions ?? {}, myReaction: d?.myReaction ?? null };
+  } catch { return null; }
+}
 export interface ServerChannel {
   id: string; name: string; handle?: string | null; access: 'open' | 'request' | 'paid'; price?: string | null;
   bio?: string | null; avatarUrl?: string | null; createdBy?: string | null;
@@ -526,6 +541,11 @@ export async function uploadFile(token: string | null, uri: string, name: string
 }
 export const registerPush = (token: string | null, expoToken: string, platform: string) =>
   postAuthed('/api/mobile/push/register', token, { token: expoToken, platform });
+
+// Remove this device's Expo token on sign-out so the previous account stops
+// receiving pushes on a shared device.
+export const unregisterPush = (token: string | null, expoToken: string) =>
+  postAuthed('/api/mobile/push/unregister', token, { token: expoToken });
 
 // ───────── Channel management (owner) ─────────
 export interface ChannelMemberRow { id: string; userId: string; userEmail: string; userName?: string | null; state: string }

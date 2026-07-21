@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
-import { registerPush } from '../data/api';
+import { registerPush, unregisterPush } from '../data/api';
 import { navigationRef } from '../navigation/ref';
 
 const PROJECT_ID = (Constants.expoConfig as any)?.extra?.eas?.projectId
@@ -47,6 +47,16 @@ function routeFromResponse(response: Notifications.NotificationResponse | null, 
       }
     } catch { /* navigator not in this state (e.g. gated) — ignore */ }
   });
+}
+
+// Call on sign-out (BEFORE Clerk signOut, while the auth token is still valid)
+// so this device's token is detached from the account. Best-effort.
+export async function unregisterPushToken(getToken: () => Promise<string | null>) {
+  try {
+    const tok = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
+    const authToken = await getToken();
+    if (tok?.data) await unregisterPush(authToken, tok.data);
+  } catch {}
 }
 
 export function usePush() {

@@ -21,6 +21,7 @@ import { useModeration } from '../../state/ModerationContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { clearAllAppData } from '../../state/reset';
+import { unregisterPushToken } from '../../state/usePush';
 import { useAchievements } from '../../data/achievements';
 import { GALLUP_DOMAIN_META, mbtiName, fmtList } from '../../data/talentslab';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
@@ -39,7 +40,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { profile, live, reload } = useTalentProfile();
   const completeness = profile?.completeness ?? localCompleteness;
   const ach = useAchievements();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
   const { finishRegistration } = useAppFlow();
@@ -70,6 +71,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
           style: 'destructive',
           onPress: async () => {
             finishRegistration();
+            try { await unregisterPushToken(getToken); } catch {}
             try { await clearAllAppData(); } catch {}
             try { await signOut(); } catch {}
           },
