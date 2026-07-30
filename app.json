@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Divergents",
+    "name": "Divergents Superapp",
     "slug": "divergents-super-app",
     "owner": "xaknazar",
     "version": "1.0.0",
@@ -28,13 +28,15 @@
         "NSPhotoLibraryUsageDescription": "Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества.",
         "NSPhotoLibraryAddUsageDescription": "Divergents сохраняет фото в вашу медиатеку при работе с местами на карте сообщества.",
         "NSCameraUsageDescription": "Divergents использует камеру, чтобы делать снимки для мест на карте сообщества.",
-        "NSMicrophoneUsageDescription": "Divergents использует микрофон для записи голосовых постов в каналах."
+        "NSMicrophoneUsageDescription": "Divergents использует микрофон для записи голосовых постов в каналах.",
+        "CFBundleDisplayName": "Divergents Superapp"
       }
     },
     "android": {
       "package": "kz.divergents.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundImage": "./assets/icon-bg.png",
         "backgroundColor": "#234088"
       },
       "permissions": [
