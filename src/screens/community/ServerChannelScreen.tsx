@@ -3,8 +3,6 @@ import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Share } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useVideoPlayer } from 'expo-video';
-import { useEvent } from 'expo';
 import { Audio } from 'expo-av';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -53,14 +51,15 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   const [manageOpen, setManageOpen] = useState(false);
   const [requests, setRequests] = useState<ChannelRequest[]>([]);
 
-  const player = useVideoPlayer(null, (p) => { p.loop = false; });
+  // Play channel voice posts through expo-av (not expo-video): remote m4a from
+  // UploadThing plays reliably here and it shares the same audio session the
+  // recorder uses, so it isn't left muted after a recording.
+  const soundRef = useRef<Audio.Sound | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  // Reset the "Играет" indicator when a track finishes, so the next tap restarts
-  // it instead of getting stuck showing pause forever.
-  const endEvent = useEvent(player, 'playToEnd', null);
-  useEffect(() => { if (endEvent) setPlayingId(null); }, [endEvent]);
-  // Ensure voice posts play even with the iOS mute switch on.
-  useEffect(() => { Audio.setAudioModeAsync({ playsInSilentModeIOS: true }).catch(() => {}); }, []);
+  useEffect(() => {
+    Audio.setAudioModeAsync({ playsInSilentModeIOS: true, allowsRecordingIOS: false }).catch(() => {});
+    return () => { soundRef.current?.unloadAsync().catch(() => {}); soundRef.current = null; };
+  }, []);
 
   // Server-backed reactions: toggle on the backend, then patch the post in place
   // with the returned counts + the user's current reaction.
@@ -107,12 +106,19 @@ export function ServerChannelScreen({ route, navigation }: Props) {
     try { const token = await getToken(); const s = await joinChannel(token, id); if (s) setState(s); } finally { setBusy(false); }
   };
 
-  const playPost = (p: ServerChannelPost) => {
+  const playPost = async (p: ServerChannelPost) => {
     if (!p.audioUrl) return;
     try {
-      if (playingId === p.id) { player.pause(); setPlayingId(null); return; } // toggle off
-      player.replace(p.audioUrl); player.play(); setPlayingId(p.id);
-    } catch {}
+      if (playingId === p.id) { await soundRef.current?.pauseAsync().catch(() => {}); setPlayingId(null); return; } // toggle off
+      if (soundRef.current) { await soundRef.current.unloadAsync().catch(() => {}); soundRef.current = null; }
+      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, allowsRecordingIOS: false });
+      const { sound } = await Audio.Sound.createAsync({ uri: p.audioUrl }, { shouldPlay: true });
+      soundRef.current = sound;
+      setPlayingId(p.id);
+      sound.setOnPlaybackStatusUpdate((st) => {
+        if (st.isLoaded && st.didJustFinish) { setPlayingId(null); sound.unloadAsync().catch(() => {}); soundRef.current = null; }
+      });
+    } catch { setPlayingId(null); }
   };
 
   if (loading) {

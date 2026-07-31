@@ -207,7 +207,7 @@ export function AIChatScreen({}: Props) {
           />
         </View>
       ) : (
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 8}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
         <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }} keyboardDismissMode="interactive">
           {messages.length === 0 ? (
             <View style={{ alignItems: 'center', paddingTop: 28 }}>

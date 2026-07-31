@@ -35,8 +35,12 @@ export function useResume() {
     loadJSON<ResumeAnswers>(KEY, {}).then((v) => {
       // prefill email/full name from Clerk if empty AND already available
       const email = user?.primaryEmailAddress?.emailAddress;
-      const name = user?.fullName;
-      setAnswers({ ...(email && !v.email ? { email } : {}), ...(name && !v.full_name ? { full_name: name } : {}), ...v });
+      setAnswers({
+        ...(email && !v.email ? { email } : {}),
+        ...(user?.firstName && !v.first_name ? { first_name: user.firstName } : {}),
+        ...(user?.lastName && !v.last_name ? { last_name: user.lastName } : {}),
+        ...v,
+      });
       setHydrated(true);
     });
   }, []);
@@ -47,11 +51,11 @@ export function useResume() {
   useEffect(() => {
     if (!hydrated || !user) return;
     const email = user.primaryEmailAddress?.emailAddress;
-    const name = user.fullName;
     setAnswers((p) => {
       const next = { ...p };
       if (email && !p.email) next.email = email;
-      if (name && !p.full_name) next.full_name = name;
+      if (user.firstName && !p.first_name) next.first_name = user.firstName;
+      if (user.lastName && !p.last_name) next.last_name = user.lastName;
       return next;
     });
   }, [hydrated, user]);
@@ -105,10 +109,21 @@ export function useResume() {
     setSubmitting(true);
     try {
       saveJSON(KEY, answers);
-      return await send(answers);
+      const ok = await send(answers);
+      // Mirror the name into Clerk so the greeting shows «Имя» and the profile
+      // shows «Имя Фамилия».
+      try {
+        const fn = typeof answers.first_name === 'string' ? answers.first_name.trim() : '';
+        const ln = typeof answers.last_name === 'string' ? answers.last_name.trim() : '';
+        const params: { firstName?: string; lastName?: string } = {};
+        if (fn) params.firstName = fn;
+        if (ln) params.lastName = ln;
+        if (user && Object.keys(params).length) await user.update(params);
+      } catch {}
+      return ok;
     } catch { saveJSON(PENDING, true); return false; }
     finally { setSubmitting(false); }
-  }, [answers, send]);
+  }, [answers, send, user]);
 
   // #4: if a previous submit failed, re-send once on mount (background, silent).
   const resentRef = useRef(false);

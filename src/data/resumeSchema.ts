@@ -24,7 +24,9 @@ export const RESUME_STEPS: ResumeStep[] = [
   {
     key: 'personal', title: 'Личные данные', icon: 'person.fill',
     fields: [
-      { key: 'full_name', label: 'ФИО', type: 'text', placeholder: 'Фамилия Имя Отчество' },
+      { key: 'last_name', label: 'Фамилия', type: 'text', placeholder: 'Фамилия' },
+      { key: 'first_name', label: 'Имя', type: 'text', placeholder: 'Имя' },
+      { key: 'middle_name', label: 'Отчество', type: 'text', placeholder: 'Отчество (если есть)', optional: true },
       { key: 'email', label: 'Email', type: 'text', placeholder: 'you@example.com' },
       { key: 'phone', label: 'Телефон', type: 'text', placeholder: '+7 700 000 00 00' },
       { key: 'gender', label: 'Пол', type: 'select', options: ['Мужской', 'Женский'] },

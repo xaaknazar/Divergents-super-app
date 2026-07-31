@@ -127,7 +127,14 @@ export async function fetchTalentProfile(token?: string | null, email?: string |
  * email fallback (only when an app key is configured). Never throws: returns
  * false when no auth path succeeds so the UI can stay responsive.
  */
-export async function submitResume(token: string | null | undefined, answers: ResumeAnswers, email?: string | null): Promise<boolean> {
+export async function submitResume(token: string | null | undefined, answersIn: ResumeAnswers, email?: string | null): Promise<boolean> {
+  // Compose full_name from parts (Фамилия Имя Отчество) so the Talentslab
+  // backend keeps receiving the single field while the UI collects them apart.
+  const answers: ResumeAnswers = { ...answersIn };
+  const parts = [answers.last_name, answers.first_name, answers.middle_name]
+    .map((x) => (typeof x === 'string' ? x.trim() : ''))
+    .filter(Boolean);
+  if (parts.length) answers.full_name = parts.join(' ');
   const post = async (headers: Record<string, string>, body: any) => {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 15000);

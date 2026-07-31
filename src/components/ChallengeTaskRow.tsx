@@ -57,7 +57,7 @@ export function ChallengeTaskRow({
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, alignItems: 'center' }}>
           <Text style={[ty.caption1, { color: T.labelSecondary }]}>
-            <Text style={{ color: over ? T.green : T.label, fontWeight: '600' }}>{fmt(task.current)}</Text>
+            <Text style={{ color: over ? T.green : T.label, fontFamily: ty.caption2.fontFamily }}>{fmt(task.current)}</Text>
             {` / ${fmt(task.min)} ${task.unit}`}
           </Text>
           {over ? <Text style={[ty.caption1, { color: T.green }]}>{`+${fmt(task.current - task.min)} ${task.unit} · +${bonus} pts`}</Text> : null}

@@ -78,11 +78,11 @@ export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onD
           <Logo size={logoSize} body={WHITE} head={WHITE} />
         </Animated.View>
 
-        <Animated.View style={{ opacity: wordOpacity, transform: [{ translateY: wordTranslate }], alignItems: 'center', maxWidth: width * 0.86 }}>
+        <Animated.View style={{ opacity: wordOpacity, transform: [{ translateY: wordTranslate }], alignItems: 'center', maxWidth: width * 0.92 }}>
           <Animated.Text style={styles.wordmark} numberOfLines={1} adjustsFontSizeToFit allowFontScaling={false}>
             Divergents
           </Animated.Text>
-          <Animated.Text style={styles.slogan} numberOfLines={1} allowFontScaling={false}>
+          <Animated.Text style={styles.slogan} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false}>
             {SLOGAN}
           </Animated.Text>
         </Animated.View>
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     ...ty.caption1,
     color: 'rgba(255,255,255,0.62)',
     marginTop: 8,
-    letterSpacing: 2,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     textAlign: 'center',
   },

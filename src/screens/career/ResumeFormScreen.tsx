@@ -26,8 +26,8 @@ export function ResumeFormScreen({ navigation, route }: Props) {
 
   const go = (n: number) => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setStep(n); };
 
-  // Don't allow submitting an empty resume — require at least the name.
-  const nameFilled = typeof answers.full_name === 'string' && answers.full_name.trim().length > 0;
+  // Don't allow submitting an empty resume — require at least name + surname.
+  const nameFilled = ['first_name', 'last_name'].every((k) => typeof answers[k] === 'string' && answers[k].trim().length > 0);
   // If an email is entered, it must be a valid address (the field is optional,
   // but an invalid value should never be saved).
   const emailRaw = typeof answers.email === 'string' ? answers.email.trim() : '';
@@ -37,7 +37,7 @@ export function ResumeFormScreen({ navigation, route }: Props) {
     if (!nameFilled) {
       Alert.alert(
         tr('Заполните анкету'),
-        tr('Укажите хотя бы ФИО, чтобы сохранить анкету.'),
+        tr('Укажите хотя бы имя и фамилию, чтобы сохранить анкету.'),
         [{ text: tr('Готово'), onPress: () => go(0) }],
       );
       return;

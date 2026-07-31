@@ -164,7 +164,7 @@ export function RootNavigator() {
       ) : (
         <>
           <Root.Screen name="Tabs" component={Tabs} />
-          <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
+          <Root.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'fullScreenModal' }} />
         </>
       )}
     </Root.Navigator>
