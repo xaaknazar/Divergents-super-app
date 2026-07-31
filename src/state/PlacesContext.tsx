@@ -3,7 +3,8 @@
 // persists across restarts. Live places come from the website API (admin
 // publishes them) — there is no hardcoded seed data.
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { Place, Review, PlaceTag, fetchPlaces, isKnownCity } from '../data/places';
+import { useAuth } from '@clerk/clerk-expo';
+import { Place, Review, PlaceTag, fetchPlaces, postPlace, postReview, isKnownCity } from '../data/places';
 import { loadJSON, saveJSON } from './persist';
 
 interface SavedLoc { country: string; city: string; manual: boolean }
@@ -34,6 +35,7 @@ export function ratingOf(p: Place): number {
 }
 
 export function PlacesProvider({ children }: { children: React.ReactNode }) {
+  const { getToken } = useAuth();
   const [country, setCountry] = useState('kz');
   const [city, setCity] = useState('almaty');
   const [locManual, setLocManual] = useState(false);
@@ -84,8 +86,19 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     const id = `u_${Date.now()}`;
     const place: Place = { ...p, id, reviews: p.reviews ?? [] } as Place;
     setUserPlaces((prev) => { const n = [place, ...prev]; saveJSON('dvg.userPlaces', n); return n; });
+    // Publish to the server so every user sees the marker (not just this device).
+    // Best-effort: the local copy stays as an offline fallback; on success we
+    // reload so the shared server copy replaces it (deduped below by name+coords).
+    (async () => {
+      try {
+        const token = await getToken();
+        const { approved: _a, reviews: _r, id: _id, ...body } = place as any;
+        const serverId = await postPlace(body, token);
+        if (serverId) reloadPlaces();
+      } catch {}
+    })();
     return id;
-  }, []);
+  }, [getToken, reloadPlaces]);
 
   const updatePlace = useCallback((id: string, patch: Partial<Place>) => {
     setUserPlaces((prev) => { const n = prev.map((p) => (p.id === id ? { ...p, ...patch } : p)); saveJSON('dvg.userPlaces', n); return n; });
@@ -102,10 +115,19 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
       saveJSON('dvg.placeReviews', n);
       return n;
     });
-  }, []);
+    // Publish the review to the server (best-effort) so others see it too.
+    (async () => {
+      try { const token = await getToken(); await postReview(placeId, { rating: r.rating, text: r.text }, token); } catch {}
+    })();
+  }, [getToken]);
 
   const places = useMemo(() => {
-    const base = [...userPlaces, ...remotePlaces];
+    // Once a locally-added place has synced to the server, the server copy comes
+    // back via fetchPlaces — hide the local duplicate (match by name + coords).
+    const key = (p: Place) => `${p.name.trim().toLowerCase()}|${p.lat.toFixed(4)}|${p.lng.toFixed(4)}`;
+    const remoteKeys = new Set(remotePlaces.map(key));
+    const localOnly = userPlaces.filter((p) => !remoteKeys.has(key(p)));
+    const base = [...localOnly, ...remotePlaces];
     return base.map((p) => ({ ...p, reviews: [...(userReviews[p.id] ?? []), ...p.reviews] }));
   }, [userPlaces, remotePlaces, userReviews]);
 
