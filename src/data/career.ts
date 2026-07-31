@@ -8,19 +8,28 @@ import { API_BASE } from './api';
 export interface Job {
   id: string;
   title: string;
+  // О компании
   company: string;
+  companyWebsite: string;
+  companyValues: string[];
   city: string;
+  officeAddress: string;
+  // Об условиях
   format: 'Офис' | 'Гибрид' | 'Удалёнка';
   salary: string;
-  level: string;
+  conditions: string;
+  benefits: string[];
+  // О требованиях
+  experience: string[];              // 'Опыт 1-3 года' | 'Опыт 3-6 лет' | 'Без опыта'
+  diplomaRequired: boolean | null;   // да / нет / не указано
+  adjacentFields: string;
+  otherRequirements: string;
+  talents: string[];                 // Примерный Gallup вакансии
+  // Card / legacy
   match: number;             // % fit to the user's profile (0 when not scored)
   logo: string;
   color: string;
-  reason: string;            // short why-it-fits line
-  talents: string[];         // matched Gallup talents
-  goodBoss: string;          // the right manager for this role
-  goodCompany: string;       // the right culture/company
-  requirements: string[];
+  reason: string;
   about: string;
   postedLabel: string;
 }
@@ -38,16 +47,21 @@ interface ApiVacancy {
   id: string;
   title: string;
   company?: string | null;
+  companyWebsite?: string | null;
+  companyValues?: string[] | null;
   city?: string | null;
+  officeAddress?: string | null;
   format?: string | null;
   salary?: string | null;
-  level?: string | null;
+  conditions?: string | null;
+  benefits?: string[] | null;
+  experience?: string[] | null;
+  diplomaRequired?: boolean | null;
+  adjacentFields?: string | null;
+  otherRequirements?: string | null;
+  talents?: string[] | null;
   match?: number | null;
   reason?: string | null;
-  talents?: string[] | null;
-  goodBoss?: string | null;
-  goodCompany?: string | null;
-  requirements?: string[] | null;
   about?: string | null;
   postedLabel?: string | null;
   logo?: string | null;
@@ -73,18 +87,23 @@ function mapVacancy(v: ApiVacancy): Job {
     id: String(v.id),
     title: v.title ?? '',
     company,
+    companyWebsite: v.companyWebsite ?? '',
+    companyValues: Array.isArray(v.companyValues) ? v.companyValues : [],
     city: v.city ?? '',
+    officeAddress: v.officeAddress ?? '',
     format: coerceFormat(v.format),
     salary: v.salary ?? '',
-    level: v.level ?? '',
+    conditions: v.conditions ?? '',
+    benefits: Array.isArray(v.benefits) ? v.benefits : [],
+    experience: Array.isArray(v.experience) ? v.experience : [],
+    diplomaRequired: typeof v.diplomaRequired === 'boolean' ? v.diplomaRequired : null,
+    adjacentFields: v.adjacentFields ?? '',
+    otherRequirements: v.otherRequirements ?? '',
+    talents: Array.isArray(v.talents) ? v.talents : [],
     match: typeof v.match === 'number' && isFinite(v.match) ? Math.max(0, Math.min(100, v.match)) : 0,
     logo: (v.logo ?? company.charAt(0) ?? '·').toUpperCase().slice(0, 1) || '·',
     color: v.color ?? decorColor(String(v.id)),
     reason: v.reason ?? '',
-    talents: Array.isArray(v.talents) ? v.talents : [],
-    goodBoss: v.goodBoss ?? '',
-    goodCompany: v.goodCompany ?? '',
-    requirements: Array.isArray(v.requirements) ? v.requirements : [],
     about: v.about ?? '',
     postedLabel: v.postedLabel ?? '',
   };

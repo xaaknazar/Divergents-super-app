@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
@@ -93,7 +93,6 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
           {job.format ? <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule> : null}
           {job.salary ? <Capsule bg={T.fillTertiary} color={T.label}>{job.salary}</Capsule> : null}
-          {job.level ? <Capsule bg={T.fillTertiary} color={T.label}>{job.level}</Capsule> : null}
           {job.postedLabel ? <Capsule bg={T.fillTertiary} color={T.labelSecondary}>{job.postedLabel}</Capsule> : null}
         </View>
       </View>
