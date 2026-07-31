@@ -27,7 +27,7 @@ function matchesFilter(j: Job, f: string): boolean {
     case 'Алматы': return j.city.includes('Алматы');
     case 'Удалёнка': return j.format === 'Удалёнка';
     case 'HR': return /HR|People|персонал|обучен|L&D|CHRO/i.test(j.title);
-    case 'Senior+': return /Senior|C-level|Lead|Head|Директор|CHRO/i.test(`${j.level} ${j.title}`);
+    case 'Senior+': return /Senior|C-level|Lead|Head|Директор|CHRO/i.test(`${j.title} ${j.experience.join(' ')}`);
     default: return true;
   }
 }

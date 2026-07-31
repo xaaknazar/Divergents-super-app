@@ -131,34 +131,82 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         );
       })() : null}
 
-      {/* Good Boss / Good Company */}
-      {job.goodBoss ? (
-        <ListSection header="Good Boss">
-          <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
-            <SF name="person.crop.circle.fill" size={22} color={T.brand} />
-            <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.goodBoss}</Text>
-          </View>
-        </ListSection>
-      ) : null}
-      {job.goodCompany ? (
-        <ListSection header="Good Company">
-          <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
-            <SF name="building.2.fill" size={22} color={T.green} />
-            <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.goodCompany}</Text>
+      {/* О компании */}
+      {(job.companyWebsite || job.companyValues.length > 0 || job.officeAddress) ? (
+        <ListSection header={tr('О компании')}>
+          <View style={{ padding: 14, gap: 12 }}>
+            {job.companyWebsite ? (
+              <Pressable onPress={() => Linking.openURL(job.companyWebsite.startsWith('http') ? job.companyWebsite : `https://${job.companyWebsite}`).catch(() => {})}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <SF name="globe" size={18} color={T.brand} />
+                <Text style={[ty.subhead, { color: T.brandAccent, flex: 1 }]} numberOfLines={1}>{job.companyWebsite}</Text>
+              </Pressable>
+            ) : null}
+            {job.officeAddress ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <SF name="mappin.circle.fill" size={18} color={T.sky} />
+                <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.officeAddress}</Text>
+              </View>
+            ) : null}
+            {job.companyValues.length > 0 ? (
+              <View style={{ gap: 6 }}>
+                <Text style={[ty.caption2Em, { color: T.labelTertiary, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Ценности')}</Text>
+                {job.companyValues.map((v, i) => (
+                  <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                    <SF name="checkmark.seal.fill" size={15} color={T.brand} />
+                    <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{v}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
         </ListSection>
       ) : null}
 
-      {/* Requirements */}
-      {job.requirements.length > 0 ? (
-        <ListSection header={tr('Требования')}>
-          <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
-            {job.requirements.map((r, i) => (
-              <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: i < job.requirements.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
-                <SF name="checkmark.circle.fill" size={18} color={T.green} />
-                <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{r}</Text>
+      {/* Условия */}
+      {(job.conditions || job.benefits.length > 0) ? (
+        <ListSection header={tr('Условия')}>
+          <View style={{ padding: 14, gap: 12 }}>
+            {job.conditions ? <Text style={[ty.body, { color: T.label }]}>{job.conditions}</Text> : null}
+            {job.benefits.length > 0 ? (
+              <View style={{ gap: 6 }}>
+                <Text style={[ty.caption2Em, { color: T.labelTertiary, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Преимущества')}</Text>
+                {job.benefits.map((b, i) => (
+                  <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                    <SF name="star.fill" size={14} color="#FF9500" />
+                    <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{b}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
+            ) : null}
+          </View>
+        </ListSection>
+      ) : null}
+
+      {/* Требования */}
+      {(job.experience.length > 0 || job.diplomaRequired !== null || job.adjacentFields || job.otherRequirements) ? (
+        <ListSection header={tr('Требования')}>
+          <View style={{ padding: 14, gap: 12 }}>
+            {job.experience.length > 0 ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {job.experience.map((e) => (
+                  <Capsule key={e} bg={T.fillTertiary} color={T.label}><SF name="clock" size={11} color={T.labelSecondary} />{e}</Capsule>
+                ))}
+              </View>
+            ) : null}
+            {job.diplomaRequired !== null ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <SF name={job.diplomaRequired ? 'checkmark.circle.fill' : 'xmark.circle.fill'} size={18} color={job.diplomaRequired ? T.green : T.labelTertiary} />
+                <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{tr('Диплом по специальности')}: {job.diplomaRequired ? tr('обязателен') : tr('не обязателен')}</Text>
+              </View>
+            ) : null}
+            {job.adjacentFields ? (
+              <View style={{ gap: 3 }}>
+                <Text style={[ty.subhead, { color: T.label }]}>{tr('Смежные сферы')}: {job.adjacentFields}</Text>
+                <Text style={[ty.caption1, { color: T.labelTertiary }]}>{tr('Допустимый опыт в смежных сферах, который готов рассматривать работодатель')}</Text>
+              </View>
+            ) : null}
+            {job.otherRequirements ? <Text style={[ty.body, { color: T.label }]}>{job.otherRequirements}</Text> : null}
           </View>
         </ListSection>
       ) : null}
