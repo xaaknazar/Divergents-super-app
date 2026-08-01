@@ -152,7 +152,7 @@ export async function submitResume(token: string | null | undefined, answersIn: 
   return false;
 }
 
-function normalizeProfile(r: any): TalentProfile {
+export function normalizeProfile(r: any): TalentProfile {
   return {
     found: !!r?.found,
     fullName: r?.fullName ?? null,

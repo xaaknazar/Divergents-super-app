@@ -27,7 +27,7 @@ const DETAIL_ROUTES = new Set([
   'Catalog', 'CourseDetail', 'Video', 'Books', 'BookDetail', 'BookAI',
   'ChallengeDetail', 'JoinChallenge', 'TripDetail', 'Channel', 'ChannelPost',
   'PlaceDetail', 'AddPlace', 'OfflineMap',
-  'VacancyDetail', 'Resume', 'TalentProfile',
+  'VacancyDetail', 'Resume', 'TalentProfile', 'CreateVacancy', 'VacancyApplicants',
   'Achievements', 'Personalize',
 ]);
 

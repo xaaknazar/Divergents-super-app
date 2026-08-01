@@ -4,13 +4,14 @@
 // render a proper Russian empty state instead of fake vacancies.
 import { T } from '../theme/tokens';
 import { API_BASE } from './api';
+import { TalentProfile, normalizeProfile } from './talentslab';
 
 export interface Job {
   id: string;
   title: string;
   // О компании
   company: string;
-  companyWebsite: string;
+  companyLogo: string;
   companyValues: string[];
   city: string;
   officeAddress: string;
@@ -24,7 +25,8 @@ export interface Job {
   diplomaRequired: boolean | null;   // да / нет / не указано
   adjacentFields: string;
   otherRequirements: string;
-  talents: string[];                 // Примерный Gallup вакансии
+  gallupFile: string;                // Примерный Gallup вакансии (PDF/картинка)
+  talents: string[];                 // legacy Gallup talents
   // Card / legacy
   match: number;             // % fit to the user's profile (0 when not scored)
   logo: string;
@@ -47,7 +49,7 @@ interface ApiVacancy {
   id: string;
   title: string;
   company?: string | null;
-  companyWebsite?: string | null;
+  companyLogo?: string | null;
   companyValues?: string[] | null;
   city?: string | null;
   officeAddress?: string | null;
@@ -59,6 +61,7 @@ interface ApiVacancy {
   diplomaRequired?: boolean | null;
   adjacentFields?: string | null;
   otherRequirements?: string | null;
+  gallupFile?: string | null;
   talents?: string[] | null;
   match?: number | null;
   reason?: string | null;
@@ -87,7 +90,7 @@ function mapVacancy(v: ApiVacancy): Job {
     id: String(v.id),
     title: v.title ?? '',
     company,
-    companyWebsite: v.companyWebsite ?? '',
+    companyLogo: v.companyLogo ?? '',
     companyValues: Array.isArray(v.companyValues) ? v.companyValues : [],
     city: v.city ?? '',
     officeAddress: v.officeAddress ?? '',
@@ -99,6 +102,7 @@ function mapVacancy(v: ApiVacancy): Job {
     diplomaRequired: typeof v.diplomaRequired === 'boolean' ? v.diplomaRequired : null,
     adjacentFields: v.adjacentFields ?? '',
     otherRequirements: v.otherRequirements ?? '',
+    gallupFile: v.gallupFile ?? '',
     talents: Array.isArray(v.talents) ? v.talents : [],
     match: typeof v.match === 'number' && isFinite(v.match) ? Math.max(0, Math.min(100, v.match)) : 0,
     logo: (v.logo ?? company.charAt(0) ?? '·').toUpperCase().slice(0, 1) || '·',
@@ -167,8 +171,54 @@ export async function applyToVacancy(id: string, token: string | null | undefine
 }
 
 export interface NewVacancy {
-  title: string; company: string; city: string; format: string;
-  salary: string; level: string; about: string; requirements: string[];
+  title: string;
+  company?: string | null;
+  companyLogo?: string | null;
+  companyValues?: string[];
+  city?: string | null;
+  officeAddress?: string | null;
+  format?: string | null;
+  salary?: string | null;
+  conditions?: string | null;
+  benefits?: string[];
+  experience?: string[];
+  diplomaRequired?: boolean | null;
+  adjacentFields?: string | null;
+  otherRequirements?: string | null;
+  gallupFile?: string | null;
+  about?: string | null;
+  published?: boolean;
+}
+
+export type AppStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Applicant {
+  id: string;
+  applicantUserId: string;
+  userEmail: string;
+  userName: string;
+  status: AppStatus;
+  feedback: string;
+  date: string;
+  profile: TalentProfile | null;
+}
+
+export interface MyApplication {
+  vacancyId: string;
+  title: string;
+  company: string;
+  status: AppStatus;
+  feedback: string;
+  date: string;
+}
+
+// Format a salary string: if it's plain digits, group thousands + ₸; else as-is.
+export function formatSalary(s: string): string {
+  const raw = (s ?? '').trim();
+  if (!raw) return '';
+  const digits = raw.replace(/[\s ]/g, '');
+  if (/^\d{4,}$/.test(digits)) return `${digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} ₸`;
+  return raw;
 }
 
 /**
@@ -193,6 +243,68 @@ export async function createVacancy(token: string | null | undefined, data: NewV
   } finally {
     clearTimeout(t);
   }
+}
+
+/** GET /api/mobile/vacancies/:id/applications — applicants with full profile (owner only). */
+export async function fetchApplicants(vacancyId: string, token: string | null | undefined): Promise<Applicant[]> {
+  if (!token) return [];
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/vacancies/${encodeURIComponent(vacancyId)}/applications`, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const d = await res.json();
+    const list: any[] = Array.isArray(d?.applications) ? d.applications : [];
+    return list.map((a) => ({
+      id: String(a.id),
+      applicantUserId: String(a.applicantUserId ?? ''),
+      userEmail: a.userEmail ?? '',
+      userName: a.userName ?? '',
+      status: (a.status ?? 'pending') as AppStatus,
+      feedback: a.feedback ?? '',
+      date: a.date ?? '',
+      profile: a.profile ? normalizeProfile(a.profile) : null,
+    }));
+  } catch { return []; }
+}
+
+/** PATCH /api/mobile/vacancies/:id/applications — set status + feedback for an applicant. */
+export async function decideApplication(
+  vacancyId: string,
+  applicantUserId: string,
+  patch: { status?: AppStatus; feedback?: string },
+  token: string | null | undefined,
+): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/vacancies/${encodeURIComponent(vacancyId)}/applications`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ applicantUserId, ...patch }),
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
+/** GET /api/mobile/me/vacancy-applications — the current user's applications (status + feedback). */
+export async function fetchMyVacancyApplications(token: string | null | undefined): Promise<MyApplication[]> {
+  if (!token) return [];
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/me/vacancy-applications`, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const d = await res.json();
+    const list: any[] = Array.isArray(d?.applications) ? d.applications : [];
+    return list.map((a) => ({
+      vacancyId: String(a.vacancyId),
+      title: a.title ?? '',
+      company: a.company ?? '',
+      status: (a.status ?? 'pending') as AppStatus,
+      feedback: a.feedback ?? '',
+      date: a.date ?? '',
+    }));
+  } catch { return []; }
 }
 
 // The Career module's unique value: match by psychotype/talents, not just skills.

@@ -2,14 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, Linking } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useAuth } from '@clerk/clerk-expo';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
 import { ListSkeleton, EmptyState } from '../../components/StateViews';
-import { Job, fetchVacancy } from '../../data/career';
+import { Job, fetchVacancy, formatSalary, fetchMyVacancyApplications, MyApplication } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
+import { useRole } from '../../state/useRole';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { talentMatch } from '../../data/talentslab';
 import { CareerStackParams } from '../../navigation/types';
@@ -43,6 +46,23 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
 
   const job = fromList ?? fetched;
   const gallup = live ? profile?.gallup ?? [] : [];
+
+  // Owner controls + the current user's own application status/feedback.
+  const { canCreate } = useRole();
+  const { getToken } = useAuth();
+  const [myApp, setMyApp] = useState<MyApplication | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const token = await getToken();
+        const list = await fetchMyVacancyApplications(token);
+        if (alive) setMyApp(list.find((a) => a.vacancyId === jobId) ?? null);
+      } catch {}
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
 
   // ── Not found / failed to load ────────────────────────────────────
   // fetchVacancy resolves null both for a removed vacancy and a network
@@ -82,9 +102,13 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       {/* Hero */}
       <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-          <View style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
-            <Text style={[ty.title1, { color: job.color }]}>{job.logo}</Text>
-          </View>
+          {job.companyLogo ? (
+            <Image source={{ uri: job.companyLogo }} style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: T.cardBg }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
+          ) : (
+            <View style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
+              <Text style={[ty.title1, { color: job.color }]}>{job.logo}</Text>
+            </View>
+          )}
           <View style={{ flex: 1 }}>
             <Text style={[ty.title2, { color: T.label }]}>{job.title}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{job.company}{job.city ? ` · ${job.city}` : ''}</Text>
@@ -92,10 +116,33 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         </View>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
           {job.format ? <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule> : null}
-          {job.salary ? <Capsule bg={T.fillTertiary} color={T.label}>{job.salary}</Capsule> : null}
+          {job.salary ? <Capsule bg={T.fillTertiary} color={T.label}>{formatSalary(job.salary)}</Capsule> : null}
           {job.postedLabel ? <Capsule bg={T.fillTertiary} color={T.labelSecondary}>{job.postedLabel}</Capsule> : null}
         </View>
       </View>
+
+      {/* Owner: view applicants */}
+      {canCreate ? (
+        <Pressable onPress={() => navigation.navigate('VacancyApplicants', { jobId: job.id })}
+          style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 4, padding: 14, borderRadius: 14, backgroundColor: T.brandTintedStrong, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <SF name="person.2.fill" size={18} color={T.brand} />
+          <Text style={[ty.headline, { color: T.label, flex: 1 }]}>Отклики на вакансию</Text>
+          <SF name="chevron.right" size={14} color={T.labelTertiary} />
+        </Pressable>
+      ) : null}
+
+      {/* My application status + feedback */}
+      {myApp ? (
+        <View style={{ marginHorizontal: 16, marginTop: 6, padding: 14, borderRadius: 14, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <SF name={myApp.status === 'approved' ? 'checkmark.circle.fill' : myApp.status === 'rejected' ? 'xmark.circle.fill' : 'clock'} size={16} color={myApp.status === 'approved' ? T.green : myApp.status === 'rejected' ? '#FF3B30' : T.orange} />
+            <Text style={[ty.subheadEm, { color: T.label }]}>
+              {myApp.status === 'approved' ? 'Ваш отклик принят' : myApp.status === 'rejected' ? 'Ваш отклик отклонён' : 'Отклик на рассмотрении'}
+            </Text>
+          </View>
+          {myApp.feedback ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 8 }]}>{myApp.feedback}</Text> : null}
+        </View>
+      ) : null}
 
       {/* Match */}
       {job.match > 0 || job.reason ? (
@@ -132,16 +179,9 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       })() : null}
 
       {/* О компании */}
-      {(job.companyWebsite || job.companyValues.length > 0 || job.officeAddress) ? (
+      {(job.companyValues.length > 0 || job.officeAddress) ? (
         <ListSection header={tr('О компании')}>
           <View style={{ padding: 14, gap: 12 }}>
-            {job.companyWebsite ? (
-              <Pressable onPress={() => Linking.openURL(job.companyWebsite.startsWith('http') ? job.companyWebsite : `https://${job.companyWebsite}`).catch(() => {})}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <SF name="globe" size={18} color={T.brand} />
-                <Text style={[ty.subhead, { color: T.brandAccent, flex: 1 }]} numberOfLines={1}>{job.companyWebsite}</Text>
-              </Pressable>
-            ) : null}
             {job.officeAddress ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <SF name="mappin.circle.fill" size={18} color={T.sky} />
@@ -184,9 +224,16 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       ) : null}
 
       {/* Требования */}
-      {(job.experience.length > 0 || job.diplomaRequired !== null || job.adjacentFields || job.otherRequirements) ? (
+      {(job.experience.length > 0 || job.diplomaRequired !== null || job.adjacentFields || job.otherRequirements || job.gallupFile) ? (
         <ListSection header={tr('Требования')}>
           <View style={{ padding: 14, gap: 12 }}>
+            {job.gallupFile ? (
+              <Pressable onPress={() => Linking.openURL(job.gallupFile).catch(() => {})} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <SF name="doc.text.fill" size={18} color={T.brand} />
+                <Text style={[ty.subhead, { color: T.brandAccent, flex: 1 }]}>{tr('Примерный Gallup вакансии')}</Text>
+                <SF name="arrow.down.circle" size={16} color={T.labelTertiary} />
+              </Pressable>
+            ) : null}
             {job.experience.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {job.experience.map((e) => (
