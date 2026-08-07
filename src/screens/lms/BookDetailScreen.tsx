@@ -1,16 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Share } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
-import { BackNav } from '../../components/headers';
+import { BackNav, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
 import { fetchBook, postBookComment, rateBook, setBookShelf, BookDetailResponse, BookComment, ShelfStatus } from '../../data/books';
+import { loadJSON, saveJSON } from '../../state/persist';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'BookDetail'>;
@@ -43,11 +45,24 @@ export function BookDetailScreen({ route, navigation }: Props) {
     try {
       const token = isSignedIn ? await getToken() : null;
       const d = await fetchBook(bookId, token);
-      if (!d) setError(true); else setData(d);
+      if (!d) setError(true); else { setData(d); saveJSON(`dvg.bookCache.${bookId}`, d); }
     } catch { setError(true); } finally { setLoading(false); }
   }, [bookId, getToken, isSignedIn]);
 
-  useEffect(() => { load(); }, [load]);
+  // Cache-first: paint the last-seen detail instantly, then revalidate.
+  useEffect(() => {
+    let alive = true;
+    loadJSON<BookDetailResponse | null>(`dvg.bookCache.${bookId}`, null).then((c) => {
+      if (alive && c && (c as any).book) { setData(c); setLoading(false); }
+    });
+    load();
+    return () => { alive = false; };
+  }, [load, bookId]);
+
+  const onShare = () => {
+    if (!data) return;
+    Share.share({ message: `«${data.book.title}» — ${data.book.author}. Divergents.` }).catch(() => {});
+  };
 
   const requireAuth = () => { Alert.alert('Войдите', 'Чтобы оценивать и комментировать книги, войдите в аккаунт.'); };
 
@@ -110,15 +125,20 @@ export function BookDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Книги" onBack={() => navigation.goBack()} />
+      <BackNav back="Книги" onBack={() => navigation.goBack()}
+        trailing={<HeaderIcon name="square.and.arrow.up" color={T.brand} label="Поделиться" onPress={onShare} />} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={88}>
       <Screen topInset={false} aurora={false} onRefresh={load}>
-        {/* Hero */}
-        <View style={{ flexDirection: 'row', gap: 16, padding: 20 }}>
-          {b.imageUrl
-            ? <Image source={imgUrl(b.imageUrl, 600)} style={{ width: 120, height: 176, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
-            : <View style={{ width: 120, height: 176, borderRadius: 12, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={34} color={T.labelTertiary} /></View>}
-          <View style={{ flex: 1 }}>
+        {/* Hero with a soft brand backdrop + lifted cover */}
+        <View style={{ position: 'relative' }}>
+          <LinearGradient colors={[T.brandTintedStrong, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 190 }} />
+          <View style={{ flexDirection: 'row', gap: 16, padding: 20 }}>
+            {b.imageUrl
+              ? <View style={{ shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 6, borderRadius: 12 }}>
+                  <Image source={imgUrl(b.imageUrl, 600)} style={{ width: 120, height: 176, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
+                </View>
+              : <View style={{ width: 120, height: 176, borderRadius: 12, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={34} color={T.labelTertiary} /></View>}
+            <View style={{ flex: 1 }}>
             <Text style={[ty.title3, { color: T.label }]}>{b.title}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{b.author}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
@@ -135,6 +155,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
                 ))}
               </View>
             ) : null}
+            </View>
           </View>
         </View>
 

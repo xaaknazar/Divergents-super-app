@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, ScrollView, Linking, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
@@ -12,6 +12,9 @@ import { Capsule, IconCircle, ListSection, ListRow, Segmented, ty } from '../../
 import { Ring } from '../../components/talentUI';
 import { GardnerChart } from '../../components/GardnerChart';
 import { JOBS } from '../../data/career';
+import { fetchMyShelf, ShelfEntry } from '../../data/books';
+import { imgUrl } from '../../data/api';
+import { loadJSON } from '../../state/persist';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
@@ -45,6 +48,20 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { signOut } = useClerk();
   const { finishRegistration } = useAppFlow();
   const { blocked, unblock } = useModeration();
+
+  // Personal reading shelf (books read / currently reading), cache-first so it
+  // shows instantly; tapping opens the book or the Library in the Обучение tab.
+  const [shelf, setShelf] = useState<ShelfEntry[]>([]);
+  useEffect(() => {
+    let alive = true;
+    loadJSON<ShelfEntry[]>('dvg.booksShelfCache.v1', []).then((c) => { if (alive && Array.isArray(c) && c.length) setShelf(c); });
+    (async () => { if (!isSignedIn) return; try { const tok = await getToken(); const s = await fetchMyShelf(tok); if (alive) setShelf(s); } catch {} })();
+    return () => { alive = false; };
+  }, [isSignedIn]);
+  const reading = shelf.filter((s) => s.status === 'reading');
+  const readBooks = shelf.filter((s) => s.status === 'read');
+  const openBook = (id: string) => navigation.getParent()?.navigate('LMSTab', { screen: 'BookDetail', params: { bookId: id } } as never);
+  const openLibrary = () => navigation.getParent()?.navigate('LMSTab', { screen: 'Books' } as never);
 
   // Let users review and lift blocks (App Store 1.2 requires blocking be reversible).
   const manageBlocked = () => {
@@ -181,6 +198,23 @@ export function ProfileHomeScreen({ navigation }: Props) {
           ))}
         </ScrollView>
         <ListRow title={t('view_all_ach')} valueColor={T.brand} chevron last onPress={() => navigation.navigate('Achievements')} />
+      </ListSection>
+
+      {/* My books — reading now / read, with a link into the Library */}
+      <ListSection header={tr('Мои книги')} style={{ marginTop: 18 }}>
+        {reading.slice(0, 2).map((s) => (
+          <ListRow key={s.book.id} onPress={() => openBook(s.book.id)}
+            leading={s.book.imageUrl
+              ? <Image source={imgUrl(s.book.imageUrl, 100)} style={{ width: 34, height: 50, borderRadius: 6 }} contentFit="cover" cachePolicy="memory-disk" />
+              : <View style={{ width: 34, height: 50, borderRadius: 6, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={16} color={T.labelTertiary} /></View>}
+            title={s.book.title} subtitle={`${tr('Читаю')} · ${s.progress}%`} chevron />
+        ))}
+        {readBooks.length > 0 ? (
+          <ListRow leading={<IconCircle icon="checkmark.circle.fill" color="#fff" bg={T.green} size={30} />}
+            title={tr('Прочитано')} detail={String(readBooks.length)} chevron onPress={openLibrary} />
+        ) : null}
+        <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />}
+          title={tr('Библиотека книг')} chevron last onPress={openLibrary} />
       </ListSection>
 
       {/* Strengths snapshot */}
