@@ -72,9 +72,10 @@ export function NavHeader({
   onBack, trailing, variant = 'inline', overlayScheme = 'dark', tint,
   transparent = false, blur = false, hairline, safeArea = true, style,
 }: NavHeaderProps) {
-  const { T, isDark } = useTheme();
+  const { T, isDark, reduceTransparency } = useTheme();
   const insets = useSafeAreaInsets();
   const top = safeArea ? insets.top : 0;
+  const useBlur = blur && !reduceTransparency;
 
   // ── Overlay: floating round buttons over a hero / gradient ──
   if (variant === 'overlay') {
@@ -94,7 +95,7 @@ export function NavHeader({
   }
 
   const fg = tint ?? T.brandAccent;
-  const showHairline = hairline ?? (!transparent && !blur);
+  const showHairline = hairline ?? (!transparent && !useBlur);
 
   const bar = (
     <View style={{
@@ -123,9 +124,10 @@ export function NavHeader({
 
   return (
     <View style={[{ position: 'relative' }, style]}>
-      {blur ? (
+      {useBlur ? (
         <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-      ) : !transparent ? (
+      ) : (!transparent || blur) ? (
+        // Opaque fill when not blurring — incl. Reduce Transparency fallback for a blur header.
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: T.cardBg }} />
       ) : null}
       {bar}

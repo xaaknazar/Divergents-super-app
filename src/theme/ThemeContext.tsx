@@ -1,6 +1,6 @@
 // Theme provider: light/dark/system + accent color + background style, persisted.
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Appearance, ColorSchemeName } from 'react-native';
+import { Appearance, ColorSchemeName, AccessibilityInfo } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { lightTheme, darkTheme, Theme, TEXT_SIZES, TextSizeKey, applyTextScale } from './tokens';
 import { ACCENTS, BACKGROUNDS, hexToRgba } from './personalization';
@@ -27,6 +27,9 @@ type Ctx = {
   textSize: TextSizeKey;
   setTextSize: (k: TextSizeKey) => void;
   textScale: number;
+  // OS accessibility prefs (iOS HIG): drive blur→opaque and animation fallbacks.
+  reduceTransparency: boolean;
+  reduceMotion: boolean;
 };
 
 const ThemeCtx = createContext<Ctx | undefined>(undefined);
@@ -42,6 +45,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [background, setBgState] = useState<string>('none');
   const [textSize, setTextSizeState] = useState<TextSizeKey>('md');
   const [sys, setSys] = useState<ColorSchemeName>(Appearance.getColorScheme());
+  const [reduceTransparency, setRT] = useState(false);
+  const [reduceMotion, setRM] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -51,6 +56,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     SecureStore.getItemAsync(KEY_TEXT).then((v) => { if (alive && v && TEXT_SIZES.some((t) => t.key === v)) setTextSizeState(v as TextSizeKey); }).catch(() => {});
     const sub = Appearance.addChangeListener(({ colorScheme }) => setSys(colorScheme));
     return () => { alive = false; sub.remove(); };
+  }, []);
+
+  // Mirror the OS "Reduce Transparency" / "Reduce Motion" accessibility settings.
+  useEffect(() => {
+    let alive = true;
+    AccessibilityInfo.isReduceTransparencyEnabled?.().then((v) => { if (alive) setRT(!!v); }).catch(() => {});
+    AccessibilityInfo.isReduceMotionEnabled().then((v) => { if (alive) setRM(!!v); }).catch(() => {});
+    const t = AccessibilityInfo.addEventListener('reduceTransparencyChanged', (v) => setRT(!!v));
+    const m = AccessibilityInfo.addEventListener('reduceMotionChanged', (v) => setRM(!!v));
+    return () => { alive = false; t.remove(); m.remove(); };
   }, []);
 
   const setMode = useCallback((m: ThemeMode) => { setModeState(m); SecureStore.setItemAsync(KEY, m).catch(() => {}); }, []);
@@ -85,7 +100,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       : bg.colors;
 
   return (
-    <ThemeCtx.Provider value={{ T, scheme, mode, setMode, isDark: scheme === 'dark', accent, setAccent, background, setBackground, auroraColors, textSize, setTextSize, textScale }}>
+    <ThemeCtx.Provider value={{ T, scheme, mode, setMode, isDark: scheme === 'dark', accent, setAccent, background, setBackground, auroraColors, textSize, setTextSize, textScale, reduceTransparency, reduceMotion }}>
       {children}
     </ThemeCtx.Provider>
   );

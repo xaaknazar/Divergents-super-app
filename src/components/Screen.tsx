@@ -22,7 +22,7 @@ export function Screen({
   largeTitle?: string;
   onRefresh?: () => void | Promise<void>;
 }) {
-  const { T, isDark } = useTheme();
+  const { T, isDark, reduceTransparency } = useTheme();
   const _bg = bg ?? T.groupedBg;
   const insets = useSafeAreaInsets();
   const top = topInset ? insets.top : 0;
@@ -55,13 +55,23 @@ export function Screen({
       {/* Collapsing compact header */}
       {largeTitle && scroll ? (
         <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, opacity: headerOpacity }}>
-          <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={{
-            paddingTop: insets.top, height: insets.top + 46, justifyContent: 'flex-end',
-            borderBottomWidth: 0.5, borderBottomColor: T.separator,
-            backgroundColor: isDark ? 'rgba(18,22,33,0.62)' : 'rgba(249,249,249,0.62)',
-          }}>
-            <Text numberOfLines={1} style={[ty.headline, { color: T.label, textAlign: 'center', paddingBottom: 11, paddingHorizontal: 48 }]}>{largeTitle}</Text>
-          </BlurView>
+          {reduceTransparency ? (
+            // Reduce Transparency: opaque header instead of the frosted blur.
+            <View style={{
+              paddingTop: insets.top, height: insets.top + 46, justifyContent: 'flex-end',
+              borderBottomWidth: 0.5, borderBottomColor: T.separator, backgroundColor: T.cardBg,
+            }}>
+              <Text numberOfLines={1} style={[ty.headline, { color: T.label, textAlign: 'center', paddingBottom: 11, paddingHorizontal: 48 }]}>{largeTitle}</Text>
+            </View>
+          ) : (
+            <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={{
+              paddingTop: insets.top, height: insets.top + 46, justifyContent: 'flex-end',
+              borderBottomWidth: 0.5, borderBottomColor: T.separator,
+              backgroundColor: isDark ? 'rgba(18,22,33,0.62)' : 'rgba(249,249,249,0.62)',
+            }}>
+              <Text numberOfLines={1} style={[ty.headline, { color: T.label, textAlign: 'center', paddingBottom: 11, paddingHorizontal: 48 }]}>{largeTitle}</Text>
+            </BlurView>
+          )}
         </Animated.View>
       ) : null}
     </View>

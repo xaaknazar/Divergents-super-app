@@ -44,40 +44,52 @@ function focusedLeafName(route: { name: string; state?: any }): string {
 }
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
-  const { T, isDark } = useTheme();
+  const { T, isDark, reduceTransparency } = useTheme();
   const { t } = useLang();
   const insets = useSafeAreaInsets();
   const active = state.routes[state.index] as { name: string; state?: any };
   const leaf = focusedLeafName(active);
   if (DETAIL_ROUTES.has(leaf)) return null;
+
+  const barLayout = {
+    position: 'absolute' as const, left: 0, right: 0, bottom: 0,
+    paddingBottom: Math.max(insets.bottom, 10), paddingTop: 8,
+    borderTopWidth: 0.5, borderTopColor: T.separator,
+  };
+
+  const content = (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 4 }}>
+      {state.routes.map((route, index) => {
+        const focused = state.index === index;
+        const meta = TABS[route.name];
+        if (!meta) return null;
+        const color = focused ? T.brand : T.labelTertiary;
+        return (
+          <Pressable key={route.key}
+            accessibilityRole="button"
+            accessibilityState={{ selected: focused }}
+            accessibilityLabel={t(meta.label)}
+            onPress={() => {
+            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+          }} style={{ flex: 1, alignItems: 'center', gap: 3, paddingHorizontal: 2 }}>
+            <SF name={focused ? meta.on : meta.off} size={24} color={color} />
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[ty.caption2, { color, fontWeight: '500', fontSize: 10, lineHeight: 13 }]}>{t(meta.label)}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+
+  // Reduce Transparency: swap the frosted blur for an opaque surface.
+  if (reduceTransparency) {
+    return <View style={[barLayout, { backgroundColor: T.cardBg }]}>{content}</View>;
+  }
   return (
-    <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{
-      position: 'absolute', left: 0, right: 0, bottom: 0,
-      paddingBottom: Math.max(insets.bottom, 10), paddingTop: 8,
-      borderTopWidth: 0.5, borderTopColor: T.separator,
+    <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={[barLayout, {
       backgroundColor: isDark ? 'rgba(18,22,33,0.86)' : 'rgba(249,249,249,0.80)',
-    }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 4 }}>
-        {state.routes.map((route, index) => {
-          const focused = state.index === index;
-          const meta = TABS[route.name];
-          if (!meta) return null;
-          const color = focused ? T.brand : T.labelTertiary;
-          return (
-            <Pressable key={route.key}
-              accessibilityRole="button"
-              accessibilityState={{ selected: focused }}
-              accessibilityLabel={t(meta.label)}
-              onPress={() => {
-              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-              if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
-            }} style={{ flex: 1, alignItems: 'center', gap: 3, paddingHorizontal: 2 }}>
-              <SF name={focused ? meta.on : meta.off} size={24} color={color} />
-              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[ty.caption2, { color, fontWeight: '500', fontSize: 10, lineHeight: 13 }]}>{t(meta.label)}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+    }]}>
+      {content}
     </BlurView>
   );
 }
