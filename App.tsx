@@ -14,6 +14,7 @@ import { CareerProvider } from './src/state/CareerContext';
 import { EnrollmentProvider } from './src/state/EnrollmentContext';
 import { PlacesProvider } from './src/state/PlacesContext';
 import { ChannelProvider } from './src/state/ChannelContext';
+import { ActivityProvider } from './src/state/ActivityContext';
 import { NotificationsProvider } from './src/state/NotificationsContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
@@ -60,6 +61,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
     <React.Fragment key={userId ?? 'anon'}>
       <CourseProvider>
         <ChallengeProvider>
+          <ActivityProvider>
           <CareerProvider>
             <EnrollmentProvider>
               <PlacesProvider>
@@ -75,6 +77,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
               </PlacesProvider>
             </EnrollmentProvider>
           </CareerProvider>
+          </ActivityProvider>
         </ChallengeProvider>
       </CourseProvider>
     </React.Fragment>

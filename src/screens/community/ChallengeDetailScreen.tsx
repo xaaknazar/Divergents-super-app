@@ -14,6 +14,7 @@ import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import { useChallenge } from '../../state/ChallengeContext';
+import { useActivities } from '../../state/ActivityContext';
 import {
   MEDAL_FOR_RANK, fetchChallengesAndTeams, getChallengeMeta, daysUntil, teamsNeed,
   CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
@@ -212,6 +213,7 @@ function Row({ icon, label, value }: { icon: any; label: string; value: string }
 function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const { T } = useTheme();
   const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints } = useChallenge();
+  const { weekly, workouts } = useActivities();
   const c = challenge;
   const insets = useSafeAreaInsets();
   const allDone = c.tasks.every(taskDone);
@@ -359,6 +361,47 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
             );
           })}
         </View>
+      </ListSection>
+
+      {/* My activity — Strava-style dynamics + record a run/walk on the map */}
+      <ListSection header={tr('Моя активность')} footer={tr('Маршрут пишется на карте; шаги можно добавить в челлендж.')}>
+        <View style={{ padding: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 64 }}>
+            {weekly.map((d, i) => {
+              const max = Math.max(1, ...weekly.map((x) => x.steps));
+              const h = 6 + (d.steps / max) * 46;
+              return (
+                <View key={i} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: '68%', height: h, borderRadius: 5, backgroundColor: d.steps > 0 ? (d.isToday ? T.brand : T.brandTinted) : T.fillTertiary }} />
+                  <Text style={[ty.caption2, { color: d.isToday ? T.brand : T.labelTertiary }]} numberOfLines={1}>{d.label}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <Pressable onPress={() => navigation.navigate('WorkoutTrack', { challengeId: c.id })}
+            style={{ marginTop: 14, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="figure.run" size={18} color="#fff" />
+            <Text style={[ty.headline, { color: '#fff' }]}>{tr('Записать пробежку / ходьбу')}</Text>
+          </Pressable>
+        </View>
+        {workouts.slice(0, 3).map((w, i, arr) => {
+          const km = (w.distanceM / 1000).toFixed(2);
+          const dt = new Date(w.dateISO);
+          const when = isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+          return (
+            <View key={w.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16, position: 'relative' }}>
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                <SF name={w.type === 'run' ? 'figure.run' : 'figure.walk'} size={18} color={T.brand} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{w.type === 'run' ? tr('Бег') : tr('Ходьба')} · {km} км</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{when} · {Math.round(w.durationSec / 60)} {tr('мин')}</Text>
+              </View>
+              <Text style={[ty.subheadEm, { color: T.brand }]}>+{w.steps}</Text>
+              {i < arr.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 64, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+            </View>
+          );
+        })}
       </ListSection>
 
       <ListSection header={`${tr('Сегодня · день')} ${c.currentDay}`} footer={`${tr('Бонусы за превышение нормы идут команде.')} +${pointsToday} pts ${tr('сегодня')}${bonusToday > 0 ? ` (${tr('включая')} +${bonusToday} ${tr('бонусных')})` : ''}.`}>

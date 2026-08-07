@@ -20,6 +20,7 @@ export type CommunityStackParams = {
   ChannelPost: { postId: string };
   CreateContent: undefined;
   ChallengeDetail: { challengeId: string };
+  WorkoutTrack: { challengeId?: string } | undefined;
   JoinChallenge: { challengeId: string; live?: { id: string; title: string; durationDays: number; startISO?: string | null; teams: { id: string; name: string; capacity: number; captain?: string | null; _count?: { applications: number } }[] } };
   TripDetail: { tripId: string };
 };

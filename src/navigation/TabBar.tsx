@@ -25,7 +25,7 @@ const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | '
 // never disappears on the main screens.
 const DETAIL_ROUTES = new Set([
   'Catalog', 'CourseDetail', 'Video', 'Books', 'BookDetail', 'BookAI',
-  'ChallengeDetail', 'JoinChallenge', 'TripDetail', 'Channel', 'ServerChannel', 'ChannelPost', 'CreateContent',
+  'ChallengeDetail', 'WorkoutTrack', 'JoinChallenge', 'TripDetail', 'Channel', 'ServerChannel', 'ChannelPost', 'CreateContent',
   'PlaceDetail', 'AddPlace', 'OfflineMap',
   'VacancyDetail', 'Resume', 'TalentProfile', 'CreateVacancy', 'VacancyApplicants',
   'Achievements', 'Personalize',
