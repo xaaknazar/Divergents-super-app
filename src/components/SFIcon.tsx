@@ -23,7 +23,8 @@ export type SFName =
   | 'soccerball' | 'tennis.racket' | 'bicycle' | 'figure.mind.and.body' | 'dumbbell' | 'cube.fill'
   | 'wifi.slash' | 'arrow.clockwise' | 'tray' | 'moon.fill' | 'sun.max.fill'
   | 'rosette' | 'checkmark.circle' | 'gearshape.fill' | 'paintpalette.fill'
-  | 'circle.lefthalf.filled' | 'textformat.size' | 'arrow.counterclockwise';
+  | 'circle.lefthalf.filled' | 'textformat.size' | 'arrow.counterclockwise'
+  | 'square.and.pencil' | 'info.circle' | 'rectangle.portrait.and.arrow.right';
 
 type Lib = 'ion' | 'mci';
 // name -> [library, icon]
@@ -88,6 +89,8 @@ const MAP: Record<string, [Lib, string]> = {
   'paintpalette.fill': ['ion', 'color-palette'],
   'circle.lefthalf.filled': ['ion', 'contrast'], 'textformat.size': ['mci', 'format-size'],
   'arrow.counterclockwise': ['ion', 'arrow-undo'],
+  'square.and.pencil': ['ion', 'create-outline'], 'info.circle': ['ion', 'information-circle-outline'],
+  'rectangle.portrait.and.arrow.right': ['ion', 'exit-outline'],
 };
 
 export interface SFProps {

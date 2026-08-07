@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, Modal, Share, ActionSheetIOS, Platform, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -227,10 +227,66 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   }, [allDone]);
   useEffect(() => { Animated.spring(cel, { toValue: celebrate ? 1 : 0, useNativeDriver: true, speed: 14, bounciness: 8 }).start(); }, [celebrate]);
   const ringPct = c.totalDays > 0 ? c.currentDay / c.totalDays : 0;
+  const finished = c.currentDay >= c.totalDays && c.totalDays > 0;
+  // Today == challenge day `currentDay`, so we can label every calendar cell with
+  // its real date by offsetting from now — no server start-date needed.
+  const anchor = new Date();
+  const todayLabel = anchor.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+
+  // Manual entry for metric tasks (steps / pages): tap the value → type it.
+  const promptSet = (t: ChallengeTask) => {
+    if (t.kind !== 'metric') return;
+    if (Platform.OS === 'ios' && typeof (Alert as any).prompt === 'function') {
+      (Alert as any).prompt(t.title, `${tr('Введите значение')} (${t.unit})`, [
+        { text: tr('Отмена'), style: 'cancel' },
+        { text: tr('Сохранить'), onPress: (txt: string) => { const n = parseInt(String(txt ?? '').replace(/[^\d]/g, ''), 10); if (!isNaN(n)) setMetric(t.id, n); } },
+      ], 'plain-text', String(t.current), 'number-pad');
+    }
+  };
+
+  // "Покинуть челлендж" gate: you can only leave AFTER it ends, or when the team
+  // captain raises a white flag 🏳️ for a valid reason (captain-side, server).
+  const attemptLeave = () => {
+    if (myEliminated) { Alert.alert(tr('Вы уже вне челленджа'), tr('Ваши очки зафиксированы до конца сезона.')); return; }
+    if (!finished) {
+      Alert.alert(
+        tr('Пока нельзя выйти'),
+        tr('Покинуть челлендж можно только после его завершения — или если капитан команды поднимет белый флаг 🏳️ по уважительной причине.'),
+        [{ text: tr('Понятно'), style: 'cancel' }],
+      );
+      return;
+    }
+    Alert.alert(tr('Челлендж завершён'), tr('Спасибо за участие! Теперь можно покинуть команду.'), [{ text: tr('Ок'), style: 'cancel' }]);
+  };
+
+  const openMenu = () => {
+    const share = () => Share.share({ message: `${c.title} — Divergents. ${tr('День')} ${c.currentDay}/${c.totalDays}.` }).catch(() => {});
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [tr('Отмена'), tr('Как засчитать активность'), tr('Поделиться'), tr('Покинуть челлендж')],
+          cancelButtonIndex: 0,
+          destructiveButtonIndex: 3,
+        },
+        (i) => { if (i === 1) setShowConv(true); else if (i === 2) share(); else if (i === 3) attemptLeave(); },
+      );
+    } else {
+      Alert.alert(c.title, undefined, [
+        { text: tr('Как засчитать активность'), onPress: () => setShowConv(true) },
+        { text: tr('Поделиться'), onPress: share },
+        { text: tr('Покинуть челлендж'), style: 'destructive', onPress: attemptLeave },
+        { text: tr('Отмена'), style: 'cancel' },
+      ]);
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={<SF name="ellipsis" size={20} color={T.brandAccent} />} />
+      <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={(
+        <Pressable onPress={openMenu} hitSlop={10} accessibilityRole="button" accessibilityLabel={tr('Меню челленджа')}>
+          <SF name="ellipsis" size={20} color={T.brandAccent} />
+        </Pressable>
+      )} />
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <Text style={{ fontSize: 18 }}>🎉</Text>
@@ -286,15 +342,18 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         <View style={{ marginTop: 16 }}><ProgressBar value={ringPct} height={6} /></View>
       </View>
 
-      <ListSection header={tr('Календарь')}>
+      <ListSection header={tr('Календарь')} footer={`${tr('Сегодня')}: ${todayLabel} · ${tr('день')} ${c.currentDay} ${tr('из')} ${c.totalDays}`}>
         <View style={{ paddingHorizontal: 10, paddingVertical: 12, flexDirection: 'row', flexWrap: 'wrap' }}>
           {Array.from({ length: c.totalDays }, (_, i) => {
             const done = i < c.currentDay;
             const today = i === c.currentDay - 1;
+            const cellDate = new Date(anchor);
+            cellDate.setDate(anchor.getDate() + (i - (c.currentDay - 1)));
             return (
               <View key={i} style={{ width: `${100 / 7}%`, aspectRatio: 1, padding: 4 }}>
-                <View style={{ flex: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: done ? T.brand : T.fillTertiary, borderWidth: today ? 2 : 0, borderColor: T.orange }}>
-                  <Text style={[ty.footnoteEm, { color: done ? '#fff' : T.labelSecondary }]}>{i + 1}</Text>
+                <View style={{ flex: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: done ? T.brand : (today ? T.brandTinted : T.fillTertiary), borderWidth: today ? 2 : 0, borderColor: T.orange }}>
+                  <Text style={[ty.footnoteEm, { color: done ? '#fff' : (today ? T.brand : T.label) }]}>{cellDate.getDate()}</Text>
+                  <Text style={[ty.caption2, { color: done ? 'rgba(255,255,255,0.85)' : T.labelTertiary, marginTop: 1 }]} numberOfLines={1}>{tr('Д')}{i + 1}</Text>
                 </View>
               </View>
             );
@@ -308,6 +367,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
             <ChallengeTaskRow key={t.id} task={t} divider={i < c.tasks.length - 1}
               onToggle={() => toggleBinary(t.id)}
               onAdjust={t.kind === 'metric' ? (d) => setMetric(t.id, t.current + d) : undefined}
+              onSet={t.kind === 'metric' ? () => promptSet(t) : undefined}
               step={t.kind === 'metric' ? (isActivityTask(t) ? 500 : 1) : 1} />
           ))}
           {/* Activity step-conversions reference (бег / плавание / силовые…) */}

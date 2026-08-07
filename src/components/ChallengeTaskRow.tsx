@@ -13,12 +13,13 @@ import { groupNum } from '../data/api';
 const fmt = (n: number) => groupNum(n);
 
 export function ChallengeTaskRow({
-  task, divider, onToggle, onAdjust, step = 1,
+  task, divider, onToggle, onAdjust, onSet, step = 1,
 }: {
   task: ChallengeTask;
   divider?: boolean;
   onToggle?: () => void;
   onAdjust?: (delta: number) => void;
+  onSet?: () => void;
   step?: number;
 }) {
   const { T } = useTheme();
@@ -56,10 +57,20 @@ export function ChallengeTaskRow({
           <View style={{ width: `${Math.min(100, pct * 100)}%`, height: '100%', backgroundColor: over ? T.green : T.brand, borderRadius: 5 }} />
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, alignItems: 'center' }}>
-          <Text style={[ty.caption1, { color: T.labelSecondary }]}>
-            <Text style={{ color: over ? T.green : T.label, fontFamily: ty.caption2.fontFamily }}>{fmt(task.current)}</Text>
-            {` / ${fmt(task.min)} ${task.unit}`}
-          </Text>
+          {onSet ? (
+            <Pressable onPress={onSet} hitSlop={6} accessibilityRole="button" accessibilityLabel="Ввести значение вручную" style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 })}>
+              <Text style={[ty.caption1, { color: T.labelSecondary }]}>
+                <Text style={{ color: over ? T.green : T.brand, fontFamily: ty.caption2.fontFamily }}>{fmt(task.current)}</Text>
+                {` / ${fmt(task.min)} ${task.unit}`}
+              </Text>
+              <SF name="square.and.pencil" size={12} color={T.brand} />
+            </Pressable>
+          ) : (
+            <Text style={[ty.caption1, { color: T.labelSecondary }]}>
+              <Text style={{ color: over ? T.green : T.label, fontFamily: ty.caption2.fontFamily }}>{fmt(task.current)}</Text>
+              {` / ${fmt(task.min)} ${task.unit}`}
+            </Text>
+          )}
           {over ? <Text style={[ty.caption1, { color: T.green }]}>{`+${fmt(task.current - task.min)} ${task.unit} · +${bonus} pts`}</Text> : null}
         </View>
 
