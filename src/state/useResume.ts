@@ -90,7 +90,13 @@ export function useResume() {
   }, []);
 
   const completeness = (() => {
-    const filled = REQUIRED_KEYS.filter((k) => !isEmpty(answers[k])).length;
+    // Count a required field as filled if the user has it locally OR the server
+    // profile already has it. The mobile form can't represent every complex
+    // field (object-arrays are skipped on hydrate), so counting only local
+    // answers made the editor read lower (e.g. 93%) than the profile's
+    // server-computed value (100%). Align them by also crediting server data.
+    const src: any = live && profile?.resume ? profile.resume : {};
+    const filled = REQUIRED_KEYS.filter((k) => !isEmpty(answers[k]) || !isEmpty(src[k])).length;
     return Math.round((filled / REQUIRED_KEYS.length) * 100);
   })();
 
