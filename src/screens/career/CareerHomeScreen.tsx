@@ -44,6 +44,9 @@ export function CareerHomeScreen({ navigation }: Props) {
 
   // Only use real (live) Gallup talents for matching — never demo data.
   const gallup: GallupTalent[] = live ? profile?.gallup ?? [] : [];
+  // Matching is driven by the user's Gallup talents; without them the podбор is
+  // empty, so we surface a prompt to fill the anketa instead.
+  const hasTalents = gallup.length > 0;
 
   const sorted = useMemo(() => [...jobs].sort((a, b) => b.match - a.match), [jobs]);
   const best = sorted[0];
@@ -65,39 +68,14 @@ export function CareerHomeScreen({ navigation }: Props) {
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
-      {/* Offers — same compact gradient card as «Библиотека книг», with the logo */}
-      <SectionHeader title={tr('Офферы')} />
-      <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
-        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-            <Logo size={26} body="#fff" head="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Пока нет офферов')}</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>
-              {tr('Здесь появятся приглашения и офферы от компаний, которым вы подойдёте по талантам.')}
-            </Text>
-          </View>
-        </LinearGradient>
-      </View>
+      {/* Talent readiness — matching needs the user's Gallup talents. Show a
+          prompt to fill the anketa when they're missing (otherwise podбор пуст). */}
+      {!hasTalents ? <TalentPrompt navigation={navigation} /> : null}
 
-      {/* Application history */}
-      <ListSection header={`${tr('История откликов')} · ${myJobs.length}`}>
-        {myJobs.length > 0 ? myJobs.map((j, i) => (
-          <ListRow key={j.id} onPress={() => open(j.id)}
-            leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
-            title={j.title} subtitle={`${j.company} · ${j.city}`}
-            trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отправлен')}</Capsule>}
-            last={i === myJobs.length - 1} />
-        )) : (
-          <View style={{ padding: 16 }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Вы ещё не откликались на вакансии.')}</Text></View>
-        )}
-      </ListSection>
-
-      {/* Vacancies */}
+      {/* Vacancies — primary content, first */}
       <SectionHeader title={t('vacancies')} action={canCreate ? '+ Создать' : undefined} onAction={canCreate ? () => navigation.navigate('CreateVacancy') : undefined} />
       <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 12, marginTop: -4 }]}>
-        {tr('Подобраны по вашему психотипу и талантам')}
+        {hasTalents ? tr('Подобраны по вашему психотипу и талантам') : tr('Заполните таланты, чтобы увидеть точные совпадения')}
       </Text>
 
       {jobsError && jobs.length === 0 ? (
@@ -136,18 +114,6 @@ export function CareerHomeScreen({ navigation }: Props) {
             </>
           ) : null}
 
-          {savedJobs.length > 0 ? (
-            <ListSection header={`${tr('Сохранённые')} · ${savedJobs.length}`}>
-              {savedJobs.map((j, i) => (
-                <ListRow key={j.id} onPress={() => open(j.id)}
-                  leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
-                  title={j.title} subtitle={`${j.company} · ${j.city}`}
-                  trailing={<SF name="bookmark.fill" size={15} color={T.brandAccent} />}
-                  last={i === savedJobs.length - 1} />
-              ))}
-            </ListSection>
-          ) : null}
-
           <SectionHeader title={filter === 0 ? tr('Ещё подходящие') : `${tr('Найдено')}: ${rest.length}`} />
           {rest.map((j) => <JobCard key={j.id} job={j} onPress={() => open(j.id)} applied={isApplied(j.id)} gallup={gallup} />)}
           {rest.length === 0 ? (
@@ -155,6 +121,49 @@ export function CareerHomeScreen({ navigation }: Props) {
           ) : null}
         </>
       )}
+
+      {/* Saved vacancies */}
+      {savedJobs.length > 0 ? (
+        <ListSection header={`${tr('Сохранённые')} · ${savedJobs.length}`} style={{ marginTop: 18 }}>
+          {savedJobs.map((j, i) => (
+            <ListRow key={j.id} onPress={() => open(j.id)}
+              leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
+              title={j.title} subtitle={`${j.company} · ${j.city}`}
+              trailing={<SF name="bookmark.fill" size={15} color={T.brandAccent} />}
+              last={i === savedJobs.length - 1} />
+          ))}
+        </ListSection>
+      ) : null}
+
+      {/* Application history */}
+      <ListSection header={`${tr('История откликов')} · ${myJobs.length}`} style={{ marginTop: 18 }}>
+        {myJobs.length > 0 ? myJobs.map((j, i) => (
+          <ListRow key={j.id} onPress={() => open(j.id)}
+            leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
+            title={j.title} subtitle={`${j.company} · ${j.city}`}
+            trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отправлен')}</Capsule>}
+            last={i === myJobs.length - 1} />
+        )) : (
+          <View style={{ padding: 16 }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Вы ещё не откликались на вакансии.')}</Text></View>
+        )}
+      </ListSection>
+
+      {/* Offers — aspirational, at the bottom until real offers arrive */}
+      <SectionHeader title={tr('Офферы')} />
+      <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
+        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <Logo size={26} body="#fff" head="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Пока нет офферов')}</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>
+              {tr('Здесь появятся приглашения и офферы от компаний, которым вы подойдёте по талантам.')}
+            </Text>
+          </View>
+        </LinearGradient>
+      </View>
+
       <View style={{ height: 16 }} />
     </Screen>
   );
@@ -195,6 +204,35 @@ function JobCard({ job, onPress, applied, best, gallup }: {
         {m.matched > 0 ? <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />{m.matched} {tr('ваших таланта')}</Capsule> : null}
         {applied ? <Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отклик отправлен')}</Capsule> : null}
       </View>
+    </Pressable>
+  );
+}
+
+// ─── Talent readiness prompt ───────────────────────────────────────
+// Shown when the user has no Gallup talents yet — matching depends on them, so
+// this drives the core action (fill the anketa) instead of showing empty подбор.
+function TalentPrompt({ navigation }: { navigation: Nav }) {
+  const { T } = useTheme();
+  return (
+    <Pressable onPress={() => navigation.navigate('Resume')}
+      accessibilityRole="button" accessibilityLabel={tr('Заполнить анкету талантов')}
+      style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 20, borderRadius: 18, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 4 }}>
+      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
+        <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="brain.head.profile" size={24} color="#fff" />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{tr('Раскройте свои таланты')}</Text>
+            <Text style={[ty.footnote, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={2}>{tr('Заполните анкету — и увидите вакансии под ваш психотип и сильные стороны.')}</Text>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.22)' }}>
+          <Text style={[ty.footnoteEm, { color: '#fff' }]}>{tr('Заполнить анкету')}</Text>
+          <SF name="chevron.right" size={12} color="rgba(255,255,255,0.85)" />
+        </View>
+      </LinearGradient>
     </Pressable>
   );
 }
