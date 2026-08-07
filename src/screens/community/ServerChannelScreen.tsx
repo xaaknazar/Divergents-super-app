@@ -2,19 +2,22 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Share } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { ty } from '../../components/ui';
+import { ty, Segmented } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
 import { useModeration } from '../../state/ModerationContext';
+import { hSelect, hSuccess } from '../../lib/haptics';
 import {
   fetchServerChannels, fetchMyChannelMemberships, joinChannel, fetchChannelRequests,
-  actChannelRequest, createChannelPost, reactChannelPost, uploadFile, updateChannel, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
+  actChannelRequest, createChannelPost, reactChannelPost, uploadFile, updateChannel, deleteChannel,
+  deleteChannelPost, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
 } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -106,6 +109,18 @@ export function ServerChannelScreen({ route, navigation }: Props) {
     try { const token = await getToken(); const s = await joinChannel(token, id); if (s) setState(s); } finally { setBusy(false); }
   };
 
+  const confirmDeletePost = (p: ServerChannelPost) => {
+    Alert.alert('Удалить публикацию?', p.title || 'Публикация', [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить', style: 'destructive', onPress: async () => {
+        const token = await getToken();
+        const ok = await deleteChannelPost(token, id, p.id);
+        if (ok) setCh((c) => c ? { ...c, posts: c.posts.filter((x) => x.id !== p.id), _count: c._count ? { ...c._count, posts: Math.max(0, (c._count.posts ?? 1) - 1) } : c._count } : c);
+        else Alert.alert('Не удалось удалить', 'Проверьте подключение и попробуйте снова.');
+      } },
+    ]);
+  };
+
   const playPost = async (p: ServerChannelPost) => {
     if (!p.audioUrl) return;
     try {
@@ -125,52 +140,100 @@ export function ServerChannelScreen({ route, navigation }: Props) {
     return <View style={{ flex: 1, backgroundColor: T.groupedBg }}><BackNav back="Каналы" onBack={() => navigation.goBack()} /><View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View></View>;
   }
   if (!ch) {
-    return <View style={{ flex: 1, backgroundColor: T.groupedBg }}><BackNav back="Каналы" onBack={() => navigation.goBack()} /><View style={{ padding: 30, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>Канал не найден</Text></View></View>;
+    // Fresh channels can lag the public list — offer a retry + a way back instead
+    // of a dead end (this is what the "new channel" push used to land on).
+    return (
+      <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+        <BackNav back="Каналы" onBack={() => navigation.goBack()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30, gap: 6 }}>
+          <View style={{ width: 66, height: 66, borderRadius: 33, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+            <SF name="tray" size={28} color={T.labelSecondary} />
+          </View>
+          <Text style={[ty.headline, { color: T.label }]}>Канал не найден</Text>
+          <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>Возможно, он ещё публикуется или был удалён.</Text>
+          <Pressable onPress={load} style={{ marginTop: 14, height: 44, paddingHorizontal: 22, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="arrow.clockwise" size={15} color="#fff" /><Text style={[ty.subheadEm, { color: '#fff' }]}>Обновить</Text>
+          </Pressable>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{ marginTop: 6, padding: 8 }}>
+            <Text style={[ty.subhead, { color: T.brandAccent }]}>К списку каналов</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
   }
+
+  const initial = (ch.name?.trim()?.[0] ?? 'K').toUpperCase();
+  const accIcon = ch.access === 'open' ? 'globe' : 'lock.fill';
+  const accLabel = ch.access === 'open' ? 'Открытый' : 'По запросу';
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Каналы" onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }}>
-        {/* Header */}
-        <View style={{ backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-          {ch.avatarUrl ? <Image source={{ uri: ch.avatarUrl }} style={{ width: 64, height: 64, borderRadius: 18, marginBottom: 10 }} contentFit="cover" cachePolicy="memory-disk" /> : null}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{ch.name}</Text>
-            {ch.access === 'request' ? <SF name="lock.fill" size={13} color={T.labelTertiary} /> : null}
-            {ch.access === 'paid' ? <SF name="creditcard.fill" size={13} color={T.labelTertiary} /> : null}
-            <View style={{ flex: 1 }} />
-            {!owner ? (
-              <Pressable onPress={moderateChannel} hitSlop={10} accessibilityLabel="Пожаловаться или заблокировать">
-                <SF name="ellipsis" size={16} color={T.labelTertiary} />
-              </Pressable>
-            ) : null}
-          </View>
-          {ch.handle ? <Text style={[ty.caption1, { color: T.labelSecondary }]}>@{ch.handle}</Text> : null}
-          <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 3 }]}>{ch._count?.members ?? 0} участников · {ch._count?.posts ?? 0} публикаций{ch.access === 'paid' && ch.price ? ` · ${ch.price}` : ''}</Text>
-          {ch.bio ? <Text style={[ty.subhead, { color: T.label, marginTop: 10 }]}>{ch.bio}</Text> : null}
-
-          {owner ? (
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-              <Pressable onPress={() => setPostOpen(true)} style={{ flex: 1, height: 44, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-                <SF name="plus" size={15} color="#fff" /><Text style={[ty.subheadEm, { color: '#fff' }]}>Создать пост</Text>
-              </Pressable>
-              {ch.access !== 'open' ? (
-                <Pressable onPress={() => { setReqOpen(true); loadRequests(); }} style={{ height: 44, paddingHorizontal: 14, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
-                  <SF name="person.2.fill" size={15} color={T.label} /><Text style={[ty.subheadEm, { color: T.label }]}>Запросы{requests.length ? ` · ${requests.length}` : ''}</Text>
-                </Pressable>
-              ) : null}
-              <Pressable onPress={() => setManageOpen(true)} style={{ height: 44, paddingHorizontal: 14, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
-                <SF name="gearshape.fill" size={16} color={T.label} />
-              </Pressable>
+      <BackNav back="Каналы" onBack={() => navigation.goBack()} trailing={!owner ? (
+        <Pressable onPress={moderateChannel} hitSlop={10} accessibilityRole="button" accessibilityLabel="Пожаловаться или заблокировать">
+          <SF name="ellipsis" size={18} color={T.label} />
+        </Pressable>
+      ) : undefined} />
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }} showsVerticalScrollIndicator={false}>
+        {/* Gradient hero header */}
+        <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+          <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
+            <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.22)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              {ch.avatarUrl ? (
+                <Image source={{ uri: ch.avatarUrl }} style={{ width: 66, height: 66, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)' }} contentFit="cover" cachePolicy="memory-disk" />
+              ) : (
+                <View style={{ width: 66, height: 66, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[ty.title1, { color: '#fff' }]}>{initial}</Text>
+                </View>
+              )}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[ty.title2, { color: '#fff', textShadowColor: 'rgba(0,0,0,0.22)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{ch.name}</Text>
+                {ch.handle ? <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 1 }]} numberOfLines={1}>@{ch.handle}</Text> : null}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 7 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
+                    <SF name={accIcon} size={10} color="#fff" /><Text style={[ty.caption2Em, { color: '#fff' }]}>{accLabel}</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
+                    <SF name="person.2.fill" size={10} color="#fff" /><Text style={[ty.caption2Em, { color: '#fff' }]}>{ch._count?.members ?? 0}</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
+                    <SF name="doc.text.fill" size={10} color="#fff" /><Text style={[ty.caption2Em, { color: '#fff' }]}>{ch._count?.posts ?? 0}</Text>
+                  </View>
+                </View>
+              </View>
             </View>
-          ) : (
-            <Pressable onPress={join} disabled={busy || state === 'requested'} style={{ marginTop: 14, height: 46, borderRadius: 14, backgroundColor: state === 'subscribed' || state === 'approved' ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-              <Text style={[ty.headline, { color: state === 'subscribed' || state === 'approved' ? T.label : '#fff' }]}>
-                {state === 'subscribed' || state === 'approved' ? 'Вы участник' : state === 'requested' ? 'Запрос отправлен' : ch.access === 'open' ? 'Вступить' : 'Запросить доступ'}
-              </Text>
-            </Pressable>
-          )}
+            {ch.bio ? <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.95)', marginTop: 12 }]} numberOfLines={3}>{ch.bio}</Text> : null}
+          </LinearGradient>
+
+          {/* Actions on a solid surface for readable contrast */}
+          <View style={{ backgroundColor: T.cardBg, padding: 14 }}>
+            {owner ? (
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Pressable onPress={() => setPostOpen(true)} style={{ flex: 1, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                  <SF name="plus" size={15} color="#fff" /><Text style={[ty.subheadEm, { color: '#fff' }]}>Создать пост</Text>
+                </Pressable>
+                {ch.access !== 'open' ? (
+                  <Pressable onPress={() => { setReqOpen(true); loadRequests(); }} style={{ height: 46, paddingHorizontal: 14, borderRadius: 13, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                    <SF name="person.2.fill" size={15} color={T.brand} /><Text style={[ty.subheadEm, { color: T.brand }]}>{requests.length ? requests.length : ''}</Text>
+                  </Pressable>
+                ) : null}
+                <Pressable onPress={() => setManageOpen(true)} style={{ height: 46, paddingHorizontal: 15, borderRadius: 13, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                  <SF name="gearshape.fill" size={17} color={T.label} />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable onPress={join} disabled={busy || state === 'requested'} style={{ height: 48, borderRadius: 14, backgroundColor: state === 'subscribed' || state === 'approved' ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+                {busy ? <ActivityIndicator color={state === 'subscribed' || state === 'approved' ? T.label : '#fff'} /> : (
+                  <>
+                    {state === 'subscribed' || state === 'approved' ? <SF name="checkmark.circle.fill" size={16} color={T.brand} /> : null}
+                    <Text style={[ty.headline, { color: state === 'subscribed' || state === 'approved' ? T.label : '#fff' }]}>
+                      {state === 'subscribed' || state === 'approved' ? 'Вы участник' : state === 'requested' ? 'Запрос отправлен' : ch.access === 'open' ? 'Вступить' : 'Запросить доступ'}
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            )}
+          </View>
         </View>
 
         {/* Posts */}
@@ -182,7 +245,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
           </View>
         ) : (
           <>
-            <Text style={[ty.footnote, { color: T.labelSecondary, paddingTop: 18, paddingBottom: 10, paddingHorizontal: 4, textTransform: 'uppercase' }]}>Публикации</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary, paddingTop: 18, paddingBottom: 10, paddingHorizontal: 4, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Публикации</Text>
             {ch.posts.length === 0 ? <Text style={[ty.subhead, { color: T.labelTertiary, paddingHorizontal: 4 }]}>Пока нет публикаций.</Text> : ch.posts.map((p) => (
               <View key={p.id} style={{ backgroundColor: T.cardBg, borderRadius: 18, borderTopLeftRadius: 6, padding: 14, marginBottom: 12, borderWidth: 0.5, borderColor: T.cardBorder, alignSelf: 'flex-start', maxWidth: '94%' }}>
                 {p.title ? <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={2}>{p.title}</Text> : null}
@@ -203,7 +266,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                   </Pressable>
                 ) : p.body ? <Text style={[ty.body, { color: T.label, marginTop: 8 }]}>{p.body}</Text> : null}
 
-                {/* Reactions + time (Telegram-style) */}
+                {/* Reactions + owner delete + time (Telegram-style) */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
                   {REACTIONS.map((e) => {
                     const on = p.myReaction === e;
@@ -217,6 +280,11 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                     );
                   })}
                   <View style={{ flex: 1 }} />
+                  {owner ? (
+                    <Pressable onPress={() => confirmDeletePost(p)} hitSlop={8} accessibilityLabel="Удалить публикацию" style={{ padding: 2, marginRight: 4 }}>
+                      <SF name="trash.fill" size={13} color={T.labelTertiary} />
+                    </Pressable>
+                  ) : null}
                   <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtTime(p.createdAt)}</Text>
                 </View>
               </View>
@@ -232,7 +300,12 @@ export function ServerChannelScreen({ route, navigation }: Props) {
 
       {/* Manage modal (owner) */}
       <Modal visible={manageOpen} animationType="slide" transparent onRequestClose={() => setManageOpen(false)}>
-        <ManageChannel channel={ch} onClose={() => setManageOpen(false)} onSaved={() => { setManageOpen(false); load(); }} />
+        <ManageChannel
+          channel={ch}
+          onClose={() => setManageOpen(false)}
+          onSaved={() => { setManageOpen(false); load(); }}
+          onDeleted={() => { setManageOpen(false); navigation.goBack(); }}
+        />
       </Modal>
 
       {/* Requests modal (owner) */}
@@ -345,12 +418,14 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
   );
 }
 
-function ManageChannel({ channel, onClose, onSaved }: { channel: ServerChannel; onClose: () => void; onSaved: () => void }) {
+function ManageChannel({ channel, onClose, onSaved, onDeleted }: { channel: ServerChannel; onClose: () => void; onSaved: () => void; onDeleted: () => void }) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
   const [name, setName] = useState(channel.name);
+  const [handle, setHandle] = useState(channel.handle ?? '');
   const [bio, setBio] = useState(channel.bio ?? '');
+  const [access, setAccess] = useState<'open' | 'request'>(channel.access === 'open' ? 'open' : 'request');
   const [avatar, setAvatar] = useState<string | null>(channel.avatarUrl ?? null);
   const [busy, setBusy] = useState(false);
   const [avBusy, setAvBusy] = useState(false);
@@ -359,6 +434,7 @@ function ManageChannel({ channel, onClose, onSaved }: { channel: ServerChannel; 
   useEffect(() => { (async () => { const t = await getToken(); setMembers(await fetchChannelMembers(t, channel.id)); })(); }, []);
 
   const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
+  const sectionLabel = { ...ty.footnote, color: T.labelSecondary, marginBottom: 6, marginLeft: 4, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
 
   const pickAvatar = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -371,7 +447,7 @@ function ManageChannel({ channel, onClose, onSaved }: { channel: ServerChannel; 
   };
   const save = async () => {
     setBusy(true);
-    try { const t = await getToken(); const ok = await updateChannel(t, channel.id, { name: name.trim(), bio: bio.trim(), avatarUrl: avatar ?? undefined }); if (ok) onSaved(); else Alert.alert('Не удалось сохранить'); }
+    try { const t = await getToken(); const ok = await updateChannel(t, channel.id, { name: name.trim(), bio: bio.trim(), avatarUrl: avatar ?? undefined, handle: handle.trim() || undefined, access }); if (ok) onSaved(); else Alert.alert('Не удалось сохранить'); }
     finally { setBusy(false); }
   };
   const invite = async () => {
@@ -385,32 +461,61 @@ function ManageChannel({ channel, onClose, onSaved }: { channel: ServerChannel; 
       { text: 'Удалить', style: 'destructive', onPress: async () => { const t = await getToken(); await removeChannelMember(t, channel.id, uid); setMembers((m) => m.filter((x) => x.userId !== uid)); } },
     ]);
   };
+  // Destructive + irreversible → double confirmation.
+  const del = () => {
+    Alert.alert('Удалить канал?', 'Канал и все его публикации будут удалены безвозвратно.', [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить канал', style: 'destructive', onPress: () => {
+        Alert.alert('Точно удалить?', 'Это действие нельзя отменить.', [
+          { text: 'Отмена', style: 'cancel' },
+          { text: 'Удалить', style: 'destructive', onPress: async () => {
+            setBusy(true);
+            try { const t = await getToken(); const ok = await deleteChannel(t, channel.id); if (ok) { hSuccess(); onDeleted(); } else Alert.alert('Не удалось удалить канал'); }
+            finally { setBusy(false); }
+          } },
+        ]);
+      } },
+    ]);
+  };
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
       <Pressable style={{ flex: 1 }} onPress={onClose} />
-      <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '88%' }}>
+      <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '90%' }}>
         <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }} keyboardShouldPersistTaps="handled">
-          <Text style={[ty.title3, { color: T.label, marginBottom: 12 }]}>Настройки канала</Text>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Text style={[ty.title3, { color: T.label, marginBottom: 14 }]}>Настройки канала</Text>
 
-          <Pressable onPress={pickAvatar} style={{ alignSelf: 'center', marginBottom: 14 }}>
+          <Pressable onPress={pickAvatar} style={{ alignSelf: 'center', marginBottom: 16 }}>
             {avatar ? <Image source={{ uri: avatar }} style={{ width: 88, height: 88, borderRadius: 24 }} contentFit="cover" />
               : <View style={{ width: 88, height: 88, borderRadius: 24, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="photo" size={26} color={T.labelSecondary} /></View>}
             <Text style={[ty.caption1, { color: T.brand, textAlign: 'center', marginTop: 6 }]}>{avBusy ? 'Загрузка…' : 'Изменить фото'}</Text>
           </Pressable>
 
-          <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>НАЗВАНИЕ</Text>
-          <TextInput value={name} onChangeText={setName} style={[inp, { marginBottom: 12 }]} />
-          <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>ОПИСАНИЕ</Text>
-          <TextInput value={bio} onChangeText={setBio} multiline style={[inp, { minHeight: 80, textAlignVertical: 'top' }]} />
+          <Text style={sectionLabel}>Название</Text>
+          <TextInput value={name} onChangeText={setName} style={[inp, { marginBottom: 14 }]} />
 
-          <Pressable onPress={invite} style={{ marginTop: 14, height: 46, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+          <Text style={sectionLabel}>Имя (@handle)</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, paddingLeft: 14, marginBottom: 14 }}>
+            <Text style={[ty.body, { color: T.labelTertiary }]}>@</Text>
+            <TextInput value={handle} onChangeText={setHandle} autoCapitalize="none" placeholder="channel" placeholderTextColor={T.labelTertiary} style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 6, color: T.label, ...ty.body }} />
+          </View>
+
+          <Text style={sectionLabel}>Описание</Text>
+          <TextInput value={bio} onChangeText={setBio} multiline placeholder="О чём этот канал" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 80, textAlignVertical: 'top', marginBottom: 14 }]} />
+
+          <Text style={sectionLabel}>Приватность</Text>
+          <Segmented items={['Открытый', 'По запросу']} value={access === 'open' ? 0 : 1} onChange={(i) => setAccess(i === 0 ? 'open' : 'request')} leadingIcons={['globe', 'lock.fill']} />
+          <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 6, marginLeft: 4 }]}>
+            {access === 'open' ? 'Любой может вступить и читать публикации.' : 'Новые участники вступают по одобрению владельца.'}
+          </Text>
+
+          <Pressable onPress={invite} style={{ marginTop: 16, height: 46, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="square.and.arrow.up" size={16} color={T.brand} />
             <Text style={[ty.subheadEm, { color: T.brand }]}>Пригласительная ссылка</Text>
           </Pressable>
 
-          <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 18, marginBottom: 8, marginLeft: 4, textTransform: 'uppercase' }]}>Участники · {members.length}</Text>
+          <Text style={[sectionLabel, { marginTop: 20 }]}>Участники · {members.length}</Text>
           {members.length === 0 ? <Text style={[ty.subhead, { color: T.labelTertiary, marginLeft: 4 }]}>Пока нет участников.</Text> : members.map((m) => (
             <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.cardBg, borderRadius: 12, padding: 12, marginBottom: 8 }}>
               <View style={{ flex: 1 }}>
@@ -421,9 +526,17 @@ function ManageChannel({ channel, onClose, onSaved }: { channel: ServerChannel; 
             </View>
           ))}
 
-          <Pressable onPress={save} disabled={busy} style={{ marginTop: 18, height: 50, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={save} disabled={busy} style={{ marginTop: 20, height: 50, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
             {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]}>Сохранить</Text>}
           </Pressable>
+
+          {/* Danger zone */}
+          <Text style={[sectionLabel, { marginTop: 26, color: T.red }]}>Опасная зона</Text>
+          <Pressable onPress={del} disabled={busy} style={{ height: 50, borderRadius: 14, backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="trash.fill" size={16} color="#fff" />
+            <Text style={[ty.headline, { color: '#fff' }]}>Удалить канал</Text>
+          </Pressable>
+          <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 8, marginLeft: 4 }]}>Канал и все публикации будут удалены безвозвратно.</Text>
         </ScrollView>
       </View>
     </KeyboardAvoidingView>

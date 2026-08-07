@@ -549,8 +549,14 @@ export const unregisterPush = (token: string | null, expoToken: string) =>
 
 // ───────── Channel management (owner) ─────────
 export interface ChannelMemberRow { id: string; userId: string; userEmail: string; userName?: string | null; state: string }
-export const updateChannel = (token: string | null, id: string, data: { name?: string; bio?: string; avatarUrl?: string }) =>
+export const updateChannel = (token: string | null, id: string, data: { name?: string; bio?: string; avatarUrl?: string; handle?: string; access?: 'open' | 'request' }) =>
   postAuthedMethod('PATCH', `/api/mobile/channels/${id}`, token, data);
+// Owner-only: permanently delete the channel (server also removes its posts/members).
+export const deleteChannel = (token: string | null, id: string) =>
+  postAuthedMethod('DELETE', `/api/mobile/channels/${id}`, token, {});
+// Owner-only: delete a single post from the channel.
+export const deleteChannelPost = (token: string | null, id: string, postId: string) =>
+  postAuthedMethod('DELETE', `/api/mobile/channels/${id}/posts/${postId}`, token, {});
 export async function fetchChannelMembers(token: string | null, id: string): Promise<ChannelMemberRow[]> {
   if (!token) return [];
   try { const r = await timedFetch(`${API_BASE}/api/mobile/channels/${id}/members`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return d?.members ?? []; } catch { return []; }

@@ -377,21 +377,27 @@ function ChannelTab({ navigation }: { navigation: Nav }) {
 
 function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav }) {
   const { T } = useTheme();
-  const { t } = useLang();
   const { isJoined, unread, postsByChannel } = useChannel();
   const joined = isJoined(channel.id);
   const count = unread(channel.id);
-  const last = postsByChannel(channel.id)[0];
-  const subs = channel.baseSubscribers + (joined ? 1 : 0);
-  const subsLabel = `${String(subs).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} ${t('subscribers')}`;
+  const posts = postsByChannel(channel.id);
+  const last = posts[0];
   const closed = channel.access === 'request';
+  const initial = (channel.name?.trim()?.[0] ?? 'K').toUpperCase();
   // Second line: latest post for subscribers, otherwise the channel bio.
   const secondary = joined && last ? last.title : (channel.bio?.trim() || '');
   return (
     <Pressable onPress={() => navigation.navigate('ServerChannel', { channelId: channel.id })}
+      accessibilityRole="button" accessibilityLabel={`${tr('Канал')} ${channel.name}`}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.cardBg, borderRadius: 18, padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, opacity: pressed ? 0.85 : 1 })}>
       <View>
-        <Image source={{ uri: channel.avatar }} style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
+        {channel.avatar ? (
+          <Image source={{ uri: channel.avatar }} style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
+        ) : (
+          <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={[ty.title3, { color: '#fff' }]}>{initial}</Text>
+          </LinearGradient>
+        )}
         {closed ? (
           <View style={{ position: 'absolute', right: -3, bottom: -3, width: 22, height: 22, borderRadius: 11, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: T.labelTertiary, alignItems: 'center', justifyContent: 'center' }}>
@@ -409,9 +415,9 @@ function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav
           <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{secondary}</Text>
         ) : null}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 }}>
-          <SF name="person.2.fill" size={10} color={T.labelTertiary} />
+          <SF name="doc.text.fill" size={10} color={T.labelTertiary} />
           <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>
-            {subsLabel}{closed ? ` · ${tr('Закрытый')}` : ''}
+            {posts.length}{closed ? ` · ${tr('Закрытый')}` : ` · ${tr('Открытый')}`}
           </Text>
         </View>
       </View>
