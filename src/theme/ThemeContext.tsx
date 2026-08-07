@@ -11,6 +11,8 @@ const KEY = 'dvg.themeMode';
 const KEY_ACCENT = 'dvg.accent';
 const KEY_BG = 'dvg.background';
 const KEY_TEXT = 'dvg.textSize';
+// One-time migration: flip the old 'none' default to 'accent' for existing users.
+const KEY_BG_MIGRATED = 'dvg.bgMigratedToAccent.v1';
 
 type Ctx = {
   T: Theme;
@@ -42,7 +44,7 @@ function resolve(mode: ThemeMode, sys: ColorSchemeName): Scheme {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>('system');
   const [accent, setAccentState] = useState<string>('divergents');
-  const [background, setBgState] = useState<string>('none');
+  const [background, setBgState] = useState<string>('accent');
   const [textSize, setTextSizeState] = useState<TextSizeKey>('md');
   const [sys, setSys] = useState<ColorSchemeName>(Appearance.getColorScheme());
   const [reduceTransparency, setRT] = useState(false);
@@ -52,7 +54,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     let alive = true;
     SecureStore.getItemAsync(KEY).then((v) => { if (alive && (v === 'light' || v === 'dark' || v === 'system')) setModeState(v); }).catch(() => {});
     SecureStore.getItemAsync(KEY_ACCENT).then((v) => { if (alive && v && ACCENTS.some((a) => a.key === v)) setAccentState(v); }).catch(() => {});
-    SecureStore.getItemAsync(KEY_BG).then((v) => { if (alive && v && BACKGROUNDS.some((b) => b.key === v)) setBgState(v); }).catch(() => {});
+    // Background: run the one-time 'none'→'accent' migration, then honour the
+    // user's saved choice on subsequent launches.
+    Promise.all([SecureStore.getItemAsync(KEY_BG), SecureStore.getItemAsync(KEY_BG_MIGRATED)])
+      .then(([v, migrated]) => {
+        if (!alive) return;
+        if (!migrated) {
+          if (!v || v === 'none') { setBgState('accent'); SecureStore.setItemAsync(KEY_BG, 'accent').catch(() => {}); }
+          else if (BACKGROUNDS.some((b) => b.key === v)) setBgState(v);
+          SecureStore.setItemAsync(KEY_BG_MIGRATED, '1').catch(() => {});
+        } else if (v && BACKGROUNDS.some((b) => b.key === v)) {
+          setBgState(v);
+        }
+      }).catch(() => {});
     SecureStore.getItemAsync(KEY_TEXT).then((v) => { if (alive && v && TEXT_SIZES.some((t) => t.key === v)) setTextSizeState(v as TextSizeKey); }).catch(() => {});
     const sub = Appearance.addChangeListener(({ colorScheme }) => setSys(colorScheme));
     return () => { alive = false; sub.remove(); };
