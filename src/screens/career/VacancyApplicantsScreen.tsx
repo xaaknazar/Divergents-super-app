@@ -47,7 +47,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
     const ok = await decideApplication(jobId, sel.applicantUserId, { status, feedback: feedback.trim() || undefined }, token);
     setBusy(false);
     if (!ok) { Alert.alert('Ошибка', 'Не удалось сохранить. Попробуйте ещё раз.'); return; }
-    setItems((p) => p.map((x) => x.applicantUserId === sel.applicantUserId ? { ...x, status, feedback: feedback.trim() } : x));
+    setItems((p) => p.map((x) => x.id === sel.id ? { ...x, status, feedback: feedback.trim() } : x));
     setSel(null);
   };
 
@@ -58,7 +58,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
     const ok = await decideApplication(jobId, sel.applicantUserId, { feedback: feedback.trim() }, token);
     setBusy(false);
     if (!ok) { Alert.alert('Ошибка', 'Не удалось отправить.'); return; }
-    setItems((p) => p.map((x) => x.applicantUserId === sel.applicantUserId ? { ...x, feedback: feedback.trim() } : x));
+    setItems((p) => p.map((x) => x.id === sel.id ? { ...x, feedback: feedback.trim() } : x));
     Alert.alert('Отправлено', 'Кандидат увидит вашу обратную связь.');
   };
 

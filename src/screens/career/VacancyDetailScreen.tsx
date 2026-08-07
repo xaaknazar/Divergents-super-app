@@ -49,9 +49,10 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
 
   // Owner controls + the current user's own application status/feedback.
   const { canCreate } = useRole();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const [myApp, setMyApp] = useState<MyApplication | null>(null);
   useEffect(() => {
+    if (!isSignedIn) return;
     let alive = true;
     (async () => {
       try {
@@ -61,8 +62,10 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       } catch {}
     })();
     return () => { alive = false; };
+    // Re-runs once the Clerk session is ready (isSignedIn flips true) so the
+    // application status/feedback loads even when the screen mounts pre-auth.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobId]);
+  }, [jobId, isSignedIn]);
 
   // ── Not found / failed to load ────────────────────────────────────
   // fetchVacancy resolves null both for a removed vacancy and a network
@@ -267,15 +270,24 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         </ListSection>
       ) : null}
 
-      <View style={{ padding: 16, paddingTop: 20 }}>
-        <PrimaryButton
-          label={applied ? tr('Отклик отправлен ✓') : tr('Откликнуться')}
-          icon={applied ? 'checkmark' : 'paperplane.fill'}
-          color={applied ? T.green : T.brand}
-          disabled={!hydrated}
-          onPress={() => apply(job.id)}
-        />
-      </View>
+      {/* Seekers apply here. Owners (canCreate) manage the vacancy via the
+          "Отклики" button above and never see an apply action for it. */}
+      {!canCreate ? (
+        <View style={{ padding: 16, paddingTop: 20 }}>
+          <PrimaryButton
+            label={applied ? tr('Отклик отправлен ✓') : tr('Откликнуться')}
+            icon={applied ? 'checkmark' : 'paperplane.fill'}
+            color={applied ? T.green : T.brand}
+            disabled={!hydrated}
+            onPress={() => {
+              apply(job.id);
+              // Show the "на рассмотрении" status card immediately instead of
+              // waiting for a screen remount to refetch.
+              setMyApp((prev) => prev ?? { vacancyId: job.id, title: job.title, company: job.company, status: 'pending', feedback: '', date: '' });
+            }}
+          />
+        </View>
+      ) : null}
       <View style={{ height: 20 }} />
     </Screen>
   );

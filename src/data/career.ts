@@ -185,6 +185,7 @@ export interface NewVacancy {
   diplomaRequired?: boolean | null;
   adjacentFields?: string | null;
   otherRequirements?: string | null;
+  talents?: string[];
   gallupFile?: string | null;
   about?: string | null;
   published?: boolean;
@@ -212,13 +213,18 @@ export interface MyApplication {
   date: string;
 }
 
-// Format a salary string: if it's plain digits, group thousands + ₸; else as-is.
+// Format a salary string for display. Groups any run of 4+ digits with thin
+// spaces (thousands separators) so it reads the same whether the poster typed a
+// bare number ("500000"), a prefixed one ("от 500000"), or a range
+// ("500000-700000"). Appends ₸ only when the value has digits but no currency
+// marker, so plain text like "Договорная" is left untouched.
 export function formatSalary(s: string): string {
   const raw = (s ?? '').trim();
   if (!raw) return '';
-  const digits = raw.replace(/[\s ]/g, '');
-  if (/^\d{4,}$/.test(digits)) return `${digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} ₸`;
-  return raw;
+  const grouped = raw.replace(/\d{4,}/g, (d) => d.replace(/\B(?=(\d{3})+(?!\d))/g, ' '));
+  const hasCurrency = /[₸$€£]|тг|тенге|руб|kzt|usd/i.test(grouped);
+  const hasDigits = /\d/.test(raw);
+  return hasCurrency || !hasDigits ? grouped : `${grouped} ₸`;
 }
 
 /**
@@ -248,8 +254,11 @@ export async function createVacancy(token: string | null | undefined, data: NewV
 /** GET /api/mobile/vacancies/:id/applications — applicants with full profile (owner only). */
 export async function fetchApplicants(vacancyId: string, token: string | null | undefined): Promise<Applicant[]> {
   if (!token) return [];
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
   try {
     const res = await fetch(`${API_BASE}/api/mobile/vacancies/${encodeURIComponent(vacancyId)}/applications`, {
+      signal: ctrl.signal,
       headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return [];
@@ -266,6 +275,7 @@ export async function fetchApplicants(vacancyId: string, token: string | null | 
       profile: a.profile ? normalizeProfile(a.profile) : null,
     }));
   } catch { return []; }
+  finally { clearTimeout(t); }
 }
 
 /** PATCH /api/mobile/vacancies/:id/applications — set status + feedback for an applicant. */
@@ -276,21 +286,28 @@ export async function decideApplication(
   token: string | null | undefined,
 ): Promise<boolean> {
   if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
   try {
     const res = await fetch(`${API_BASE}/api/mobile/vacancies/${encodeURIComponent(vacancyId)}/applications`, {
       method: 'PATCH',
+      signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ applicantUserId, ...patch }),
     });
     return res.ok;
   } catch { return false; }
+  finally { clearTimeout(t); }
 }
 
 /** GET /api/mobile/me/vacancy-applications — the current user's applications (status + feedback). */
 export async function fetchMyVacancyApplications(token: string | null | undefined): Promise<MyApplication[]> {
   if (!token) return [];
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
   try {
     const res = await fetch(`${API_BASE}/api/mobile/me/vacancy-applications`, {
+      signal: ctrl.signal,
       headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return [];
@@ -305,6 +322,7 @@ export async function fetchMyVacancyApplications(token: string | null | undefine
       date: a.date ?? '',
     }));
   } catch { return []; }
+  finally { clearTimeout(t); }
 }
 
 // The Career module's unique value: match by psychotype/talents, not just skills.

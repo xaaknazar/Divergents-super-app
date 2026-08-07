@@ -38,22 +38,16 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
   const [diploma, setDiploma] = useState<'' | 'yes' | 'no'>('');
   const [adjacentFields, setAdjacentFields] = useState('');
   const [otherRequirements, setOtherRequirements] = useState('');
+  const [talents, setTalents] = useState('');
   const [gallupFile, setGallupFile] = useState('');
   const [about, setAbout] = useState('');
   const [published, setPublished] = useState(true);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState<'logo' | 'gallup' | null>(null);
 
-  const ok = title.trim().length > 1;
+  // Vacancy is valid only with a title AND a company name (both required by ТЗ).
+  const ok = title.trim().length > 1 && company.trim().length > 0;
   const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, borderWidth: 0.5, borderColor: T.cardBorder, ...ty.body } as any;
-
-  const Field = ({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) => (
-    <View style={{ marginBottom: 14 }}>
-      <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 6, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{label}</Text>
-      {children}
-      {hint ? <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 5, marginLeft: 2 }]}>{hint}</Text> : null}
-    </View>
-  );
 
   const pickImage = async (which: 'logo' | 'gallup') => {
     try {
@@ -93,6 +87,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
         diplomaRequired: diploma === 'yes' ? true : diploma === 'no' ? false : null,
         adjacentFields: adjacentFields.trim() || null,
         otherRequirements: otherRequirements.trim() || null,
+        talents: talents.split(/[,\n]/).map((s) => s.trim()).filter(Boolean),
         gallupFile: gallupFile || null,
         about: about.trim() || null,
         published,
@@ -107,10 +102,6 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
       Alert.alert('Не удалось создать', 'Проверьте подключение и попробуйте снова.');
     } finally { setBusy(false); }
   };
-
-  const Sec = ({ title: tt }: { title: string }) => (
-    <Text style={[ty.headline, { color: T.label, marginTop: 8, marginBottom: 10 }]}>{tt}</Text>
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
@@ -154,7 +145,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
             </View>
           </Field>
           <Field label="Зарплата">
-            <TextInput value={salary} onChangeText={setSalary} placeholder="Например: от 500 000 ₸" placeholderTextColor={T.labelTertiary} keyboardType="numbers-and-punctuation" style={inp} />
+            <TextInput value={salary} onChangeText={setSalary} placeholder="Например: от 500 000 ₸" placeholderTextColor={T.labelTertiary} style={inp} />
           </Field>
           <Field label="Другие условия">
             <TextInput value={conditions} onChangeText={setConditions} multiline placeholder="График 5/2, оформление по ТК, испытательный срок…" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 76, textAlignVertical: 'top' }]} />
@@ -188,6 +179,9 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Field label="Другие требования">
             <TextInput value={otherRequirements} onChangeText={setOtherRequirements} multiline placeholder="Необязательно" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 66, textAlignVertical: 'top' }]} />
           </Field>
+          <Field label="Ключевые таланты Gallup для роли" hint="Через запятую · используются для подбора кандидатов по талантам">
+            <TextInput value={talents} onChangeText={setTalents} multiline placeholder="Например: Стратег, Организатор, Коммуникация" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 66, textAlignVertical: 'top' }]} />
+          </Field>
           <Field label="Примерный Gallup вакансии" hint="По желанию · изображение/скрин (PDF — на сайте)">
             <Pressable onPress={() => pickImage('gallup')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               {gallupFile
@@ -216,4 +210,23 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
       </KeyboardAvoidingView>
     </View>
   );
+}
+
+// Declared at module scope (not inside the screen render) so their component
+// identity is stable — otherwise every keystroke would remount each wrapped
+// TextInput, dismissing the keyboard after a single character.
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  const { T } = useTheme();
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 6, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{label}</Text>
+      {children}
+      {hint ? <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 5, marginLeft: 2 }]}>{hint}</Text> : null}
+    </View>
+  );
+}
+
+function Sec({ title }: { title: string }) {
+  const { T } = useTheme();
+  return <Text style={[ty.headline, { color: T.label, marginTop: 8, marginBottom: 10 }]}>{title}</Text>;
 }

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -12,7 +13,7 @@ import { Logo } from '../../components/Logo';
 import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
 import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
 import { Ring } from '../../components/talentUI';
-import { CAREER_FILTERS, GOOD_FIT, Job } from '../../data/career';
+import { CAREER_FILTERS, GOOD_FIT, Job, formatSalary } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useRole } from '../../state/useRole';
@@ -175,9 +176,13 @@ function JobCard({ job, onPress, applied, best, gallup }: {
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={[ty.title3, { color: job.color }]}>{job.logo}</Text>
-        </View>
+        {job.companyLogo ? (
+          <Image source={{ uri: job.companyLogo }} style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.fillQuaternary }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
+        ) : (
+          <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={[ty.title3, { color: job.color }]}>{job.logo}</Text>
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{job.title}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{job.company}{job.city ? ` · ${job.city}` : ''}</Text>
@@ -186,7 +191,7 @@ function JobCard({ job, onPress, applied, best, gallup }: {
       </View>
       <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
         {job.format ? <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule> : null}
-        {job.salary ? <Capsule bg={T.fillTertiary} color={T.label}>{job.salary}</Capsule> : null}
+        {job.salary ? <Capsule bg={T.fillTertiary} color={T.label}>{formatSalary(job.salary)}</Capsule> : null}
         {m.matched > 0 ? <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />{m.matched} {tr('ваших таланта')}</Capsule> : null}
         {applied ? <Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отклик отправлен')}</Capsule> : null}
       </View>
