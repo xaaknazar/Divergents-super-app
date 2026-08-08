@@ -5,73 +5,86 @@
 // the community screens already consume. On failure or empty response we return
 // [] / null and the screens render a proper Russian empty/error state; we never
 // fall back to fake/branded seed data.
+import { z } from 'zod';
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { API_BASE, formatPrice } from './api';
+import { fetchJson, arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 
-// ─── Small JSON fetch helper ───────────────────────────────────────────────
-// getJsonResult distinguishes a real failure (network error, timeout, non-2xx,
-// bad JSON → ok:false) from a valid-but-empty response (ok:true, data may be
-// null/[]). This lets screens show a proper ERROR + RETRY state instead of an
-// "empty" state when the server is unreachable. getJson keeps the simple
-// null-on-failure contract for callers that only need the payload.
-interface JsonResult { ok: boolean; data: any | null }
+// ─── Server contracts (GET /api/mobile/{trips,challenges,sport}) ─────────────
+// Zod schemas validate every response at the network boundary and are the single
+// source of truth for the raw types (inferred via z.infer). Fields are lenient
+// (nullish text, string|number ids) so a valid row is never dropped; malformed
+// rows are dropped individually by arrayOf rather than failing the whole list.
+const CountSchema = z.object({ applications: z.number().nullish() }).partial().nullish();
 
-async function getJsonResult(path: string, timeoutMs = 12000): Promise<JsonResult> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      signal: ctrl.signal,
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) return { ok: false, data: null };
-    return { ok: true, data: await res.json() };
-  } catch {
-    return { ok: false, data: null };
-  } finally {
-    clearTimeout(timer);
+const RawTeamSchema = z.object({
+  id: zId,
+  name: zStr(''),
+  capacity: zNumN,
+  captain: zStrN,
+  _count: CountSchema,
+}).passthrough();
+
+const RawChallengeSchema = z.object({
+  id: zId,
+  title: zStr(''),
+  startISO: zStrN,
+  durationDays: zNumN,
+  categories: z.union([z.array(z.string()), z.string()]).nullish().catch(null),
+  rules: zStrN,
+  price: zNumN,
+  status: zStr(''),
+  teams: arrayOf(RawTeamSchema, 'team'),
+  _count: CountSchema,
+}).passthrough();
+
+const RawTripSchema = z.object({
+  id: zId,
+  title: zStr(''),
+  region: zStrN,
+  date: zStrN,
+  days: zNumN,
+  price: zNumN,
+  spots: zNumN,
+  difficulty: zStrN,
+  description: zStrN,
+  status: zStr(''),
+  createdBy: zStrN,
+  _count: CountSchema,
+}).passthrough();
+
+const RawSportSchema = z.object({
+  id: zId,
+  title: zStr(''),
+  place: zStr(''),
+  date: zStr(''),
+  spots: zNumN,
+  description: zStrN,
+  meetLat: zNumN,
+  meetLng: zNumN,
+  meetAt: zStrN,
+  _count: CountSchema,
+}).passthrough();
+
+type RawTeam = z.infer<typeof RawTeamSchema>;
+type RawChallenge = z.infer<typeof RawChallengeSchema>;
+type RawTrip = z.infer<typeof RawTripSchema>;
+type RawSport = z.infer<typeof RawSportSchema>;
+
+// The list endpoints return { trips|challenges|sport: [...] } (or, defensively, a
+// bare array). Normalize to a resilient array so a non-object 200 body still
+// yields [] instead of an error — matching the previous behavior exactly.
+function pickArr(d: unknown, key: string): unknown[] {
+  if (Array.isArray(d)) return d;
+  if (d && typeof d === 'object' && Array.isArray((d as Record<string, unknown>)[key])) {
+    return (d as Record<string, unknown[]>)[key];
   }
+  return [];
 }
-
-async function getJson(path: string, timeoutMs = 12000): Promise<any | null> {
-  return (await getJsonResult(path, timeoutMs)).data;
-}
-
-// ─── Raw server shapes (GET /api/mobile/challenges, /api/mobile/trips) ───────
-interface RawTeam {
-  id: string;
-  name: string;
-  capacity: number;
-  captain: string | null;
-  _count?: { applications?: number } | null;
-}
-interface RawChallenge {
-  id: string;
-  title: string;
-  startISO: string | null;
-  durationDays: number;
-  categories: string[] | string | null;
-  rules: string | null;
-  price: number | null;
-  status: 'open' | 'active' | 'archived' | string;
-  teams?: RawTeam[] | null;
-  _count?: { applications?: number } | null;
-}
-interface RawTrip {
-  id: string;
-  title: string;
-  region: string | null;
-  date: string | null;
-  days: number;
-  price: number | null;
-  spots: number;
-  difficulty: string | null;
-  description: string | null;
-  status: string;
-  createdBy: string | null;
-  _count?: { applications?: number } | null;
-}
+const TripListSchema = z.preprocess((d) => pickArr(d, 'trips'), arrayOf(RawTripSchema, 'trip'));
+const ChallengeListSchema = z.preprocess((d) => pickArr(d, 'challenges'), arrayOf(RawChallengeSchema, 'challenge'));
+const SportListSchema = z.preprocess((d) => pickArr(d, 'sport'), arrayOf(RawSportSchema, 'sport'));
 
 // ─── Deterministic decoration (icon/tint by index) ──────────────────────────
 // Reuse the soft iOS-tinted palette the cards already render against.
@@ -96,7 +109,7 @@ function tripDateLabel(raw: string | null | undefined): string {
   return ruShortDate(raw) || String(raw);
 }
 
-function applicationsOf(c: { _count?: { applications?: number } | null } | null | undefined): number {
+function applicationsOf(c: { _count?: { applications?: number | null } | null } | null | undefined): number {
   const n = c?._count?.applications;
   return typeof n === 'number' && Number.isFinite(n) ? n : 0;
 }
@@ -472,13 +485,9 @@ function mapTrip(raw: RawTrip, index: number): Trip {
   };
 }
 
-function mapTrips(data: any): Trip[] {
-  const arr: RawTrip[] = Array.isArray(data?.trips) ? data.trips : [];
-  return arr.map(mapTrip);
-}
-
 export async function fetchTrips(): Promise<Trip[]> {
-  return mapTrips(await getJson('/api/mobile/trips'));
+  const { data } = await fetchJson('/api/mobile/trips', TripListSchema);
+  return (data ?? []).map(mapTrip);
 }
 
 // The server has no trip-detail endpoint — fetch the list and find by id.
@@ -628,9 +637,8 @@ function teamsFromChallenges(list: RawChallenge[]): ChallengeTeam[] {
 }
 
 export async function fetchTeams(): Promise<ChallengeTeam[]> {
-  const d = await getJson('/api/mobile/challenges');
-  const list: RawChallenge[] = Array.isArray(d?.challenges) ? d.challenges : [];
-  return teamsFromChallenges(list);
+  const { data } = await fetchJson('/api/mobile/challenges', ChallengeListSchema);
+  return teamsFromChallenges(data ?? []);
 }
 
 export function teamsNeed(teams: ChallengeTeam[]): number {
@@ -670,13 +678,9 @@ function mapChallenge(raw: RawChallenge, index: number): ChallengeListItem {
   };
 }
 
-function mapChallenges(data: any): ChallengeListItem[] {
-  const arr: RawChallenge[] = Array.isArray(data?.challenges) ? data.challenges : [];
-  return arr.map(mapChallenge);
-}
-
 export async function fetchChallenges(): Promise<ChallengeListItem[]> {
-  return mapChallenges(await getJson('/api/mobile/challenges'));
+  const { data } = await fetchJson('/api/mobile/challenges', ChallengeListSchema);
+  return (data ?? []).map(mapChallenge);
 }
 
 export function getChallengeMeta(list: ChallengeListItem[], id: string) {
@@ -705,28 +709,24 @@ export interface SportActivity {
   meetAt?: string | null;
 }
 
-// Server-backed sport activities (GET /api/mobile/sport).
+// Server-backed sport activities (GET /api/mobile/sport). Now validated through
+// the contracts layer, which also gives it the 12s abort-timeout it lacked.
 export async function fetchSport(): Promise<SportActivity[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/mobile/sport`);
-    if (!res.ok) return [];
-    const d = await res.json();
-    const arr = Array.isArray(d?.sport) ? d.sport : [];
-    return arr.map((x: any): SportActivity => ({
-      id: String(x.id),
-      title: String(x.title ?? ''),
-      place: String(x.place ?? ''),
-      date: String(x.date ?? ''),
-      icon: 'figure.run',
-      going: x?._count?.applications ?? 0,
-      spotsLabel: x.spots ? `${x.spots} мест` : 'Открыто',
-      tint: 'rgba(35,64,136,0.12)',
-      note: x.description ?? undefined,
-      meetLat: x.meetLat ?? null,
-      meetLng: x.meetLng ?? null,
-      meetAt: x.meetAt ?? null,
-    }));
-  } catch { return []; }
+  const { data } = await fetchJson('/api/mobile/sport', SportListSchema);
+  return (data ?? []).map((x): SportActivity => ({
+    id: x.id,
+    title: x.title,
+    place: x.place,
+    date: x.date,
+    icon: 'figure.run',
+    going: applicationsOf(x),
+    spotsLabel: x.spots ? `${x.spots} мест` : 'Открыто',
+    tint: 'rgba(35,64,136,0.12)',
+    note: x.description ?? undefined,
+    meetLat: x.meetLat ?? null,
+    meetLng: x.meetLng ?? null,
+    meetAt: x.meetAt ?? null,
+  }));
 }
 
 // ─── Встречи: онлайн-лекции ─────────────────────────────────────────
@@ -761,15 +761,15 @@ export interface CommunityHomeData {
 
 export async function fetchCommunityHome(): Promise<CommunityHomeData> {
   const [t, c, sport] = await Promise.all([
-    getJsonResult('/api/mobile/trips'),
-    getJsonResult('/api/mobile/challenges'),
+    fetchJson('/api/mobile/trips', TripListSchema),
+    fetchJson('/api/mobile/challenges', ChallengeListSchema),
     fetchSport(),
   ]);
   return {
-    trips: mapTrips(t.data),
+    trips: (t.data ?? []).map(mapTrip),
     sport,
-    challenges: mapChallenges(c.data),
-    error: !t.ok && !c.ok,
+    challenges: (c.data ?? []).map(mapChallenge),
+    error: t.error && c.error,
   };
 }
 
@@ -780,11 +780,11 @@ export interface ChallengesBundle {
 }
 
 export async function fetchChallengesAndTeams(): Promise<ChallengesBundle> {
-  const c = await getJsonResult('/api/mobile/challenges');
-  const list: RawChallenge[] = Array.isArray(c.data?.challenges) ? c.data.challenges : [];
+  const { data, error } = await fetchJson('/api/mobile/challenges', ChallengeListSchema);
+  const list = data ?? [];
   return {
     challenges: list.map(mapChallenge),
     teams: teamsFromChallenges(list),
-    error: !c.ok,
+    error,
   };
 }

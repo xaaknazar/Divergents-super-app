@@ -5,8 +5,10 @@
 // /posts endpoint), so the channel list and the flattened post feed both derive
 // from that one call. On failure or empty response we return [] and the screens
 // render a Russian empty / error state.
+import { z } from 'zod';
 import { SFName } from '../components/SFIcon';
 import { API_BASE } from './api';
+import { fetchJson, arrayOf, zId, zStr } from './contracts/http';
 
 // Only free access tiers remain for v1 ('open' = anyone, 'request' = approval).
 // The paid channel was removed, so the server's 'paid' tier maps to 'request'.
@@ -42,49 +44,42 @@ export interface ChannelPost {
   views: string;
 }
 
-// ─── Raw server shapes (GET /api/mobile/channels) ──────────────────
-interface ApiChannelPost {
-  id: string;
-  type: 'article' | 'audio';
-  title: string;
-  body: string | null;
-  audioUrl: string | null;
-  createdAt: string;
-}
+// ─── Server contract (GET /api/mobile/channels) ────────────────────
+// Zod schemas ARE the source of truth: they validate the response at the network
+// boundary and the raw types are inferred from them (z.infer) so they can't drift
+// from the server. Fields are intentionally lenient (nullish text, string|number
+// ids, unknown access → 'request') so valid rows are never wrongly rejected.
+const ApiChannelPostSchema = z.object({
+  id: zId,
+  type: z.enum(['article', 'audio']).catch('article'),
+  title: zStr('Без названия'),
+  body: z.string().nullish(),
+  audioUrl: z.string().nullish(),
+  createdAt: zStr(),
+}).passthrough();
 
-interface ApiChannel {
-  id: string;
-  handle: string | null;
-  name: string;
-  access: 'open' | 'request' | 'paid';
-  price: number | null;
-  bio: string | null;
-  avatarUrl: string | null;
-  status: string;
-  createdBy: string | null;
-  createdAt: string;
-  posts: ApiChannelPost[];
-  _count: { posts: number };
-}
+const ApiChannelSchema = z.object({
+  id: zId,
+  handle: z.string().nullish(),
+  name: zStr('Без названия'),
+  access: z.enum(['open', 'request', 'paid']).catch('request'),
+  price: z.number().nullish(),
+  bio: z.string().nullish(),
+  avatarUrl: z.string().nullish(),
+  status: z.string().nullish(),
+  createdBy: z.string().nullish(),
+  createdAt: zStr(),
+  posts: arrayOf(ApiChannelPostSchema, 'channel post'),
+  _count: z.object({ posts: z.number() }).partial().nullish(),
+}).passthrough();
 
-interface JsonResult { ok: boolean; data: any | null }
+const ChannelsResponseSchema = z.object({
+  channels: arrayOf(ApiChannelSchema, 'channel'),
+}).passthrough();
 
-async function getJsonResult(path: string, timeoutMs = 12000): Promise<JsonResult> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      signal: ctrl.signal,
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) return { ok: false, data: null };
-    return { ok: true, data: await res.json() };
-  } catch {
-    return { ok: false, data: null };
-  } finally {
-    clearTimeout(timer);
-  }
-}
+type ApiChannelPost = z.infer<typeof ApiChannelPostSchema>;
+type ApiChannel = z.infer<typeof ApiChannelSchema>;
+type ChannelsResponse = z.infer<typeof ChannelsResponseSchema>;
 
 // ─── Mapping helpers ───────────────────────────────────────────────
 const MONTHS_RU = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
@@ -108,7 +103,7 @@ function relativeRu(iso: string): string {
 }
 
 // Split rich-text body into paragraphs for the article reader's body[] shape.
-function toParagraphs(body: string | null): string[] | undefined {
+function toParagraphs(body: string | null | undefined): string[] | undefined {
   if (!body) return undefined;
   const parts = body
     .split(/\n{2,}/)
@@ -136,7 +131,7 @@ function mapAccess(access: ApiChannel['access']): ChannelAccess {
 
 function mapChannel(c: ApiChannel): Channel {
   return {
-    id: String(c.id ?? ''),
+    id: c.id,
     handle: c.handle ?? '',
     name: c.name || 'Без названия',
     avatar: c.avatarUrl ?? '',
@@ -151,7 +146,7 @@ function mapPost(p: ApiChannelPost, channelId: string): ChannelPost {
   const isAudio = p.type === 'audio';
   const paras = toParagraphs(p.body);
   const base: ChannelPost = {
-    id: String(p.id ?? ''),
+    id: p.id,
     channelId,
     type: isAudio ? 'audio' : 'article',
     title: p.title || 'Без названия',
@@ -171,39 +166,37 @@ function mapPost(p: ApiChannelPost, channelId: string): ChannelPost {
   return base;
 }
 
-// Parse the single /api/mobile/channels payload into both view models.
-function parseChannels(data: any): { channels: Channel[]; posts: ChannelPost[] } {
-  const raw: ApiChannel[] = Array.isArray(data?.channels) ? data.channels : [];
-  const valid = raw.filter((c) => c && c.id != null);
-  const channels = valid.map(mapChannel);
-  const posts = valid.flatMap((c) =>
-    (Array.isArray(c.posts) ? c.posts : [])
-      .filter((p) => p && p.id != null)
-      .map((p) => mapPost(p, String(c.id))),
-  );
+// Turn the validated /api/mobile/channels payload into both view models. Input is
+// already validated (ids normalized to strings, id-less rows dropped upstream),
+// so this is a pure mapping with no defensive guards.
+function toViewModels(res: ChannelsResponse): { channels: Channel[]; posts: ChannelPost[] } {
+  const channels = res.channels.map(mapChannel);
+  const posts = res.channels.flatMap((c) => c.posts.map((p) => mapPost(p, c.id)));
   return { channels, posts };
 }
 
 export async function fetchChannels(): Promise<Channel[]> {
-  const { data } = await getJsonResult('/api/mobile/channels');
-  return parseChannels(data).channels;
+  const { data } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema);
+  return data ? toViewModels(data).channels : [];
 }
 
 // Flattens the posts embedded in the single /channels response (no /posts call).
 export async function fetchChannelPosts(): Promise<ChannelPost[]> {
-  const { data } = await getJsonResult('/api/mobile/channels');
-  return parseChannels(data).posts;
+  const { data } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema);
+  return data ? toViewModels(data).posts : [];
 }
 
 // Loads channels + posts together from one request and reports `error: true`
-// only when the request failed (server unreachable), so screens can show a
-// RETRY state instead of an "empty" / "not found" one when the network is down.
+// only when the request failed or the payload didn't match the contract, so
+// screens can show a RETRY state instead of an "empty" one. A valid but empty
+// response (channels: []) is a success → the empty state, not the error state.
 export interface ChannelData { channels: Channel[]; posts: ChannelPost[]; error: boolean }
 
 export async function fetchChannelData(): Promise<ChannelData> {
-  const res = await getJsonResult('/api/mobile/channels');
-  const { channels, posts } = parseChannels(res.data);
-  return { channels, posts, error: !res.ok };
+  const { data, error } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema);
+  if (!data) return { channels: [], posts: [], error };
+  const { channels, posts } = toViewModels(data);
+  return { channels, posts, error: false };
 }
 
 // ─── Creator/admin: create a channel (Clerk Bearer) ─────────────────────────
