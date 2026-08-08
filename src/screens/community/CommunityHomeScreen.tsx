@@ -47,6 +47,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
   const { canCreate } = useRole();
   const [seg, setSeg] = useState(0);
   const refreshToken = route.params?.refresh;
+  const focusParam = route.params?.focus;
 
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [sport, setSport] = useState<SportActivity[] | null>(null);
@@ -80,12 +81,19 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
   }, [load, reloadChannels]);
 
   // A create modal sets route.params.refresh on dismissal — reload the lists
-  // once so newly published content shows immediately.
+  // once so newly published content shows immediately, and switch to the tab
+  // that actually shows the created kind (the home tab lists channels/trips/sport
+  // but NOT open challenges, so a new challenge would otherwise look missing).
   useEffect(() => {
     if (refreshToken === undefined) return;
     reloadChannels();
     load();
-  }, [refreshToken, load, reloadChannels]);
+    if (focusParam) {
+      const idx = focusParam === 'channel' ? 1 : focusParam === 'challenge' ? 2 : focusParam === 'trip' ? 3 : 4;
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setSeg(idx);
+    }
+  }, [refreshToken, focusParam, load, reloadChannels]);
 
   return (
     <Screen largeTitle={tr('Сообщество')} onRefresh={onRefresh}>

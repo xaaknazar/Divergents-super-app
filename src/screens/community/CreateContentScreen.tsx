@@ -72,7 +72,11 @@ export function CreateContentScreen({ navigation }: Props) {
     // Return to the community home WITH a changing `refresh` token so it reloads
     // its lists once — otherwise the freshly created challenge/trip/channel stays
     // invisible until an app restart or a manual pull-to-refresh.
-    if (success) Alert.alert('Создано', 'Опубликовано и доступно в приложении.', [{ text: 'Готово', onPress: () => navigation.navigate('CommunityHome', { refresh: Date.now() }) }]);
+    // Return to the community home WITH a changing `refresh` token (reload lists)
+    // AND `focus` = the created kind, so it opens the tab that actually shows it
+    // (the home tab doesn't list open challenges) — otherwise the new item looks
+    // like it "didn't appear".
+    if (success) Alert.alert('Создано', 'Опубликовано и доступно в приложении.', [{ text: 'Готово', onPress: () => navigation.navigate('CommunityHome', { refresh: Date.now(), focus: kind }) }]);
     else Alert.alert('Не удалось создать', 'Проверьте подключение и права (нужен email-куратор).');
   };
 
