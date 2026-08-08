@@ -79,6 +79,12 @@ export function ChallengeTaskRow({
             <Stepper label={`− ${fmt(step)}`} onPress={() => onAdjust(-step)} />
             <Stepper label={`+ ${fmt(step)}`} onPress={() => onAdjust(step)} primary />
           </View>
+        ) : onSet ? (
+          <Pressable onPress={onSet} accessibilityRole="button" accessibilityLabel="Указать значение вручную"
+            style={({ pressed }) => ({ marginTop: 10, height: 44, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: pressed ? 0.7 : 1 })}>
+            <SF name="square.and.pencil" size={17} color={T.brand} />
+            <Text style={[ty.subheadEm, { color: T.brand }]}>Указать вручную</Text>
+          </Pressable>
         ) : null}
       </View>
     </View>
