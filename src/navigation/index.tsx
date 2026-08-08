@@ -22,6 +22,7 @@ import { VideoScreen } from '../screens/lms/VideoScreen';
 import { DownloadsScreen } from '../screens/lms/DownloadsScreen';
 
 import { CommunityHomeScreen } from '../screens/community/CommunityHomeScreen';
+import { ChannelsScreen } from '../screens/community/ChannelsScreen';
 import { ChallengeDetailScreen } from '../screens/community/ChallengeDetailScreen';
 import { JoinChallengeScreen } from '../screens/community/JoinChallengeScreen';
 import { TripDetailScreen } from '../screens/community/TripDetailScreen';
@@ -72,6 +73,7 @@ function CommunityNavigator() {
   return (
     <CommunityStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <CommunityStack.Screen name="CommunityHome" component={CommunityHomeScreen} />
+      <CommunityStack.Screen name="Channels" component={ChannelsScreen} />
       <CommunityStack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <CommunityStack.Screen name="WorkoutTrack" component={WorkoutTrackScreen} />
       <CommunityStack.Screen name="JoinChallenge" component={JoinChallengeScreen} options={{ presentation: 'modal' }} />

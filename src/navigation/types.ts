@@ -15,6 +15,7 @@ export type CommunityStackParams = {
   // `refresh` is a changing token a create modal sets on dismissal so the home
   // screen reloads its lists once.
   CommunityHome: { refresh?: number } | undefined;
+  Channels: undefined;
   Channel: { channelId: string };
   ServerChannel: { channelId: string };
   ChannelPost: { postId: string };

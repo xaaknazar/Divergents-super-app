@@ -177,18 +177,10 @@ function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { naviga
   return (
     <>
       {/* Channels first */}
-      <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(1); }} />
+      <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => navigation.navigate('Channels')} />
       {channels.length === 0
         ? <EmptyOrError error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
         : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
-
-      {/* Then your challenge */}
-      <View style={{ marginTop: 18 }}>
-        <SectionHeader title={t('your_challenge')} />
-        {hasActive
-          ? <ActiveChallengeCard navigation={navigation} />
-          : <EmptyState icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />}
-      </View>
 
       <View style={{ marginTop: 18 }}>
         <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
