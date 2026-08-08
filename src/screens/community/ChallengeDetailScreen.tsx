@@ -15,6 +15,9 @@ import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useActivities } from '../../state/ActivityContext';
+import { useAuth } from '@clerk/clerk-expo';
+import { useRole } from '../../state/useRole';
+import { deleteChallenge } from '../../data/api';
 import {
   MEDAL_FOR_RANK, fetchChallengesAndTeams, getChallengeMeta, daysUntil, teamsNeed,
   CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
@@ -88,6 +91,21 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   useLang();
   const insets = useSafeAreaInsets();
   const left = daysUntil(meta.startISO);
+  const { canCreate } = useRole();
+  const { getToken } = useAuth();
+
+  // Creator/admin: delete the challenge (double-confirmed; irreversible).
+  const confirmDelete = () => {
+    Alert.alert('Удалить челлендж?', `«${meta.title}» и все заявки будут удалены безвозвратно.`, [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить', style: 'destructive', onPress: async () => {
+        const token = await getToken();
+        const ok = await deleteChallenge(token, meta.id);
+        if (ok) { hSuccess(); navigation.navigate('CommunityHome', { refresh: Date.now(), focus: 'challenge' }); }
+        else Alert.alert('Не удалось удалить', 'Проверьте подключение и права (нужен создатель/админ).');
+      } },
+    ]);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
@@ -95,7 +113,9 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <NavHeader
           transparent tint="#fff" backLabel={tr('Сообщество')} onBack={() => navigation.goBack()}
-          trailing={<SF name="square.and.arrow.up" size={20} color="#fff" />}
+          trailing={canCreate
+            ? <Pressable onPress={confirmDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel="Удалить челлендж"><SF name="trash.fill" size={19} color="#fff" /></Pressable>
+            : <SF name="square.and.arrow.up" size={20} color="#fff" />}
         />
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 22, position: 'relative' }}>
           <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
