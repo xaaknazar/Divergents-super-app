@@ -409,9 +409,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           {c.tasks.map((t, i) => (
             <ChallengeTaskRow key={t.id} task={t} divider={i < c.tasks.length - 1}
               onToggle={() => toggleBinary(t.id)}
-              onAdjust={t.kind === 'metric' ? (d) => setMetric(t.id, t.current + d) : undefined}
+              onAdjust={t.kind === 'metric' && !isActivityTask(t) ? (d) => setMetric(t.id, t.current + d) : undefined}
               onSet={t.kind === 'metric' ? () => promptSet(t) : undefined}
-              step={t.kind === 'metric' ? (isActivityTask(t) ? 500 : 1) : 1} />
+              step={1} />
           ))}
           {/* Activity step-conversions reference (бег / плавание / силовые…) */}
           <Pressable onPress={() => setShowConv(true)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, opacity: pressed ? 0.6 : 1 })}>
