@@ -1,6 +1,6 @@
 // Vacancy applicants (owner view): list of people who applied, their full
 // Talentslab анкета, and controls to accept/reject + leave written feedback.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, Modal, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
@@ -31,11 +31,15 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
   const [feedback, setFeedback] = useState('');
   const [busy, setBusy] = useState(false);
 
+  // Keep getToken in a ref so `load` (and its effect) don't re-fire on every
+  // Clerk re-render — that identity churn could loop and freeze the page.
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
   const load = useCallback(async () => {
     setLoading(true);
-    try { const token = await getToken(); setItems(await fetchApplicants(jobId, token)); }
+    try { const token = await getTokenRef.current(); setItems(await fetchApplicants(jobId, token)); }
     finally { setLoading(false); }
-  }, [jobId, getToken]);
+  }, [jobId]);
   useEffect(() => { load(); }, [load]);
 
   const openApplicant = (a: Applicant) => { setSel(a); setFeedback(a.feedback || ''); };
