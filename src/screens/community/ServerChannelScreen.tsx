@@ -13,6 +13,7 @@ import { ty, Segmented } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
 import { useModeration } from '../../state/ModerationContext';
+import { useChannel } from '../../state/ChannelContext';
 import { hSelect, hSuccess } from '../../lib/haptics';
 import {
   fetchServerChannels, fetchMyChannelMemberships, joinChannel, fetchChannelRequests,
@@ -43,6 +44,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
   const { email } = useRole();
+  const { reload: reloadChannels } = useChannel();
   const id = route.params.channelId;
 
   const [ch, setCh] = useState<ServerChannel | null>(null);
@@ -304,7 +306,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
           channel={ch}
           onClose={() => setManageOpen(false)}
           onSaved={() => { setManageOpen(false); load(); }}
-          onDeleted={() => { setManageOpen(false); navigation.goBack(); }}
+          onDeleted={() => { setManageOpen(false); reloadChannels(); navigation.goBack(); }}
         />
       </Modal>
 
