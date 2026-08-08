@@ -77,7 +77,7 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="JoinChallenge" component={JoinChallengeScreen} options={{ presentation: 'modal' }} />
       <CommunityStack.Screen name="TripDetail" component={TripDetailScreen} />
       <CommunityStack.Screen name="ServerChannel" component={ServerChannelScreen} />
-      <CommunityStack.Screen name="CreateContent" component={CreateContentScreen} options={{ presentation: 'modal' }} />
+      <CommunityStack.Screen name="CreateContent" component={CreateContentScreen} />
     </CommunityStack.Navigator>
   );
 }

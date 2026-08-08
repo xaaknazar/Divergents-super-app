@@ -63,7 +63,10 @@ export function NotificationsScreen({ navigation }: Props) {
     // on the root ref next frame so the target always opens FULL-SCREEN on its
     // tab stack.
     navigation.goBack();
-    requestAnimationFrame(() => {
+    // Wait for the modal-dismiss animation to FINISH before navigating — doing it
+    // on the next frame raced the dismissal and left the target rendering behind
+    // the still-closing modal (looked like a half screen over the main one).
+    InteractionManager.runAfterInteractions(() => {
       if (navigationRef.isReady()) {
         (navigationRef as any).navigate('Tabs', {
           screen: target.tab,

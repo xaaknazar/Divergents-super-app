@@ -13,8 +13,9 @@ export type LMSStackParams = {
 
 export type CommunityStackParams = {
   // `refresh` is a changing token a create modal sets on dismissal so the home
-  // screen reloads its lists once.
-  CommunityHome: { refresh?: number } | undefined;
+  // screen reloads its lists once. `focus` switches to the tab that shows the
+  // just-created content (e.g. a new challenge → the Челленджи tab).
+  CommunityHome: { refresh?: number; focus?: 'challenge' | 'trip' | 'sport' | 'channel' } | undefined;
   Channels: undefined;
   ServerChannel: { channelId: string };
   CreateContent: undefined;
