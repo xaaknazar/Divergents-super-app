@@ -13,7 +13,7 @@ import { Logo } from '../../components/Logo';
 import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
 import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
 import { Ring } from '../../components/talentUI';
-import { CAREER_FILTERS, GOOD_FIT, Job, formatSalary } from '../../data/career';
+import { CAREER_FILTERS, Job, formatSalary } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useRole } from '../../state/useRole';
@@ -96,22 +96,7 @@ export function CareerHomeScreen({ navigation }: Props) {
           </ScrollView>
 
           {filter === 0 && best ? (
-            <>
-              <JobCard job={best} best onPress={() => open(best.id)} applied={isApplied(best.id)} gallup={gallup} />
-              {/* Good fit */}
-              <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
-                <View style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
-                  <SF name="person.crop.circle.fill" size={22} color={T.brand} />
-                  <Text style={[ty.subheadEm, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{GOOD_FIT.bossTitle}</Text>
-                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 4 }]}>{GOOD_FIT.bossText}</Text>
-                </View>
-                <View style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
-                  <SF name="building.2.fill" size={22} color={T.green} />
-                  <Text style={[ty.subheadEm, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{GOOD_FIT.companyTitle}</Text>
-                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 4 }]}>{GOOD_FIT.companyText}</Text>
-                </View>
-              </View>
-            </>
+            <JobCard job={best} best onPress={() => open(best.id)} applied={isApplied(best.id)} gallup={gallup} />
           ) : null}
 
           <SectionHeader title={filter === 0 ? tr('Ещё подходящие') : `${tr('Найдено')}: ${rest.length}`} />
