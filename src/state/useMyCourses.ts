@@ -1,5 +1,6 @@
 // Loads the signed-in user's owned courses from the authenticated mobile API.
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { AppState } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { Course } from '../data/courses';
 import { fetchMyCourses } from '../data/api';
@@ -23,9 +24,12 @@ export function useMyCourses() {
   const mergeRef = useRef(mergeServerProgress);
   mergeRef.current = mergeServerProgress;
 
-  const run = useCallback(async () => {
+  // `silent` refetches without flipping `loading` — used for the foreground
+  // refresh so the owned list updates after an out-of-app purchase without
+  // flashing a spinner.
+  const run = useCallback(async (silent?: boolean) => {
     if (!isSignedIn) { setCourses([]); setError(false); setReady(true); return; }
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(false);
     try {
       const token = await getTokenRef.current();
@@ -46,6 +50,14 @@ export function useMyCourses() {
   }, [isSignedIn]);
 
   useEffect(() => { run(); }, [run]);
+
+  // Course purchases happen on the website (opened in an external browser), so
+  // when the user returns to the app we silently re-pull owned courses — the
+  // just-bought course then appears in "Мои курсы" without a manual refresh.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') run(true); });
+    return () => sub.remove();
+  }, [run]);
 
   return { courses, loading, ready, error, isSignedIn, reload: run };
 }
