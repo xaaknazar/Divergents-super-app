@@ -251,17 +251,17 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                 {p.title ? <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={2}>{p.title}</Text> : null}
 
                 {p.type === 'audio' && p.audioUrl ? (
-                  <Pressable onPress={() => playPost(p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 }}>
+                  <Pressable onPress={() => playPost(p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10, width: 230, maxWidth: '100%' }}>
                     <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name={playingId === p.id ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 22 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 22, overflow: 'hidden' }}>
                         {waveHeights(p.id).map((hh, i) => (
                           <View key={i} style={{ width: 3, height: hh, borderRadius: 2, backgroundColor: playingId === p.id ? T.brand : T.labelTertiary }} />
                         ))}
                       </View>
-                      <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 3 }]}>{playingId === p.id ? 'Играет…' : 'Голосовое сообщение'}</Text>
+                      <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 3 }]} numberOfLines={1}>{playingId === p.id ? 'Играет…' : 'Голосовое сообщение'}</Text>
                     </View>
                   </Pressable>
                 ) : p.body ? <Text style={[ty.body, { color: T.label, marginTop: 8 }]}>{p.body}</Text> : null}
