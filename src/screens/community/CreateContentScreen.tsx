@@ -69,7 +69,10 @@ export function CreateContentScreen({ navigation }: Props) {
       }
     } catch {}
     setBusy(false);
-    if (success) Alert.alert('Создано', 'Опубликовано и доступно в приложении.', [{ text: 'Готово', onPress: () => navigation.goBack() }]);
+    // Return to the community home WITH a changing `refresh` token so it reloads
+    // its lists once — otherwise the freshly created challenge/trip/channel stays
+    // invisible until an app restart or a manual pull-to-refresh.
+    if (success) Alert.alert('Создано', 'Опубликовано и доступно в приложении.', [{ text: 'Готово', onPress: () => navigation.navigate('CommunityHome', { refresh: Date.now() }) }]);
     else Alert.alert('Не удалось создать', 'Проверьте подключение и права (нужен email-куратор).');
   };
 
