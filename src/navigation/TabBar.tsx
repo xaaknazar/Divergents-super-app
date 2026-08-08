@@ -19,16 +19,15 @@ const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | '
   ProfileTab: { label: 'tab_profile', on: 'person.crop.circle.fill', off: 'person.crop.circle' },
 };
 
-// Pushed detail / modal screens that hide the bar (they have their own back
-// button + bottom CTAs). Everything else — including tab roots and any state
-// that hasn't initialised yet — keeps the bar VISIBLE (fail-safe), so the bar
-// never disappears on the main screens.
-const DETAIL_ROUTES = new Set([
-  'Catalog', 'CourseDetail', 'Video', 'Books', 'BookDetail', 'BookAI',
-  'ChallengeDetail', 'WorkoutTrack', 'JoinChallenge', 'TripDetail', 'Channel', 'ServerChannel', 'ChannelPost', 'CreateContent',
-  'PlaceDetail', 'AddPlace', 'OfflineMap',
-  'VacancyDetail', 'Resume', 'TalentProfile', 'CreateVacancy', 'VacancyApplicants',
-  'Achievements', 'Personalize',
+// The bar is shown ONLY on the six tab-root screens; every pushed/detail screen
+// is fullscreen (no bar). Inverting the rule this way means new detail screens
+// are fullscreen automatically — no allow-list to keep in sync — which avoids
+// the "half-screen page breaks the layout" bug. The tab CONTAINER names are
+// included as a fail-safe so the bar stays visible before a nested stack has
+// initialised (leaf falls back to the container name).
+const ROOT_ROUTES = new Set([
+  'LMSHome', 'AIChat', 'CommunityHome', 'MapHome', 'CareerHome', 'ProfileHome',
+  'LMSTab', 'AITab', 'CommunityTab', 'MapTab', 'CareerTab', 'ProfileTab',
 ]);
 
 // Walk to the currently focused leaf route inside a (possibly nested) navigator
@@ -49,7 +48,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const active = state.routes[state.index] as { name: string; state?: any };
   const leaf = focusedLeafName(active);
-  if (DETAIL_ROUTES.has(leaf)) return null;
+  if (!ROOT_ROUTES.has(leaf)) return null;
 
   const barLayout = {
     position: 'absolute' as const, left: 0, right: 0, bottom: 0,
