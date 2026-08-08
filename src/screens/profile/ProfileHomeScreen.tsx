@@ -14,7 +14,6 @@ import { GardnerChart } from '../../components/GardnerChart';
 import { JOBS } from '../../data/career';
 import { fetchMyShelf, ShelfEntry } from '../../data/books';
 import { imgUrl } from '../../data/api';
-import { loadJSON } from '../../state/persist';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
@@ -54,7 +53,6 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const [shelf, setShelf] = useState<ShelfEntry[]>([]);
   useEffect(() => {
     let alive = true;
-    loadJSON<ShelfEntry[]>('dvg.booksShelfCache.v1', []).then((c) => { if (alive && Array.isArray(c) && c.length) setShelf(c); });
     (async () => { if (!isSignedIn) return; try { const tok = await getToken(); const s = await fetchMyShelf(tok); if (alive) setShelf(s); } catch {} })();
     return () => { alive = false; };
   }, [isSignedIn]);
@@ -268,10 +266,16 @@ export function ProfileHomeScreen({ navigation }: Props) {
         </ListSection>
       ) : null}
 
-      {/* Resume data (Talentslab) */}
-      {Sec(t('personal_data'), personal)}
-      {Sec(t('career_education'), career)}
-      {Sec(t('about_me'), about)}
+      {/* Anketa — single entry that opens the full Talentslab report */}
+      <ListSection header={tr('Анкета')} style={{ marginTop: 18 }}>
+        <ListRow
+          leading={<IconCircle icon="doc.text.fill" color="#fff" bg={T.brand} size={30} />}
+          title={tr('Открыть свою анкету')}
+          subtitle={tr('Полный отчёт: таланты, MBTI, Гарднер')}
+          chevron last
+          onPress={() => navigation.getParent()?.navigate('CareerTab', { screen: 'TalentProfile' } as never)}
+        />
+      </ListSection>
 
       {/* Reports */}
       {(profile?.reports ?? []).length > 0 ? (
