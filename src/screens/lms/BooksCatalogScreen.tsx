@@ -11,11 +11,7 @@ import { Chip, SectionHeader, ty } from '../../components/ui';
 import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
 import { fetchBooks, fetchMyShelf, BookListItem, ShelfEntry, ShelfStatus } from '../../data/books';
-import { loadJSON, saveJSON } from '../../state/persist';
 import { LMSStackParams } from '../../navigation/types';
-
-const BOOKS_CACHE = 'dvg.booksCache.v1';
-const SHELF_CACHE = 'dvg.booksShelfCache.v1';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Books'>;
 
@@ -45,25 +41,10 @@ export function BooksCatalogScreen({ navigation }: Props) {
       const token = isSignedIn ? await getToken() : null;
       const [b, s] = await Promise.all([fetchBooks(token), isSignedIn ? fetchMyShelf(token) : Promise.resolve([] as ShelfEntry[])]);
       setBooks(b); setShelf(s);
-      // Cache so the next visit paints instantly (revalidated in the background).
-      saveJSON(BOOKS_CACHE, b);
-      if (isSignedIn) saveJSON(SHELF_CACHE, s);
     } catch { setError(true); } finally { setLoading(false); }
   }, [getToken, isSignedIn]);
 
-  // Cache-first: show the last catalog immediately, then revalidate over the network.
-  useEffect(() => {
-    let alive = true;
-    Promise.all([
-      loadJSON<BookListItem[]>(BOOKS_CACHE, []),
-      loadJSON<ShelfEntry[]>(SHELF_CACHE, []),
-    ]).then(([cb, cs]) => {
-      if (!alive) return;
-      if (Array.isArray(cb) && cb.length) { setBooks(cb); if (Array.isArray(cs)) setShelf(cs); setLoading(false); }
-    });
-    load();
-    return () => { alive = false; };
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   const genres = useMemo(
     () => ['Все', ...Array.from(new Set(books.flatMap((b) => b.genres))).sort()],

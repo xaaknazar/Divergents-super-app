@@ -12,7 +12,6 @@ import { ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
 import { fetchBook, postBookComment, rateBook, setBookShelf, BookDetailResponse, BookComment, ShelfStatus } from '../../data/books';
-import { loadJSON, saveJSON } from '../../state/persist';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'BookDetail'>;
@@ -45,19 +44,11 @@ export function BookDetailScreen({ route, navigation }: Props) {
     try {
       const token = isSignedIn ? await getToken() : null;
       const d = await fetchBook(bookId, token);
-      if (!d) setError(true); else { setData(d); saveJSON(`dvg.bookCache.${bookId}`, d); }
+      if (!d) setError(true); else setData(d);
     } catch { setError(true); } finally { setLoading(false); }
   }, [bookId, getToken, isSignedIn]);
 
-  // Cache-first: paint the last-seen detail instantly, then revalidate.
-  useEffect(() => {
-    let alive = true;
-    loadJSON<BookDetailResponse | null>(`dvg.bookCache.${bookId}`, null).then((c) => {
-      if (alive && c && (c as any).book) { setData(c); setLoading(false); }
-    });
-    load();
-    return () => { alive = false; };
-  }, [load, bookId]);
+  useEffect(() => { load(); }, [load]);
 
   const onShare = () => {
     if (!data) return;
