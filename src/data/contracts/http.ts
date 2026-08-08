@@ -29,11 +29,11 @@ export interface FetchOpts {
 
 // Fetch JSON and validate it against `schema`. Never throws — any network,
 // parse or validation failure resolves to { ok:false, data:null, error:true }.
-export async function fetchJson<T>(
+export async function fetchJson<S extends z.ZodTypeAny>(
   path: string,
-  schema: z.ZodType<T>,
+  schema: S,
   opts: FetchOpts = {},
-): Promise<Fetched<T>> {
+): Promise<Fetched<z.output<S>>> {
   const { timeoutMs = 12000, token, method = 'GET', body } = opts;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
