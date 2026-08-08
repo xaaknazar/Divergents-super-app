@@ -468,8 +468,8 @@ export async function applyToChallenge(token: string | null, challengeId: string
 }
 
 // ───────── Creator role + create content (challenges/trips/channels) ─────────
-export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; email?: string | null }> {
-  if (!token) return { canCreate: false };
+export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; isAdmin?: boolean; email?: string | null }> {
+  if (!token) return { canCreate: false, isAdmin: false };
   // A non-2xx is a legitimate "not an admin" → canCreate:false. A network/timeout
   // error THROWS so the caller (useRole) can retry instead of silently hiding
   // admin controls on a transient blip.

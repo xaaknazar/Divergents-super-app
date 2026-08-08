@@ -92,7 +92,10 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   const insets = useSafeAreaInsets();
   const left = daysUntil(meta.startISO);
   const { canCreate } = useRole();
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
+  // Reviewers: admins/creators, plus a captain of any team in this challenge.
+  const isCaptainHere = teams.some((t) => t.captainId && t.captainId === userId);
+  const canReview = canCreate || isCaptainHere;
 
   // Creator/admin: delete the challenge (double-confirmed; irreversible).
   const confirmDelete = () => {
@@ -211,7 +214,14 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
       </ScrollView>
 
       {/* CTA */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, gap: 10 }}>
+        {canReview ? (
+          <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId: meta.id })}
+            style={{ height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="person.2.fill" size={16} color={T.brand} />
+            <Text style={[ty.headline, { color: T.brand }]}>{canCreate ? 'Заявки (все команды)' : 'Заявки моей команды'}</Text>
+          </Pressable>
+        ) : null}
         <PrimaryButton label={tr('Подать заявку')} icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId: meta.id })} />
       </View>
     </View>
