@@ -1,8 +1,10 @@
 // Live data client for the Divergents LMS website.
 // Talks to the public read-only API added at /api/mobile on divergents-lms.kz.
+import { z } from 'zod';
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { Course, Lesson } from './courses';
+import { arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 
 // Single source of truth lives in src/config.ts; imported for internal use and
 // re-exported so the many `from './api'` importers keep working without a
@@ -20,41 +22,68 @@ export function lessonAudioUrl(lesson: Lesson): string | null {
   return (lesson as LessonWithAudio).audioUrl ?? null;
 }
 
-interface ApiCourseSummary {
-  id: string;
-  title: string;
-  description: string | null;
-  imageUrl: string | null;
-  price: number | null;
-  category: string | null;
-  categoryId: string | null;
-  chaptersCount: number;
-}
+// ─── Course contracts (GET /api/mobile/courses[/:id], /me/courses[/:id]) ──────
+// Zod schemas are the single source of truth for the course API shapes; the raw
+// types are inferred via z.infer so they can't drift from the server. Fields are
+// lenient (nullish text, string|number ids) so valid rows are never dropped.
+const ApiCourseSummarySchema = z.object({
+  id: zId,
+  title: zStr('Без названия'),
+  description: zStrN,
+  imageUrl: zStrN,
+  price: zNumN,
+  category: zStrN,
+  categoryId: zStrN,
+  chaptersCount: zNumN,
+}).passthrough();
 
-interface ApiChapter {
-  id: string;
-  title: string;
-  description: string | null;
-  position: number;
-  isFree: boolean;
-  playbackId: string | null;
-  hlsUrl: string | null;
+const ApiChapterSchema = z.object({
+  id: zId,
+  title: zStr(''),
+  description: zStrN,
+  position: zNumN,
+  isFree: z.boolean().nullish(),
+  playbackId: zStrN,
+  hlsUrl: zStrN,
   // Optional Mux audio rendition (audio.m4a) for offline audio downloads.
   // Only present on the owned-course detail endpoint (/api/mobile/me/courses/:id).
-  audioUrl?: string | null;
-}
+  audioUrl: zStrN,
+}).passthrough();
 
-interface ApiCourseDetail {
-  id: string;
-  title: string;
-  description: string | null;
-  imageUrl: string | null;
-  price: number | null;
-  category: string | null;
-  attachments: { id: string; name: string; url: string }[];
-  chapters: ApiChapter[];
-  progress?: number; // 0..100, present on the owned-course detail endpoint
-}
+const ApiAttachmentSchema = z.object({
+  id: zId,
+  name: zStr(''),
+  url: z.string(), // rows without a usable url are dropped by arrayOf
+}).passthrough();
+
+const ApiCourseDetailSchema = z.object({
+  id: zId,
+  title: zStr('Без названия'),
+  description: zStrN,
+  imageUrl: zStrN,
+  price: zNumN,
+  category: zStrN,
+  attachments: arrayOf(ApiAttachmentSchema, 'attachment'),
+  chapters: arrayOf(ApiChapterSchema, 'chapter'),
+  progress: z.number().nullish(), // 0..100, present on the owned-course detail endpoint
+}).passthrough();
+
+const ApiOwnedCourseSchema = ApiCourseSummarySchema.extend({
+  progress: z.number().nullish(),
+  owned: z.boolean().nullish(),
+});
+
+// Catalog responses arrive as { courses: [...] } or a bare array — normalize both
+// to a resilient array (malformed rows dropped, not the whole list).
+const courseListPre = (d: unknown) =>
+  Array.isArray(d) ? d : (d && Array.isArray((d as { courses?: unknown }).courses) ? (d as { courses: unknown[] }).courses : []);
+const CourseListSchema = z.preprocess(courseListPre, arrayOf(ApiCourseSummarySchema, 'course'));
+const OwnedListSchema = z.preprocess(courseListPre, arrayOf(ApiOwnedCourseSchema, 'owned course'));
+
+type ApiCourseSummary = z.infer<typeof ApiCourseSummarySchema>;
+type ApiChapter = z.infer<typeof ApiChapterSchema>;
+type ApiCourseDetail = z.infer<typeof ApiCourseDetailSchema>;
+type ApiOwnedCourse = z.infer<typeof ApiOwnedCourseSchema>;
 
 // Deterministic icon/tint per course so cards still look good without a cover.
 const PALETTE: { icon: SFName; tint: string; iconColor: string }[] = [
@@ -163,14 +192,20 @@ async function getJson(path: string, timeoutMs = 12000): Promise<any> {
 }
 
 export async function fetchCatalog(): Promise<Course[]> {
+  // getJson throws on network/HTTP failure (callers rely on it for the error
+  // state); the schema then validates the 200 body — CourseListSchema never
+  // throws (non-array → [], malformed rows dropped).
   const data = await getJson('/api/mobile/courses');
-  const raw = Array.isArray(data?.courses) ? data.courses : Array.isArray(data) ? data : [];
-  return raw.filter((c: any) => c && c.id != null).map(mapSummary);
+  return CourseListSchema.parse(data).map(mapSummary);
 }
 
 export async function fetchCourseDetail(id: string): Promise<Course> {
-  const data: ApiCourseDetail = await getJson(`/api/mobile/courses/${id}`);
-  return mapDetail(data);
+  const data = await getJson(`/api/mobile/courses/${id}`);
+  const parsed = ApiCourseDetailSchema.safeParse(data);
+  if (!parsed.success && __DEV__) console.warn(`[contracts] /courses/${id} failed validation:`, parsed.error.issues.slice(0, 4));
+  // On a validation miss, fall back to the defensive mapper on the raw body so a
+  // shape change never turns into a crash — behavior is never worse than before.
+  return mapDetail(parsed.success ? parsed.data : (data as ApiCourseDetail));
 }
 
 // Format a ₸ price (or "Бесплатно").
@@ -213,27 +248,25 @@ async function timedFetch(url: string, init?: RequestInit, timeoutMs = 12000): P
   }
 }
 
-interface ApiOwnedCourse extends ApiCourseSummary { progress: number; owned: boolean }
-
 export async function fetchMyCourses(token: string): Promise<Course[]> {
   const data = await getJsonAuthed('/api/mobile/me/courses', token);
-  const raw = Array.isArray(data?.courses) ? data.courses : Array.isArray(data) ? data : [];
-  return raw
-    .filter((c: any) => c && c.id != null)
-    .map((c: ApiOwnedCourse) => ({
-      ...mapSummary(c),
-      serverProgress: typeof c.progress === 'number' ? c.progress : undefined,
-      source: 'live' as const,
-    }));
+  return OwnedListSchema.parse(data).map((c) => ({
+    ...mapSummary(c),
+    serverProgress: typeof c.progress === 'number' ? c.progress : undefined,
+    source: 'live' as const,
+  }));
 }
 
 // Owned course detail (chapters unlocked with Mux HLS for every chapter).
 export async function fetchOwnedDetail(id: string, token: string): Promise<Course & { owned: boolean }> {
-  const data: ApiCourseDetail = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
+  const data = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
+  const parsed = ApiCourseDetailSchema.safeParse(data);
+  if (!parsed.success && __DEV__) console.warn(`[contracts] /me/courses/${id} failed validation:`, parsed.error.issues.slice(0, 4));
+  const detail = parsed.success ? parsed.data : (data as ApiCourseDetail);
   return {
-    ...mapDetail(data),
+    ...mapDetail(detail),
     owned: true,
-    ...(typeof data.progress === 'number' ? { serverProgress: data.progress } : {}),
+    ...(typeof detail.progress === 'number' ? { serverProgress: detail.progress } : {}),
   };
 }
 

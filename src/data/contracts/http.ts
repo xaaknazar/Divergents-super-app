@@ -96,3 +96,10 @@ export const zId = z.union([z.string(), z.number()]).transform((v) => String(v))
 
 // A nullable/absent string that falls back to `fallback` (default '').
 export const zStr = (fallback = '') => z.string().nullish().transform((v) => v ?? fallback);
+
+// Nullable/absent string normalized to `string | null` (never undefined) — for
+// view-model fields typed `string | null` (imageUrl, description, …).
+export const zStrN = z.string().nullish().transform((v) => v ?? null);
+
+// Nullable/absent number normalized to `number | null` — for `price`, etc.
+export const zNumN = z.number().nullish().transform((v) => v ?? null);
