@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Share } from 'react-native';
+import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Share, RefreshControl } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
@@ -53,6 +53,10 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   const [reqOpen, setReqOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [requests, setRequests] = useState<ChannelRequest[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  // Feed controls: filter by post type and per-post "read more" expansion.
+  const [postFilter, setPostFilter] = useState<'all' | 'article' | 'audio'>('all');
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   // Play channel voice posts through expo-av (not expo-video): remote m4a from
   // UploadThing plays reliably here and it shares the same audio session the
@@ -94,6 +98,17 @@ export function ServerChannelScreen({ route, navigation }: Props) {
     } finally { setLoading(false); }
   }, [id]);
   useEffect(() => { load(); }, [load]);
+
+  // Pull-to-refresh: re-fetch without flipping the full-screen loading spinner.
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const token = await getToken();
+      const [channels, mem] = await Promise.all([fetchServerChannels(), fetchMyChannelMemberships(token)]);
+      const found = channels.find((c) => c.id === id) ?? null;
+      setCh(found); setState(mem[id] ?? null);
+    } finally { setRefreshing(false); }
+  }, [id]);
 
   const loadRequests = useCallback(async () => {
     const token = await getToken();
@@ -173,7 +188,8 @@ export function ServerChannelScreen({ route, navigation }: Props) {
           <SF name="ellipsis" size={18} color={T.label} />
         </Pressable>
       ) : undefined} />
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }} showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}>
         {/* Gradient hero header */}
         <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
           <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
@@ -245,50 +261,128 @@ export function ServerChannelScreen({ route, navigation }: Props) {
           </View>
         ) : (
           <>
-            <Text style={[ty.footnote, { color: T.labelSecondary, paddingTop: 18, paddingBottom: 10, paddingHorizontal: 4, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Публикации</Text>
-            {ch.posts.length === 0 ? <Text style={[ty.subhead, { color: T.labelTertiary, paddingHorizontal: 4 }]}>Пока нет публикаций.</Text> : ch.posts.map((p) => (
-              <View key={p.id} style={{ backgroundColor: T.cardBg, borderRadius: 18, borderTopLeftRadius: 6, padding: 14, marginBottom: 12, borderWidth: 0.5, borderColor: T.cardBorder, alignSelf: 'flex-start', maxWidth: '94%' }}>
-                {p.title ? <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={2}>{p.title}</Text> : null}
-
-                {p.type === 'audio' && p.audioUrl ? (
-                  <Pressable onPress={() => playPost(p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10, width: 230, maxWidth: '100%' }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-                      <SF name={playingId === p.id ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 22, overflow: 'hidden' }}>
-                        {waveHeights(p.id).map((hh, i) => (
-                          <View key={i} style={{ width: 3, height: hh, borderRadius: 2, backgroundColor: playingId === p.id ? T.brand : T.labelTertiary }} />
-                        ))}
-                      </View>
-                      <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 3 }]} numberOfLines={1}>{playingId === p.id ? 'Играет…' : 'Голосовое сообщение'}</Text>
-                    </View>
-                  </Pressable>
-                ) : p.body ? <Text style={[ty.body, { color: T.label, marginTop: 8 }]}>{p.body}</Text> : null}
-
-                {/* Reactions + owner delete + time (Telegram-style) */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
-                  {REACTIONS.map((e) => {
-                    const on = p.myReaction === e;
-                    const count = p.reactions?.[e] ?? 0;
-                    return (
-                      <Pressable key={e} onPress={() => react(p.id, e)} hitSlop={4}
-                        style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 14, backgroundColor: on ? T.brandTinted : T.fillSecondary, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                        <Text style={{ fontSize: 14 }}>{e}</Text>
-                        {count > 0 ? <Text style={[ty.caption2Em, { color: on ? T.brand : T.labelSecondary }]}>{count}</Text> : null}
-                      </Pressable>
-                    );
-                  })}
-                  <View style={{ flex: 1 }} />
-                  {owner ? (
-                    <Pressable onPress={() => confirmDeletePost(p)} hitSlop={8} accessibilityLabel="Удалить публикацию" style={{ padding: 2, marginRight: 4 }}>
-                      <SF name="trash.fill" size={13} color={T.labelTertiary} />
-                    </Pressable>
-                  ) : null}
-                  <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtTime(p.createdAt)}</Text>
+            {/* Section header + count */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 20, paddingBottom: 12, paddingHorizontal: 4 }}>
+              <Text style={[ty.title3, { color: T.label }]}>Публикации</Text>
+              {ch.posts.length > 0 ? (
+                <View style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 7, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[ty.caption2Em, { color: T.labelSecondary }]}>{ch.posts.length}</Text>
                 </View>
+              ) : null}
+            </View>
+
+            {/* Content-type filter (only when there's more than one post) */}
+            {ch.posts.length > 1 ? (
+              <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4, marginBottom: 14 }}>
+                {([['all', 'Все'], ['article', 'Статьи'], ['audio', 'Голос']] as const).map(([k, label]) => {
+                  const n = k === 'all' ? ch.posts.length : ch.posts.filter((p) => p.type === k).length;
+                  if (k !== 'all' && n === 0) return null;
+                  const on = postFilter === k;
+                  return (
+                    <Pressable key={k} onPress={() => { hSelect(); setPostFilter(k); }}
+                      style={{ paddingHorizontal: 13, paddingVertical: 7, borderRadius: 999, backgroundColor: on ? T.brand : T.fillSecondary, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.labelSecondary }]}>{label}</Text>
+                      <Text style={[ty.caption2Em, { color: on ? 'rgba(255,255,255,0.85)' : T.labelTertiary }]}>{n}</Text>
+                    </Pressable>
+                  );
+                })}
               </View>
-            ))}
+            ) : null}
+
+            {ch.posts.length === 0 ? (
+              owner ? (
+                <View style={{ backgroundColor: T.cardBg, borderRadius: 20, borderWidth: 0.5, borderColor: T.cardBorder, padding: 24, alignItems: 'center' }}>
+                  <View style={{ width: 60, height: 60, borderRadius: 20, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <SF name="square.and.pencil" size={26} color={T.brand} />
+                  </View>
+                  <Text style={[ty.headline, { color: T.label, marginTop: 14 }]}>Опубликуйте первый пост</Text>
+                  <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>Поделитесь статьёй или голосовым сообщением — участники увидят его здесь.</Text>
+                  <Pressable onPress={() => setPostOpen(true)} style={{ marginTop: 16, height: 46, paddingHorizontal: 22, borderRadius: 13, backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <SF name="plus" size={15} color="#fff" /><Text style={[ty.subheadEm, { color: '#fff' }]}>Создать пост</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={{ alignItems: 'center', paddingVertical: 34 }}>
+                  <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="quote.bubble.fill" size={24} color={T.labelSecondary} /></View>
+                  <Text style={[ty.headline, { color: T.label, marginTop: 12 }]}>Здесь пока тихо</Text>
+                  <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>Автор ещё не публиковал. Загляните позже.</Text>
+                </View>
+              )
+            ) : (
+              ch.posts.filter((p) => postFilter === 'all' || p.type === postFilter).map((p) => {
+                const isAudio = p.type === 'audio';
+                const long = !isAudio && (p.body?.length ?? 0) > 260;
+                const isOpen = !!expanded[p.id];
+                const totalReactions = p.reactions ? Object.values(p.reactions).reduce((s, n) => s + (n || 0), 0) : 0;
+                return (
+                  <View key={p.id} style={{ backgroundColor: T.cardBg, borderRadius: 18, padding: 16, marginBottom: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+                    {/* Header: type badge + time (+ owner delete) */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: T.brandTinted, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }}>
+                        <SF name={isAudio ? 'waveform' : 'doc.text.fill'} size={11} color={T.brand} />
+                        <Text style={[ty.caption2Em, { color: T.brand }]}>{isAudio ? 'Голос' : 'Статья'}</Text>
+                      </View>
+                      <View style={{ flex: 1 }} />
+                      <SF name="clock.fill" size={10} color={T.labelTertiary} />
+                      <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtTime(p.createdAt)}</Text>
+                      {owner ? (
+                        <Pressable onPress={() => confirmDeletePost(p)} hitSlop={8} accessibilityLabel="Удалить публикацию" style={{ paddingLeft: 10 }}>
+                          <SF name="trash.fill" size={13} color={T.labelTertiary} />
+                        </Pressable>
+                      ) : null}
+                    </View>
+
+                    {p.title ? <Text style={[ty.headline, { color: T.label, marginTop: 10 }]}>{p.title}</Text> : null}
+
+                    {isAudio && p.audioUrl ? (
+                      <Pressable onPress={() => playPost(p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, backgroundColor: T.fillSecondary, borderRadius: 14, padding: 10 }}>
+                        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+                          <SF name={playingId === p.id ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
+                        </View>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 22, overflow: 'hidden' }}>
+                            {waveHeights(p.id).map((hh, i) => (
+                              <View key={i} style={{ width: 3, height: hh, borderRadius: 2, backgroundColor: playingId === p.id ? T.brand : T.labelTertiary }} />
+                            ))}
+                          </View>
+                          <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 3 }]} numberOfLines={1}>{playingId === p.id ? 'Играет…' : 'Голосовое сообщение'}</Text>
+                        </View>
+                      </Pressable>
+                    ) : p.body ? (
+                      <>
+                        <Text style={[ty.body, { color: T.labelSecondary, marginTop: 8 }]} numberOfLines={long && !isOpen ? 6 : undefined}>{p.body}</Text>
+                        {long ? (
+                          <Pressable onPress={() => setExpanded((e) => ({ ...e, [p.id]: !isOpen }))} hitSlop={6} style={{ marginTop: 6 }}>
+                            <Text style={[ty.subheadEm, { color: T.brand }]}>{isOpen ? 'Свернуть' : 'Читать далее'}</Text>
+                          </Pressable>
+                        ) : null}
+                      </>
+                    ) : null}
+
+                    {/* Reactions */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
+                      {REACTIONS.map((e) => {
+                        const on = p.myReaction === e;
+                        const count = p.reactions?.[e] ?? 0;
+                        return (
+                          <Pressable key={e} onPress={() => react(p.id, e)} hitSlop={4}
+                            style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: on ? T.brandTinted : T.fillSecondary, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                            <Text style={{ fontSize: 14 }}>{e}</Text>
+                            {count > 0 ? <Text style={[ty.caption2Em, { color: on ? T.brand : T.labelSecondary }]}>{count}</Text> : null}
+                          </Pressable>
+                        );
+                      })}
+                      {totalReactions > 0 ? (
+                        <>
+                          <View style={{ flex: 1 }} />
+                          <Text style={[ty.caption2, { color: T.labelTertiary }]}>{totalReactions}</Text>
+                        </>
+                      ) : null}
+                    </View>
+                  </View>
+                );
+              })
+            )}
           </>
         )}
       </ScrollView>
