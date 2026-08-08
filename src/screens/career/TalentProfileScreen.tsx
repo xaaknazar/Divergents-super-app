@@ -4,6 +4,7 @@ import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, ScrollView, Linking, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
@@ -27,7 +28,10 @@ const stepIndex = (key: string) => Math.max(0, RESUME_STEPS.findIndex((s) => s.k
 export function TalentProfileScreen({ navigation }: Props) {
   const { T } = useTheme();
   useLang();
-  const { profile: realProfile, live, loading } = useTalentProfile();
+  const { profile: realProfile, live, loading, reload } = useTalentProfile();
+  // Re-fetch on focus (silently) so edits saved on the Resume form are reflected
+  // when the user returns here — the profile feeds the Gallup vacancy matching.
+  useFocusEffect(React.useCallback(() => { reload(true); }, [reload]));
   // Only ever show the user's OWN data — never a demo profile masquerading as
   // theirs. When there is no live candidate record we render an empty CTA
   // (see the early return below), not fake "Aknazar K." data.

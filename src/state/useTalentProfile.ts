@@ -18,8 +18,10 @@ export function useTalentProfile() {
 
   const email = user?.primaryEmailAddress?.emailAddress ?? null;
 
-  const run = useCallback(async () => {
-    setLoading(true);
+  // `silent` refetches without flipping `loading` — used for focus/foreground
+  // refreshes so the screen doesn't flash its full-screen spinner every time.
+  const run = useCallback(async (silent?: boolean) => {
+    if (!silent) setLoading(true);
     try {
       const token = isSignedIn ? await getTalentslabToken(getTokenRef.current) : null;
       setProfile(await fetchTalentProfile(token, email));

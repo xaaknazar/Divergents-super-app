@@ -221,7 +221,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('strengths')}</Text>
             {!live ? (
-              <Pressable onPress={reload} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Pressable onPress={() => reload()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
                 <Text style={[ty.caption2Em, { color: T.labelSecondary }]} numberOfLines={1}>{t('demo_refresh')}</Text>
               </Pressable>
