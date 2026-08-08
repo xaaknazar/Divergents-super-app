@@ -55,7 +55,7 @@ export function VideoScreen({ route, navigation }: Props) {
   const resolving = !!isSignedIn && !my.ready && !hls && lesson?.isFree === false;
   const needsPurchase = !owned && course?.source === 'live' && lesson?.isFree === false && !hls && !resolving;
   const unavailable = owned && !hls && !resolving;
-  const player = useVideoPlayer(hls ?? '', (p) => { p.loop = false; });
+  const player = useVideoPlayer(hls ?? null, (p) => { p.loop = false; });
   // Offline-audio store. Called unconditionally (before any early return) so the
   // hook count stays stable across renders — see Rules of Hooks.
   const { isDownloaded, downloadLesson, removeDownload, isDownloading } = useDownloads();

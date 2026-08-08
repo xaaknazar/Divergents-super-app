@@ -3,7 +3,6 @@ import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, FlatList, RefreshControl, InteractionManager } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
@@ -11,6 +10,7 @@ import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateView
 import { useNotifications } from '../../state/NotificationsContext';
 import { NotifTarget } from '../../data/notifications';
 import { RootStackParams } from '../../navigation/types';
+import { navigationRef } from '../../navigation/ref';
 
 function fmtDate(iso: string, ru: boolean): string {
   if (!iso) return '';
@@ -57,12 +57,20 @@ export function NotificationsScreen({ navigation }: Props) {
   const open = useCallback((id: string, target?: NotifTarget | null) => {
     markRead(id);
     if (!target) return;
-    navigation.dispatch(
-      CommonActions.navigate({
-        name: 'Tabs',
-        params: { screen: target.tab, params: { screen: target.screen, params: target.params } },
-      }),
-    );
+    // This screen is a full-screen modal. Navigating to the target while the
+    // modal was still presented left the destination rendering BEHIND it (it
+    // looked like a half-height sheet). Dismiss the modal first, then navigate
+    // on the root ref next frame so the target always opens FULL-SCREEN on its
+    // tab stack.
+    navigation.goBack();
+    requestAnimationFrame(() => {
+      if (navigationRef.isReady()) {
+        (navigationRef as any).navigate('Tabs', {
+          screen: target.tab,
+          params: { screen: target.screen, params: target.params },
+        });
+      }
+    });
   }, [markRead, navigation]);
 
   // Skeleton during the open animation, and during the very first load.
@@ -127,8 +135,8 @@ const NotifRow = React.memo(function NotifRow({ it, T, ru, onPress }: { it: any;
   return (
     <Pressable onPress={() => onPress(it.id, it.target)}
       style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
-      <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: it.color + '33', alignItems: 'center', justifyContent: 'center' }}>
-        <SF name={it.icon} size={20} color={it.color} />
+      <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: (it.color || T.brand) + '33', alignItems: 'center', justifyContent: 'center' }}>
+        <SF name={it.icon || 'bell.fill'} size={20} color={it.color || T.brand} />
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
