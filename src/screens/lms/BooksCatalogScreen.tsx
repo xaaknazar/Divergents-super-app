@@ -34,6 +34,10 @@ export function BooksCatalogScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
   const [genre, setGenre] = useState('Все');
   const [sort, setSort] = useState<Sort>('rating');
+  // Render books in pages of 30 — the catalog will grow to ~500, and drawing all
+  // covers at once would jank. "Показать ещё" reveals the next 30.
+  const [visible, setVisible] = useState(30);
+  useEffect(() => { setVisible(30); }, [query, genre, sort]);
 
   const load = useCallback(async () => {
     setError(false);
@@ -147,7 +151,7 @@ export function BooksCatalogScreen({ navigation }: Props) {
 
             <SectionHeader title={query || genre !== 'Все' ? ('Найдено: ' + filtered.length) : 'Все книги'} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16 }}>
-              {filtered.map((b) => (
+              {filtered.slice(0, visible).map((b) => (
                 <Pressable key={b.id} onPress={() => navigation.navigate('BookDetail', { bookId: b.id })} style={{ width: '48.5%', marginBottom: 18 }}>
                   <View>
                     <Cover url={b.imageUrl} />
@@ -176,6 +180,12 @@ export function BooksCatalogScreen({ navigation }: Props) {
                 </Pressable>
               ))}
             </View>
+            {filtered.length > visible ? (
+              <Pressable onPress={() => setVisible((v) => v + 30)}
+                style={{ marginHorizontal: 16, marginTop: 2, marginBottom: 10, height: 46, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={[ty.subheadEm, { color: T.brand }]}>Показать ещё · {Math.min(30, filtered.length - visible)}</Text>
+              </Pressable>
+            ) : null}
             {filtered.length === 0 ? (
               books.length === 0
                 ? <EmptyState icon="book" title="Книги скоро появятся" subtitle="Библиотека обновляется — загляните чуть позже." />
