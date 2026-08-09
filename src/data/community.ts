@@ -145,8 +145,20 @@ function mapStatus(status: string): 'upcoming' | 'active' | 'finished' {
   return 'finished';
 }
 
+// Phase is DATE-DRIVEN: набор until the start date, then active for `durationDays`,
+// then finished. Falls back to the server status when there is no start date.
+function challengePhase(startISO: string | null | undefined, durationDays: number, serverStatus: string): 'upcoming' | 'active' | 'finished' {
+  const startMs = startISO ? Date.parse(startISO) : NaN;
+  if (!isFinite(startMs)) return mapStatus(serverStatus);
+  const now = Date.now();
+  if (now < startMs) return 'upcoming';
+  if (now < startMs + Math.max(1, durationDays) * 86400000) return 'active';
+  return 'finished';
+}
+
 function challengeStartLabel(c: RawChallenge): string {
-  if (c.status === 'active') return 'идёт';
+  const startMs = c.startISO ? Date.parse(c.startISO) : NaN;
+  if (isFinite(startMs) && Date.now() >= startMs) return 'идёт';
   return ruShortDate(c.startISO) || 'скоро';
 }
 
@@ -670,7 +682,7 @@ function mapChallenge(raw: RawChallenge, index: number): ChallengeListItem {
     id: raw.id,
     title: raw.title ?? '',
     subtitle: categoriesText(raw.categories) || rulesSnippet(raw.rules),
-    status: mapStatus(raw.status),
+    status: challengePhase(raw.startISO, typeof raw.durationDays === 'number' ? raw.durationDays : 0, raw.status),
     startISO: raw.startISO ?? undefined,
     startLabel: challengeStartLabel(raw),
     durationDays: typeof raw.durationDays === 'number' ? raw.durationDays : 0,
@@ -880,4 +892,35 @@ export async function assignTeamCaptain(
     });
     return res.ok;
   } catch { return false; } finally { clearTimeout(t); }
+}
+
+// The signed-in user's own challenge applications (status + captain/admin reason).
+export interface MyChallengeApplication {
+  challengeId: string;
+  title: string;
+  teamName: string;
+  status: ChallengeAppStatus;
+  feedback: string;
+  date: string;
+}
+export async function fetchMyChallengeApplications(token: string | null | undefined): Promise<MyChallengeApplication[]> {
+  if (!token) return [];
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/me/challenge-applications`, {
+      signal: ctrl.signal, headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const d = await res.json();
+    const list: any[] = Array.isArray(d?.applications) ? d.applications : [];
+    return list.map((a) => ({
+      challengeId: String(a.challengeId ?? ''),
+      title: a.title ?? '',
+      teamName: a.teamName ?? '',
+      status: (a.status ?? 'pending') as ChallengeAppStatus,
+      feedback: a.feedback ?? '',
+      date: a.date ?? '',
+    }));
+  } catch { return []; } finally { clearTimeout(t); }
 }

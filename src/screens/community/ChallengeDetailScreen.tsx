@@ -3,6 +3,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, Modal, Share, ActionSheetIOS, Platform, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Screen } from '../../components/Screen';
@@ -22,6 +23,7 @@ import {
   MEDAL_FOR_RANK, fetchChallengesAndTeams, getChallengeMeta, daysUntil, teamsNeed,
   CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
   FlagCounts, totalFlags, ChallengeTask,
+  fetchMyChallengeApplications, MyChallengeApplication,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -96,6 +98,17 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   // Reviewers: admins/creators, plus a captain of any team in this challenge.
   const isCaptainHere = teams.some((t) => t.captainId && t.captainId === userId);
   const canReview = canCreate || isCaptainHere;
+
+  // The user's own application to THIS challenge (undefined = loading). Drives the
+  // CTA: apply once; can't change while pending/approved; re-apply after rejection.
+  const [myApp, setMyApp] = useState<MyChallengeApplication | null | undefined>(undefined);
+  const loadMyApp = useCallback(async () => {
+    const token = await getToken();
+    const apps = await fetchMyChallengeApplications(token);
+    setMyApp(apps.find((a) => a.challengeId === meta.id) ?? null);
+  }, [meta.id]);
+  // Refresh on focus so the CTA updates right after applying (returns from JoinChallenge).
+  useFocusEffect(React.useCallback(() => { loadMyApp(); }, [loadMyApp]));
 
   // Creator/admin: delete the challenge (double-confirmed; irreversible).
   const confirmDelete = () => {
@@ -222,7 +235,30 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
             <Text style={[ty.headline, { color: T.brand }]}>{canCreate ? 'Заявки (все команды)' : 'Заявки моей команды'}</Text>
           </Pressable>
         ) : null}
-        <PrimaryButton label={tr('Подать заявку')} icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId: meta.id })} />
+
+        {/* Applicant CTA — one application; can re-apply only after a rejection. */}
+        {myApp?.status === 'approved' ? (
+          <View style={{ height: 50, borderRadius: 14, backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="checkmark.circle.fill" size={18} color={T.green} />
+            <Text style={[ty.headline, { color: T.green }]}>Вы в команде{myApp.teamName ? ` «${myApp.teamName}»` : ''}</Text>
+          </View>
+        ) : myApp?.status === 'pending' ? (
+          <View style={{ height: 50, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="clock.fill" size={16} color={T.labelSecondary} />
+            <Text style={[ty.headline, { color: T.labelSecondary }]}>Заявка на рассмотрении</Text>
+          </View>
+        ) : (
+          <>
+            {myApp?.status === 'rejected' && myApp.feedback ? (
+              <Text style={[ty.caption1, { color: T.red, textAlign: 'center' }]} numberOfLines={2}>Отклонено: {myApp.feedback}</Text>
+            ) : null}
+            <PrimaryButton
+              label={myApp?.status === 'rejected' ? tr('Подать заявку заново') : tr('Подать заявку')}
+              icon="paperplane.fill"
+              onPress={() => navigation.navigate('JoinChallenge', { challengeId: meta.id })}
+            />
+          </>
+        )}
       </View>
     </View>
   );

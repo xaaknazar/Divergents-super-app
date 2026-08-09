@@ -197,17 +197,22 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
             {openChallenges.map((ch) => (
-              <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })} style={{ width: 250, borderRadius: 16, overflow: 'hidden', backgroundColor: T.cardBg }}>
-                <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 78, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, gap: 12 }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-                    <SF name={ch.icon} size={22} color="#fff" />
+              <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })} style={{ width: 260, borderRadius: 18, overflow: 'hidden', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
+                <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 14, gap: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+                      <SF name={ch.icon} size={20} color="#fff" />
+                    </View>
+                    <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
+                      <Text style={[ty.caption2Em, { color: '#fff' }]}>{daysUntil(ch.startISO) > 0 ? `старт через ${daysUntil(ch.startISO)} дн.` : 'скоро старт'}</Text>
+                    </View>
                   </View>
-                  <Text style={[ty.headline, { color: '#fff', flex: 1 }]} numberOfLines={2}>{ch.title}</Text>
+                  <Text style={[ty.title3, { color: '#fff' }]} numberOfLines={2}>{ch.title}</Text>
                 </LinearGradient>
                 <View style={{ padding: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  <Capsule bg={T.brandTinted} color={T.brand}><SF name="calendar" size={10} color={T.brand} />{tr('Старт')} {ch.startLabel}</Capsule>
-                  <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дн.</Capsule>
-                  <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={10} color={T.labelSecondary} />{ch.participants}</Capsule>
+                  <Capsule bg={T.brandTinted} color={T.brand}><SF name="flame.fill" size={10} color={T.brand} />{ch.durationDays} дней</Capsule>
+                  <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={10} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
+                  <Capsule bg={T.fillTertiary} color={T.label}>Набор открыт</Capsule>
                 </View>
               </Pressable>
             ))}
