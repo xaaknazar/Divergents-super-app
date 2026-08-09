@@ -10,6 +10,7 @@ import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { API_BASE, formatPrice } from './api';
 import { fetchJson, arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
+import { TalentProfile, normalizeProfile } from './talentslab';
 
 // ─── Server contracts (GET /api/mobile/{trips,challenges,sport}) ─────────────
 // Zod schemas validate every response at the network boundary and are the single
@@ -22,7 +23,8 @@ const RawTeamSchema = z.object({
   id: zId,
   name: zStr(''),
   capacity: zNumN,
-  captain: zStrN,
+  captain: zStrN,     // Clerk userId of the captain (or null)
+  captainName: zStrN, // resolved display name (server-side)
   _count: CountSchema,
 }).passthrough();
 
@@ -611,7 +613,8 @@ export interface ChallengeTeam {
   name: string;
   members: number;
   capacity: number;
-  captain: string;
+  captain: string;   // display name ('—' when none)
+  captainId: string; // Clerk userId ('' when none) — for "am I the captain" checks
   advisors: string[];
   tint: string;
 }
@@ -622,7 +625,8 @@ function mapTeam(raw: RawTeam, index: number): ChallengeTeam {
     name: raw.name ?? '',
     members: applicationsOf(raw),
     capacity: typeof raw.capacity === 'number' ? raw.capacity : 0,
-    captain: raw.captain ?? '—',
+    captain: raw.captainName || '—',
+    captainId: raw.captain ?? '',
     advisors: [],
     tint: tintAt(index),
   };
@@ -787,4 +791,93 @@ export async function fetchChallengesAndTeams(): Promise<ChallengesBundle> {
     teams: teamsFromChallenges(list),
     error,
   };
+}
+
+// ─── Challenge applications (admin/captain review) ───────────────────────────
+export type ChallengeAppStatus = 'pending' | 'approved' | 'rejected';
+
+export interface ChallengeApplicant {
+  id: string;
+  applicantUserId: string;
+  userEmail: string;
+  userName: string;
+  status: ChallengeAppStatus;
+  feedback: string;
+  coefficient: number;
+  teamId: string | null;
+  teamName: string;
+  date: string;
+  profile: TalentProfile | null;
+}
+
+// Admin sees all applicants; a team captain sees only their team's. `canManage`
+// tells the app whether to show admin-only controls (assign captain, move team).
+export async function fetchChallengeApplicants(
+  challengeId: string, token: string | null | undefined,
+): Promise<{ applicants: ChallengeApplicant[]; canManage: boolean }> {
+  if (!token) return { applicants: [], canManage: false };
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/applications`, {
+      signal: ctrl.signal, headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return { applicants: [], canManage: false };
+    const d = await res.json();
+    const list: any[] = Array.isArray(d?.applications) ? d.applications : [];
+    return {
+      canManage: !!d?.canManage,
+      applicants: list.map((a) => ({
+        id: String(a.id),
+        applicantUserId: String(a.applicantUserId ?? ''),
+        userEmail: a.userEmail ?? '',
+        userName: a.userName ?? '',
+        status: (a.status ?? 'pending') as ChallengeAppStatus,
+        feedback: a.feedback ?? '',
+        coefficient: typeof a.coefficient === 'number' ? a.coefficient : 1,
+        teamId: a.teamId ?? null,
+        teamName: a.teamName ?? '',
+        date: a.date ?? '',
+        profile: a.profile ? normalizeProfile(a.profile) : null,
+      })),
+    };
+  } catch { return { applicants: [], canManage: false }; }
+  finally { clearTimeout(t); }
+}
+
+// Captain/admin: set status + feedback (accept/reject with reason); admin may
+// also move the applicant to a team via `teamId`.
+export async function decideChallengeApplication(
+  challengeId: string, applicantUserId: string,
+  patch: { status?: ChallengeAppStatus; feedback?: string; teamId?: string },
+  token: string | null | undefined,
+): Promise<boolean> {
+  if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/applications`, {
+      method: 'PATCH', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ applicantUserId, ...patch }),
+    });
+    return res.ok;
+  } catch { return false; } finally { clearTimeout(t); }
+}
+
+// Admin: assign (userId) or clear (null) a team's captain.
+export async function assignTeamCaptain(
+  challengeId: string, teamId: string, captainUserId: string | null, token: string | null | undefined,
+): Promise<boolean> {
+  if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/teams/${encodeURIComponent(teamId)}`, {
+      method: 'PATCH', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ captain: captainUserId }),
+    });
+    return res.ok;
+  } catch { return false; } finally { clearTimeout(t); }
 }

@@ -15,6 +15,9 @@ import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useActivities } from '../../state/ActivityContext';
+import { useAuth } from '@clerk/clerk-expo';
+import { useRole } from '../../state/useRole';
+import { deleteChallenge } from '../../data/api';
 import {
   MEDAL_FOR_RANK, fetchChallengesAndTeams, getChallengeMeta, daysUntil, teamsNeed,
   CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
@@ -88,6 +91,24 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   useLang();
   const insets = useSafeAreaInsets();
   const left = daysUntil(meta.startISO);
+  const { canCreate } = useRole();
+  const { getToken, userId } = useAuth();
+  // Reviewers: admins/creators, plus a captain of any team in this challenge.
+  const isCaptainHere = teams.some((t) => t.captainId && t.captainId === userId);
+  const canReview = canCreate || isCaptainHere;
+
+  // Creator/admin: delete the challenge (double-confirmed; irreversible).
+  const confirmDelete = () => {
+    Alert.alert('Удалить челлендж?', `«${meta.title}» и все заявки будут удалены безвозвратно.`, [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить', style: 'destructive', onPress: async () => {
+        const token = await getToken();
+        const ok = await deleteChallenge(token, meta.id);
+        if (ok) { hSuccess(); navigation.navigate('CommunityHome', { refresh: Date.now(), focus: 'challenge' }); }
+        else Alert.alert('Не удалось удалить', 'Проверьте подключение и права (нужен создатель/админ).');
+      } },
+    ]);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
@@ -95,7 +116,9 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <NavHeader
           transparent tint="#fff" backLabel={tr('Сообщество')} onBack={() => navigation.goBack()}
-          trailing={<SF name="square.and.arrow.up" size={20} color="#fff" />}
+          trailing={canCreate
+            ? <Pressable onPress={confirmDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel="Удалить челлендж"><SF name="trash.fill" size={19} color="#fff" /></Pressable>
+            : <SF name="square.and.arrow.up" size={20} color="#fff" />}
         />
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 22, position: 'relative' }}>
           <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
@@ -191,7 +214,14 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
       </ScrollView>
 
       {/* CTA */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, gap: 10 }}>
+        {canReview ? (
+          <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId: meta.id })}
+            style={{ height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="person.2.fill" size={16} color={T.brand} />
+            <Text style={[ty.headline, { color: T.brand }]}>{canCreate ? 'Заявки (все команды)' : 'Заявки моей команды'}</Text>
+          </Pressable>
+        ) : null}
         <PrimaryButton label={tr('Подать заявку')} icon="paperplane.fill" onPress={() => navigation.navigate('JoinChallenge', { challengeId: meta.id })} />
       </View>
     </View>

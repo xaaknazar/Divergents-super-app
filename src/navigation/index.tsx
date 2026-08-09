@@ -24,6 +24,7 @@ import { DownloadsScreen } from '../screens/lms/DownloadsScreen';
 import { CommunityHomeScreen } from '../screens/community/CommunityHomeScreen';
 import { ChannelsScreen } from '../screens/community/ChannelsScreen';
 import { ChallengeDetailScreen } from '../screens/community/ChallengeDetailScreen';
+import { ChallengeApplicantsScreen } from '../screens/community/ChallengeApplicantsScreen';
 import { JoinChallengeScreen } from '../screens/community/JoinChallengeScreen';
 import { TripDetailScreen } from '../screens/community/TripDetailScreen';
 import { ServerChannelScreen } from '../screens/community/ServerChannelScreen';
@@ -73,6 +74,7 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="CommunityHome" component={CommunityHomeScreen} />
       <CommunityStack.Screen name="Channels" component={ChannelsScreen} />
       <CommunityStack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
+      <CommunityStack.Screen name="ChallengeApplicants" component={ChallengeApplicantsScreen} />
       <CommunityStack.Screen name="WorkoutTrack" component={WorkoutTrackScreen} />
       <CommunityStack.Screen name="JoinChallenge" component={JoinChallengeScreen} options={{ presentation: 'modal' }} />
       <CommunityStack.Screen name="TripDetail" component={TripDetailScreen} />

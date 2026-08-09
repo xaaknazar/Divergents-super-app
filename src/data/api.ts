@@ -468,8 +468,8 @@ export async function applyToChallenge(token: string | null, challengeId: string
 }
 
 // ───────── Creator role + create content (challenges/trips/channels) ─────────
-export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; email?: string | null }> {
-  if (!token) return { canCreate: false };
+export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; isAdmin?: boolean; email?: string | null }> {
+  if (!token) return { canCreate: false, isAdmin: false };
   // A non-2xx is a legitimate "not an admin" → canCreate:false. A network/timeout
   // error THROWS so the caller (useRole) can retry instead of silently hiding
   // admin controls on a transient blip.
@@ -587,6 +587,11 @@ export const updateChannel = (token: string | null, id: string, data: { name?: s
 // Owner-only: permanently delete the channel (server also removes its posts/members).
 export const deleteChannel = (token: string | null, id: string) =>
   postAuthedMethod('DELETE', `/api/mobile/channels/${id}`, token, {});
+
+// Delete a challenge (creator/admin only, enforced server-side). Cascades its
+// teams/applications/tasks.
+export const deleteChallenge = (token: string | null, id: string) =>
+  postAuthedMethod('DELETE', `/api/mobile/challenges/${id}`, token, {});
 // Owner-only: delete a single post from the channel.
 export const deleteChannelPost = (token: string | null, id: string, postId: string) =>
   postAuthedMethod('DELETE', `/api/mobile/channels/${id}/posts/${postId}`, token, {});
