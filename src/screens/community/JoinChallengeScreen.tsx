@@ -13,6 +13,7 @@ import {
   fetchChallengesAndTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam,
 } from '../../data/community';
 import { applyToChallenge } from '../../data/api';
+import { useTalentProfile } from '../../state/useTalentProfile';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
@@ -34,6 +35,9 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { getToken } = useAuth();
+  // The applicant's own анкета — attached to the application so the captain/admin
+  // reliably sees it (independent of the server→Talentslab by-email lookup).
+  const { profile, live } = useTalentProfile();
 
   const load = useCallback(() => {
     let alive = true;
@@ -61,7 +65,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
     setSubmitting(true);
     try {
       const token = await getToken();
-      const ok = await applyToChallenge(token, route.params.challengeId, teamId);
+      const ok = await applyToChallenge(token, route.params.challengeId, teamId, live ? profile : undefined);
       if (ok) setSubmitted(true);
       else Alert.alert(tr('Не удалось отправить заявку'), tr('Проверьте подключение и попробуйте снова.'));
     } catch {

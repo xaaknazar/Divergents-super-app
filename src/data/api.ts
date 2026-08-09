@@ -453,7 +453,9 @@ export async function fetchLiveChallenges(): Promise<LiveChallenge[]> {
   } catch { return []; } finally { clearTimeout(t); }
 }
 
-export async function applyToChallenge(token: string | null, challengeId: string, teamId: string | null): Promise<boolean> {
+// `profile` is the applicant's own Talentslab анкета (from useTalentProfile) —
+// sent so reviewers reliably see it, independent of the server→Talentslab lookup.
+export async function applyToChallenge(token: string | null, challengeId: string, teamId: string | null, profile?: unknown): Promise<boolean> {
   if (!token) return false;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 15000);
@@ -461,7 +463,7 @@ export async function applyToChallenge(token: string | null, challengeId: string
     const res = await fetch(`${API_BASE}/api/mobile/challenges/${challengeId}/apply`, {
       method: 'POST', signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ teamId }),
+      body: JSON.stringify({ teamId, ...(profile ? { profile } : {}) }),
     });
     return res.ok;
   } catch { return false; } finally { clearTimeout(t); }

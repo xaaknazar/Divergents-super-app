@@ -112,7 +112,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
         {SECTION_KEYS.map((k, i) => <Chip key={k} label={t(k)} active={seg === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(i); }} />)}
       </ScrollView>
 
-      {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} trips={trips} sport={sport} error={error} onRetry={load} />}
+      {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} trips={trips} sport={sport} challenges={challenges} error={error} onRetry={load} />}
       {seg === 1 && <ChannelTab navigation={navigation} />}
       {seg === 2 && <ChallengesTab navigation={navigation} challenges={challenges} error={error} onRetry={load} />}
       {seg === 3 && <TripsTab navigation={navigation} trips={trips} error={error} onRetry={load} />}
@@ -176,12 +176,11 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
 }
 
 // ─── Главная ────────────────────────────────────────────────────────
-function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; error: boolean; onRetry: () => void }) {
+function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { t } = useLang();
   const { T } = useTheme();
-  const { challenge } = useChallenge();
-  const hasActive = challenge.currentDay > 0 || challenge.tasks.length > 0;
   const { channels, error: channelsError, reload: reloadChannels } = useChannel();
+  const openChallenges = (challenges ?? []).filter((x) => x.status === 'upcoming');
   return (
     <>
       {/* Channels first */}
@@ -189,6 +188,32 @@ function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { naviga
       {channels.length === 0
         ? <EmptyOrError error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
         : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
+
+      {/* Challenges — open registration */}
+      <View style={{ marginTop: 18 }}>
+        <SectionHeader title={t('sec_challenges')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(2); }} />
+        {challenges === null ? <Loading /> : openChallenges.length === 0 ? (
+          <EmptyOrError error={error} onRetry={onRetry} icon="flag.fill" title={tr('Пока ничего нет')} subtitle={tr('Новые челленджи появятся здесь.')} />
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
+            {openChallenges.map((ch) => (
+              <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })} style={{ width: 250, borderRadius: 16, overflow: 'hidden', backgroundColor: T.cardBg }}>
+                <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 78, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, gap: 12 }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+                    <SF name={ch.icon} size={22} color="#fff" />
+                  </View>
+                  <Text style={[ty.headline, { color: '#fff', flex: 1 }]} numberOfLines={2}>{ch.title}</Text>
+                </LinearGradient>
+                <View style={{ padding: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  <Capsule bg={T.brandTinted} color={T.brand}><SF name="calendar" size={10} color={T.brand} />{tr('Старт')} {ch.startLabel}</Capsule>
+                  <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дн.</Capsule>
+                  <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={10} color={T.labelSecondary} />{ch.participants}</Capsule>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+      </View>
 
       <View style={{ marginTop: 18 }}>
         <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
@@ -226,7 +251,10 @@ function HomeFeed({ navigation, setSeg, trips, sport, error, onRetry }: { naviga
 function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation: Nav; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
   const { challenge } = useChallenge();
-  const hasActive = challenge.currentDay > 0 || challenge.tasks.length > 0;
+  // Only a REAL server-active challenge (currentDay > 0) counts. The offline
+  // DEFAULT_CHALLENGE placeholder always has tasks, so the old `|| tasks.length`
+  // made a phantom "active challenge" (День 0/21) show permanently.
+  const hasActive = challenge.currentDay > 0;
   const upcoming = (challenges ?? []).filter((x) => x.status === 'upcoming');
   return (
     <>
