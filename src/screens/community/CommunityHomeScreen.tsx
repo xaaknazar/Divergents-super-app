@@ -175,33 +175,58 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
   );
 }
 
+// Russian plural: ruPlural(1,'день','дня','дней') → 'день', (3)→'дня', (10)→'дней'.
+function ruPlural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+// White text over a brand gradient can wash out where the gradient goes light
+// (esp. dark-mode brandAccent). This shadow keeps every white label legible.
+const HERO_TEXT_SHADOW = { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 } as const;
+
 // ─── Open-challenge card (full-width) ───────────────────────────────
 // Shared by the home feed and the Челленджи tab so an open challenge always
 // renders as one full-width card — never a narrow, left-floating carousel item.
 function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => void }) {
   const { T } = useTheme();
   const left = daysUntil(ch.startISO);
+  const countdown = left > 0
+    ? `${tr('Старт через')} ${left} ${ruPlural(left, 'день', 'дня', 'дней')}${ch.startLabel ? ` · ${ch.startLabel}` : ''}`
+    : tr('Старт скоро');
   return (
     <Pressable onPress={onPress}
-      style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder }}>
-      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
-        <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-          <SF name={ch.icon} size={28} color="#fff" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />{tr('Старт')} {ch.startLabel}</Capsule>
-          <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{ch.title}</Text>
+      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
+      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
+        {/* Darkening overlay → guarantees white text contrast across the gradient */}
+        <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 52, height: 52, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+            <SF name={ch.icon} size={26} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: '#fff' }, HERO_TEXT_SHADOW]} numberOfLines={2}>{ch.title}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+              <SF name="calendar" size={11} color="#fff" />
+              <Text style={[ty.caption1, { color: '#fff', flex: 1 }, HERO_TEXT_SHADOW]} numberOfLines={1}>{countdown}</Text>
+            </View>
+          </View>
         </View>
       </LinearGradient>
       <View style={{ padding: 14 }}>
         {ch.subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]} numberOfLines={2}>{ch.subtitle}</Text> : null}
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-          <Capsule bg={T.brandTinted} color={T.brand}>{left > 0 ? `${tr('через')} ${left} ${tr('дн.')}` : tr('скоро старт')}</Capsule>
-          <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дней</Capsule>
-          <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
+          <Capsule bg={T.brandTinted} color={T.brand}><SF name="flame.fill" size={11} color={T.brand} />{ch.durationDays} {ruPlural(ch.durationDays, 'день', 'дня', 'дней')}</Capsule>
+          <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} {ruPlural(ch.participants, 'заявка', 'заявки', 'заявок')}</Capsule>
+          <Capsule bg="rgba(255,59,48,0.12)" color={T.red}>{ch.maxFlags} 🚩 {tr('вылет')}</Capsule>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
-          <Text style={[ty.caption1, { color: T.red, flexShrink: 1 }]} numberOfLines={1}>{ch.maxFlags} 🚩 — {tr('вылет')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: T.green }} />
+            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Набор открыт')}</Text>
+          </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Подробнее')}</Text>
             <SF name="chevron.forward" size={12} color={T.brand} />
