@@ -25,6 +25,7 @@ const RawTeamSchema = z.object({
   capacity: zNumN,
   captain: zStrN,     // Clerk userId of the captain (or null)
   captainName: zStrN, // resolved display name (server-side)
+  advisors: z.array(z.string()).nullish(), // 2 advisor display names (optional)
   _count: CountSchema,
 }).passthrough();
 
@@ -229,10 +230,14 @@ export const DEFAULT_CHALLENGE: Challenge = {
   teamCount: 0,
   trainer: '',
   price: '',
+  // Scoring mirrors the Divergents rules exactly (see CHALLENGE_RULES):
+  //  • Чтение: норма 20 стр., 1 балл за страницу → basePts 20 + 1 за каждую стр. сверх.
+  //  • No Sugar: условие-гейт, 0 баллов за соблюдение (нарушение штрафуется сервером).
+  //  • Активность: норма 10 000 шагов, 1 балл за 400 шагов → basePts 25 + 1 за каждые 400 сверх.
   tasks: [
-    { id: 'steps', kind: 'metric', title: '10 000 шагов', icon: 'figure.walk', unit: 'шагов', min: 10000, current: 0, basePts: 10, unitSize: 100, ptsPerUnit: 1 },
-    { id: 'sugar', kind: 'binary', title: 'День без сахара', icon: 'cube.fill', done: false, basePts: 10 },
-    { id: 'reading', kind: 'metric', title: '10 страниц книги', icon: 'book.fill', unit: 'стр.', min: 10, current: 0, basePts: 10, unitSize: 1, ptsPerUnit: 2 },
+    { id: 'reading', kind: 'metric', title: '20 страниц книги', icon: 'book.fill', unit: 'стр.', min: 20, current: 0, basePts: 20, unitSize: 1, ptsPerUnit: 1 },
+    { id: 'sugar', kind: 'binary', title: 'День без сахара', icon: 'cube.fill', done: false, basePts: 0 },
+    { id: 'steps', kind: 'metric', title: '10 000 шагов', icon: 'figure.walk', unit: 'шагов', min: 10000, current: 0, basePts: 25, unitSize: 400, ptsPerUnit: 1 },
   ],
 };
 
@@ -269,9 +274,11 @@ export interface Member {
   day: number;
   isMe?: boolean;
   // Server-computed disciplinary state. flags are per-category 🚩 counts;
-  // eliminated freezes the member's points (🏳️ / «выбыл»).
+  // eliminated freezes the member's points (🏳️ / «выбыл»). penalty is the total
+  // штрафных баллов (−100/−300), отрицательное число; уже учтено в weekBase.
   flags?: FlagCounts;
   eliminated?: boolean;
+  penalty?: number;
 }
 
 export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | null => {
@@ -303,7 +310,7 @@ interface RawActiveChallenge {
 }
 interface RawActiveMember {
   id?: unknown; name?: unknown; weekBase?: unknown; day?: unknown; isMe?: unknown;
-  flags?: unknown; eliminated?: unknown;
+  flags?: unknown; eliminated?: unknown; penalty?: unknown;
 }
 
 const numOf = (v: unknown, d = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
@@ -390,6 +397,7 @@ function mapActiveMember(raw: RawActiveMember): Member | null {
     isMe: raw.isMe === true,
     flags: flagsOf(raw.flags),
     eliminated: raw.eliminated === true,
+    penalty: numOf(raw.penalty),
   };
 }
 
@@ -443,6 +451,33 @@ export async function postChallengeProgress(
       signal: ctrl.signal,
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// POST /api/mobile/challenges/:id/report (Clerk Bearer) — the participant's daily
+// report ("отчёт за день"). The server timestamps it and, if it arrives after the
+// 23:00 deadline (challenge TZ), applies the late penalty (−300 и 3 🚩). Best-effort:
+// returns false when it can't be sent, so the UI can surface a retry.
+export async function submitChallengeReport(
+  challengeId: string,
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<boolean> {
+  if (!challengeId || challengeId === DEFAULT_CHALLENGE.id || !token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/report`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({}),
     });
     return res.ok;
   } catch {
@@ -590,7 +625,7 @@ export interface ChallengeCategory {
 
 export const CHALLENGE_CATEGORIES: ChallengeCategory[] = [
   { key: 'R', title: 'Чтение', norm: '20 страниц в день', scoring: '1 балл за страницу · худлит — 0.5', icon: 'book.fill', color: T.brand },
-  { key: 'NS', title: 'No Sugar', norm: 'Полностью без сахара', scoring: 'Читмил: 2 ч.л. мёда + 1 финик в день', icon: 'cube.fill', color: T.red },
+  { key: 'NS', title: 'No Sugar', norm: 'Полностью без сахара', scoring: 'Читмил: 2 ч.л. мёда/день; фрукты и финики — без ограничений', icon: 'cube.fill', color: T.red },
   { key: 'A', title: 'Активность', norm: '10 000 шагов в день', scoring: '1 балл за 400 шагов · минимум 5 000', icon: 'figure.walk', color: T.green },
 ];
 
@@ -601,9 +636,9 @@ export const CHALLENGE_RULES: string[] = [
   'Отчёт за день — в чат команды до 23:00. Опоздание: −300 баллов и три 🚩.',
   'Штраф за невыполнение нормы: −100 баллов и 🚩 по этой категории. Баллы не уходят в минус (минимум 0).',
   '3 🚩 по одной категории → 🏳️ и вылет. Очки фиксируются.',
-  'Команда — ровно 30 человек: капитан и 2 советника, выбранные участниками.',
-  'Никнейм ≤ 9 символов, близкий к ФИО. Фиксируйте аэробную нагрузку для проверки.',
-  'Читмил: до 2 ч.л. мёда с горкой в день; несладкие сухофрукты и финики — без ограничений.',
+  'Размер команды задаёт организатор (например, 20–35 человек): капитан и 2 советника, выбранные участниками.',
+  'Никнейм ≤ 9 символов и не более одной заглавной буквы, близкий к ФИО. Фиксируйте аэробную нагрузку для проверки.',
+  'Читмил: до 2 ч.л. мёда с горкой в день; фрукты, несладкие сухофрукты и финики — без ограничений.',
   'Побеждает команда с наибольшей суммой баллов всех участников.',
 ];
 
@@ -639,7 +674,7 @@ function mapTeam(raw: RawTeam, index: number): ChallengeTeam {
     capacity: typeof raw.capacity === 'number' ? raw.capacity : 0,
     captain: raw.captainName || '—',
     captainId: raw.captain ?? '',
-    advisors: [],
+    advisors: Array.isArray(raw.advisors) ? raw.advisors.filter((a): a is string => typeof a === 'string' && a.trim().length > 0) : [],
     tint: tintAt(index),
   };
 }
@@ -673,11 +708,15 @@ export interface ChallengeListItem {
   maxFlags: number;
   participants: number;
   teams: number;
+  // The teams of THIS challenge (mapped). Screens must scope team selection to
+  // the challenge being viewed — never to a global "first open challenge" list.
+  teamList: ChallengeTeam[];
   tint: string;
   icon: SFName;
 }
 
 function mapChallenge(raw: RawChallenge, index: number): ChallengeListItem {
+  const teamList = Array.isArray(raw.teams) ? raw.teams.map(mapTeam) : [];
   return {
     id: raw.id,
     title: raw.title ?? '',
@@ -688,7 +727,8 @@ function mapChallenge(raw: RawChallenge, index: number): ChallengeListItem {
     durationDays: typeof raw.durationDays === 'number' ? raw.durationDays : 0,
     maxFlags: parseMaxFlags(raw.rules),
     participants: applicationsOf(raw),
-    teams: Array.isArray(raw.teams) ? raw.teams.length : 0,
+    teams: teamList.length,
+    teamList,
     tint: tintAt(index),
     icon: challengeIconAt(index),
   };

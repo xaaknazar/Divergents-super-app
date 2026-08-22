@@ -34,23 +34,20 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   const challengeId = route.params?.challengeId ?? '';
   const { challenge: active } = useChallenge();
   const [list, setList] = useState<ChallengeListItem[] | null>(null);
-  const [teams, setTeams] = useState<ChallengeTeam[]>([]);
   const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
-    const { challenges, teams: tms, error: err } = await fetchChallengesAndTeams();
+    const { challenges, error: err } = await fetchChallengesAndTeams();
     setList(challenges);
-    setTeams(tms);
     setError(err);
   }, []);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { challenges, teams: tms, error: err } = await fetchChallengesAndTeams();
+      const { challenges, error: err } = await fetchChallengesAndTeams();
       if (!alive) return;
       setList(challenges);
-      setTeams(tms);
       setError(err);
     })();
     return () => { alive = false; };
@@ -71,7 +68,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
 
   const meta = getChallengeMeta(list, challengeId);
   if (meta && meta.status === 'upcoming') {
-    return <UpcomingChallenge meta={meta} teams={teams} navigation={navigation} />;
+    return <UpcomingChallenge meta={meta} teams={meta.teamList} navigation={navigation} />;
   }
   // A server-side active challenge (matched by id) opens the daily tracker.
   if (meta) return <ActiveChallenge navigation={navigation} />;
@@ -200,7 +197,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{t.name}</Text>
-                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{tr('Капитан:')} {t.captain} · {tr('советники:')} {t.advisors.join(', ')}</Text>
+                  <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{tr('Капитан:')} {t.captain}{t.advisors.length ? ` · ${tr('советники:')} ${t.advisors.join(', ')}` : ''}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={[ty.subheadEm, { color: full ? T.emeraldText : T.label }]} numberOfLines={1}>{t.members}/{t.capacity}</Text>
@@ -278,7 +275,7 @@ function Row({ icon, label, value }: { icon: any; label: string; value: string }
 // ─── Active challenge (daily tracker) ──────────────────────────────
 function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const { T } = useTheme();
-  const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints } = useChallenge();
+  const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints, teamFlags, teamPenalty, reportedToday, reportedAt, submitReport } = useChallenge();
   const { weekly, workouts } = useActivities();
   const c = challenge;
   const insets = useSafeAreaInsets();
@@ -485,6 +482,13 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
             <Text style={[ty.subhead, { color: T.brand, flex: 1 }]} numberOfLines={1}>{tr('Как засчитать активность в шагах?')}</Text>
             <SF name="chevron.right" size={13} color={T.labelTertiary} />
           </Pressable>
+
+          {/* Daily report — отчёт за день до 23:00 (сервер решает on-time/late) */}
+          {c.currentDay > 0 && !finished && !myEliminated ? (
+            <View style={{ borderTopWidth: 0.5, borderTopColor: T.separator, paddingTop: 4 }}>
+              <DailyReport reported={reportedToday} reportedAt={reportedAt} onSubmit={submitReport} />
+            </View>
+          ) : null}
         </View>
       </ListSection>
 
@@ -493,7 +497,10 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           <View style={{ padding: 18, alignItems: 'center' }}>
             <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команда ещё формируется.')}</Text>
           </View>
-        ) : leaderboard.map((row, i) => {
+        ) : (
+          <>
+            <TeamSummary points={teamPoints} flags={teamFlags} penalty={teamPenalty} />
+            {leaderboard.map((row, i) => {
           const medal = MEDAL_FOR_RANK(row.rank);
           const out = row.eliminated === true;
           const flagN = totalFlags(row.flags);
@@ -511,6 +518,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
                   {flagN > 0 && row.flags ? (
                     <Text style={[ty.caption1, { color: T.red }]}>{`  · 🚩 R${row.flags.R} NS${row.flags.NS} A${row.flags.A}`}</Text>
                   ) : null}
+                  {row.penalty ? (
+                    <Text style={[ty.caption1, { color: T.red }]}>{`  · штраф ${row.penalty}`}</Text>
+                  ) : null}
                 </View>
               </View>
               {out
@@ -519,7 +529,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
               {i < leaderboard.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 64, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
             </View>
           );
-        })}
+            })}
+          </>
+        )}
       </ListSection>
 
       {/* Activity step-conversions sheet (from the Divergents rules) */}
@@ -541,6 +553,77 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
 
       <View style={{ height: 30 }} />
       </Screen>
+    </View>
+  );
+}
+
+// Daily report bar — «отчёт за день» с дедлайном 23:00. Клиент показывает
+// обратный отсчёт и статус; сервер решает, вовремя отчёт или просрочен (−300 и 🚩).
+function DailyReport({ reported, reportedAt, onSubmit }: { reported: boolean; reportedAt: string | null; onSubmit: () => Promise<boolean> }) {
+  const { T } = useTheme();
+  const [busy, setBusy] = useState(false);
+
+  if (reported) {
+    const at = reportedAt ? new Date(reportedAt) : null;
+    const hhmm = at && !isNaN(at.getTime()) ? at.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '';
+    return (
+      <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(52,199,89,0.12)', borderRadius: 12, padding: 12 }}>
+        <SF name="checkmark.circle.fill" size={20} color={T.green} />
+        <Text style={[ty.subheadEm, { color: T.green, flex: 1 }]} numberOfLines={1}>{tr('Отчёт за день отправлен')}{hhmm ? ` · ${hhmm}` : ''}</Text>
+      </View>
+    );
+  }
+
+  const now = new Date();
+  const deadline = new Date(now); deadline.setHours(23, 0, 0, 0);
+  const late = now.getTime() > deadline.getTime();
+  const msLeft = deadline.getTime() - now.getTime();
+  const hLeft = Math.max(0, Math.floor(msLeft / 3600000));
+  const mLeft = Math.max(0, Math.floor((msLeft % 3600000) / 60000));
+
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true);
+    const ok = await onSubmit();
+    setBusy(false);
+    if (ok) hSuccess();
+    else Alert.alert(tr('Не удалось отправить отчёт'), tr('Проверьте подключение и попробуйте снова.'));
+  };
+
+  return (
+    <View style={{ marginTop: 12, gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <SF name="clock.fill" size={14} color={late ? T.red : T.labelSecondary} />
+        <Text style={[ty.caption1, { color: late ? T.red : T.labelSecondary, flex: 1 }]}>
+          {late
+            ? tr('Дедлайн 23:00 прошёл — отчёт зачтётся как просроченный (−300 и 🚩)')
+            : `${tr('До дедлайна отчёта (23:00)')}: ${hLeft} ч ${mLeft} мин`}
+        </Text>
+      </View>
+      <Pressable onPress={submit} disabled={busy} accessibilityRole="button" accessibilityLabel={tr('Отправить отчёт за день')}
+        style={{ height: 48, borderRadius: 14, backgroundColor: late ? T.red : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: busy ? 0.6 : 1 }}>
+        <SF name="paperplane.fill" size={17} color="#fff" />
+        <Text style={[ty.headline, { color: '#fff' }]}>{busy ? tr('Отправка…') : tr('Отправить отчёт за день')}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+// Team-wide totals visible to EVERY member: накопленные баллы + штрафы (🚩 / очки).
+function TeamSummary({ points, flags, penalty }: { points: number; flags: number; penalty: number }) {
+  const { T } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
+      <View style={{ flex: 1 }}>
+        <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Накоплено командой')}</Text>
+        <Text style={[ty.title3, { color: T.brand, marginTop: 2 }]} numberOfLines={1}>{points} pts</Text>
+      </View>
+      <View style={{ flex: 1, alignItems: 'flex-end' }}>
+        <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Штрафы команды')}</Text>
+        <Text style={[ty.title3, { color: flags > 0 || penalty < 0 ? T.red : T.label, marginTop: 2 }]} numberOfLines={1}>
+          {flags} 🚩{penalty < 0 ? ` · ${penalty}` : ''}
+        </Text>
+      </View>
     </View>
   );
 }

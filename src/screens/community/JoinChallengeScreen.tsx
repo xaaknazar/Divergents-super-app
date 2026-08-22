@@ -20,6 +20,17 @@ type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
 
 const NICK_MAX = 9;
 
+// Count uppercase letters (Latin/Cyrillic/Kazakh) without relying on regex
+// Unicode-property support: a char is uppercase if it differs from its
+// lowercase form and equals its own uppercase form.
+function upperCount(s: string): number {
+  let n = 0;
+  for (const ch of s) {
+    if (ch !== ch.toLowerCase() && ch === ch.toUpperCase()) n++;
+  }
+  return n;
+}
+
 export function JoinChallengeScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   useLang();
@@ -42,10 +53,13 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const load = useCallback(() => {
     let alive = true;
     setLoading(true);
-    fetchChallengesAndTeams().then(({ challenges, teams: tms, error: err }) => {
+    fetchChallengesAndTeams().then(({ challenges, error: err }) => {
       if (!alive) return;
-      setMeta(getChallengeMeta(challenges, route.params.challengeId));
-      setTeams(tms);
+      const m = getChallengeMeta(challenges, route.params.challengeId);
+      setMeta(m);
+      // Teams MUST be scoped to the challenge being applied to — not the global
+      // "first open challenge" list — so the selected teamId belongs to it.
+      setTeams(m?.teamList ?? []);
       setError(err);
       setLoading(false);
     });
@@ -54,7 +68,10 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
 
   useEffect(() => load(), [load]);
 
-  const nickOk = nick.trim().length > 0 && nick.trim().length <= NICK_MAX;
+  const nickLen = nick.trim().length;
+  const lenOk = nickLen > 0 && nickLen <= NICK_MAX;
+  const caseOk = upperCount(nick) <= 1; // максимум одна заглавная буква
+  const nickOk = lenOk && caseOk;
   const canSubmit = nickOk && !!teamId && agree && track;
   const team = teams.find((t) => t.id === teamId);
 
@@ -100,7 +117,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]} numberOfLines={1}>{tr('Старт')} {meta?.startLabel} · {meta?.durationDays} {tr('дней')}</Text>
 
         {/* Nickname */}
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('НИКНЕЙМ (до 9 символов, близкий к ФИО)')}</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('НИКНЕЙМ (до 9 символов, одна заглавная буква)')}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: nick && !nickOk ? T.red : 'transparent' }}>
           <TextInput
             value={nick}
@@ -113,7 +130,9 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
           />
           <Text style={[ty.caption1, { color: nickOk || !nick ? T.labelTertiary : T.red }]}>{nick.trim().length}/{NICK_MAX}</Text>
         </View>
-        {nick && !nickOk ? <Text style={[ty.caption1, { color: T.red, marginTop: 6, marginLeft: 4 }]}>{tr('Никнейм должен быть от 1 до 9 символов')}</Text> : null}
+        {nick && !lenOk ? <Text style={[ty.caption1, { color: T.red, marginTop: 6, marginLeft: 4 }]}>{tr('Никнейм должен быть от 1 до 9 символов')}</Text>
+          : nick && !caseOk ? <Text style={[ty.caption1, { color: T.red, marginTop: 6, marginLeft: 4 }]}>{tr('Разрешена только одна заглавная буква')}</Text>
+          : null}
 
         {/* Team */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('ВЫБЕРИТЕ КОМАНДУ')}</Text>

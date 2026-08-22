@@ -58,7 +58,7 @@ export const STR: Record<string, Pair> = {
   ob2_t: { ru: 'AI-наставник рядом', en: 'An AI mentor by your side' },
   ob2_b: { ru: 'Персональный ассистент знает ваш психотип и даёт точечные советы по курсам, книгам и карьере.', en: 'A personal assistant who knows your type and gives tailored advice on courses, books and career.' },
   ob3_t: { ru: 'Сообщество своих', en: 'Your community' },
-  ob3_b: { ru: '21-дневные челленджи, поездки и встречи с людьми, разделяющими ваши ценности.', en: '21-day challenges, trips and meetups with people who share your values.' },
+  ob3_b: { ru: 'Челленджи, поездки и встречи с людьми, разделяющими ваши ценности.', en: 'Challenges, trips and meetups with people who share your values.' },
   ob4_t: { ru: 'Работа по психотипу', en: 'Work that fits your type' },
   ob4_b: { ru: 'Карьера ищет совпадение по талантам и ценностям, а не только по резюме.', en: 'Career matches by talents and values, not just a résumé.' },
 

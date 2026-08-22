@@ -175,6 +175,43 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
   );
 }
 
+// ─── Open-challenge card (full-width) ───────────────────────────────
+// Shared by the home feed and the Челленджи tab so an open challenge always
+// renders as one full-width card — never a narrow, left-floating carousel item.
+function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => void }) {
+  const { T } = useTheme();
+  const left = daysUntil(ch.startISO);
+  return (
+    <Pressable onPress={onPress}
+      style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder }}>
+      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
+        <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+          <SF name={ch.icon} size={28} color="#fff" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />{tr('Старт')} {ch.startLabel}</Capsule>
+          <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{ch.title}</Text>
+        </View>
+      </LinearGradient>
+      <View style={{ padding: 14 }}>
+        {ch.subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]} numberOfLines={2}>{ch.subtitle}</Text> : null}
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          <Capsule bg={T.brandTinted} color={T.brand}>{left > 0 ? `${tr('через')} ${left} ${tr('дн.')}` : tr('скоро старт')}</Capsule>
+          <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дней</Capsule>
+          <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+          <Text style={[ty.caption1, { color: T.red, flexShrink: 1 }]} numberOfLines={1}>{ch.maxFlags} 🚩 — {tr('вылет')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Подробнее')}</Text>
+            <SF name="chevron.forward" size={12} color={T.brand} />
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 // ─── Главная ────────────────────────────────────────────────────────
 function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { t } = useLang();
@@ -195,28 +232,9 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
         {challenges === null ? <Loading /> : openChallenges.length === 0 ? (
           <EmptyOrError error={error} onRetry={onRetry} icon="flag.fill" title={tr('Пока ничего нет')} subtitle={tr('Новые челленджи появятся здесь.')} />
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
-            {openChallenges.map((ch) => (
-              <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })} style={{ width: 260, borderRadius: 18, overflow: 'hidden', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
-                <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 14, gap: 10 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-                      <SF name={ch.icon} size={20} color="#fff" />
-                    </View>
-                    <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
-                      <Text style={[ty.caption2Em, { color: '#fff' }]}>{daysUntil(ch.startISO) > 0 ? `старт через ${daysUntil(ch.startISO)} дн.` : 'скоро старт'}</Text>
-                    </View>
-                  </View>
-                  <Text style={[ty.title3, { color: '#fff' }]} numberOfLines={2}>{ch.title}</Text>
-                </LinearGradient>
-                <View style={{ padding: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  <Capsule bg={T.brandTinted} color={T.brand}><SF name="flame.fill" size={10} color={T.brand} />{ch.durationDays} дней</Capsule>
-                  <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={10} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
-                  <Capsule bg={T.fillTertiary} color={T.label}>Набор открыт</Capsule>
-                </View>
-              </Pressable>
-            ))}
-          </ScrollView>
+          openChallenges.map((ch) => (
+            <ChallengeCard key={ch.id} ch={ch} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })} />
+          ))
         )}
       </View>
 
@@ -254,7 +272,6 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
 
 // ─── Челленджи ──────────────────────────────────────────────────────
 function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation: Nav; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
-  const { T } = useTheme();
   const { challenge } = useChallenge();
   // Only a REAL server-active challenge (currentDay > 0) counts. The offline
   // DEFAULT_CHALLENGE placeholder always has tasks, so the old `|| tasks.length`
@@ -271,33 +288,7 @@ function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation:
       {challenges === null ? <Loading /> : upcoming.length === 0 ? (
         <EmptyOrError error={error} onRetry={onRetry} icon="calendar" title={tr('Пока ничего нет')} subtitle={tr('Новые челленджи появятся здесь.')} />
       ) : upcoming.map((ch) => (
-        <Pressable key={ch.id} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })}
-          style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
-          <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 14 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-              <SF name={ch.icon} size={28} color="#fff" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />{tr('Старт')} {ch.startLabel}</Capsule>
-              <Text style={[ty.title3, { color: '#fff', marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{ch.title}</Text>
-            </View>
-          </LinearGradient>
-          <View style={{ padding: 14 }}>
-            <Text style={[ty.subhead, { color: T.labelSecondary }]}>{ch.subtitle}</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-              <Capsule bg={T.brandTinted} color={T.brand}>{tr('через')} {daysUntil(ch.startISO)} {tr('дн.')}</Capsule>
-              <Capsule bg={T.fillTertiary} color={T.label}>{ch.durationDays} дней</Capsule>
-              <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} заявок</Capsule>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
-              <Text style={[ty.caption1, { color: T.red, flexShrink: 1 }]} numberOfLines={1}>{tr('3 пропуска (🚩) — вылет')}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Подробнее')}</Text>
-                <SF name="chevron.forward" size={12} color={T.brand} />
-              </View>
-            </View>
-          </View>
-        </Pressable>
+        <ChallengeCard key={ch.id} ch={ch} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })} />
       ))}
     </>
   );

@@ -27,13 +27,20 @@ export function ChallengeTaskRow({
   const pts = taskPoints(task);
 
   if (task.kind === 'binary') {
+    // A 0-point binary is a discipline GATE (e.g. «День без сахара»): соблюдение
+    // не даёт баллов (нарушение штрафуется), поэтому показываем «условие», а не «+0 pts».
+    const isGate = task.basePts === 0;
     return (
       <Pressable onPress={onToggle} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
         <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={22} color={done ? T.brand : T.labelTertiary} />
         <Text style={[ty.body, { flex: 1, color: done ? T.labelSecondary : T.label, textDecorationLine: done ? 'line-through' : 'none' }]}>{task.title}</Text>
-        {done
-          ? <Capsule bg={T.brandTinted} color={T.brand}>{`+${pts} pts`}</Capsule>
-          : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{task.basePts}</Text>}
+        {isGate
+          ? (done
+            ? <Capsule bg="rgba(52,199,89,0.18)" color={T.green}>Выполнено</Capsule>
+            : <Text style={[ty.caption1, { color: T.labelTertiary }]}>условие</Text>)
+          : (done
+            ? <Capsule bg={T.brandTinted} color={T.brand}>{`+${pts} pts`}</Capsule>
+            : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{task.basePts}</Text>)}
       </Pressable>
     );
   }

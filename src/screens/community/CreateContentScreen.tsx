@@ -66,9 +66,11 @@ export function CreateContentScreen({ navigation }: Props) {
         const s = chStart.trim();
         const startISO = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(`${s}T09:00:00`).toISOString() : '';
         if (!startISO || isNaN(Date.parse(startISO))) { setBusy(false); Alert.alert('Укажите дату старта', 'Формат: ГГГГ-ММ-ДД, напр. 2026-09-01'); return; }
+        const durationDays = Number(days) || 21;
+        if (durationDays < 14) { setBusy(false); Alert.alert('Слишком короткий челлендж', 'Минимальная длительность — 14 дней.'); return; }
         const teamsPayload = chTeams.filter((t) => t.name.trim()).map((t) => ({ name: t.name.trim(), capacity: Number(t.capacity) || 30, captainEmail: t.captainEmail.trim() || undefined }));
         if (teamsPayload.length === 0) { setBusy(false); Alert.alert('Добавьте хотя бы одну команду'); return; }
-        success = await createChallenge(token, { title: title.trim(), startISO, durationDays: Number(days) || 21, price: price.trim() || null, teams: teamsPayload });
+        success = await createChallenge(token, { title: title.trim(), startISO, durationDays, price: price.trim() || null, teams: teamsPayload });
       } else if (kind === 'trip') {
         success = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null, meetPlace: meetPlace.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
       } else if (kind === 'sport') {
@@ -111,13 +113,18 @@ export function CreateContentScreen({ navigation }: Props) {
               <Field label="ДАТА СТАРТА (ГГГГ-ММ-ДД)"><TextInput value={chStart} onChangeText={setChStart} placeholder="напр. 2026-09-01" placeholderTextColor={T.labelTertiary} autoCapitalize="none" style={inp} /></Field>
               <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: -8, marginLeft: 4 }]}>Набор идёт до этой даты, затем челлендж стартует автоматически.</Text>
               <Field label="ДЛИТЕЛЬНОСТЬ (ДНЕЙ)"><TextInput value={days} onChangeText={(t) => setDays(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" style={inp} /></Field>
+              <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: -8, marginLeft: 4 }]}>Длительность задаёт организатор. Минимум 14 дней (например, 14, 21, 30).</Text>
               <Field label="ЦЕНА (ОПЦ.)"><TextInput value={price} onChangeText={setPrice} placeholder="напр. 12 000 ₸" placeholderTextColor={T.labelTertiary} style={inp} /></Field>
               <Field label="КОМАНДЫ И КАПИТАНЫ">
+                <Text style={[ty.caption1, { color: T.labelTertiary, marginBottom: 8, marginLeft: 4 }]}>Число справа — размер команды (сколько человек можно набрать). Задайте любой: 20, 30, 35…</Text>
                 {chTeams.map((tm, i) => (
                   <View key={i} style={{ backgroundColor: T.cardBg, borderRadius: 12, padding: 12, marginBottom: 8, gap: 8 }}>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
                       <TextInput value={tm.name} onChangeText={(v) => setChTeams((p) => p.map((x, j) => (j === i ? { ...x, name: v } : x)))} placeholder="Название команды" placeholderTextColor={T.labelTertiary} style={[inp, { flex: 1 }]} />
-                      <TextInput value={tm.capacity} onChangeText={(v) => setChTeams((p) => p.map((x, j) => (j === i ? { ...x, capacity: v.replace(/[^0-9]/g, '') } : x)))} keyboardType="number-pad" placeholder="30" placeholderTextColor={T.labelTertiary} style={[inp, { width: 68 }]} />
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <TextInput value={tm.capacity} onChangeText={(v) => setChTeams((p) => p.map((x, j) => (j === i ? { ...x, capacity: v.replace(/[^0-9]/g, '') } : x)))} keyboardType="number-pad" placeholder="30" placeholderTextColor={T.labelTertiary} style={[inp, { width: 60, textAlign: 'center' }]} />
+                        <Text style={[ty.caption1, { color: T.labelSecondary }]}>чел.</Text>
+                      </View>
                     </View>
                     <TextInput value={tm.captainEmail} onChangeText={(v) => setChTeams((p) => p.map((x, j) => (j === i ? { ...x, captainEmail: v } : x)))} placeholder="email капитана (опционально)" placeholderTextColor={T.labelTertiary} autoCapitalize="none" keyboardType="email-address" style={inp} />
                     {chTeams.length > 1 ? <Pressable onPress={() => setChTeams((p) => p.filter((_, j) => j !== i))} hitSlop={6} style={{ alignSelf: 'flex-end' }}><Text style={[ty.caption1, { color: T.red }]}>Удалить команду</Text></Pressable> : null}
