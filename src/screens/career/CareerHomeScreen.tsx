@@ -1,223 +1,45 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, LayoutAnimation } from 'react-native';
-import { Image } from 'expo-image';
+import { View, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
-import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
-import { Logo } from '../../components/Logo';
-import { Capsule, Chip, ListSection, ListRow, SectionHeader, ty } from '../../components/ui';
-import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
-import { Ring } from '../../components/talentUI';
-import { CAREER_FILTERS, Job, formatSalary } from '../../data/career';
-import { useCareer } from '../../state/CareerContext';
-import { useTalentProfile } from '../../state/useTalentProfile';
-import { useRole } from '../../state/useRole';
-import { talentMatch, GallupTalent } from '../../data/talentslab';
+import { Capsule, ty } from '../../components/ui';
+import { useNotifications } from '../../state/NotificationsContext';
 import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'CareerHome'>;
-type Nav = Props['navigation'];
 
-function matchesFilter(j: Job, f: string): boolean {
-  switch (f) {
-    case 'Алматы': return j.city.includes('Алматы');
-    case 'Удалёнка': return j.format === 'Удалёнка';
-    case 'HR': return /HR|People|персонал|обучен|L&D|CHRO/i.test(j.title);
-    case 'Senior+': return /Senior|C-level|Lead|Head|Директор|CHRO/i.test(`${j.title} ${j.experience.join(' ')}`);
-    default: return true;
-  }
-}
-
+// Карьера временно закрыта: раздел (вакансии, подбор по талантам, отклики) на
+// доработке и вернётся в одном из следующих обновлений. Экран-заглушка держит
+// вкладку на месте и показывает понятное сообщение вместо пустого/сырого UI.
 export function CareerHomeScreen({ navigation }: Props) {
   const { T } = useTheme();
   const { t } = useLang();
-  const [filter, setFilter] = useState(0);
-  const { applied, isApplied, jobs, jobsLoading, jobsError, reloadJobs, saved, getJob } = useCareer();
-  const { profile, live, reload: reloadProfile } = useTalentProfile();
   const { unread } = useNotifications();
-  const { canCreate } = useRole();
-
-  // Only use real (live) Gallup talents for matching — never demo data.
-  const gallup: GallupTalent[] = live ? profile?.gallup ?? [] : [];
-  // Matching is driven by the user's Gallup talents; without them the podбор is
-  // empty, so we surface a prompt to fill the anketa instead.
-  const hasTalents = gallup.length > 0;
-
-  const sorted = useMemo(() => [...jobs].sort((a, b) => b.match - a.match), [jobs]);
-  const best = sorted[0];
-  const filtered = useMemo(() => sorted.filter((j) => matchesFilter(j, CAREER_FILTERS[filter])), [filter, sorted]);
-  const rest = best ? filtered.filter((j) => j.id !== best.id || filter !== 0) : filtered;
-  const myJobs = jobs.filter((j) => applied.includes(j.id));
-  // Saved vacancies, resolved against the loaded catalog. Ones that are no
-  // longer published (getJob → undefined) are dropped so bookmarks never become
-  // a dead, untappable row.
-  const savedJobs = useMemo(() => saved.map((id) => getJob(id)).filter((j): j is Job => !!j), [saved, jobs, getJob]);
-
-  const open = (id: string) => navigation.navigate('VacancyDetail', { jobId: id });
-
-  const empty = !jobsLoading && !jobsError && jobs.length === 0;
 
   return (
-    <Screen largeTitle={t('tab_career')} onRefresh={async () => { await Promise.all([reloadProfile(), reloadJobs()]); }}>
+    <Screen largeTitle={t('tab_career')}>
       <NavBarLarge title={t('tab_career')} trailing={(
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
-      {/* Talent readiness — matching needs the user's Gallup talents. Show a
-          prompt to fill the anketa when they're missing (otherwise podбор пуст). */}
-      {!hasTalents ? <TalentPrompt navigation={navigation} /> : null}
-
-      {/* Vacancies — primary content, first */}
-      <SectionHeader title={t('vacancies')} action={canCreate ? '+ Создать' : undefined} onAction={canCreate ? () => navigation.navigate('CreateVacancy') : undefined} />
-      <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 12, marginTop: -4 }]}>
-        {hasTalents ? tr('Подобраны по вашему психотипу и талантам') : tr('Заполните таланты, чтобы увидеть точные совпадения')}
-      </Text>
-
-      {jobsError && jobs.length === 0 ? (
-        <ErrorState message={tr('Не удалось загрузить вакансии. Проверьте подключение к интернету.')} onRetry={() => reloadJobs()} />
-      ) : empty ? (
-        <EmptyState icon="briefcase" title={tr('Пока нет вакансий')}
-          subtitle={tr('Здесь появятся вакансии, подобранные под ваш профиль. Загляните позже.')}
-          actionLabel={tr('Обновить')} onAction={() => reloadJobs()} />
-      ) : jobsLoading && jobs.length === 0 ? (
-        <View style={{ paddingTop: 8 }}><ListSkeleton rows={4} /></View>
-      ) : (
-        <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
-            {CAREER_FILTERS.map((c, i) => (
-              <Chip key={c} label={c} active={filter === i} icon={i === 0 ? 'sparkles' : undefined}
-                onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setFilter(i); }} />
-            ))}
-          </ScrollView>
-
-          {filter === 0 && best ? (
-            <JobCard job={best} best onPress={() => open(best.id)} applied={isApplied(best.id)} gallup={gallup} />
-          ) : null}
-
-          <SectionHeader title={filter === 0 ? tr('Ещё подходящие') : `${tr('Найдено')}: ${rest.length}`} />
-          {rest.map((j) => <JobCard key={j.id} job={j} onPress={() => open(j.id)} applied={isApplied(j.id)} gallup={gallup} />)}
-          {rest.length === 0 ? (
-            <View style={{ padding: 24, alignItems: 'center' }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Ничего не найдено')}</Text></View>
-          ) : null}
-        </>
-      )}
-
-      {/* Saved vacancies */}
-      {savedJobs.length > 0 ? (
-        <ListSection header={`${tr('Сохранённые')} · ${savedJobs.length}`} style={{ marginTop: 18 }}>
-          {savedJobs.map((j, i) => (
-            <ListRow key={j.id} onPress={() => open(j.id)}
-              leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
-              title={j.title} subtitle={`${j.company} · ${j.city}`}
-              trailing={<SF name="bookmark.fill" size={15} color={T.brandAccent} />}
-              last={i === savedJobs.length - 1} />
-          ))}
-        </ListSection>
-      ) : null}
-
-      {/* Application history */}
-      <ListSection header={`${tr('История откликов')} · ${myJobs.length}`} style={{ marginTop: 18 }}>
-        {myJobs.length > 0 ? myJobs.map((j, i) => (
-          <ListRow key={j.id} onPress={() => open(j.id)}
-            leading={<View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
-            title={j.title} subtitle={`${j.company} · ${j.city}`}
-            trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отправлен')}</Capsule>}
-            last={i === myJobs.length - 1} />
-        )) : (
-          <View style={{ padding: 16 }}><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Вы ещё не откликались на вакансии.')}</Text></View>
-        )}
-      </ListSection>
-
-      {/* Offers — aspirational, at the bottom until real offers arrive */}
-      <SectionHeader title={tr('Офферы')} />
-      <View style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
-        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-            <Logo size={26} body="#fff" head="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Пока нет офферов')}</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>
-              {tr('Здесь появятся приглашения и офферы от компаний, которым вы подойдёте по талантам.')}
-            </Text>
-          </View>
+      <View style={{ alignItems: 'center', paddingHorizontal: 36, paddingTop: 48 }}>
+        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={{ width: 100, height: 100, borderRadius: 30, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
+          <SF name="gearshape.fill" size={46} color="#fff" />
         </LinearGradient>
-      </View>
 
-      <View style={{ height: 16 }} />
+        <Capsule bg={T.brandTinted} color={T.brand} style={{ marginTop: 18, alignSelf: 'center' }}><SF name="clock.fill" size={11} color={T.brand} />{tr('Скоро')}</Capsule>
+
+        <Text style={[ty.title2, { color: T.label, marginTop: 14, textAlign: 'center' }]}>{tr('Раздел в разработке')}</Text>
+        <Text style={[ty.body, { color: T.labelSecondary, marginTop: 10, textAlign: 'center', lineHeight: 22 }]}>
+          {tr('Мы дорабатываем «Карьеру»: вакансии и подбор по вашим талантам. Раздел появится в одном из следующих обновлений приложения.')}
+        </Text>
+      </View>
     </Screen>
-  );
-}
-
-// ─── Vacancy card ──────────────────────────────────────────────────
-function JobCard({ job, onPress, applied, best, gallup }: {
-  job: Job; onPress: () => void; applied: boolean; best?: boolean; gallup: GallupTalent[];
-}) {
-  const { T } = useTheme();
-  const m = talentMatch(job.talents, gallup);
-  return (
-    <Pressable onPress={onPress}
-      style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: best ? 0 : 0.5, borderColor: T.cardBorder, ...(best ? { shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 } : null) }}>
-      {best ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 12 }}>
-          <SF name="bolt.fill" size={12} color={T.orange} />
-          <Text style={[ty.caption2Em, { color: T.orange, textTransform: 'uppercase' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Лучшее совпадение')}</Text>
-        </View>
-      ) : null}
-      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        {job.companyLogo ? (
-          <Image source={{ uri: job.companyLogo }} style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.fillQuaternary }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
-        ) : (
-          <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[ty.title3, { color: job.color }]}>{job.logo}</Text>
-          </View>
-        )}
-        <View style={{ flex: 1 }}>
-          <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{job.title}</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{job.company}{job.city ? ` · ${job.city}` : ''}</Text>
-        </View>
-        {job.match > 0 ? <Ring value={job.match / 100} size={52} stroke={5} color={T.brand} label={`${job.match}%`} /> : null}
-      </View>
-      <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
-        {job.format ? <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule> : null}
-        {job.salary ? <Capsule bg={T.fillTertiary} color={T.label}>{formatSalary(job.salary)}</Capsule> : null}
-        {m.matched > 0 ? <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />{m.matched} {tr('ваших таланта')}</Capsule> : null}
-        {applied ? <Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{tr('Отклик отправлен')}</Capsule> : null}
-      </View>
-    </Pressable>
-  );
-}
-
-// ─── Talent readiness prompt ───────────────────────────────────────
-// Shown when the user has no Gallup talents yet — matching depends on them, so
-// this drives the core action (fill the anketa) instead of showing empty подбор.
-function TalentPrompt({ navigation }: { navigation: Nav }) {
-  const { T } = useTheme();
-  return (
-    <Pressable onPress={() => navigation.navigate('Resume')}
-      accessibilityRole="button" accessibilityLabel={tr('Заполнить анкету талантов')}
-      style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 20, borderRadius: 18, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 4 }}>
-      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
-        <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="brain.head.profile" size={24} color="#fff" />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{tr('Раскройте свои таланты')}</Text>
-            <Text style={[ty.footnote, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={2}>{tr('Заполните анкету — и увидите вакансии под ваш психотип и сильные стороны.')}</Text>
-          </View>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.22)' }}>
-          <Text style={[ty.footnoteEm, { color: '#fff' }]}>{tr('Заполнить анкету')}</Text>
-          <SF name="chevron.right" size={12} color="rgba(255,255,255,0.85)" />
-        </View>
-      </LinearGradient>
-    </Pressable>
   );
 }
