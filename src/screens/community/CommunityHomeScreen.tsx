@@ -7,7 +7,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { SectionHeader, ListSection, Capsule, Chip, PrimaryButton, IconSquircle, ty } from '../../components/ui';
+import { SectionHeader, ListSection, Capsule, Chip, PrimaryButton, ty } from '../../components/ui';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
@@ -268,9 +268,7 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
         {trips === null ? <Loading /> : trips.length === 0 ? (
           <EmptyOrError error={error} onRetry={onRetry} icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
-            {trips.map((tp) => <TripCardH key={tp.id} trip={tp} navigation={navigation} />)}
-          </ScrollView>
+          trips.map((tp) => <TripCardH key={tp.id} trip={tp} navigation={navigation} />)
         )}
       </View>
 
@@ -279,16 +277,19 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
         {sport === null ? <Loading /> : sport.length === 0 ? (
           <EmptyOrError error={error} onRetry={onRetry} icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 8 }}>
-            {sport.map((sp) => (
-              <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} style={{ width: 180, backgroundColor: T.cardBg, borderRadius: 14, padding: 14 }}>
-                <IconSquircle icon={sp.icon} bg={T.brand} size={34} />
-                <Text style={[ty.headline, { color: T.label, marginTop: 10 }]} numberOfLines={1}>{sp.title}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}</Text>
-                <Text style={[ty.caption2, { color: T.brand, marginTop: 6 }]} numberOfLines={1}>{sp.date}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          sport.map((sp) => (
+            <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
+              <View style={{ width: 52, height: 52, borderRadius: 15, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                <SF name={sp.icon} size={24} color={T.brand} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{sp.title}</Text>
+                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}{sp.date ? ` · ${sp.date}` : ''}</Text>
+              </View>
+              <SF name="chevron.forward" size={14} color={T.labelTertiary} />
+            </Pressable>
+          ))
         )}
       </View>
     </>
@@ -320,21 +321,42 @@ function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation:
 }
 
 // ─── Поездки ────────────────────────────────────────────────────────
+// Full-width trip card — same footprint as the challenge card. Uses the photo
+// when there is one, otherwise a brand gradient header (trips have no image yet).
 function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
   const { T } = useTheme();
   return (
     <Pressable onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
-      style={{ width: 260, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
-      <View style={{ height: 140 }}>
-        <Image source={imgUrl(trip.imageUrl, 640)} style={{ width: '100%', height: 140 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-        <View style={{ position: 'absolute', top: 10, left: 10 }}>
-          <Capsule bg="rgba(0,0,0,0.45)" color="#fff"><SF name="calendar" size={11} color="#fff" />{trip.date}</Capsule>
+      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
+      {trip.imageUrl ? (
+        <View style={{ height: 150 }}>
+          <Image source={imgUrl(trip.imageUrl, 800)} style={{ width: '100%', height: 150 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+          {trip.date ? <View style={{ position: 'absolute', top: 12, left: 12 }}><Capsule bg="rgba(0,0,0,0.45)" color="#fff"><SF name="calendar" size={11} color="#fff" />{trip.date}</Capsule></View> : null}
         </View>
-      </View>
-      <View style={{ padding: 12 }}>
-        <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{trip.title}</Text>
-        <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{trip.region}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+      ) : (
+        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+          <View style={{ width: 52, height: 52, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="map.fill" size={24} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: '#fff' }, HERO_TEXT_SHADOW]} numberOfLines={2}>{trip.title}</Text>
+            {trip.date ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                <SF name="calendar" size={11} color="#fff" />
+                <Text style={[ty.caption1, { color: '#fff' }, HERO_TEXT_SHADOW]} numberOfLines={1}>{trip.date}</Text>
+              </View>
+            ) : null}
+          </View>
+        </LinearGradient>
+      )}
+      <View style={{ padding: 14 }}>
+        {trip.imageUrl ? <Text style={[ty.headline, { color: T.label, marginBottom: 8 }]} numberOfLines={1}>{trip.title}</Text> : null}
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          {trip.region ? <Capsule bg={T.fillTertiary} color={T.label}><SF name="mappin.and.ellipse" size={11} color={T.labelSecondary} />{trip.region}</Capsule> : null}
+          {trip.difficulty && trip.difficulty !== '—' ? <Capsule bg={T.fillTertiary} color={T.label}>{trip.difficulty}</Capsule> : null}
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
           <Text style={[ty.caption1, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{trip.meta}</Text>
           <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{trip.price}</Text>
         </View>
@@ -415,8 +437,8 @@ function ChannelTab({ navigation }: { navigation: Nav }) {
   const { t } = useLang();
   const { channels, loading, error, reload } = useChannel();
   return (
-    <View style={{ paddingHorizontal: 16 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 4, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{t('channels_of_community')}</Text>
+    <View>
+      <Text style={[ty.footnote, { color: T.labelSecondary, marginHorizontal: 20, paddingBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{t('channels_of_community')}</Text>
       {loading && channels.length === 0 ? <Loading />
         : channels.length === 0 ? <EmptyOrError error={error} onRetry={reload} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
         : channels.map((ch) => <ChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
@@ -438,7 +460,7 @@ function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav
   return (
     <Pressable onPress={() => navigation.navigate('ServerChannel', { channelId: channel.id })}
       accessibilityRole="button" accessibilityLabel={`${tr('Канал')} ${channel.name}`}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.cardBg, borderRadius: 18, padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, opacity: pressed ? 0.85 : 1 })}>
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.cardBg, borderRadius: 18, padding: 14, marginHorizontal: 16, marginBottom: 14, borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2, opacity: pressed ? 0.9 : 1 })}>
       <View>
         {channel.avatar ? (
           <Image source={{ uri: channel.avatar }} style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
