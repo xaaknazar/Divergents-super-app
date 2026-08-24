@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { PageIntro } from '../../components/PageIntro';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { SectionHeader, ListSection, Capsule, Chip, PrimaryButton, ty } from '../../components/ui';
@@ -97,6 +98,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
 
   return (
     <Screen largeTitle={tr('Сообщество')} onRefresh={onRefresh}>
+      <PageIntro page="community" />
       <NavBarLarge title={t('community')} trailing={(
         <>
           {canCreate ? <HeaderIcon name="plus" color={T.brand} label="Создать" onPress={() => openCreateSheet(navigation)} /> : null}

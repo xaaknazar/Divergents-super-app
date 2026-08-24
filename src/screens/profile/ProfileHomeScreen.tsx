@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { PageIntro } from '../../components/PageIntro';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
@@ -139,6 +140,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   return (
     <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await reload(); }}>
+      <PageIntro page="profile" />
       <NavBarLarge title={t('profile')} trailing={(
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />

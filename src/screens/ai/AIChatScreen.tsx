@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ty } from '../../components/ui';
+import { PageIntro } from '../../components/PageIntro';
 import { EmptyState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
 import { MarkdownText } from '../../components/MarkdownText';
@@ -181,6 +182,7 @@ export function AIChatScreen({}: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top }}>
+      <PageIntro page="ai" />
       {/* Header */}
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

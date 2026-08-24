@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ty } from '../../components/ui';
+import { PageIntro } from '../../components/PageIntro';
 import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
 import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, safeCityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
@@ -253,6 +254,7 @@ export function MapHomeScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+      <PageIntro page="map" />
       {(
         <MapView
           ref={mapRef}

@@ -23,6 +23,7 @@ import { AppFlowProvider } from './src/state/AppFlowContext';
 import { ResumeGateProvider } from './src/state/ResumeGateContext';
 import { ModerationProvider } from './src/state/ModerationContext';
 import { LanguageProvider } from './src/state/LanguageContext';
+import { PageIntroProvider } from './src/state/PageIntroContext';
 import { IntroSplash } from './src/screens/IntroSplash';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -107,12 +108,14 @@ export default function App() {
           <AppFlowProvider>
           <LanguageProvider>
           <SafeAreaProvider>
-            <UserScopedProviders>
-              {fontsLoaded ? <Root /> : null}
-              {!introDone ? (
-                <IntroSplash fontsLoaded={fontsLoaded} onDone={() => setIntroDone(true)} />
-              ) : null}
-            </UserScopedProviders>
+            <PageIntroProvider>
+              <UserScopedProviders>
+                {fontsLoaded ? <Root /> : null}
+                {!introDone ? (
+                  <IntroSplash fontsLoaded={fontsLoaded} onDone={() => setIntroDone(true)} />
+                ) : null}
+              </UserScopedProviders>
+            </PageIntroProvider>
           </SafeAreaProvider>
           </LanguageProvider>
           </AppFlowProvider>
