@@ -90,6 +90,8 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   useLang();
   const insets = useSafeAreaInsets();
   const left = daysUntil(meta.startISO);
+  // All team spots taken → recruitment closed, waiting for the start.
+  const full = teams.length > 0 && teamsNeed(teams) === 0;
   const { canCreate } = useRole();
   const { getToken, userId } = useAuth();
   // Reviewers: admins/creators, plus a captain of any team in this challenge.
@@ -200,7 +202,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         </ListSection>
 
         {/* Teams */}
-        <ListSection header={teams.length > 0 ? `Команды · нужно ещё ${teamsNeed(teams)} человек` : tr('Команды')}>
+        <ListSection header={teams.length === 0 ? tr('Команды') : full ? tr('Команды · набор завершён') : `Команды · нужно ещё ${teamsNeed(teams)} человек`}>
           {teams.length === 0 ? (
             <View style={{ padding: 18, alignItems: 'center' }}>
               <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команды пока не сформированы.')}</Text>
@@ -285,6 +287,14 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
               )}
             </Pressable>
           </>
+        ) : full ? (
+          <View style={{ borderRadius: 14, backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', paddingVertical: 11, gap: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <SF name="checkmark.seal.fill" size={18} color={T.green} />
+              <Text style={[ty.headline, { color: T.green }]} numberOfLines={1}>Команды сформированы</Text>
+            </View>
+            <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>Набор завершён — ждём старта</Text>
+          </View>
         ) : (
           <>
             {myApp?.status === 'rejected' && myApp.feedback ? (

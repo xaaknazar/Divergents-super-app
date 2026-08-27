@@ -11,15 +11,15 @@ export type PlaceCategory =
   | 'cafe' | 'restaurant' | 'hotel' | 'guesthouse' | 'resort' | 'park' | 'gym' | 'picnic' | 'tourism';
 
 export const CATEGORY_META: Record<PlaceCategory, { label: string; icon: SFName; color: string }> = {
-  cafe:       { label: 'Кафе',        icon: 'cart.fill',        color: '#C2410C' },
-  restaurant: { label: 'Ресторан',    icon: 'cart.fill',        color: '#B45309' },
-  hotel:      { label: 'Отель',       icon: 'building.2.fill',  color: '#4338CA' },
-  guesthouse: { label: 'Гостевой дом', icon: 'house.fill',      color: '#0E7490' },
-  resort:     { label: 'База отдыха', icon: 'leaf.fill',        color: '#047857' },
-  park:       { label: 'Парк',        icon: 'leaf.fill',        color: '#16A34A' },
-  gym:        { label: 'Спортзал',    icon: 'figure.run',       color: '#BE123C' },
-  picnic:     { label: 'Пикник',      icon: 'flame.fill',       color: '#EA580C' },
-  tourism:    { label: 'Туризм',      icon: 'mappin.and.ellipse', color: '#0369A1' },
+  cafe:       { label: 'Кафе',        icon: 'cup.and.saucer.fill',  color: '#C2410C' },
+  restaurant: { label: 'Ресторан',    icon: 'fork.knife',           color: '#B45309' },
+  hotel:      { label: 'Отель',       icon: 'bed.double.fill',      color: '#4338CA' },
+  guesthouse: { label: 'Гостевой дом', icon: 'house.fill',          color: '#0E7490' },
+  resort:     { label: 'База отдыха', icon: 'beach.umbrella.fill',  color: '#047857' },
+  park:       { label: 'Парк',        icon: 'tree.fill',            color: '#16A34A' },
+  gym:        { label: 'Спортзал',    icon: 'dumbbell',             color: '#BE123C' },
+  picnic:     { label: 'Пикник',      icon: 'basket.fill',          color: '#EA580C' },
+  tourism:    { label: 'Туризм',      icon: 'camera.fill',          color: '#0369A1' },
 };
 export const CATEGORIES = Object.keys(CATEGORY_META) as PlaceCategory[];
 

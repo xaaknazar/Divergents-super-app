@@ -323,6 +323,13 @@ export function ProfileHomeScreen({ navigation }: Props) {
         {/* Язык РУС/ENG временно скрыт — английский перевод на паузе */}
       </ListSection>
 
+      {/* Support — write to us on Telegram */}
+      <ListSection header={tr('Поддержка')} footer={tr('Вопросы, ошибки или предложения — напишите нам в Telegram.')}>
+        <ListRow leading={<IconCircle icon="paperplane.fill" color="#fff" bg={T.brand} size={30} />}
+          title={tr('Написать в поддержку')} detail="@haaknazar" chevron last
+          onPress={() => Linking.openURL('https://t.me/haaknazar').catch(() => {})} />
+      </ListSection>
+
       <View style={{ height: 30 }} />
     </Screen>
   );

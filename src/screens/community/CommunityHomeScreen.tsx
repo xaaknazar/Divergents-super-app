@@ -17,7 +17,7 @@ import { joinSport } from '../../data/api';
 import { useAuth } from '@clerk/clerk-expo';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
-  daysUntil, fetchCommunityHome,
+  daysUntil, fetchCommunityHome, teamsNeed,
   Trip, SportActivity, ChallengeListItem,
 } from '../../data/community';
 import { imgUrl } from '../../data/api';
@@ -195,6 +195,8 @@ const HERO_TEXT_SHADOW = { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset
 function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => void }) {
   const { T } = useTheme();
   const left = daysUntil(ch.startISO);
+  // All team spots taken → recruitment done, waiting for the start.
+  const full = ch.teamList.length > 0 && teamsNeed(ch.teamList) === 0;
   const countdown = left > 0
     ? `${tr('Старт через')} ${left} ${ruPlural(left, 'день', 'дня', 'дней')}${ch.startLabel ? ` · ${ch.startLabel}` : ''}`
     : tr('Старт скоро');
@@ -226,9 +228,9 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
           <Capsule bg="rgba(255,59,48,0.12)" color={T.red}>{ch.maxFlags} 🚩 {tr('вылет')}</Capsule>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: T.green }} />
-            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Набор открыт')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
+            {full ? <SF name="checkmark.seal.fill" size={12} color={T.green} /> : <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: T.green }} />}
+            <Text style={[ty.caption1, { color: full ? T.green : T.labelSecondary, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{full ? tr('Команды сформированы · ждём старта') : tr('Набор открыт')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Подробнее')}</Text>

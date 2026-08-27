@@ -21,6 +21,8 @@ export type SFName =
   | 'puzzlepiece.fill' | 'figure.2.and.child.holdinghands' | 'flag.fill' | 'tag.fill'
   | 'percent' | 'globe' | 'house.fill' | 'figure.walk' | 'arrow.right'
   | 'soccerball' | 'tennis.racket' | 'bicycle' | 'figure.mind.and.body' | 'dumbbell' | 'cube.fill'
+  | 'cup.and.saucer.fill' | 'fork.knife' | 'bed.double.fill' | 'beach.umbrella.fill'
+  | 'tree.fill' | 'basket.fill' | 'camera.fill' | 'exclamationmark.bubble'
   | 'wifi.slash' | 'arrow.clockwise' | 'tray' | 'moon.fill' | 'sun.max.fill'
   | 'rosette' | 'checkmark.circle' | 'gearshape.fill' | 'paintpalette.fill'
   | 'circle.lefthalf.filled' | 'textformat.size' | 'arrow.counterclockwise'
@@ -82,6 +84,10 @@ const MAP: Record<string, [Lib, string]> = {
   'soccerball': ['mci', 'soccer'], 'tennis.racket': ['mci', 'tennis'],
   'bicycle': ['ion', 'bicycle'], 'figure.mind.and.body': ['mci', 'meditation'],
   'dumbbell': ['mci', 'dumbbell'], 'cube.fill': ['ion', 'cube'],
+  'cup.and.saucer.fill': ['ion', 'cafe'], 'fork.knife': ['ion', 'restaurant'],
+  'bed.double.fill': ['ion', 'bed'], 'beach.umbrella.fill': ['mci', 'beach'],
+  'tree.fill': ['mci', 'tree'], 'basket.fill': ['ion', 'basket'],
+  'camera.fill': ['ion', 'camera'], 'exclamationmark.bubble': ['ion', 'alert-circle-outline'],
   'wifi.slash': ['ion', 'cloud-offline'], 'arrow.clockwise': ['ion', 'refresh'],
   'tray': ['ion', 'file-tray-outline'], 'moon.fill': ['ion', 'moon'],
   'sun.max.fill': ['ion', 'sunny'], 'rosette': ['mci', 'medal-outline'],

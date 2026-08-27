@@ -132,9 +132,9 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             </View>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-            <ActBtn icon={fav ? 'heart.fill' : 'heart'} label={fav ? 'В избранном' : 'В избранное'} active={fav} onPress={() => toggleFav(place.id)} T={T} />
+            <ActBtn icon={fav ? 'heart.fill' : 'heart'} label={fav ? tr('В избранном') : tr('В избранное')} active={fav} onPress={() => toggleFav(place.id)} T={T} />
             <ActBtn icon="square.and.arrow.up" label={tr('Поделиться')} onPress={sharePlace} T={T} />
-            {mine ? <ActBtn icon="pencil" label={tr('Изменить')} onPress={() => navigation.navigate('AddPlace', { editId: place.id })} T={T} />
+            {mine ? <ActBtn icon="square.and.pencil" label={tr('Изменить')} onPress={() => navigation.navigate('AddPlace', { editId: place.id })} T={T} />
                   : <ActBtn icon="exclamationmark.bubble" label={tr('Сообщить')} onPress={report} T={T} />}
           </View>
         </View>
@@ -213,9 +213,9 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
 function ActBtn({ icon, label, active, onPress, T }: { icon: any; label: string; active?: boolean; onPress: () => void; T: any }) {
   return (
-    <Pressable onPress={onPress} style={{ flex: 1, height: 58, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+    <Pressable onPress={onPress} style={{ flex: 1, height: 58, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
       <SF name={icon} size={18} color={active ? T.brand : T.label} />
-      <Text style={[ty.caption2, { color: active ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
+      <Text style={[ty.caption2, { color: active ? T.brand : T.labelSecondary, fontSize: 10, lineHeight: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
     </Pressable>
   );
 }
