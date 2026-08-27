@@ -16,6 +16,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "usesAppleSignIn": true,
       "bundleIdentifier": "kz.divergents.app",
       "buildNumber": "1",
       "infoPlist": {
