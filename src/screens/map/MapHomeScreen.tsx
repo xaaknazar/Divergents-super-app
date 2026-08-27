@@ -170,7 +170,17 @@ export function MapHomeScreen({ navigation }: Props) {
     try { const token = await getTokenRef.current(); const p = await fetchPendingPlaces(token); setPendingCount(p.length); } catch {}
   }, [canModerate]);
   useEffect(() => { loadPending(); }, [loadPending]);
-  useEffect(() => navigation.addListener('focus', loadPending), [navigation, loadPending]);
+  // Refresh places (and the moderation badge) when the map regains focus, so a
+  // newly-approved place shows up without an app restart. Throttled to 20s.
+  const lastPlacesReload = useRef(0);
+  useEffect(() => {
+    const unsub = navigation.addListener('focus', () => {
+      loadPending();
+      const now = Date.now();
+      if (now - lastPlacesReload.current > 20000) { lastPlacesReload.current = now; reloadPlaces(); }
+    });
+    return unsub;
+  }, [navigation, loadPending, reloadPlaces]);
 
   const downloadCity = async (ci: City) => {
     if (!offline) { Alert.alert(tr('Офлайн-карта'), tr('Офлайн-карта доступна в полной версии приложения (релиз), а не в Expo Go.')); return; }
