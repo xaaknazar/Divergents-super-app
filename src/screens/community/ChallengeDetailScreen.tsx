@@ -18,7 +18,7 @@ import { useChallenge } from '../../state/ChallengeContext';
 import { useActivities } from '../../state/ActivityContext';
 import { useAuth } from '@clerk/clerk-expo';
 import { useRole } from '../../state/useRole';
-import { deleteChallenge } from '../../data/api';
+import { deleteChallenge, withdrawChallengeApplication } from '../../data/api';
 import {
   MEDAL_FOR_RANK, fetchChallengesAndTeams, getChallengeMeta, daysUntil, teamsNeed,
   CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
@@ -106,6 +106,24 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   }, [meta.id]);
   // Refresh on focus so the CTA updates right after applying (returns from JoinChallenge).
   useFocusEffect(React.useCallback(() => { loadMyApp(); }, [loadMyApp]));
+
+  // Applicant: withdraw a still-pending application. Once approved you're in the
+  // team and can't withdraw — only the captain can remove you (server → 409).
+  const [withdrawing, setWithdrawing] = useState(false);
+  const confirmWithdraw = () => {
+    Alert.alert('Отозвать заявку?', `Заявка в команду${myApp?.teamName ? ` «${myApp.teamName}»` : ''} будет отменена. Позже можно подать снова.`, [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Отозвать', style: 'destructive', onPress: async () => {
+        setWithdrawing(true);
+        const token = await getToken();
+        const r = await withdrawChallengeApplication(token, meta.id);
+        setWithdrawing(false);
+        if (r.ok) { hSuccess(); loadMyApp(); }
+        else if (r.reason === 'approved') { Alert.alert('Вы уже в команде', 'Отозвать нельзя — вас принял капитан. Выйти из команды можно только через капитана.'); loadMyApp(); }
+        else Alert.alert('Не удалось отозвать', 'Проверьте подключение и попробуйте снова.');
+      } },
+    ]);
+  };
 
   // Creator/admin: delete the challenge (double-confirmed; irreversible).
   const confirmDelete = () => {
@@ -235,15 +253,31 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
 
         {/* Applicant CTA — one application; can re-apply only after a rejection. */}
         {myApp?.status === 'approved' ? (
-          <View style={{ height: 50, borderRadius: 14, backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-            <SF name="checkmark.circle.fill" size={18} color={T.green} />
-            <Text style={[ty.headline, { color: T.green }]}>Вы в команде{myApp.teamName ? ` «${myApp.teamName}»` : ''}</Text>
-          </View>
+          <>
+            <View style={{ height: 50, borderRadius: 14, backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+              <SF name="checkmark.circle.fill" size={18} color={T.green} />
+              <Text style={[ty.headline, { color: T.green }]}>Вы в команде{myApp.teamName ? ` «${myApp.teamName}»` : ''}</Text>
+            </View>
+            {!isCaptainHere ? (
+              <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center' }]} numberOfLines={2}>Вас приняли — отозвать заявку уже нельзя. Выйти из команды можно только через капитана.</Text>
+            ) : null}
+          </>
         ) : myApp?.status === 'pending' ? (
-          <View style={{ height: 50, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-            <SF name="clock.fill" size={16} color={T.labelSecondary} />
-            <Text style={[ty.headline, { color: T.labelSecondary }]}>Заявка на рассмотрении</Text>
-          </View>
+          <>
+            <View style={{ height: 50, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+              <SF name="clock.fill" size={16} color={T.labelSecondary} />
+              <Text style={[ty.headline, { color: T.labelSecondary }]}>Заявка на рассмотрении</Text>
+            </View>
+            <Pressable onPress={confirmWithdraw} disabled={withdrawing} accessibilityRole="button" accessibilityLabel="Отозвать заявку"
+              style={{ height: 44, borderRadius: 14, backgroundColor: 'rgba(255,59,48,0.10)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: withdrawing ? 0.6 : 1 }}>
+              {withdrawing ? <ActivityIndicator color={T.red} /> : (
+                <>
+                  <SF name="xmark.circle.fill" size={16} color={T.red} />
+                  <Text style={[ty.subheadEm, { color: T.red }]}>Отозвать заявку</Text>
+                </>
+              )}
+            </Pressable>
+          </>
         ) : (
           <>
             {myApp?.status === 'rejected' && myApp.feedback ? (

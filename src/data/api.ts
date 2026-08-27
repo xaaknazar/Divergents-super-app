@@ -469,6 +469,27 @@ export async function applyToChallenge(token: string | null, challengeId: string
   } catch { return false; } finally { clearTimeout(t); }
 }
 
+// Withdraw the signed-in user's own application. Allowed only while it's still
+// pending (a rejected one is cleared too). Once approved you're in the team and
+// only the captain can remove you — the server answers 409 (reason 'approved').
+export async function withdrawChallengeApplication(
+  token: string | null, challengeId: string,
+): Promise<{ ok: boolean; reason?: 'approved' | 'notfound' | 'error' }> {
+  if (!token) return { ok: false, reason: 'error' };
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/apply`, {
+      method: 'DELETE', signal: ctrl.signal,
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) return { ok: true };
+    if (res.status === 409) return { ok: false, reason: 'approved' };
+    if (res.status === 404) return { ok: false, reason: 'notfound' };
+    return { ok: false, reason: 'error' };
+  } catch { return { ok: false, reason: 'error' }; } finally { clearTimeout(t); }
+}
+
 // ───────── Creator role + create content (challenges/trips/channels) ─────────
 export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; isAdmin?: boolean; email?: string | null }> {
   if (!token) return { canCreate: false, isAdmin: false };
