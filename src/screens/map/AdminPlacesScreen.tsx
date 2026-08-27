@@ -1,7 +1,7 @@
 // Admin/curator (xaaknazar@gmail.com): the approval queue for user-suggested
 // places. Approve → the marker becomes public on the map; reject → it's deleted.
 // The list of pending suggestions is the "список на карте" for moderation.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -29,13 +29,17 @@ export function AdminPlacesScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  // Clerk's getToken is a fresh reference each render — keep it in a ref so
+  // `load` stays stable and the effect below runs once (not on every render).
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await getToken();
+      const token = await getTokenRef.current();
       setItems(await fetchPendingPlaces(token));
     } finally { setLoading(false); }
-  }, [getToken]);
+  }, []);
   useEffect(() => { load(); }, [load]);
 
   const approve = async (p: PendingPlace) => {

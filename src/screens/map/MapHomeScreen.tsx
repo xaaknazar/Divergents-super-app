@@ -161,10 +161,14 @@ export function MapHomeScreen({ navigation }: Props) {
   // the pending count; the button opens the approval list.
   const { canCreate: canModerate } = useRole();
   const [pendingCount, setPendingCount] = useState(0);
+  // getToken is a fresh reference each render; keep it in a ref so loadPending
+  // stays stable and doesn't re-fire on every map re-render (GPS/pan cause many).
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
   const loadPending = useCallback(async () => {
     if (!canModerate) { setPendingCount(0); return; }
-    try { const token = await getToken(); const p = await fetchPendingPlaces(token); setPendingCount(p.length); } catch {}
-  }, [canModerate, getToken]);
+    try { const token = await getTokenRef.current(); const p = await fetchPendingPlaces(token); setPendingCount(p.length); } catch {}
+  }, [canModerate]);
   useEffect(() => { loadPending(); }, [loadPending]);
   useEffect(() => navigation.addListener('focus', loadPending), [navigation, loadPending]);
 
