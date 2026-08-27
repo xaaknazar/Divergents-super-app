@@ -23,6 +23,7 @@ export type SFName =
   | 'soccerball' | 'tennis.racket' | 'bicycle' | 'figure.mind.and.body' | 'dumbbell' | 'cube.fill'
   | 'cup.and.saucer.fill' | 'fork.knife' | 'bed.double.fill' | 'beach.umbrella.fill'
   | 'tree.fill' | 'basket.fill' | 'camera.fill' | 'exclamationmark.bubble'
+  | 'applelogo' | 'logo.google'
   | 'wifi.slash' | 'arrow.clockwise' | 'tray' | 'moon.fill' | 'sun.max.fill'
   | 'rosette' | 'checkmark.circle' | 'gearshape.fill' | 'paintpalette.fill'
   | 'circle.lefthalf.filled' | 'textformat.size' | 'arrow.counterclockwise'
@@ -88,6 +89,7 @@ const MAP: Record<string, [Lib, string]> = {
   'bed.double.fill': ['ion', 'bed'], 'beach.umbrella.fill': ['mci', 'beach'],
   'tree.fill': ['mci', 'tree'], 'basket.fill': ['ion', 'basket'],
   'camera.fill': ['ion', 'camera'], 'exclamationmark.bubble': ['ion', 'alert-circle-outline'],
+  'applelogo': ['ion', 'logo-apple'], 'logo.google': ['ion', 'logo-google'],
   'wifi.slash': ['ion', 'cloud-offline'], 'arrow.clockwise': ['ion', 'refresh'],
   'tray': ['ion', 'file-tray-outline'], 'moon.fill': ['ion', 'moon'],
   'sun.max.fill': ['ion', 'sunny'], 'rosette': ['mci', 'medal-outline'],
