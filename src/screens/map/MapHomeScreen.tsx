@@ -153,7 +153,11 @@ export function MapHomeScreen({ navigation }: Props) {
 
   // Per-city offline packs (nothing is pre-downloaded — user grabs a city from
   // the picker). Refresh the list whenever the picker opens.
-  const offline = offlineAvailable();
+  // TEMPORARILY DISABLED: the native MapLibre pack download crashes on device
+  // and the feature needs a real tile-provider key to be useful. Flip this flag
+  // back to `true` to restore the download UI + «Офлайн-карта» screen.
+  const OFFLINE_ENABLED = false;
+  const offline = OFFLINE_ENABLED && offlineAvailable();
   const refreshPacks = useCallback(() => { if (offline) listOfflinePacks().then(setPacks).catch(() => {}); }, [offline]);
   useEffect(() => { if (pickerOpen) refreshPacks(); }, [pickerOpen, refreshPacks]);
 
@@ -472,7 +476,7 @@ export function MapHomeScreen({ navigation }: Props) {
             ) : null}
           </Pressable>
         ) : null}
-        <Round icon="arrow.down.circle" onPress={() => navigation.navigate('OfflineMap')} T={T} />
+        {OFFLINE_ENABLED ? <Round icon="arrow.down.circle" onPress={() => navigation.navigate('OfflineMap')} T={T} /> : null}
         <Round icon="location.fill" onPress={recenter} T={T} />
         <Round icon="plus" brand onPress={() => navigation.navigate('AddPlace')} T={T} />
       </View>

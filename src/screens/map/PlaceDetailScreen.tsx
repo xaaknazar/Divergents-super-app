@@ -18,6 +18,10 @@ import { MapStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<MapStackParams, 'PlaceDetail'>;
 
+// Soft neutral blur shown instantly while the real photo streams in from the
+// CDN — the page never flashes an empty block, so the image feels much faster.
+const PHOTO_BLURHASH = 'L6Pj0^i_.AyE_3t7t7R**0o#DgR4';
+
 export function PlaceDetailScreen({ route, navigation }: Props) {
   const { T, isDark } = useTheme();
   useLang();
@@ -103,7 +107,18 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader backLabel={tr('Места')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
-        {place.photo ? <Image source={{ uri: place.photo }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : null}
+        {place.photo ? (
+          <Image
+            source={{ uri: place.photo }}
+            style={{ width: '100%', height: 220, backgroundColor: T.fillTertiary }}
+            contentFit="cover"
+            transition={220}
+            cachePolicy="memory-disk"
+            priority="high"
+            placeholder={PHOTO_BLURHASH}
+            placeholderContentFit="cover"
+          />
+        ) : null}
         {/* Hero */}
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -213,9 +228,9 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
 function ActBtn({ icon, label, active, onPress, T }: { icon: any; label: string; active?: boolean; onPress: () => void; T: any }) {
   return (
-    <Pressable onPress={onPress} style={{ flex: 1, height: 58, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-      <SF name={icon} size={18} color={active ? T.brand : T.label} />
-      <Text style={[ty.caption2, { color: active ? T.brand : T.labelSecondary, fontSize: 10, lineHeight: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
+    <Pressable onPress={onPress} style={{ flex: 1, height: 62, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4 }}>
+      <SF name={icon} size={20} color={active ? T.brand : T.label} />
+      <Text style={[ty.caption1, { color: active ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{label}</Text>
     </Pressable>
   );
 }

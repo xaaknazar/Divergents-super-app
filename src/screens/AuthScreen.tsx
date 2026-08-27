@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../theme/ThemeContext';
-import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignIn, useSignUp, useSSO } from '@clerk/clerk-expo';
@@ -34,10 +35,12 @@ export function AuthScreen({}: Props) {
   const { startRegistration, finishRegistration } = useAppFlow();
   const { startSSOFlow } = useSSO();
 
-  // Вход через Google/Apple. Полностью минует email-код.
+  // Вход через Google/Apple. Полностью минует email-код. `sso` держит активного
+  // провайдера, чтобы показать спиннер именно на нажатой кнопке.
+  const [sso, setSso] = useState<null | 'oauth_google' | 'oauth_apple'>(null);
   const onSSO = async (strategy: 'oauth_google' | 'oauth_apple') => {
     if (busy) return;
-    setBusy(true); setError(null); setInfo(null);
+    setBusy(true); setSso(strategy); setError(null); setInfo(null);
     try {
       const redirectUrl = AuthSession.makeRedirectUri({ scheme: 'divergents', path: 'sso-callback' });
       const { createdSessionId, setActive } = await startSSOFlow({ strategy, redirectUrl });
@@ -45,7 +48,7 @@ export function AuthScreen({}: Props) {
       else setError(t('err_generic'));
     } catch (e: any) {
       setError(e?.errors?.[0]?.message || t('err_generic'));
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setSso(null); }
   };
 
   const [step, setStep] = useState<'email' | 'code'>('email');
@@ -203,9 +206,14 @@ export function AuthScreen({}: Props) {
     <View style={{ flex: 1, backgroundColor: T.systemBg }}>
       <LinearGradient colors={auroraTop as any} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <View style={{ flex: 1, paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 16 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingHorizontal: 22, paddingBottom: insets.bottom + 16 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Hero */}
-          <View style={{ alignItems: 'center', marginTop: 18, marginBottom: 22 }}>
+          <View style={{ alignItems: 'center', marginTop: 14, marginBottom: 20 }}>
             <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
               <Logo size={50} />
             </View>
@@ -260,18 +268,18 @@ export function AuthScreen({}: Props) {
                   <View style={{ flex: 1, height: 1, backgroundColor: T.separator }} />
                 </View>
 
-                {/* Google */}
+                {/* Google — real multi-colour logo, spinner on the pressed button */}
                 <Pressable onPress={() => onSSO('oauth_google')} disabled={busy || !isLoaded}
-                  style={{ marginTop: 14, height: 52, borderRadius: 14, borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy || !isLoaded) ? 0.6 : 1 }}>
-                  <SF name="globe" size={17} color={T.label} />
+                  style={{ marginTop: 14, height: 54, borderRadius: 15, borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: (busy && sso !== 'oauth_google') || !isLoaded ? 0.5 : 1 }}>
+                  {sso === 'oauth_google' ? <ActivityIndicator size="small" color={T.label} /> : <GoogleG size={20} />}
                   <Text style={[ty.headline, { color: T.label }]}>{lang === 'ru' ? 'Войти через Google' : 'Continue with Google'}</Text>
                 </Pressable>
 
                 {/* Apple (iOS) */}
                 {Platform.OS === 'ios' ? (
                   <Pressable onPress={() => onSSO('oauth_apple')} disabled={busy || !isLoaded}
-                    style={{ marginTop: 10, height: 52, borderRadius: 14, backgroundColor: '#000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy || !isLoaded) ? 0.6 : 1 }}>
-                    <SF name="applelogo" size={17} color="#fff" />
+                    style={{ marginTop: 10, height: 54, borderRadius: 15, backgroundColor: '#000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy && sso !== 'oauth_apple') || !isLoaded ? 0.5 : 1 }}>
+                    {sso === 'oauth_apple' ? <ActivityIndicator size="small" color="#fff" /> : <SF name="applelogo" size={18} color="#fff" />}
                     <Text style={[ty.headline, { color: '#fff' }]}>{lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}</Text>
                   </Pressable>
                 ) : null}
@@ -326,8 +334,11 @@ export function AuthScreen({}: Props) {
             </Pressable>
           ) : null}
 
-          <View style={{ flex: 1 }} />
-          <Text style={[ty.caption2, { color: T.labelTertiary, textAlign: 'center', paddingHorizontal: 16 }]}>{t('terms')}</Text>
+          {/* Spacer pins the terms to the bottom when the content is short, yet
+              lets everything scroll when the card is tall (SSO buttons on small
+              screens). */}
+          <View style={{ flex: 1, minHeight: 24 }} />
+          <Text style={[ty.caption2, { color: T.labelTertiary, textAlign: 'center', paddingHorizontal: 16, marginTop: 20 }]}>{t('terms')}</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 6 }}>
             <Pressable onPress={() => openUrl(TERMS_URL)} hitSlop={8}>
               <Text style={[ty.caption2Em, { color: T.brandAccent }]}>{lang === 'ru' ? 'Условия использования' : 'Terms of Service'}</Text>
@@ -337,9 +348,22 @@ export function AuthScreen({}: Props) {
               <Text style={[ty.caption2Em, { color: T.brandAccent }]}>{lang === 'ru' ? 'Политика конфиденциальности' : 'Privacy Policy'}</Text>
             </Pressable>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
+  );
+}
+
+// Official multi-colour Google "G" (viewBox 48). Recognisable on light or dark
+// buttons, so it reads correctly in both themes.
+function GoogleG({ size = 20 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48">
+      <Path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+      <Path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
+      <Path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+      <Path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+    </Svg>
   );
 }
 
@@ -348,8 +372,12 @@ function GradientButton({ label, icon, loading, disabled, onPress, T, style }: {
     <Pressable onPress={onPress} disabled={loading || disabled} style={style}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={{ height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: loading || disabled ? 0.5 : 1, shadowColor: T.brand, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } }}>
-        <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{label}</Text>
-        {icon && !loading ? <SF name={icon} size={16} color="#fff" /> : null}
+        {loading ? <ActivityIndicator size="small" color="#fff" /> : (
+          <>
+            <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{label}</Text>
+            {icon ? <SF name={icon} size={16} color="#fff" /> : null}
+          </>
+        )}
       </LinearGradient>
     </Pressable>
   );
