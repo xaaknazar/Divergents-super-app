@@ -40,9 +40,19 @@ export interface DownloadInput {
   owned: boolean;
 }
 
+// An in-flight download's metadata, so the Downloads screen can list it while
+// it's still downloading (not just after it completes).
+interface PendingMeta { lessonId: string; courseId: string; courseTitle: string; title: string; n?: number }
+export interface PendingDownload extends PendingMeta { progress: number }
+
 // ─── External store ────────────────────────────────────────────────
 let registry: Record<string, DownloadRecord> = {};
 let progress: Record<string, number> = {}; // lessonId -> 0..1 while in flight
+// The live resumable tasks (so a download can be cancelled) + their metadata.
+// These live at module scope, so a download keeps running when the user leaves
+// the lesson screen — it only stops when completed or explicitly cancelled.
+const tasks: Record<string, ReturnType<typeof createDownloadResumable>> = {};
+let pendingMeta: Record<string, PendingMeta> = {};
 let ready = false;
 let loadStarted = false;
 
@@ -114,6 +124,9 @@ export async function downloadLesson(input: DownloadInput, audioUrl?: string | n
 
   const localUri = `${DIR}${safeName(input.lessonId)}.m4a`;
   progress[input.lessonId] = 0;
+  pendingMeta[input.lessonId] = {
+    lessonId: input.lessonId, courseId: input.courseId, courseTitle: input.courseTitle, title: input.title, n: input.n,
+  };
   notify();
 
   try {
@@ -124,9 +137,13 @@ export async function downloadLesson(input: DownloadInput, audioUrl?: string | n
       progress[input.lessonId] = Math.max(0, Math.min(1, frac));
       notify();
     });
+    tasks[input.lessonId] = task;
     const result = await task.downloadAsync();
-    if (!result || result.status < 200 || result.status >= 300) {
-      throw new Error(`HTTP ${result?.status ?? 'no-response'}`);
+    // A cancel resolves downloadAsync() with undefined — treat as "stopped", not
+    // an error (the file was already cleaned up by cancelDownload).
+    if (!result) { clearPending(input.lessonId); notify(); return false; }
+    if (result.status < 200 || result.status >= 300) {
+      throw new Error(`HTTP ${result.status}`);
     }
     let size = 0;
     try {
@@ -143,16 +160,33 @@ export async function downloadLesson(input: DownloadInput, audioUrl?: string | n
       size,
       at: Date.now(),
     };
-    delete progress[input.lessonId];
+    clearPending(input.lessonId);
     notify();
     await persist();
     return true;
   } catch {
-    delete progress[input.lessonId];
+    clearPending(input.lessonId);
     try { await deleteAsync(localUri, { idempotent: true }); } catch {}
     notify();
     return false;
   }
+}
+
+// Clear the in-flight bookkeeping for a lesson (progress / task / metadata).
+function clearPending(lessonId: string) {
+  delete progress[lessonId];
+  delete tasks[lessonId];
+  delete pendingMeta[lessonId];
+}
+
+// Stop an in-flight download the user started. Cancels the resumable task,
+// removes the partial file, and clears its progress. Safe if nothing's running.
+export async function cancelDownload(lessonId: string): Promise<void> {
+  const task = tasks[lessonId];
+  clearPending(lessonId);
+  notify();
+  if (task) { try { await task.cancelAsync(); } catch {} }
+  try { await deleteAsync(`${DIR}${safeName(lessonId)}.m4a`, { idempotent: true }); } catch {}
 }
 
 export async function removeDownload(lessonId: string): Promise<void> {
@@ -175,10 +209,12 @@ function safeName(id: string): string {
 // ─── React hook ────────────────────────────────────────────────────
 export interface UseDownloads {
   ready: boolean;
-  items: DownloadRecord[]; // newest first
+  items: DownloadRecord[]; // completed, newest first
+  pending: PendingDownload[]; // in-flight (still downloading)
   progress: Record<string, number>;
   downloadLesson: typeof downloadLesson;
   removeDownload: typeof removeDownload;
+  cancelDownload: typeof cancelDownload;
   isDownloaded: (lessonId: string) => boolean;
   isDownloading: (lessonId: string) => boolean;
   localUriFor: (lessonId: string) => string | null;
@@ -189,12 +225,15 @@ export function useDownloads(): UseDownloads {
   useEffect(() => subscribe(() => setTick((t) => t + 1)), []);
 
   const items = Object.values(registry).sort((a, b) => b.at - a.at);
+  const pending = Object.values(pendingMeta).map((m) => ({ ...m, progress: progress[m.lessonId] ?? 0 }));
   return {
     ready,
     items,
+    pending,
     progress: { ...progress },
     downloadLesson,
     removeDownload,
+    cancelDownload,
     isDownloaded: (id) => !!registry[id],
     isDownloading: (id) => progress[id] !== undefined,
     localUriFor: (id) => registry[id]?.localUri ?? null,

@@ -34,7 +34,7 @@ export function DownloadsScreen({ navigation }: Props) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
-  const { items, removeDownload, downloadLesson, isDownloaded, isDownloading, progress } = useDownloads();
+  const { items, pending, removeDownload, cancelDownload, downloadLesson, isDownloaded, isDownloading, progress } = useDownloads();
   const { getToken, isSignedIn } = useAuth();
   const my = useMyCourses();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -153,7 +153,7 @@ export function DownloadsScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.systemBg }}>
       <NavHeader title={tr('Загрузки')} onBack={() => navigation.goBack()} hairline />
 
-      {items.length === 0 && availFiltered.length === 0 ? (
+      {items.length === 0 && availFiltered.length === 0 && pending.length === 0 ? (
         <View style={{ flex: 1 }}>
           {loadingAvail ? (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
@@ -163,6 +163,32 @@ export function DownloadsScreen({ navigation }: Props) {
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 4, paddingBottom: insets.bottom + (selected ? 150 : 30) }}>
+          {/* In progress — keeps downloading after you leave the lesson; stop it here */}
+          {pending.length > 0 ? (
+            <ListSection header={`${tr('Скачивается')} · ${pending.length}`}>
+              {pending.map((p, i) => (
+                <View key={p.lessonId} style={{ paddingVertical: 12, paddingHorizontal: 16, position: 'relative' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ width: 38, height: 38, borderRadius: 9, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                      <ActivityIndicator size="small" color={T.brand} />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={[ty.body, { color: T.label }]} numberOfLines={2}>{p.n ? `${p.n}. ` : ''}{p.title}</Text>
+                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{p.courseTitle} · {Math.round(p.progress * 100)}%</Text>
+                    </View>
+                    <Pressable onPress={() => cancelDownload(p.lessonId)} hitSlop={10} style={{ padding: 4 }} accessibilityLabel={tr('Остановить загрузку')}>
+                      <SF name="xmark.circle.fill" size={22} color={T.labelTertiary} />
+                    </Pressable>
+                  </View>
+                  <View style={{ height: 3, borderRadius: 2, backgroundColor: T.fillTertiary, overflow: 'hidden', marginTop: 8, marginLeft: 50 }}>
+                    <View style={{ width: `${Math.max(3, p.progress * 100)}%`, height: '100%', borderRadius: 2, backgroundColor: T.brand }} />
+                  </View>
+                  {i < pending.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+                </View>
+              ))}
+            </ListSection>
+          ) : null}
+
           {/* Downloaded (offline) */}
           {groups.length > 0 ? (
             <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Скачано')} · {items.length}</Text>

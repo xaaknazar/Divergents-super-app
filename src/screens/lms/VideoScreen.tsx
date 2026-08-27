@@ -58,7 +58,7 @@ export function VideoScreen({ route, navigation }: Props) {
   const player = useVideoPlayer(hls ?? null, (p) => { p.loop = false; });
   // Offline-audio store. Called unconditionally (before any early return) so the
   // hook count stays stable across renders — see Rules of Hooks.
-  const { isDownloaded, downloadLesson, removeDownload, isDownloading } = useDownloads();
+  const { isDownloaded, downloadLesson, removeDownload, cancelDownload, isDownloading } = useDownloads();
   const videoRef = useRef<VideoView>(null);
 
   // Autoplay once a real HLS source is available (also covers the case where the
@@ -138,6 +138,9 @@ export function VideoScreen({ route, navigation }: Props) {
   const downloaded = isDownloaded(lesson.id);
   const dlBusy = isDownloading(lesson.id);
   const onDownloadAudio = async () => {
+    // Tapping while it's downloading stops it (the download keeps running in the
+    // background otherwise — it's not tied to this screen).
+    if (dlBusy) { await cancelDownload(lesson.id); return; }
     if (downloaded) { await removeDownload(lesson.id); return; }
     if (!audioUrl) { Alert.alert(tr('Аудио недоступно'), tr('Для этого урока пока нет аудиоверсии.')); return; }
     const okDl = await downloadLesson({ lessonId: lesson.id, courseId, courseTitle: course.title, title: lesson.title, n: lesson.n, owned: true }, audioUrl);
@@ -226,9 +229,9 @@ export function VideoScreen({ route, navigation }: Props) {
           <Text style={[ty.title3, { color: T.label }]} numberOfLines={2}>{lesson.title}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{tr('Урок')} {lesson.n} {tr('из')} {course.lessons.length} · {course.title}</Text>
           {owned && audioUrl ? (
-            <Pressable onPress={onDownloadAudio} disabled={dlBusy} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: downloaded ? T.brandTinted : T.fillSecondary, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 }}>
+            <Pressable onPress={onDownloadAudio} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: downloaded ? T.brandTinted : T.fillSecondary, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 }}>
               {dlBusy ? <ActivityIndicator color={T.brand} /> : <SF name={downloaded ? 'checkmark.circle.fill' : 'arrow.down.circle'} size={16} color={T.brand} />}
-              <Text style={[ty.footnoteEm, { color: T.brand }]}>{dlBusy ? tr('Скачивание…') : downloaded ? tr('Аудио скачано · удалить') : tr('Скачать аудио (офлайн)')}</Text>
+              <Text style={[ty.footnoteEm, { color: T.brand }]}>{dlBusy ? tr('Скачивается… · остановить') : downloaded ? tr('Аудио скачано · удалить') : tr('Скачать аудио (офлайн)')}</Text>
             </Pressable>
           ) : null}
         </View>
