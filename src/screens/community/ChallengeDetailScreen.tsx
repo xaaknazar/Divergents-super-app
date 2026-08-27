@@ -243,6 +243,13 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
 
       {/* CTA */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, gap: 10 }}>
+        {canCreate ? (
+          <Pressable onPress={() => navigation.navigate('ManageChallenge', { challengeId: meta.id })}
+            style={{ height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <SF name="slider.horizontal.3" size={16} color="#fff" />
+            <Text style={[ty.headline, { color: '#fff' }]}>Управление челленджем</Text>
+          </Pressable>
+        ) : null}
         {canReview ? (
           <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId: meta.id })}
             style={{ height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>

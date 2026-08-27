@@ -964,3 +964,101 @@ export async function fetchMyChallengeApplications(token: string | null | undefi
     }));
   } catch { return []; } finally { clearTimeout(t); }
 }
+
+// ─── Manage challenge (creator, only BEFORE start) ───────────────────────────
+export interface ManageTeam {
+  id: string; name: string; capacity: number;
+  captainId: string | null; captainName: string | null; memberCount: number;
+}
+export interface ManageMember {
+  applicationId: string; userId: string; userName: string; userEmail: string;
+  status: ChallengeAppStatus; teamId: string | null;
+}
+export interface ChallengeManage {
+  canManage: boolean;
+  challenge: { id: string; title: string; startISO: string | null; durationDays: number; price: string | null; status: string; started: boolean; editable: boolean };
+  teams: ManageTeam[];
+  members: ManageMember[];
+}
+type EditResult = { ok: boolean; reason?: 'started' | 'error' };
+
+// Everything the creator's manage screen needs, in one call. null on failure/403.
+export async function fetchChallengeManage(challengeId: string, token: string | null | undefined): Promise<ChallengeManage | null> {
+  if (!token) return null;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/manage`, {
+      signal: ctrl.signal, headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    if (!d?.challenge) return null;
+    return {
+      canManage: !!d.canManage,
+      challenge: {
+        id: String(d.challenge.id), title: String(d.challenge.title ?? ''),
+        startISO: d.challenge.startISO ?? null, durationDays: Number(d.challenge.durationDays) || 21,
+        price: d.challenge.price ?? null, status: String(d.challenge.status ?? ''),
+        started: !!d.challenge.started, editable: !!d.challenge.editable,
+      },
+      teams: (Array.isArray(d.teams) ? d.teams : []).map((tm: any) => ({
+        id: String(tm.id), name: String(tm.name ?? ''), capacity: Number(tm.capacity) || 0,
+        captainId: tm.captainId ?? null, captainName: tm.captainName ?? null, memberCount: Number(tm.memberCount) || 0,
+      })),
+      members: (Array.isArray(d.members) ? d.members : []).map((m: any) => ({
+        applicationId: String(m.applicationId), userId: String(m.userId),
+        userName: m.userName ?? '', userEmail: m.userEmail ?? '',
+        status: (m.status ?? 'pending') as ChallengeAppStatus, teamId: m.teamId ?? null,
+      })),
+    };
+  } catch { return null; } finally { clearTimeout(t); }
+}
+
+async function patchJson(path: string, body: unknown, token: string): Promise<EditResult> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'PATCH', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) return { ok: true };
+    if (res.status === 409) return { ok: false, reason: 'started' };
+    return { ok: false, reason: 'error' };
+  } catch { return { ok: false, reason: 'error' }; } finally { clearTimeout(t); }
+}
+
+// Edit challenge-level fields (title / duration / price / start). Before start.
+export function updateChallenge(challengeId: string, patch: { title?: string; durationDays?: number; price?: string | null; startISO?: string }, token: string | null | undefined): Promise<EditResult> {
+  if (!token) return Promise.resolve({ ok: false, reason: 'error' });
+  return patchJson(`/api/mobile/challenges/${encodeURIComponent(challengeId)}`, patch, token);
+}
+
+// Edit a team (name / capacity / captain). Before start.
+export function updateChallengeTeam(challengeId: string, teamId: string, patch: { name?: string; capacity?: number; captain?: string | null }, token: string | null | undefined): Promise<EditResult> {
+  if (!token) return Promise.resolve({ ok: false, reason: 'error' });
+  return patchJson(`/api/mobile/challenges/${encodeURIComponent(challengeId)}/teams/${encodeURIComponent(teamId)}`, patch, token);
+}
+
+// Move a participant to another team. Before start.
+export function moveChallengeParticipant(challengeId: string, applicantUserId: string, teamId: string, token: string | null | undefined): Promise<EditResult> {
+  if (!token) return Promise.resolve({ ok: false, reason: 'error' });
+  return patchJson(`/api/mobile/challenges/${encodeURIComponent(challengeId)}/applications`, { applicantUserId, teamId }, token);
+}
+
+// Remove a participant from the challenge entirely. Before start.
+export async function removeChallengeParticipant(challengeId: string, applicantUserId: string, token: string | null | undefined): Promise<EditResult> {
+  if (!token) return { ok: false, reason: 'error' };
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/applications?userId=${encodeURIComponent(applicantUserId)}`, {
+      method: 'DELETE', signal: ctrl.signal, headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) return { ok: true };
+    if (res.status === 409) return { ok: false, reason: 'started' };
+    return { ok: false, reason: 'error' };
+  } catch { return { ok: false, reason: 'error' }; } finally { clearTimeout(t); }
+}
