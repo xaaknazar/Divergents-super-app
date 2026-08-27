@@ -213,6 +213,9 @@ export interface Challenge {
   // The signed-in user's own disciplinary state (server-computed).
   flags?: FlagCounts;
   eliminated?: boolean;
+  teamId?: string | null;
+  teamChat?: string | null;   // team's Telegram chat link (members open it)
+  captainId?: string | null;  // Clerk id of the team captain (drives captain-only tools)
 }
 
 // Neutral scaffold for the daily tracker before the server's active challenge
@@ -383,6 +386,9 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
     tasks,
     flags: flagsOf(raw.flags),
     eliminated: raw.eliminated === true,
+    teamId: (raw as any).teamId ?? null,
+    teamChat: (raw as any).teamChat ?? null,
+    captainId: (raw as any).captainId ?? null,
   };
 }
 
@@ -630,11 +636,14 @@ export const CHALLENGE_CATEGORIES: ChallengeCategory[] = [
 ];
 
 export const CHALLENGE_RULES: string[] = [
+  'Старт: челлендж активируется в 23:00 накануне первого дня. Например, старт «28-го» — трекер открывается в 23:00 27-го.',
+  'День идёт с 23:01 до 23:00 следующего дня. Отчёт сдаётся с 07:00 до 23:00; после 23:00 сдача этого дня закрывается, а в 23:01 начинается следующий день.',
   'Три категории: Чтение (R), No Sugar (NS), Активность (A). Норма: 20 страниц и 10 000 шагов в день.',
   'Баллы: 1 страница = 1 балл (худлит — 0.5), день без сахара = 0 баллов, 400 шагов = 1 балл.',
   'Активность можно набирать бегом, плаванием, велосипедом и силовыми (см. таблицу пересчёта).',
-  'Отчёт за день — в чат команды до 23:00. Опоздание: −300 баллов и три 🚩.',
+  'Отчёт за день обязателен до 23:00. Опоздание/пропуск: −300 баллов и три 🚩.',
   'Штраф за невыполнение нормы: −100 баллов и 🚩 по этой категории. Баллы не уходят в минус (минимум 0).',
+  'Баллы команды обновляются, как только все сдали отчёт, и окончательно пересчитываются в 23:01 при закрытии дня.',
   '3 🚩 по одной категории → 🏳️ и вылет. Очки фиксируются.',
   'Размер команды задаёт организатор (например, 20–35 человек): капитан и 2 советника, выбранные участниками.',
   'Никнейм ≤ 9 символов и не более одной заглавной буквы, близкий к ФИО. Фиксируйте аэробную нагрузку для проверки.',
@@ -855,6 +864,7 @@ export interface ChallengeApplicant {
   userName: string;
   status: ChallengeAppStatus;
   feedback: string;
+  telegram: string | null;
   coefficient: number;
   teamId: string | null;
   teamName: string;
@@ -886,6 +896,7 @@ export async function fetchChallengeApplicants(
         userName: a.userName ?? '',
         status: (a.status ?? 'pending') as ChallengeAppStatus,
         feedback: a.feedback ?? '',
+        telegram: a.telegram ?? null,
         coefficient: typeof a.coefficient === 'number' ? a.coefficient : 1,
         teamId: a.teamId ?? null,
         teamName: a.teamName ?? '',
@@ -972,7 +983,7 @@ export interface ManageTeam {
 }
 export interface ManageMember {
   applicationId: string; userId: string; userName: string; userEmail: string;
-  status: ChallengeAppStatus; teamId: string | null;
+  status: ChallengeAppStatus; teamId: string | null; telegram: string | null;
 }
 export interface ChallengeManage {
   canManage: boolean;
@@ -1009,7 +1020,7 @@ export async function fetchChallengeManage(challengeId: string, token: string | 
       members: (Array.isArray(d.members) ? d.members : []).map((m: any) => ({
         applicationId: String(m.applicationId), userId: String(m.userId),
         userName: m.userName ?? '', userEmail: m.userEmail ?? '',
-        status: (m.status ?? 'pending') as ChallengeAppStatus, teamId: m.teamId ?? null,
+        status: (m.status ?? 'pending') as ChallengeAppStatus, teamId: m.teamId ?? null, telegram: m.telegram ?? null,
       })),
     };
   } catch { return null; } finally { clearTimeout(t); }
@@ -1061,4 +1072,35 @@ export async function removeChallengeParticipant(challengeId: string, applicantU
     if (res.status === 409) return { ok: false, reason: 'started' };
     return { ok: false, reason: 'error' };
   } catch { return { ok: false, reason: 'error' }; } finally { clearTimeout(t); }
+}
+
+// ─── Team comms (captain) ────────────────────────────────────────────────────
+// Set (or clear with '') the team's Telegram chat link. Captain or admin.
+export async function setTeamChat(challengeId: string, teamId: string, telegramChat: string | null, token: string | null | undefined): Promise<boolean> {
+  if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/team`, {
+      method: 'PATCH', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ teamId, telegramChat: telegramChat ?? null }),
+    });
+    return res.ok;
+  } catch { return false; } finally { clearTimeout(t); }
+}
+
+// Broadcast a push to every member of the team. Captain or admin.
+export async function broadcastTeam(challengeId: string, teamId: string, message: string, token: string | null | undefined): Promise<boolean> {
+  if (!token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/team`, {
+      method: 'POST', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ teamId, message }),
+    });
+    return res.ok;
+  } catch { return false; } finally { clearTimeout(t); }
 }

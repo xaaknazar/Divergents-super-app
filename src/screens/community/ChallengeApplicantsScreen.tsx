@@ -3,7 +3,7 @@
 // accept/reject with a reason. Admins can also promote an applicant to captain
 // of their team. Mirrors VacancyApplicantsScreen.
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Modal, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Modal, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
@@ -136,6 +136,12 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                 <View style={{ padding: 14, gap: 8 }}>
                   {sel?.teamName ? <Row T={T} k="Команда" v={sel.teamName} /> : null}
                   <Row T={T} k="Статус" v={sel ? STATUS_META[sel.status].label : ''} />
+                  {sel?.telegram ? (
+                    <Pressable onPress={() => Linking.openURL(`https://t.me/${sel.telegram}`).catch(() => {})} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+                      <Text style={[ty.subhead, { color: T.labelSecondary }]}>Telegram</Text>
+                      <Text style={[ty.subhead, { color: T.brand }]} numberOfLines={1}>@{sel.telegram}</Text>
+                    </Pressable>
+                  ) : null}
                   {sel && sel.coefficient !== 1 ? <Row T={T} k="Коэффициент" v={`×${sel.coefficient}`} /> : null}
                 </View>
               </ListSection>

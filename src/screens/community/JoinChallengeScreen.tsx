@@ -10,7 +10,7 @@ import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import {
-  fetchChallengesAndTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam,
+  fetchChallengesAndTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam, CHALLENGE_RULES,
 } from '../../data/community';
 import { applyToChallenge } from '../../data/api';
 import { useTalentProfile } from '../../state/useTalentProfile';
@@ -40,6 +40,8 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [nick, setNick] = useState('');
+  const [tg, setTg] = useState('');
+  const [showRules, setShowRules] = useState(false);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [agree, setAgree] = useState(false);
   const [track, setTrack] = useState(false);
@@ -72,7 +74,9 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const lenOk = nickLen > 0 && nickLen <= NICK_MAX;
   const caseOk = upperCount(nick) <= 1; // максимум одна заглавная буква
   const nickOk = lenOk && caseOk;
-  const canSubmit = nickOk && !!teamId && agree && track;
+  const tgHandle = tg.trim().replace(/^@+/, '');
+  const tgOk = tgHandle.length >= 3;
+  const canSubmit = nickOk && tgOk && !!teamId && agree && track;
   const team = teams.find((t) => t.id === teamId);
 
   // Real submit: send the application to the server; only show success when the
@@ -82,7 +86,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
     setSubmitting(true);
     try {
       const token = await getToken();
-      const ok = await applyToChallenge(token, route.params.challengeId, teamId, live ? profile : undefined);
+      const ok = await applyToChallenge(token, route.params.challengeId, teamId, live ? profile : undefined, tgHandle);
       if (ok) setSubmitted(true);
       else Alert.alert(tr('Не удалось отправить заявку'), tr('Проверьте подключение и попробуйте снова.'));
     } catch {
@@ -134,6 +138,21 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
           : nick && !caseOk ? <Text style={[ty.caption1, { color: T.red, marginTop: 6, marginLeft: 4 }]}>{tr('Разрешена только одна заглавная буква')}</Text>
           : null}
 
+        {/* Telegram username — how the captain reaches you */}
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('USERNAME В TELEGRAM')}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: tg && !tgOk ? T.red : 'transparent' }}>
+          <Text style={[ty.body, { color: T.labelSecondary }]}>@</Text>
+          <TextInput
+            value={tg}
+            onChangeText={(t) => setTg(t.replace(/[^a-zA-Z0-9_@]/g, ''))}
+            placeholder={tr('username')}
+            placeholderTextColor={T.labelTertiary}
+            autoCapitalize="none" autoCorrect={false}
+            style={[ty.body, { flex: 1, paddingVertical: 12, color: T.label }]}
+          />
+        </View>
+        <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 6, marginLeft: 4 }]}>{tr('Капитан свяжется с вами в Telegram и добавит в чат команды.')}</Text>
+
         {/* Team */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('ВЫБЕРИТЕ КОМАНДУ')}</Text>
         <View style={{ backgroundColor: T.cardBg, borderRadius: 12, overflow: 'hidden' }}>
@@ -177,10 +196,29 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
           <SF name={track ? 'checkmark.circle.fill' : 'circle'} size={24} color={track ? T.brand : T.labelTertiary} />
         </Pressable>
 
-        {/* Agree */}
-        <Pressable onPress={() => setAgree((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agree }} accessibilityLabel="Согласен с правилами" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 22 }}>
+        {/* Rules — open/hide, then the mandatory acknowledgment */}
+        <Pressable onPress={() => setShowRules((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, marginBottom: showRules ? 8 : 0 }}>
+          <Text style={[ty.footnote, { color: T.labelSecondary, marginLeft: 4 }]}>{tr('ПРАВИЛА ЧЕЛЛЕНДЖА')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={[ty.caption1, { color: T.brand }]}>{showRules ? tr('Скрыть') : tr('Открыть')}</Text>
+            <SF name={showRules ? 'chevron.down' : 'chevron.right'} size={12} color={T.brand} />
+          </View>
+        </Pressable>
+        {showRules ? (
+          <View style={{ backgroundColor: T.cardBg, borderRadius: 12, padding: 14, gap: 9 }}>
+            {CHALLENGE_RULES.map((r, i) => (
+              <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
+                <Text style={[ty.subheadEm, { color: T.brand, width: 16 }]}>{i + 1}</Text>
+                <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{r}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {/* Mandatory acknowledgment */}
+        <Pressable onPress={() => setAgree((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agree }} accessibilityLabel="Ознакомился с правилами" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 }}>
           <SF name={agree ? 'checkmark.circle.fill' : 'circle'} size={24} color={agree ? T.brand : T.labelTertiary} />
-          <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{tr('Я ознакомился с правилами: 20 страниц, без сахара, 10 000 шагов и отчёт до 23:00. 3 🚩 — вылет.')}</Text>
+          <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{tr('Я прочитал(а) и ознакомился с правилами челленджа выше и согласен(на) их соблюдать.')}</Text>
         </Pressable>
       </ScrollView>
 

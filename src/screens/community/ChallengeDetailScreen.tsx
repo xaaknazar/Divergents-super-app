@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, Modal, Share, ActionSheetIOS, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, Modal, Share, ActionSheetIOS, Platform, Alert, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +24,7 @@ import {
   CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
   FlagCounts, totalFlags, ChallengeTask,
   fetchMyChallengeApplications, MyChallengeApplication,
+  setTeamChat, broadcastTeam,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
@@ -92,6 +93,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   const left = daysUntil(meta.startISO);
   // All team spots taken → recruitment closed, waiting for the start.
   const full = teams.length > 0 && teamsNeed(teams) === 0;
+  const [rulesOpen, setRulesOpen] = useState(false);
   const { canCreate } = useRole();
   const { getToken, userId } = useAuth();
   // Reviewers: admins/creators, plus a captain of any team in this challenge.
@@ -230,8 +232,16 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         </ListSection>
 
         {/* Rules */}
-        <ListSection header={tr('Правила')}>
-          <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
+        {/* Rules — open/hide */}
+        <Pressable onPress={() => setRulesOpen((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 }}>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Правила')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={[ty.subheadEm, { color: T.brand }]}>{rulesOpen ? tr('Скрыть') : tr('Открыть')}</Text>
+            <SF name={rulesOpen ? 'chevron.down' : 'chevron.right'} size={13} color={T.brand} />
+          </View>
+        </Pressable>
+        {rulesOpen ? (
+          <View style={{ marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 0.5, borderColor: T.cardBorder }}>
             {CHALLENGE_RULES.map((rule, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 9, borderBottomWidth: i < CHALLENGE_RULES.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
                 <Text style={[ty.subheadEm, { color: T.brand, width: 18 }]}>{i + 1}</Text>
@@ -239,7 +249,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
               </View>
             ))}
           </View>
-        </ListSection>
+        ) : null}
         <View style={{ height: 20 }} />
       </ScrollView>
 
@@ -328,8 +338,37 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const { T } = useTheme();
   const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints, teamFlags, teamPenalty, reportedToday, reportedAt, submitReport } = useChallenge();
   const { weekly, workouts } = useActivities();
+  const { userId, getToken } = useAuth();
   const c = challenge;
   const insets = useSafeAreaInsets();
+  // Team chat + captain tools.
+  const isCaptain = !!c.captainId && c.captainId === userId;
+  const [chatOverride, setChatOverride] = useState<string | null>(null);
+  const chat = chatOverride ?? c.teamChat ?? null;
+  const promptIOS = (title: string, msg: string, value: string, onOk: (text: string) => void) => {
+    if (Platform.OS === 'ios' && typeof (Alert as any).prompt === 'function') {
+      (Alert as any).prompt(title, msg, [
+        { text: tr('Отмена'), style: 'cancel' },
+        { text: tr('OK'), onPress: (t: string) => onOk(String(t ?? '')) },
+      ], 'plain-text', value);
+    } else {
+      Alert.alert(title, tr('Доступно в полной версии на iOS.'));
+    }
+  };
+  const editChat = () => promptIOS(tr('Ссылка на чат команды'), tr('Вставьте ссылку на Telegram-чат (t.me/…)'), chat ?? '', async (txt) => {
+    const v = txt.trim();
+    if (!c.teamId) return;
+    const token = await getToken();
+    const ok = await setTeamChat(c.id, c.teamId, v || null, token);
+    if (ok) { hSuccess(); setChatOverride(v || null); } else Alert.alert(tr('Не удалось сохранить'));
+  });
+  const broadcast = () => promptIOS(tr('Написать команде'), tr('Сообщение придёт пушем всем участникам команды.'), '', async (txt) => {
+    const msg = txt.trim();
+    if (!msg || !c.teamId) return;
+    const token = await getToken();
+    const ok = await broadcastTeam(c.id, c.teamId, msg, token);
+    if (ok) { hSuccess(); Alert.alert(tr('Отправлено'), tr('Сообщение отправлено команде.')); } else Alert.alert(tr('Не удалось отправить'));
+  });
   const allDone = c.tasks.every(taskDone);
   const [celebrate, setCelebrate] = useState(false);
   const [showConv, setShowConv] = useState(false);
@@ -421,6 +460,29 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           <Text style={[ty.largeTitle, { color: T.label, flex: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{c.title}</Text>
         </View>
         {c.teamName ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]} numberOfLines={1}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')}{c.startedLabel ? ` · ${c.startedLabel}` : ''}</Text> : null}
+
+        {/* Team chat + captain tools */}
+        <View style={{ marginTop: 12, gap: 8 }}>
+          {chat ? (
+            <Pressable onPress={() => Linking.openURL(chat).catch(() => {})}
+              style={{ height: 46, borderRadius: 14, backgroundColor: '#229ED9', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+              <SF name="paperplane.fill" size={16} color="#fff" />
+              <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{tr('Открыть чат команды')}</Text>
+            </Pressable>
+          ) : !isCaptain ? (
+            <View style={{ height: 40, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+              <SF name="clock.fill" size={13} color={T.labelSecondary} />
+              <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Капитан скоро добавит чат команды')}</Text>
+            </View>
+          ) : null}
+          {isCaptain ? (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <CaptainBtn icon="square.and.pencil" label={chat ? tr('Изменить чат') : tr('Ссылка на чат')} onPress={editChat} T={T} />
+              <CaptainBtn icon="bubble.left.fill" label={tr('Написать всем')} onPress={broadcast} T={T} />
+              <CaptainBtn icon="person.2.fill" label={tr('Состав')} onPress={() => navigation.navigate('ChallengeApplicants', { challengeId: c.id })} T={T} />
+            </View>
+          ) : null}
+        </View>
       </View>
 
       {/* Elimination banner — points are frozen for the user (🏳️) */}
@@ -608,6 +670,16 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   );
 }
 
+// Compact captain action button (chat link / broadcast / roster).
+function CaptainBtn({ icon, label, onPress, T }: { icon: any; label: string; onPress: () => void; T: any }) {
+  return (
+    <Pressable onPress={onPress} style={{ flex: 1, height: 58, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+      <SF name={icon} size={18} color={T.brand} />
+      <Text style={[ty.caption2, { color: T.brand, fontSize: 10, lineHeight: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
+    </Pressable>
+  );
+}
+
 // Daily report bar — «отчёт за день» с дедлайном 23:00. Клиент показывает
 // обратный отсчёт и статус; сервер решает, вовремя отчёт или просрочен (−300 и 🚩).
 function DailyReport({ reported, reportedAt, onSubmit }: { reported: boolean; reportedAt: string | null; onSubmit: () => Promise<boolean> }) {
@@ -626,11 +698,17 @@ function DailyReport({ reported, reportedAt, onSubmit }: { reported: boolean; re
   }
 
   const now = new Date();
+  // Report window: opens 07:00, closes 23:00 (Almaty). Before 07:00 → not yet open.
+  const openAt = new Date(now); openAt.setHours(7, 0, 0, 0);
   const deadline = new Date(now); deadline.setHours(23, 0, 0, 0);
+  const beforeOpen = now.getTime() < openAt.getTime();
   const late = now.getTime() > deadline.getTime();
   const msLeft = deadline.getTime() - now.getTime();
   const hLeft = Math.max(0, Math.floor(msLeft / 3600000));
   const mLeft = Math.max(0, Math.floor((msLeft % 3600000) / 60000));
+  const msToOpen = openAt.getTime() - now.getTime();
+  const hToOpen = Math.max(0, Math.floor(msToOpen / 3600000));
+  const mToOpen = Math.max(0, Math.floor((msToOpen % 3600000) / 60000));
 
   const submit = async () => {
     if (busy) return;
@@ -641,6 +719,16 @@ function DailyReport({ reported, reportedAt, onSubmit }: { reported: boolean; re
     else Alert.alert(tr('Не удалось отправить отчёт'), tr('Проверьте подключение и попробуйте снова.'));
   };
 
+  // Before 07:00 the report window isn't open yet.
+  if (beforeOpen) {
+    return (
+      <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.fillSecondary, borderRadius: 12, padding: 12 }}>
+        <SF name="clock.fill" size={18} color={T.labelSecondary} />
+        <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]} numberOfLines={2}>{tr('Приём отчёта откроется в 07:00')} · {tr('через')} {hToOpen} ч {mToOpen} мин</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ marginTop: 12, gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -648,7 +736,7 @@ function DailyReport({ reported, reportedAt, onSubmit }: { reported: boolean; re
         <Text style={[ty.caption1, { color: late ? T.red : T.labelSecondary, flex: 1 }]}>
           {late
             ? tr('Дедлайн 23:00 прошёл — отчёт зачтётся как просроченный (−300 и 🚩)')
-            : `${tr('До дедлайна отчёта (23:00)')}: ${hLeft} ч ${mLeft} мин`}
+            : `${tr('Отчёт открыт до 23:00')} · ${tr('осталось')} ${hLeft} ч ${mLeft} мин`}
         </Text>
       </View>
       <Pressable onPress={submit} disabled={busy} accessibilityRole="button" accessibilityLabel={tr('Отправить отчёт за день')}
