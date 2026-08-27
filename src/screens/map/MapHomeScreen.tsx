@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput, Modal, Linking, Platform, Share, Alert, Keyboard } from 'react-native';
 import { Image } from 'expo-image';
@@ -12,7 +12,9 @@ import { Capsule, ty } from '../../components/ui';
 import { PageIntro } from '../../components/PageIntro';
 import { Stars } from '../../components/Stars';
 import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
-import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, safeCityCenter, nearestCity, Place, isOpenNow } from '../../data/places';
+import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, safeCityCenter, nearestCity, Place, isOpenNow, City, fetchPendingPlaces } from '../../data/places';
+import { offlineAvailable, listOfflinePacks, findCityPack, downloadCityPack, deleteCityPack } from '../../data/offlineMap';
+import { useRole } from '../../state/useRole';
 import { fetchLiveTrips, fetchMyTripIds, LiveTrip, fetchLiveSport, fetchMySportIds, LiveSport } from '../../data/api';
 import { MapStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
@@ -88,6 +90,9 @@ export function MapHomeScreen({ navigation }: Props) {
   const [tags, setTags] = useState<PlaceTag[]>([]);
   const [q, setQ] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [packs, setPacks] = useState<any[]>([]);
+  const [dlCity, setDlCity] = useState<string | null>(null);
+  const [dlPct, setDlPct] = useState(0);
   const [selId, setSelId] = useState<string | null>(null);
   const [user, setUser] = useState<LatLng | null>(null);
   const [target, setTarget] = useState<{ name: string; lat: number; lng: number } | null>(null);
@@ -145,6 +150,39 @@ export function MapHomeScreen({ navigation }: Props) {
   const cityName = center.name;
   const list = useMemo(() => filterPlaces(places, country, city, cat, tags, q), [places, country, city, cat, tags, q]);
   const sel = selId ? places.find((p) => p.id === selId) : null;
+
+  // Per-city offline packs (nothing is pre-downloaded — user grabs a city from
+  // the picker). Refresh the list whenever the picker opens.
+  const offline = offlineAvailable();
+  const refreshPacks = useCallback(() => { if (offline) listOfflinePacks().then(setPacks).catch(() => {}); }, [offline]);
+  useEffect(() => { if (pickerOpen) refreshPacks(); }, [pickerOpen, refreshPacks]);
+
+  // Admin/curator (xaaknazar@gmail.com) moderates suggested places — badge shows
+  // the pending count; the button opens the approval list.
+  const { canCreate: canModerate } = useRole();
+  const [pendingCount, setPendingCount] = useState(0);
+  const loadPending = useCallback(async () => {
+    if (!canModerate) { setPendingCount(0); return; }
+    try { const token = await getToken(); const p = await fetchPendingPlaces(token); setPendingCount(p.length); } catch {}
+  }, [canModerate, getToken]);
+  useEffect(() => { loadPending(); }, [loadPending]);
+  useEffect(() => navigation.addListener('focus', loadPending), [navigation, loadPending]);
+
+  const downloadCity = async (ci: City) => {
+    if (!offline) { Alert.alert(tr('Офлайн-карта'), tr('Офлайн-карта доступна в полной версии приложения (релиз), а не в Expo Go.')); return; }
+    if (dlCity) return;
+    setDlCity(ci.key); setDlPct(0);
+    const ok = await downloadCityPack({ cityKey: ci.key, cityName: ci.name, lat: ci.lat, lng: ci.lng }, setDlPct);
+    setDlCity(null);
+    await refreshPacks();
+    if (!ok) Alert.alert(tr('Офлайн-карта'), tr('Не удалось скачать город. Проверьте связь и попробуйте позже.'));
+  };
+  const confirmRemoveCity = (ci: City) => {
+    Alert.alert(tr('Удалить офлайн-карту?'), `«${ci.name}» — ${tr('скачанные тайлы будут удалены.')}`, [
+      { text: tr('Отмена'), style: 'cancel' },
+      { text: tr('Удалить'), style: 'destructive', onPress: async () => { await deleteCityPack(ci.key); await refreshPacks(); } },
+    ]);
+  };
 
   // GPS: request + watch
   useEffect(() => {
@@ -409,6 +447,17 @@ export function MapHomeScreen({ navigation }: Props) {
 
       {/* Right floating buttons */}
       <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
+        {canModerate ? (
+          <Pressable onPress={() => navigation.navigate('AdminPlaces')} accessibilityRole="button" accessibilityLabel={tr('Заявки на метки')}
+            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 5 }}>
+            <SF name="checkmark.seal.fill" size={20} color={T.brand} />
+            {pendingCount > 0 ? (
+              <View style={{ position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: '#FF3B30', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: T.cardBg }}>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }} numberOfLines={1}>{pendingCount > 99 ? '99+' : pendingCount}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+        ) : null}
         <Round icon="arrow.down.circle" onPress={() => navigation.navigate('OfflineMap')} T={T} />
         <Round icon="location.fill" onPress={recenter} T={T} />
         <Round icon="plus" brand onPress={() => navigation.navigate('AddPlace')} T={T} />
@@ -497,19 +546,37 @@ export function MapHomeScreen({ navigation }: Props) {
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setPickerOpen(false)} />
         <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '70%' }}>
           <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
-          <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Выберите город')}</Text>
+          <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 2 }]} numberOfLines={1}>{tr('Выберите город')}</Text>
+          {offline ? (
+            <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 6 }]} numberOfLines={2}>{tr('Скачайте город, чтобы карта работала без интернета в разделе «Офлайн-карта».')}</Text>
+          ) : null}
           <ScrollView contentContainerStyle={{ paddingBottom: 10 }}>
             {COUNTRIES.map((co) => (
               <View key={co.key}>
                 <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 }]} numberOfLines={1}>{co.name}</Text>
                 {co.cities.map((ci) => {
                   const on = co.key === country && ci.key === city;
+                  const hasPack = offline && !!findCityPack(packs, ci.key);
+                  const busyCity = dlCity === ci.key;
                   return (
                     <Pressable key={ci.key} onPress={() => { manualRef.current = true; setLocation(co.key, ci.key, true); setPickerOpen(false); mapRef.current?.animateToRegion({ latitude: ci.lat, longitude: ci.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 600); }}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 20, backgroundColor: on ? T.brandTinted : 'transparent' }}>
                       <SF name="mappin.circle.fill" size={18} color={on ? T.brand : T.labelTertiary} />
                       <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{ci.name}</Text>
                       {on ? <SF name="checkmark" size={16} color={T.brand} /> : null}
+                      {offline ? (
+                        busyCity ? (
+                          <Text style={[ty.caption1, { color: T.brand, width: 42, textAlign: 'right' }]} numberOfLines={1}>{dlPct}%</Text>
+                        ) : hasPack ? (
+                          <Pressable onPress={() => confirmRemoveCity(ci)} hitSlop={10} accessibilityLabel={`Удалить офлайн-карту ${ci.name}`}>
+                            <SF name="arrow.down.circle.fill" size={22} color={T.green} />
+                          </Pressable>
+                        ) : (
+                          <Pressable onPress={() => downloadCity(ci)} disabled={!!dlCity} hitSlop={10} accessibilityLabel={`Скачать офлайн-карту ${ci.name}`}>
+                            <SF name="arrow.down.circle" size={22} color={dlCity ? T.labelTertiary : T.labelSecondary} />
+                          </Pressable>
+                        )
+                      ) : null}
                     </Pressable>
                   );
                 })}

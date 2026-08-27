@@ -36,6 +36,7 @@ import { MapHomeScreen } from '../screens/map/MapHomeScreen';
 import { PlaceDetailScreen } from '../screens/map/PlaceDetailScreen';
 import { AddPlaceScreen } from '../screens/map/AddPlaceScreen';
 import { OfflineMapScreen } from '../screens/map/OfflineMapScreen';
+import { AdminPlacesScreen } from '../screens/map/AdminPlacesScreen';
 import { CareerHomeScreen } from '../screens/career/CareerHomeScreen';
 import { VacancyDetailScreen } from '../screens/career/VacancyDetailScreen';
 import { ResumeFormScreen } from '../screens/career/ResumeFormScreen';
@@ -101,6 +102,7 @@ function MapNavigator() {
       <MapStack.Screen name="PlaceDetail" component={PlaceDetailScreen} />
       <MapStack.Screen name="AddPlace" component={AddPlaceScreen} options={{ presentation: 'modal' }} />
       <MapStack.Screen name="OfflineMap" component={OfflineMapScreen} />
+      <MapStack.Screen name="AdminPlaces" component={AdminPlacesScreen} />
     </MapStack.Navigator>
   );
 }

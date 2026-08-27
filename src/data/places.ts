@@ -61,7 +61,21 @@ export const COUNTRIES: Country[] = [
     { key: 'almaty', name: 'Алматы', lat: 43.2380, lng: 76.8829 },
     { key: 'astana', name: 'Астана', lat: 51.1605, lng: 71.4704 },
     { key: 'shymkent', name: 'Шымкент', lat: 42.3174, lng: 69.5901 },
+    { key: 'karaganda', name: 'Караганда', lat: 49.8047, lng: 73.1094 },
+    { key: 'aktobe', name: 'Актобе', lat: 50.2839, lng: 57.1670 },
+    { key: 'taraz', name: 'Тараз', lat: 42.9000, lng: 71.3667 },
+    { key: 'pavlodar', name: 'Павлодар', lat: 52.2870, lng: 76.9674 },
     { key: 'oskemen', name: 'Усть-Каменогорск', lat: 49.9714, lng: 82.6059 },
+    { key: 'semey', name: 'Семей', lat: 50.4111, lng: 80.2275 },
+    { key: 'atyrau', name: 'Атырау', lat: 47.1167, lng: 51.8833 },
+    { key: 'kostanay', name: 'Костанай', lat: 53.2140, lng: 63.6320 },
+    { key: 'kyzylorda', name: 'Кызылорда', lat: 44.8479, lng: 65.5093 },
+    { key: 'aktau', name: 'Актау', lat: 43.6410, lng: 51.1980 },
+    { key: 'oral', name: 'Уральск', lat: 51.2333, lng: 51.3667 },
+    { key: 'petropavl', name: 'Петропавловск', lat: 54.8667, lng: 69.1500 },
+    { key: 'turkestan', name: 'Туркестан', lat: 43.2973, lng: 68.2517 },
+    { key: 'kokshetau', name: 'Кокшетау', lat: 53.2833, lng: 69.3833 },
+    { key: 'taldykorgan', name: 'Талдыкорган', lat: 45.0156, lng: 78.3739 },
   ]},
   { key: 'tr', name: 'Турция', cities: [
     { key: 'istanbul', name: 'Стамбул', lat: 41.0082, lng: 28.9784 },
@@ -261,6 +275,73 @@ export async function reportPlace(
   }
 }
 
+
+// ─── Moderation (admin xaaknazar@gmail.com) ────────────────────────────────
+// A suggested place awaiting approval, plus who submitted it (for the queue UI).
+export interface PendingPlace extends Place {
+  date?: string;
+  submitterName?: string | null;
+  submitterEmail?: string | null;
+}
+
+// Admin/curator: list places awaiting approval. Returns [] without a token or on
+// any failure (a non-admin gets 403 → []). Throws only on network error so the
+// caller can offer retry.
+export async function fetchPendingPlaces(token: string | null | undefined, timeoutMs = 12000): Promise<PendingPlace[]> {
+  if (!token) return [];
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/pending`, {
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const list: (ApiPlace & { date?: string; submitterName?: string | null; submitterEmail?: string | null })[] =
+      Array.isArray(data) ? data : Array.isArray(data?.places) ? data.places : [];
+    return list
+      .map((raw): PendingPlace | null => {
+        const base = mapApiPlace(raw);
+        if (!base) return null;
+        return { ...base, date: raw.date, submitterName: raw.submitterName ?? null, submitterEmail: raw.submitterEmail ?? null };
+      })
+      .filter((p): p is PendingPlace => p !== null);
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// Admin/curator: approve (approved=true) or un-approve a place.
+export async function approvePlace(token: string | null | undefined, placeId: string, approved = true, timeoutMs = 12000): Promise<boolean> {
+  if (!token || !placeId) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}`, {
+      method: 'PATCH',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ approved }),
+    });
+    return res.ok;
+  } catch { return false; } finally { clearTimeout(t); }
+}
+
+// Admin/curator: reject a suggestion — deletes the place entirely.
+export async function rejectPlace(token: string | null | undefined, placeId: string, timeoutMs = 12000): Promise<boolean> {
+  if (!token || !placeId) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}`, {
+      method: 'DELETE',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    return res.ok;
+  } catch { return false; } finally { clearTimeout(t); }
+}
 
 // Open-now status from an hours string like "09:00–23:00" or "Круглосуточно".
 export interface OpenInfo { known: boolean; open: boolean; label: string }
