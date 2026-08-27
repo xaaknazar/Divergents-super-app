@@ -220,6 +220,7 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
       <View style={{ padding: 14 }}>
         {ch.subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]} numberOfLines={2}>{ch.subtitle}</Text> : null}
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="globe" size={11} color={T.green} />{tr('Онлайн')}</Capsule>
           <Capsule bg={T.brandTinted} color={T.brand}><SF name="flame.fill" size={11} color={T.brand} />{ch.durationDays} {ruPlural(ch.durationDays, 'день', 'дня', 'дней')}</Capsule>
           <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} {ruPlural(ch.participants, 'заявка', 'заявки', 'заявок')}</Capsule>
           <Capsule bg="rgba(255,59,48,0.12)" color={T.red}>{ch.maxFlags} 🚩 {tr('вылет')}</Capsule>
@@ -355,6 +356,7 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
       <View style={{ padding: 14 }}>
         {trip.imageUrl ? <Text style={[ty.headline, { color: T.label, marginBottom: 8 }]} numberOfLines={1}>{trip.title}</Text> : null}
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          <Capsule bg="rgba(255,149,0,0.14)" color={T.orange}><SF name="figure.walk" size={11} color={T.orange} />{tr('Офлайн')}</Capsule>
           {trip.region ? <Capsule bg={T.fillTertiary} color={T.label}><SF name="mappin.and.ellipse" size={11} color={T.labelSecondary} />{trip.region}</Capsule> : null}
           {trip.difficulty && trip.difficulty !== '—' ? <Capsule bg={T.fillTertiary} color={T.label}>{trip.difficulty}</Capsule> : null}
         </View>

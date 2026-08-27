@@ -595,8 +595,13 @@ export async function uploadFile(token: string | null, uri: string, name: string
     return d?.url ?? null;
   } catch { return null; }
 }
-export const registerPush = (token: string | null, expoToken: string, platform: string) =>
-  postAuthed('/api/mobile/push/register', token, { token: expoToken, platform });
+export const registerPush = (token: string | null, expoToken: string, platform: string, city?: string | null, country?: string | null) =>
+  postAuthed('/api/mobile/push/register', token, { token: expoToken, platform, ...(city ? { city } : {}), ...(country ? { country } : {}) });
+
+// Update the signed-in user's city on their push tokens so offline events
+// (trips/sport) can be pushed "по месту". Called when the user's city changes.
+export const updateMyLocation = (token: string | null, country: string, city: string) =>
+  postAuthed('/api/mobile/me/location', token, { country, city });
 
 // Remove this device's Expo token on sign-out so the previous account stops
 // receiving pushes on a shared device.

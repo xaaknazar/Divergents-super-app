@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { Place, Review, PlaceTag, fetchPlaces, postPlace, postReview, isKnownCity } from '../data/places';
+import { updateMyLocation } from '../data/api';
 import { loadJSON, saveJSON } from './persist';
 
 interface SavedLoc { country: string; city: string; manual: boolean }
@@ -36,6 +37,8 @@ export function ratingOf(p: Place): number {
 
 export function PlacesProvider({ children }: { children: React.ReactNode }) {
   const { getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
   const [country, setCountry] = useState('kz');
   const [city, setCity] = useState('almaty');
   const [locManual, setLocManual] = useState(false);
@@ -80,6 +83,8 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     const isManual = manual || manualRef.current;
     if (manual) { manualRef.current = true; setLocManual(true); }
     saveJSON('dvg.placeLoc', { country: c, city: ci, manual: isManual } as SavedLoc);
+    // Sync to the server (best-effort) so offline events push "по месту".
+    (async () => { try { const token = await getTokenRef.current(); if (token) await updateMyLocation(token, c, ci); } catch {} })();
   }, []);
 
   const addPlace: PlacesState['addPlace'] = useCallback((p) => {

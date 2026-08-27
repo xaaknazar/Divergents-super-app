@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { registerPush, unregisterPush } from '../data/api';
 import { navigationRef } from '../navigation/ref';
+import { loadJSON } from './persist';
 
 const PROJECT_ID = (Constants.expoConfig as any)?.extra?.eas?.projectId
   || (Constants as any)?.easConfig?.projectId
@@ -79,7 +80,9 @@ export function usePush() {
         if (status !== 'granted') return;
         const tok = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
         const authToken = await getTokenRef.current();
-        if (alive && tok?.data) await registerPush(authToken, tok.data, Platform.OS);
+        // Attach the user's saved city so trip/sport pushes can target "по месту".
+        const loc = await loadJSON<{ country?: string; city?: string } | null>('dvg.placeLoc', null);
+        if (alive && tok?.data) await registerPush(authToken, tok.data, Platform.OS, loc?.city ?? null, loc?.country ?? null);
       } catch {}
     })();
     return () => { alive = false; };
