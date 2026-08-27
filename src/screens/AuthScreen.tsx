@@ -5,7 +5,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSignIn, useSignUp } from '@clerk/clerk-expo';
+import { useSignIn, useSignUp, useSSO } from '@clerk/clerk-expo';
+import * as AuthSession from 'expo-auth-session';
 import { SF } from '../components/SFIcon';
 import { ty } from '../components/ui';
 import { Logo } from '../components/Logo';
@@ -20,6 +21,9 @@ const TERMS_URL = `${API_BASE}/terms`;
 const PRIVACY_URL = `${API_BASE}/privacy`;
 const openUrl = (url: string) => { WebBrowser.openBrowserAsync(url).catch(() => {}); };
 
+// Нужно для Clerk SSO: корректно закрывает web-браузер после возврата в приложение.
+WebBrowser.maybeCompleteAuthSession();
+
 export function AuthScreen({}: Props) {
   const { T, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -28,6 +32,21 @@ export function AuthScreen({}: Props) {
   const { signUp, setActive: setActiveSignUp, isLoaded: suLoaded } = useSignUp();
   const isLoaded = siLoaded && suLoaded;
   const { startRegistration, finishRegistration } = useAppFlow();
+  const { startSSOFlow } = useSSO();
+
+  // Вход через Google/Apple. Полностью минует email-код.
+  const onSSO = async (strategy: 'oauth_google' | 'oauth_apple') => {
+    if (busy) return;
+    setBusy(true); setError(null); setInfo(null);
+    try {
+      const redirectUrl = AuthSession.makeRedirectUri({ scheme: 'divergents', path: 'sso-callback' });
+      const { createdSessionId, setActive } = await startSSOFlow({ strategy, redirectUrl });
+      if (createdSessionId && setActive) { finishRegistration(); await setActive({ session: createdSessionId }); }
+      else setError(t('err_generic'));
+    } catch (e: any) {
+      setError(e?.errors?.[0]?.message || t('err_generic'));
+    } finally { setBusy(false); }
+  };
 
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [intent, setIntent] = useState<'in' | 'up'>('in');
@@ -233,6 +252,29 @@ export function AuthScreen({}: Props) {
                   <SF name="lock.open.fill" size={12} color={T.labelTertiary} />
                   <Text style={[ty.caption1, { color: T.labelTertiary }]}>{t('passwordless')}</Text>
                 </View>
+
+                {/* Divider */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18 }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: T.separator }} />
+                  <Text style={[ty.caption1, { color: T.labelTertiary }]}>{lang === 'ru' ? 'или' : 'or'}</Text>
+                  <View style={{ flex: 1, height: 1, backgroundColor: T.separator }} />
+                </View>
+
+                {/* Google */}
+                <Pressable onPress={() => onSSO('oauth_google')} disabled={busy || !isLoaded}
+                  style={{ marginTop: 14, height: 52, borderRadius: 14, borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy || !isLoaded) ? 0.6 : 1 }}>
+                  <SF name="globe" size={17} color={T.label} />
+                  <Text style={[ty.headline, { color: T.label }]}>{lang === 'ru' ? 'Войти через Google' : 'Continue with Google'}</Text>
+                </Pressable>
+
+                {/* Apple (iOS) */}
+                {Platform.OS === 'ios' ? (
+                  <Pressable onPress={() => onSSO('oauth_apple')} disabled={busy || !isLoaded}
+                    style={{ marginTop: 10, height: 52, borderRadius: 14, backgroundColor: '#000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy || !isLoaded) ? 0.6 : 1 }}>
+                    <SF name="applelogo" size={17} color="#fff" />
+                    <Text style={[ty.headline, { color: '#fff' }]}>{lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}</Text>
+                  </Pressable>
+                ) : null}
               </>
             ) : (
               <>
