@@ -95,10 +95,36 @@ export function AuthScreen({}: Props) {
       if (mode === 'in') {
         const f = signIn!.supportedFirstFactors?.find((x: any) => x.strategy === 'email_code') as any;
         if (f) await signIn!.prepareFirstFactor({ strategy: 'email_code', emailAddressId: f.emailAddressId });
-      } else { await signUp!.prepareEmailAddressVerification({ strategy: 'email_code' }); }
-      setLeft(30);
+        setLeft(30);
+      } else {
+        // Can't resend a code to an already-verified email — finish if possible,
+        // otherwise tell the user to just enter the code they already received.
+        try { await signUp!.prepareEmailAddressVerification({ strategy: 'email_code' }); setLeft(30); }
+        catch (e: any) {
+          if (isAlreadyVerified(e)) {
+            if (!(await activateComplete())) setError(tr('Почта уже подтверждена — введите код из письма и нажмите «Подтвердить».'));
+          } else throw e;
+        }
+      }
     } catch (e: any) { setError(e?.errors?.[0]?.message || t('err_generic')); }
     finally { setBusy(false); }
+  };
+
+  // Clerk's "already verified" — the email was verified on a previous attempt
+  // (double-tap, or after a resend). Match by error code or message.
+  const isAlreadyVerified = (e: any) => {
+    const err = e?.errors?.[0];
+    const c = err?.code || '';
+    const msg = `${err?.message ?? ''} ${err?.longMessage ?? ''}`.toLowerCase();
+    return c === 'verification_already_verified' || c === 'already_verified' || (msg.includes('already') && msg.includes('verif'));
+  };
+  // If the sign-up is actually finished, activate its session — this unsticks the
+  // "already verified" dead-end whenever email is the only sign-up requirement.
+  const activateComplete = async (): Promise<boolean> => {
+    try {
+      if (signUp?.status === 'complete' && signUp.createdSessionId) { await setActiveSignUp!({ session: signUp.createdSessionId }); return true; }
+    } catch {}
+    return false;
   };
 
   const verify = async () => {
@@ -116,7 +142,21 @@ export function AuthScreen({}: Props) {
         if (res.status === 'complete') { finishRegistration(); await setActiveSignIn!({ session: res.createdSessionId }); }
         else setError(needMore);
       } else {
-        const res = await signUp!.attemptEmailAddressVerification({ code: code.trim() });
+        let res;
+        try { res = await signUp!.attemptEmailAddressVerification({ code: code.trim() }); }
+        catch (e: any) {
+          // Email already verified earlier → finish if we can; otherwise it's a
+          // Clerk config issue (sign-up needs more than email).
+          if (isAlreadyVerified(e)) {
+            if (await activateComplete()) return;
+            const miss = [...((signUp as any)?.missingFields ?? []), ...((signUp as any)?.unverifiedFields ?? [])].join(', ');
+            setError(miss
+              ? `${tr('Почта подтверждена, но Clerk требует ещё поля:')} ${miss}. ${tr('Оставьте обязательным только email.')}`
+              : tr('Почта уже подтверждена, но вход не завершился — обновите приложение или свяжитесь с поддержкой.'));
+            return;
+          }
+          throw e;
+        }
         if (res.status === 'complete') { await setActiveSignUp!({ session: res.createdSessionId }); }
         else if (res.status === 'missing_requirements') {
           const miss = [...(res.missingFields ?? []), ...(res.unverifiedFields ?? [])].join(', ');
