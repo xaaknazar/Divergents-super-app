@@ -31,8 +31,8 @@ export function ChallengeTaskRow({
     // не даёт баллов (нарушение штрафуется), поэтому показываем «условие», а не «+0 pts».
     const isGate = task.basePts === 0;
     return (
-      <Pressable onPress={onToggle} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
-        <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={22} color={done ? T.brand : T.labelTertiary} />
+      <Pressable onPress={onToggle} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
+        <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={24} color={done ? T.brand : T.labelTertiary} />
         <Text style={[ty.body, { flex: 1, color: done ? T.labelSecondary : T.label, textDecorationLine: done ? 'line-through' : 'none' }]}>{task.title}</Text>
         {isGate
           ? (done
@@ -50,18 +50,18 @@ export function ChallengeTaskRow({
   const bonus = taskBonus(task);
 
   return (
-    <View style={{ paddingVertical: 12, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
+    <View style={{ paddingVertical: 14, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={22} color={done ? T.brand : T.labelTertiary} />
+        <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={24} color={done ? T.brand : T.labelTertiary} />
         <Text style={[ty.body, { flex: 1, color: T.label }]}>{task.title}</Text>
         {done
           ? <Capsule bg={over ? 'rgba(52,199,89,0.18)' : T.brandTinted} color={over ? T.green : T.brand}>{`+${pts} pts`}</Capsule>
           : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{task.basePts}</Text>}
       </View>
 
-      <View style={{ marginTop: 8, marginLeft: 34 }}>
-        <View style={{ height: 5, backgroundColor: T.fillTertiary, borderRadius: 5, overflow: 'hidden' }}>
-          <View style={{ width: `${Math.min(100, pct * 100)}%`, height: '100%', backgroundColor: over ? T.green : T.brand, borderRadius: 5 }} />
+      <View style={{ marginTop: 10, marginLeft: 36 }}>
+        <View style={{ height: 8, backgroundColor: T.fillTertiary, borderRadius: 8, overflow: 'hidden' }}>
+          <View style={{ width: `${Math.min(100, pct * 100)}%`, height: '100%', backgroundColor: over ? T.green : T.brand, borderRadius: 8 }} />
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, alignItems: 'center' }}>
           {onSet ? (
@@ -101,11 +101,11 @@ export function ChallengeTaskRow({
 function Stepper({ label, onPress, primary }: { label: string; onPress: () => void; primary?: boolean }) {
   const { T } = useTheme();
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => ({
-      flex: 1, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({
+      flex: 1, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
       backgroundColor: primary ? T.brandTinted : T.fillTertiary, opacity: pressed ? 0.6 : 1,
     })}>
-      <Text style={[ty.subheadEm, { color: primary ? T.brand : T.label }]}>{label}</Text>
+      <Text style={[ty.headline, { color: primary ? T.brand : T.label }]}>{label}</Text>
     </Pressable>
   );
 }

@@ -25,6 +25,8 @@ import { CommunityHomeScreen } from '../screens/community/CommunityHomeScreen';
 import { ChannelsScreen } from '../screens/community/ChannelsScreen';
 import { ChallengeDetailScreen } from '../screens/community/ChallengeDetailScreen';
 import { ChallengeApplicantsScreen } from '../screens/community/ChallengeApplicantsScreen';
+import { ChallengeRosterScreen } from '../screens/community/ChallengeRosterScreen';
+import { TeamStandingsScreen } from '../screens/community/TeamStandingsScreen';
 import { ManageChallengeScreen } from '../screens/community/ManageChallengeScreen';
 import { JoinChallengeScreen } from '../screens/community/JoinChallengeScreen';
 import { TripDetailScreen } from '../screens/community/TripDetailScreen';
@@ -77,6 +79,8 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="Channels" component={ChannelsScreen} />
       <CommunityStack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <CommunityStack.Screen name="ChallengeApplicants" component={ChallengeApplicantsScreen} />
+      <CommunityStack.Screen name="ChallengeRoster" component={ChallengeRosterScreen} />
+      <CommunityStack.Screen name="TeamStandings" component={TeamStandingsScreen} />
       <CommunityStack.Screen name="ManageChallenge" component={ManageChallengeScreen} />
       <CommunityStack.Screen name="WorkoutTrack" component={WorkoutTrackScreen} />
       <CommunityStack.Screen name="JoinChallenge" component={JoinChallengeScreen} options={{ presentation: 'modal' }} />

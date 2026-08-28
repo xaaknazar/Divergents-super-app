@@ -247,9 +247,12 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
   const { t } = useLang();
   const { T } = useTheme();
   const { channels, error: channelsError, reload: reloadChannels } = useChannel();
+  const { challenge } = useChallenge();
   const openChallenges = (challenges ?? []).filter((x) => x.status === 'upcoming');
   return (
     <>
+      {/* Your live challenge — mirror the Челленджи-tab card so it's reachable from Главная too */}
+      {challenge.currentDay > 0 ? <ActiveChallengeCard navigation={navigation} /> : null}
       {/* Channels first */}
       <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => navigation.navigate('Channels')} />
       {channels.length === 0

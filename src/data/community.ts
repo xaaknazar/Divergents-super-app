@@ -197,6 +197,16 @@ export interface FlagCounts {
   A: number;  // Activity
 }
 
+// One row of the cross-team leaderboard (server-computed, all teams by points).
+export interface TeamStanding {
+  id: string;
+  name: string;
+  points: number;
+  members: number;
+  rank: number;
+  isMine: boolean;
+}
+
 export interface Challenge {
   id: string;
   title: string;
@@ -216,6 +226,7 @@ export interface Challenge {
   teamId?: string | null;
   teamChat?: string | null;   // team's Telegram chat link (members open it)
   captainId?: string | null;  // Clerk id of the team captain (drives captain-only tools)
+  teamStandings?: TeamStanding[]; // all teams by points → the «Рейтинг команд» screen
 }
 
 // Neutral scaffold for the daily tracker before the server's active challenge
@@ -231,6 +242,7 @@ export const DEFAULT_CHALLENGE: Challenge = {
   startedLabel: '',
   teamRank: 0,
   teamCount: 0,
+  teamStandings: [],
   trainer: '',
   price: '',
   // Scoring mirrors the Divergents rules exactly (see CHALLENGE_RULES):
@@ -309,7 +321,7 @@ interface RawActiveChallenge {
   id?: unknown; title?: unknown; teamName?: unknown; totalDays?: unknown;
   currentDay?: unknown; members?: unknown; startedLabel?: unknown;
   teamRank?: unknown; teamCount?: unknown; trainer?: unknown; price?: unknown;
-  tasks?: unknown; flags?: unknown; eliminated?: unknown;
+  tasks?: unknown; flags?: unknown; eliminated?: unknown; teamStandings?: unknown;
 }
 interface RawActiveMember {
   id?: unknown; name?: unknown; weekBase?: unknown; day?: unknown; isMe?: unknown;
@@ -381,6 +393,16 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
     startedLabel: strOf(raw.startedLabel),
     teamRank: numOf(raw.teamRank),
     teamCount: numOf(raw.teamCount),
+    teamStandings: (Array.isArray(raw.teamStandings) ? raw.teamStandings : [])
+      .map((r: any): TeamStanding => ({
+        id: strOf(r?.id),
+        name: strOf(r?.name, 'Команда'),
+        points: numOf(r?.points),
+        members: numOf(r?.members),
+        rank: numOf(r?.rank),
+        isMine: r?.isMine === true,
+      }))
+      .filter((t: TeamStanding) => t.id),
     trainer: strOf(raw.trainer),
     price: strOf(raw.price),
     tasks,

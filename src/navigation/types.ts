@@ -21,6 +21,8 @@ export type CommunityStackParams = {
   CreateContent: undefined;
   ChallengeDetail: { challengeId: string };
   ChallengeApplicants: { challengeId: string };
+  ChallengeRoster: { challengeId: string };
+  TeamStandings: { challengeId: string };
   ManageChallenge: { challengeId: string };
   WorkoutTrack: { challengeId?: string } | undefined;
   JoinChallenge: { challengeId: string; live?: { id: string; title: string; durationDays: number; startISO?: string | null; teams: { id: string; name: string; capacity: number; captain?: string | null; _count?: { applications: number } }[] } };

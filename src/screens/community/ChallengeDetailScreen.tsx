@@ -11,6 +11,7 @@ import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
 import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ProgressBar, ty } from '../../components/ui';
+import { Ring } from '../../components/talentUI';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
@@ -414,19 +415,29 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
     Alert.alert(tr('Челлендж завершён'), tr('Спасибо за участие! Теперь можно покинуть команду.'), [{ text: tr('Ок'), style: 'cancel' }]);
   };
 
+  const openRoster = () => navigation.navigate('ChallengeRoster', { challengeId: c.id });
+  const openStandings = () => navigation.navigate('TeamStandings', { challengeId: c.id });
   const openMenu = () => {
     const share = () => Share.share({ message: `${c.title} — Divergents. ${tr('День')} ${c.currentDay}/${c.totalDays}.` }).catch(() => {});
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: [tr('Отмена'), tr('Как засчитать активность'), tr('Поделиться'), tr('Покинуть челлендж')],
+          options: [tr('Отмена'), tr('Состав команды'), tr('Рейтинг команд'), tr('Как засчитать активность'), tr('Поделиться'), tr('Покинуть челлендж')],
           cancelButtonIndex: 0,
-          destructiveButtonIndex: 3,
+          destructiveButtonIndex: 5,
         },
-        (i) => { if (i === 1) setShowConv(true); else if (i === 2) share(); else if (i === 3) attemptLeave(); },
+        (i) => {
+          if (i === 1) openRoster();
+          else if (i === 2) openStandings();
+          else if (i === 3) setShowConv(true);
+          else if (i === 4) share();
+          else if (i === 5) attemptLeave();
+        },
       );
     } else {
       Alert.alert(c.title, undefined, [
+        { text: tr('Состав команды'), onPress: openRoster },
+        { text: tr('Рейтинг команд'), onPress: openStandings },
         { text: tr('Как засчитать активность'), onPress: () => setShowConv(true) },
         { text: tr('Поделиться'), onPress: share },
         { text: tr('Покинуть челлендж'), style: 'destructive', onPress: attemptLeave },
@@ -450,19 +461,30 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
       </Animated.View>
       <Screen tabPadding={false} topInset={false}>
 
-      <View style={{ padding: 20, paddingBottom: 16 }}>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Capsule bg={T.brandTinted} color={T.brand}><SF name="flag.fill" size={11} color={T.brand} />{tr('День')} {c.currentDay} {tr('из')} {c.totalDays}</Capsule>
-          <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="checkmark.seal.fill" size={11} color={T.green} />{tr('Бесплатно')}</Capsule>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
-          <Logo size={26} />
-          <Text style={[ty.largeTitle, { color: T.label, flex: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{c.title}</Text>
-        </View>
-        {c.teamName ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]} numberOfLines={1}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')}{c.startedLabel ? ` · ${c.startedLabel}` : ''}</Text> : null}
+      {/* Gradient hero — day-progress ring + title, matches the app's card system */}
+      <View style={{ marginHorizontal: 16, marginTop: 8, marginBottom: 16, borderRadius: 20, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="flag.fill" size={11} color="#fff" />{tr('День')} {c.currentDay} {tr('из')} {c.totalDays}</Capsule>
+            <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="checkmark.seal.fill" size={11} color="#fff" />{tr('Бесплатно')}</Capsule>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 14 }}>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Logo size={24} body="#fff" head="#fff" />
+                <Text style={[ty.title1, { color: '#fff', flex: 1, textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>{c.title}</Text>
+              </View>
+              {c.teamName ? <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 8, textShadowColor: 'rgba(0,0,0,0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }]} numberOfLines={2}>{tr('Команда')} «{c.teamName}» · {c.members} {tr('участников')}</Text> : null}
+              {c.startedLabel ? <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.8)', marginTop: 2 }]} numberOfLines={1}>{c.startedLabel}</Text> : null}
+            </View>
+            <Ring value={ringPct} size={74} stroke={8} color="#fff" textColor="#fff" label={`${tr('Д')}${c.currentDay}`} sub={`${tr('из')} ${c.totalDays}`} />
+          </View>
+        </LinearGradient>
+      </View>
 
-        {/* Team chat + captain tools */}
-        <View style={{ marginTop: 12, gap: 8 }}>
+      {/* Team chat + captain tools */}
+      <View style={{ paddingHorizontal: 16, marginBottom: 4 }}>
+        <View style={{ gap: 8 }}>
           {chat ? (
             <Pressable onPress={() => Linking.openURL(chat).catch(() => {})}
               style={{ height: 46, borderRadius: 14, backgroundColor: '#229ED9', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
@@ -504,20 +526,29 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         </View>
       ) : null}
 
-      <View style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 14, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
+      <View style={{ marginHorizontal: 16, marginBottom: 20, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 }}>
         <View style={{ flexDirection: 'row' }}>
           {[
-            { v: `${c.currentDay}/${c.totalDays}`, l: tr('Дней') },
-            { v: `${Math.round(ringPct * 100)}%`, l: tr('Прогресс') },
-            { v: `${teamPoints}`, l: tr('Очки команды') },
+            { icon: 'bolt.fill', c: T.orange, v: `+${pointsToday}`, l: tr('Сегодня, pts') },
+            { icon: 'rosette', c: T.brand, v: `${myRank || '—'}/${c.teamCount || '—'}`, l: tr('Моё место') },
+            { icon: 'trophy.fill', c: T.green, v: `${teamPoints}`, l: tr('Очки команды') },
           ].map((st, i, arr) => (
             <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < arr.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-              <Text style={[ty.title2, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{st.v}</Text>
+              <SF name={st.icon} size={15} color={st.c} />
+              <Text style={[ty.title1, { color: T.label, marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{st.v}</Text>
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{st.l}</Text>
             </View>
           ))}
         </View>
-        <View style={{ marginTop: 16 }}><ProgressBar value={ringPct} height={6} /></View>
+        <View style={{ marginTop: 18 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Прогресс сезона')}</Text>
+            <Text style={[ty.caption2Em, { color: finished ? T.green : T.labelSecondary }]} numberOfLines={1}>
+              {finished ? tr('Челлендж завершён') : `${tr('осталось')} ${Math.max(0, c.totalDays - c.currentDay)} ${tr('дн')}`}
+            </Text>
+          </View>
+          <ProgressBar value={ringPct} height={8} />
+        </View>
       </View>
 
       <ListSection header={tr('Календарь')} footer={`${tr('Сегодня')}: ${todayLabel} · ${tr('день')} ${c.currentDay} ${tr('из')} ${c.totalDays}`}>
@@ -617,6 +648,11 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           const medal = MEDAL_FOR_RANK(row.rank);
           const out = row.eliminated === true;
           const flagN = totalFlags(row.flags);
+          const flagParts = row.flags ? [
+            row.flags.R > 0 ? `${tr('чтение')} ${row.flags.R}` : null,
+            row.flags.NS > 0 ? `${tr('сахар')} ${row.flags.NS}` : null,
+            row.flags.A > 0 ? `${tr('актив')} ${row.flags.A}` : null,
+          ].filter(Boolean).join(' · ') : '';
           return (
             <View key={row.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16, backgroundColor: row.isMe ? T.brandTinted : 'transparent', opacity: out ? 0.6 : 1 }}>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: out ? T.labelTertiary : T.brand, alignItems: 'center', justifyContent: 'center' }}>
@@ -628,8 +664,8 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 1 }}>
                   <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('День')} {row.day} · {row.points} pts</Text>
-                  {flagN > 0 && row.flags ? (
-                    <Text style={[ty.caption1, { color: T.red }]}>{`  · 🚩 R${row.flags.R} NS${row.flags.NS} A${row.flags.A}`}</Text>
+                  {flagN > 0 ? (
+                    <Text style={[ty.caption1, { color: T.red }]}>{`  · 🚩 ${flagParts}`}</Text>
                   ) : null}
                   {row.penalty ? (
                     <Text style={[ty.caption1, { color: T.red }]}>{`  · штраф ${row.penalty}`}</Text>
@@ -638,7 +674,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
               </View>
               {out
                 ? <Text style={{ fontSize: 16 }}>🏳️</Text>
-                : medal ? <SF name={medal.icon} size={16} color={medal.color} /> : <SF name="flame.fill" size={14} color={T.orange} />}
+                : flagN > 0
+                  ? <Capsule bg="rgba(255,59,48,0.14)" color={T.red}>🚩 {flagN}</Capsule>
+                  : medal ? <SF name={medal.icon} size={16} color={medal.color} /> : <SF name="flame.fill" size={14} color={T.orange} />}
               {i < leaderboard.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 64, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
             </View>
           );
@@ -673,9 +711,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
 // Compact captain action button (chat link / broadcast / roster).
 function CaptainBtn({ icon, label, onPress, T }: { icon: any; label: string; onPress: () => void; T: any }) {
   return (
-    <Pressable onPress={onPress} style={{ flex: 1, height: 58, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-      <SF name={icon} size={18} color={T.brand} />
-      <Text style={[ty.caption2, { color: T.brand, fontSize: 10, lineHeight: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={{ flex: 1, height: 60, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+      <SF name={icon} size={19} color={T.brand} />
+      <Text style={[ty.caption2, { color: T.brand, fontSize: 11, lineHeight: 13 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{label}</Text>
     </Pressable>
   );
 }

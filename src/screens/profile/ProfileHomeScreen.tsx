@@ -75,6 +75,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
   // Open the anketa (resume) editor within the Profile stack so closing it
   // returns to the profile (not the Career tab).
   const editAnketa = () => navigation.navigate('Resume' as never);
+  // Open the live challenge tracker in the Community tab (was wrongly going to Career).
+  const goChallenge = () => navigation.getParent()?.navigate('CommunityTab', { screen: 'ChallengeDetail', params: { challengeId: challenge.id } } as never);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -176,6 +178,20 @@ export function ProfileHomeScreen({ navigation }: Props) {
           </View>
         </LinearGradient>
       </Pressable>
+
+      {/* Live challenge — top placement, right after the profile/anketa hero */}
+      {challengeActive ? (
+        <ListSection header={t('active_challenge')} style={{ marginBottom: 18 }}>
+          <Pressable onPress={goChallenge} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
+            <IconCircle icon="flame.fill" color="#fff" bg={T.red} size={30} />
+            <View style={{ flex: 1 }}>
+              <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{challenge.title}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{tr('День')} {challenge.currentDay}/{challenge.totalDays}</Text>
+            </View>
+            <SF name="chevron.forward" size={14} color={T.labelTertiary} />
+          </Pressable>
+        </ListSection>
+      ) : null}
 
       {/* Stat tiles */}
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
@@ -285,17 +301,6 @@ export function ProfileHomeScreen({ navigation }: Props) {
           {profile!.reports.map((r, i) => (
             <ListRow key={i} onPress={() => Linking.openURL(encodeURI(r.url))} leading={<SF name="doc.fill" size={20} color={T.brand} />} title={r.title} trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />} last={i === profile!.reports.length - 1} />
           ))}
-        </ListSection>
-      ) : null}
-
-      {challengeActive ? (
-        <ListSection header={t('active_challenge')}>
-          <Pressable onPress={goCareer} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{challenge.title}</Text>
-            </View>
-            <Text style={[ty.subheadEm, { color: T.labelSecondary }]}>{challenge.currentDay}/{challenge.totalDays}</Text>
-          </Pressable>
         </ListSection>
       ) : null}
 
