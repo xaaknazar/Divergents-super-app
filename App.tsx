@@ -1,10 +1,12 @@
 import React from 'react';
 import { Platform, UIManager } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as Linking from 'expo-linking';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
+import { resourceCache } from '@clerk/clerk-expo/resource-cache';
 import { useFonts } from 'expo-font';
 import { RootNavigator } from './src/navigation';
 import { navigationRef } from './src/navigation/ref';
@@ -25,6 +27,64 @@ import { ModerationProvider } from './src/state/ModerationContext';
 import { LanguageProvider } from './src/state/LanguageContext';
 import { PageIntroProvider } from './src/state/PageIntroContext';
 import { IntroSplash } from './src/screens/IntroSplash';
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
+
+const linking = {
+  prefixes: [Linking.createURL('/'), 'divergents://', 'https://divergents-lms.kz/app'],
+  config: {
+    screens: {
+      Onboarding: 'onboarding',
+      Auth: 'auth',
+      Register: 'register',
+      ResumeGate: 'resume-gate',
+      Notifications: 'notifications',
+      Tabs: {
+        screens: {
+          LMSTab: {
+            screens: {
+              LMSHome: 'learning',
+              Catalog: 'learning/catalog',
+              CourseDetail: 'learning/courses/:courseId',
+              Video: 'learning/courses/:courseId/lessons/:lessonId',
+              Downloads: 'learning/downloads',
+              Books: 'learning/books',
+              BookDetail: 'learning/books/:bookId',
+              BookAI: 'learning/books/ai',
+            },
+          },
+          AITab: { screens: { AIChat: 'ai' } },
+          CommunityTab: {
+            screens: {
+              CommunityHome: 'community',
+              ChallengeDetail: 'community/challenges/:challengeId',
+              TripDetail: 'community/trips/:tripId',
+              ServerChannel: 'community/channels/:channelId',
+              WorkoutTrack: 'community/workout',
+            },
+          },
+          MapTab: {
+            screens: {
+              MapHome: 'map',
+              PlaceDetail: 'map/places/:placeId',
+            },
+          },
+          ProfileTab: {
+            screens: {
+              ProfileHome: 'profile',
+              Career: {
+                screens: {
+                  CareerHome: 'career',
+                  VacancyDetail: 'career/vacancies/:jobId',
+                  TalentProfile: 'career/profile',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -45,7 +105,7 @@ function Root() {
     },
   };
   return (
-    <NavigationContainer ref={navigationRef} theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme} linking={linking}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <RootNavigator />
     </NavigationContainer>
@@ -102,9 +162,17 @@ export default function App() {
   const [introDone, setIntroDone] = React.useState(false);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
-        <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
+    <AppErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ThemeProvider>
+        <ClerkProvider
+          publishableKey={CLERK_PUBLISHABLE_KEY}
+          tokenCache={tokenCache}
+          // Persist Clerk's client/environment resources as well as the JWT.
+          // Without this, Clerk cannot reconstruct the signed-in session on a
+          // cold launch with no network, so the whole navigator stays locked.
+          __experimental_resourceCache={resourceCache}
+        >
           <AppFlowProvider>
           <LanguageProvider>
           <SafeAreaProvider>
@@ -120,7 +188,8 @@ export default function App() {
           </LanguageProvider>
           </AppFlowProvider>
         </ClerkProvider>
-      </ThemeProvider>
-    </GestureHandlerRootView>
+        </ThemeProvider>
+      </GestureHandlerRootView>
+    </AppErrorBoundary>
   );
 }

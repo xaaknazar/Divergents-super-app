@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
-import { submitResume, getTalentslabToken, ResumeAnswers } from '../data/talentslab';
+import { submitResume, getTalentslabToken, ResumeAnswers, effectiveResumeCompleteness } from '../data/talentslab';
 import { REQUIRED_KEYS, RESUME_STEPS } from '../data/resumeSchema';
 import { useTalentProfile } from './useTalentProfile';
 
@@ -97,7 +97,8 @@ export function useResume() {
     // server-computed value (100%). Align them by also crediting server data.
     const src: any = live && profile?.resume ? profile.resume : {};
     const filled = REQUIRED_KEYS.filter((k) => !isEmpty(answers[k]) || !isEmpty(src[k])).length;
-    return Math.round((filled / REQUIRED_KEYS.length) * 100);
+    const localAndFields = Math.round((filled / REQUIRED_KEYS.length) * 100);
+    return effectiveResumeCompleteness(profile, localAndFields);
   })();
 
   // Send to Talentslab (retry once). Records success/failure in `dvg.resumePending`

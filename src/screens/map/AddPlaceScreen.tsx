@@ -139,7 +139,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
             return (
               <Pressable key={c} onPress={() => setCat(c)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 13, borderRadius: 18, backgroundColor: on ? T.brand : T.cardBg, borderWidth: 0.5, borderColor: on ? 'transparent' : T.separator }}>
                 <SF name={CATEGORY_META[c].icon} size={12} color={on ? '#fff' : T.brand} />
-                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{CATEGORY_META[c].label}</Text>
+                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]} numberOfLines={1}>{CATEGORY_META[c].label}</Text>
               </Pressable>
             );
           })}
@@ -152,7 +152,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
             return (
               <Pressable key={t} onPress={() => toggle(t)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 13, borderRadius: 18, backgroundColor: on ? T.brand : T.cardBg, borderWidth: 0.5, borderColor: on ? 'transparent' : T.separator }}>
                 <SF name={TAG_META[t].icon} size={12} color={on ? '#fff' : T.brand} />
-                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAG_META[t].label}</Text>
+                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]} numberOfLines={1}>{TAG_META[t].label}</Text>
               </Pressable>
             );
           })}
@@ -166,8 +166,8 @@ export function AddPlaceScreen({ navigation, route }: Props) {
           <View style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
             <Image source={{ uri: photo }} style={{ width: '100%', height: 180 }} contentFit="cover" />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-              <Pressable onPress={pickPhoto} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Заменить')}</Text></Pressable>
-              <Pressable onPress={() => setPhoto(null)} style={{ flex: 1, height: 40, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Удалить')}</Text></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={tr('Заменить фото')} onPress={pickPhoto} style={{ flex: 1, minHeight: 48, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brandText }]} numberOfLines={1}>{tr('Заменить')}</Text></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={tr('Удалить фото')} onPress={() => setPhoto(null)} style={{ flex: 1, minHeight: 48, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{tr('Удалить')}</Text></Pressable>
             </View>
           </View>
         ) : (

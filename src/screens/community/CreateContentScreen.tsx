@@ -207,7 +207,7 @@ function Seg({ items, value, onChange }: { items: { k: string; label: string }[]
         const on = value === it.k;
         return (
           <Pressable key={it.k} onPress={() => onChange(it.k)} style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? T.cardBg : 'transparent' }}>
-            <Text style={[ty.footnoteEm, { color: on ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{it.label}</Text>
+            <Text style={[ty.footnoteEm, { color: on ? T.brand : T.labelSecondary }]} numberOfLines={1}>{it.label}</Text>
           </Pressable>
         );
       })}

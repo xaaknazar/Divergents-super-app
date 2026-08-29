@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, Linking } from 'react-native';
+import { View, Text, Pressable, Linking, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
@@ -51,6 +51,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
   const { canCreate } = useRole();
   const { getToken, isSignedIn } = useAuth();
   const [myApp, setMyApp] = useState<MyApplication | null>(null);
+  const [applying, setApplying] = useState(false);
   useEffect(() => {
     if (!isSignedIn) return;
     let alive = true;
@@ -92,7 +93,18 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
     );
   }
 
-  const applied = isApplied(job.id);
+  const applied = isApplied(job.id) || myApp !== null;
+  const submitApplication = async () => {
+    if (applied || applying) return;
+    setApplying(true);
+    const ok = await apply(job.id);
+    setApplying(false);
+    if (!ok) {
+      Alert.alert(tr('Не удалось отправить отклик'), tr('Проверьте подключение и авторизацию, затем попробуйте снова.'));
+      return;
+    }
+    setMyApp((prev) => prev ?? { vacancyId: job.id, title: job.title, company: job.company, status: 'pending', feedback: '', date: '' });
+  };
 
   return (
     <Screen gradient={isDark ? [T.systemBg, T.groupedBg, T.secondaryBg] : ['#EAF4EF', '#F3F6F4', '#F2F2F7']} topInset={false} tabPadding={false}>
@@ -153,7 +165,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
           {job.match > 0 ? (
             <View style={{ alignItems: 'center', minWidth: 70 }}>
               <Text style={[ty.largeTitle, { color: T.brand }]} numberOfLines={1}>{job.match}<Text style={ty.title3}>%</Text></Text>
-              <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Совпадение')}</Text>
+              <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{tr('Совпадение')}</Text>
             </View>
           ) : null}
           {job.reason ? <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.reason}</Text> : null}
@@ -278,13 +290,9 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
             label={applied ? tr('Отклик отправлен ✓') : tr('Откликнуться')}
             icon={applied ? 'checkmark' : 'paperplane.fill'}
             color={applied ? T.green : T.brand}
-            disabled={!hydrated}
-            onPress={() => {
-              apply(job.id);
-              // Show the "на рассмотрении" status card immediately instead of
-              // waiting for a screen remount to refetch.
-              setMyApp((prev) => prev ?? { vacancyId: job.id, title: job.title, company: job.company, status: 'pending', feedback: '', date: '' });
-            }}
+            disabled={!hydrated || applying || applied}
+            loading={applying}
+            onPress={submitApplication}
           />
         </View>
       ) : null}

@@ -114,7 +114,7 @@ export function BookAIScreen({ navigation }: Props) {
           <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
             <TextInput value={text} onChangeText={setText} multiline placeholder="Спросить про книги…" placeholderTextColor={T.labelTertiary} style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
           </View>
-          <Pressable onPress={() => send()} disabled={busy || !text.trim()} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: text.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Отправить сообщение" accessibilityState={{ disabled: busy || !text.trim() }} onPress={() => send()} disabled={busy || !text.trim()} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: text.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="arrow.up" size={18} color={text.trim() ? '#fff' : T.labelTertiary} />
           </Pressable>
         </View>

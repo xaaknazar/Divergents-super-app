@@ -13,7 +13,7 @@ import { Stars } from '../../components/Stars';
 import { NavHeader } from '../../components/NavHeader';
 import { usePlaces, ratingOf } from '../../state/PlacesContext';
 import { useModeration } from '../../state/ModerationContext';
-import { CATEGORY_META, TAG_META, isOpenNow, reportPlace, postReview } from '../../data/places';
+import { CATEGORY_META, TAG_META, isOpenNow, reportPlace, postReview, updatePlaceReview, deletePlaceReview } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<MapStackParams, 'PlaceDetail'>;
@@ -28,7 +28,8 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
-  const { getPlace, addReview, isFav, toggleFav } = usePlaces();
+  const { getPlace, addReview, isFav, toggleFav, reloadPlaces } = usePlaces();
+  const [editingReview, setEditingReview] = useState<string | null>(null);
   const { isBlocked, block } = useModeration();
   const place = getPlace(route.params.placeId);
   const [stars, setStars] = useState(0);
@@ -89,11 +90,40 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     ]);
   };
 
+  // Edit / delete your own review (server-backed; refreshes the shared list).
+  const startEditReview = (rev: { id: string; rating: number; text: string }) => {
+    setEditingReview(rev.id);
+    setStars(rev.rating);
+    setText(rev.text);
+  };
+  const confirmDeleteReview = (rev: { id: string }) => {
+    Alert.alert(tr('Удалить отзыв?'), undefined, [
+      { text: tr('Отмена'), style: 'cancel' },
+      { text: tr('Удалить'), style: 'destructive', onPress: async () => {
+        const token = await getToken();
+        const ok = await deletePlaceReview(place.id, rev.id, token);
+        if (ok) { if (editingReview === rev.id) { setEditingReview(null); setStars(0); setText(''); } reloadPlaces(); }
+        else Alert.alert(tr('Не удалось удалить'), tr('Проверьте подключение и попробуйте снова.'));
+      } },
+    ]);
+  };
+
   const submit = () => {
     if (!stars) return;
     const author = user?.firstName || user?.fullName || (user?.primaryEmailAddress?.emailAddress?.split('@')[0]) || 'Участник';
     const rating = stars;
     const body = text.trim();
+    if (editingReview) {
+      const id = editingReview;
+      setEditingReview(null); setStars(0); setText('');
+      (async () => {
+        const token = await getToken();
+        const ok = await updatePlaceReview(place.id, id, { rating, text: body }, token);
+        if (ok) reloadPlaces();
+        else Alert.alert(tr('Не удалось сохранить'), tr('Проверьте подключение и попробуйте снова.'));
+      })();
+      return;
+    }
     // Optimistic local review (persists on-device) + best-effort server sync so
     // other users can see it. A sync failure is silent — the local copy stays.
     addReview(place.id, { author, rating, text: body });
@@ -201,6 +231,17 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                   </View>
                   <View style={{ marginTop: 4 }}><Stars value={rev.rating} size={12} /></View>
                   {rev.text ? <Text style={[ty.body, { color: T.label, marginTop: 6 }]}>{rev.text}</Text> : null}
+                  {/* Own review: edit or delete it. */}
+                  {rev.mine ? (
+                    <View style={{ flexDirection: 'row', gap: 16, marginTop: 10 }}>
+                      <Pressable onPress={() => startEditReview(rev)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Изменить отзыв')}>
+                        <Text style={[ty.caption2Em, { color: T.brandAccent }]}>{tr('Изменить')}</Text>
+                      </Pressable>
+                      <Pressable onPress={() => confirmDeleteReview(rev)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Удалить отзыв')}>
+                        <Text style={[ty.caption2Em, { color: T.red }]}>{tr('Удалить')}</Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
               ))}
               {visibleReviews.length === 0 ? (
@@ -230,7 +271,7 @@ function ActBtn({ icon, label, active, onPress, T }: { icon: any; label: string;
   return (
     <Pressable onPress={onPress} style={{ flex: 1, height: 62, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4 }}>
       <SF name={icon} size={20} color={active ? T.brand : T.label} />
-      <Text style={[ty.caption1, { color: active ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{label}</Text>
+      <Text style={[ty.caption1, { color: active ? T.brand : T.labelSecondary }]} numberOfLines={1}>{label}</Text>
     </Pressable>
   );
 }

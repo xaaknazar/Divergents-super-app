@@ -2,15 +2,16 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ty } from '../theme/tokens';
+import { minTouch } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
+import { hSelect } from '../lib/haptics';
 import { SF } from './SFIcon';
 
 export function NavBarLarge({ title, trailing }: { title: string; trailing?: React.ReactNode }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 8, minHeight: 48 }}>
-      <Text style={[ty.largeTitle, { color: T.label, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{title}</Text>
+      <Text accessibilityRole="header" style={[ty.largeTitle, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{title}</Text>
       {trailing ? <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', paddingLeft: 12 }}>{trailing}</View> : null}
     </View>
   );
@@ -19,7 +20,7 @@ export function NavBarLarge({ title, trailing }: { title: string; trailing?: Rea
 export function BackNav({
   back = 'Назад', onBack, trailing, transparent = false,
 }: { back?: string; onBack?: () => void; trailing?: React.ReactNode; transparent?: boolean }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   return (
     <View style={{
@@ -28,9 +29,10 @@ export function BackNav({
       backgroundColor: transparent ? 'transparent' : T.cardBg,
       borderBottomWidth: transparent ? 0 : 0.33, borderBottomColor: T.separator,
     }}>
-      <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" accessibilityLabel={back} style={{ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6 }}>
-        <SF name="chevron.left" size={20} color={T.brandAccent} />
-        <Text style={[ty.body, { color: T.brandAccent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{back}</Text>
+      <Pressable onPress={onBack ? () => { hSelect(); onBack(); } : undefined} accessibilityRole="button" accessibilityLabel={back}
+        accessibilityState={{ disabled: !onBack }} style={{ minHeight: minTouch, minWidth: minTouch, flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 6 }}>
+        <SF name="chevron.left" size={20} color={T.brandText} />
+        <Text style={[ty.body, { color: T.brandText }]} numberOfLines={1}>{back}</Text>
       </Pressable>
       <View style={{ flexDirection: 'row', gap: 16, paddingRight: 6, alignItems: 'center' }}>{trailing}</View>
     </View>
@@ -41,14 +43,17 @@ export function BackNav({
 export function HeaderIcon({ name, color, size = 20, onPress, badge, label }: {
   name: string; color?: string; size?: number; onPress?: () => void; badge?: number; label?: string;
 }) {
-  const { T } = useTheme();
-  const _color = color ?? T.brandAccent;
+  const { T, ty } = useTheme();
+  const _color = color ?? T.brandText;
+  const accessibleName = label ?? `Действие: ${name}`;
   return (
-    <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" accessibilityLabel={label ?? 'Кнопка'} style={{ position: 'relative' }}>
+    <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} accessibilityRole="button"
+      accessibilityLabel={badge ? `${accessibleName}. ${badge}` : accessibleName} accessibilityState={{ disabled: !onPress }}
+      style={{ position: 'relative', minWidth: minTouch, minHeight: minTouch, alignItems: 'center', justifyContent: 'center' }}>
       <SF name={name} size={size} color={_color} />
       {badge ? (
         <View style={{ position: 'absolute', top: -4, right: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
-          <Text style={[ty.caption2Em, { color: '#fff' }]}>{badge}</Text>
+          <Text style={[ty.caption2Em, { color: T.onBrand }]}>{badge}</Text>
         </View>
       ) : null}
     </Pressable>

@@ -84,23 +84,23 @@ export function BooksCatalogScreen({ navigation }: Props) {
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>Библиотека Divergents · {books.length}</Text>
         </View>
 
-        <Pressable onPress={() => navigation.navigate('BookAI')}
-          style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 6, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.brandTintedStrong }}>
+        <Pressable onPress={() => navigation.navigate('BookAI')} accessibilityRole="button" accessibilityLabel="Спросить ИИ, что почитать" accessibilityHint="Открывает подбор книг с AI-помощником"
+          style={{ minHeight: 68, marginHorizontal: 16, marginTop: 12, marginBottom: 6, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.brandTintedStrong }}>
           <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="sparkles" size={20} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Спросить ИИ, что почитать</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary }]} numberOfLines={2}>Подберёт книги под ваши таланты, психотип и цели</Text>
+            <Text style={[ty.headline, { color: T.label }]}>Спросить ИИ, что почитать</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary }]}>Подберёт книги под ваши таланты, психотип и цели</Text>
           </View>
           <SF name="chevron.right" size={14} color={T.labelTertiary} />
         </Pressable>
 
         <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, paddingHorizontal: 12, height: 42 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4, minHeight: 48 }}>
             <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
-            <TextInput value={query} onChangeText={setQuery} placeholder="Название или автор" placeholderTextColor={T.labelTertiary} style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]} />
-            {query ? <Pressable onPress={() => setQuery('')} hitSlop={8}><SF name="xmark" size={15} color={T.labelTertiary} /></Pressable> : null}
+            <TextInput value={query} onChangeText={setQuery} placeholder="Название или автор" placeholderTextColor={T.labelTertiary} accessibilityLabel="Поиск книги по названию или автору" style={[ty.body, { flex: 1, color: T.label, minHeight: 40, paddingVertical: 6 }]} />
+            {query ? <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Очистить поиск" style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><SF name="xmark" size={15} color={T.labelTertiary} /></Pressable> : null}
           </View>
         </View>
 

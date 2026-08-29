@@ -15,6 +15,7 @@ import { TEXT_SIZES } from '../../theme/tokens';
 import { hSelect, hSuccess } from '../../lib/haptics';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useResume } from '../../state/useResume';
+import { effectiveResumeCompleteness } from '../../data/talentslab';
 import { useUser } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
 
@@ -88,7 +89,7 @@ export function PersonalizeScreen({ navigation }: Props) {
     || (live && profile?.fullName ? profile.fullName : null)
     || (email ? email.split('@')[0] : 'Divergents');
   const initial = (name?.trim()?.[0] ?? 'D').toUpperCase();
-  const completeness = profile?.completeness ?? localCompleteness ?? 0;
+  const completeness = effectiveResumeCompleteness(profile, localCompleteness);
   const photoUrl = profile?.photoUrl;
 
   // Gentle "pop" of the live preview whenever a choice changes. Respect the OS
@@ -166,7 +167,7 @@ export function PersonalizeScreen({ navigation }: Props) {
                 </View>
               )}
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[ty.title3, { color: '#fff', textShadowColor: 'rgba(0,0,0,0.22)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
+                <Text style={[ty.title3, { color: '#fff', textShadowColor: 'rgba(0,0,0,0.22)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={1}>{name}</Text>
                 <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.95)', marginTop: 2, textShadowColor: 'rgba(0,0,0,0.18)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={1}>{tr('Так выглядит ваша тема')}</Text>
                 <View style={{ flexDirection: 'row', gap: 6, marginTop: 9 }}>
                   <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="sparkles" size={11} color="#fff" />{accObj.name}</Capsule>
@@ -237,7 +238,7 @@ export function PersonalizeScreen({ navigation }: Props) {
                       ) : null}
                     </LinearGradient>
                   </View>
-                  <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, marginTop: 6 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{a.name}</Text>
+                  <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>{a.name}</Text>
                 </Pressable>
               );
             })}
@@ -283,7 +284,7 @@ export function PersonalizeScreen({ navigation }: Props) {
                   <View style={{ borderRadius: 15, overflow: 'hidden', borderWidth: on ? 2 : 0.5, borderColor: on ? T.brand : T.cardBorder }}>
                     <BgSwatch colors={cols} none={b.key === 'none'} selected={on} />
                   </View>
-                  <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, textAlign: 'center', marginTop: 5 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{b.name}</Text>
+                  <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, textAlign: 'center', marginTop: 5 }]} numberOfLines={1}>{b.name}</Text>
                 </Pressable>
               );
             })}

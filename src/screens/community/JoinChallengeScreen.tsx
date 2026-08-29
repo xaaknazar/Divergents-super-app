@@ -103,7 +103,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: 'rgba(52,199,89,0.15)', alignItems: 'center', justifyContent: 'center' }}>
           <SF name="checkmark.circle.fill" size={56} color={T.green} />
         </View>
-        <Text style={[ty.title2, { color: T.label, marginTop: 18, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Заявка отправлена!')}</Text>
+        <Text style={[ty.title2, { color: T.label, marginTop: 18, textAlign: 'center' }]} numberOfLines={1}>{tr('Заявка отправлена!')}</Text>
         <Text style={[ty.body, { color: T.labelSecondary, marginTop: 8, textAlign: 'center' }]}>
           Капитан команды «{team?.name}» рассмотрит вашу заявку на «{meta?.title}». С вами свяжутся в Telegram перед стартом {meta?.startLabel}.
         </Text>
@@ -117,7 +117,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
       <NavHeader title={tr('Заявка')} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
-        <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{meta?.title}</Text>
+        <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{meta?.title}</Text>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]} numberOfLines={1}>{tr('Старт')} {meta?.startLabel} · {meta?.durationDays} {tr('дней')}</Text>
 
         {/* Nickname */}
@@ -176,7 +176,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
                   <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{t.name}</Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{t.members}/{t.capacity} · капитан {t.captain}</Text>
                 </View>
-                <Text style={[ty.caption2Em, { color: full ? T.emeraldText : T.orange }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{full ? 'набрана' : `нужно ${t.capacity - t.members}`}</Text>
+                <Text style={[ty.caption2Em, { color: full ? T.emeraldText : T.orange }]} numberOfLines={1}>{full ? 'набрана' : `нужно ${t.capacity - t.members}`}</Text>
               </Pressable>
             );
           })}

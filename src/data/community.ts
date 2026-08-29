@@ -197,6 +197,19 @@ export interface FlagCounts {
   A: number;  // Activity
 }
 
+export interface MemberTaskProgress {
+  id: string;
+  kind: 'metric' | 'binary';
+  title: string;
+  icon: SFName;
+  unit: string;
+  target: number | null;
+  value: number;
+  done: boolean;
+  marked: boolean;
+  completed: boolean;
+}
+
 // One row of the cross-team leaderboard (server-computed, all teams by points).
 export interface TeamStanding {
   id: string;
@@ -210,6 +223,7 @@ export interface TeamStanding {
 export interface Challenge {
   id: string;
   title: string;
+  startISO?: string;
   teamName: string;
   totalDays: number;
   currentDay: number;
@@ -294,6 +308,10 @@ export interface Member {
   flags?: FlagCounts;
   eliminated?: boolean;
   penalty?: number;
+  previousRank?: number | null;
+  rankChange?: number | null;
+  averagePoints?: number;
+  todayTasks: MemberTaskProgress[];
 }
 
 export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | null => {
@@ -304,9 +322,16 @@ export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | 
 };
 
 // Live active challenge + its full team leaderboard.
-export interface ActiveChallengeData { challenge: Challenge | null; members: Member[] }
+export interface ActiveChallengeData {
+  challenge: Challenge | null;
+  members: Member[];
+  // Distinguishes a valid `{ challenge: null }` response from a network/auth
+  // failure. Without this, a brief outage can incorrectly remove the active
+  // challenge from the UI while the participant is still enrolled.
+  ok: boolean;
+}
 
-const EMPTY_ACTIVE: ActiveChallengeData = { challenge: null, members: [] };
+const EMPTY_ACTIVE: ActiveChallengeData = { challenge: null, members: [], ok: false };
 
 // ─── Raw server shapes (GET /api/mobile/challenges/active) ──────────────────
 // The server returns the exact { challenge, members } shape: challenge carries
@@ -319,6 +344,7 @@ interface RawActiveTask {
 }
 interface RawActiveChallenge {
   id?: unknown; title?: unknown; teamName?: unknown; totalDays?: unknown;
+  startISO?: unknown;
   currentDay?: unknown; members?: unknown; startedLabel?: unknown;
   teamRank?: unknown; teamCount?: unknown; trainer?: unknown; price?: unknown;
   tasks?: unknown; flags?: unknown; eliminated?: unknown; teamStandings?: unknown;
@@ -326,6 +352,7 @@ interface RawActiveChallenge {
 interface RawActiveMember {
   id?: unknown; name?: unknown; weekBase?: unknown; day?: unknown; isMe?: unknown;
   flags?: unknown; eliminated?: unknown; penalty?: unknown;
+  previousRank?: unknown; rankChange?: unknown; averagePoints?: unknown; todayTasks?: unknown;
 }
 
 const numOf = (v: unknown, d = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
@@ -386,6 +413,7 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
   return {
     id,
     title: strOf(raw.title, 'Divergents challenge'),
+    startISO: typeof raw.startISO === 'string' ? raw.startISO : undefined,
     teamName: strOf(raw.teamName),
     totalDays: numOf(raw.totalDays, 21),
     currentDay: numOf(raw.currentDay),
@@ -426,6 +454,27 @@ function mapActiveMember(raw: RawActiveMember): Member | null {
     flags: flagsOf(raw.flags),
     eliminated: raw.eliminated === true,
     penalty: numOf(raw.penalty),
+    previousRank: typeof raw.previousRank === 'number' ? numOf(raw.previousRank) : null,
+    rankChange: typeof raw.rankChange === 'number' ? numOf(raw.rankChange) : null,
+    averagePoints: numOf(raw.averagePoints),
+    todayTasks: (Array.isArray(raw.todayTasks) ? raw.todayTasks : [])
+      .map((task: any): MemberTaskProgress | null => {
+        const taskId = strOf(task?.id);
+        if (!taskId) return null;
+        return {
+          id: taskId,
+          kind: task?.kind === 'binary' ? 'binary' : 'metric',
+          title: strOf(task?.title, 'Цель'),
+          icon: coerceIcon(task?.icon, task?.kind === 'binary' ? 'checkmark.circle.fill' : 'target'),
+          unit: strOf(task?.unit),
+          target: typeof task?.target === 'number' ? numOf(task.target) : null,
+          value: numOf(task?.value),
+          done: task?.done === true,
+          marked: task?.marked === true,
+          completed: task?.completed === true,
+        };
+      })
+      .filter((task): task is MemberTaskProgress => task !== null),
   };
 }
 
@@ -437,11 +486,12 @@ export async function fetchActiveChallenge(
   token?: string | null,
   timeoutMs = 12000,
 ): Promise<ActiveChallengeData> {
+  if (!token) return EMPTY_ACTIVE;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const headers: Record<string, string> = { Accept: 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
     const res = await fetch(`${API_BASE}/api/mobile/challenges/active`, { signal: ctrl.signal, headers });
     if (!res.ok) return EMPTY_ACTIVE;
     const data = await res.json();
@@ -452,7 +502,7 @@ export async function fetchActiveChallenge(
       .filter((m): m is Member => m !== null);
     // Backfill the members count from the roster when the challenge omits it.
     if (challenge && challenge.members === 0 && members.length) challenge.members = members.length;
-    return { challenge, members };
+    return { challenge, members, ok: true };
   } catch {
     return EMPTY_ACTIVE;
   } finally {
@@ -479,33 +529,6 @@ export async function postChallengeProgress(
       signal: ctrl.signal,
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(body),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-// POST /api/mobile/challenges/:id/report (Clerk Bearer) — the participant's daily
-// report ("отчёт за день"). The server timestamps it and, if it arrives after the
-// 23:00 deadline (challenge TZ), applies the late penalty (−300 и 3 🚩). Best-effort:
-// returns false when it can't be sent, so the UI can surface a retry.
-export async function submitChallengeReport(
-  challengeId: string,
-  token?: string | null,
-  timeoutMs = 12000,
-): Promise<boolean> {
-  if (!challengeId || challengeId === DEFAULT_CHALLENGE.id || !token) return false;
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/report`, {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({}),
     });
     return res.ok;
   } catch {
@@ -659,13 +682,13 @@ export const CHALLENGE_CATEGORIES: ChallengeCategory[] = [
 
 export const CHALLENGE_RULES: string[] = [
   'Старт: челлендж активируется в 23:00 накануне первого дня. Например, старт «28-го» — трекер открывается в 23:00 27-го.',
-  'День идёт с 23:01 до 23:00 следующего дня. Отчёт сдаётся с 07:00 до 23:00; после 23:00 сдача этого дня закрывается, а в 23:01 начинается следующий день.',
+  'День идёт с 23:01 до 23:00 следующего дня. Каждая отметка сразу сохраняется; отдельный отчёт отправлять не нужно.',
   'Три категории: Чтение (R), No Sugar (NS), Активность (A). Норма: 20 страниц и 10 000 шагов в день.',
   'Баллы: 1 страница = 1 балл (худлит — 0.5), день без сахара = 0 баллов, 400 шагов = 1 балл.',
   'Активность можно набирать бегом, плаванием, велосипедом и силовыми (см. таблицу пересчёта).',
-  'Отчёт за день обязателен до 23:00. Опоздание/пропуск: −300 баллов и три 🚩.',
+  'Изменения принимаются до закрытия дня. Если за день нет ни одной отметки: −300 баллов и три 🚩.',
   'Штраф за невыполнение нормы: −100 баллов и 🚩 по этой категории. Баллы не уходят в минус (минимум 0).',
-  'Баллы команды обновляются, как только все сдали отчёт, и окончательно пересчитываются в 23:01 при закрытии дня.',
+  'Баллы команды обновляются по отметкам и окончательно пересчитываются в 23:01 при закрытии дня.',
   '3 🚩 по одной категории → 🏳️ и вылет. Очки фиксируются.',
   'Размер команды задаёт организатор (например, 20–35 человек): капитан и 2 советника, выбранные участниками.',
   'Никнейм ≤ 9 символов и не более одной заглавной буквы, близкий к ФИО. Фиксируйте аэробную нагрузку для проверки.',

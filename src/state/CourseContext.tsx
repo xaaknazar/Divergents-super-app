@@ -1,8 +1,7 @@
 // Courses state: fetches the live catalog from the Divergents website, lazily
 // loads per-course detail (chapters), and tracks local lesson completion.
-// Content is API-driven only — there is no bundled fake catalog. When the
-// website API is unreachable or empty, the screens render proper Russian
-// loading / empty / error states instead of placeholder data.
+// Live content is preferred; a small bundled demo keeps the learning flow
+// usable when the website API is temporarily unreachable.
 import React, { createContext, useContext, useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { Course } from '../data/courses';
 import { fetchCatalog, fetchCourseDetail, fetchOwnedDetail, markLessonComplete } from '../data/api';
@@ -26,7 +25,7 @@ interface CourseState {
   mergeServerProgress: (list: { id: string; serverProgress?: number }[]) => void;
 
   completed: Record<string, string[]>;
-  completeLesson: (courseId: string, lessonId: string, token?: string | null) => void;
+  completeLesson: (courseId: string, lessonId: string, token?: string | null) => Promise<boolean>;
   isCompleted: (courseId: string, lessonId: string) => boolean;
   completedCount: (courseId: string) => number;
   totalLessons: (courseId: string) => number;
@@ -36,6 +35,27 @@ interface CourseState {
 }
 
 const Ctx = createContext<CourseState | null>(null);
+
+const MOCK_COURSES: Course[] = [{
+  id: 'offline-demo',
+  title: 'Знакомство с Divergents',
+  author: 'Команда Divergents',
+  level: 'Начальный',
+  durationLabel: '15 мин',
+  lessonsLabel: '2 урока',
+  icon: 'sparkles',
+  tint: 'rgba(35,64,136,0.12)',
+  iconColor: '#234088',
+  category: 'Саморазвитие',
+  description: 'Короткий демо-курс доступен без сети. Видео и полный каталог появятся после восстановления подключения.',
+  price: 0,
+  chaptersCount: 2,
+  source: 'mock',
+  lessons: [
+    { id: 'offline-intro', n: 1, title: 'Как устроена экосистема', duration: '7 мин · Материал', minutes: 7, description: 'Обзор возможностей приложения и персонального маршрута развития.' },
+    { id: 'offline-plan', n: 2, title: 'Ваш следующий шаг', duration: '8 мин · Материал', minutes: 8, description: 'Определите ближайшую цель и выберите направление обучения.' },
+  ],
+}];
 
 export function CourseProvider({ children }: { children: React.ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -71,8 +91,12 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
       // Keep any previously loaded catalog so a transient refresh failure
       // doesn't blank the screen; the error drives the empty-state retry only
       // when there is nothing to show.
-      if (coursesRef.current.length === 0) setCourses([]);
-      setSource('live');
+      if (coursesRef.current.length === 0) {
+        setCourses(MOCK_COURSES);
+        setSource('mock');
+      } else {
+        setSource(coursesRef.current.every((course) => course.source === 'mock') ? 'mock' : 'live');
+      }
       setError(e?.message ?? 'network');
     }
   }, []);
@@ -117,14 +141,25 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const completeLesson = useCallback((courseId: string, lessonId: string, token?: string | null) => {
+  const completeLesson = useCallback(async (courseId: string, lessonId: string, token?: string | null): Promise<boolean> => {
     setCompleted((prev) => {
       const list = prev[courseId] ?? [];
       if (list.includes(lessonId)) return prev;
       return { ...prev, [courseId]: [...list, lessonId] };
     });
-    // Best-effort server sync so progress follows the user across devices.
-    if (token) markLessonComplete(courseId, lessonId, token);
+    // Offline/local courses are complete immediately. Live authenticated
+    // courses return the actual sync result after the API's bounded retry.
+    if (!token) return true;
+    const synced = await markLessonComplete(courseId, lessonId, token);
+    if (!synced) {
+      // Do not show a false success. Roll the optimistic mark back so the user
+      // can retry once connectivity/authentication is restored.
+      setCompleted((prev) => ({
+        ...prev,
+        [courseId]: (prev[courseId] ?? []).filter((id) => id !== lessonId),
+      }));
+    }
+    return synced;
   }, []);
 
   const value = useMemo<CourseState>(() => {

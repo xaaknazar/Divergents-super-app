@@ -89,7 +89,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
                   <Text style={[ty.headline, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{name}</Text>
+                  <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{name}</Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>
                     {a.profile?.mbtiType ? `${a.profile.mbtiType} · ` : ''}{a.profile?.completeness != null ? `анкета ${a.profile.completeness}%` : (a.userEmail || '')}
                   </Text>

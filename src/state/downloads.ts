@@ -200,6 +200,20 @@ export async function removeDownload(lessonId: string): Promise<void> {
   await persist();
 }
 
+// Clear the live module state before sign-out/account deletion. SecureStore and
+// the files are removed by reset.ts, but without clearing this in-memory copy a
+// just-signed-out user could briefly see stale rows in the offline fallback.
+export async function resetDownloadsState(): Promise<void> {
+  const activeTasks = Object.values(tasks);
+  registry = {};
+  progress = {};
+  pendingMeta = {};
+  notify();
+  await Promise.all(activeTasks.map(async (task) => {
+    try { await task.cancelAsync(); } catch {}
+  }));
+}
+
 // Replace characters that are unsafe in a file name (lesson ids are usually
 // cuids, but guard anyway).
 function safeName(id: string): string {

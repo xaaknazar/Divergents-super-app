@@ -34,7 +34,7 @@ export const TAG_META: Record<PlaceTag, { label: string; icon: SFName }> = {
 };
 export const TAGS = Object.keys(TAG_META) as PlaceTag[];
 
-export interface Review { id: string; author: string; rating: number; text: string; date: string }
+export interface Review { id: string; author: string; rating: number; text: string; date: string; mine?: boolean }
 
 export interface Place {
   id: string;
@@ -116,7 +116,7 @@ export function citiesOf(country: string): City[] {
 
 // ─── Live places API ──────────────────────────────────────────────────────
 // Real, admin-published places fetched from the website. No local seed data.
-interface ApiReview { id?: string; author?: string; rating?: number; text?: string; date?: string }
+interface ApiReview { id?: string; author?: string; rating?: number; text?: string; date?: string; mine?: boolean }
 interface ApiPlace {
   id?: string; name?: string; category?: string; country?: string; city?: string;
   lat?: number; lng?: number; tags?: string[]; highlights?: string; hours?: string;
@@ -126,13 +126,30 @@ interface ApiPlace {
 const VALID_CATS = new Set<string>(CATEGORIES);
 const VALID_TAGS = new Set<string>(TAGS);
 
+// Server sends an ISO timestamp; show a readable Russian date instead of the
+// raw "2026-08-27T09:21:34.263Z" string.
+function fmtReviewDate(raw: unknown): string {
+  const s = String(raw ?? '');
+  if (!s) return '';
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s; // already human ("сейчас")
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'только что';
+  if (mins < 60) return `${mins} мин назад`;
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 24) return `${hours} ч назад`;
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function mapReview(r: ApiReview, i: number): Review {
   return {
     id: String(r.id ?? `sr_${i}`),
     author: String(r.author ?? 'Участник'),
     rating: Math.max(0, Math.min(5, Math.round(Number(r.rating) || 0))),
     text: String(r.text ?? ''),
-    date: String(r.date ?? ''),
+    date: fmtReviewDate(r.date),
+    mine: (r as { mine?: boolean }).mine === true,
   };
 }
 
@@ -363,4 +380,29 @@ export function isOpenNow(hours: string, now: Date = new Date()): OpenInfo {
     return { known: true, open: true, label: left <= 60 ? `Закроется через ${left} мин` : `Открыто до ${pad(c % 1440)}` };
   }
   return { known: true, open: false, label: `Закрыто · откроется в ${pad(o)}` };
+}
+
+/** PATCH /api/mobile/places/:id/review/:reviewId — edit your own review. */
+export async function updatePlaceReview(placeId: string, reviewId: string, body: { text?: string; rating?: number }, token?: string | null): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}/review/${encodeURIComponent(reviewId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
+/** DELETE /api/mobile/places/:id/review/:reviewId — remove your own review. */
+export async function deletePlaceReview(placeId: string, reviewId: string, token?: string | null): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}/review/${encodeURIComponent(reviewId)}`, {
+      method: 'DELETE',
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    return res.ok;
+  } catch { return false; }
 }

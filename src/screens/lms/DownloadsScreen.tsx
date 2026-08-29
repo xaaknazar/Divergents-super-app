@@ -17,6 +17,13 @@ import { fetchOwnedDetail, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Downloads'>;
+type DownloadsProps = {
+  navigation: Pick<Props['navigation'], 'goBack'>;
+  /** Startup fallback shown when Clerk cannot restore its session offline. */
+  offlineStandalone?: boolean;
+  /** Lets a resolved signed-out session leave fallback and open authentication. */
+  onExitOffline?: () => void;
+};
 
 function fmtTime(sec: number): string {
   if (!isFinite(sec) || sec < 0) sec = 0;
@@ -30,7 +37,7 @@ function fmtSize(bytes: number): string {
   return mb >= 1 ? `${mb.toFixed(1)} МБ` : `${Math.max(1, Math.round(bytes / 1024))} КБ`;
 }
 
-export function DownloadsScreen({ navigation }: Props) {
+export function DownloadsScreen({ navigation, offlineStandalone = false, onExitOffline }: DownloadsProps) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
@@ -151,7 +158,26 @@ export function DownloadsScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg }}>
-      <NavHeader title={tr('Загрузки')} onBack={() => navigation.goBack()} hairline />
+      <NavHeader
+        title={offlineStandalone ? tr('Офлайн-уроки') : tr('Загрузки')}
+        onBack={offlineStandalone ? undefined : () => navigation.goBack()}
+        hairline
+      />
+
+      {offlineStandalone ? (
+        <View style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <SF name="wifi.slash" size={18} color={T.brand} />
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.subheadEm, { color: T.label }]}>{tr('Нет подключения')}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{tr('Скачанные уроки доступны без интернета. Остальные разделы откроются после восстановления сети.')}</Text>
+          </View>
+          {onExitOffline ? (
+            <Pressable onPress={onExitOffline} hitSlop={8} style={{ paddingVertical: 7, paddingHorizontal: 9 }}>
+              <Text style={[ty.footnoteEm, { color: T.brand }]}>{tr('Войти')}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
 
       {items.length === 0 && availFiltered.length === 0 && pending.length === 0 ? (
         <View style={{ flex: 1 }}>
@@ -266,7 +292,7 @@ export function DownloadsScreen({ navigation }: Props) {
           </View>
           {/* Seek bar */}
           <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38, textAlign: 'right' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{fmtTime(currentTime)}</Text>
+            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38, textAlign: 'right' }]} numberOfLines={1}>{fmtTime(currentTime)}</Text>
             <View
               onLayout={(e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width)}
               onStartShouldSetResponder={() => true}
@@ -277,7 +303,7 @@ export function DownloadsScreen({ navigation }: Props) {
                 <View style={{ width: `${frac * 100}%`, height: '100%', borderRadius: 2, backgroundColor: T.brand }} />
               </View>
             </View>
-            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{fmtTime(duration)}</Text>
+            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38 }]} numberOfLines={1}>{fmtTime(duration)}</Text>
           </View>
         </View>
       ) : null}

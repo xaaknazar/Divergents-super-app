@@ -2,12 +2,11 @@
 // the first time that tab is focused, a designed explainer modal appears (icon,
 // what the page is for, key features) and is remembered so it shows only once.
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Modal, Animated } from 'react-native';
+import { View, Text, Modal, Animated, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { ty } from '../theme/tokens';
 import { SF, SFName } from './SFIcon';
 import { PrimaryButton } from './ui';
 import { usePageIntroState } from '../state/PageIntroContext';
@@ -82,7 +81,7 @@ const PAGE_INTROS: Record<PageKey, IntroInfo> = {
 };
 
 function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: boolean; onClose: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const a = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -93,36 +92,38 @@ function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: bool
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <Animated.View style={{
-          width: '100%', maxWidth: 380, backgroundColor: T.cardBg, borderRadius: 26, overflow: 'hidden',
+          width: '100%', maxWidth: 380, maxHeight: '92%', backgroundColor: T.cardBg, borderRadius: 26, overflow: 'hidden',
           opacity: a, transform: [{ scale: a.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
           shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 26, shadowOffset: { width: 0, height: 14 }, elevation: 10,
         }}>
-          {/* Gradient header with a big soft glyph */}
-          <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: 28, paddingBottom: 22, paddingHorizontal: 20, alignItems: 'center' }}>
-            <View pointerEvents="none" style={{ position: 'absolute', right: -12, top: -20, opacity: 0.16 }}>
-              <SF name={info.icon} size={132} color="#fff" />
-            </View>
-            <View style={{ width: 74, height: 74, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-              <SF name={info.icon} size={38} color="#fff" />
-            </View>
-            <Text style={[ty.title2, { color: '#fff', marginTop: 14, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{info.title}</Text>
-          </LinearGradient>
+          <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+            {/* Gradient header with a big soft glyph */}
+            <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: 28, paddingBottom: 22, paddingHorizontal: 20, alignItems: 'center' }}>
+              <View pointerEvents="none" style={{ position: 'absolute', right: -12, top: -20, opacity: 0.16 }}>
+                <SF name={info.icon} size={132} color="#fff" />
+              </View>
+              <View style={{ width: 74, height: 74, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+                <SF name={info.icon} size={38} color="#fff" />
+              </View>
+              <Text style={[ty.title2, { color: '#fff', marginTop: 14, textAlign: 'center' }]}>{info.title}</Text>
+            </LinearGradient>
 
-          {/* Body: tagline + feature rows + CTA */}
-          <View style={{ padding: 22, paddingBottom: Math.max(22, insets.bottom) }}>
-            <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', lineHeight: 21 }]}>{info.tagline}</Text>
-            <View style={{ marginTop: 18, gap: 14 }}>
-              {info.points.map((p, i) => (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-                    <SF name={p.icon} size={17} color={T.brand} />
+            {/* Body: tagline + feature rows + CTA */}
+            <View style={{ padding: 22, paddingBottom: Math.max(22, insets.bottom) }}>
+              <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', lineHeight: 21 }]}>{info.tagline}</Text>
+              <View style={{ marginTop: 18, gap: 14 }}>
+                {info.points.map((p, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                      <SF name={p.icon} size={17} color={T.brand} />
+                    </View>
+                    <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{p.text}</Text>
                   </View>
-                  <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{p.text}</Text>
-                </View>
-              ))}
+                ))}
+              </View>
+              <PrimaryButton label={info.cta} icon="checkmark" onPress={onClose} style={{ marginTop: 22 }} />
             </View>
-            <PrimaryButton label={info.cta} icon="checkmark" onPress={onClose} style={{ marginTop: 22 }} />
-          </View>
+          </ScrollView>
         </Animated.View>
       </View>
     </Modal>

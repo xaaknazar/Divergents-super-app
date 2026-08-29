@@ -1,7 +1,7 @@
 // Talentslab integration: the signed-in user's candidate profile, Gallup
 // talents, MBTI, Gardner results and report files. Matched by email server-side
 // from the Clerk session token. Falls back to a demo profile until the API is live.
-import { TALENTSLAB_BASE, TALENTSLAB_APP_KEY } from '../config';
+import { TALENTSLAB_BASE } from '../config';
 import { loadJSON, saveJSON } from '../state/persist';
 
 // ─── Types (mirror the Talentslab data model) ──────────────────────
@@ -100,34 +100,22 @@ export async function getTalentslabToken(
 }
 
 /**
- * GET /api/mobile/profile — Clerk-token auth FIRST (Bearer), then the optional
- * X-App-Key + email fallback (only when an app key is configured). When neither
- * a Clerk token nor an app key is available this resolves to a graceful
- * not-configured result (found:false) instead of throwing, so callers can show
- * an empty/demo state rather than crash.
+ * GET /api/mobile/profile — Clerk-token auth only. A shared app key cannot be a
+ * mobile credential because every EXPO_PUBLIC value is extractable from the app
+ * bundle. Without a Clerk token this returns found:false and never sends an
+ * email-address lookup authenticated by a public secret.
  */
-export async function fetchTalentProfile(token?: string | null, email?: string | null): Promise<TalentProfile> {
-  if (token) {
-    try {
-      const p = normalizeProfile(await reqJson('/api/mobile/profile', { Authorization: `Bearer ${token}` }));
-      if (p.found) return p; // only accept the Clerk result if it matched a candidate
-    } catch { /* fall through to the optional app-key path */ }
-  }
-  // Only send X-App-Key when an app key is actually configured (non-empty).
-  if (email && TALENTSLAB_APP_KEY) {
-    try {
-      return normalizeProfile(await reqJson(`/api/mobile/profile?email=${encodeURIComponent(email)}`, { 'X-App-Key': TALENTSLAB_APP_KEY }));
-    } catch { /* fall through to graceful not-configured result */ }
-  }
-  return EMPTY_TALENT_PROFILE;
+export async function fetchTalentProfile(token?: string | null, _email?: string | null): Promise<TalentProfile> {
+  if (!token) throw new Error('talentslab_auth_unavailable');
+  return normalizeProfile(await reqJson('/api/mobile/profile', { Authorization: `Bearer ${token}` }));
 }
 
 /**
- * POST /api/mobile/resume — Clerk token FIRST, then the optional X-App-Key +
- * email fallback (only when an app key is configured). Never throws: returns
- * false when no auth path succeeds so the UI can stay responsive.
+ * POST /api/mobile/resume — Clerk token only. Never throws: returns false when
+ * the user has no valid session or the request fails, so local retry can handle
+ * an offline save without exposing a shared credential in the bundle.
  */
-export async function submitResume(token: string | null | undefined, answersIn: ResumeAnswers, email?: string | null): Promise<boolean> {
+export async function submitResume(token: string | null | undefined, answersIn: ResumeAnswers, _email?: string | null): Promise<boolean> {
   // Compose full_name from parts (Фамилия Имя Отчество) so the Talentslab
   // backend keeps receiving the single field while the UI collects them apart.
   const answers: ResumeAnswers = { ...answersIn };
@@ -148,28 +136,123 @@ export async function submitResume(token: string | null | undefined, answersIn: 
     } finally { clearTimeout(t); }
   };
   if (token) { try { if (await post({ Authorization: `Bearer ${token}` }, { answers })) return true; } catch {} }
-  if (email && TALENTSLAB_APP_KEY) { try { return await post({ 'X-App-Key': TALENTSLAB_APP_KEY }, { email, answers }); } catch {} }
   return false;
 }
 
-export function normalizeProfile(r: any): TalentProfile {
+const firstDefined = (...values: any[]) => values.find((value) => value !== undefined && value !== null);
+const boolValue = (value: any): boolean | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  const text = String(value).trim().toLowerCase();
+  if (['true', '1', 'yes'].includes(text)) return true;
+  if (['false', '0', 'no'].includes(text)) return false;
+  return undefined;
+};
+const numberValue = (value: any): number => {
+  const parsed = Number.parseFloat(String(value ?? '').replace(',', '.').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+/** Resolve Laravel relative storage paths and common photo wrapper shapes. */
+export function normalizeTalentPhotoUrl(value: unknown): string | null {
+  const candidate = typeof value === 'string'
+    ? value
+    : value && typeof value === 'object'
+      ? firstDefined(
+        (value as any).url, (value as any).path, (value as any).src,
+        (value as any).original_url, (value as any).originalUrl,
+      )
+      : null;
+  if (typeof candidate !== 'string' || !candidate.trim()) return null;
+  const raw = candidate.trim();
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('//')) return `https:${raw}`;
+  try {
+    const relative = raw.startsWith('/') ? raw : `/${raw.replace(/^\.\//, '')}`;
+    return new URL(relative, `${TALENTSLAB_BASE.replace(/\/+$/, '')}/`).toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Normalize deployed Laravel variants as well as the documented camelCase contract. */
+export function normalizeProfile(response: any): TalentProfile {
+  const wrapped = response?.data?.profile ?? response?.profile ?? response?.data ?? response?.candidate ?? response ?? {};
+  const pick = (...keys: string[]) => firstDefined(
+    ...keys.map((key) => wrapped?.[key]),
+    ...keys.map((key) => response?.[key]),
+  );
+  const resume = pick('resume', 'resume_data', 'answers', 'questionnaire') ?? null;
+  const rawStep = numberValue(pick('resumeStep', 'resume_step', 'step'));
+  const explicitlyComplete = boolValue(pick('complete', 'completed', 'isComplete', 'is_complete', 'resumeComplete', 'resume_complete')) === true;
+  const rawCompleteness = numberValue(pick(
+    'completeness', 'completion', 'completionPercent', 'completion_percent',
+    'profileCompleteness', 'profile_completeness', 'resumeCompleteness', 'resume_completeness',
+  ));
+  const completeness = Math.max(0, Math.min(100, explicitlyComplete || rawStep >= 5 ? 100 : rawCompleteness));
+  const explicitFound = boolValue(pick('found', 'exists', 'candidateFound', 'candidate_found'));
+  const inferredFound = !!firstDefined(
+    pick('id', 'candidateId', 'candidate_id'), pick('email'), pick('fullName', 'full_name'),
+    resume, rawStep > 0 ? rawStep : undefined, rawCompleteness > 0 ? rawCompleteness : undefined,
+  );
+  const rawPhoto = firstDefined(
+    pick(
+      'photoUrl', 'photo_url', 'photo', 'avatarUrl', 'avatar_url', 'avatar',
+      'profilePhoto', 'profile_photo', 'profilePicture', 'profile_picture',
+      'imageUrl', 'image_url', 'image',
+    ),
+    resume?.photoUrl, resume?.photo_url, resume?.photo,
+    resume?.avatarUrl, resume?.avatar_url, resume?.avatar,
+  );
   return {
-    found: !!r?.found,
-    fullName: r?.fullName ?? null,
-    email: r?.email ?? null,
-    phone: r?.phone ?? null,
-    currentCity: r?.currentCity ?? null,
-    photoUrl: r?.photoUrl ?? null,
-    resumeStep: Number(r?.resumeStep ?? 0),
-    completeness: Number(r?.completeness ?? 0),
-    mbtiType: r?.mbtiType ?? null,
-    mbtiName: r?.mbtiName ?? null,
-    resume: r?.resume ?? null,
-    reportsText: r?.reportsText ?? null,
-    gallup: Array.isArray(r?.gallup) ? r.gallup : [],
-    gardner: Array.isArray(r?.gardner) ? r.gardner : [],
-    reports: Array.isArray(r?.reports) ? r.reports.filter((x: any) => !String(x?.type ?? '').endsWith('_short')) : [],
+    found: explicitFound ?? inferredFound,
+    fullName: pick('fullName', 'full_name', 'name') ?? null,
+    email: pick('email') ?? null,
+    phone: pick('phone') ?? null,
+    currentCity: pick('currentCity', 'current_city', 'city') ?? null,
+    photoUrl: normalizeTalentPhotoUrl(rawPhoto),
+    resumeStep: Math.max(0, rawStep),
+    completeness,
+    mbtiType: pick('mbtiType', 'mbti_type') ?? null,
+    mbtiName: pick('mbtiName', 'mbti_name', 'mbti_full_name') ?? null,
+    resume,
+    reportsText: pick('reportsText', 'reports_text') ?? null,
+    gallup: Array.isArray(pick('gallup', 'gallup_talents')) ? pick('gallup', 'gallup_talents') : [],
+    gardner: Array.isArray(pick('gardner', 'gardner_results')) ? pick('gardner', 'gardner_results') : [],
+    reports: Array.isArray(pick('reports')) ? pick('reports').filter((x: any) => !String(x?.type ?? '').endsWith('_short')) : [],
   };
+}
+
+/** Build an offline-safe view model from the locally persisted questionnaire. */
+export function profileFromSavedResume(answers: ResumeAnswers | null | undefined, email?: string | null): TalentProfile | null {
+  if (!answers || typeof answers !== 'object' || Object.keys(answers).length === 0) return null;
+  const parts = [answers.last_name, answers.first_name, answers.middle_name]
+    .map((value) => typeof value === 'string' ? value.trim() : '')
+    .filter(Boolean);
+  const fullName = parts.join(' ') || (typeof answers.full_name === 'string' ? answers.full_name.trim() : '');
+  return {
+    ...EMPTY_TALENT_PROFILE,
+    found: true,
+    fullName: fullName || null,
+    email: typeof answers.email === 'string' ? answers.email : email ?? null,
+    phone: typeof answers.phone === 'string' ? answers.phone : null,
+    currentCity: typeof answers.current_city === 'string' ? answers.current_city : null,
+    photoUrl: normalizeTalentPhotoUrl(firstDefined(
+      answers.photoUrl, answers.photo_url, answers.photo,
+      answers.avatarUrl, answers.avatar_url, answers.avatar,
+    )),
+    mbtiType: typeof answers.mbti_type === 'string' ? answers.mbti_type : null,
+    resume: { ...answers },
+  };
+}
+
+/** One source of truth for gates and profile progress; empty API data cannot erase local progress. */
+export function effectiveResumeCompleteness(profile: TalentProfile | null | undefined, local = 0): number {
+  const localPct = Math.max(0, Math.min(100, numberValue(local)));
+  if (!profile?.found) return localPct;
+  const serverPct = profile.resumeStep >= 5 ? 100 : Math.max(0, Math.min(100, numberValue(profile.completeness)));
+  return Math.max(localPct, serverPct);
 }
 
 // ─── Demo profile (fallback until the API is live) ─────────────────
@@ -350,3 +433,62 @@ export function profileSummary(p: TalentProfile | null): string {
   if (p.reportsText) lines.push(`\nСодержание отчётов Divergents (используй для анализа психотипа и рекомендаций):\n${p.reportsText}`);
   return lines.join('\n');
 }
+
+// ─── Тесты: Gallup (файл) и Гарднер (тест на сайте) ───────────────
+export interface TestsStatus {
+  gallupUploaded: boolean;
+  gallupParsed: boolean;
+  gallupFileUrl: string | null;
+  gardnerDone: boolean;
+}
+
+/** GET /api/mobile/tests-status — есть ли загруженный Gallup и пройден ли Гарднер. */
+export async function fetchTestsStatus(token: string | null | undefined): Promise<TestsStatus | null> {
+  if (!token) return null;
+  try {
+    const res = await fetch(`${TALENTSLAB_BASE}/api/mobile/tests-status`, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    return {
+      gallupUploaded: !!d?.gallupUploaded,
+      gallupParsed: !!d?.gallupParsed,
+      gallupFileUrl: d?.gallupFileUrl ?? null,
+      gardnerDone: !!d?.gardnerDone,
+    };
+  } catch { return null; }
+}
+
+/**
+ * POST /api/mobile/gallup — загрузить отчёт Gallup (PDF или фото) прямо из
+ * приложения. Сервер сохраняет файл кандидату и ставит разбор в очередь, как
+ * это делает сайт. Возвращает текст ошибки или null при успехе.
+ */
+export async function uploadGallupFile(
+  token: string | null | undefined,
+  file: { uri: string; name: string; mime: string },
+): Promise<string | null> {
+  if (!token) return 'Нет авторизации';
+  const form = new FormData();
+  form.append('file', { uri: file.uri, name: file.name, type: file.mime } as any);
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 60000);
+  try {
+    const res = await fetch(`${TALENTSLAB_BASE}/api/mobile/gallup`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (res.ok) return null;
+    if (res.status === 404) return 'Анкета не найдена — сначала заполните и сохраните анкету.';
+    if (res.status === 422) return 'Файл должен быть PDF или изображением, до 10 МБ.';
+    return `Не удалось загрузить (код ${res.status}).`;
+  } catch {
+    return 'Не удалось загрузить. Проверьте подключение.';
+  } finally { clearTimeout(t); }
+}
+
+/** Страница теста Гарднера на сайте Talentslab. */
+export const GARDNER_TEST_URL = `${TALENTSLAB_BASE.replace(/\/+$/, '')}/gardner-test`;

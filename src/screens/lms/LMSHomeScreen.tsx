@@ -14,6 +14,7 @@ import { useMyCourses } from '../../state/useMyCourses';
 import { useNotifications } from '../../state/NotificationsContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
+import { useDownloads } from '../../state/downloads';
 import { useUser } from '@clerk/clerk-expo';
 import { Logo } from '../../components/Logo';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +30,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   const { t } = useLang();
   const { user } = useUser();
   const { profile, live } = useTalentProfile();
+  const downloads = useDownloads();
   // Prefer a real name (Clerk → anketa full_name); email prefix only as a last resort.
   const displayName = user?.firstName || user?.fullName
     || (live && profile?.fullName ? profile.fullName.split(' ')[0] : null)
@@ -73,7 +75,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   return (
     <Screen largeTitle={t('tab_learn')} onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
       <PageIntro page="lms" />
-      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />} />
+      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="person.crop.circle.fill" color={T.brand} size={30} badge={unread} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 16 }}>
         <Logo size={36} />
@@ -86,6 +88,21 @@ export function LMSHomeScreen({ navigation }: Props) {
           </Text>
         </View>
       </View>
+
+      {downloads.items.length > 0 ? (
+        <Pressable
+          onPress={() => navigation.navigate('Downloads')}
+          style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, borderRadius: 16, backgroundColor: T.brandTinted, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1 })}>
+          <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="arrow.down.circle" size={21} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]}>{tr('Скачанные уроки')}</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]}>{downloads.items.length} · {tr('доступны без интернета')}</Text>
+          </View>
+          <SF name="chevron.right" size={15} color={T.labelTertiary} />
+        </Pressable>
+      ) : null}
 
       {/* Search (iOS fill style) */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>

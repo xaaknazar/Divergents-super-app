@@ -102,7 +102,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       <NavBarLarge title={t('community')} trailing={(
         <>
           {canCreate ? <HeaderIcon name="plus" color={T.brand} label="Создать" onPress={() => openCreateSheet(navigation)} /> : null}
-          <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+          <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={30} badge={unread} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
         </>
       )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
@@ -155,7 +155,7 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
           <Logo size={22} body="#fff" head="#fff" />
-          <Text style={[ty.title2, { color: '#fff', flex: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{c.title}</Text>
+          <Text style={[ty.title2, { color: '#fff', flex: 1 }]} numberOfLines={1}>{c.title}</Text>
         </View>
         <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>{c.teamName ? `${tr('Команда')} «${c.teamName}» · ` : ''}{tr('сегодня')} +{pointsToday} pts</Text>
         <View style={{ marginTop: 12, height: 6, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
@@ -165,8 +165,8 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
       <View style={{ flexDirection: 'row', paddingVertical: 14 }}>
         {stats.map((st, i) => (
           <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < stats.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-            <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{st.v}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{st.l}</Text>
+            <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{st.v}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{st.l}</Text>
           </View>
         ))}
       </View>
@@ -188,6 +188,35 @@ function ruPlural(n: number, one: string, few: string, many: string): string {
 // White text over a brand gradient can wash out where the gradient goes light
 // (esp. dark-mode brandAccent). This shadow keeps every white label legible.
 const HERO_TEXT_SHADOW = { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 } as const;
+
+function PersonalActivityCard({ icon, eyebrow, title, subtitle, onPress }: {
+  icon: string;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+}) {
+  const { T } = useTheme();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${eyebrow}: ${title}`}
+      style={({ pressed }) => ({
+        minHeight: 68, marginHorizontal: 16, marginBottom: 10, paddingHorizontal: 14,
+        flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16,
+        backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder,
+        opacity: pressed ? 0.7 : 1,
+      })}>
+      <View style={{ width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: T.brandTinted }}>
+        <SF name={icon} size={19} color={T.brand} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[ty.caption2Em, { color: T.brand, textTransform: 'uppercase', letterSpacing: 0.25 }]} numberOfLines={1}>{eyebrow}</Text>
+        <Text style={[ty.subheadEm, { color: T.label, marginTop: 1 }]} numberOfLines={1}>{title}</Text>
+        {subtitle ? <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{subtitle}</Text> : null}
+      </View>
+      <SF name="chevron.forward" size={13} color={T.labelTertiary} />
+    </Pressable>
+  );
+}
 
 // ─── Open-challenge card (full-width) ───────────────────────────────
 // Shared by the home feed and the Челленджи tab so an open challenge always
@@ -230,7 +259,7 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
             {full ? <SF name="checkmark.seal.fill" size={12} color={T.green} /> : <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: T.green }} />}
-            <Text style={[ty.caption1, { color: full ? T.green : T.labelSecondary, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{full ? tr('Команды сформированы · ждём старта') : tr('Набор открыт')}</Text>
+            <Text style={[ty.caption1, { color: full ? T.green : T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{full ? tr('Команды сформированы · ждём старта') : tr('Набор открыт')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Подробнее')}</Text>
@@ -247,12 +276,27 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
   const { t } = useLang();
   const { T } = useTheme();
   const { channels, error: channelsError, reload: reloadChannels } = useChannel();
-  const { challenge } = useChallenge();
+  const { isParticipant } = useChallenge();
+  const { has, ready } = useEnrollment();
   const openChallenges = (challenges ?? []).filter((x) => x.status === 'upcoming');
+  const myTrips = ready ? (trips ?? []).filter((trip) => has(`trip:${trip.id}`)) : [];
+  const mySport = ready ? (sport ?? []).filter((activity) => has(`sport:${activity.id}`)) : [];
+  const hasPersonalActivity = isParticipant || myTrips.length > 0 || mySport.length > 0;
   return (
     <>
-      {/* Your live challenge — mirror the Челленджи-tab card so it's reachable from Главная too */}
-      {challenge.currentDay > 0 ? <ActiveChallengeCard navigation={navigation} /> : null}
+      {/* Personal activity is visible only to the signed-up participant. */}
+      {hasPersonalActivity ? <SectionHeader title={tr('Мои активности')} /> : null}
+      {isParticipant ? <ActiveChallengeCard navigation={navigation} /> : null}
+      {myTrips.map((trip) => (
+        <PersonalActivityCard key={`mine-trip:${trip.id}`} icon="map.fill" eyebrow={tr('Ваша поездка')}
+          title={trip.title} subtitle={[trip.date, trip.region].filter(Boolean).join(' · ')}
+          onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })} />
+      ))}
+      {mySport.map((activity) => (
+        <PersonalActivityCard key={`mine-sport:${activity.id}`} icon={activity.icon} eyebrow={tr('Вы записаны')}
+          title={activity.title} subtitle={[activity.date, activity.place].filter(Boolean).join(' · ')}
+          onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }} />
+      ))}
       {/* Channels first */}
       <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => navigation.navigate('Channels')} />
       {channels.length === 0
@@ -306,11 +350,11 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
 
 // ─── Челленджи ──────────────────────────────────────────────────────
 function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation: Nav; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
-  const { challenge } = useChallenge();
+  const { isParticipant } = useChallenge();
   // Only a REAL server-active challenge (currentDay > 0) counts. The offline
   // DEFAULT_CHALLENGE placeholder always has tasks, so the old `|| tasks.length`
   // made a phantom "active challenge" (День 0/21) show permanently.
-  const hasActive = challenge.currentDay > 0;
+  const hasActive = isParticipant;
   const upcoming = (challenges ?? []).filter((x) => x.status === 'upcoming');
   return (
     <>
@@ -430,7 +474,7 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
                 if (!okJoin) { toggle(k); Alert.alert(tr('Не удалось записаться'), tr('Проверьте подключение и попробуйте снова.')); }
               }
             }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
-              <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{on ? 'Вы идёте' : 'Участвую'}</Text>
+              <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]} numberOfLines={1}>{on ? 'Вы идёте' : 'Участвую'}</Text>
             </Pressable>
             {i < sport.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
           </View>

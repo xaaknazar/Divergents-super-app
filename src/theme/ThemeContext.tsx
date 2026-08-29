@@ -1,9 +1,9 @@
 // Theme provider: light/dark/system + accent color + background style, persisted.
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Appearance, ColorSchemeName, AccessibilityInfo } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { lightTheme, darkTheme, Theme, TEXT_SIZES, TextSizeKey, applyTextScale } from './tokens';
-import { ACCENTS, BACKGROUNDS, hexToRgba } from './personalization';
+import { lightTheme, darkTheme, Theme, TEXT_SIZES, TextSizeKey, createTypography, Typography } from './tokens';
+import { ACCENTS, BACKGROUNDS, contrastForeground, hexToRgba } from './personalization';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 type Scheme = 'light' | 'dark';
@@ -29,6 +29,7 @@ type Ctx = {
   textSize: TextSizeKey;
   setTextSize: (k: TextSizeKey) => void;
   textScale: number;
+  ty: Typography;
   // OS accessibility prefs (iOS HIG): drive blur→opaque and animation fallbacks.
   reduceTransparency: boolean;
   reduceMotion: boolean;
@@ -87,11 +88,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setBackground = useCallback((k: string) => { setBgState(k); SecureStore.setItemAsync(KEY_BG, k).catch(() => {}); }, []);
   const setTextSize = useCallback((k: TextSizeKey) => { setTextSizeState(k); SecureStore.setItemAsync(KEY_TEXT, k).catch(() => {}); }, []);
 
-  // Apply the chosen text scale to the shared `ty` *before* children render, so
-  // the very first paint of every screen uses the right sizes (applyTextScale is
-  // idempotent + cheap). The state change here re-renders all useTheme consumers.
   const textScale = (TEXT_SIZES.find((t) => t.key === textSize) ?? TEXT_SIZES[1]).scale;
-  applyTextScale(textScale);
+  const ty = useMemo(() => createTypography(textScale), [textScale]);
 
   const scheme = resolve(mode, sys);
   const base = scheme === 'dark' ? darkTheme : lightTheme;
@@ -102,6 +100,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     ...base,
     brand: ac.brand,
     brandAccent: ac.accent,
+    brandText: scheme === 'dark' ? ac.accent : ac.brand,
+    onBrand: contrastForeground(ac.brand),
     brandTinted: hexToRgba(ac.accent, scheme === 'dark' ? 0.18 : 0.13),
     brandTintedStrong: hexToRgba(ac.accent, scheme === 'dark' ? 0.28 : 0.20),
   };
@@ -114,7 +114,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       : bg.colors;
 
   return (
-    <ThemeCtx.Provider value={{ T, scheme, mode, setMode, isDark: scheme === 'dark', accent, setAccent, background, setBackground, auroraColors, textSize, setTextSize, textScale, reduceTransparency, reduceMotion }}>
+    <ThemeCtx.Provider value={{ T, scheme, mode, setMode, isDark: scheme === 'dark', accent, setAccent, background, setBackground, auroraColors, textSize, setTextSize, textScale, ty, reduceTransparency, reduceMotion }}>
       {children}
     </ThemeCtx.Provider>
   );

@@ -19,15 +19,6 @@ export const API_BASE = 'https://divergents-lms.kz';
 export const TALENTSLAB_BASE =
   process.env.EXPO_PUBLIC_TALENTSLAB_BASE || 'https://talentslab.org';
 
-// OPTIONAL fallback auth for the Talentslab mobile API (X-App-Key + email),
-// used only when no Clerk session token is available. Clerk-token (Bearer) auth
-// is the preferred and primary path — see src/data/talentslab.ts. This key, if
-// set, ships in the app bundle and can read any candidate by email, so it MUST
-// NOT be hardcoded here; provide it only via the env var when truly needed.
-// Defaults to '' (disabled) so the app relies on Clerk-token auth.
-export const TALENTSLAB_APP_KEY = process.env.EXPO_PUBLIC_TALENTSLAB_APP_KEY || '';
-
-
 // MapLibre style URL for the offline-capable map. When unset (''), the map code
 // falls back to the MapLibre demo/no-key behavior (low-detail tiles, no API key
 // required). For street-level maps AND offline downloads, set

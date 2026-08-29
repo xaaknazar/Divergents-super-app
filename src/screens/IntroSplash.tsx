@@ -17,12 +17,24 @@ const NAVY_MID = '#234088';
 const NAVY_DEEP = '#16294F';
 const WHITE = '#FFFFFF';
 
+const WORDMARK = 'Divergents';
 const SLOGAN = 'non-stop development';
 const MIN_DURATION_MS = 1700;
 
 export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onDone: () => void }) {
   const { width } = useWindowDimensions();
   const logoSize = Math.min(120, Math.round(width * 0.3));
+
+  // Brand lockup must never truncate. Size it from the ACTUAL available width
+  // (independent of the app's personalised text scale, which previously pushed
+  // the wordmark past the screen edge and produced «Diverg…»).
+  const avail = width - 48; // styles.center paddingHorizontal: 24 on both sides
+  const fit = (text: string, max: number, min: number, em: number, extra = 0) =>
+    Math.max(min, Math.min(max, Math.floor((avail - 4) / (text.length * em + extra))));
+  const wordSize = fit(WORDMARK, 34, 20, 0.62);
+  // Uppercase + letter-spacing: solve for size with spacing proportional to it.
+  const sloganSize = fit(SLOGAN, 13, 9, 0.62, 1.4);
+  const sloganSpacing = sloganSize >= 12 ? 1.4 : 0.8;
 
   const logoScale = useRef(new Animated.Value(0.9)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -78,11 +90,11 @@ export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onD
           <Logo size={logoSize} body={WHITE} head={WHITE} />
         </Animated.View>
 
-        <Animated.View style={{ opacity: wordOpacity, transform: [{ translateY: wordTranslate }], alignItems: 'center', maxWidth: width * 0.92 }}>
-          <Animated.Text style={styles.wordmark} numberOfLines={1} adjustsFontSizeToFit allowFontScaling={false}>
-            Divergents
+        <Animated.View style={{ opacity: wordOpacity, transform: [{ translateY: wordTranslate }], alignItems: 'center', maxWidth: avail }}>
+          <Animated.Text style={[styles.wordmark, { fontSize: wordSize, lineHeight: Math.round(wordSize * 1.2) }]} numberOfLines={1} allowFontScaling={false}>
+            {WORDMARK}
           </Animated.Text>
-          <Animated.Text style={styles.slogan} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false}>
+          <Animated.Text style={[styles.slogan, { fontSize: sloganSize, lineHeight: Math.round(sloganSize * 1.35), letterSpacing: sloganSpacing }]} numberOfLines={1} allowFontScaling={false}>
             {SLOGAN}
           </Animated.Text>
         </Animated.View>
@@ -100,17 +112,16 @@ const styles = StyleSheet.create({
   },
   center: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   wordmark: {
-    ...ty.largeTitle,
+    fontFamily: ty.largeTitle.fontFamily,
     color: WHITE,
     marginTop: 22,
     letterSpacing: 0.5,
     textAlign: 'center',
   },
   slogan: {
-    ...ty.caption1,
+    fontFamily: ty.caption1.fontFamily,
     color: 'rgba(255,255,255,0.62)',
     marginTop: 8,
-    letterSpacing: 1.4,
     textTransform: 'uppercase',
     textAlign: 'center',
   },

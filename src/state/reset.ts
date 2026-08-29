@@ -7,6 +7,7 @@
 //   - dvg.themeMode / dvg.accent / dvg.background (appearance)
 import { deleteAsync, documentDirectory } from 'expo-file-system/legacy';
 import { clearKeys } from './persist';
+import { resetDownloadsState } from './downloads';
 
 // Every user-scoped persisted key in the app. Grep the codebase for "dvg." to
 // keep this in sync when new persisted state is added.
@@ -20,14 +21,19 @@ export const USER_DATA_KEYS: string[] = [
   'dvg.resume',             // useResume — local resume answers (Talentslab)
   'dvg.resumeComplete',     // ResumeGateContext — cached "resume 100% filled" flag
   'dvg.resumePending',      // useResume — failed-submit resend flag
+  'dvg.talentProfileCache.v1', // last verified Talentslab profile for offline fallback
+  'dvg.gallup.order',       // Talentslab — local Gallup priority ordering
   'dvg.blockedAuthors',     // ModerationContext — blocked UGC authors
+  'ai.history.v1',          // AIChatScreen — conversation history
   // Notifications
   'dvg.readNotifs',         // NotificationsContext — read notification ids
   // Places / map
   'dvg.userPlaces',         // PlacesContext — user-added places
   'dvg.placeReviews',       // PlacesContext — user reviews
   'dvg.placeFavs',          // PlacesContext — favourite places
+  'dvg.placeLoc',           // PlacesContext/usePush — selected city/country
   'dvg.mapRecent',          // recent map searches
+  'dvg.workouts.v1',        // ActivityContext — workout history + GPS routes
   // Community channels
   'dvg.channelJoined.v2',
   'dvg.channelRequested.v2',
@@ -35,6 +41,11 @@ export const USER_DATA_KEYS: string[] = [
   'dvg.channelPaid.v2',
   'dvg.channelSeen.v2',
   'dvg.channelLikes.v2',
+  // Active challenge — today's local values and unsent automatic updates
+  'dvg.challengeProgress.v1',
+  'dvg.challengeProgressPending.v1',
+  'dvg.challengeReminder.v1',
+  'dvg.challengeReport.v1', // legacy manual-report state (pre auto-save)
   // Registration flow (анкета after sign-up) — reset for the next account
   'dvg.pendingRegistration',
   // Offline downloads — metadata registry (the .m4a files themselves are
@@ -55,6 +66,9 @@ const USER_DATA_DIRS: string[] = [
  * Individual key failures are swallowed by clearKeys.
  */
 export async function clearAllAppData(): Promise<void> {
+  // Stop active audio downloads and clear the module-level registry first, so
+  // no in-flight task can repopulate state while its files are being removed.
+  await resetDownloadsState();
   await clearKeys(USER_DATA_KEYS);
   // Remove downloaded audio files from disk. Idempotent; failures (e.g. folder
   // never created) are swallowed so sign-out never blocks on cleanup.

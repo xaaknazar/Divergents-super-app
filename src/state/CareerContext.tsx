@@ -12,7 +12,7 @@ interface CareerState {
   hydrated: boolean;
   isApplied: (id: string) => boolean;
   isSaved: (id: string) => boolean;
-  apply: (id: string) => void;
+  apply: (id: string) => Promise<boolean>;
   toggleSave: (id: string) => void;
   // Live vacancy catalog
   jobs: Job[];
@@ -70,18 +70,23 @@ export function CareerProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { reloadJobs(); }, [reloadJobs]);
 
-  const apply = useCallback((id: string) =>
-    setApplied((p) => {
-      if (p.includes(id)) return p;
-      const n = [...p, id];
-      saveJSON('dvg.applied', n);
-      // Best-effort server sync; the local optimistic state is the source of
-      // truth, so failure here is silent and never blocks the UI.
-      Promise.resolve(getTokenRef.current())
-        .then((tok) => applyToVacancy(id, tok))
-        .catch(() => {});
-      return n;
-    }), []);
+  const appliedRef = useRef(applied);
+  appliedRef.current = applied;
+  const apply = useCallback(async (id: string): Promise<boolean> => {
+    if (appliedRef.current.includes(id)) return true;
+    try {
+      const token = await getTokenRef.current();
+      const ok = await applyToVacancy(id, token);
+      if (!ok) return false;
+      const next = uniq([...appliedRef.current, id]);
+      appliedRef.current = next;
+      setApplied(next);
+      await saveJSON('dvg.applied', next);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
   const toggleSave = useCallback((id: string) =>
     setSaved((p) => { const n = p.includes(id) ? p.filter((x) => x !== id) : [...p, id]; saveJSON('dvg.saved', n); return n; }), []);
 

@@ -368,7 +368,7 @@ function LabeledInput({ label, value, onChangeText, editable, placeholder, keybo
 
 function StepBtn({ icon, onPress, T }: { icon: any; onPress: () => void; T: any }) {
   return (
-    <Pressable onPress={onPress} hitSlop={8} style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={icon === 'minus' ? 'Уменьшить' : 'Увеличить'} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={15} color={T.brand} />
     </Pressable>
   );

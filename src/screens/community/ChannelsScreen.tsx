@@ -57,7 +57,7 @@ export function ChannelsScreen({ navigation }: Props) {
                 ) : null}
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{ch.name}</Text>
+                <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{ch.name}</Text>
                 {secondary ? <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{secondary}</Text> : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 }}>
                   <SF name="doc.text.fill" size={10} color={T.labelTertiary} />

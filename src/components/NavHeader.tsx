@@ -8,7 +8,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ty, space } from '../theme/tokens';
+import { minTouch, space } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { hSelect } from '../lib/haptics';
 import { SF } from './SFIcon';
@@ -51,14 +51,15 @@ export function NavRoundButton({
 }: { icon: string; onPress?: () => void; scheme?: 'light' | 'dark'; size?: number; accessibilityLabel?: string }) {
   const { T } = useTheme();
   const dark = scheme === 'dark';
+  const controlSize = Math.max(size, minTouch);
   return (
     <Pressable
       onPress={onPress ? () => { hSelect(); onPress(); } : undefined}
-      hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? 'Кнопка'}
+      accessibilityLabel={accessibilityLabel ?? `Действие: ${icon}`}
+      accessibilityState={{ disabled: !onPress }}
       style={({ pressed }) => ({
-        width: size, height: size, borderRadius: size / 2,
+        width: controlSize, height: controlSize, borderRadius: controlSize / 2,
         backgroundColor: dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.72)',
         alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1,
       })}>
@@ -72,7 +73,7 @@ export function NavHeader({
   onBack, trailing, variant = 'inline', overlayScheme = 'dark', tint,
   transparent = false, blur = false, hairline, safeArea = true, style,
 }: NavHeaderProps) {
-  const { T, isDark, reduceTransparency } = useTheme();
+  const { T, isDark, reduceTransparency, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const top = safeArea ? insets.top : 0;
   const useBlur = blur && !reduceTransparency;
@@ -88,31 +89,31 @@ export function NavHeader({
         }, style]}>
         {onBack
           ? <NavRoundButton icon="chevron.left" scheme={overlayScheme} onPress={onBack} accessibilityLabel={backLabel} />
-          : <View style={{ width: 34 }} />}
-        {trailing ? <View style={{ flexDirection: 'row', gap: space.sm }}>{trailing}</View> : <View style={{ width: 34 }} />}
+          : <View style={{ width: minTouch }} />}
+        {trailing ? <View style={{ flexDirection: 'row', gap: space.sm }}>{trailing}</View> : <View style={{ width: minTouch }} />}
       </View>
     );
   }
 
-  const fg = tint ?? T.brandAccent;
+  const fg = tint ?? T.brandText;
   const showHairline = hairline ?? (!transparent && !useBlur);
 
   const bar = (
     <View style={{
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       paddingTop: top + space.sm - 2, paddingBottom: space.sm + 2,
-      paddingLeft: space.md, paddingRight: space.sm, minHeight: 44,
+      paddingLeft: space.md, paddingRight: space.sm, minHeight: minTouch,
     }}>
       {/* Centered inline title (behind the row so side widths don't shift it). */}
       {title && !largeTitle ? (
         <View pointerEvents="none" style={{ position: 'absolute', left: 56, right: 56, top: top + space.sm - 2, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{title}</Text>
+          <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]} numberOfLines={1}>{title}</Text>
         </View>
       ) : null}
 
       {onBack ? (
-        <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" accessibilityLabel={backLabel}
-          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 2, padding: 6, opacity: pressed ? 0.6 : 1 })}>
+        <Pressable onPress={() => { hSelect(); onBack(); }} accessibilityRole="button" accessibilityLabel={backLabel}
+          style={({ pressed }) => ({ minWidth: minTouch, minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 6, opacity: pressed ? 0.6 : 1 })}>
           <SF name="chevron.left" size={20} color={fg} />
           {!hideBackLabel ? <Text style={[ty.body, { color: fg }]} numberOfLines={1}>{backLabel}</Text> : null}
         </Pressable>
@@ -133,7 +134,7 @@ export function NavHeader({
       {bar}
       {largeTitle && title ? (
         <View style={{ paddingHorizontal: space.xl, paddingTop: space.xs, paddingBottom: subtitle ? space.sm : space.lg }}>
-          <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={2}>{title}</Text>
+          <Text accessibilityRole="header" style={[ty.largeTitle, { color: T.label }]}>{title}</Text>
           {subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: space.xs }]}>{subtitle}</Text> : null}
         </View>
       ) : null}

@@ -55,11 +55,16 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   const my = useMyCourses();
 
   useEffect(() => {
+    if (!course || course.source === 'mock') return;
+    let active = true;
     (async () => {
       const token = isSignedIn ? await getToken() : null;
-      if (course && (course.lessons.length === 0 || token)) loadDetail(courseId, token);
+      if (active && (course.lessons.length === 0 || token)) await loadDetail(courseId, token);
     })();
-  }, [courseId, isSignedIn]);
+    return () => { active = false; };
+    // course?.id is essential for cold deep links: it changes once the catalog
+    // arrives, while avoiding a loop when detail replaces the course object.
+  }, [courseId, course?.id, course?.source, isSignedIn]);
 
   if (!course) {
     return (
@@ -132,9 +137,10 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
 
         <View style={{ flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
           {meta.map((m, i) => (
-            <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < meta.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{m.v}</Text>
-              <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{m.l}</Text>
+            <View key={i} style={{ flex: 1, alignItems: 'center', paddingHorizontal: 6, borderRightWidth: i < meta.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
+              {/* Values like a category name ("Саморазвитие") must wrap, not clip. */}
+              <Text style={[ty.headline, { color: T.label, textAlign: 'center' }]} numberOfLines={2}>{m.v}</Text>
+              <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1, textAlign: 'center' }]} numberOfLines={1}>{m.l}</Text>
             </View>
           ))}
         </View>
@@ -162,7 +168,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
                 ? <SF name="checkmark.circle.fill" size={26} color={T.green} />
                 : (
                   <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: status === 'current' ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={[ty.footnoteEm, { color: status === 'current' ? '#fff' : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{l.n}</Text>
+                    <Text style={[ty.footnoteEm, { color: status === 'current' ? '#fff' : T.labelSecondary }]} numberOfLines={1}>{l.n}</Text>
                   </View>
                 );
               return (
@@ -233,7 +239,7 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
         {/* Price card */}
         <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, ...shadows.card }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-            <Text style={[ty.title1, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{formatPrice(course.price)}</Text>
+            <Text style={[ty.title1, { color: T.label }]} numberOfLines={1}>{formatPrice(course.price)}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{tr('единоразово')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>

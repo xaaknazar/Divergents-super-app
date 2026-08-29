@@ -10,7 +10,7 @@ import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateView
 import { useNotifications } from '../../state/NotificationsContext';
 import { NotifTarget } from '../../data/notifications';
 import { RootStackParams } from '../../navigation/types';
-import { navigationRef } from '../../navigation/ref';
+import { navigationRef, normalizeTabTarget } from '../../navigation/ref';
 
 function fmtDate(iso: string, ru: boolean): string {
   if (!iso) return '';
@@ -68,10 +68,7 @@ export function NotificationsScreen({ navigation }: Props) {
     // the still-closing modal (looked like a half screen over the main one).
     InteractionManager.runAfterInteractions(() => {
       if (navigationRef.isReady()) {
-        (navigationRef as any).navigate('Tabs', {
-          screen: target.tab,
-          params: { screen: target.screen, params: target.params },
-        });
+        (navigationRef as any).navigate('Tabs', normalizeTabTarget(target.tab, target.screen, target.params));
       }
     });
   }, [markRead, navigation]);
@@ -82,10 +79,10 @@ export function NotificationsScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}><Text style={[ty.body, { color: T.brandAccent }]} numberOfLines={1}>{tr('Закрыть')}</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Уведомления')}</Text>
-        <Pressable onPress={markAllRead} hitSlop={8} disabled={unread === 0}>
-          <Text style={[ty.subhead, { color: unread ? T.brandAccent : T.labelTertiary }]} numberOfLines={1}>{tr('Прочитать')}</Text>
+        <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel={tr('Закрыть')} style={{ flex: 1, minHeight: 48, justifyContent: 'center', alignItems: 'flex-start' }}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Закрыть')}</Text></Pressable>
+        <Text style={[ty.headline, { color: T.label, flex: 1, textAlign: 'center' }]}>{tr('Уведомления')}</Text>
+        <Pressable onPress={markAllRead} disabled={unread === 0} accessibilityRole="button" accessibilityLabel={tr('Прочитать')} accessibilityState={{ disabled: unread === 0 }} style={{ flex: 1, minHeight: 48, justifyContent: 'center', alignItems: 'flex-end' }}>
+          <Text style={[ty.subhead, { color: unread ? T.brandAccent : T.labelTertiary, textAlign: 'right' }]}>{tr('Прочитать')}</Text>
         </Pressable>
       </View>
 
@@ -143,7 +140,7 @@ const NotifRow = React.memo(function NotifRow({ it, T, ru, onPress }: { it: any;
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={[ty.headline, { color: T.label, flex: 1 }]} numberOfLines={1}>{it.title}</Text>
+          <Text style={[ty.headline, { color: T.label, flex: 1 }]} numberOfLines={2}>{it.title}</Text>
           {!it.read ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: T.brand }} /> : null}
         </View>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={3}>{it.body}</Text>

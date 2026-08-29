@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, ScrollView, Linking, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
+import { Logo } from '../../components/Logo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -12,23 +13,22 @@ import { SF } from '../../components/SFIcon';
 import { Capsule, IconCircle, ListSection, ListRow, Segmented, ty } from '../../components/ui';
 import { Ring } from '../../components/talentUI';
 import { GardnerChart } from '../../components/GardnerChart';
-import { JOBS } from '../../data/career';
 import { fetchMyShelf, ShelfEntry } from '../../data/books';
 import { imgUrl } from '../../data/api';
 import { useChallenge } from '../../state/ChallengeContext';
+import { useEnrollment } from '../../state/EnrollmentContext';
 import { useCourses } from '../../state/CourseContext';
 import { useCareer } from '../../state/CareerContext';
 import { useResume } from '../../state/useResume';
-import { useAppFlow } from '../../state/AppFlowContext';
 import { useModeration } from '../../state/ModerationContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
-import { clearAllAppData } from '../../state/reset';
-import { unregisterPushToken } from '../../state/usePush';
+import { deleteAccountAndClear, signOutAndClear } from '../../state/signOut';
 import { useAchievements } from '../../data/achievements';
-import { GALLUP_DOMAIN_META, mbtiName, fmtList } from '../../data/talentslab';
+import { GALLUP_DOMAIN_META, mbtiName, fmtList, effectiveResumeCompleteness } from '../../data/talentslab';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
+import { fetchCommunityHome, SportActivity, Trip } from '../../data/community';
 
 type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 
@@ -36,27 +36,34 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { T, mode, setMode } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
-  const { challenge } = useChallenge();
+  const { challenge, isParticipant } = useChallenge();
+  const { has } = useEnrollment();
   const { courses, progress, reload: reloadCourses } = useCourses();
-  const { applied } = useCareer();
-  const { completeness: localCompleteness } = useResume();
+  const { applied, jobs } = useCareer();
+  const { completeness: localCompleteness, answers } = useResume();
   const { profile, live, reload } = useTalentProfile();
-  const completeness = profile?.completeness ?? localCompleteness;
+  const completeness = effectiveResumeCompleteness(profile, localCompleteness);
   const ach = useAchievements();
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
-  const { finishRegistration } = useAppFlow();
   const { blocked, unblock } = useModeration();
+  const [accountAction, setAccountAction] = useState(false);
 
   // Personal reading shelf (books read / currently reading), cache-first so it
   // shows instantly; tapping opens the book or the Library in the Обучение tab.
   const [shelf, setShelf] = useState<ShelfEntry[]>([]);
+  const [communityActivities, setCommunityActivities] = useState<{ trips: Trip[]; sport: SportActivity[] }>({ trips: [], sport: [] });
   useEffect(() => {
     let alive = true;
     (async () => { if (!isSignedIn) return; try { const tok = await getToken(); const s = await fetchMyShelf(tok); if (alive) setShelf(s); } catch {} })();
     return () => { alive = false; };
   }, [isSignedIn]);
+  const loadCommunityActivities = async () => {
+    const data = await fetchCommunityHome();
+    setCommunityActivities({ trips: data.trips, sport: data.sport });
+  };
+  useEffect(() => { if (isSignedIn) loadCommunityActivities(); }, [isSignedIn]);
   const reading = shelf.filter((s) => s.status === 'reading');
   const readBooks = shelf.filter((s) => s.status === 'read');
   const openBook = (id: string) => navigation.getParent()?.navigate('LMSTab', { screen: 'BookDetail', params: { bookId: id } } as never);
@@ -77,8 +84,11 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const editAnketa = () => navigation.navigate('Resume' as never);
   // Open the live challenge tracker in the Community tab (was wrongly going to Career).
   const goChallenge = () => navigation.getParent()?.navigate('CommunityTab', { screen: 'ChallengeDetail', params: { challengeId: challenge.id } } as never);
+  const goTrip = (tripId: string) => navigation.getParent()?.navigate('CommunityTab', { screen: 'TripDetail', params: { tripId } } as never);
+  const goSport = () => navigation.getParent()?.navigate('CommunityTab', { screen: 'CommunityHome', params: { focus: 'sport' } } as never);
 
   const handleSignOut = () => {
+    if (accountAction) return;
     Alert.alert(
       'Выйти из аккаунта?',
       undefined,
@@ -88,10 +98,51 @@ export function ProfileHomeScreen({ navigation }: Props) {
           text: 'Выйти',
           style: 'destructive',
           onPress: async () => {
-            finishRegistration();
-            try { await unregisterPushToken(getToken); } catch {}
-            try { await clearAllAppData(); } catch {}
-            try { await signOut(); } catch {}
+            setAccountAction(true);
+            try {
+              await signOutAndClear({ getToken, signOut });
+            } catch {
+              Alert.alert('Не удалось выйти', 'Проверьте подключение и попробуйте снова.');
+            } finally {
+              setAccountAction(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    if (accountAction) return;
+    Alert.alert(
+      'Удалить аккаунт навсегда?',
+      'Профиль Clerk будет удалён без возможности восстановления. Локальная анкета, прогресс, GPS-маршруты, история AI и скачанные уроки также будут удалены с этого устройства.',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить аккаунт',
+          style: 'destructive',
+          onPress: async () => {
+            if (!user) {
+              Alert.alert('Не удалось удалить аккаунт', 'Профиль ещё не загрузился. Попробуйте снова через несколько секунд.');
+              return;
+            }
+            setAccountAction(true);
+            try {
+              await deleteAccountAndClear({
+                getToken,
+                signOut,
+                deleteRemoteAccount: () => user.delete(),
+              });
+            } catch (error: any) {
+              const clerkMessage = error?.errors?.[0]?.message;
+              Alert.alert(
+                'Не удалось удалить аккаунт',
+                typeof clerkMessage === 'string' ? clerkMessage : 'Проверьте подключение и попробуйте снова. Аккаунт не был удалён.',
+              );
+            } finally {
+              setAccountAction(false);
+            }
           },
         },
       ],
@@ -100,14 +151,24 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   const coursesInProgress = courses.filter((c) => progress(c.id) > 0).length;
   const email = user?.primaryEmailAddress?.emailAddress;
-  // Prefer a real name: Clerk name → Talentslab anketa full_name → email prefix.
-  // Email-code sign-up doesn't collect a name, so the anketa is the real source.
-  const name = user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(' ')
-    || (live && profile?.fullName ? profile.fullName : null)
+  // The public identity is the псевдоним (short, never truncates). Fall back to
+  // a real name only for legacy profiles that haven't set one yet.
+  const nickname = typeof answers.nickname === 'string' && answers.nickname.trim()
+    ? answers.nickname.trim()
+    : (typeof (profile?.resume as { nickname?: unknown } | null)?.nickname === 'string'
+        ? String((profile!.resume as { nickname?: unknown }).nickname).trim()
+        : '');
+  const name = nickname
+    || user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(' ')
+    || (profile?.fullName ? profile.fullName : null)
     || (email ? email.split('@')[0] : 'Divergents');
   const initial = (name?.trim()?.[0] ?? 'D').toUpperCase();
-  const challengeActive = challenge.currentDay > 0;
-  const myApps = JOBS.filter((j) => applied.includes(j.id));
+  // Photo: Talentslab anketa photo → Clerk avatar (Google/Apple sign-in) → initial.
+  const photoUrl = profile?.photoUrl || user?.imageUrl || null;
+  const challengeActive = isParticipant;
+  const myTrips = communityActivities.trips.filter((trip) => has(`trip:${trip.id}`));
+  const mySport = communityActivities.sport.filter((activity) => has(`sport:${activity.id}`));
+  const myApps = jobs.filter((j) => applied.includes(j.id));
   const rz = profile?.resume ?? null;
 
   const tiles = [
@@ -141,7 +202,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   );
 
   return (
-    <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await reload(); }}>
+    <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await Promise.all([reload(), loadCommunityActivities()]); }}>
       <PageIntro page="profile" />
       <NavBarLarge title={t('profile')} trailing={(
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
@@ -152,16 +213,16 @@ export function ProfileHomeScreen({ navigation }: Props) {
         style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            {profile?.photoUrl ? (
-              <Image source={{ uri: profile.photoUrl }} style={{ width: 64, height: 64, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
+            {photoUrl ? (
+              <Image source={{ uri: photoUrl }} style={{ width: 64, height: 64, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
             ) : (
               <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.title1, { color: '#fff' }]}>{initial}</Text>
               </View>
             )}
             <View style={{ flex: 1 }}>
-              <Text style={[ty.title2, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.85)', marginTop: 2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+              <Text style={[ty.title2, { color: '#fff' }]} numberOfLines={1}>{name}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.85)', marginTop: 2 }]} numberOfLines={1}>
                 {email ?? 'Divergents'}
               </Text>
               {profile?.mbtiType ? (
@@ -183,7 +244,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {challengeActive ? (
         <ListSection header={t('active_challenge')} style={{ marginBottom: 18 }}>
           <Pressable onPress={goChallenge} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
-            <IconCircle icon="flame.fill" color="#fff" bg={T.red} size={30} />
+            <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+              <Logo size={19} body="#FFFFFF" head="#FFFFFF" />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{challenge.title}</Text>
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{tr('День')} {challenge.currentDay}/{challenge.totalDays}</Text>
@@ -193,13 +256,28 @@ export function ProfileHomeScreen({ navigation }: Props) {
         </ListSection>
       ) : null}
 
+      {(myTrips.length > 0 || mySport.length > 0) ? (
+        <ListSection header={tr('Мои активности')} style={{ marginBottom: 18 }}>
+          {myTrips.map((trip, index) => (
+            <ListRow key={`trip:${trip.id}`} leading={<IconCircle icon="map.fill" color="#fff" bg={T.brand} size={30} />}
+              title={trip.title} subtitle={`${tr('Ваша поездка')}${trip.date ? ` · ${trip.date}` : ''}`}
+              chevron onPress={() => goTrip(trip.id)} last={index === myTrips.length - 1 && mySport.length === 0} />
+          ))}
+          {mySport.map((activity, index) => (
+            <ListRow key={`sport:${activity.id}`} leading={<IconCircle icon={activity.icon} color="#fff" bg={T.green} size={30} />}
+              title={activity.title} subtitle={`${tr('Вы записаны')}${activity.date ? ` · ${activity.date}` : ''}`}
+              chevron onPress={goSport} last={index === mySport.length - 1} />
+          ))}
+        </ListSection>
+      ) : null}
+
       {/* Stat tiles */}
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
         {tiles.map((t, i) => (
           <View key={i} style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
             <SF name={t.icon} size={18} color={t.c} />
-            <Text style={[ty.title2, { color: T.label, marginTop: 8 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t.v}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t.l}</Text>
+            <Text style={[ty.title2, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{t.v}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{t.l}</Text>
           </View>
         ))}
       </View>
@@ -237,7 +315,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {(profile?.gallup ?? []).length > 0 ? (
         <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{t('strengths')}</Text>
+            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{t('strengths')}</Text>
             {!live ? (
               <Pressable onPress={() => reload()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
@@ -275,7 +353,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
         {blocked.length > 0 ? (
           <ListRow leading={<IconCircle icon="hand.raised.fill" color="#fff" bg={T.labelSecondary} size={30} />} title="Заблокированные" detail={String(blocked.length)} chevron onPress={manageBlocked} />
         ) : null}
-        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.red} last onPress={handleSignOut} />
+        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.red} onPress={handleSignOut} />
+        <ListRow leading={<SF name="trash.fill" size={20} color={T.red} />} title="Удалить аккаунт" subtitle="Без возможности восстановления" valueColor={T.red} last onPress={handleDeleteAccount} />
       </ListSection>
 
       {coursesInProgress > 0 ? (
@@ -291,7 +370,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
           title={tr('Открыть свою анкету')}
           subtitle={tr('Полный отчёт: таланты, MBTI, Гарднер')}
           chevron last
-          onPress={() => navigation.getParent()?.navigate('CareerTab', { screen: 'TalentProfile' } as never)}
+          onPress={() => navigation.navigate('TalentProfile', { origin: 'profile' })}
         />
       </ListSection>
 
@@ -331,7 +410,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Support — write to us on Telegram */}
       <ListSection header={tr('Поддержка')} footer={tr('Вопросы, ошибки или предложения — напишите нам в Telegram.')}>
         <ListRow leading={<IconCircle icon="paperplane.fill" color="#fff" bg={T.brand} size={30} />}
-          title={tr('Написать в поддержку')} detail="@haaknazar" chevron last
+          title={tr('Написать в поддержку')} subtitle="@haaknazar" chevron last
           onPress={() => Linking.openURL('https://t.me/haaknazar').catch(() => {})} />
       </ListSection>
 

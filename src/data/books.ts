@@ -108,3 +108,28 @@ export async function fetchMyShelf(token: string | null): Promise<ShelfEntry[]> 
   const d = await authedGet<{ shelf?: ShelfEntry[] }>('/api/mobile/me/books', token, {});
   return Array.isArray(d?.shelf) ? d.shelf : [];
 }
+
+/** PATCH /api/mobile/books/:id/comment/:commentId — edit your own comment/review. */
+export async function updateBookComment(bookId: string, commentId: string, token: string | null, content: string): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const r = await fetch(`${API_BASE}/api/mobile/books/${bookId}/comment/${commentId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ content }),
+    });
+    return r.ok;
+  } catch { return false; }
+}
+
+/** DELETE /api/mobile/books/:id/comment/:commentId — remove your own comment/review. */
+export async function deleteBookComment(bookId: string, commentId: string, token: string | null): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const r = await fetch(`${API_BASE}/api/mobile/books/${bookId}/comment/${commentId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return r.ok;
+  } catch { return false; }
+}

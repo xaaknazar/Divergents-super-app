@@ -270,27 +270,34 @@ export async function fetchOwnedDetail(id: string, token: string): Promise<Cours
   };
 }
 
-// Best-effort: tell the website a lesson/chapter is completed so progress
-// syncs across devices. Silently ignored if the endpoint is unavailable
-// (local completion is already saved). Matches BACKEND.md:
+// Tell the website a lesson/chapter is completed so progress syncs across
+// devices. Transient failures are retried and the final result is returned to
+// the caller; local completion can still remain available offline. Matches BACKEND.md:
 //   POST /api/mobile/me/courses/:id/progress  body { lessonId, completed }
 export async function markLessonComplete(
   courseId: string, lessonId: string, token: string,
-): Promise<void> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 12000);
-  try {
-    await fetch(`${API_BASE}/api/mobile/me/courses/${courseId}/progress`, {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lessonId, completed: true }),
-    });
-  } catch {
-    // best-effort — local completion is already saved
-  } finally {
-    clearTimeout(t);
+): Promise<boolean> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    try {
+      const res = await fetch(`${API_BASE}/api/mobile/me/courses/${encodeURIComponent(courseId)}/progress`, {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ lessonId, completed: true }),
+      });
+      if (res.ok) return true;
+      // Authentication/validation/not-found errors will not heal on immediate retry.
+      if (res.status < 500 && res.status !== 408 && res.status !== 429) return false;
+    } catch {
+      // Network errors and timeouts get one bounded retry below.
+    } finally {
+      clearTimeout(timer);
+    }
+    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 500));
   }
+  return false;
 }
 
 // Strip HTML tags / decode common entities (chapter descriptions are rich text).

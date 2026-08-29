@@ -126,7 +126,7 @@ export function VideoScreen({ route, navigation }: Props) {
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="play.slash" size={28} color={T.labelTertiary} />
           </View>
-          <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Урок недоступен')}</Text>
+          <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]} numberOfLines={1}>{tr('Урок недоступен')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Этот урок не найден или ещё не загружен. Вернитесь к курсу и попробуйте снова.')}</Text>
           <PrimaryButton label={tr('Назад к курсу')} icon="chevron.left" onPress={() => navigation.goBack()} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />
         </View>
@@ -149,9 +149,20 @@ export function VideoScreen({ route, navigation }: Props) {
   const attachments = course.attachments ?? [];
 
   const complete = async () => {
-    const token = isSignedIn ? await getToken() : null;
-    completeLesson(courseId, lesson.id, token);
-    navigation.goBack();
+    const token = isSignedIn && course.source === 'live' ? await getToken() : null;
+    const synced = await completeLesson(courseId, lesson.id, token);
+    if (!token || synced) {
+      navigation.goBack();
+      return;
+    }
+    Alert.alert(
+      tr('Не удалось сохранить прогресс'),
+      tr('Проверьте подключение и попробуйте завершить урок ещё раз.'),
+      [
+        { text: tr('Остаться'), style: 'cancel' },
+        { text: tr('К курсу'), onPress: () => navigation.goBack() },
+      ],
+    );
   };
 
   const send = async () => {
@@ -180,7 +191,7 @@ export function VideoScreen({ route, navigation }: Props) {
       {/* Video area */}
       <View style={{ paddingTop: insets.top, height: 240 + insets.top, backgroundColor: '#0E1729' }}>
         <View style={{ position: 'absolute', top: insets.top + 12, left: 12, right: 12, zIndex: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Pressable onPress={() => navigation.goBack()} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Закрыть')} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel={tr('Закрыть')} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
             <SF name="chevron.down" size={18} color="#fff" />
           </Pressable>
           <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 8 }}>
@@ -188,11 +199,11 @@ export function VideoScreen({ route, navigation }: Props) {
             <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1}>{lesson.title}</Text>
           </View>
           {hls ? (
-            <Pressable onPress={() => { try { videoRef.current?.enterFullscreen(); } catch {} }} hitSlop={8}
-              style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable onPress={() => { try { videoRef.current?.enterFullscreen(); } catch {} }} accessibilityRole="button" accessibilityLabel="Полноэкранный режим"
+              style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
               <SF name="arrow.up.left.and.arrow.down.right" size={16} color="#fff" />
             </Pressable>
-          ) : <View style={{ width: 32 }} />}
+          ) : <View style={{ width: 48 }} />}
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           {hls ? (
@@ -202,13 +213,13 @@ export function VideoScreen({ route, navigation }: Props) {
           ) : needsPurchase ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Урок по подписке')}</Text>
+              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1}>{tr('Урок по подписке')}</Text>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Купите курс на сайте, чтобы открыть все уроки')}</Text>
             </View>
           ) : unavailable ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="exclamationmark.triangle.fill" size={36} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Видео недоступно')}</Text>
+              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1}>{tr('Видео недоступно')}</Text>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Видео этого урока сейчас не загружается. Проверьте подключение или попробуйте позже.')}</Text>
             </View>
           ) : (

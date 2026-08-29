@@ -20,7 +20,7 @@ export type CommunityStackParams = {
   ServerChannel: { channelId: string };
   CreateContent: undefined;
   ChallengeDetail: { challengeId: string };
-  ChallengeApplicants: { challengeId: string };
+  ChallengeApplicants: { challengeId: string; applicantUserId?: string };
   ChallengeRoster: { challengeId: string };
   TeamStandings: { challengeId: string };
   ManageChallenge: { challengeId: string };
@@ -31,8 +31,16 @@ export type CommunityStackParams = {
 
 export type AIStackParams = { AIChat: undefined };
 export type MapStackParams = { MapHome: undefined; PlaceDetail: { placeId: string }; AddPlace: { lat?: number; lng?: number; editId?: string } | undefined; OfflineMap: undefined; AdminPlaces: undefined };
-export type CareerStackParams = { CareerHome: undefined; VacancyDetail: { jobId: string }; Resume: { step?: number } | undefined; TalentProfile: undefined; CreateVacancy: undefined; VacancyApplicants: { jobId: string } };
-export type ProfileStackParams = { ProfileHome: undefined; Achievements: undefined; Personalize: undefined; Downloads: undefined; Resume: { step?: number } | undefined };
+export type TalentProfileParams = { origin?: 'profile' } | undefined;
+export type CareerStackParams = { CareerHome: undefined; VacancyDetail: { jobId: string }; Resume: { step?: number } | undefined; TalentProfile: TalentProfileParams; CreateVacancy: undefined; VacancyApplicants: { jobId: string } };
+export type ProfileStackParams = {
+  ProfileHome: undefined;
+  Achievements: undefined;
+  Personalize: undefined;
+  Downloads: undefined;
+  Resume: { step?: number } | undefined;
+  TalentProfile: TalentProfileParams;
+};
 
 export type TabParams = {
   LMSTab: NavigatorScreenParams<LMSStackParams>;
@@ -47,6 +55,7 @@ export type RootStackParams = {
   Onboarding: undefined;
   Auth: undefined;
   Register: undefined;
+  NicknameGate: undefined;
   ResumeGate: undefined;
   Tabs: NavigatorScreenParams<TabParams>;
   Notifications: undefined;

@@ -99,11 +99,21 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
     if (denied) { Alert.alert('Нет доступа к геолокации', 'Разрешите доступ к местоположению в настройках, чтобы записывать маршрут.'); return; }
     lastRef.current = user;
     setStatus('tracking');
-    await startWatch();
-    startTimer();
+    try {
+      await startWatch();
+      startTimer();
+    } catch {
+      setStatus('idle');
+      setDenied(true);
+      Alert.alert('Не удалось начать запись', 'Проверьте доступ к геолокации и попробуйте снова.');
+    }
   };
   const pause = () => { hTap(); setStatus('paused'); subRef.current?.remove(); subRef.current = null; stopTimer(); };
-  const resume = async () => { hTap(); setStatus('tracking'); lastRef.current = user; await startWatch(); startTimer(); };
+  const resume = async () => {
+    hTap(); setStatus('tracking'); lastRef.current = user;
+    try { await startWatch(); startTimer(); }
+    catch { setStatus('paused'); Alert.alert('Не удалось продолжить', 'Проверьте доступ к геолокации и попробуйте снова.'); }
+  };
 
   const steps = distanceToSteps(distanceM, type);
   const finish = () => {
@@ -180,7 +190,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
               { v: String(steps), l: 'шагов' },
             ].map((s, i, arr) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < arr.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-                <Text style={[ty.title2, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{s.v}</Text>
+                <Text style={[ty.title2, { color: T.label }]} numberOfLines={1}>{s.v}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{s.l}</Text>
               </View>
             ))}

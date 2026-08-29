@@ -4,13 +4,13 @@ import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Aler
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../components/SFIcon';
-import { PrimaryButton, ty } from '../components/ui';
+import { PrimaryButton } from '../components/ui';
 import { ResumeFieldInput } from '../components/ResumeField';
 import { RESUME_STEPS } from '../data/resumeSchema';
 import { useResume } from '../state/useResume';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { fetchTalentProfile } from '../data/talentslab';
-import { clearAllAppData } from '../state/reset';
+import { signOutAndClear } from '../state/signOut';
 import { useAppFlow } from '../state/AppFlowContext';
 import { useResumeGate } from '../state/ResumeGateContext';
 import { useLang, tr } from '../state/LanguageContext';
@@ -27,7 +27,7 @@ const missingRequired = (fields: typeof RESUME_STEPS[number]['fields'], answers:
 type Props = NativeStackScreenProps<RootStackParams, 'Register'>;
 
 export function RegisterScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { lang } = useLang();
   const insets = useSafeAreaInsets();
   const { answers, setField, completeness, submit, submitting } = useResume();
@@ -61,9 +61,11 @@ export function RegisterScreen({ navigation }: Props) {
           text: tr('Выйти'),
           style: 'destructive',
           onPress: async () => {
-            finishRegistration();
-            try { await clearAllAppData(); } catch {}
-            try { await signOut(); } catch {}
+            try {
+              await signOutAndClear({ getToken, signOut });
+            } catch {
+              Alert.alert(tr('Не удалось выйти'), tr('Проверьте подключение и попробуйте снова.'));
+            }
           },
         },
       ],
@@ -112,7 +114,11 @@ export function RegisterScreen({ navigation }: Props) {
   if (done) {
     const pct = tlPct ?? completeness;
     return (
-      <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top, paddingHorizontal: 24, paddingBottom: insets.bottom + 24, justifyContent: 'center' }}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: T.systemBg }}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 24, paddingHorizontal: 24, paddingBottom: insets.bottom + 24, justifyContent: 'center' }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={{ alignItems: 'center' }}>
           <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="checkmark.seal.fill" size={48} color={T.brand} />
@@ -123,9 +129,9 @@ export function RegisterScreen({ navigation }: Props) {
             : tr('Анкета сохранена на устройстве — отправим в Talentslab, как только появится связь.')}</Text>
         </View>
         <View style={{ marginTop: 28, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, borderWidth: 0.5, borderColor: T.cardBorder }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
-            <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{tr('Заполненность анкеты Talentslab')}</Text>
-            <Text style={[ty.title3, { color: T.brand }]}>{pct}%</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+            <Text style={[ty.subheadEm, { color: T.label, flex: 1 }]}>{tr('Заполненность анкеты Talentslab')}</Text>
+            <Text style={[ty.title3, { color: T.brand, flexShrink: 0 }]}>{pct}%</Text>
           </View>
           <View style={{ height: 10, borderRadius: 5, backgroundColor: T.fillSecondary, overflow: 'hidden' }}>
             <View style={{ width: `${Math.max(4, Math.min(100, pct))}%`, height: 10, borderRadius: 5, backgroundColor: T.brand }} />
@@ -135,38 +141,38 @@ export function RegisterScreen({ navigation }: Props) {
           </Text>
         </View>
         <PrimaryButton label={tr('Войти в приложение')} icon="arrow.right" style={{ marginTop: 24 }} onPress={enter} />
-      </View>
+      </ScrollView>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={backToLogin} hitSlop={8} style={{ width: 64, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+        <Pressable onPress={backToLogin} accessibilityRole="button" accessibilityLabel={tr('Вернуться ко входу')} style={{ minWidth: 64, minHeight: 48, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
           <SF name="chevron.left" size={15} color={T.brandAccent} />
-          <Text style={[ty.body, { color: T.brandAccent }]} numberOfLines={1}>{tr('Вход')}</Text>
+          <Text style={[ty.body, { color: T.brandAccent }]}>{tr('Вход')}</Text>
         </Pressable>
-        <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Регистрация')} · {completeness}%</Text>
+        <Text style={[ty.headline, { color: T.label, flex: 1, textAlign: 'center', paddingHorizontal: 8 }]}>{tr('Регистрация')} · {completeness}%</Text>
         <View style={{ width: 64 }} />
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingVertical: 12 }}>
+      <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 16 }}>
         {RESUME_STEPS.map((st, i) => (
-          <Pressable key={st.key} onPress={() => go(i)} style={{ flex: 1 }}>
+          <Pressable key={st.key} onPress={() => go(i)} accessibilityRole="button" accessibilityLabel={`${tr('Шаг')} ${i + 1} ${tr('из')} ${total}: ${st.title}`} accessibilityState={{ selected: i === step }} style={{ flex: 1, minHeight: 48, justifyContent: 'center' }}>
             <View style={{ height: 4, borderRadius: 2, backgroundColor: i <= step ? T.brand : T.fillSecondary }} />
           </Pressable>
         ))}
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 8}>
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 110 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={s.icon} size={20} color={T.brand} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
-              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{s.title}</Text>
+              <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
+              <Text style={[ty.title3, { color: T.label }]}>{s.title}</Text>
             </View>
           </View>
 
@@ -186,7 +192,7 @@ export function RegisterScreen({ navigation }: Props) {
           ) : null}
         </ScrollView>
 
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+        <View style={{ flexDirection: 'row', gap: 10, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
           {step > 0 ? <PrimaryButton label={tr('Назад')} color="transparent" style={{ flex: 1 }} onPress={() => go(step - 1)} /> : null}
           {last ? (
             <PrimaryButton label={tr('Завершить')} icon="checkmark" loading={submitting} style={{ flex: 2 }} onPress={finish} />

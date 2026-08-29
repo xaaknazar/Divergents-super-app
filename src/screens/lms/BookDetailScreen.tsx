@@ -11,7 +11,7 @@ import { SF } from '../../components/SFIcon';
 import { ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
-import { fetchBook, postBookComment, rateBook, setBookShelf, BookDetailResponse, BookComment, ShelfStatus } from '../../data/books';
+import { fetchBook, postBookComment, updateBookComment, deleteBookComment, rateBook, setBookShelf, BookDetailResponse, BookComment, ShelfStatus } from '../../data/books';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'BookDetail'>;
@@ -36,6 +36,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
   const [error, setError] = useState(false);
   const [tab, setTab] = useState<'comment' | 'review'>('review');
   const [draft, setDraft] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [busyShelf, setBusyShelf] = useState(false);
 
@@ -84,10 +85,31 @@ export function BookDetailScreen({ route, navigation }: Props) {
     const content = draft.trim(); if (!content) return;
     setSending(true);
     const token = await getToken();
-    const r = await postBookComment(bookId, token, content, tab);
+    // Editing an existing entry vs. posting a new one.
+    const ok = editingId
+      ? await updateBookComment(bookId, editingId, token, content)
+      : !!(await postBookComment(bookId, token, content, tab))?.comment;
     setSending(false);
-    if (r?.comment) { setDraft(''); load(); }
+    if (ok) { setDraft(''); setEditingId(null); load(); }
     else Alert.alert('Ошибка', 'Не удалось отправить. Попробуйте ещё раз.');
+  };
+
+  // Edit / delete your own review or comment.
+  const startEdit = (c: BookComment) => { setTab(c.kind === 'review' ? 'review' : 'comment'); setEditingId(c.id); setDraft(c.content); };
+  const cancelEdit = () => { setEditingId(null); setDraft(''); };
+  const confirmDelete = (c: BookComment) => {
+    Alert.alert(c.kind === 'review' ? 'Удалить рецензию?' : 'Удалить комментарий?', undefined, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить', style: 'destructive',
+        onPress: async () => {
+          const token = await getToken();
+          const ok = await deleteBookComment(bookId, c.id, token);
+          if (ok) { if (editingId === c.id) cancelEdit(); load(); }
+          else Alert.alert('Ошибка', 'Не удалось удалить. Попробуйте ещё раз.');
+        },
+      },
+    ]);
   };
 
   if (loading) {
@@ -243,15 +265,28 @@ export function BookDetailScreen({ route, navigation }: Props) {
           ) : comments.map((c: BookComment) => (
             <View key={c.id} style={{ padding: 14, borderRadius: 14, backgroundColor: T.cardBg, marginBottom: 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{c.author}{c.mine ? ' · вы' : ''}</Text>
+                <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={2}>{c.author}{c.mine ? ' · вы' : ''}</Text>
                 <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtDate(c.date)}</Text>
               </View>
               <Text style={[ty.body, { color: T.labelSecondary, marginTop: 6 }]}>{c.content}</Text>
-              {c.likes ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-                  <SF name="heart.fill" size={12} color="#FF3B30" /><Text style={[ty.caption2, { color: T.labelTertiary }]}>{c.likes}</Text>
-                </View>
-              ) : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 8 }}>
+                {c.likes ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <SF name="heart.fill" size={12} color="#FF3B30" /><Text style={[ty.caption2, { color: T.labelTertiary }]}>{c.likes}</Text>
+                  </View>
+                ) : null}
+                {/* Own comment/review: edit or delete it. */}
+                {c.mine ? (
+                  <>
+                    <Pressable onPress={() => startEdit(c)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Изменить">
+                      <Text style={[ty.caption2Em, { color: T.brandAccent }]}>Изменить</Text>
+                    </Pressable>
+                    <Pressable onPress={() => confirmDelete(c)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Удалить">
+                      <Text style={[ty.caption2Em, { color: T.red }]}>Удалить</Text>
+                    </Pressable>
+                  </>
+                ) : null}
+              </View>
             </View>
           ))}
         </View>
@@ -261,9 +296,9 @@ export function BookDetailScreen({ route, navigation }: Props) {
       {/* Composer */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 28, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
         <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
-          <TextInput value={draft} onChangeText={setDraft} multiline placeholder={tab === 'review' ? 'Написать рецензию…' : 'Написать комментарий…'} placeholderTextColor={T.labelTertiary} style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
+          <TextInput value={draft} onChangeText={setDraft} multiline placeholder={editingId ? 'Изменить текст…' : tab === 'review' ? 'Написать рецензию…' : 'Написать комментарий…'} placeholderTextColor={T.labelTertiary} style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
         </View>
-        <Pressable onPress={onSend} disabled={sending || !draft.trim()} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: draft.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Отправить комментарий" accessibilityState={{ disabled: sending || !draft.trim() }} onPress={onSend} disabled={sending || !draft.trim()} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: draft.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
           {sending ? <ActivityIndicator color="#fff" size="small" /> : <SF name="arrow.up" size={18} color={draft.trim() ? '#fff' : T.labelTertiary} />}
         </Pressable>
       </View>

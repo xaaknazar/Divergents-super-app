@@ -11,12 +11,12 @@ import { SF } from '../components/SFIcon';
 import { Logo } from '../components/Logo';
 import { PrimaryButton, ty } from '../components/ui';
 import { ResumeFieldInput } from '../components/ResumeField';
+import { AssessmentsBlock } from '../components/AssessmentsBlock';
 import { RESUME_STEPS } from '../data/resumeSchema';
 import { useResume } from '../state/useResume';
 import { useResumeGate } from '../state/ResumeGateContext';
-import { useClerk } from '@clerk/clerk-expo';
-import { clearAllAppData } from '../state/reset';
-import { useAppFlow } from '../state/AppFlowContext';
+import { useAuth, useClerk } from '@clerk/clerk-expo';
+import { signOutAndClear } from '../state/signOut';
 import { useLang, tr } from '../state/LanguageContext';
 
 const missingRequired = (fields: typeof RESUME_STEPS[number]['fields'], answers: Record<string, any>) =>
@@ -31,8 +31,8 @@ export function ResumeGateScreen() {
   const insets = useSafeAreaInsets();
   const { ready, markComplete } = useResumeGate();
   const { answers, setField, completeness, submit, submitting } = useResume();
+  const { getToken } = useAuth();
   const { signOut } = useClerk();
-  const { finishRegistration } = useAppFlow();
   const total = RESUME_STEPS.length;
   const [step, setStep] = useState(0);
   const s = RESUME_STEPS[step];
@@ -51,9 +51,11 @@ export function ResumeGateScreen() {
           text: tr('Выйти'),
           style: 'destructive',
           onPress: async () => {
-            finishRegistration();
-            try { await clearAllAppData(); } catch {}
-            try { await signOut(); } catch {}
+            try {
+              await signOutAndClear({ getToken, signOut });
+            } catch {
+              Alert.alert(tr('Не удалось выйти'), tr('Проверьте подключение и попробуйте снова.'));
+            }
           },
         },
       ],
@@ -121,7 +123,7 @@ export function ResumeGateScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Logo size={22} />
           <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Заполните анкету')} · {completeness}%</Text>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Заполните анкету')} · {completeness}%</Text>
             <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Нужно заполнить резюме, чтобы продолжить')}</Text>
           </View>
         </View>
@@ -144,7 +146,7 @@ export function ResumeGateScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
-              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.title}</Text>
+              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{s.title}</Text>
             </View>
           </View>
 
@@ -152,14 +154,7 @@ export function ResumeGateScreen() {
             <ResumeFieldInput key={f.key} field={f} value={answers[f.key]} onChange={(v) => setField(f.key, v)} />
           ))}
 
-          {s.key === 'assessments' ? (
-            <View style={{ marginTop: 8, backgroundColor: T.brandTinted, borderRadius: 12, padding: 14, flexDirection: 'row', gap: 10 }}>
-              <SF name="doc.fill" size={18} color={T.brand} />
-              <Text style={[ty.caption1, { color: T.label, flex: 1 }]}>
-                {tr('Тесты Gallup, MBTI и Гарднера проходятся на Talentslab — после обработки результаты появятся в разделе «Карьера».')}
-              </Text>
-            </View>
-          ) : null}
+          {s.key === 'assessments' ? <AssessmentsBlock /> : null}
         </ScrollView>
 
         {/* Footer */}

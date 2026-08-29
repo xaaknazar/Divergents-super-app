@@ -419,7 +419,7 @@ export function MapHomeScreen({ navigation }: Props) {
         const rt = routes[routeIdx];
         const Pill = ({ label, on, onPress }: { label: string; on?: boolean; onPress: () => void }) => (
           <Pressable onPress={onPress} hitSlop={4} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: on ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.14)' }}>
-            <Text style={[ty.footnoteEm, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
+            <Text style={[ty.footnoteEm, { color: '#fff' }]} numberOfLines={1}>{label}</Text>
           </Pressable>
         );
         return (
@@ -513,10 +513,10 @@ export function MapHomeScreen({ navigation }: Props) {
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                 <Pressable onPress={() => startNav(sel)} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
-                  <SF name="paperplane.fill" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Вести сюда')}</Text>
+                  <SF name="paperplane.fill" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{tr('Вести сюда')}</Text>
                 </Pressable>
                 <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} style={({ pressed }) => ({ width: 84, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-                  <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Детали')}</Text>
+                  <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1}>{tr('Детали')}</Text>
                 </Pressable>
                 <Pressable onPress={() => toggleFav(sel.id)} style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name={isFav(sel.id) ? 'heart.fill' : 'heart'} size={18} color={isFav(sel.id) ? T.brand : T.label} />
@@ -548,10 +548,10 @@ export function MapHomeScreen({ navigation }: Props) {
               </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                 <Pressable onPress={() => navTo(searchPin)} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
-                  <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Вести сюда')}</Text>
+                  <SF name="figure.walk" size={15} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{tr('Вести сюда')}</Text>
                 </Pressable>
                 <Pressable onPress={() => externalRoute(searchPin)} style={({ pressed }) => ({ width: 110, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-                  <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Навигатор')}</Text>
+                  <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1}>{tr('Навигатор')}</Text>
                 </Pressable>
               </View>
             </View>
@@ -611,7 +611,7 @@ function FChip({ label, icon, active, onPress, T }: { label: string; icon?: any;
   return (
     <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 18, backgroundColor: active ? T.brand : T.cardBg, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
       {icon ? <SF name={icon} size={12} color={active ? '#fff' : T.brand} /> : null}
-      <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
+      <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]} numberOfLines={1}>{label}</Text>
     </Pressable>
   );
 }

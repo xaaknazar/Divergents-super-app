@@ -4,7 +4,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { registerPush, unregisterPush } from '../data/api';
-import { navigationRef } from '../navigation/ref';
+import { navigationRef, normalizeTabTarget } from '../navigation/ref';
 import { loadJSON } from './persist';
 
 const PROJECT_ID = (Constants.expoConfig as any)?.extra?.eas?.projectId
@@ -38,10 +38,7 @@ function routeFromResponse(response: Notifications.NotificationResponse | null, 
   whenReady(() => {
     try {
       if (target?.tab && target?.screen) {
-        nav.navigate('Tabs', {
-          screen: target.tab,
-          params: { screen: target.screen, params: target.params },
-        });
+        nav.navigate('Tabs', normalizeTabTarget(target.tab, target.screen, target.params));
       } else {
         // No specific target → open the notifications list.
         nav.navigate('Notifications');
@@ -75,6 +72,13 @@ export function usePush() {
     (async () => {
       if (!isSignedIn) return;
       try {
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('challenge-reminders', {
+            name: 'Напоминания челленджа',
+            importance: Notifications.AndroidImportance.HIGH,
+            sound: 'default',
+          });
+        }
         let { status } = await Notifications.getPermissionsAsync();
         if (status !== 'granted') { const r = await Notifications.requestPermissionsAsync(); status = r.status; }
         if (status !== 'granted') return;

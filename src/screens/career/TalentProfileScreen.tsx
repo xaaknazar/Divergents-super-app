@@ -3,32 +3,39 @@ import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, ScrollView, Linking, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { Image } from 'expo-image';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection, ListRow, PrimaryButton, ty } from '../../components/ui';
 import { GardnerChart } from '../../components/GardnerChart';
+import { ErrorState } from '../../components/StateViews';
 import { useTalentProfile } from '../../state/useTalentProfile';
+import { useResume } from '../../state/useResume';
 import {
   GALLUP_DOMAIN_META, mbtiName, fmtList,
-  loadGallupOrder, saveGallupOrder, applyGallupOrder, gallupId,
+  loadGallupOrder, saveGallupOrder, applyGallupOrder, gallupId, effectiveResumeCompleteness,
 } from '../../data/talentslab';
 import { RESUME_STEPS } from '../../data/resumeSchema';
 import { exportProfilePdf } from '../../data/profilePdf';
 import { hSelect } from '../../lib/haptics';
-import { CareerStackParams } from '../../navigation/types';
-
-type Props = NativeStackScreenProps<CareerStackParams, 'TalentProfile'>;
+type Props = {
+  navigation: {
+    goBack: () => void;
+    navigate: (screen: 'Resume', params?: { step?: number }) => void;
+  };
+  route: { params?: { origin?: 'profile' } };
+};
 
 // RESUME_STEPS index whose `key` matches — computed, never hardcoded.
 const stepIndex = (key: string) => Math.max(0, RESUME_STEPS.findIndex((s) => s.key === key));
 
-export function TalentProfileScreen({ navigation }: Props) {
+export function TalentProfileScreen({ navigation, route }: Props) {
   const { T } = useTheme();
   useLang();
-  const { profile: realProfile, live, loading, reload } = useTalentProfile();
+  const { profile: realProfile, loading, unavailable, source, reload } = useTalentProfile();
+  const { completeness: localCompleteness } = useResume();
+  const backLabel = route.params?.origin === 'profile' ? tr('Профиль') : tr('Карьера');
   // Re-fetch on focus (silently) so edits saved on the Resume form are reflected
   // when the user returns here — the profile feeds the Gallup vacancy matching.
   useFocusEffect(React.useCallback(() => { reload(true); }, [reload]));
@@ -95,13 +102,13 @@ export function TalentProfileScreen({ navigation }: Props) {
   const GroupHeader = ({ label, action, accessibilityLabel, onPress }: {
     label: string; action?: string; accessibilityLabel?: string; onPress?: () => void;
   }) => (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4, flex: 1 }]} numberOfLines={1}>{label}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6 }}>
+      <Text style={[ty.footnote, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4, flex: 1, flexShrink: 1 }]}>{label}</Text>
       {onPress ? (
         <Pressable onPress={() => { hSelect(); onPress(); }} hitSlop={8} accessibilityRole="button"
           accessibilityLabel={accessibilityLabel ?? action ?? tr('Изменить')}
           style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
-          <Text style={[ty.footnoteEm, { color: T.brandAccent }]} numberOfLines={1}>{action ?? tr('Изменить')}</Text>
+          <Text style={[ty.footnoteEm, { color: T.brandAccent, textAlign: 'right' }]}>{action ?? tr('Изменить')}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -126,20 +133,42 @@ export function TalentProfileScreen({ navigation }: Props) {
     );
   };
 
-  // No live candidate record → loading spinner or a CTA to fill the resume.
+  // No server/cache/local candidate record → loading spinner or a CTA.
   // Never fall back to demo data.
-  if (!live) {
+  if (!profile?.found) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <NavHeader title={tr('Моя анкета')} backLabel={tr('Карьера')} onBack={() => navigation.goBack()} />
+        <NavHeader title={tr('Моя анкета')} backLabel={backLabel} onBack={() => navigation.goBack()} />
         {loading ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+        ) : unavailable ? (
+          <View style={{ flex: 1 }}>
+            <ErrorState
+              message={localCompleteness > 0
+                ? `${tr('Анкета сохранена локально')} · ${localCompleteness}%. ${tr('Не удалось получить профиль Talentslab.')}`
+                : tr('Не удалось получить профиль Talentslab. Проверьте подключение.')}
+              onRetry={() => reload()}
+            />
+            <PrimaryButton label={tr('Редактировать анкету')} icon="arrow.right"
+              style={{ marginHorizontal: 32 }} onPress={() => navigation.navigate('Resume')} />
+          </View>
         ) : (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
             <SF name="person.text.rectangle" size={44} color={T.labelTertiary} />
-            <Text style={[ty.title3, { color: T.label, marginTop: 14, textAlign: 'center' }]}>{tr('Анкета не заполнена')}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>{tr('Заполните анкету, чтобы увидеть свой профиль талантов.')}</Text>
-            <PrimaryButton label={tr('Заполнить анкету')} icon="arrow.right" style={{ marginTop: 20 }} onPress={() => navigation.navigate('Resume')} />
+            <Text style={[ty.title3, { color: T.label, marginTop: 14, textAlign: 'center' }]}>
+              {localCompleteness > 0 ? tr('Анкета сохранена локально') : tr('Анкета не заполнена')}
+            </Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>
+              {localCompleteness > 0
+                ? `${tr('Заполнено')} ${localCompleteness}%. ${tr('Отправим данные в Talentslab при следующем сохранении.')}`
+                : tr('Заполните анкету, чтобы увидеть свой профиль талантов.')}
+            </Text>
+            <PrimaryButton
+              label={localCompleteness > 0 ? tr('Редактировать анкету') : tr('Заполнить анкету')}
+              icon="arrow.right"
+              style={{ width: '100%', maxWidth: 320, minHeight: 56, marginTop: 24, paddingHorizontal: 20 }}
+              onPress={() => navigation.navigate('Resume')}
+            />
           </View>
         )}
       </View>
@@ -148,7 +177,7 @@ export function TalentProfileScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Моя анкета')} backLabel={tr('Карьера')} onBack={() => navigation.goBack()}
+      <NavHeader title={tr('Моя анкета')} backLabel={backLabel} onBack={() => navigation.goBack()}
         trailing={
           <>
             {/* Share the анкета as a PDF (send to other apps / save). */}
@@ -170,15 +199,26 @@ export function TalentProfileScreen({ navigation }: Props) {
           </>
         } />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        {unavailable || source === 'cache' || source === 'local' ? (
+          <View style={{ marginHorizontal: 16, marginBottom: 14, padding: 12, borderRadius: 12, backgroundColor: 'rgba(255,149,0,0.12)', flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+            <SF name="wifi.exclamationmark" size={17} color={T.orange} />
+            <Text style={[ty.caption1, { color: T.label, flex: 1 }]}>
+              {source === 'local'
+                ? tr('Показана анкета, сохранённая на устройстве. Данные Talentslab обновятся после восстановления связи.')
+                : tr('Показаны последние сохранённые данные Talentslab.')}
+            </Text>
+            <Pressable onPress={() => reload()} hitSlop={8}><Text style={[ty.caption1, { color: T.brand }]}>{tr('Повторить')}</Text></Pressable>
+          </View>
+        ) : null}
         {/* Hero */}
         <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16 }}>
           {profile?.photoUrl
             ? <Image source={{ uri: profile.photoUrl }} style={{ width: 88, height: 88, borderRadius: 24 }} contentFit="cover" cachePolicy="memory-disk" />
             : <View style={{ width: 88, height: 88, borderRadius: 24, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.largeTitle, { color: '#fff' }]}>{(profile?.fullName ?? 'D').charAt(0)}</Text></View>}
-          <Text style={[ty.title2, { color: T.label, marginTop: 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{profile?.fullName ?? '—'}</Text>
+          <Text style={[ty.title2, { color: T.label, marginTop: 12, textAlign: 'center' }]}>{profile?.fullName ?? '—'}</Text>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
             {profile?.mbtiType ? <Capsule bg={T.brandTinted} color={T.brand}>MBTI · {profile.mbtiType}</Capsule> : null}
-            <Capsule bg={T.fillTertiary} color={T.label}>{tr('Анкета')} {profile?.completeness ?? 0}%</Capsule>
+            <Capsule bg={T.fillTertiary} color={T.label}>{tr('Анкета')} {effectiveResumeCompleteness(profile, localCompleteness)}%</Capsule>
           </View>
         </View>
 
@@ -206,7 +246,7 @@ export function TalentProfileScreen({ navigation }: Props) {
         {profile?.mbtiType ? (
           <ListSection header={tr('Тип личности (MBTI)')}>
             <View style={{ padding: 16 }}>
-              <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>
+              <Text style={[ty.body, { color: T.label }]}>
                 {profile.mbtiType}
                 {(profile.mbtiName || mbtiName(profile.mbtiType)) ? ` · ${profile.mbtiName || mbtiName(profile.mbtiType)}` : ''}
               </Text>

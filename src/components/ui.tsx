@@ -1,20 +1,24 @@
 // Shared iOS-style UI atoms — theme-aware via useTheme().
 import React, { useRef } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Animated, StyleProp, ViewStyle } from 'react-native';
-import { T as LIGHT, ty, radius, space, shadows } from '../theme/tokens';
+import { T as LIGHT, ty as baseTy, minTouch, radius, space, shadows } from '../theme/tokens';
+import { contrastForeground } from '../theme/personalization';
 import { useTheme } from '../theme/ThemeContext';
 import { hTap, hSelect } from '../lib/haptics';
 import { SF, SFName } from './SFIcon';
 
 export function ProgressBar({
-  value = 0.5, color, height = 4, track,
-}: { value?: number; color?: string; height?: number; track?: string }) {
+  value = 0.5, color, height = 4, track, accessibilityLabel = 'Прогресс',
+}: { value?: number; color?: string; height?: number; track?: string; accessibilityLabel?: string }) {
   const { T } = useTheme();
-  const fill = color ?? T.brand;
+  const fill = color ?? T.brandText;
   const bg = track ?? T.fillTertiary;
+  const normalized = Math.min(1, Math.max(0, value));
   return (
-    <View style={{ height, backgroundColor: bg, borderRadius: height, overflow: 'hidden' }}>
-      <View style={{ width: `${Math.min(1, Math.max(0, value)) * 100}%`, height: '100%', backgroundColor: fill, borderRadius: height }} />
+    <View accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel}
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(normalized * 100), text: `${Math.round(normalized * 100)}%` }}
+      style={{ height, backgroundColor: bg, borderRadius: height, overflow: 'hidden' }}>
+      <View style={{ width: `${normalized * 100}%`, height: '100%', backgroundColor: fill, borderRadius: height }} />
     </View>
   );
 }
@@ -22,7 +26,7 @@ export function ProgressBar({
 export function Capsule({
   children, bg, color, style,
 }: { children: React.ReactNode; bg?: string; color?: string; style?: StyleProp<ViewStyle> }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const _bg = bg ?? T.fillTertiary;
   const _color = color ?? T.label;
   return (
@@ -31,13 +35,14 @@ export function Capsule({
       paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: _bg,
     }, style]}>
       {(typeof children === 'string' || typeof children === 'number')
-        ? <Text style={[ty.caption2Em, { color: _color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{children}</Text>
+        ? <Text style={[ty.caption2Em, { color: _color }]} numberOfLines={1}>{children}</Text>
         : <CapsuleContent color={_color}>{children}</CapsuleContent>}
     </View>
   );
 }
 
 function CapsuleContent({ children, color }: { children: React.ReactNode; color: string }) {
+  const { ty } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       {React.Children.map(children, (c) =>
@@ -52,31 +57,32 @@ export function IconCircle({
   const { T } = useTheme();
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg ?? T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-      <SF name={icon} size={iconSize ?? Math.round(size * 0.55)} color={color ?? T.brand} />
+      <SF name={icon} size={iconSize ?? Math.round(size * 0.55)} color={color ?? T.brandText} />
     </View>
   );
 }
 
 export function IconSquircle({
-  icon, color = '#fff', bg, size = 30, iconSize,
+  icon, color, bg, size = 30, iconSize,
 }: { icon: SFName | string; color?: string; bg?: string; size?: number; iconSize?: number }) {
   const { T } = useTheme();
   return (
     <View style={{ width: size, height: size, borderRadius: size * 0.22, backgroundColor: bg ?? T.brand, alignItems: 'center', justifyContent: 'center' }}>
-      <SF name={icon} size={iconSize ?? Math.round(size * 0.6)} color={color} />
+      <SF name={icon} size={iconSize ?? Math.round(size * 0.6)} color={color ?? (bg ? contrastForeground(bg) : T.onBrand)} />
     </View>
   );
 }
 
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8, minHeight: 28 }}>
-      <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{title}</Text>
+      <Text accessibilityRole="header" style={[ty.title3, { color: T.label, flexShrink: 1 }]}>{title}</Text>
       {action ? (
-        <Pressable onPress={onAction ? () => { hSelect(); onAction(); } : undefined} hitSlop={8} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 2, opacity: pressed ? 0.5 : 1 })}>
-          <Text style={[ty.subheadEm, { color: T.brandAccent }]}>{action}</Text>
-          <SF name="chevron.forward" size={12} color={T.brandAccent} />
+        <Pressable onPress={onAction ? () => { hSelect(); onAction(); } : undefined} accessibilityRole="button" accessibilityLabel={action}
+          style={({ pressed }) => ({ minWidth: minTouch, minHeight: minTouch, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 2, opacity: pressed ? 0.5 : 1 })}>
+          <Text style={[ty.subheadEm, { color: T.brandText }]}>{action}</Text>
+          <SF name="chevron.forward" size={12} color={T.brandText} />
         </Pressable>
       ) : null}
     </View>
@@ -86,7 +92,7 @@ export function SectionHeader({ title, action, onAction }: { title: string; acti
 export function ListSection({
   header, footer, children, style,
 }: { header?: string; footer?: string; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View style={[{ marginTop: 6 }, style]}>
       {header ? (
@@ -108,19 +114,21 @@ export function ListRow({
   leading?: React.ReactNode; title?: string; subtitle?: string; detail?: string;
   trailing?: React.ReactNode; chevron?: boolean; last?: boolean; onPress?: () => void; valueColor?: string;
 }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const rowStyle: ViewStyle = {
     flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16,
-    minHeight: 44, position: 'relative',
+    minHeight: minTouch, position: 'relative',
   };
   const inner = (
     <>
       {leading}
       <View style={{ flex: 1, minWidth: 0 }}>
-        {title ? <Text style={[ty.body, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{title}</Text> : null}
-        {subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]}>{subtitle}</Text> : null}
+        {/* Wrap to a second line instead of truncating: long RU titles ("Написать
+            в поддержку") must stay readable at every text size. */}
+        {title ? <Text style={[ty.body, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{title}</Text> : null}
+        {subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>{subtitle}</Text> : null}
       </View>
-      {detail ? <Text style={[ty.body, { color: valueColor ?? T.labelSecondary }]}>{detail}</Text> : null}
+      {detail ? <Text style={[ty.body, { color: valueColor ?? T.labelSecondary, flexShrink: 0, maxWidth: '38%' }]} numberOfLines={1}>{detail}</Text> : null}
       {trailing}
       {chevron ? <SF name="chevron.forward" size={14} color={T.labelTertiary} /> : null}
       {!last ? (
@@ -130,7 +138,8 @@ export function ListRow({
   );
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => [rowStyle, { opacity: pressed ? 0.6 : 1 }]}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={title}
+        style={({ pressed }) => [rowStyle, { opacity: pressed ? 0.6 : 1 }]}>
         {inner}
       </Pressable>
     );
@@ -146,19 +155,20 @@ export function Separator({ left = 16 }: { left?: number }) {
 export function Segmented({
   items, value, onChange, leadingIcons,
 }: { items: string[]; value: number; onChange?: (i: number) => void; leadingIcons?: (SFName | string)[] }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: T.fillTertiary, borderRadius: 9, padding: 2, height: 32 }}>
+    <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', backgroundColor: T.fillTertiary, borderRadius: radius.md, padding: 2, minHeight: minTouch }}>
       {items.map((s, i) => {
         const on = i === value;
         return (
-          <Pressable key={i} onPress={() => { hSelect(); onChange?.(i); }} accessibilityRole="button" style={{
+          <Pressable key={i} onPress={() => { hSelect(); onChange?.(i); }} accessibilityRole="radio"
+            accessibilityLabel={s} accessibilityState={{ selected: on, disabled: !onChange }} style={{
             flex: 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center',
-            backgroundColor: on ? T.systemBg : 'transparent', borderRadius: 7,
+            minHeight: 44, paddingHorizontal: space.xs, backgroundColor: on ? T.systemBg : 'transparent', borderRadius: radius.sm,
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
           }}>
             {leadingIcons ? <SF name={leadingIcons[i]} size={12} color={T.label} /> : null}
-            <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s}</Text>
+            <Text style={[ty.footnoteEm, { color: T.label, flexShrink: 1, textAlign: 'center' }]} numberOfLines={2}>{s}</Text>
           </Pressable>
         );
       })}
@@ -169,17 +179,18 @@ export function Segmented({
 export function Chip({
   label, active, icon, onPress,
 }: { label: string; active?: boolean; icon?: SFName | string; onPress?: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
-    <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} accessibilityRole="button" accessibilityState={{ selected: active }} style={({ pressed }) => [{
+    <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} accessibilityRole="button"
+      accessibilityLabel={label} accessibilityState={{ selected: active, disabled: !onPress }} style={({ pressed }) => [{
       flexDirection: 'row', alignItems: 'center', gap: 5,
-      paddingVertical: 7, paddingHorizontal: 14, borderRadius: 18,
+      minHeight: minTouch, paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.pill,
       backgroundColor: active ? T.brand : T.cardBg,
       borderWidth: 0.5, borderColor: active ? 'transparent' : T.separator,
       transform: [{ scale: pressed ? 0.96 : 1 }],
     }, active ? { shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 } : null]}>
-      {icon ? <SF name={icon} size={11} color={active ? '#fff' : T.brand} /> : null}
-      <Text style={[ty.footnoteEm, { color: active ? '#fff' : T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
+      {icon ? <SF name={icon} size={13} color={active ? T.onBrand : T.brandText} /> : null}
+      <Text style={[ty.footnoteEm, { color: active ? T.onBrand : T.label, flexShrink: 1 }]} numberOfLines={2}>{label}</Text>
     </Pressable>
   );
 }
@@ -187,18 +198,19 @@ export function Chip({
 export function PrimaryButton({
   label, icon, onPress, color, textColor, style, loading, disabled,
 }: { label: string; icon?: SFName | string; onPress?: () => void; color?: string; textColor?: string; style?: StyleProp<ViewStyle>; loading?: boolean; disabled?: boolean }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const _color = color ?? T.brand;
-  const fg = textColor ?? (_color === 'transparent' ? T.brand : '#fff');
+  const fg = textColor ?? (_color === 'transparent' ? T.brandText : color ? contrastForeground(_color) : T.onBrand);
   const solid = _color !== 'transparent';
   // Soft, brand-tinted elevation gives the solid CTA tactile depth (HIG).
   const shadow = solid ? {
     shadowColor: _color, shadowOpacity: 0.22, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 3,
   } : null;
   return (
-    <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} style={({ pressed }) => [{
-      height: 50, borderRadius: 14, backgroundColor: _color, flexDirection: 'row',
-      alignItems: 'center', justifyContent: 'center', gap: 8,
+    <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading}
+      accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }} style={({ pressed }) => [{
+      minHeight: 50, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.xl, backgroundColor: _color, flexDirection: 'row',
+      alignItems: 'center', justifyContent: 'center', gap: space.sm,
       transform: [{ scale: pressed ? 0.98 : 1 }], opacity: pressed ? 0.92 : disabled ? 0.45 : 1,
     }, shadow, style]}>
       {loading ? (
@@ -206,7 +218,7 @@ export function PrimaryButton({
       ) : (
         <>
           {icon ? <SF name={icon} size={16} color={fg} /> : null}
-          <Text style={[ty.headline, { color: fg }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
+          <Text style={[ty.headline, { color: fg, flexShrink: 1, textAlign: 'center' }]}>{label}</Text>
         </>
       )}
     </Pressable>
@@ -225,7 +237,7 @@ export function Card({
   };
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => [base, { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }, style]}>
+      <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [base, { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }, style]}>
         {children}
       </Pressable>
     );
@@ -237,11 +249,12 @@ export function Card({
 export function SecondaryButton({
   label, icon, onPress, color, tinted = true, style, loading, disabled,
 }: { label: string; icon?: SFName | string; onPress?: () => void; color?: string; tinted?: boolean; style?: StyleProp<ViewStyle>; loading?: boolean; disabled?: boolean }) {
-  const { T } = useTheme();
-  const accent = color ?? T.brand;
+  const { T, ty } = useTheme();
+  const accent = color ?? T.brandText;
   return (
-    <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} style={({ pressed }) => [{
-      height: 50, borderRadius: radius.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading}
+      accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }} style={({ pressed }) => [{
+      minHeight: 50, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       backgroundColor: tinted ? T.brandTinted : 'transparent',
       borderWidth: tinted ? 0 : 1, borderColor: accent,
       transform: [{ scale: pressed ? 0.98 : 1 }], opacity: pressed ? 0.9 : disabled ? 0.45 : 1,
@@ -251,11 +264,11 @@ export function SecondaryButton({
       ) : (
         <>
           {icon ? <SF name={icon} size={16} color={accent} /> : null}
-          <Text style={[ty.headline, { color: accent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
+          <Text style={[ty.headline, { color: accent, flexShrink: 1, textAlign: 'center' }]}>{label}</Text>
         </>
       )}
     </Pressable>
   );
 }
 
-export { LIGHT as T, ty };
+export { LIGHT as T, baseTy as ty };

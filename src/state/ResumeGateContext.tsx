@@ -17,6 +17,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '@clerk/clerk-expo';
 import { useResume } from './useResume';
 import { useTalentProfile } from './useTalentProfile';
+import { effectiveResumeCompleteness } from '../data/talentslab';
 
 export const RESUME_COMPLETE_KEY = 'dvg.resumeComplete';
 
@@ -45,7 +46,7 @@ export function ResumeGateProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const localComplete = hydrated && completeness >= 100;
-  const serverComplete = live && ((profile?.completeness ?? 0) >= 100 || (profile?.resumeStep ?? 0) >= 5);
+  const serverComplete = live && effectiveResumeCompleteness(profile) >= 100;
   const complete = cached === true || localComplete || serverComplete;
 
   // Persist the confirmation once, so a later offline launch keeps the user in.

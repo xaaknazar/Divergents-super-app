@@ -28,7 +28,8 @@ const STATUS_META: Record<ChallengeAppStatus, { label: string; bg: string; color
 };
 
 export function ChallengeApplicantsScreen({ route, navigation }: Props) {
-  const { challengeId } = route.params;
+  const { challengeId, applicantUserId } = route.params;
+  const directProfile = !!applicantUserId;
   const { T } = useTheme();
   const { getToken } = useAuth();
   const [items, setItems] = useState<ChallengeApplicant[]>([]);
@@ -46,11 +47,22 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
       const token = await getTokenRef.current();
       const { applicants, canManage: cm } = await fetchChallengeApplicants(challengeId, token);
       setItems(applicants); setCanManage(cm);
+      if (applicantUserId) {
+        const selected = applicants.find((a) => a.applicantUserId === applicantUserId);
+        if (selected) {
+          setSel(selected);
+          setFeedback(selected.feedback || '');
+        }
+      }
     } finally { setLoading(false); }
-  }, [challengeId]);
+  }, [applicantUserId, challengeId]);
   useEffect(() => { load(); }, [load]);
 
   const openApplicant = (a: ChallengeApplicant) => { setSel(a); setFeedback(a.feedback || ''); };
+  const closeApplicant = () => {
+    if (directProfile) navigation.goBack();
+    else setSel(null);
+  };
 
   const decide = async (status: ChallengeAppStatus) => {
     if (!sel) return;
@@ -61,7 +73,8 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
     if (!ok) { Alert.alert('Ошибка', 'Не удалось сохранить. Попробуйте ещё раз.'); return; }
     hSuccess();
     setItems((p) => p.map((x) => x.id === sel.id ? { ...x, status, feedback: feedback.trim() } : x));
-    setSel(null);
+    if (directProfile) navigation.goBack();
+    else setSel(null);
   };
 
   const saveFeedback = async () => {
@@ -95,9 +108,11 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title="Заявки" onBack={() => navigation.goBack()} hairline />
+      <NavHeader title={directProfile ? 'Анкета участника' : 'Заявки'} onBack={() => navigation.goBack()} hairline />
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+      ) : directProfile ? (
+        <EmptyState icon="person.crop.circle.badge.exclamationmark" title="Анкета недоступна" subtitle="Не удалось найти анкету этого участника." />
       ) : items.length === 0 ? (
         <EmptyState icon="person.2.fill" title="Пока нет заявок" subtitle="Как только кто-то подаст заявку, она появится здесь." />
       ) : (
@@ -113,7 +128,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                   <Text style={[ty.headline, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{name}</Text>
+                  <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{name}</Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>
                     {a.teamName ? `${a.teamName} · ` : ''}{a.profile?.completeness != null ? `анкета ${a.profile.completeness}%` : (a.userEmail || '')}
                   </Text>
@@ -126,25 +141,26 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
       )}
 
       {/* Applicant detail */}
-      <Modal visible={!!sel} animationType="slide" onRequestClose={() => setSel(null)}>
+      <Modal visible={!!sel} animationType={directProfile ? "none" : "slide"} onRequestClose={closeApplicant}>
         <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-          <NavHeader title={sel?.userName || sel?.profile?.fullName || 'Кандидат'} backLabel="Закрыть" onBack={() => setSel(null)} hairline />
+          <NavHeader title={sel?.userName || sel?.profile?.fullName || 'Участник'} backLabel={directProfile ? "Состав" : "Закрыть"} onBack={closeApplicant} hairline />
           <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
             <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
-              {/* Application meta */}
-              <ListSection header="Заявка">
-                <View style={{ padding: 14, gap: 8 }}>
-                  {sel?.teamName ? <Row T={T} k="Команда" v={sel.teamName} /> : null}
-                  <Row T={T} k="Статус" v={sel ? STATUS_META[sel.status].label : ''} />
-                  {sel?.telegram ? (
-                    <Pressable onPress={() => Linking.openURL(`https://t.me/${sel.telegram}`).catch(() => {})} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-                      <Text style={[ty.subhead, { color: T.labelSecondary }]}>Telegram</Text>
-                      <Text style={[ty.subhead, { color: T.brand }]} numberOfLines={1}>@{sel.telegram}</Text>
-                    </Pressable>
-                  ) : null}
-                  {sel && sel.coefficient !== 1 ? <Row T={T} k="Коэффициент" v={`×${sel.coefficient}`} /> : null}
-                </View>
-              </ListSection>
+              {!directProfile ? (
+                <ListSection header="Заявка">
+                  <View style={{ padding: 14, gap: 8 }}>
+                    {sel?.teamName ? <Row T={T} k="Команда" v={sel.teamName} /> : null}
+                    <Row T={T} k="Статус" v={sel ? STATUS_META[sel.status].label : ''} />
+                    {sel?.telegram ? (
+                      <Pressable onPress={() => Linking.openURL(`https://t.me/${sel.telegram}`).catch(() => {})} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+                        <Text style={[ty.subhead, { color: T.labelSecondary }]}>Telegram</Text>
+                        <Text style={[ty.subhead, { color: T.brand }]} numberOfLines={1}>@{sel.telegram}</Text>
+                      </Pressable>
+                    ) : null}
+                    {sel && sel.coefficient !== 1 ? <Row T={T} k="Коэффициент" v={`×${sel.coefficient}`} /> : null}
+                  </View>
+                </ListSection>
+              ) : null}
 
               {!p ? (
                 <View style={{ padding: 20 }}>
@@ -196,36 +212,38 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                 </>
               )}
 
-              {/* Feedback + decision */}
-              <ListSection header="Ответ кандидату (причина)">
-                <View style={{ padding: 14, gap: 10 }}>
-                  <TextInput value={feedback} onChangeText={setFeedback} multiline placeholder="Напишите причину приёма/отклонения — кандидат увидит её…"
-                    placeholderTextColor={T.labelTertiary}
-                    style={{ backgroundColor: T.fillTertiary, borderRadius: 12, padding: 12, minHeight: 90, textAlignVertical: 'top', color: T.label, ...ty.body }} />
-                  <Pressable onPress={saveFeedback} disabled={busy || !feedback.trim()} style={{ alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, backgroundColor: feedback.trim() ? T.brandTinted : T.fillTertiary }}>
-                    <Text style={[ty.subheadEm, { color: feedback.trim() ? T.brand : T.labelTertiary }]}>Отправить ответ</Text>
-                  </Pressable>
-                </View>
-              </ListSection>
+              {!directProfile ? (
+                <>
+                  <ListSection header="Ответ кандидату (причина)">
+                    <View style={{ padding: 14, gap: 10 }}>
+                      <TextInput value={feedback} onChangeText={setFeedback} multiline placeholder="Напишите причину приёма/отклонения — кандидат увидит её…"
+                        placeholderTextColor={T.labelTertiary}
+                        style={{ backgroundColor: T.fillTertiary, borderRadius: 12, padding: 12, minHeight: 90, textAlignVertical: 'top', color: T.label, ...ty.body }} />
+                      <Pressable onPress={saveFeedback} disabled={busy || !feedback.trim()} style={{ alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, backgroundColor: feedback.trim() ? T.brandTinted : T.fillTertiary }}>
+                        <Text style={[ty.subheadEm, { color: feedback.trim() ? T.brand : T.labelTertiary }]}>Отправить ответ</Text>
+                      </Pressable>
+                    </View>
+                  </ListSection>
 
-              {/* Admin-only: promote to captain of their team */}
-              {canManage && sel?.teamId ? (
-                <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
-                  <Pressable onPress={makeCaptain} disabled={busy} style={{ paddingVertical: 12, borderRadius: 14, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: T.brandTinted }}>
-                    <SF name="star.fill" size={15} color={T.brand} />
-                    <Text style={[ty.subheadEm, { color: T.brand }]}>Назначить капитаном «{sel.teamName}»</Text>
-                  </Pressable>
-                </View>
+                  {canManage && sel?.teamId ? (
+                    <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
+                      <Pressable onPress={makeCaptain} disabled={busy} style={{ paddingVertical: 12, borderRadius: 14, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: T.brandTinted }}>
+                        <SF name="star.fill" size={15} color={T.brand} />
+                        <Text style={[ty.subheadEm, { color: T.brand }]}>Назначить капитаном «{sel.teamName}»</Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
+
+                  <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 10 }}>
+                    <Pressable onPress={() => decide('rejected')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
+                      <Text style={[ty.headline, { color: '#FF3B30' }]}>Отклонить</Text>
+                    </Pressable>
+                    <Pressable onPress={() => decide('approved')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: T.brand }}>
+                      {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]}>Принять</Text>}
+                    </Pressable>
+                  </View>
+                </>
               ) : null}
-
-              <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 10 }}>
-                <Pressable onPress={() => decide('rejected')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
-                  <Text style={[ty.headline, { color: '#FF3B30' }]}>Отклонить</Text>
-                </Pressable>
-                <Pressable onPress={() => decide('approved')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: T.brand }}>
-                  {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]}>Принять</Text>}
-                </Pressable>
-              </View>
             </ScrollView>
           </KeyboardAvoidingView>
         </View>

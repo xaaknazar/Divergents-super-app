@@ -205,7 +205,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                 </View>
               )}
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[ty.title2, { color: '#fff', textShadowColor: 'rgba(0,0,0,0.22)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{ch.name}</Text>
+                <Text style={[ty.title2, { color: '#fff', textShadowColor: 'rgba(0,0,0,0.22)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={2}>{ch.name}</Text>
                 {ch.handle ? <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 1 }]} numberOfLines={1}>@{ch.handle}</Text> : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 7 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
@@ -416,8 +416,8 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                 <Text style={[ty.subheadEm, { color: T.label }]}>{r.profile?.fullName || r.userName || r.userEmail}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary }]}>{r.userEmail}{r.profile?.phone ? ` · ${r.profile.phone}` : ''}{r.profile?.mbtiType ? ` · MBTI ${r.profile.mbtiType}` : ''}</Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                  <Pressable onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'approve'); loadRequests(); load(); }} style={{ flex: 1, height: 38, borderRadius: 10, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>Принять</Text></Pressable>
-                  <Pressable onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'reject'); loadRequests(); }} style={{ flex: 1, height: 38, borderRadius: 10, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]}>Отклонить</Text></Pressable>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Принять заявку" onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'approve'); loadRequests(); load(); }} style={{ flex: 1, minHeight: 48, borderRadius: 10, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.onBrand }]}>Принять</Text></Pressable>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Отклонить заявку" onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'reject'); loadRequests(); }} style={{ flex: 1, minHeight: 48, borderRadius: 10, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]}>Отклонить</Text></Pressable>
                 </View>
               </View>
             ))}

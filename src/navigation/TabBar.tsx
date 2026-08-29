@@ -1,10 +1,10 @@
 // Custom iOS-style tab bar (blur surface, brand active colour, SF icons).
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, useWindowDimensions, PixelRatio } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ty } from '../theme/tokens';
+import { minTouch } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { SF, SFName } from '../components/SFIcon';
 import { hSelect } from '../lib/haptics';
@@ -16,7 +16,18 @@ const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | '
   CommunityTab: { label: 'tab_community', on: 'person.3.fill', off: 'person.3' },
   MapTab: { label: 'tab_map', on: 'map.fill', off: 'map' },
   CareerTab: { label: 'tab_career', on: 'briefcase.fill', off: 'briefcase' },
-  ProfileTab: { label: 'tab_profile', on: 'person.crop.circle.fill', off: 'person.crop.circle' },
+  // ProfileTab is intentionally absent: the profile is opened from the big
+  // avatar button in each screen's header, which frees a slot so the five
+  // remaining labels fit at full size.
+};
+
+// Compact fallbacks used only when the full word can't fit the tab slot
+// (narrow screen or enlarged system/app text). Keeps the label readable at
+// 11 pt instead of wrapping to «Сообществ / о» or shrinking to 9 pt.
+const SHORT_RU: Record<string, string> = {
+  CommunityTab: 'Клуб',
+  LMSTab: 'Курсы',
+  CareerTab: 'Работа',
 };
 
 // The bar is shown ONLY on the six tab-root screens; every pushed/detail screen
@@ -43,12 +54,42 @@ function focusedLeafName(route: { name: string; state?: any }): string {
 }
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
-  const { T, isDark, reduceTransparency } = useTheme();
+  const { T, isDark, reduceTransparency, ty } = useTheme();
   const { t } = useLang();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const fontScale = PixelRatio.getFontScale();
   const active = state.routes[state.index] as { name: string; state?: any };
   const leaf = focusedLeafName(active);
   if (!ROOT_ROUTES.has(leaf)) return null;
+
+  // Labels must never wrap or shrink into unreadable 9 pt text. Estimate the
+  // width the LONGEST label needs at the current font size (system Dynamic Type
+  // included); when it doesn't fit the per-tab slot, fall back to icons-only —
+  // the same thing iOS does at accessibility text sizes. Screen readers still
+  // announce each tab via accessibilityLabel.
+  const visible = state.routes.filter((r) => TABS[r.name]);
+  const tabCount = Math.max(1, visible.length);
+  const slotW = (width - 8) / tabCount - 6; // bar padding + per-tab padding
+  const labelSize = ((ty.caption2 as { fontSize?: number }).fontSize ?? 11) * fontScale;
+  // ~0.58em average glyph width for Gotham Rounded Cyrillic + a small buffer.
+  const fits = (s: string) => s.length * labelSize * 0.58 + 4 <= slotW;
+  // Per-tab: full label → short label → icon only. Never wrap, never shrink
+  // below the readable 11 pt floor.
+  const bestLabel = (key: string): string | null => {
+    const full = t(TABS[key].label);
+    if (fits(full)) return full;
+    const short = SHORT_RU[key];
+    if (short && fits(short)) return short;
+    return null;
+  };
+  // All-or-nothing: if even one tab can't fit a readable label, drop labels
+  // everywhere so the bar stays visually consistent (icons-only), rather than
+  // a mix of words and bare icons.
+  const showLabels = visible.every((r) => bestLabel(r.name) !== null);
+  const labelFor = (key: string) => (showLabels ? bestLabel(key) : null);
+  const anyLabel = showLabels;
+  const iconSize = anyLabel ? 24 : 26;
 
   const barLayout = {
     position: 'absolute' as const, left: 0, right: 0, bottom: 0,
@@ -62,18 +103,31 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         const focused = state.index === index;
         const meta = TABS[route.name];
         if (!meta) return null;
-        const color = focused ? T.brand : T.labelTertiary;
+        const color = focused ? T.brandText : T.labelSecondary;
+        const label = labelFor(route.name);
         return (
           <Pressable key={route.key}
             accessibilityRole="button"
             accessibilityState={{ selected: focused }}
             accessibilityLabel={t(meta.label)}
             onPress={() => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
-          }} style={{ flex: 1, alignItems: 'center', gap: 3, paddingHorizontal: 2 }}>
-            <SF name={focused ? meta.on : meta.off} size={24} color={color} />
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[ty.caption2, { color, fontWeight: '500', fontSize: 10, lineHeight: 13 }]}>{t(meta.label)}</Text>
+              hSelect();
+              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+            }}
+            onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+            style={({ pressed }) => ({ flex: 1, minHeight: minTouch, alignItems: 'center', justifyContent: 'center', gap: anyLabel ? 3 : 0, paddingHorizontal: 2, opacity: pressed ? 0.65 : 1 })}>
+            <SF name={focused ? meta.on : meta.off} size={iconSize} color={color} />
+            {label ? (
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="clip"
+                allowFontScaling={false}
+                style={[ty.caption2, { color, textAlign: 'center', fontSize: labelSize, lineHeight: Math.round(labelSize * 1.25) }]}
+              >
+                {label}
+              </Text>
+            ) : null}
           </Pressable>
         );
       })}

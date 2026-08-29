@@ -109,7 +109,7 @@ export function OfflineMapScreen({ navigation }: Props) {
           <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="arrow.down.circle" size={34} color={T.brand} />
           </View>
-          <Text style={[ty.title3, { color: T.label, marginTop: 16, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr('Офлайн-карта')}</Text>
+          <Text style={[ty.title3, { color: T.label, marginTop: 16, textAlign: 'center' }]} numberOfLines={1}>{tr('Офлайн-карта')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 8, textAlign: 'center' }]}>
             {tr('Офлайн-карта доступна в полной версии приложения (релиз), а не в Expo Go.')}
           </Text>
@@ -192,7 +192,7 @@ export function OfflineMapScreen({ navigation }: Props) {
               <Pressable key={a.key} disabled={busy} onPress={() => download(a.km, tr(a.key))}
                 style={{ flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, alignItems: 'center', gap: 6 }}>
                 <SF name="square.and.arrow.down" size={20} color={T.brand} />
-                <Text style={[ty.footnoteEm, { color: T.label, textAlign: 'center' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tr(a.key)}</Text>
+                <Text style={[ty.footnoteEm, { color: T.label, textAlign: 'center' }]} numberOfLines={1}>{tr(a.key)}</Text>
               </Pressable>
             ))}
           </View>

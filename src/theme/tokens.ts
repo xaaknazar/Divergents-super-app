@@ -6,6 +6,8 @@ const light = {
   // Brand
   brand: '#234088',
   brandAccent: '#3D5BDB',
+  brandText: '#234088',
+  onBrand: '#FFFFFF',
   brandTinted: 'rgba(35, 64, 136, 0.10)',
   brandTintedStrong: 'rgba(35, 64, 136, 0.18)',
 
@@ -22,9 +24,11 @@ const light = {
 
   // Label
   label: '#000000',
-  labelSecondary: 'rgba(60,60,67,0.60)',
-  labelTertiary: 'rgba(60,60,67,0.30)',
-  labelQuaternary: 'rgba(60,60,67,0.18)',
+  // Opaque accessible variants. The former iOS alpha labels fell below 4.5:1
+  // on white and were frequently used for 11-17 pt text.
+  labelSecondary: '#5C5C60',
+  labelTertiary: '#6B6B70',
+  labelQuaternary: '#76767A',
 
   // Separator
   separator: 'rgba(60,60,67,0.20)',
@@ -41,6 +45,12 @@ const light = {
   teal: '#30B0C7',
   brown: '#A2845E',
   indigo: '#5856D6',
+  onGreen: '#000000',
+  onRed: '#000000',
+  onOrange: '#000000',
+  greenText: '#187A32',
+  redText: '#C5221F',
+  orangeText: '#934900',
 
   // Divergents LMS website palette (sky / emerald) for course UI
   sky: '#0369A1',
@@ -59,6 +69,8 @@ const dark: Theme = {
   // Brand (brightened so it reads on dark surfaces)
   brand: '#3D5BDB',
   brandAccent: '#8AA0FF',
+  brandText: '#8AA0FF',
+  onBrand: '#FFFFFF',
   brandTinted: 'rgba(124,149,255,0.16)',
   brandTintedStrong: 'rgba(124,149,255,0.26)',
 
@@ -75,9 +87,9 @@ const dark: Theme = {
 
   // Label
   label: '#F5F7FB',
-  labelSecondary: 'rgba(228,233,243,0.64)',
-  labelTertiary: 'rgba(228,233,243,0.38)',
-  labelQuaternary: 'rgba(228,233,243,0.22)',
+  labelSecondary: '#C7CBD4',
+  labelTertiary: '#A6ABB5',
+  labelQuaternary: '#9298A4',
 
   // Separator
   separator: 'rgba(255,255,255,0.10)',
@@ -94,6 +106,12 @@ const dark: Theme = {
   teal: '#40C8E0',
   brown: '#AC8E68',
   indigo: '#5E5CE6',
+  onGreen: '#000000',
+  onRed: '#000000',
+  onOrange: '#000000',
+  greenText: '#73E28D',
+  redText: '#FF8A83',
+  orangeText: '#FFC266',
 
   // Course palette (dark)
   sky: '#38BDF8',
@@ -122,11 +140,16 @@ export const FONT = {
 } as const;
 export const FF = FONT.regular;
 
-type TY = Record<string, TextStyle>;
+export type Typography = Record<
+  'largeTitle' | 'title1' | 'title2' | 'title3' | 'headline' | 'body' |
+  'callout' | 'subhead' | 'subheadEm' | 'footnote' | 'footnoteEm' |
+  'caption1' | 'caption2' | 'caption2Em',
+  TextStyle
+>;
 
 // Canonical (1×) type scale — the single source of truth. `ty` is derived from
 // this and can be re-scaled at runtime by the text-size personalization setting.
-const TY_BASE: TY = {
+const TY_BASE: Typography = {
   // Gotham Rounded carries more inherent width than Nunito, so the large/title
   // styles drop the positive tracking (would otherwise push labels to wrap).
   largeTitle: { fontFamily: FONT.extrabold, fontSize: 34, lineHeight: 41, letterSpacing: 0 },
@@ -134,8 +157,8 @@ const TY_BASE: TY = {
   title2:     { fontFamily: FONT.extrabold, fontSize: 22, lineHeight: 28, letterSpacing: 0 },
   title3:     { fontFamily: FONT.bold, fontSize: 20, lineHeight: 25, letterSpacing: 0 },
   headline:   { fontFamily: FONT.bold, fontSize: 17, lineHeight: 22, letterSpacing: -0.2 },
-  body:       { fontFamily: FONT.regular, fontSize: 17, lineHeight: 23, letterSpacing: -0.2 },
-  callout:    { fontFamily: FONT.regular, fontSize: 16, lineHeight: 21, letterSpacing: -0.2 },
+  body:       { fontFamily: FONT.regular, fontSize: 17, lineHeight: 24, letterSpacing: -0.2 },
+  callout:    { fontFamily: FONT.regular, fontSize: 16, lineHeight: 22, letterSpacing: -0.2 },
   subhead:    { fontFamily: FONT.regular, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
   subheadEm:  { fontFamily: FONT.bold, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
   footnote:   { fontFamily: FONT.regular, fontSize: 13, lineHeight: 18, letterSpacing: 0 },
@@ -145,15 +168,11 @@ const TY_BASE: TY = {
   caption2Em: { fontFamily: FONT.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0 },
 };
 
-// Live type scale. NOTE: the object reference is stable — existing
-// `import { ty } from '../theme/tokens'` consumers keep working. When the user
-// changes the text-size setting, each entry is replaced with a freshly-scaled
-// copy, so anything reading `ty.body` inline at render picks up the new size on
-// the next render (ThemeContext re-render cascades through every useTheme()).
-export const ty: TY = (Object.keys(TY_BASE) as (keyof TY)[]).reduce((acc, k) => {
-  acc[k] = { ...TY_BASE[k] };
-  return acc;
-}, {} as TY);
+// Immutable 1x baseline kept for existing imports. New/theme-aware components
+// consume `ty` from useTheme(), which is derived without mutating module state.
+export const ty: Typography = Object.freeze(
+  Object.fromEntries(Object.entries(TY_BASE).map(([k, v]) => [k, Object.freeze({ ...v })])),
+) as Typography;
 
 // Curated text-size presets (≈ iOS Dynamic Type). 'md' is the design baseline.
 export const TEXT_SIZES = [
@@ -164,21 +183,22 @@ export const TEXT_SIZES = [
 ] as const;
 export type TextSizeKey = (typeof TEXT_SIZES)[number]['key'];
 
-let _textScale = 1;
-export function getTextScale(): number { return _textScale; }
+const MIN_FONT_SIZE: Partial<Record<keyof Typography, number>> = {
+  caption1: 11,
+  caption2: 11,
+  caption2Em: 11,
+};
 
-// Re-scale the shared `ty` in place. Idempotent for a given scale.
-export function applyTextScale(scale: number): void {
-  if (scale === _textScale) return;
-  _textScale = scale;
-  (Object.keys(TY_BASE) as (keyof TY)[]).forEach((k) => {
+export function createTypography(scale = 1): Typography {
+  return (Object.keys(TY_BASE) as (keyof Typography)[]).reduce((acc, k) => {
     const b = TY_BASE[k];
-    ty[k] = {
+    acc[k] = {
       ...b,
-      ...(typeof b.fontSize === 'number' ? { fontSize: Math.round(b.fontSize * scale) } : null),
+      ...(typeof b.fontSize === 'number' ? { fontSize: Math.max(MIN_FONT_SIZE[k] ?? 0, Math.round(b.fontSize * scale)) } : null),
       ...(typeof b.lineHeight === 'number' ? { lineHeight: Math.round(b.lineHeight * scale) } : null),
     };
-  });
+    return acc;
+  }, {} as Typography);
 }
 
 // ─── Spatial scales ────────────────────────────────────────────────
@@ -186,6 +206,9 @@ export function applyTextScale(scale: number): void {
 // `xxl` is kept for backward compatibility; `pill` is the fully-rounded token.
 export const radius = { sm: 8, md: 10, lg: 12, xl: 14, xxl: 16, pill: 999 } as const;
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
+// 48 dp also satisfies the iOS 44 pt minimum and keeps shared components safe
+// on both platforms without relying on hitSlop.
+export const minTouch = 48;
 
 // ─── Elevation ─────────────────────────────────────────────────────
 // Soft iOS-style shadows. `shadows.*` are ready-to-spread presets;

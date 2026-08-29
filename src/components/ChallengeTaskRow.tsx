@@ -7,13 +7,13 @@ import { View, Text, Pressable } from 'react-native';
 import { ty } from '../theme/tokens';
 import { SF } from './SFIcon';
 import { Capsule } from './ui';
-import { ChallengeTask, taskBonus, taskDone, taskPoints } from '../data/community';
+import { ChallengeTask, taskDone, taskPoints } from '../data/community';
 
 import { groupNum } from '../data/api';
 const fmt = (n: number) => groupNum(n);
 
 export function ChallengeTaskRow({
-  task, divider, onToggle, onAdjust, onSet, step = 1,
+  task, divider, onToggle, onAdjust, onSet, step = 1, disabled = false,
 }: {
   task: ChallengeTask;
   divider?: boolean;
@@ -21,6 +21,7 @@ export function ChallengeTaskRow({
   onAdjust?: (delta: number) => void;
   onSet?: () => void;
   step?: number;
+  disabled?: boolean;
 }) {
   const { T } = useTheme();
   const done = taskDone(task);
@@ -31,15 +32,17 @@ export function ChallengeTaskRow({
     // не даёт баллов (нарушение штрафуется), поэтому показываем «условие», а не «+0 pts».
     const isGate = task.basePts === 0;
     return (
-      <Pressable onPress={onToggle} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
-        <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={24} color={done ? T.brand : T.labelTertiary} />
-        <Text style={[ty.body, { flex: 1, color: done ? T.labelSecondary : T.label, textDecorationLine: done ? 'line-through' : 'none' }]}>{task.title}</Text>
+      <Pressable onPress={onToggle} disabled={disabled} accessibilityRole="checkbox" accessibilityLabel={task.title} accessibilityState={{ checked: done, disabled }}
+        accessibilityHint={done ? 'Нажмите, чтобы отменить выполнение' : 'Нажмите, чтобы отметить выполненным'}
+        style={({ pressed }) => ({ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 7, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator, opacity: disabled ? 0.5 : pressed ? 0.65 : 1 })}>
+        <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={21} color={done ? T.brand : T.labelTertiary} />
+        <Text style={[ty.subheadEm, { flex: 1, color: done ? T.labelSecondary : T.label, textDecorationLine: done ? 'line-through' : 'none' }]} numberOfLines={1}>{task.title}</Text>
         {isGate
           ? (done
-            ? <Capsule bg="rgba(52,199,89,0.18)" color={T.green}>Выполнено</Capsule>
-            : <Text style={[ty.caption1, { color: T.labelTertiary }]}>условие</Text>)
+            ? <Capsule bg="rgba(52,199,89,0.14)" color={T.green} style={{ alignSelf: 'center' }}>Готово</Capsule>
+            : <Text style={[ty.caption2, { color: T.labelTertiary }]}>условие</Text>)
           : (done
-            ? <Capsule bg={T.brandTinted} color={T.brand}>{`+${pts} pts`}</Capsule>
+            ? <Capsule bg={T.brandTinted} color={T.brand} style={{ alignSelf: 'center' }}>{`+${pts} pts`}</Capsule>
             : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{task.basePts}</Text>)}
       </Pressable>
     );
@@ -47,65 +50,57 @@ export function ChallengeTaskRow({
 
   const pct = task.min > 0 ? task.current / task.min : 0;
   const over = pct > 1;
-  const bonus = taskBonus(task);
-
   return (
-    <View style={{ paddingVertical: 14, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={24} color={done ? T.brand : T.labelTertiary} />
-        <Text style={[ty.body, { flex: 1, color: T.label }]}>{task.title}</Text>
+    <View style={{ paddingVertical: 9, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator, opacity: disabled ? 0.5 : 1 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+        <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={21} color={done ? T.brand : T.labelTertiary} />
+        <Text style={[ty.subheadEm, { flex: 1, color: T.label }]} numberOfLines={1}>{task.title}</Text>
         {done
-          ? <Capsule bg={over ? 'rgba(52,199,89,0.18)' : T.brandTinted} color={over ? T.green : T.brand}>{`+${pts} pts`}</Capsule>
+          ? <Capsule bg={over ? 'rgba(52,199,89,0.18)' : T.brandTinted} color={over ? T.green : T.brand} style={{ alignSelf: 'center' }}>{`+${pts} pts`}</Capsule>
           : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{task.basePts}</Text>}
       </View>
 
-      <View style={{ marginTop: 10, marginLeft: 36 }}>
-        <View style={{ height: 8, backgroundColor: T.fillTertiary, borderRadius: 8, overflow: 'hidden' }}>
-          <View style={{ width: `${Math.min(100, pct * 100)}%`, height: '100%', backgroundColor: over ? T.green : T.brand, borderRadius: 8 }} />
+      <View style={{ marginTop: 6, marginLeft: 30 }}>
+        <View accessibilityRole="progressbar" accessibilityLabel={task.title}
+          accessibilityValue={{ min: 0, max: task.min, now: task.current, text: `${fmt(task.current)} из ${fmt(task.min)} ${task.unit}` }}
+          style={{ height: 5, backgroundColor: T.fillTertiary, borderRadius: 5, overflow: 'hidden' }}>
+          <View style={{ width: `${Math.min(100, pct * 100)}%`, height: '100%', backgroundColor: over ? T.green : T.brand, borderRadius: 6 }} />
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, alignItems: 'center' }}>
+        <View style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {onSet ? (
-            <Pressable onPress={onSet} hitSlop={6} accessibilityRole="button" accessibilityLabel="Ввести значение вручную" style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 })}>
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>
+            <Pressable onPress={onSet} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Изменить значение: ${task.title}`} accessibilityState={{ disabled }}
+              style={({ pressed }) => ({ minHeight: 44, flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 })}>
+              <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>
                 <Text style={{ color: over ? T.green : T.brand, fontFamily: ty.caption2.fontFamily }}>{fmt(task.current)}</Text>
                 {` / ${fmt(task.min)} ${task.unit}`}
               </Text>
               <SF name="square.and.pencil" size={12} color={T.brand} />
             </Pressable>
           ) : (
-            <Text style={[ty.caption1, { color: T.labelSecondary }]}>
+            <Text style={[ty.caption2, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>
               <Text style={{ color: over ? T.green : T.label, fontFamily: ty.caption2.fontFamily }}>{fmt(task.current)}</Text>
               {` / ${fmt(task.min)} ${task.unit}`}
             </Text>
           )}
-          {over ? <Text style={[ty.caption1, { color: T.green }]}>{`+${fmt(task.current - task.min)} ${task.unit} · +${bonus} pts`}</Text> : null}
+          {over && !onAdjust ? <Text style={[ty.caption2, { color: T.green }]} numberOfLines={1}>{`+${fmt(task.current - task.min)} ${task.unit}`}</Text> : null}
+          {onAdjust ? <View style={{ flexDirection: 'row', gap: 6 }}>
+            <Stepper label={`− ${fmt(step)}`} accessibilityLabel={`Уменьшить ${task.title} на ${fmt(step)}`} onPress={() => onAdjust(-step)} disabled={disabled} />
+            <Stepper label={`+ ${fmt(step)}`} accessibilityLabel={`Увеличить ${task.title} на ${fmt(step)}`} onPress={() => onAdjust(step)} primary disabled={disabled} />
+          </View> : null}
         </View>
-
-        {onAdjust ? (
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-            <Stepper label={`− ${fmt(step)}`} onPress={() => onAdjust(-step)} />
-            <Stepper label={`+ ${fmt(step)}`} onPress={() => onAdjust(step)} primary />
-          </View>
-        ) : onSet ? (
-          <Pressable onPress={onSet} accessibilityRole="button" accessibilityLabel="Указать значение вручную"
-            style={({ pressed }) => ({ marginTop: 10, height: 44, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: pressed ? 0.7 : 1 })}>
-            <SF name="square.and.pencil" size={17} color={T.brand} />
-            <Text style={[ty.subheadEm, { color: T.brand }]}>Указать вручную</Text>
-          </Pressable>
-        ) : null}
       </View>
     </View>
   );
 }
 
-function Stepper({ label, onPress, primary }: { label: string; onPress: () => void; primary?: boolean }) {
+function Stepper({ label, accessibilityLabel, onPress, primary, disabled }: { label: string; accessibilityLabel: string; onPress: () => void; primary?: boolean; disabled?: boolean }) {
   const { T } = useTheme();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({
-      flex: 1, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={{ disabled }} style={({ pressed }) => ({
+      width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
       backgroundColor: primary ? T.brandTinted : T.fillTertiary, opacity: pressed ? 0.6 : 1,
     })}>
-      <Text style={[ty.headline, { color: primary ? T.brand : T.label }]}>{label}</Text>
+      <Text style={[ty.subheadEm, { color: primary ? T.brand : T.label }]}>{label}</Text>
     </Pressable>
   );
 }

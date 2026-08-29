@@ -8,6 +8,25 @@ export function hexToRgba(hex: string, a: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
+function relativeLuminance(hex: string): number {
+  const h = hex.replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return 0;
+  const channel = (part: string) => {
+    const c = parseInt(part, 16) / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(h.slice(0, 2)) + 0.7152 * channel(h.slice(2, 4)) + 0.0722 * channel(h.slice(4, 6));
+}
+
+/** Returns the higher-contrast foreground for an opaque hex surface. */
+export function contrastForeground(background: string): '#FFFFFF' | '#000000' {
+  const bg = relativeLuminance(background);
+  const whiteContrast = 1.05 / (bg + 0.05);
+  const dark = 0;
+  const darkContrast = (Math.max(bg, dark) + 0.05) / (Math.min(bg, dark) + 0.05);
+  return whiteContrast >= darkContrast ? '#FFFFFF' : '#000000';
+}
+
 export interface Accent {
   key: string;
   name: string;
@@ -17,17 +36,20 @@ export interface Accent {
 
 export const ACCENTS: Accent[] = [
   { key: 'divergents', name: 'Divergents', light: { brand: '#234088', accent: '#3D5BDB' }, dark: { brand: '#3D5BDB', accent: '#8AA0FF' } },
-  { key: 'royal',      name: 'Королевский', light: { brand: '#4338CA', accent: '#6366F1' }, dark: { brand: '#6366F1', accent: '#A5B4FC' } },
-  { key: 'violet',     name: 'Фиолет',      light: { brand: '#6D28D9', accent: '#8B5CF6' }, dark: { brand: '#8B5CF6', accent: '#C4B5FD' } },
-  { key: 'fuchsia',    name: 'Фуксия',      light: { brand: '#A21CAF', accent: '#D946EF' }, dark: { brand: '#D946EF', accent: '#F0ABFC' } },
-  { key: 'rose',       name: 'Роза',        light: { brand: '#BE123C', accent: '#F43F5E' }, dark: { brand: '#FB7185', accent: '#FDA4AF' } },
-  { key: 'sunset',     name: 'Закат',       light: { brand: '#C2410C', accent: '#F97316' }, dark: { brand: '#F97316', accent: '#FDBA74' } },
-  { key: 'amber',      name: 'Золото',      light: { brand: '#B45309', accent: '#F59E0B' }, dark: { brand: '#FBBF24', accent: '#FCD34D' } },
-  { key: 'emerald',    name: 'Изумруд',     light: { brand: '#047857', accent: '#10B981' }, dark: { brand: '#10B981', accent: '#6EE7B7' } },
-  { key: 'forest',     name: 'Лес',         light: { brand: '#3F6212', accent: '#65A30D' }, dark: { brand: '#84CC16', accent: '#BEF264' } },
-  { key: 'teal',       name: 'Океан',       light: { brand: '#0E7490', accent: '#06B6D4' }, dark: { brand: '#22D3EE', accent: '#67E8F9' } },
-  { key: 'sky',        name: 'Небо',        light: { brand: '#0369A1', accent: '#0EA5E9' }, dark: { brand: '#38BDF8', accent: '#7DD3FC' } },
-  { key: 'graphite',   name: 'Графит',      light: { brand: '#334155', accent: '#64748B' }, dark: { brand: '#94A3B8', accent: '#CBD5E1' } },
+  // Dark `brand` is also a solid button/badge surface throughout the legacy UI,
+  // where its foreground is still often hard-coded white. Keep every surface
+  // at >= 4.5:1 with white; `accent` stays bright for links on dark backgrounds.
+  { key: 'royal',      name: 'Королевский', light: { brand: '#4338CA', accent: '#6366F1' }, dark: { brand: '#4338CA', accent: '#A5B4FC' } },
+  { key: 'violet',     name: 'Фиолет',      light: { brand: '#6D28D9', accent: '#8B5CF6' }, dark: { brand: '#6D28D9', accent: '#C4B5FD' } },
+  { key: 'fuchsia',    name: 'Фуксия',      light: { brand: '#A21CAF', accent: '#D946EF' }, dark: { brand: '#A21CAF', accent: '#F0ABFC' } },
+  { key: 'rose',       name: 'Роза',        light: { brand: '#BE123C', accent: '#F43F5E' }, dark: { brand: '#BE123C', accent: '#FDA4AF' } },
+  { key: 'sunset',     name: 'Закат',       light: { brand: '#C2410C', accent: '#F97316' }, dark: { brand: '#C2410C', accent: '#FDBA74' } },
+  { key: 'amber',      name: 'Золото',      light: { brand: '#B45309', accent: '#F59E0B' }, dark: { brand: '#92400E', accent: '#FCD34D' } },
+  { key: 'emerald',    name: 'Изумруд',     light: { brand: '#047857', accent: '#10B981' }, dark: { brand: '#047857', accent: '#6EE7B7' } },
+  { key: 'forest',     name: 'Лес',         light: { brand: '#3F6212', accent: '#65A30D' }, dark: { brand: '#3F6212', accent: '#BEF264' } },
+  { key: 'teal',       name: 'Океан',       light: { brand: '#0E7490', accent: '#06B6D4' }, dark: { brand: '#0E7490', accent: '#67E8F9' } },
+  { key: 'sky',        name: 'Небо',        light: { brand: '#0369A1', accent: '#0EA5E9' }, dark: { brand: '#0369A1', accent: '#7DD3FC' } },
+  { key: 'graphite',   name: 'Графит',      light: { brand: '#334155', accent: '#64748B' }, dark: { brand: '#334155', accent: '#CBD5E1' } },
 ];
 
 export interface Background {

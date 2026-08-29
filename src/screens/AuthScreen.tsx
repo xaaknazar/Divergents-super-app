@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignIn, useSignUp, useSSO } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
 import { SF } from '../components/SFIcon';
-import { ty } from '../components/ui';
 import { Logo } from '../components/Logo';
 import { RootStackParams } from '../navigation/types';
 import { API_BASE } from '../data/api';
@@ -26,7 +25,7 @@ const openUrl = (url: string) => { WebBrowser.openBrowserAsync(url).catch(() => 
 WebBrowser.maybeCompleteAuthSession();
 
 export function AuthScreen({}: Props) {
-  const { T, isDark } = useTheme();
+  const { T, isDark, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { lang, setLang, t } = useLang();
   const { signIn, setActive: setActiveSignIn, isLoaded: siLoaded } = useSignIn();
@@ -217,7 +216,7 @@ export function AuthScreen({}: Props) {
             <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
               <Logo size={50} />
             </View>
-            <Text style={[ty.largeTitle, { color: T.label, marginTop: 18 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t('welcome')}</Text>
+            <Text style={[ty.largeTitle, { color: T.label, marginTop: 18, textAlign: 'center' }]}>{t('welcome')}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center', paddingHorizontal: 8 }]}>{t('auth_sub')}</Text>
           </View>
 
@@ -230,25 +229,41 @@ export function AuthScreen({}: Props) {
                   {(['in', 'up'] as const).map((k) => {
                     const on = intent === k;
                     return (
-                      <Pressable key={k} onPress={() => { setIntent(k); setError(null); }} style={{ flex: 1, paddingVertical: 9, borderRadius: 10, alignItems: 'center', backgroundColor: on ? T.cardBg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.1 : 0, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
-                        <Text style={[ty.subheadEm, { color: on ? T.brand : T.labelSecondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{k === 'in' ? t('tab_signin') : t('tab_signup')}</Text>
+                      <Pressable
+                        key={k}
+                        onPress={() => { setIntent(k); setError(null); }}
+                        accessibilityRole="radio"
+                        accessibilityLabel={k === 'in' ? t('tab_signin') : t('tab_signup')}
+                        accessibilityState={{ selected: on }}
+                        style={{ flex: 1, minHeight: 48, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? T.cardBg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.1 : 0, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
+                      >
+                        <Text style={[ty.subheadEm, { color: on ? T.brand : T.labelSecondary, textAlign: 'center' }]}>{k === 'in' ? t('tab_signin') : t('tab_signup')}</Text>
                       </Pressable>
                     );
                   })}
                 </View>
 
                 <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 7, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.5 }]}>{t('email')}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.fillTertiary, borderRadius: 14, paddingHorizontal: 14, height: 54, borderWidth: 1.5, borderColor: focus ? T.brand : 'transparent' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.fillTertiary, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 8, minHeight: 54, borderWidth: 1.5, borderColor: focus ? T.brand : 'transparent' }}>
                   <SF name="envelope.fill" size={17} color={focus ? T.brand : T.labelTertiary} />
                   <TextInput
                     value={email} onChangeText={setEmail}
                     onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
                     placeholder={t('email_ph')} placeholderTextColor={T.labelTertiary}
                     autoCapitalize="none" keyboardType="email-address" autoCorrect={false}
-                    style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]}
+                    style={[ty.body, { flex: 1, color: T.label, minHeight: 38, paddingVertical: 6 }]}
                     onSubmitEditing={() => sendCode()} returnKeyType="go"
                   />
-                  {email.length > 0 ? <Pressable onPress={() => setEmail('')} hitSlop={8}><SF name="xmark.circle.fill" size={17} color={T.labelTertiary} /></Pressable> : null}
+                  {email.length > 0 ? (
+                    <Pressable
+                      onPress={() => setEmail('')}
+                      accessibilityRole="button"
+                      accessibilityLabel={lang === 'ru' ? 'Очистить адрес электронной почты' : 'Clear email address'}
+                      style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <SF name="xmark.circle.fill" size={17} color={T.labelTertiary} />
+                    </Pressable>
+                  ) : null}
                 </View>
 
                 {error ? <Text style={[ty.footnote, { color: T.red, marginTop: 10, marginLeft: 2 }]}>{error}</Text> : null}
@@ -256,9 +271,9 @@ export function AuthScreen({}: Props) {
 
                 <GradientButton label={t('cont')} icon="arrow.right" loading={busy} disabled={!isLoaded || !email.trim()} onPress={() => sendCode()} T={T} style={{ marginTop: 16 }} />
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14, paddingHorizontal: 4 }}>
                   <SF name="lock.open.fill" size={12} color={T.labelTertiary} />
-                  <Text style={[ty.caption1, { color: T.labelTertiary }]}>{t('passwordless')}</Text>
+                  <Text style={[ty.caption1, { color: T.labelTertiary, flexShrink: 1, textAlign: 'center' }]}>{t('passwordless')}</Text>
                 </View>
 
                 {/* Divider */}
@@ -270,28 +285,34 @@ export function AuthScreen({}: Props) {
 
                 {/* Google — real multi-colour logo, spinner on the pressed button */}
                 <Pressable onPress={() => onSSO('oauth_google')} disabled={busy || !isLoaded}
-                  style={{ marginTop: 14, height: 54, borderRadius: 15, borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: (busy && sso !== 'oauth_google') || !isLoaded ? 0.5 : 1 }}>
+                  accessibilityRole="button"
+                  accessibilityLabel={lang === 'ru' ? 'Войти через Google' : 'Continue with Google'}
+                  accessibilityState={{ disabled: busy || !isLoaded, busy: sso === 'oauth_google' }}
+                  style={{ marginTop: 14, minHeight: 54, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 15, borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: (busy && sso !== 'oauth_google') || !isLoaded ? 0.5 : 1 }}>
                   {sso === 'oauth_google' ? <ActivityIndicator size="small" color={T.label} /> : <GoogleG size={20} />}
-                  <Text style={[ty.headline, { color: T.label }]}>{lang === 'ru' ? 'Войти через Google' : 'Continue with Google'}</Text>
+                  <Text style={[ty.headline, { color: T.label, flexShrink: 1, textAlign: 'center' }]}>{lang === 'ru' ? 'Войти через Google' : 'Continue with Google'}</Text>
                 </Pressable>
 
                 {/* Apple (iOS) */}
                 {Platform.OS === 'ios' ? (
                   <Pressable onPress={() => onSSO('oauth_apple')} disabled={busy || !isLoaded}
-                    style={{ marginTop: 10, height: 54, borderRadius: 15, backgroundColor: '#000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy && sso !== 'oauth_apple') || !isLoaded ? 0.5 : 1 }}>
+                    accessibilityRole="button"
+                    accessibilityLabel={lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}
+                    accessibilityState={{ disabled: busy || !isLoaded, busy: sso === 'oauth_apple' }}
+                    style={{ marginTop: 10, minHeight: 54, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 15, backgroundColor: '#000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy && sso !== 'oauth_apple') || !isLoaded ? 0.5 : 1 }}>
                     {sso === 'oauth_apple' ? <ActivityIndicator size="small" color="#fff" /> : <SF name="applelogo" size={18} color="#fff" />}
-                    <Text style={[ty.headline, { color: '#fff' }]}>{lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}</Text>
+                    <Text style={[ty.headline, { color: '#fff', flexShrink: 1, textAlign: 'center' }]}>{lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}</Text>
                   </Pressable>
                 ) : null}
               </>
             ) : (
               <>
-                <Pressable onPress={() => { setStep('email'); setCode(''); setError(null); }} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginBottom: 14 }}>
+                <Pressable onPress={() => { setStep('email'); setCode(''); setError(null); }} accessibilityRole="button" accessibilityLabel={t('change_email')} style={{ minHeight: 48, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginBottom: 8 }}>
                   <SF name="chevron.left" size={15} color={T.brandAccent} />
-                  <Text style={[ty.body, { color: T.brandAccent }]} numberOfLines={1}>{t('change_email')}</Text>
+                  <Text style={[ty.body, { color: T.brandAccent, flexShrink: 1 }]}>{t('change_email')}</Text>
                 </Pressable>
 
-                <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t('code_title')}</Text>
+                <Text style={[ty.title3, { color: T.label }]}>{t('code_title')}</Text>
                 <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{t('code_sent')} <Text style={[ty.subheadEm, { color: T.label }]}>{email}</Text></Text>
                 {info ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 12, backgroundColor: T.brandTinted, borderRadius: 11, paddingVertical: 9, paddingHorizontal: 12 }}>
@@ -301,12 +322,12 @@ export function AuthScreen({}: Props) {
                 ) : null}
 
                 {/* OTP boxes */}
-                <Pressable onPress={() => otpRef.current?.focus()} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 }}>
+                <Pressable onPress={() => otpRef.current?.focus()} accessibilityRole="button" accessibilityLabel={t('code_title')} style={{ flexDirection: 'row', gap: 6, marginTop: 18 }}>
                   {Array.from({ length: 6 }).map((_, i) => {
                     const ch = code[i] ?? '';
                     const active = i === code.length;
                     return (
-                      <View key={i} style={{ width: 46, height: 56, borderRadius: 13, backgroundColor: T.fillTertiary, borderWidth: 1.5, borderColor: ch ? T.brand : active ? T.brandAccent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                      <View key={i} style={{ flex: 1, maxWidth: 46, minHeight: 56, borderRadius: 13, backgroundColor: T.fillTertiary, borderWidth: 1.5, borderColor: ch ? T.brand : active ? T.brandAccent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                         <Text style={[ty.title2, { color: T.label }]}>{ch}</Text>
                       </View>
                     );
@@ -319,8 +340,8 @@ export function AuthScreen({}: Props) {
 
                 <GradientButton label={mode === 'up' ? t('verify_up') : t('verify_in')} icon="checkmark" loading={busy} onPress={verify} T={T} style={{ marginTop: 18 }} />
 
-                <Pressable onPress={resend} disabled={left > 0 || busy} style={{ alignItems: 'center', marginTop: 16 }}>
-                  <Text style={[ty.subhead, { color: left > 0 ? T.labelTertiary : T.brandAccent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                <Pressable onPress={resend} disabled={left > 0 || busy} accessibilityRole="button" accessibilityLabel={t('resend')} accessibilityState={{ disabled: left > 0 || busy }} style={{ minHeight: 48, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', marginTop: 6 }}>
+                  <Text style={[ty.subhead, { color: left > 0 ? T.labelTertiary : T.brandAccent, textAlign: 'center' }]}>
                     {left > 0 ? `${t('resend_in')} 0:${left.toString().padStart(2, '0')}` : t('resend')}
                   </Text>
                 </Pressable>
@@ -329,8 +350,8 @@ export function AuthScreen({}: Props) {
           </View>
 
           {step === 'email' ? (
-            <Pressable onPress={recover} disabled={busy} style={{ alignItems: 'center', marginTop: 18 }}>
-              <Text style={[ty.subhead, { color: T.brandAccent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{t('recover')}</Text>
+            <Pressable onPress={recover} disabled={busy} accessibilityRole="button" accessibilityLabel={t('recover')} accessibilityState={{ disabled: busy }} style={{ minHeight: 48, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>
+              <Text style={[ty.subhead, { color: T.brandAccent, textAlign: 'center' }]}>{t('recover')}</Text>
             </Pressable>
           ) : null}
 
@@ -339,13 +360,13 @@ export function AuthScreen({}: Props) {
               screens). */}
           <View style={{ flex: 1, minHeight: 24 }} />
           <Text style={[ty.caption2, { color: T.labelTertiary, textAlign: 'center', paddingHorizontal: 16, marginTop: 20 }]}>{t('terms')}</Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 6 }}>
-            <Pressable onPress={() => openUrl(TERMS_URL)} hitSlop={8}>
-              <Text style={[ty.caption2Em, { color: T.brandAccent }]}>{lang === 'ru' ? 'Условия использования' : 'Terms of Service'}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', columnGap: 6 }}>
+            <Pressable onPress={() => openUrl(TERMS_URL)} accessibilityRole="link" accessibilityLabel={lang === 'ru' ? 'Условия использования' : 'Terms of Service'} style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Text style={[ty.caption2Em, { color: T.brandAccent, textAlign: 'center' }]}>{lang === 'ru' ? 'Условия использования' : 'Terms of Service'}</Text>
             </Pressable>
             <Text style={[ty.caption2, { color: T.labelTertiary }]}>·</Text>
-            <Pressable onPress={() => openUrl(PRIVACY_URL)} hitSlop={8}>
-              <Text style={[ty.caption2Em, { color: T.brandAccent }]}>{lang === 'ru' ? 'Политика конфиденциальности' : 'Privacy Policy'}</Text>
+            <Pressable onPress={() => openUrl(PRIVACY_URL)} accessibilityRole="link" accessibilityLabel={lang === 'ru' ? 'Политика конфиденциальности' : 'Privacy Policy'} style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Text style={[ty.caption2Em, { color: T.brandAccent, textAlign: 'center' }]}>{lang === 'ru' ? 'Политика конфиденциальности' : 'Privacy Policy'}</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -368,13 +389,14 @@ function GoogleG({ size = 20 }: { size?: number }) {
 }
 
 function GradientButton({ label, icon, loading, disabled, onPress, T, style }: { label: string; icon?: any; loading?: boolean; disabled?: boolean; onPress: () => void; T: any; style?: any }) {
+  const { ty } = useTheme();
   return (
-    <Pressable onPress={onPress} disabled={loading || disabled} style={style}>
+    <Pressable onPress={onPress} disabled={loading || disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: loading || disabled, busy: loading }} style={style}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={{ height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: loading || disabled ? 0.5 : 1, shadowColor: T.brand, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } }}>
+        style={{ minHeight: 54, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: loading || disabled ? 0.5 : 1, shadowColor: T.brand, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } }}>
         {loading ? <ActivityIndicator size="small" color="#fff" /> : (
           <>
-            <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{label}</Text>
+            <Text style={[ty.headline, { color: '#fff', flexShrink: 1, textAlign: 'center' }]}>{label}</Text>
             {icon ? <SF name={icon} size={16} color="#fff" /> : null}
           </>
         )}

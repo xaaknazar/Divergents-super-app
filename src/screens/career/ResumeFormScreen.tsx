@@ -7,6 +7,7 @@ import { NavHeader } from '../../components/NavHeader';
 import { PrimaryButton, ty } from '../../components/ui';
 import { RESUME_STEPS } from '../../data/resumeSchema';
 import { ResumeFieldInput } from '../../components/ResumeField';
+import { AssessmentsBlock } from '../../components/AssessmentsBlock';
 import { useResume } from '../../state/useResume';
 import { useLang, tr } from '../../state/LanguageContext';
 // Registered in BOTH the Career stack and the Profile stack, so its props are
@@ -85,7 +86,7 @@ export function ResumeFormScreen({ navigation, route }: Props) {
             </View>
             <View>
               <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{tr('Шаг')} {step + 1} {tr('из')} {total}</Text>
-              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{s.title}</Text>
+              <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{s.title}</Text>
             </View>
           </View>
 
@@ -93,14 +94,7 @@ export function ResumeFormScreen({ navigation, route }: Props) {
             <ResumeFieldInput key={f.key} field={f} value={answers[f.key]} onChange={(v) => setField(f.key, v)} />
           ))}
 
-          {s.key === 'assessments' ? (
-            <View style={{ marginTop: 8, backgroundColor: T.brandTinted, borderRadius: 12, padding: 14, flexDirection: 'row', gap: 10 }}>
-              <SF name="doc.fill" size={18} color={T.brand} />
-              <Text style={[ty.caption1, { color: T.label, flex: 1 }]}>
-                {tr('Отчёты Gallup и тест Гарднера загружаются на сайте Talentslab — после обработки они появятся в разделе «Карьера».')}
-              </Text>
-            </View>
-          ) : null}
+          {s.key === 'assessments' ? <AssessmentsBlock /> : null}
         </ScrollView>
 
         {/* Footer */}

@@ -9,8 +9,11 @@ import { TabBar } from './TabBar';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAppFlow } from '../state/AppFlowContext';
 import { useResumeGate } from '../state/ResumeGateContext';
+import { useResume } from '../state/useResume';
+import { isValidNickname } from '../data/nickname';
 import { usePush } from '../state/usePush';
 import { useInviteLinks } from '../state/useInviteLinks';
+import { useDownloads } from '../state/downloads';
 
 import { LMSHomeScreen } from '../screens/lms/LMSHomeScreen';
 import { CatalogScreen } from '../screens/lms/CatalogScreen';
@@ -53,6 +56,7 @@ import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
 import { ResumeGateScreen } from '../screens/ResumeGateScreen';
+import { NicknameGateScreen } from '../screens/NicknameGateScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 
 const LMSStack = createNativeStackNavigator<LMSStackParams>();
@@ -136,6 +140,7 @@ function ProfileNavigator() {
       <ProfileStack.Screen name="Personalize" component={PersonalizeScreen} />
       <ProfileStack.Screen name="Downloads" component={DownloadsScreen} />
       <ProfileStack.Screen name="Resume" component={ResumeFormScreen} options={{ presentation: 'modal' }} />
+      <ProfileStack.Screen name="TalentProfile" component={TalentProfileScreen as React.ComponentType<any>} />
     </ProfileStack.Navigator>
   );
 }
@@ -143,7 +148,7 @@ function ProfileNavigator() {
 const Tab = createBottomTabNavigator<TabParams>();
 function Tabs() {
   return (
-    <Tab.Navigator detachInactiveScreens={false} screenOptions={{ headerShown: false, lazy: false }} tabBar={(props) => <TabBar {...props} />}>
+    <Tab.Navigator detachInactiveScreens screenOptions={{ headerShown: false, lazy: true }} tabBar={(props) => <TabBar {...props} />}>
       <Tab.Screen name="LMSTab" component={LMSNavigator} />
       <Tab.Screen name="AITab" component={AINavigator} />
       <Tab.Screen name="CommunityTab" component={CommunityNavigator} />
@@ -159,8 +164,39 @@ export function RootNavigator() {
   const { isLoaded, isSignedIn } = useAuth();
   const { ready, onboarded, pendingRegistration } = useAppFlow();
   const { complete: resumeComplete } = useResumeGate();
+  // Existing accounts predate nicknames: once the anketa is complete, ask for a
+  // public псевдоним before letting them into the app (one short screen).
+  const { answers: resumeAnswers, hydrated: resumeHydrated } = useResume();
+  const needsNickname = resumeHydrated && !isValidNickname(resumeAnswers.nickname);
+  const downloads = useDownloads();
+  const [authWaitElapsed, setAuthWaitElapsed] = useState(false);
+  const [offlineDismissed, setOfflineDismissed] = useState(false);
   usePush();
   useInviteLinks();
+
+  // Clerk normally restores the cached signed-in session immediately. If it
+  // cannot do that without a network (for example on the first launch after an
+  // update), never strand a user behind an empty root navigator: downloaded
+  // audio is local and remains playable through this deliberately limited UI.
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      setAuthWaitElapsed(false);
+      setOfflineDismissed(false);
+      return;
+    }
+    const timer = setTimeout(() => setAuthWaitElapsed(true), 2200);
+    return () => clearTimeout(timer);
+  }, [isLoaded, isSignedIn]);
+
+  if (!offlineDismissed && (!isLoaded || !ready || !isSignedIn) && authWaitElapsed && downloads.ready && downloads.items.length > 0) {
+    return (
+      <DownloadsScreen
+        navigation={{ goBack: () => {} }}
+        offlineStandalone
+        onExitOffline={isLoaded && !isSignedIn ? () => setOfflineDismissed(true) : undefined}
+      />
+    );
+  }
   if (!isLoaded || !ready) return null;
   return (
     <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
@@ -173,6 +209,8 @@ export function RootNavigator() {
       ) : !resumeComplete ? (
         // Mandatory: no entry to the app until the Talentslab resume is 100% filled.
         <Root.Screen name="ResumeGate" component={ResumeGateScreen} />
+      ) : needsNickname ? (
+        <Root.Screen name="NicknameGate" component={NicknameGateScreen} />
       ) : (
         <>
           <Root.Screen name="Tabs" component={Tabs} />

@@ -1,7 +1,6 @@
 // Team roster (Состав команды). Every member sees who's on the team — name,
 // day, points and a clear red-flag badge — but NOT the anketa. Captains and
-// managers (curators/teachers) can tap a member to open the full applicant
-// profiles (anketa) via the existing applicants screen.
+// managers (curators/teachers) can tap a member to open the full anketa directly.
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -76,7 +75,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
               return (
                 <View key={m.id} style={{ position: 'relative' }}>
                   {canSeeAnketa
-                    ? <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId })} accessibilityRole="button" accessibilityLabel={`${tr('Анкета')} — ${m.name}`}>{row}</Pressable>
+                    ? <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId, applicantUserId: m.id })} accessibilityRole="button" accessibilityLabel={`${tr('Анкета')} — ${m.name}`}>{row}</Pressable>
                     : row}
                   {i < leaderboard.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 66, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
                 </View>

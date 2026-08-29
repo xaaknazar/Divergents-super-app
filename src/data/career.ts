@@ -1,7 +1,7 @@
 // Career vacancies — API-driven. The catalog is published by the admin on the
 // Divergents LMS website and fetched live; there is NO hardcoded/branded seed
-// data here. On failure or empty the fetchers resolve to [] / null so screens
-// render a proper Russian empty state instead of fake vacancies.
+// data here. Catalog failures are allowed to reject so screens can distinguish
+// a real empty catalog from an unavailable API.
 import { T } from '../theme/tokens';
 import { API_BASE } from './api';
 import { TalentProfile, normalizeProfile } from './talentslab';
@@ -123,15 +123,11 @@ async function reqJson(path: string, timeoutMs = 12000): Promise<any> {
   } finally { clearTimeout(t); }
 }
 
-/** GET /api/mobile/vacancies — live published catalog. Returns [] on failure/empty. */
+/** GET /api/mobile/vacancies — live published catalog. Throws on network/HTTP failure. */
 export async function fetchVacancies(): Promise<Job[]> {
-  try {
-    const data = await reqJson('/api/mobile/vacancies');
-    const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.vacancies) ? data.vacancies : [];
-    return list.filter((v) => v && v.id != null).map(mapVacancy);
-  } catch {
-    return [];
-  }
+  const data = await reqJson('/api/mobile/vacancies');
+  const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.vacancies) ? data.vacancies : [];
+  return list.filter((v) => v && v.id != null).map(mapVacancy);
 }
 
 /** GET /api/mobile/vacancies/:id — single vacancy. Returns null when missing/unreachable. */
@@ -146,10 +142,8 @@ export async function fetchVacancy(id: string): Promise<Job | null> {
 }
 
 /**
- * POST /api/mobile/vacancies/:id/apply — best-effort server-side application.
- * Optional endpoint: the local optimistic "applied" state is the source of
- * truth, so this never throws and resolves false when the sync isn't possible
- * (no auth / unreachable / endpoint not yet implemented).
+ * POST /api/mobile/vacancies/:id/apply. Local state must only be committed
+ * after this confirms success; false means the UI should keep the action open.
  */
 export async function applyToVacancy(id: string, token: string | null | undefined): Promise<boolean> {
   if (!token) return false;

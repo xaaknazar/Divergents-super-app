@@ -10,7 +10,7 @@ export type NotifKind = 'challenge' | 'course' | 'community' | 'place' | 'career
 // (string names) so this data module stays independent of the navigation types;
 // the screen validates/dispatches it.
 export interface NotifTarget {
-  tab: string;            // e.g. 'LMSTab' | 'CommunityTab' | 'CareerTab' | 'MapTab'
+  tab: string;            // e.g. CareerTab
   screen: string;         // e.g. 'CourseDetail'
   params?: Record<string, string>;
 }

@@ -54,7 +54,7 @@ export function CourseCardPremium({
       </View>
       <View style={{ padding: 12 }}>
         <Text style={[ty.subheadEm, { color: T.label, minHeight: 40 }]} numberOfLines={2}>{course.title}</Text>
-        <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{course.category}</Text>
+        <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={2}>{course.category}</Text>
         <View style={{ marginTop: 10, minHeight: 32, justifyContent: 'flex-end' }}>
           {owned ? (
             <View>
