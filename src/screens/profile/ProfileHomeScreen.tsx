@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { Logo } from '../../components/Logo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { PageIntro } from '../../components/PageIntro';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
@@ -59,6 +60,10 @@ export function ProfileHomeScreen({ navigation }: Props) {
     (async () => { if (!isSignedIn) return; try { const tok = await getToken(); const s = await fetchMyShelf(tok); if (alive) setShelf(s); } catch {} })();
     return () => { alive = false; };
   }, [isSignedIn]);
+  // Re-read the anketa/profile whenever the screen comes back into focus, so
+  // edits made in the form show up immediately (silent = no full-screen spinner).
+  useFocusEffect(React.useCallback(() => { reload(true); }, [reload]));
+
   const loadCommunityActivities = async () => {
     const data = await fetchCommunityHome();
     setCommunityActivities({ trips: data.trips, sport: data.sport });

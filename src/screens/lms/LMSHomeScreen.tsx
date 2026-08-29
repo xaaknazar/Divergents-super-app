@@ -75,7 +75,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   return (
     <Screen largeTitle={t('tab_learn')} onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
       <PageIntro page="lms" />
-      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="person.crop.circle.fill" color={T.brand} size={30} badge={unread} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
+      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="person.crop.circle.fill" color={T.brand} size={36} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 16 }}>
         <Logo size={36} />

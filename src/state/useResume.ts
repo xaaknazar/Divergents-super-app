@@ -117,6 +117,9 @@ export function useResume() {
     try {
       saveJSON(KEY, answers);
       const ok = await send(answers);
+      // The Talentslab profile is cached on-device; drop it so the next read
+      // fetches the freshly saved anketa instead of showing stale values.
+      if (ok) { try { await saveJSON('dvg.talentProfileCache.v1', null); } catch {} }
       // Mirror the name into Clerk so the greeting shows «Имя» and the profile
       // shows «Имя Фамилия».
       try {

@@ -102,7 +102,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       <NavBarLarge title={t('community')} trailing={(
         <>
           {canCreate ? <HeaderIcon name="plus" color={T.brand} label="Создать" onPress={() => openCreateSheet(navigation)} /> : null}
-          <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={30} badge={unread} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
+          <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={36} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
         </>
       )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>

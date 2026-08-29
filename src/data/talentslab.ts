@@ -396,12 +396,44 @@ export function fmtList(v: any): string {
 export function resumeRows(r: ResumeData | null): { label: string; value: string }[] {
   if (!r) return [];
   const rows: { label: string; value: string }[] = [];
-  const add = (label: string, v: any) => { const val = Array.isArray(v) ? fmtList(v) : (v == null ? '' : String(v)); if (val) rows.push({ label, value: val }); };
-  add('Город', r.current_city); add('Телефон', r.phone); add('Дата рождения', r.birth_date);
-  add('Пол', r.gender); add('Семейное положение', r.marital_status); add('Гражданство', r.citizenship);
+  const add = (label: string, v: any) => {
+    const val = Array.isArray(v) ? fmtList(v) : (v == null ? '' : String(v));
+    if (val && val.trim()) rows.push({ label, value: val.trim() });
+  };
+  // Личные данные
+  add('ФИО', r.full_name);
+  add('Телефон', r.phone); add('Email', r.email);
+  add('Дата рождения', r.birth_date); add('Место рождения', r.birth_place);
+  add('Пол', r.gender); add('Семейное положение', r.marital_status);
+  add('Город', r.current_city); add('Гражданство', r.citizenship);
+  add('Готов(а) к переезду', r.ready_to_relocate === undefined ? '' : r.ready_to_relocate ? 'Да' : 'Нет');
   add('Instagram', r.instagram);
+  // Образование и опыт
+  add('Школа', r.school); add('Вузы', r.universities);
+  add('Языки', r.language_skills); add('Компьютерные навыки', r.computer_skills);
+  add('Опыт работы', r.work_experience);
+  add('Общий стаж (лет)', r.total_experience_years);
+  add('Удовлетворённость работой', r.job_satisfaction);
+  add('Желаемая должность', r.desired_position ?? r.desired_positions);
+  add('Сфера деятельности', r.activity_sphere);
+  add('Награды и достижения', r.awards);
+  add('Ожидания по зарплате', r.expected_salary);
+  add('Требования к работодателю', r.employer_requirements);
+  // Дополнительно
+  add('Религия', r.religion);
+  add('Практикующий(ая)', r.is_practicing === undefined ? '' : r.is_practicing ? 'Да' : 'Нет');
+  add('Хобби', r.hobbies); add('Интересы', r.interests);
+  add('Посещённые страны', r.visited_countries);
+  add('Любимые виды спорта', r.favorite_sports);
+  add('Книг в год', r.books_per_year);
+  add('Часов на обучение в неделю', r.educational_hours_weekly);
+  add('Часов на развлечения в неделю', r.entertainment_hours_weekly);
+  add('Часов в соцсетях в неделю', r.social_media_hours_weekly);
+  add('Водительские права', r.has_driving_license === undefined ? '' : r.has_driving_license ? 'Да' : 'Нет');
+  add('Семья', r.family);
   return rows;
 }
+
 
 // ─── Compact profile summary for the AI assistant ─────────────────
 export function profileSummary(p: TalentProfile | null): string {

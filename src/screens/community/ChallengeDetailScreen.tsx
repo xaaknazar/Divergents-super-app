@@ -647,17 +647,14 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
             <Text style={[ty.footnoteEm, { color: T.labelSecondary }]}>{ratingMode === 'overall' ? tr('Очки команды') : tr('Сегодня командой')}</Text>
             <Text style={[ty.title3, { color: T.brand, marginTop: 5 }]}>{formatTeamNumber(ratingMode === 'overall' ? teamPoints : teamPointsToday)} pts</Text>
           </View>
-          <View accessible accessibilityLabel={ratingMode === 'overall' ? `${tr('Штрафы команды')}: ${teamFlags} ${tr('флагов')}, ${teamPenalty} pts` : `${tr('Выполнено целей')}: ${completedTeamGoals} ${tr('из')} ${totalTeamGoals}`} style={{ flex: 1.15, alignItems: 'flex-end' }}>
+          <View accessible accessibilityLabel={ratingMode === 'overall' ? `${tr('Штрафы команды')}: ${teamFlags} ${tr('флагов')}` : `${tr('Выполнено целей')}: ${completedTeamGoals} ${tr('из')} ${totalTeamGoals}`} style={{ flex: 1.15, alignItems: 'flex-end' }}>
             <Text style={[ty.footnoteEm, { color: T.labelSecondary, textAlign: 'right' }]}>{ratingMode === 'overall' ? tr('Штрафы команды') : tr('Выполнено целей')}</Text>
             {ratingMode === 'today' ? (
               <Text style={[ty.title3, { color: T.green, marginTop: 5 }]}>{completedTeamGoals}/{totalTeamGoals}</Text>
             ) : teamFlags > 0 ? (
-              <View style={{ alignItems: 'flex-end', marginTop: 5, gap: 2 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  <SF name="flag.fill" size={13} color={T.red} />
-                  <Text style={[ty.footnoteEm, { color: T.red }]}>{teamFlags} {flagWord(teamFlags)}</Text>
-                </View>
-                <Text style={[ty.caption1, { color: T.red }]}>{tr('Штраф')} {formatSignedPenalty(teamPenalty)} pts</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 7 }}>
+                <SF name="flag.fill" size={13} color={T.red} />
+                <Text style={[ty.footnoteEm, { color: T.red }]}>{teamFlags} {flagWord(teamFlags)}</Text>
               </View>
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 7 }}>
@@ -1012,7 +1009,8 @@ function MyFlagRow({ flags }: { flags: FlagCounts }) {
         return (
           <View key={cat.key} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, backgroundColor: T.fillTertiary, borderWidth: danger ? 1 : 0, borderColor: T.red }}>
             <SF name={cat.icon} size={16} color={danger ? T.red : cat.color} />
-            <Text style={[ty.title3, { color: danger ? T.red : T.label, marginTop: 4 }]} numberOfLines={1}>{`${n} 🚩`}</Text>
+            {/* Number only — the section header already says these are flags. */}
+            <Text style={[ty.title3, { color: danger ? T.red : T.label, marginTop: 4 }]} numberOfLines={1}>{n}</Text>
             <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{cat.title}</Text>
           </View>
         );

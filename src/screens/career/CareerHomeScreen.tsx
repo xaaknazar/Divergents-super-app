@@ -22,7 +22,7 @@ export function CareerHomeScreen({ navigation }: Props) {
   return (
     <Screen largeTitle={t('tab_career')}>
       <NavBarLarge title={t('tab_career')} trailing={(
-        <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={30} badge={unread} label={tr('Профиль')} onPress={() => (navigationRef as any).navigate('Tabs', { screen: 'ProfileTab' })} />
+        <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={36} label={tr('Профиль')} onPress={() => (navigationRef as any).navigate('Tabs', { screen: 'ProfileTab' })} />
       )} />
 
       <View style={{ alignItems: 'center', paddingHorizontal: 36, paddingTop: 48 }}>
