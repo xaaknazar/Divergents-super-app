@@ -31,9 +31,9 @@ export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onD
   const avail = width - 48; // styles.center paddingHorizontal: 24 on both sides
   const fit = (text: string, max: number, min: number, em: number, extra = 0) =>
     Math.max(min, Math.min(max, Math.floor((avail - 4) / (text.length * em + extra))));
-  const wordSize = fit(WORDMARK, 34, 20, 0.62);
+  const wordSize = fit(WORDMARK, 34, 20, 0.74);
   // Uppercase + letter-spacing: solve for size with spacing proportional to it.
-  const sloganSize = fit(SLOGAN, 13, 9, 0.62, 1.4);
+  const sloganSize = fit(SLOGAN, 13, 9, 0.72, 1.4);
   const sloganSpacing = sloganSize >= 12 ? 1.4 : 0.8;
 
   const logoScale = useRef(new Animated.Value(0.9)).current;
@@ -90,7 +90,7 @@ export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onD
           <Logo size={logoSize} body={WHITE} head={WHITE} />
         </Animated.View>
 
-        <Animated.View style={{ opacity: wordOpacity, transform: [{ translateY: wordTranslate }], alignItems: 'center', maxWidth: avail }}>
+        <Animated.View style={{ opacity: wordOpacity, transform: [{ translateY: wordTranslate }], alignItems: 'center', width: avail }}>
           <Animated.Text style={[styles.wordmark, { fontSize: wordSize, lineHeight: Math.round(wordSize * 1.2) }]} numberOfLines={1} allowFontScaling={false}>
             {WORDMARK}
           </Animated.Text>
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  center: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  center: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   wordmark: {
     fontFamily: ty.largeTitle.fontFamily,
     color: WHITE,

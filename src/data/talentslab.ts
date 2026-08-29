@@ -492,3 +492,25 @@ export async function uploadGallupFile(
 
 /** Страница теста Гарднера на сайте Talentslab. */
 export const GARDNER_TEST_URL = `${TALENTSLAB_BASE.replace(/\/+$/, '')}/gardner-test`;
+
+/**
+ * GET /api/mobile/nickname-available — свободен ли псевдоним.
+ * Возвращает true/false; при недоступности сети — null (не блокируем ввод).
+ */
+export async function checkNicknameAvailable(
+  token: string | null | undefined,
+  nickname: string,
+): Promise<boolean | null> {
+  if (!token || !nickname) return null;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const res = await fetch(
+      `${TALENTSLAB_BASE}/api/mobile/nickname-available?nickname=${encodeURIComponent(nickname)}`,
+      { signal: ctrl.signal, headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } },
+    );
+    if (!res.ok) return null;
+    const d = await res.json();
+    return !!d?.available;
+  } catch { return null; } finally { clearTimeout(t); }
+}
