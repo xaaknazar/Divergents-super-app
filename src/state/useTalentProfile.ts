@@ -14,6 +14,7 @@ import {
   TalentProfile,
 } from '../data/talentslab';
 import { loadJSON, saveJSON } from './persist';
+import { onProfileChanged } from './profileBus';
 
 const CACHE_KEY = 'dvg.talentProfileCache.v1';
 type ProfileSource = 'live' | 'cache' | 'local' | null;
@@ -36,7 +37,7 @@ export function useTalentProfile() {
 
   // `silent` refetches without flipping `loading` — used for focus/foreground
   // refreshes so the screen doesn't flash its full-screen spinner every time.
-  const run = useCallback(async (silent?: boolean) => {
+  const run = useCallback(async (silent?: boolean, localFirst?: boolean) => {
     const request = ++requestRef.current;
     if (!silent) setLoading(true);
     setUnavailable(false);
@@ -69,6 +70,23 @@ export function useTalentProfile() {
       if (!isSignedIn) {
         if (request === requestRef.current) { setProfile(null); setSource(null); }
         return;
+      }
+      // Профиль только что изменили в приложении: показываем локальные ответы
+      // мгновенно, не дожидаясь ответа сервера.
+      if (localFirst && profileIdentityRef.current === identity) {
+        const answers = await loadJSON<ResumeAnswers>('dvg.resume', {});
+        const local = profileFromSavedResume(answers, email);
+        if (local && request === requestRef.current) {
+          setProfile((prev) => (prev ? {
+            ...prev,
+            fullName: local.fullName || prev.fullName,
+            email: local.email || prev.email,
+            phone: local.phone || prev.phone,
+            currentCity: local.currentCity || prev.currentCity,
+            photoUrl: local.photoUrl || prev.photoUrl,
+            resume: { ...(prev.resume ?? {}), ...(local.resume ?? {}) },
+          } : local));
+        }
       }
       // Hydrate immediately from the last verified profile/local questionnaire;
       // the network refresh below can then update it without a blank screen.
@@ -116,6 +134,12 @@ export function useTalentProfile() {
   }, [isSignedIn, email, identity]);
 
   useEffect(() => { run(); }, [run]);
+
+  // Анкету/фото/Gallup могли изменить на другом экране — обновляемся сразу,
+  // без перезапуска приложения (см. profileBus).
+  const runRef = useRef(run);
+  runRef.current = run;
+  useEffect(() => onProfileChanged(() => { runRef.current(true, true); }), []);
 
   // "Live" only when the backend actually resolved a candidate record. A
   // found:false / null profile is NOT live and must not be shown as the user's

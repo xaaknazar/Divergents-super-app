@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
 import { ty } from './ui';
 import { fetchTalentProfile, uploadProfilePhoto, getTalentslabToken } from '../data/talentslab';
+import { emitProfileChanged } from '../state/profileBus';
 
 export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => void }) {
   const { T } = useTheme();
@@ -51,6 +52,7 @@ export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => 
       else {
         setUrl(res.url || a.uri);
         onChanged?.(res.url);
+        emitProfileChanged(); // аватар в профиле обновится сразу
         Alert.alert('Фото обновлено', 'Оно появится в профиле и на сайте Talentslab.');
       }
     } catch {

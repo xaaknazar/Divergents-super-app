@@ -90,11 +90,23 @@ export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onD
           <Logo size={logoSize} body={WHITE} head={WHITE} />
         </Animated.View>
 
-        <Animated.View style={{ opacity: wordOpacity, transform: [{ translateY: wordTranslate }], alignItems: 'center', width: avail }}>
-          <Animated.Text style={[styles.wordmark, { fontSize: wordSize, lineHeight: Math.round(wordSize * 1.2) }]} numberOfLines={1} allowFontScaling={false}>
+        <Animated.View style={{ opacity: wordOpacity, transform: [{ translateY: wordTranslate }], alignItems: 'center', alignSelf: 'stretch', width: avail }}>
+          <Animated.Text
+            style={[styles.wordmark, { fontSize: wordSize, lineHeight: Math.round(wordSize * 1.2) }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+            allowFontScaling={false}
+          >
             {WORDMARK}
           </Animated.Text>
-          <Animated.Text style={[styles.slogan, { fontSize: sloganSize, lineHeight: Math.round(sloganSize * 1.35), letterSpacing: sloganSpacing }]} numberOfLines={1} allowFontScaling={false}>
+          <Animated.Text
+            style={[styles.slogan, { fontSize: sloganSize, lineHeight: Math.round(sloganSize * 1.35), letterSpacing: sloganSpacing }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+            allowFontScaling={false}
+          >
             {SLOGAN}
           </Animated.Text>
         </Animated.View>

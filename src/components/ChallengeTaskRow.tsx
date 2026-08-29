@@ -83,7 +83,7 @@ export function ChallengeTaskRow({
             </Text>
           )}
           {over && !onAdjust ? <Text style={[ty.caption2, { color: T.green }]} numberOfLines={1}>{`+${fmt(task.current - task.min)} ${task.unit}`}</Text> : null}
-          {onAdjust ? <View style={{ flexDirection: 'row', gap: 6 }}>
+          {onAdjust ? <View style={{ flexDirection: 'row', gap: 8 }}>
             <Stepper label={`− ${fmt(step)}`} accessibilityLabel={`Уменьшить ${task.title} на ${fmt(step)}`} onPress={() => onAdjust(-step)} disabled={disabled} />
             <Stepper label={`+ ${fmt(step)}`} accessibilityLabel={`Увеличить ${task.title} на ${fmt(step)}`} onPress={() => onAdjust(step)} primary disabled={disabled} />
           </View> : null}
@@ -96,10 +96,13 @@ export function ChallengeTaskRow({
 function Stepper({ label, accessibilityLabel, onPress, primary, disabled }: { label: string; accessibilityLabel: string; onPress: () => void; primary?: boolean; disabled?: boolean }) {
   const { T } = useTheme();
   return (
-    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={{ disabled }} style={({ pressed }) => ({
-      width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
-      backgroundColor: primary ? T.brandTinted : T.fillTertiary, opacity: pressed ? 0.6 : 1,
-    })}>
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={{ disabled }}
+      // Visually compact, but hitSlop keeps the real touch target at ~44pt (HIG).
+      hitSlop={{ top: 7, bottom: 7, left: 5, right: 5 }}
+      style={({ pressed }) => ({
+        minWidth: 38, height: 30, paddingHorizontal: 9, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
+        backgroundColor: primary ? T.brandTinted : T.fillTertiary, opacity: pressed ? 0.6 : 1,
+      })}>
       <Text style={[ty.subheadEm, { color: primary ? T.brand : T.label }]}>{label}</Text>
     </Pressable>
   );

@@ -14,6 +14,7 @@ import { ty } from './ui';
 import {
   fetchTestsStatus, uploadGallupFile, getTalentslabToken, TestsStatus, GARDNER_TEST_URL,
 } from '../data/talentslab';
+import { emitProfileChanged } from '../state/profileBus';
 
 export function AssessmentsBlock() {
   const { T } = useTheme();
@@ -46,6 +47,7 @@ export function AssessmentsBlock() {
       else {
         Alert.alert('Отчёт загружен', 'Мы разбираем его — таланты появятся в профиле через несколько минут.');
         refresh();
+        emitProfileChanged();
       }
     } catch {
       Alert.alert('Не удалось загрузить', 'Попробуйте ещё раз.');

@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
+import { emitProfileChanged } from './profileBus';
 import { submitResume, getTalentslabToken, ResumeAnswers, effectiveResumeCompleteness } from '../data/talentslab';
 import { REQUIRED_KEYS, RESUME_STEPS } from '../data/resumeSchema';
 import { useTalentProfile } from './useTalentProfile';
@@ -120,6 +121,9 @@ export function useResume() {
       // The Talentslab profile is cached on-device; drop it so the next read
       // fetches the freshly saved anketa instead of showing stale values.
       if (ok) { try { await saveJSON('dvg.talentProfileCache.v1', null); } catch {} }
+      // Сообщаем всем экранам, что анкета изменилась — они обновятся сразу,
+      // без перезапуска приложения.
+      emitProfileChanged();
       // Mirror the name into Clerk so the greeting shows «Имя» and the profile
       // shows «Имя Фамилия».
       try {

@@ -49,7 +49,7 @@ export function HeaderIcon({ name, color, size = 20, onPress, badge, label }: {
   return (
     <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} accessibilityRole="button"
       accessibilityLabel={badge ? `${accessibleName}. ${badge}` : accessibleName} accessibilityState={{ disabled: !onPress }}
-      style={{ position: 'relative', minWidth: minTouch, minHeight: minTouch, alignItems: 'center', justifyContent: 'center' }}>
+      style={{ position: 'relative', minWidth: Math.max(minTouch, size + 8), minHeight: Math.max(minTouch, size + 8), alignItems: 'center', justifyContent: 'center' }}>
       <SF name={name} size={size} color={_color} />
       {badge ? (
         <View style={{ position: 'absolute', top: -4, right: -6, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
