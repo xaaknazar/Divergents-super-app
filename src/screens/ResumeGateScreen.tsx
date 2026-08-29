@@ -12,6 +12,7 @@ import { Logo } from '../components/Logo';
 import { PrimaryButton, ty } from '../components/ui';
 import { ResumeFieldInput } from '../components/ResumeField';
 import { AssessmentsBlock } from '../components/AssessmentsBlock';
+import { ProfilePhotoField } from '../components/ProfilePhotoField';
 import { RESUME_STEPS } from '../data/resumeSchema';
 import { useResume } from '../state/useResume';
 import { useResumeGate } from '../state/ResumeGateContext';
@@ -149,6 +150,8 @@ export function ResumeGateScreen() {
               <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{s.title}</Text>
             </View>
           </View>
+
+          {s.key === 'personal' ? <ProfilePhotoField /> : null}
 
           {s.fields.map((f) => (
             <ResumeFieldInput key={f.key} field={f} value={answers[f.key]} onChange={(v) => setField(f.key, v)} />

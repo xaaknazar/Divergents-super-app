@@ -8,6 +8,7 @@ import { PrimaryButton, ty } from '../../components/ui';
 import { RESUME_STEPS } from '../../data/resumeSchema';
 import { ResumeFieldInput } from '../../components/ResumeField';
 import { AssessmentsBlock } from '../../components/AssessmentsBlock';
+import { ProfilePhotoField } from '../../components/ProfilePhotoField';
 import { useResume } from '../../state/useResume';
 import { useLang, tr } from '../../state/LanguageContext';
 // Registered in BOTH the Career stack and the Profile stack, so its props are
@@ -89,6 +90,8 @@ export function ResumeFormScreen({ navigation, route }: Props) {
               <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{s.title}</Text>
             </View>
           </View>
+
+          {s.key === 'personal' ? <ProfilePhotoField /> : null}
 
           {s.fields.map((f) => (
             <ResumeFieldInput key={f.key} field={f} value={answers[f.key]} onChange={(v) => setField(f.key, v)} />

@@ -546,3 +546,35 @@ export async function checkNicknameAvailable(
     return !!d?.available;
   } catch { return null; } finally { clearTimeout(t); }
 }
+
+/**
+ * POST /api/mobile/photo — заменить фото профиля в Talentslab.
+ * Возвращает новый URL фото или строку с ошибкой.
+ */
+export async function uploadProfilePhoto(
+  token: string | null | undefined,
+  file: { uri: string; name: string; mime: string },
+): Promise<{ url: string } | { error: string }> {
+  if (!token) return { error: 'Нет авторизации' };
+  const form = new FormData();
+  form.append('file', { uri: file.uri, name: file.name, type: file.mime } as any);
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 60000);
+  try {
+    const res = await fetch(`${TALENTSLAB_BASE}/api/mobile/photo`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (res.ok) {
+      const d = await res.json().catch(() => null);
+      return { url: d?.photoUrl ?? '' };
+    }
+    if (res.status === 404) return { error: 'Анкета не найдена — сначала сохраните анкету.' };
+    if (res.status === 422) return { error: 'Нужен JPG, PNG или WebP до 8 МБ.' };
+    return { error: `Не удалось загрузить (код ${res.status}).` };
+  } catch {
+    return { error: 'Не удалось загрузить. Проверьте подключение.' };
+  } finally { clearTimeout(t); }
+}
