@@ -36,6 +36,7 @@ export type CareerStackParams = { CareerHome: undefined; VacancyDetail: { jobId:
 export type ProfileStackParams = {
   ProfileHome: undefined;
   Achievements: undefined;
+  ChallengeHistory: undefined;
   Personalize: undefined;
   Downloads: undefined;
   Resume: { step?: number } | undefined;

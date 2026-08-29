@@ -50,6 +50,7 @@ import { TalentProfileScreen } from '../screens/career/TalentProfileScreen';
 import { CreateVacancyScreen } from '../screens/career/CreateVacancyScreen';
 import { VacancyApplicantsScreen } from '../screens/career/VacancyApplicantsScreen';
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
+import { ChallengeHistoryScreen } from '../screens/profile/ChallengeHistoryScreen';
 import { AchievementsScreen } from '../screens/profile/AchievementsScreen';
 import { PersonalizeScreen } from '../screens/profile/PersonalizeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
@@ -137,6 +138,7 @@ function ProfileNavigator() {
     <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <ProfileStack.Screen name="ProfileHome" component={ProfileHomeScreen} />
       <ProfileStack.Screen name="Achievements" component={AchievementsScreen} />
+      <ProfileStack.Screen name="ChallengeHistory" component={ChallengeHistoryScreen} />
       <ProfileStack.Screen name="Personalize" component={PersonalizeScreen} />
       <ProfileStack.Screen name="Downloads" component={DownloadsScreen} />
       <ProfileStack.Screen name="Resume" component={ResumeFormScreen} options={{ presentation: 'modal' }} />

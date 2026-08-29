@@ -1149,3 +1149,37 @@ export async function broadcastTeam(challengeId: string, teamId: string, message
     return res.ok;
   } catch { return false; } finally { clearTimeout(t); }
 }
+
+// ─── История моих челленджей (GET /api/mobile/me/challenges) ───────
+export interface ChallengeHistoryItem {
+  challengeId: string;
+  title: string;
+  startISO: string | null;
+  durationDays: number;
+  challengeStatus: string;   // open | active | archived …
+  teamName: string | null;
+  status: string;            // pending | approved | rejected
+  joinedAt: string;
+}
+
+export async function fetchMyChallengeHistory(token: string | null): Promise<ChallengeHistoryItem[]> {
+  if (!token) return [];
+  try {
+    const r = await fetch(`${API_BASE}/api/mobile/me/challenges`, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return [];
+    const d = await r.json();
+    const list: any[] = Array.isArray(d?.history) ? d.history : [];
+    return list.map((x) => ({
+      challengeId: String(x.challengeId),
+      title: String(x.title ?? ''),
+      startISO: x.startISO ?? null,
+      durationDays: Number(x.durationDays) || 0,
+      challengeStatus: String(x.challengeStatus ?? ''),
+      teamName: x.teamName ?? null,
+      status: String(x.status ?? 'pending'),
+      joinedAt: String(x.joinedAt ?? ''),
+    }));
+  } catch { return []; }
+}

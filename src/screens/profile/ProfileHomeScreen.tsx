@@ -176,10 +176,12 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const myApps = jobs.filter((j) => applied.includes(j.id));
   const rz = profile?.resume ?? null;
 
+  // Each tile opens the matching section: мои курсы, достижения, история челленджей.
   const tiles = [
-    { v: String(coursesInProgress), l: tr('Курсов'), icon: 'book.fill', c: T.brand },
-    { v: `${ach.earned}`, l: 'Достижений', icon: 'rosette', c: T.orange },
-    { v: challengeActive ? String(challenge.currentDay) : '—', l: 'День челленджа', icon: 'flame.fill', c: T.red },
+    { v: String(coursesInProgress), l: tr('Курсов'), icon: 'book.fill', c: T.brand, onPress: goLearning },
+    { v: `${ach.earned}`, l: tr('Достижений'), icon: 'rosette', c: T.orange, onPress: () => navigation.navigate('Achievements') },
+    // "День челленджа" didn't fit the narrow tile — shortened to «День».
+    { v: challengeActive ? String(challenge.currentDay) : '—', l: tr('День'), icon: 'flame.fill', c: T.red, onPress: () => navigation.navigate('ChallengeHistory') },
   ];
 
   const mk = (items: [string, any][]) => items
@@ -279,11 +281,12 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Stat tiles */}
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
         {tiles.map((t, i) => (
-          <View key={i} style={{ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <Pressable key={i} onPress={t.onPress} accessibilityRole="button" accessibilityLabel={`${t.l}: ${t.v}`}
+            style={({ pressed }) => ({ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.7 : 1 })}>
             <SF name={t.icon} size={18} color={t.c} />
             <Text style={[ty.title2, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{t.v}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{t.l}</Text>
-          </View>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={2}>{t.l}</Text>
+          </Pressable>
         ))}
       </View>
 
