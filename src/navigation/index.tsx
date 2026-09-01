@@ -16,7 +16,6 @@ import { useInviteLinks } from '../state/useInviteLinks';
 import { useDownloads } from '../state/downloads';
 
 import { LMSHomeScreen } from '../screens/lms/LMSHomeScreen';
-import { CatalogScreen } from '../screens/lms/CatalogScreen';
 import { BooksCatalogScreen } from '../screens/lms/BooksCatalogScreen';
 import { BookDetailScreen } from '../screens/lms/BookDetailScreen';
 import { BookAIScreen } from '../screens/lms/BookAIScreen';
@@ -65,7 +64,6 @@ function LMSNavigator() {
   return (
     <LMSStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       <LMSStack.Screen name="LMSHome" component={LMSHomeScreen} />
-      <LMSStack.Screen name="Catalog" component={CatalogScreen} />
       <LMSStack.Screen name="CourseDetail" component={CourseDetailScreen} />
       <LMSStack.Screen name="Video" component={VideoScreen} options={{ presentation: 'fullScreenModal' }} />
       <LMSStack.Screen name="Downloads" component={DownloadsScreen} />

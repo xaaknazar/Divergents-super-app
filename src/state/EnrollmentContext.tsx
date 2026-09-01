@@ -1,16 +1,52 @@
 // Persisted set of "signups": sport, trips, lectures, course bookmarks.
 // Keys are namespaced, e.g. 'sport:football', 'trip:kolsai', 'lecture:lec1', 'bookmark:<courseId>'.
+//
+// Записи на поездки и спорт хранятся ВМЕСТЕ СО СТАТУСОМ: 'pending' — заявка на
+// рассмотрении, 'approved' — человек действительно записан. Раньше это был
+// плоский список ключей, поэтому отклонённый заявитель видел «Вы записаны ✓».
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
-import { fetchMySportIds, fetchMyTripIds } from '../data/api';
+import { fetchMySport, fetchMyTrips, EnrollStatus } from '../data/api';
 
 const KEY = 'dvg.enrollments';
 
+export type { EnrollStatus };
+
+type EnrollMap = Record<string, EnrollStatus>;
+
+// Ключи, за которые отвечает сервер: их список он и перезаписывает целиком.
+const isServerKey = (k: string) => k.startsWith('trip:') || k.startsWith('sport:');
+
+// На диске раньше лежал string[]. Читаем оба формата, чтобы обновление
+// приложения не стирало локальные закладки и избранное.
+function normalizeStored(v: unknown): EnrollMap {
+  if (Array.isArray(v)) {
+    const out: EnrollMap = {};
+    for (const k of v) if (typeof k === 'string' && k) out[k] = 'approved';
+    return out;
+  }
+  if (v && typeof v === 'object') {
+    const out: EnrollMap = {};
+    for (const [k, s] of Object.entries(v as Record<string, unknown>)) {
+      if (!k) continue;
+      out[k] = s === 'pending' ? 'pending' : 'approved';
+    }
+    return out;
+  }
+  return {};
+}
+
 interface EnrollState {
+  /** Записан ИЛИ подана заявка — «эта карточка моя». */
   has: (k: string) => boolean;
+  /** Точный статус: 'approved' | 'pending' | null. */
+  statusOf: (k: string) => EnrollStatus | null;
+  /** Только подтверждённое участие (метка на карте, «Вы идёте»). */
+  isApproved: (k: string) => boolean;
   toggle: (k: string) => void;
-  add: (k: string) => void;
+  add: (k: string, status?: EnrollStatus) => void;
+  remove: (k: string) => void;
   ready: boolean;
 }
 
@@ -18,35 +54,37 @@ const Ctx = createContext<EnrollState | null>(null);
 
 export function EnrollmentProvider({ children }: { children: React.ReactNode }) {
   const { isSignedIn, getToken } = useAuth();
-  const [set, setSet] = useState<string[]>([]);
+  const [map, setMap] = useState<EnrollMap>({});
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (isSignedIn === false) {
-      setSet([]);
+      setMap({});
       setReady(true);
-      saveJSON(KEY, []);
+      saveJSON(KEY, {});
       return;
     }
-    loadJSON<string[]>(KEY, []).then((v) => { setSet(v); setReady(true); });
+    loadJSON<unknown>(KEY, {}).then((v) => { setMap(normalizeStored(v)); setReady(true); });
   }, [isSignedIn]);
 
-  // Server membership is authoritative. Merge it into the local cache so
-  // personal activity cards survive reinstalls and appear on every device.
+  // Server membership is authoritative. Раньше серверные id только ДОБАВЛЯЛИСЬ
+  // к локальному кэшу, поэтому отклонённая заявка оставалась в телефоне
+  // навсегда. Теперь ответ сервера ЗАМЕЩАЕТ все trip:/sport: ключи — если
+  // заявку отклонили или запись отменили, она исчезает и здесь.
   useEffect(() => {
     if (!isSignedIn) return;
     let alive = true;
     (async () => {
       try {
         const token = await getToken();
-        const [tripIds, sportIds] = await Promise.all([fetchMyTripIds(token), fetchMySportIds(token)]);
+        const [trips, sport] = await Promise.all([fetchMyTrips(token), fetchMySport(token)]);
         if (!alive) return;
-        setSet((previous) => {
-          const next = Array.from(new Set([
-            ...previous,
-            ...tripIds.map((id) => `trip:${id}`),
-            ...sportIds.map((id) => `sport:${id}`),
-          ]));
+        setMap((previous) => {
+          const next: EnrollMap = {};
+          // Локальные ключи вне зоны сервера (закладки, избранное) сохраняем.
+          for (const [k, s] of Object.entries(previous)) if (!isServerKey(k)) next[k] = s;
+          for (const t of trips) next[`trip:${t.id}`] = t.status;
+          for (const s of sport) next[`sport:${s.id}`] = s.status;
           saveJSON(KEY, next);
           return next;
         });
@@ -59,10 +97,29 @@ export function EnrollmentProvider({ children }: { children: React.ReactNode }) 
 
   const value = useMemo<EnrollState>(() => ({
     ready,
-    has: (k) => set.includes(k),
-    add: (k) => setSet((p) => { if (p.includes(k)) return p; const n = [...p, k]; saveJSON(KEY, n); return n; }),
-    toggle: (k) => setSet((p) => { const n = p.includes(k) ? p.filter((x) => x !== k) : [...p, k]; saveJSON(KEY, n); return n; }),
-  }), [set, ready]);
+    has: (k) => map[k] != null,
+    statusOf: (k) => map[k] ?? null,
+    isApproved: (k) => map[k] === 'approved',
+    add: (k, status = 'approved') => setMap((p) => {
+      if (p[k] === status) return p;
+      const n = { ...p, [k]: status };
+      saveJSON(KEY, n);
+      return n;
+    }),
+    remove: (k) => setMap((p) => {
+      if (p[k] == null) return p;
+      const n = { ...p };
+      delete n[k];
+      saveJSON(KEY, n);
+      return n;
+    }),
+    toggle: (k) => setMap((p) => {
+      const n = { ...p };
+      if (n[k] != null) delete n[k]; else n[k] = 'approved';
+      saveJSON(KEY, n);
+      return n;
+    }),
+  }), [map, ready]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

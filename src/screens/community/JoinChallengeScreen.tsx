@@ -12,23 +12,19 @@ import { ErrorState } from '../../components/StateViews';
 import {
   fetchChallengesAndTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam, CHALLENGE_RULES,
 } from '../../data/community';
-import { applyToChallenge } from '../../data/api';
+import { applyToChallenge, challengeApplyFailureMessage } from '../../data/api';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
 
-const NICK_MAX = 9;
-
-// Count uppercase letters (Latin/Cyrillic/Kazakh) without relying on regex
-// Unicode-property support: a char is uppercase if it differs from its
-// lowercase form and equals its own uppercase form.
-function upperCount(s: string): number {
-  let n = 0;
-  for (const ch of s) {
-    if (ch !== ch.toLowerCase() && ch === ch.toUpperCase()) n++;
-  }
-  return n;
+// Псевдоним для рейтинга берётся из анкеты профиля (User.nickname) — именно его
+// сервер показывает команде. Отдельное поле «никнейм» здесь раньше валидировали
+// и никуда не отправляли, поэтому его больше нет.
+function profileNickname(profile: unknown): string {
+  const resume = (profile as { resume?: Record<string, unknown> } | null)?.resume;
+  const value = resume?.nickname;
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 export function JoinChallengeScreen({ route, navigation }: Props) {
@@ -39,7 +35,6 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const [teams, setTeams] = useState<ChallengeTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [nick, setNick] = useState('');
   const [tg, setTg] = useState('');
   const [showRules, setShowRules] = useState(false);
   const [teamId, setTeamId] = useState<string | null>(null);
@@ -70,25 +65,29 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
 
   useEffect(() => load(), [load]);
 
-  const nickLen = nick.trim().length;
-  const lenOk = nickLen > 0 && nickLen <= NICK_MAX;
-  const caseOk = upperCount(nick) <= 1; // максимум одна заглавная буква
-  const nickOk = lenOk && caseOk;
+  const nick = profileNickname(profile);
   const tgHandle = tg.trim().replace(/^@+/, '');
   const tgOk = tgHandle.length >= 3;
-  const canSubmit = nickOk && tgOk && !!teamId && agree && track;
+  const canSubmit = tgOk && !!teamId && agree && track;
   const team = teams.find((t) => t.id === teamId);
 
   // Real submit: send the application to the server; only show success when the
-  // server actually accepted it, otherwise surface a retryable error.
+  // server actually accepted it. Отказ показываем настоящей причиной — «заявка
+  // уже на рассмотрении» или «в команде нет мест», а не «проверьте подключение».
   const submit = async () => {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     try {
       const token = await getToken();
-      const ok = await applyToChallenge(token, route.params.challengeId, teamId, live ? profile : undefined, tgHandle);
-      if (ok) setSubmitted(true);
-      else Alert.alert(tr('Не удалось отправить заявку'), tr('Проверьте подключение и попробуйте снова.'));
+      const r = await applyToChallenge(token, route.params.challengeId, teamId, live ? profile : undefined, tgHandle);
+      if (r.ok) {
+        setSubmitted(true);
+      } else {
+        const { title, body } = challengeApplyFailureMessage(r);
+        Alert.alert(tr(title), tr(body));
+        // Место в команде заняли, пока заполнялась заявка — покажем свежие цифры.
+        if (r.reason === 'team_full') { setTeamId(null); load(); }
+      }
     } catch {
       Alert.alert(tr('Не удалось отправить заявку'), tr('Проверьте подключение и попробуйте снова.'));
     } finally {
@@ -120,23 +119,26 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{meta?.title}</Text>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]} numberOfLines={1}>{tr('Старт')} {meta?.startLabel} · {meta?.durationDays} {tr('дней')}</Text>
 
-        {/* Nickname */}
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('НИКНЕЙМ (до 9 символов, одна заглавная буква)')}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: nick && !nickOk ? T.red : 'transparent' }}>
-          <TextInput
-            value={nick}
-            onChangeText={(t) => setNick(t.slice(0, NICK_MAX))}
-            maxLength={NICK_MAX}
-            placeholder={tr('напр. Aknazar')}
-            placeholderTextColor={T.labelTertiary}
-            autoCapitalize="none"
-            style={[ty.body, { flex: 1, paddingVertical: 12, color: T.label }]}
-          />
-          <Text style={[ty.caption1, { color: nickOk || !nick ? T.labelTertiary : T.red }]}>{nick.trim().length}/{NICK_MAX}</Text>
+        {/* Псевдоним — только для сведения: он берётся из анкеты профиля, и
+            именно его команда видит в рейтинге. Отдельного поля здесь нет. */}
+        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('ПСЕВДОНИМ В РЕЙТИНГЕ')}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, padding: 14 }}>
+          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: nick ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+            {nick
+              ? <Text style={[ty.subheadEm, { color: '#fff' }]}>{nick.charAt(0).toUpperCase()}</Text>
+              : <SF name="person.fill" size={18} color={T.labelTertiary} />}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.subheadEm, { color: nick ? T.label : T.labelSecondary }]} numberOfLines={1}>
+              {nick || tr('Псевдоним не указан')}
+            </Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>
+              {nick
+                ? tr('Так вас увидят в составе и рейтинге команды.')
+                : tr('Пока в рейтинге будет ваше имя. Псевдоним задаётся в анкете профиля.')}
+            </Text>
+          </View>
         </View>
-        {nick && !lenOk ? <Text style={[ty.caption1, { color: T.red, marginTop: 6, marginLeft: 4 }]}>{tr('Никнейм должен быть от 1 до 9 символов')}</Text>
-          : nick && !caseOk ? <Text style={[ty.caption1, { color: T.red, marginTop: 6, marginLeft: 4 }]}>{tr('Разрешена только одна заглавная буква')}</Text>
-          : null}
 
         {/* Telegram username — how the captain reaches you */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('USERNAME В TELEGRAM')}</Text>

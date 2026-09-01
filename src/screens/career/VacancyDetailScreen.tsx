@@ -159,16 +159,12 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
-      {/* Match */}
-      {job.match > 0 || job.reason ? (
-        <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          {job.match > 0 ? (
-            <View style={{ alignItems: 'center', minWidth: 70 }}>
-              <Text style={[ty.largeTitle, { color: T.brand }]} numberOfLines={1}>{job.match}<Text style={ty.title3}>%</Text></Text>
-              <Text style={[ty.caption2, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{tr('Совпадение')}</Text>
-            </View>
-          ) : null}
-          {job.reason ? <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{job.reason}</Text> : null}
+      {/* Почему эта вакансия (текст от работодателя). Блок «Совпадение %» убран:
+          job.match никто не записывает — это была одна и та же константа для
+          всех. Настоящее совпадение считается ниже по талантам Gallup. */}
+      {job.reason ? (
+        <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, padding: 16 }}>
+          <Text style={[ty.subhead, { color: T.label }]}>{job.reason}</Text>
         </View>
       ) : null}
 
@@ -178,8 +174,10 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         return (
           <ListSection header={tr('Почему вам подходит')}>
             <View style={{ padding: 14 }}>
+              {/* m.total — количество талантов ВАКАНСИИ, а не пользователя,
+                  поэтому формулировка считает совпадения по талантам роли. */}
               <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]}>
-                {tr('Таланты Gallup для роли')} · {tr('совпадает')} {m.matched} {tr('из')} {m.total} {tr('ваших')}
+                {tr('Таланты Gallup для роли')} · {tr('совпадений с вашими')}: {m.matched} {tr('из')} {m.total}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {m.items.map((it) => (

@@ -12,6 +12,7 @@ import { ty } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
 import { fetchBook, postBookComment, updateBookComment, deleteBookComment, rateBook, setBookShelf, BookDetailResponse, BookComment, ShelfStatus } from '../../data/books';
+import { emitShelfChanged } from '../../state/shelfBus';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'BookDetail'>;
@@ -25,6 +26,14 @@ const SHELF: { key: ShelfStatus; label: string; icon: string }[] = [
 function fmtDate(iso: string): string {
   const d = new Date(iso); if (isNaN(d.getTime())) return '';
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// «1 оценка / 2 оценки / 5 оценок»
+function plurRatings(n: number): string {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return `${n} оценка`;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return `${n} оценки`;
+  return `${n} оценок`;
 }
 
 export function BookDetailScreen({ route, navigation }: Props) {
@@ -64,20 +73,35 @@ export function BookDetailScreen({ route, navigation }: Props) {
     setData((p) => p ? { ...p, myRating: n } : p);
     const token = await getToken();
     const r = await rateBook(bookId, token, n);
-    if (r?.ratingAvg != null) setData((p) => p ? { ...p, myRating: n, book: { ...p.book, ratingAvg: r.ratingAvg, ratingCount: r.ratingCount } } : p);
+    if (r?.ratingAvg != null) {
+      setData((p) => p ? { ...p, myRating: n, book: { ...p.book, ratingAvg: r.ratingAvg, ratingCount: r.ratingCount } } : p);
+      // Оценка видна в «Моих книгах» и в каталоге — сообщаем другим экранам.
+      emitShelfChanged();
+    }
     else { setData((p) => p ? { ...p, myRating: prev ?? null } : p); Alert.alert('Не удалось сохранить оценку', 'Проверьте подключение и попробуйте снова.'); }
   };
 
-  const onShelf = async (status: ShelfStatus, progress?: number) => {
+  // Статус меняется явно; повторное нажатие на активный статус больше ничего не
+  // удаляет — для этого есть отдельное «Убрать с полки» с подтверждением.
+  const onShelf = async (status: ShelfStatus | 'none', progress?: number) => {
     if (!isSignedIn) return requireAuth();
-    const current = data?.myShelf?.status;
-    const next = current === status && progress == null ? 'none' : status;
     setBusyShelf(true);
     const token = await getToken();
-    const r = await setBookShelf(bookId, token, next as any, progress);
+    const r = await setBookShelf(bookId, token, status, progress);
     setBusyShelf(false);
-    if (r) setData((p) => p ? { ...p, myShelf: r.shelf } : p);
+    if (r) {
+      setData((p) => p ? { ...p, myShelf: r.shelf } : p);
+      // Сервер принял изменение — остальные экраны перечитывают полку.
+      emitShelfChanged();
+    }
     else Alert.alert('Не удалось обновить полку', 'Проверьте подключение и попробуйте снова.');
+  };
+
+  const confirmRemoveShelf = () => {
+    Alert.alert('Убрать с полки?', 'Книга исчезнет из «Моих книг», прогресс чтения будет удалён.', [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Убрать', style: 'destructive', onPress: () => { onShelf('none'); } },
+    ]);
   };
 
   const onSend = async () => {
@@ -154,10 +178,27 @@ export function BookDetailScreen({ route, navigation }: Props) {
             <View style={{ flex: 1 }}>
             <Text style={[ty.title3, { color: T.label }]}>{b.title}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{b.author}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
-              <SF name="star.fill" size={14} color="#FF9500" />
-              <Text style={[ty.subheadEm, { color: T.label }]}>{b.ratingAvg ? b.ratingAvg.toFixed(1) : '—'}</Text>
-              <Text style={[ty.footnote, { color: T.labelTertiary }]}>({b.ratingCount})</Text>
+            {/* Оценка редакции и оценка читателей — разные величины, поэтому
+                показываем их отдельными строками, а не одним числом со счётчиком. */}
+            <View style={{ gap: 4, marginTop: 8 }}>
+              {b.rating ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <SF name="star.fill" size={14} color="#FF9500" />
+                  <Text style={[ty.subheadEm, { color: T.label }]}>{b.rating.toFixed(1)}</Text>
+                  <Text style={[ty.footnote, { color: T.labelTertiary, flexShrink: 1 }]} numberOfLines={1}>Оценка Divergents</Text>
+                </View>
+              ) : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <SF name="person.2.fill" size={13} color={T.labelTertiary} />
+                {b.ratingAvg != null ? (
+                  <>
+                    <Text style={[ty.subheadEm, { color: T.label }]}>{b.ratingAvg.toFixed(1)}</Text>
+                    <Text style={[ty.footnote, { color: T.labelTertiary, flexShrink: 1 }]} numberOfLines={1}>Читатели · {plurRatings(b.ratingCount)}</Text>
+                  </>
+                ) : (
+                  <Text style={[ty.footnote, { color: T.labelTertiary, flexShrink: 1 }]} numberOfLines={1}>Читатели ещё не оценивали</Text>
+                )}
+              </View>
             </View>
             {b.genres.length ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
@@ -179,7 +220,8 @@ export function BookDetailScreen({ route, navigation }: Props) {
             {SHELF.map((s) => {
               const active = shelfStatus === s.key;
               return (
-                <Pressable key={s.key} onPress={() => onShelf(s.key)} disabled={busyShelf}
+                <Pressable key={s.key} onPress={() => { if (!active) onShelf(s.key); }} disabled={busyShelf}
+                  accessibilityRole="button" accessibilityState={{ selected: active, disabled: busyShelf }} accessibilityLabel={s.label}
                   style={{ flex: 1, alignItems: 'center', gap: 5, paddingVertical: 10, borderRadius: 12, backgroundColor: active ? T.brand : T.fillTertiary }}>
                   <SF name={s.icon as any} size={17} color={active ? '#fff' : T.labelSecondary} />
                   <Text style={[ty.caption2Em, { color: active ? '#fff' : T.labelSecondary }]} numberOfLines={1}>{s.label}</Text>
@@ -202,6 +244,14 @@ export function BookDetailScreen({ route, navigation }: Props) {
                 ))}
               </View>
             </View>
+          ) : null}
+          {shelfStatus ? (
+            <Pressable onPress={confirmRemoveShelf} disabled={busyShelf} hitSlop={8}
+              accessibilityRole="button" accessibilityLabel="Убрать книгу с полки"
+              style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' }}>
+              <SF name="trash.fill" size={13} color={T.red} />
+              <Text style={[ty.footnoteEm, { color: T.red }]}>Убрать с полки</Text>
+            </Pressable>
           ) : null}
         </View>
 

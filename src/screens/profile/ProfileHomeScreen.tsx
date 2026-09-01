@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, ScrollView, Linking, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
@@ -15,6 +15,7 @@ import { Capsule, IconCircle, ListSection, ListRow, Segmented, ty } from '../../
 import { Ring } from '../../components/talentUI';
 import { GardnerChart } from '../../components/GardnerChart';
 import { fetchMyShelf, ShelfEntry } from '../../data/books';
+import { onShelfChanged } from '../../state/shelfBus';
 import { imgUrl } from '../../data/api';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useEnrollment } from '../../state/EnrollmentContext';
@@ -26,7 +27,7 @@ import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { deleteAccountAndClear, signOutAndClear } from '../../state/signOut';
 import { useAchievements } from '../../data/achievements';
-import { GALLUP_DOMAIN_META, mbtiName, fmtList, effectiveResumeCompleteness } from '../../data/talentslab';
+import { GALLUP_DOMAIN_META, mbtiName, fmtList, effectiveResumeCompleteness, applyGallupOrder, loadGallupOrder } from '../../data/talentslab';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
 import { fetchCommunityHome, SportActivity, Trip } from '../../data/community';
@@ -38,7 +39,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { t } = useLang();
   const { unread } = useNotifications();
   const { challenge, isParticipant } = useChallenge();
-  const { has } = useEnrollment();
+  const { has, statusOf } = useEnrollment();
   const { courses, progress, reload: reloadCourses } = useCourses();
   const { applied, jobs } = useCareer();
   const { completeness: localCompleteness, answers } = useResume();
@@ -53,16 +54,30 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
   // Personal reading shelf (books read / currently reading), cache-first so it
   // shows instantly; tapping opens the book or the Library in the Обучение tab.
+  // Порядок талантов пользователь настраивает в «Профиле талантов»; читаем его
+  // при каждом возврате на экран, иначе здесь оставался серверный порядок.
+  const [gallupOrder, setGallupOrder] = React.useState<string[]>([]);
   const [shelf, setShelf] = useState<ShelfEntry[]>([]);
   const [communityActivities, setCommunityActivities] = useState<{ trips: Trip[]; sport: SportActivity[] }>({ trips: [], sport: [] });
-  useEffect(() => {
-    let alive = true;
-    (async () => { if (!isSignedIn) return; try { const tok = await getToken(); const s = await fetchMyShelf(tok); if (alive) setShelf(s); } catch {} })();
-    return () => { alive = false; };
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
+  const loadShelf = useCallback(async () => {
+    if (!isSignedIn) { setShelf([]); return; }
+    try { const tok = await getTokenRef.current(); setShelf(await fetchMyShelf(tok)); } catch {}
   }, [isSignedIn]);
+  useEffect(() => { loadShelf(); }, [loadShelf]);
+  // Полку могли изменить на экране книги — обновляем «Мои книги» сразу, без
+  // перезапуска приложения (см. shelfBus). Ссылка на актуальный загрузчик,
+  // чтобы подписка оформлялась один раз.
+  const loadShelfRef = useRef(loadShelf);
+  loadShelfRef.current = loadShelf;
+  useEffect(() => onShelfChanged(() => { loadShelfRef.current(); }), []);
   // Re-read the anketa/profile whenever the screen comes back into focus, so
   // edits made in the form show up immediately (silent = no full-screen spinner).
-  useFocusEffect(React.useCallback(() => { reload(true); }, [reload]));
+  useFocusEffect(React.useCallback(() => {
+    reload(true);
+    loadGallupOrder().then(setGallupOrder);
+  }, [reload]));
 
   const loadCommunityActivities = async () => {
     const data = await fetchCommunityHome();
@@ -71,8 +86,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
   useEffect(() => { if (isSignedIn) loadCommunityActivities(); }, [isSignedIn]);
   const reading = shelf.filter((s) => s.status === 'reading');
   const readBooks = shelf.filter((s) => s.status === 'read');
-  const openBook = (id: string) => navigation.getParent()?.navigate('LMSTab', { screen: 'BookDetail', params: { bookId: id } } as never);
-  const openLibrary = () => navigation.getParent()?.navigate('LMSTab', { screen: 'Books' } as never);
+  const openBook = (id: string) => navigation.getParent()?.navigate('LMSTab', { screen: 'BookDetail', params: { bookId: id }, initial: false } as never);
+  const openLibrary = () => navigation.getParent()?.navigate('LMSTab', { screen: 'Books', initial: false } as never);
 
   // Let users review and lift blocks (App Store 1.2 requires blocking be reversible).
   const manageBlocked = () => {
@@ -88,8 +103,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
   // returns to the profile (not the Career tab).
   const editAnketa = () => navigation.navigate('Resume' as never);
   // Open the live challenge tracker in the Community tab (was wrongly going to Career).
-  const goChallenge = () => navigation.getParent()?.navigate('CommunityTab', { screen: 'ChallengeDetail', params: { challengeId: challenge.id } } as never);
-  const goTrip = (tripId: string) => navigation.getParent()?.navigate('CommunityTab', { screen: 'TripDetail', params: { tripId } } as never);
+  const goChallenge = () => navigation.getParent()?.navigate('CommunityTab', { screen: 'ChallengeDetail', params: { challengeId: challenge.id }, initial: false } as never);
+  const goTrip = (tripId: string) => navigation.getParent()?.navigate('CommunityTab', { screen: 'TripDetail', params: { tripId }, initial: false } as never);
   const goSport = () => navigation.getParent()?.navigate('CommunityTab', { screen: 'CommunityHome', params: { focus: 'sport' } } as never);
 
   const handleSignOut = () => {
@@ -209,7 +224,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   );
 
   return (
-    <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await Promise.all([reload(), loadCommunityActivities()]); }}>
+    <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await Promise.all([reload(), loadCommunityActivities(), loadShelf()]); }}>
       <PageIntro page="profile" />
       <NavBarLarge title={t('profile')} trailing={(
         <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
@@ -267,7 +282,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
         <ListSection header={tr('Мои активности')} style={{ marginBottom: 18 }}>
           {myTrips.map((trip, index) => (
             <ListRow key={`trip:${trip.id}`} leading={<IconCircle icon="map.fill" color="#fff" bg={T.brand} size={30} />}
-              title={trip.title} subtitle={`${tr('Ваша поездка')}${trip.date ? ` · ${trip.date}` : ''}`}
+              title={trip.title} subtitle={`${statusOf(`trip:${trip.id}`) === 'pending' ? tr('Заявка на рассмотрении') : tr('Ваша поездка')}${trip.date ? ` · ${trip.date}` : ''}`}
               chevron onPress={() => goTrip(trip.id)} last={index === myTrips.length - 1 && mySport.length === 0} />
           ))}
           {mySport.map((activity, index) => (
@@ -332,7 +347,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
             ) : null}
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-            {profile!.gallup.slice(0, 10).map((g) => {
+            {applyGallupOrder(profile!.gallup, gallupOrder).slice(0, 10).map((g) => {
               const c = GALLUP_DOMAIN_META[g.domain]?.color ?? T.brand;
               return (
                 <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c + '18' }}>

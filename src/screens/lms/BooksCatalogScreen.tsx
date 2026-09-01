@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -11,6 +11,7 @@ import { Chip, SectionHeader, ty } from '../../components/ui';
 import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
 import { fetchBooks, fetchMyShelf, BookListItem, ShelfEntry, ShelfStatus } from '../../data/books';
+import { onShelfChanged } from '../../state/shelfBus';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Books'>;
@@ -49,6 +50,13 @@ export function BooksCatalogScreen({ navigation }: Props) {
   }, [getToken, isSignedIn]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Полку могли изменить на экране книги — обновляем каталог сразу, без
+  // ручного «потянуть вниз» (см. shelfBus). Ссылка на актуальный загрузчик,
+  // чтобы подписка оформлялась один раз.
+  const loadRef = useRef(load);
+  loadRef.current = load;
+  useEffect(() => onShelfChanged(() => { loadRef.current(); }), []);
 
   const genres = useMemo(
     () => ['Все', ...Array.from(new Set(books.flatMap((b) => b.genres))).sort()],
@@ -163,15 +171,23 @@ export function BooksCatalogScreen({ navigation }: Props) {
                   </View>
                   <Text style={[ty.subheadEm, { color: T.label, marginTop: 8 }]} numberOfLines={2}>{b.title}</Text>
                   <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{b.author}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  {/* Звезда — редакционная оценка Divergents, человечки — средняя
+                      оценка читателей со счётчиком. Это разные числа. */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                     {b.rating ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }} accessibilityLabel={`Оценка Divergents ${b.rating.toFixed(1)}`}>
                         <SF name="star.fill" size={11} color="#FF9500" />
                         <Text style={[ty.caption2Em, { color: T.labelSecondary }]}>{b.rating.toFixed(1)}</Text>
                       </View>
                     ) : null}
+                    {b.userRating ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }} accessibilityLabel={`Оценка читателей ${b.userRating.toFixed(1)}, оценок: ${b.userRatingCount ?? 0}`}>
+                        <SF name="person.2.fill" size={10} color={T.labelTertiary} />
+                        <Text style={[ty.caption2, { color: T.labelTertiary }]}>{b.userRating.toFixed(1)} · {b.userRatingCount ?? 0}</Text>
+                      </View>
+                    ) : null}
                     {b.comments ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }} accessibilityLabel={`Комментариев: ${b.comments}`}>
                         <SF name="bubble.left.fill" size={10} color={T.labelTertiary} />
                         <Text style={[ty.caption2, { color: T.labelTertiary }]}>{b.comments}</Text>
                       </View>

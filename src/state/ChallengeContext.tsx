@@ -4,13 +4,14 @@
 // its full team are loaded from the website API; the user's daily inputs are
 // persisted on-device so progress survives app launches.
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { AppState, Platform } from 'react-native';
+import { Alert, AppState, Platform } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
 import { loadJSON, saveJSON } from './persist';
 import {
   DEFAULT_CHALLENGE, Challenge, ChallengeTask, Member, fetchActiveChallenge, fetchChallenges, postChallengeProgress,
   challengePointsToday, challengeBonusToday, taskPoints, taskBonus, taskDone, totalFlags,
+  DEFAULT_REPORT_DEADLINE_HOUR,
 } from '../data/community';
 
 export interface RankedMember extends Member { rank: number; points: number }
@@ -31,6 +32,8 @@ interface ChallengeState {
   // Team-wide disciplinary totals — visible to every member.
   teamFlags: number;
   teamPenalty: number;
+  /** Перечитать активный челлендж с сервера (например, после его удаления). */
+  refresh: () => Promise<boolean>;
 }
 
 const Ctx = createContext<ChallengeState | null>(null);
@@ -131,8 +134,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const [timeTick, setTimeTick] = useState(() => Date.now());
   const savedRef = useRef<SavedProgress | null>(null);
   const pendingRef = useRef<SavedPending | null>(null);
-  const reminderRef = useRef<SavedReminder | null>(null);
   const flushingRef = useRef(false);
+  // Про закрытый день предупреждаем один раз за день, а не на каждую отметку.
+  const deadlineNoticeRef = useRef<string | null>(null);
   // Keep the latest getToken in a ref so the load effect can run once without
   // re-subscribing every time Clerk hands back a new function identity.
   const getTokenRef = useRef(getToken);
@@ -144,9 +148,24 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     saveJSON(PENDING_KEY, pending);
   }, []);
 
-  const saveReminder = useCallback((reminder: SavedReminder | null) => {
-    reminderRef.current = reminder;
-    saveJSON(REMINDER_KEY, reminder);
+  // Отметку, которую сервер не принял из-за дедлайна, из очереди убираем: иначе
+  // приложение переотправляло бы её каждые 20 секунд до конца челленджа.
+  const dropPending = useCallback((challengeId: string, day: number, taskId: string) => {
+    const latest = pendingRef.current;
+    if (!latest || latest.id !== challengeId || latest.day !== day) return;
+    const remaining = latest.updates.filter((item) => item.taskId !== taskId);
+    savePending(remaining.length ? { ...latest, updates: remaining } : null);
+  }, [savePending]);
+
+  const warnDeadlinePassed = useCallback((challengeId: string, day: number, hour?: number) => {
+    const key = `${challengeId}:${day}`;
+    if (deadlineNoticeRef.current === key) return;
+    deadlineNoticeRef.current = key;
+    const h = typeof hour === 'number' && hour > 0 ? hour : DEFAULT_REPORT_DEADLINE_HOUR;
+    Alert.alert(
+      'Отметки на сегодня закрыты',
+      `Изменения принимаются до ${h}:00 по Алматы. Эта отметка не сохранена и в зачёт дня не попадёт.`,
+    );
   }, []);
 
   // Refresh without replacing valid on-screen data during a temporary outage.
@@ -206,7 +225,6 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
         const pending = await loadJSON<SavedPending | null>(PENDING_KEY, null);
         pendingRef.current = pending;
         if (alive) setPendingCount(pending?.updates.length ?? 0);
-        reminderRef.current = await loadJSON<SavedReminder | null>(REMINDER_KEY, null);
         if (!isSignedIn) {
           if (alive) { setChallenge(DEFAULT_CHALLENGE); setMembers([]); }
           return;
@@ -226,7 +244,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   // Every tap is persisted locally first and queued before the network request.
   // A failed request remains in the queue and is retried while the app is open,
   // so there is no separate end-of-day report the participant can forget.
-  const syncTask = useCallback((challengeId: string, day: number, body: PendingUpdate) => {
+  const syncTask = useCallback((challengeId: string, day: number, body: PendingUpdate, rollback?: () => void) => {
     if (!challengeId || challengeId === DEFAULT_CHALLENGE.id) return;
     const previous = pendingRef.current;
     const updates = previous?.id === challengeId && previous.day === day ? previous.updates : [];
@@ -237,8 +255,17 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     });
     Promise.resolve(getTokenRef.current())
       .then(async (token) => {
-        const ok = await postChallengeProgress(challengeId, body, token);
-        if (!ok) return;
+        const res = await postChallengeProgress(challengeId, body, token);
+        if (!res.ok) {
+          // День закрыт — оптимистичную запись откатываем, иначе на экране
+          // «сохранено», а сервер этой отметки не знает.
+          if (res.reason === 'deadline_passed') {
+            dropPending(challengeId, day, body.taskId);
+            rollback?.();
+            warnDeadlinePassed(challengeId, day, res.deadlineHour);
+          }
+          return;
+        }
         const latest = pendingRef.current;
         if (!latest || latest.id !== challengeId || latest.day !== day) return;
         const queued = latest.updates.find((item) => item.taskId === body.taskId);
@@ -247,7 +274,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
         savePending(remaining.length ? { ...latest, updates: remaining } : null);
       })
       .catch(() => {});
-  }, [savePending]);
+  }, [dropPending, savePending, warnDeadlinePassed]);
 
   const flushPending = useCallback(async () => {
     if (flushingRef.current || !isSignedIn || challenge.id === DEFAULT_CHALLENGE.id) return;
@@ -261,8 +288,18 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = await getTokenRef.current();
       for (const update of [...pending.updates]) {
-        const ok = await postChallengeProgress(challenge.id, update, token);
-        if (!ok) break;
+        const res = await postChallengeProgress(challenge.id, update, token);
+        if (!res.ok) {
+          if (res.reason !== 'deadline_passed') break;
+          // Отложенная отметка опоздала: выбрасываем её из очереди и сбрасываем
+          // локальный снимок дня, чтобы экран показал то, что реально у сервера.
+          dropPending(challenge.id, challenge.currentDay, update.taskId);
+          warnDeadlinePassed(challenge.id, challenge.currentDay, res.deadlineHour);
+          savedRef.current = null;
+          saveJSON(PROGRESS_KEY, null);
+          refreshLive();
+          continue;
+        }
         const latest = pendingRef.current;
         if (!latest || latest.id !== challenge.id || latest.day !== challenge.currentDay) break;
         const queued = latest.updates.find((item) => item.taskId === update.taskId);
@@ -274,7 +311,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     } finally {
       flushingRef.current = false;
     }
-  }, [challenge.id, challenge.currentDay, isSignedIn, savePending]);
+  }, [challenge.id, challenge.currentDay, dropPending, isSignedIn, refreshLive, savePending, warnDeadlinePassed]);
 
   // Retry failed writes while the app is open.
   useEffect(() => {
@@ -317,64 +354,21 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [challenge.id, challenge.currentDay, flushPending, isSignedIn, loading, refreshLive]);
 
-  // One-shot 22:00 reminder for a participant who still has any incomplete
-  // task. It is scheduled locally, so iOS/Android can deliver it while the app
-  // is backgrounded or terminated. Completing every task cancels it.
+  // Напоминание «отметьте цели» в 22:00 шлёт СЕРВЕР (lib/challenge-reminder.ts)
+  // — тем же текстом, по реальным отметкам и с защитой от повтора. Локальное
+  // расписание давало участнику второе уведомление через минуту, поэтому его
+  // здесь больше нет: гасим только то, что запланировала прошлая версия.
   useEffect(() => {
-    if (loading || Platform.OS === 'web') return;
+    if (Platform.OS === 'web') return;
     let cancelled = false;
-    const participant = challenge.id !== DEFAULT_CHALLENGE.id && members.some((member) => member.isMe);
-    const incomplete = challenge.tasks.filter((task) => !taskDone(task));
     (async () => {
-      const previous = reminderRef.current;
-      const sameDay = previous?.id === challenge.id && previous.day === challenge.currentDay;
-      if (!isSignedIn || !participant || challenge.currentDay <= 0 || challenge.eliminated || incomplete.length === 0) {
-        if (previous) {
-          await Notifications.cancelScheduledNotificationAsync(previous.notificationId).catch(() => {});
-          if (!cancelled) saveReminder(null);
-        }
-        return;
-      }
-      if (sameDay) return;
-      if (previous) {
-        await Notifications.cancelScheduledNotificationAsync(previous.notificationId).catch(() => {});
-        if (!cancelled) saveReminder(null);
-      }
-      let { status } = await Notifications.getPermissionsAsync();
-      if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;
-      if (cancelled || status !== 'granted') return;
-
-      const now = Date.now();
-      const todayAt22 = almatyTimeToday(22, 0, now);
-      const todayClose = almatyTimeToday(23, 1, now);
-      // If the app first loads between 22:00 and 23:01, deliver a catch-up
-      // reminder immediately. After closure, prepare tomorrow's reminder.
-      const reminderAt = now < todayAt22
-        ? todayAt22
-        : now < todayClose
-          ? now + 2_000
-          : todayAt22 + 24 * 60 * 60 * 1000;
-      const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Челлендж: отметьте цели',
-          body: `Не выполнено: ${incomplete.map((task) => task.title).join(', ')}. Внесите отметки до 23:00.`,
-          sound: 'default',
-          data: { target: { tab: 'CommunityTab', screen: 'ChallengeDetail', params: { challengeId: challenge.id } } },
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: new Date(reminderAt),
-          ...(Platform.OS === 'android' ? { channelId: 'challenge-reminders' } : {}),
-        },
-      });
-      if (cancelled) {
-        await Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => {});
-        return;
-      }
-      saveReminder({ id: challenge.id, day: challenge.currentDay, notificationId, scheduledFor: new Date(reminderAt).toISOString() });
+      const previous = await loadJSON<SavedReminder | null>(REMINDER_KEY, null);
+      if (!previous || cancelled) return;
+      await Notifications.cancelScheduledNotificationAsync(previous.notificationId).catch(() => {});
+      saveJSON(REMINDER_KEY, null);
     })().catch(() => {});
     return () => { cancelled = true; };
-  }, [challenge.currentDay, challenge.eliminated, challenge.id, challenge.tasks, isSignedIn, loading, members, saveReminder]);
+  }, []);
 
   const persist = useCallback((c: Challenge) => {
     const snap = toSaved(c);
@@ -382,24 +376,45 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     saveJSON(PROGRESS_KEY, snap);
   }, []);
 
+  // Откат оптимистичной записи, когда сервер отметку не принял.
+  const revertTask = useCallback((taskId: string, restore: { value?: number; done?: boolean }) => {
+    setChallenge((prev) => {
+      const next = {
+        ...prev,
+        tasks: prev.tasks.map((t) => {
+          if (t.id !== taskId) return t;
+          if (t.kind === 'metric' && restore.value !== undefined) return { ...t, current: restore.value };
+          if (t.kind === 'binary' && restore.done !== undefined) return { ...t, done: restore.done };
+          return t;
+        }),
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
   const setMetric = useCallback((taskId: string, value: number) => {
     const safe = Math.max(0, value);
     setChallenge((prev) => {
       if (isChallengeDayLocked(prev)) return prev;
+      const before = prev.tasks.find((t) => t.id === taskId);
+      const previousValue = before && before.kind === 'metric' ? before.current : 0;
       const next = {
         ...prev,
         tasks: prev.tasks.map((t) =>
           t.id === taskId && t.kind === 'metric' ? { ...t, current: safe } : t),
       };
       persist(next);
-      syncTask(next.id, next.currentDay, { taskId, value: safe });
+      syncTask(next.id, next.currentDay, { taskId, value: safe }, () => revertTask(taskId, { value: previousValue }));
       return next;
     });
-  }, [persist, syncTask]);
+  }, [persist, revertTask, syncTask]);
 
   const toggleBinary = useCallback((taskId: string) => {
     setChallenge((prev) => {
       if (isChallengeDayLocked(prev)) return prev;
+      const before = prev.tasks.find((t) => t.id === taskId);
+      const previousDone = before && before.kind === 'binary' ? before.done : false;
       const next = {
         ...prev,
         tasks: prev.tasks.map((t) =>
@@ -408,14 +423,22 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       const updated = next.tasks.find((t) => t.id === taskId);
       const done = updated && updated.kind === 'binary' ? updated.done : undefined;
       persist(next);
-      if (done !== undefined) syncTask(next.id, next.currentDay, { taskId, done });
+      if (done !== undefined) {
+        syncTask(next.id, next.currentDay, { taskId, done }, () => revertTask(taskId, { done: previousDone }));
+      }
       return next;
     });
-  }, [persist, syncTask]);
+  }, [persist, revertTask, syncTask]);
 
   const value = useMemo<ChallengeState>(() => {
-    const pointsToday = challengePointsToday(challenge.tasks);
-    const bonusToday = challengeBonusToday(challenge.tasks);
+    const me = members.find((m) => m.isMe) ?? null;
+    const myEliminated = me?.eliminated === true || challenge.eliminated === true;
+    // Коэффициент участника приходит с сервера и умножает ВЕСЬ день — без него
+    // участница с ×1.5 весь день видела две трети своих настоящих баллов.
+    const myCoefficient = me?.coefficient ?? 1;
+    // У выбывшего очки заморожены сервером: живого счётчика за сегодня нет.
+    const pointsToday = myEliminated ? (me?.day ?? 0) : challengePointsToday(challenge.tasks, myCoefficient);
+    const bonusToday = myEliminated ? 0 : challengeBonusToday(challenge.tasks);
 
     // Every member's total includes today's server-reported points. For the
     // signed-in user, use the local optimistic value so the row updates instantly.
@@ -466,8 +489,13 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       }));
 
     const myRank = ranked.find((m) => m.isMe)?.rank ?? 0;
-    // Sum ALL team members (full roster from the server), not a subset.
-    const teamPoints = ranked.reduce((s, m) => s + m.points, 0);
+    // Очки команды берём у сервера: рядом с этим числом показывается место
+    // команды, тоже серверное, а локальная сумма (с подстановкой своих
+    // сегодняшних баллов) давала другую цифру, чем экран «Рейтинг команд».
+    const serverTeamPoints = (challenge.teamStandings ?? []).find((t) => t.isMine)?.points;
+    const teamPoints = typeof serverTeamPoints === 'number'
+      ? serverTeamPoints
+      : ranked.reduce((s, m) => s + m.points, 0);
     // Team-wide discipline totals — every member sees the team's 🚩 and штрафы.
     const teamFlags = ranked.reduce((s, m) => s + totalFlags(m.flags), 0);
     const teamPenalty = ranked.reduce((s, m) => {
@@ -481,8 +509,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       dayLocked: isChallengeDayLocked(challenge, timeTick),
       setMetric, toggleBinary, pointsToday, bonusToday,
       leaderboard: ranked, myRank, teamPoints, teamFlags, teamPenalty,
+      refresh: refreshLive,
     };
-  }, [challenge, members, loading, pendingCount, setMetric, timeTick, toggleBinary]);
+  }, [challenge, members, loading, pendingCount, setMetric, timeTick, toggleBinary, refreshLive]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

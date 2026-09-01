@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, ActivityIndicator, Share, Linking, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator, Share, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,7 +15,7 @@ import { useEnrollment } from '../../state/EnrollmentContext';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useAuth } from '@clerk/clerk-expo';
-import { formatPrice, stripHtml, API_BASE, imgUrl, getSignInTicket, webAuthedUrl } from '../../data/api';
+import { stripHtml, API_BASE, imgUrl } from '../../data/api';
 import { Course } from '../../data/courses';
 import { LMSStackParams } from '../../navigation/types';
 
@@ -98,6 +98,18 @@ export function CourseDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  // Ownership genuinely unknown (the "Мои курсы" fetch failed and nothing local
+  // confirms access). Showing the sales page here would tell a paying user to
+  // buy the course again after a cold start with no connectivity.
+  if (!owned && !isFree && course.source === 'live' && my.isSignedIn && my.error) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.systemBg }}>
+        <NavHeader transparent hideBackLabel onBack={() => navigation.goBack()} />
+        <ErrorState message={tr('Не удалось проверить доступ к курсу. Проверьте подключение и попробуйте снова.')} onRetry={() => my.reload()} />
+      </View>
+    );
+  }
+
   return owned
     ? <OwnedCourse course={course} courseId={courseId} navigation={navigation} />
     : <SalesCourse course={course} courseId={courseId} navigation={navigation} />;
@@ -110,7 +122,10 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
   const { detailLoading, progress, currentLessonIndex, lessonStatus } = useCourses();
   const p = progress(courseId);
   const curIdx = currentLessonIndex(courseId);
-  const curLesson = course.lessons[curIdx];
+  // curIdx === -1 → every lesson is done. Re-entry starts the course over
+  // instead of silently reopening the last lesson under a «Продолжить» label.
+  const allDone = course.lessons.length > 0 && curIdx === -1;
+  const curLesson = allDone ? course.lessons[0] : course.lessons[curIdx];
   const chaptersLoading = detailLoading[courseId] && course.lessons.length === 0;
 
   const meta = [
@@ -152,8 +167,15 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
               <Text style={[ty.title3, { color: T.brand }]} numberOfLines={1}>{Math.round(p * 100)}%</Text>
             </View>
             <View style={{ marginTop: 10 }}><ProgressBar value={p} /></View>
-            {curLesson ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>{tr('Урок')} {curLesson.n} — {curLesson.title}</Text> : null}
-            <PrimaryButton label={p > 0 ? tr('Продолжить') : tr('Начать курс')} icon="play.fill" style={{ marginTop: 14 }}
+            {allDone ? (
+              <Text style={[ty.subhead, { color: T.green, marginTop: 6 }]} numberOfLines={1}>{tr('Курс пройден')}</Text>
+            ) : curLesson ? (
+              <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6 }]} numberOfLines={1}>{tr('Урок')} {curLesson.n} — {curLesson.title}</Text>
+            ) : null}
+            <PrimaryButton
+              label={allDone ? tr('Пройти заново') : p > 0 ? tr('Продолжить') : tr('Начать курс')}
+              icon={allDone ? 'arrow.clockwise' : 'play.fill'}
+              style={{ marginTop: 14 }}
               onPress={() => curLesson && navigation.navigate('Video', { courseId, lessonId: curLesson.id })} />
           </View>
         ) : null}
@@ -201,14 +223,8 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
 // ─── Locked / paid course → sales landing page ─────────────────────
 function SalesCourse({ course, courseId, navigation }: { course: Course; courseId: string; navigation: Nav }) {
   const { T } = useTheme();
-  const { getToken } = useAuth();
   const insets = useSafeAreaInsets();
   const { detailLoading } = useCourses();
-  const buy = async () => {
-    const path = `/courses/${courseId}`;
-    try { const t = await getToken(); const ticket = await getSignInTicket(t); Linking.openURL(webAuthedUrl(ticket, path)); }
-    catch { Linking.openURL(`${API_BASE}${path}`); }
-  };
   const freeLesson = course.lessons.find((l) => l.isFree);
   const chaptersLoading = detailLoading[courseId] && course.lessons.length === 0;
 
@@ -216,12 +232,11 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
     { icon: 'play.circle.fill', t: `${course.chaptersCount ?? course.lessons.length} видеоуроков` },
     { icon: 'doc.fill', t: tr('Материалы и конспекты') },
     { icon: 'person.3.fill', t: tr('Обсуждение с участниками') },
-    { icon: 'checkmark.seal.fill', t: tr('Доступ на 1 год') },
   ];
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + (freeLesson ? 100 : 30) }}>
         {/* Cover */}
         <View style={{ height: 300 }}>
           {course.imageUrl
@@ -236,17 +251,18 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
           </View>
         </View>
 
-        {/* Price card */}
+        {/* Курс без доступа. Ни цены, ни кнопки покупки: правила App Store
+            запрещают продавать цифровой контент мимо встроенных покупок и
+            подталкивать к оплате на стороне. Курсы открываются на сайте, и
+            купленный курс здесь просто становится доступным. */}
         <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, ...shadows.card }}>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-            <Text style={[ty.title1, { color: T.label }]} numberOfLines={1}>{formatPrice(course.price)}</Text>
-            <Text style={[ty.subhead, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{tr('единоразово')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <SF name="lock.fill" size={15} color={T.labelSecondary} />
+            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{tr('Курс пока не открыт')}</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-            <SF name="lock.fill" size={12} color={T.labelSecondary} />
-            <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('Полный доступ открывается после покупки')}</Text>
-          </View>
-          <PrimaryButton label={`Купить · ${formatPrice(course.price)}`} icon="cart.fill" style={{ marginTop: 14 }} onPress={buy} />
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6 }]}>
+            {tr('Когда доступ будет открыт, курс появится в разделе «Мои курсы».')}
+          </Text>
           {freeLesson ? (
             <PrimaryButton label={tr('Смотреть бесплатный урок')} icon="play.fill" color="transparent" style={{ marginTop: 8 }}
               onPress={() => navigation.navigate('Video', { courseId, lessonId: freeLesson.id })} />
@@ -297,14 +313,14 @@ function SalesCourse({ course, courseId, navigation }: { course: Course; courseI
         ) : null}
       </ScrollView>
 
-      {/* Sticky buy bar */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View>
-          <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{formatPrice(course.price)}</Text>
-          <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{tr('оплата на divergents-lms.kz')}</Text>
+      {/* Закреплённая панель: только бесплатный урок, если он есть.
+          Кнопки покупки нет — см. комментарий к карточке выше. */}
+      {freeLesson ? (
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+          <PrimaryButton label={tr('Смотреть бесплатный урок')} icon="play.fill"
+            onPress={() => navigation.navigate('Video', { courseId, lessonId: freeLesson.id })} />
         </View>
-        <PrimaryButton label={tr('Купить курс')} icon="cart.fill" style={{ flex: 1 }} onPress={buy} />
-      </View>
+      ) : null}
     </View>
   );
 }

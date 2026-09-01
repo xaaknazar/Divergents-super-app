@@ -3,7 +3,7 @@ import type { ExpoConfig } from 'expo/config';
 const googleMapsApiKey = process.env.GOOGLE_MAPS_ANDROID_KEY?.trim();
 
 const config: ExpoConfig = {
-  name: 'Divergents Superapp',
+  name: 'Divergents',
   slug: 'divergents-super-app',
   owner: 'xaknazar',
   version: '1.0.0',
@@ -14,12 +14,13 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   splash: { image: './assets/splash.png', resizeMode: 'contain', backgroundColor: '#234088' },
   ios: {
-    supportsTablet: true,
-    usesAppleSignIn: true,
+    // v1 is verified and marketed for iPhone. Keeping iPad disabled also avoids
+    // advertising an untested tablet layout in the initial App Store release.
+    supportsTablet: false,
     bundleIdentifier: 'kz.divergents.app',
     // Pinned so a LOCAL build (eas build --local) produces an explicit number
     // instead of asking the EAS server. Bump this for every new TestFlight upload.
-    buildNumber: '44',
+    buildNumber: '51',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       UIBackgroundModes: ['audio'],
@@ -29,7 +30,7 @@ const config: ExpoConfig = {
       NSPhotoLibraryAddUsageDescription: 'Divergents сохраняет фото в вашу медиатеку при работе с местами на карте сообщества.',
       NSCameraUsageDescription: 'Divergents использует камеру, чтобы делать снимки для мест на карте сообщества.',
       NSMicrophoneUsageDescription: 'Divergents использует микрофон для записи голосовых постов в каналах.',
-      CFBundleDisplayName: 'Divergents Superapp',
+      CFBundleDisplayName: 'Divergents',
     },
   },
   android: {

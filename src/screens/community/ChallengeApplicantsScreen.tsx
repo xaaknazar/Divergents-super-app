@@ -97,7 +97,13 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
         const token = await getToken();
         const ok = await assignTeamCaptain(challengeId, sel.teamId!, sel.applicantUserId, token);
         setBusy(false);
-        if (ok) { hSuccess(); Alert.alert('Готово', `Капитан команды «${sel.teamName}» назначен.`); }
+        if (ok) {
+          hSuccess();
+          // Без перезагрузки экран (и страница челленджа) показывали прежнего
+          // капитана до перезапуска приложения.
+          load();
+          Alert.alert('Готово', `Капитан команды «${sel.teamName}» назначен.`);
+        }
         else Alert.alert('Ошибка', 'Не удалось назначить капитана.');
       } },
     ]);

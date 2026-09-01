@@ -7,7 +7,10 @@ import { Course } from '../data/courses';
 import { fetchCatalog, fetchCourseDetail, fetchOwnedDetail, markLessonComplete } from '../data/api';
 import { loadJSON, saveJSON } from './persist';
 
-export type LessonStatus = 'done' | 'current' | 'available' | 'locked';
+// No 'locked': an owned/free course opens every lesson (the sales page is the
+// only place that gates content, and it gates by `isFree`). The old 'locked'
+// state was cosmetic — the rows navigated anyway — so it lied to the user.
+export type LessonStatus = 'done' | 'current' | 'available';
 export type DataSource = 'live' | 'mock' | 'loading';
 
 interface CourseState {
@@ -119,6 +122,24 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
         detail = await fetchCourseDetail(id);
       }
       setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...detail, ...(ownedConfirmed ? { owned: true } : {}) } : c)));
+      // Сервер знает, какие уроки пройдены (в том числе на сайте). Раньше в
+      // приложение попадал только общий процент, поэтому в «Программе курса»
+      // ни один урок не был отмечен, хотя прогресс показывал, скажем, 38%.
+      // Объединяем с локальными отметками, чтобы не потерять отмеченное офлайн.
+      const lessons = detail?.lessons ?? [];
+      const serverDone = lessons.filter((l) => l.completed).map((l) => l.id);
+      if (lessons.length > 0) {
+        const liveIds = new Set(lessons.map((l) => l.id));
+        setCompleted((prev) => {
+          const local = prev[id] ?? [];
+          // Drop ids of chapters that were unpublished or deleted. Without this
+          // completedCount could exceed the lesson count and a course with
+          // unfinished lessons showed 100%.
+          const merged = Array.from(new Set([...local.filter((x) => liveIds.has(x)), ...serverDone]));
+          const same = merged.length === local.length && merged.every((x, i) => x === local[i]);
+          return same ? prev : { ...prev, [id]: merged };
+        });
+      }
     } catch {
       // keep whatever we have (mock courses already include lessons)
     } finally {
@@ -177,22 +198,21 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
       const server = Math.min(1, Math.max(0, (getCourse(id)?.serverProgress ?? 0) / 100));
       return Math.max(local, server);
     };
+    // Index of the first unfinished lesson, or -1 when the whole course is done.
+    // It used to return the last index in that case, so a finished course still
+    // offered «Продолжить» and reopened an already completed lesson.
     const currentLessonIndex = (id: string) => {
       const c = getCourse(id);
       if (!c || c.lessons.length === 0) return 0;
       const done = completed[id] ?? [];
-      const idx = c.lessons.findIndex((l) => !done.includes(l.id));
-      return idx === -1 ? c.lessons.length - 1 : idx;
+      return c.lessons.findIndex((l) => !done.includes(l.id));
     };
     const lessonStatus = (id: string, index: number): LessonStatus => {
       const c = getCourse(id);
-      if (!c || !c.lessons[index]) return 'locked';
+      if (!c || !c.lessons[index]) return 'available';
       const done = completed[id] ?? [];
       if (done.includes(c.lessons[index].id)) return 'done';
-      const cur = currentLessonIndex(id);
-      if (index === cur) return 'current';
-      if (index === cur + 1) return 'available';
-      return 'locked';
+      return index === currentLessonIndex(id) ? 'current' : 'available';
     };
     const isCompleted = (id: string, lessonId: string) => (completed[id] ?? []).includes(lessonId);
 

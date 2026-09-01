@@ -17,6 +17,9 @@ export interface Lesson {
   playbackId?: string | null;
   hlsUrl?: string | null;
   description?: string | null;
+  // Отметка о прохождении с сервера (эндпоинт своего курса). Локальные отметки
+  // живут в CourseContext.completed; сервер — источник правды при входе.
+  completed?: boolean;
 }
 
 export interface Course {

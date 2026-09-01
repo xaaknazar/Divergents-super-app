@@ -26,20 +26,32 @@ function fmtDate(iso: string) {
   } catch { return ''; }
 }
 const initials = (c: ChapterComment) =>
-  ((c.user.firstName?.[0] ?? '') + (c.user.lastName?.[0] ?? '')).toUpperCase() || 'У';
+  (c.user.nickname?.trim()
+    ? c.user.nickname.trim().slice(0, 2)
+    : (c.user.firstName?.[0] ?? '')).toUpperCase() || 'У';
+// Публичное имя автора комментария — псевдоним. ФИО другим пользователям не
+// показываем; пока псевдоним не задан, остаётся только имя (без фамилии).
 const fullName = (c: ChapterComment) =>
-  [c.user.firstName, c.user.lastName].filter(Boolean).join(' ') || 'Участник';
+  c.user.nickname?.trim() || c.user.firstName?.trim() || 'Участник';
 
 export function VideoScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { courseId, lessonId } = route.params;
-  const { getCourse, completeLesson, isCompleted, loadDetail } = useCourses();
+  const { getCourse, completeLesson, isCompleted, loadDetail, detailLoading } = useCourses();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
   const course = getCourse(courseId);
-  const lesson = course?.lessons.find((l) => l.id === lessonId) ?? course?.lessons[0];
+  // Strictly the requested lesson. Falling back to lessons[0] meant a stale deep
+  // link opened a different lesson under the wrong title, and «Завершить урок»
+  // marked THAT lesson done — the «Урок недоступен» state below is the honest answer.
+  const lesson = course?.lessons.find((l) => l.id === lessonId);
+  // Chapters may simply not have been fetched yet (cold start / deep link):
+  // that is "still loading", not "missing". detailLoading is undefined until the
+  // first fetch starts, and false once one has finished.
+  const chaptersPending = !!course && course.lessons.length === 0
+    && course.source === 'live' && detailLoading[courseId] !== false;
   const [tab, setTab] = useState(0);
 
   // Ownership: free, purchased (in "Мои курсы" OR confirmed by owned-detail
@@ -67,6 +79,20 @@ export function VideoScreen({ route, navigation }: Props) {
     if (!hls) return;
     try { player.play(); } catch {}
   }, [hls, player]);
+
+  // Cold start / deep link: the catalog knows the course but not its chapters,
+  // so no lessonId can resolve. Fetch the detail once (with a token when signed
+  // in, to unlock owned HLS) before deciding the lesson is really unavailable.
+  useEffect(() => {
+    if (!course || course.lessons.length > 0 || course.source !== 'live') return;
+    let cancelled = false;
+    (async () => {
+      let token: string | null = null;
+      if (isSignedIn) { try { token = await getToken(); } catch {} }
+      if (!cancelled) loadDetail(courseId, token);
+    })();
+    return () => { cancelled = true; };
+  }, [courseId, course?.id, course?.lessons.length, course?.source, isSignedIn]);
 
   // If the lesson's video URL isn't loaded yet (typically an owned/paid chapter
   // whose Mux HLS only comes from the authed detail endpoint), fetch the course
@@ -122,6 +148,11 @@ export function VideoScreen({ route, navigation }: Props) {
     return (
       <View style={{ flex: 1, backgroundColor: T.systemBg }}>
         <NavHeader transparent hideBackLabel onBack={() => navigation.goBack()} />
+        {chaptersPending ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 }}>
+            <ActivityIndicator color={T.brand} />
+          </View>
+        ) : (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingBottom: 80, gap: 10 }}>
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="play.slash" size={28} color={T.labelTertiary} />
@@ -130,6 +161,7 @@ export function VideoScreen({ route, navigation }: Props) {
           <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Этот урок не найден или ещё не загружен. Вернитесь к курсу и попробуйте снова.')}</Text>
           <PrimaryButton label={tr('Назад к курсу')} icon="chevron.left" onPress={() => navigation.goBack()} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />
         </View>
+        )}
       </View>
     );
   }
@@ -143,7 +175,7 @@ export function VideoScreen({ route, navigation }: Props) {
     if (dlBusy) { await cancelDownload(lesson.id); return; }
     if (downloaded) { await removeDownload(lesson.id); return; }
     if (!audioUrl) { Alert.alert(tr('Аудио недоступно'), tr('Для этого урока пока нет аудиоверсии.')); return; }
-    const okDl = await downloadLesson({ lessonId: lesson.id, courseId, courseTitle: course.title, title: lesson.title, n: lesson.n, owned: true }, audioUrl);
+    const okDl = await downloadLesson({ lessonId: lesson.id, courseId, courseTitle: course.title, title: lesson.title, n: lesson.n }, audioUrl);
     if (!okDl) Alert.alert(tr('Не удалось скачать'), tr('Проверьте подключение и попробуйте снова.'));
   };
   const attachments = course.attachments ?? [];
@@ -214,7 +246,7 @@ export function VideoScreen({ route, navigation }: Props) {
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
               <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1}>{tr('Урок по подписке')}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Купите курс на сайте, чтобы открыть все уроки')}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Этот урок откроется вместе с доступом к курсу')}</Text>
             </View>
           ) : unavailable ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>

@@ -1,9 +1,17 @@
-// Channels + posts (loaded from the website API), plus per-channel
-// subscriptions, join requests, unread tracking and post likes. Paid channels
-// were cut for v1 — only free tiers ('open', 'request') remain.
+// Channels + posts (loaded from the website API) and the signed-in user's
+// membership in them. Paid channels were cut for v1 — only free tiers
+// ('open', 'request') remain.
+//
+// Членство — за сервером. Раньше список подписок жил только в локальном
+// состоянии и никем не заполнялся, поэтому «Вы участник», счётчик непрочитанных
+// и лайки были мертвы. Теперь единственный источник правды — /api/mobile/me/channels
+// (и ответ POST /channels/:id/join), а локально хранится только то, чего на
+// сервере нет вовсе: отметка «последний просмотренный пост» для бейджа.
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useAuth } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
 import { Channel, ChannelPost, fetchChannelData } from '../data/channel';
+import { fetchMyChannelMemberships, joinChannel } from '../data/api';
 
 interface ChannelState {
   channels: Channel[];
@@ -13,36 +21,36 @@ interface ChannelState {
   getChannel: (id: string) => Channel | undefined;
   postsByChannel: (id: string) => ChannelPost[];
   getPost: (id: string) => ChannelPost | undefined;
-  joined: string[];
-  requested: string[];
+  // Состояние членства с сервера: 'subscribed' | 'approved' | 'requested'.
+  memberships: Record<string, string>;
   isJoined: (id: string) => boolean;
-  isRequested: (id: string) => boolean;
-  join: (id: string) => void;
-  leave: (id: string) => void;
-  request: (id: string) => void;
-  approved: string[];
-  isApproved: (id: string) => boolean;
-  approve: (id: string) => void;
+  join: (id: string) => Promise<string | null>;
   unread: (id: string) => number;
   markSeen: (id: string) => void;
-  likes: string[];
-  isLiked: (id: string) => boolean;
-  toggleLike: (id: string) => void;
 }
 
 const Ctx = createContext<ChannelState | null>(null);
 
 export function ChannelProvider({ children }: { children: React.ReactNode }) {
+  const { getToken } = useAuth();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [posts, setPosts] = useState<ChannelPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const [joined, setJoined] = useState<string[]>([]);
-  const [requested, setRequested] = useState<string[]>([]);
-  const [approved, setApproved] = useState<string[]>([]);
+  const [memberships, setMemberships] = useState<Record<string, string>>({});
   const [seen, setSeen] = useState<Record<string, number>>({});
-  const [likes, setLikes] = useState<string[]>([]);
+
+  // Clerk's getToken is not guaranteed to be referentially stable; reading it
+  // through a ref keeps reload()/join() stable so they can't retrigger effects.
+  const getTokenRef = useRef(getToken);
+  useEffect(() => { getTokenRef.current = getToken; }, [getToken]);
+
+  const reloadMemberships = useCallback(async () => {
+    let token: string | null = null;
+    try { token = await getTokenRef.current(); } catch { token = null; }
+    setMemberships(await fetchMyChannelMemberships(token));
+  }, []);
 
   // Mirror the latest channels into a ref so reload() can read the current count
   // on failure without depending on `channels.length` — that dependency made the
@@ -50,6 +58,7 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
   const channelsRef = useRef<Channel[]>([]);
   const reload = useCallback(() => {
     setLoading(true);
+    void reloadMemberships();
     fetchChannelData()
       .then(({ channels: ch, posts: ps, error: err }) => {
         channelsRef.current = ch;
@@ -61,43 +70,53 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => setError((prev) => prev || channelsRef.current.length === 0))
       .finally(() => setLoading(false));
-  }, []);
+  }, [reloadMemberships]);
 
   useEffect(() => { reload(); }, [reload]);
 
   useEffect(() => {
-    loadJSON<string[]>('dvg.channelJoined.v2', []).then((v) => setJoined(Array.isArray(v) ? v : []));
-    loadJSON<string[]>('dvg.channelRequested.v2', []).then((v) => setRequested(Array.isArray(v) ? v : []));
-    loadJSON<string[]>('dvg.channelApproved.v2', []).then((v) => setApproved(Array.isArray(v) ? v : []));
-    loadJSON<Record<string, number>>('dvg.channelSeen.v2', {}).then((v) => setSeen(v && typeof v === 'object' ? v : {}));
-    loadJSON<string[]>('dvg.channelLikes.v2', []).then((v) => setLikes(Array.isArray(v) ? v : []));
+    // Merge, don't replace: markSeen may already have run for the open channel
+    // before the async read finished, and the fresher value must win.
+    loadJSON<Record<string, number>>('dvg.channelSeen.v2', {})
+      .then((v) => { if (v && typeof v === 'object') setSeen((cur) => ({ ...v, ...cur })); });
   }, []);
 
   const postsByChannel = useCallback((id: string) => posts.filter((p) => p.channelId === id), [posts]);
   const getPost = useCallback((id: string) => posts.find((p) => p.id === id), [posts]);
   const getChannel = useCallback((id: string) => channels.find((c) => c.id === id), [channels]);
 
-  const join = useCallback((id: string) => setJoined((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelJoined.v2', n); return n; }), []);
-  const leave = useCallback((id: string) => setJoined((p) => { const n = p.filter((x) => x !== id); saveJSON('dvg.channelJoined.v2', n); return n; }), []);
-  const request = useCallback((id: string) => setRequested((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelRequested.v2', n); return n; }), []);
-  const approve = useCallback((id: string) => setApproved((p) => { const n = p.includes(id) ? p : [id, ...p]; saveJSON('dvg.channelApproved.v2', n); return n; }), []);
-  const markSeen = useCallback((id: string) => setSeen((p) => { const n = { ...p, [id]: posts.filter((x) => x.channelId === id).length }; saveJSON('dvg.channelSeen.v2', n); return n; }), [posts]);
-  const toggleLike = useCallback((id: string) => setLikes((p) => { const n = p.includes(id) ? p.filter((x) => x !== id) : [id, ...p]; saveJSON('dvg.channelLikes.v2', n); return n; }), []);
+  // Открытым каналам сервер сразу ставит 'subscribed', закрытым — 'requested'
+  // и позже 'approved'; участником считаются только первое и третье.
+  const isJoined = useCallback((id: string) => {
+    const s = memberships[id];
+    return s === 'subscribed' || s === 'approved';
+  }, [memberships]);
+
+  const join = useCallback(async (id: string) => {
+    let token: string | null = null;
+    try { token = await getTokenRef.current(); } catch { token = null; }
+    const state = await joinChannel(token, id);
+    if (state) setMemberships((p) => ({ ...p, [id]: state }));
+    return state;
+  }, []);
+
+  const markSeen = useCallback((id: string) => setSeen((p) => {
+    const total = posts.filter((x) => x.channelId === id).length;
+    if (p[id] === total) return p; // без изменений — не пишем в хранилище и не перерисовываем
+    const n = { ...p, [id]: total };
+    saveJSON('dvg.channelSeen.v2', n);
+    return n;
+  }), [posts]);
 
   const unread = useCallback((id: string) => {
-    if (!joined.includes(id)) return 0;
+    if (!isJoined(id)) return 0;
     return Math.max(0, posts.filter((x) => x.channelId === id).length - (seen[id] ?? 0));
-  }, [joined, seen, posts]);
+  }, [isJoined, seen, posts]);
 
   const value = useMemo<ChannelState>(() => ({
     channels, loading, error, reload, getChannel, postsByChannel, getPost,
-    joined, requested,
-    isJoined: (id) => joined.includes(id),
-    isRequested: (id) => requested.includes(id),
-    join, leave, request, unread, markSeen,
-    approved, isApproved: (id) => approved.includes(id), approve,
-    likes, isLiked: (id) => likes.includes(id), toggleLike,
-  }), [channels, loading, error, reload, getChannel, postsByChannel, getPost, joined, requested, approved, seen, likes, join, leave, request, approve, unread, markSeen, toggleLike]);
+    memberships, isJoined, join, unread, markSeen,
+  }), [channels, loading, error, reload, getChannel, postsByChannel, getPost, memberships, isJoined, join, unread, markSeen]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

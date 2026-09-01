@@ -48,7 +48,10 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
     if (!sel) return;
     setBusy(true);
     const token = await getToken();
-    const ok = await decideApplication(jobId, sel.applicantUserId, { status, feedback: feedback.trim() || undefined }, token);
+    // Всегда шлём строку (в т.ч. пустую): при `undefined` поле выпадало из JSON,
+    // сервер оставлял прошлый текст, а экран уже показывал очищенный — кандидат
+    // и работодатель видели разную обратную связь.
+    const ok = await decideApplication(jobId, sel.applicantUserId, { status, feedback: feedback.trim() }, token);
     setBusy(false);
     if (!ok) { Alert.alert('Ошибка', 'Не удалось сохранить. Попробуйте ещё раз.'); return; }
     setItems((p) => p.map((x) => x.id === sel.id ? { ...x, status, feedback: feedback.trim() } : x));

@@ -48,6 +48,8 @@ const ApiChapterSchema = z.object({
   // Optional Mux audio rendition (audio.m4a) for offline audio downloads.
   // Only present on the owned-course detail endpoint (/api/mobile/me/courses/:id).
   audioUrl: zStrN,
+  // Пройдена ли глава — приходит с эндпоинта своего курса.
+  completed: z.boolean().nullish(),
 }).passthrough();
 
 const ApiAttachmentSchema = z.object({
@@ -153,6 +155,7 @@ function mapDetail(c: ApiCourseDetail): Course {
     hlsUrl: ch.hlsUrl ?? null,
     description: ch.description ?? null,
     audioUrl: ch.audioUrl ?? null,
+    completed: ch.completed === true,
   }));
   const attachments = Array.isArray(safe.attachments)
     ? safe.attachments.filter((a) => a && a.id != null && a.url != null)
@@ -270,6 +273,29 @@ export async function fetchOwnedDetail(id: string, token: string): Promise<Cours
   };
 }
 
+// Передаём псевдоним из анкеты (Talentslab) на сайт, чтобы он подставлялся в
+// комментариях, рецензиях, отзывах о местах и в челлендже. Уникальность
+// проверяет Talentslab при сохранении анкеты; здесь 409 означает, что сайт уже
+// знает этот псевдоним за другим аккаунтом — молча выходим, анкета не ломается.
+//   POST /api/mobile/me/nickname  body { nickname }
+export async function syncNicknameToSite(nickname: string, token: string): Promise<boolean> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/me/nickname`, {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ nickname }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Tell the website a lesson/chapter is completed so progress syncs across
 // devices. Transient failures are retried and the final result is returned to
 // the caller; local completion can still remain available offline. Matches BACKEND.md:
@@ -326,7 +352,8 @@ export interface ChapterComment {
   createdAt: string;
   likesCount: number;
   isLikedByCurrentUser: boolean;
-  user: { id: string; firstName: string | null; lastName: string | null };
+  // `nickname` — публичное имя автора; ФИО оставлено для инициалов в аватарке.
+  user: { id: string; nickname: string | null; firstName: string | null; lastName: string | null };
 }
 
 // Throws on a network/HTTP failure so callers can show an error/retry state
@@ -345,6 +372,7 @@ export async function fetchComments(courseId: string, chapterId: string): Promis
       isLikedByCurrentUser: c.isLikedByCurrentUser === true,
       user: {
         id: String(c.user?.id ?? ''),
+        nickname: typeof c.user?.nickname === 'string' ? c.user.nickname : null,
         firstName: c.user?.firstName ?? null,
         lastName: c.user?.lastName ?? null,
       },
@@ -375,6 +403,7 @@ export async function postComment(
       isLikedByCurrentUser: c.isLikedByCurrentUser === true,
       user: {
         id: String(c.user?.id ?? ''),
+        nickname: typeof c.user?.nickname === 'string' ? c.user.nickname : null,
         firstName: c.user?.firstName ?? null,
         lastName: c.user?.lastName ?? null,
       },
@@ -462,18 +491,50 @@ export async function fetchLiveChallenges(): Promise<LiveChallenge[]> {
 
 // `profile` is the applicant's own Talentslab анкета (from useTalentProfile) —
 // sent so reviewers reliably see it, independent of the server→Talentslab lookup.
-export async function applyToChallenge(token: string | null, challengeId: string, teamId: string | null, profile?: unknown, telegram?: string): Promise<boolean> {
-  if (!token) return false;
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 15000);
-  try {
-    const res = await fetch(`${API_BASE}/api/mobile/challenges/${challengeId}/apply`, {
-      method: 'POST', signal: ctrl.signal,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ teamId, ...(telegram ? { telegram } : {}), ...(profile ? { profile } : {}) }),
-    });
-    return res.ok;
-  } catch { return false; } finally { clearTimeout(t); }
+// Возвращает статус и причину отказа: сервер отвечает осмысленными 409
+// ('started' | 'pending' | 'approved' | 'team_full') и 400 «No email», а голый
+// boolean превращал их все в «проверьте подключение».
+export function applyToChallenge(
+  token: string | null, challengeId: string, teamId: string | null, profile?: unknown, telegram?: string,
+): Promise<PostResult> {
+  return requestAuthed('POST', `/api/mobile/challenges/${encodeURIComponent(challengeId)}/apply`, token, {
+    teamId,
+    ...(telegram ? { telegram } : {}),
+    ...(profile ? { profile } : {}),
+  });
+}
+
+// Человеческая причина отказа в заявке на челлендж.
+export function challengeApplyFailureMessage(r: PostResult): { title: string; body: string } {
+  if (r.reason === 'team_full') {
+    const detail = r.capacity ? ` Все ${r.capacity} мест заняты.` : '';
+    return { title: 'В команде нет мест', body: `Пока вы заполняли заявку, команду набрали.${detail} Выберите другую команду.` };
+  }
+  if (r.reason === 'started') {
+    return { title: 'Набор закрыт', body: 'Челлендж уже стартовал — заявки больше не принимаются. Дождитесь следующего потока.' };
+  }
+  if (r.reason === 'closed') {
+    return { title: 'Набор закрыт', body: 'Организатор больше не принимает заявки на этот челлендж.' };
+  }
+  if (r.reason === 'pending') {
+    return { title: 'Заявка уже отправлена', body: 'Она на рассмотрении у капитана. Дождитесь ответа — повторная заявка не нужна.' };
+  }
+  if (r.reason === 'approved') {
+    return { title: 'Вы уже в команде', body: 'Заявка одобрена — подавать её заново не нужно.' };
+  }
+  if (r.status === 401 || r.reason === 'no-token') {
+    return { title: 'Нужен вход', body: 'Войдите в аккаунт, чтобы подать заявку.' };
+  }
+  if (r.status === 404) {
+    return { title: 'Команда не найдена', body: 'Возможно, состав команд изменили. Обновите экран и выберите команду заново.' };
+  }
+  if (r.status === 400) {
+    return { title: 'Нужен подтверждённый email', body: 'В аккаунте нет почты. Добавьте её в профиле и попробуйте снова.' };
+  }
+  if (r.status === 0) {
+    return { title: 'Нет связи', body: 'Проверьте подключение и попробуйте снова.' };
+  }
+  return { title: 'Не удалось отправить заявку', body: 'Сервер вернул ошибку. Попробуйте позже.' };
 }
 
 // Withdraw the signed-in user's own application. Allowed only while it's still
@@ -497,8 +558,19 @@ export async function withdrawChallengeApplication(
   } catch { return { ok: false, reason: 'error' }; } finally { clearTimeout(t); }
 }
 
-// ───────── Creator role + create content (challenges/trips/channels) ─────────
-export async function fetchMyRole(token: string | null): Promise<{ canCreate: boolean; isAdmin?: boolean; email?: string | null }> {
+// ───────── Права пользователя и показ разделов ─────────
+// `perms` — права по разделам из админ-панели сайта, `features` — какие разделы
+// приложения включены. Оба поля появились позже, поэтому необязательные:
+// на старом сервере их просто не будет, и приложение работает как раньше.
+export interface MyRole {
+  canCreate: boolean;
+  isAdmin?: boolean;
+  email?: string | null;
+  perms?: string[];
+  features?: Record<string, boolean>;
+}
+
+export async function fetchMyRole(token: string | null): Promise<MyRole> {
   if (!token) return { canCreate: false, isAdmin: false };
   // A non-2xx is a legitimate "not an admin" → canCreate:false. A network/timeout
   // error THROWS so the caller (useRole) can retry instead of silently hiding
@@ -508,18 +580,79 @@ export async function fetchMyRole(token: string | null): Promise<{ canCreate: bo
   return await res.json();
 }
 
-async function postAuthed(path: string, token: string | null, body: any): Promise<boolean> {
-  if (!token) return false;
+// Результат авторизованного POST/DELETE. Раньше здесь возвращался голый
+// boolean, и любой отказ по бизнес-правилу (401 «войдите», 403 «нет прав»,
+// 409 «мест нет» / «набор закрыт») экраны показывали как «Проверьте
+// подключение» — то есть предлагали чинить интернет вместо реальной причины.
+export interface PostResult {
+  ok: boolean;
+  /** HTTP-статус; 0 — сети не было вовсе (или таймаут). */
+  status: number;
+  /** Причина из тела ответа: 'full' | 'closed' | 'no-token' | … */
+  reason?: string;
+  /** Для reason === 'full': вместимость и сколько уже занято. */
+  spots?: number;
+  taken?: number;
+  /** Для reason === 'team_full': вместимость команды в челлендже. */
+  capacity?: number;
+}
+
+async function requestAuthed(method: 'POST' | 'DELETE', path: string, token: string | null, body?: any): Promise<PostResult> {
+  if (!token) return { ok: false, status: 401, reason: 'no-token' };
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 15000);
   try {
     const res = await fetch(`${API_BASE}${path}`, {
-      method: 'POST', signal: ctrl.signal,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(body),
+      method, signal: ctrl.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
-    return res.ok;
-  } catch { return false; } finally { clearTimeout(t); }
+    let data: any = null;
+    try { data = await res.json(); } catch { /* пустое / не-JSON тело */ }
+    if (!res.ok) {
+      return {
+        ok: false, status: res.status,
+        reason: typeof data?.reason === 'string' ? data.reason : undefined,
+        spots: typeof data?.spots === 'number' ? data.spots : undefined,
+        taken: typeof data?.taken === 'number' ? data.taken : undefined,
+        capacity: typeof data?.capacity === 'number' ? data.capacity : undefined,
+      };
+    }
+    return { ok: true, status: res.status, reason: typeof data?.status === 'string' ? data.status : undefined };
+  } catch { return { ok: false, status: 0, reason: 'network' }; } finally { clearTimeout(t); }
+}
+
+// Человеческая причина отказа для алерта «не удалось записаться». Возвращает
+// именно то, что произошло, вместо универсального «проверьте подключение».
+export function joinFailureMessage(r: PostResult): { title: string; body: string } {
+  if (r.reason === 'full') {
+    const detail = r.spots ? ` Все ${r.spots} мест заняты.` : '';
+    return { title: 'Свободных мест нет', body: `Набор уже заполнен.${detail} Попробуйте следующую поездку или напишите организатору.` };
+  }
+  if (r.reason === 'closed') {
+    return { title: 'Набор закрыт', body: 'Организатор больше не принимает заявки.' };
+  }
+  if (r.status === 401 || r.reason === 'no-token') {
+    return { title: 'Нужен вход', body: 'Войдите в аккаунт, чтобы записаться.' };
+  }
+  if (r.status === 403) {
+    return { title: 'Нет доступа', body: 'У вашего аккаунта нет прав на это действие.' };
+  }
+  if (r.status === 404) {
+    return { title: 'Событие не найдено', body: 'Возможно, его сняли с публикации.' };
+  }
+  if (r.status === 400) {
+    return { title: 'Не удалось записаться', body: 'Заполните профиль (нужен подтверждённый email) и попробуйте снова.' };
+  }
+  if (r.status === 0) {
+    return { title: 'Нет связи', body: 'Проверьте подключение и попробуйте снова.' };
+  }
+  return { title: 'Не удалось записаться', body: 'Сервер вернул ошибку. Попробуйте позже.' };
+}
+
+// Тонкая обёртка для вызовов, которым важен только факт успеха.
+async function postAuthed(path: string, token: string | null, body: any): Promise<boolean> {
+  return (await requestAuthed('POST', path, token, body)).ok;
 }
 
 export const createChallenge = (token: string | null, data: any) => postAuthed('/api/mobile/challenges', token, data);
@@ -527,14 +660,51 @@ export const createTrip = (token: string | null, data: any) => postAuthed('/api/
 export const createChannel = (token: string | null, data: any) => postAuthed('/api/mobile/channels', token, data);
 
 export interface LiveTrip { id: string; title: string; region?: string | null; date?: string | null; days: number; price?: string | null; spots: number; difficulty?: string | null; description?: string | null; meetPlace?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
-export async function fetchMyTripIds(token: string | null): Promise<string[]> {
+
+// ───────── Мои записи на офлайн-события (заявка ≠ участие) ─────────
+// 'pending'  — заявка отправлена, организатор ещё не ответил;
+// 'approved' — человек действительно записан (для спорта это статус 'going').
+// Отклонённые и отменённые записи сервер не отдаёт вовсе.
+export type EnrollStatus = 'pending' | 'approved';
+export interface MyEnrollment { id: string; status: EnrollStatus }
+
+// Сервер может прислать словарь поездок (pending|approved) или спорта
+// (going|cancelled) — приводим к одному типу, неизвестное отбрасываем.
+function normalizeEnrollments(raw: unknown, legacyIds: unknown): MyEnrollment[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .map((x: any): MyEnrollment | null => {
+        const id = x?.id != null ? String(x.id) : '';
+        if (!id) return null;
+        const s = String(x?.status ?? '');
+        if (s === 'pending') return { id, status: 'pending' };
+        if (s === 'approved' || s === 'going') return { id, status: 'approved' };
+        return null;
+      })
+      .filter((x): x is MyEnrollment => x !== null);
+  }
+  // Старый сервер отдаёт только массив id и статусов не знает — считаем такие
+  // записи подтверждёнными, как приложение вело себя и раньше.
+  if (Array.isArray(legacyIds)) {
+    return legacyIds.filter((x) => x != null).map((x) => ({ id: String(x), status: 'approved' as const }));
+  }
+  return [];
+}
+
+export async function fetchMyTrips(token: string | null): Promise<MyEnrollment[]> {
   if (!token) return [];
-  try { const r = await timedFetch(`${API_BASE}/api/mobile/me/trips`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.tripIds) ? d.tripIds : []; } catch { return []; }
+  try {
+    const r = await timedFetch(`${API_BASE}/api/mobile/me/trips`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return normalizeEnrollments(d?.trips, d?.tripIds);
+  } catch { return []; }
 }
 export async function fetchLiveTrips(): Promise<LiveTrip[]> {
   try { const res = await timedFetch(`${API_BASE}/api/mobile/trips`); if (!res.ok) return []; const d = await res.json(); return Array.isArray(d?.trips) ? d.trips : []; } catch { return []; }
 }
-export const applyToTrip = (token: string | null, tripId: string) => postAuthed(`/api/mobile/trips/${tripId}/apply`, token, {});
+export const applyToTrip = (token: string | null, tripId: string): Promise<PostResult> =>
+  requestAuthed('POST', `/api/mobile/trips/${encodeURIComponent(tripId)}/apply`, token, {});
 
 // ───────── Server channels (Telegram-style): membership, requests, posts ─────────
 export interface ServerChannelPost { id: string; type: 'audio' | 'article'; title: string; body?: string | null; audioUrl?: string | null; createdAt: string; reactions?: Record<string, number>; myReaction?: string | null }
@@ -667,12 +837,22 @@ export function webAuthedUrl(ticket: string | null, path: string): string {
 
 // ───────── Sport (server) ─────────
 export interface LiveSport { id: string; title: string; place?: string | null; date?: string | null; spots: number; description?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
-export async function fetchMySportIds(token: string | null): Promise<string[]> {
+export async function fetchMySport(token: string | null): Promise<MyEnrollment[]> {
   if (!token) return [];
-  try { const r = await timedFetch(`${API_BASE}/api/mobile/me/sport`, { headers: { Authorization: `Bearer ${token}` } }); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sportIds) ? d.sportIds : []; } catch { return []; }
+  try {
+    const r = await timedFetch(`${API_BASE}/api/mobile/me/sport`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return normalizeEnrollments(d?.sport, d?.sportIds);
+  } catch { return []; }
 }
 export async function fetchLiveSport(): Promise<LiveSport[]> {
   try { const r = await timedFetch(`${API_BASE}/api/mobile/sport`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sport) ? d.sport : []; } catch { return []; }
 }
 export const createSport = (token: string | null, data: any) => postAuthed('/api/mobile/sport', token, data);
-export const joinSport = (token: string | null, id: string) => postAuthed(`/api/mobile/sport/${id}/join`, token, {});
+export const joinSport = (token: string | null, id: string): Promise<PostResult> =>
+  requestAuthed('POST', `/api/mobile/sport/${encodeURIComponent(id)}/join`, token, {});
+// Отмена участия. Без неё «отмена» жила только в телефоне: строка оставалась
+// `going`, а следующий запуск возвращал кнопку в «Вы идёте».
+export const leaveSport = (token: string | null, id: string): Promise<PostResult> =>
+  requestAuthed('DELETE', `/api/mobile/sport/${encodeURIComponent(id)}/join`, token);

@@ -27,6 +27,13 @@ export class AiUnavailableError extends Error {
 
 interface AskAiOptions {
   profileContext?: string | null;
+  /**
+   * The course catalog, sent as its OWN field. It used to be concatenated onto
+   * profileContext, which the server truncates — and since the profile ends
+   * with the full psychometric report text, the catalog was the part that got
+   * cut. Separate fields mean separate budgets.
+   */
+  coursesContext?: string | null;
   timeoutMs?: number;
 }
 
@@ -47,8 +54,9 @@ export async function askAi(
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    // Server contract (POST /api/mobile/ai): { message, history?, profileContext? }
-    // → { answer }. The caller hands us the full running conversation (history
+    // Server contract (POST /api/mobile/ai):
+    // { message, history?, profileContext?, coursesContext? } → { answer }.
+    // The caller hands us the full running conversation (history
     // turns followed by the new user message); we split it into the latest
     // `message` and the prior `history` the server expects.
     const recent = messages.slice(-12);
@@ -66,6 +74,7 @@ export async function askAi(
         message,
         ...(history.length ? { history } : {}),
         ...(opts.profileContext ? { profileContext: opts.profileContext } : {}),
+        ...(opts.coursesContext ? { coursesContext: opts.coursesContext } : {}),
       }),
     });
 

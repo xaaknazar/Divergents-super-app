@@ -34,13 +34,14 @@ export const USER_DATA_KEYS: string[] = [
   'dvg.placeLoc',           // PlacesContext/usePush — selected city/country
   'dvg.mapRecent',          // recent map searches
   'dvg.workouts.v1',        // ActivityContext — workout history + GPS routes
-  // Community channels
+  // Community channels — членство и реакции живут на сервере, локально
+  // остаётся только отметка прочитанного. Остальные ключи — от снятых версий.
   'dvg.channelJoined.v2',
   'dvg.channelRequested.v2',
   'dvg.channelApproved.v2',
   'dvg.channelPaid.v2',
-  'dvg.channelSeen.v2',
   'dvg.channelLikes.v2',
+  'dvg.channelSeen.v2',
   // Active challenge — today's local values and unsent automatic updates
   'dvg.challengeProgress.v1',
   'dvg.challengeProgressPending.v1',

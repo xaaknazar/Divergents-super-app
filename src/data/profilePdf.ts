@@ -8,6 +8,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import {
   TalentProfile, GallupTalent, GALLUP_DOMAIN_META, mbtiName, fmtList,
+  applyGallupOrder, loadGallupOrder,
 } from './talentslab';
 import { matchGardnerType } from '../components/GardnerChart';
 
@@ -124,7 +125,7 @@ function mbtiHtml(profile: TalentProfile): string {
 }
 
 // ─── Document ──────────────────────────────────────────────────────
-export function buildProfileHtml(profile: TalentProfile): string {
+export function buildProfileHtml(profile: TalentProfile, gallupOrder?: string[] | null): string {
   const r = profile.resume ?? null;
 
   const personal = sectionRows([
@@ -277,7 +278,7 @@ export function buildProfileHtml(profile: TalentProfile): string {
     ${cardSection('О себе', about)}
     ${workHtml}
     ${mbtiHtml(profile)}
-    ${gallupHtml(profile.gallup ?? [])}
+    ${gallupHtml(applyGallupOrder(profile.gallup ?? [], gallupOrder))}
     ${gardnerHtml(profile.gardner ?? [])}
 
     <div class="foot">Сформировано в приложении Divergents</div>
@@ -293,7 +294,10 @@ export function buildProfileHtml(profile: TalentProfile): string {
  */
 export async function exportProfilePdf(profile: TalentProfile): Promise<string | null> {
   try {
-    const { uri } = await Print.printToFileAsync({ html: buildProfileHtml(profile) });
+    // Порядок талантов, настроенный пользователем в «Профиле талантов»:
+    // раньше PDF всегда печатал серверный.
+    const gallupOrder = await loadGallupOrder().catch(() => [] as string[]);
+    const { uri } = await Print.printToFileAsync({ html: buildProfileHtml(profile, gallupOrder) });
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(uri, {
         mimeType: 'application/pdf',

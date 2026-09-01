@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
-import { emitProfileChanged } from './profileBus';
+import { emitProfileChanged, onProfileChanged } from './profileBus';
 import { submitResume, getTalentslabToken, ResumeAnswers, effectiveResumeCompleteness } from '../data/talentslab';
 import { REQUIRED_KEYS, RESUME_STEPS } from '../data/resumeSchema';
 import { useTalentProfile } from './useTalentProfile';
@@ -85,6 +85,15 @@ export function useResume() {
       return next;
     });
   }, [hydrated, live, profile]);
+
+  // Анкету изменили на другом экране — перечитываем сохранённые ответы, чтобы
+  // не ждать перезапуска приложения. В хранилище всегда самая свежая версия:
+  // setField пишет туда синхронно с каждым изменением поля.
+  useEffect(() => onProfileChanged(() => {
+    loadJSON<ResumeAnswers>(KEY, {}).then((v) => {
+      if (v && Object.keys(v).length) setAnswers((p) => ({ ...p, ...v }));
+    });
+  }), []);
 
   const setField = useCallback((key: string, value: any) => {
     setAnswers((p) => { const n = { ...p, [key]: value }; saveJSON(KEY, n); return n; });

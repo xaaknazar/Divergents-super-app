@@ -16,7 +16,9 @@ export interface Job {
   city: string;
   officeAddress: string;
   // Об условиях
-  format: 'Офис' | 'Гибрид' | 'Удалёнка';
+  // null when the poster left the format blank — the UI hides the chip rather
+  // than inventing a value.
+  format: 'Офис' | 'Гибрид' | 'Удалёнка' | null;
   salary: string;
   conditions: string;
   benefits: string[];
@@ -28,7 +30,9 @@ export interface Job {
   gallupFile: string;                // Примерный Gallup вакансии (PDF/картинка)
   talents: string[];                 // legacy Gallup talents
   // Card / legacy
-  match: number;             // % fit to the user's profile (0 when not scored)
+  // Legacy column kept on the server; nothing writes it and nothing renders it
+  // any more — the real fit is the Gallup talentMatch computed on-device.
+  match: number;
   logo: string;
   color: string;
   reason: string;
@@ -71,7 +75,8 @@ interface ApiVacancy {
   color?: string | null;
 }
 
-const FORMATS: Job['format'][] = ['Офис', 'Гибрид', 'Удалёнка'];
+type VacancyFormat = 'Офис' | 'Гибрид' | 'Удалёнка';
+const FORMATS: VacancyFormat[] = ['Офис', 'Гибрид', 'Удалёнка'];
 const LOGO_PALETTE = [T.brand, T.green, T.indigo, T.brown, T.purple, T.teal, T.orange, T.red];
 
 function decorColor(seed: string): string {
@@ -80,8 +85,11 @@ function decorColor(seed: string): string {
   return LOGO_PALETTE[h % LOGO_PALETTE.length];
 }
 
+// Unknown/blank format → null. Defaulting to 'Офис' invented a condition the
+// employer never stated (a remote vacancy posted without a format read as
+// office work); the detail screen already hides the chip when it's empty.
 function coerceFormat(f?: string | null): Job['format'] {
-  return FORMATS.includes((f ?? '') as Job['format']) ? (f as Job['format']) : 'Офис';
+  return FORMATS.includes((f ?? '') as VacancyFormat) ? (f as VacancyFormat) : null;
 }
 
 function mapVacancy(v: ApiVacancy): Job {

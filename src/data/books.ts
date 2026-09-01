@@ -6,14 +6,20 @@ import { API_BASE } from './api';
 export type ShelfStatus = 'want' | 'reading' | 'read';
 export interface ShelfState { status: ShelfStatus; progress: number }
 
+// Две независимые оценки: `rating` — редакционная (её ставит редакция
+// Divergents в админке сайта, по ней сортируется каталог), `userRating` —
+// средняя оценка читателей со счётчиком. Смешивать их в одном числе нельзя.
 export interface BookListItem {
   id: string;
   title: string;
   author: string;
   imageUrl?: string | null;
   rating?: number | null;
+  userRating?: number | null;
+  userRatingCount?: number;
   description?: string | null;
   genres: string[];
+  /** Только комментарии; рецензии считаются отдельно. */
   comments: number;
   shelf?: ShelfState | null;
 }
@@ -38,7 +44,11 @@ export interface BookDetail {
   review?: string | null;
   imageUrl?: string | null;
   genres: string[];
-  ratingAvg: number;
+  /** Редакционная оценка Divergents (0..5) или null, если её не выставили. */
+  rating?: number | null;
+  /** Средняя оценка читателей; null, пока никто не оценил. */
+  ratingAvg: number | null;
+  /** Сколько читателей оценили книгу. */
   ratingCount: number;
 }
 
@@ -100,8 +110,10 @@ export async function rateBook(id: string, token: string | null, rating: number)
   return authedPost(`/api/mobile/books/${id}/rate`, token, { rating });
 }
 
+// `progress` отправляется только когда его действительно задали: без этого
+// смена статуса обнуляла бы прочитанный процент на сервере.
 export async function setBookShelf(id: string, token: string | null, status: ShelfStatus | 'none', progress?: number) {
-  return authedPost(`/api/mobile/books/${id}/shelf`, token, { status, progress });
+  return authedPost(`/api/mobile/books/${id}/shelf`, token, progress == null ? { status } : { status, progress });
 }
 
 export async function fetchMyShelf(token: string | null): Promise<ShelfEntry[]> {

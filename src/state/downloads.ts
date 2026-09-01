@@ -30,14 +30,15 @@ export interface DownloadRecord {
   at: number; // epoch ms
 }
 
-// Caller-supplied context for a download (the owned flag gates everything).
+// Caller-supplied context for a download. Ownership is NOT a flag here: both
+// call sites only ever offer a download from a course the user already owns,
+// and continued access is enforced by revalidateDownloads() below.
 export interface DownloadInput {
   lessonId: string;
   courseId: string;
   courseTitle: string;
   title: string;
   n?: number;
-  owned: boolean;
 }
 
 // An in-flight download's metadata, so the Downloads screen can list it while
@@ -93,8 +94,9 @@ async function load() {
   notify();
   if (Object.keys(checked).length !== Object.keys(saved || {}).length) persist();
 }
-// Kick off the initial load as soon as the module is imported.
-load();
+// Kick off the initial load as soon as the module is imported. The promise is
+// kept so revalidation can wait for the registry to be hydrated first.
+const initialLoad = load();
 
 // ─── Module-level API ──────────────────────────────────────────────
 export function isDownloaded(lessonId: string): boolean {
@@ -117,7 +119,6 @@ export function isDownloading(lessonId: string): boolean {
 // (network, 404 while Mux still renders the rendition, missing dir): cleans up
 // the partial file and resolves false so the caller can offer a retry.
 export async function downloadLesson(input: DownloadInput, audioUrl?: string | null): Promise<boolean> {
-  if (!input.owned) return false; // only purchased/owned courses
   if (!audioUrl || !documentDirectory) return false;
   if (registry[input.lessonId]) return true; // already have it
   if (progress[input.lessonId] !== undefined) return false; // already in flight
@@ -191,12 +192,40 @@ export async function cancelDownload(lessonId: string): Promise<void> {
 
 export async function removeDownload(lessonId: string): Promise<void> {
   const rec = registry[lessonId];
+  // Cancel any in-flight task for this lesson too. Clearing only `progress`
+  // left the resumable running: it kept writing to the path we just deleted and
+  // then re-created the file as an orphan nothing referenced.
+  const task = tasks[lessonId];
   delete registry[lessonId];
-  delete progress[lessonId];
+  clearPending(lessonId);
   notify();
-  if (rec) {
+  if (task) { try { await task.cancelAsync(); } catch {} }
+  try { await deleteAsync(rec?.localUri ?? `${DIR}${safeName(lessonId)}.m4a`, { idempotent: true }); } catch {}
+  await persist();
+}
+
+/**
+ * Drop everything downloaded from a course the user no longer owns (refund,
+ * expired purchase, removal from a team) and delete its files.
+ *
+ * MUST be called only after a SUCCESSFUL fetch of the owned-course list — an
+ * empty list from a failed request would otherwise erase the user's offline
+ * lessons. Cancels in-flight downloads for lost courses as well.
+ */
+export async function revalidateDownloads(ownedCourseIds: string[]): Promise<void> {
+  try { await initialLoad; } catch {}
+  const owned = new Set(ownedCourseIds);
+
+  const stalePending = Object.values(pendingMeta).filter((m) => !owned.has(m.courseId));
+  for (const m of stalePending) await cancelDownload(m.lessonId);
+
+  const stale = Object.values(registry).filter((r) => !owned.has(r.courseId));
+  if (!stale.length) { if (stalePending.length) notify(); return; }
+  for (const rec of stale) delete registry[rec.lessonId];
+  notify();
+  await Promise.all(stale.map(async (rec) => {
     try { await deleteAsync(rec.localUri, { idempotent: true }); } catch {}
-  }
+  }));
   await persist();
 }
 
@@ -229,6 +258,7 @@ export interface UseDownloads {
   downloadLesson: typeof downloadLesson;
   removeDownload: typeof removeDownload;
   cancelDownload: typeof cancelDownload;
+  revalidateDownloads: typeof revalidateDownloads;
   isDownloaded: (lessonId: string) => boolean;
   isDownloading: (lessonId: string) => boolean;
   localUriFor: (lessonId: string) => string | null;
@@ -248,6 +278,7 @@ export function useDownloads(): UseDownloads {
     downloadLesson,
     removeDownload,
     cancelDownload,
+    revalidateDownloads,
     isDownloaded: (id) => !!registry[id],
     isDownloading: (id) => progress[id] !== undefined,
     localUriFor: (id) => registry[id]?.localUri ?? null,

@@ -4,7 +4,7 @@
 // publishes them) — there is no hardcoded seed data.
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
-import { Place, Review, PlaceTag, fetchPlaces, postPlace, postReview, isKnownCity } from '../data/places';
+import { Place, Review, PlaceTag, fetchPlaces, postPlace, patchPlace, postReview, isKnownCity } from '../data/places';
 import { updateMyLocation } from '../data/api';
 import { loadJSON, saveJSON } from './persist';
 
@@ -99,39 +99,92 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
         const token = await getToken();
         const { approved: _a, reviews: _r, id: _id, ...body } = place as any;
         const serverId = await postPlace(body, token);
-        if (serverId) reloadPlaces();
+        if (serverId) {
+          // Помечаем локальную копию id с сервера: по нему дубль скрывается
+          // надёжно, даже если место потом переименуют.
+          setUserPlaces((prev) => {
+            const n = prev.map((x) => (x.id === id ? { ...x, serverId } : x));
+            saveJSON('dvg.userPlaces', n);
+            return n;
+          });
+          reloadPlaces();
+        }
       } catch {}
     })();
     return id;
   }, [getToken, reloadPlaces]);
 
   const updatePlace = useCallback((id: string, patch: Partial<Place>) => {
-    setUserPlaces((prev) => { const n = prev.map((p) => (p.id === id ? { ...p, ...patch } : p)); saveJSON('dvg.userPlaces', n); return n; });
-  }, []);
+    let target: Place | undefined;
+    setUserPlaces((prev) => {
+      const n = prev.map((p) => {
+        if (p.id !== id) return p;
+        target = { ...p, ...patch };
+        return target;
+      });
+      saveJSON('dvg.userPlaces', n);
+      return n;
+    });
+    // Отправляем правку на сервер. Раньше её не было вовсе: изменения видел
+    // только автор, а точка появлялась на карте дважды.
+    (async () => {
+      try {
+        // Серверный id знаем либо из локальной пометки, либо по совпадению с
+        // уже загруженной серверной копией (места, добавленные до этой правки).
+        const serverId = target?.serverId
+          ?? remotePlaces.find((r) => r.id === id)?.id
+          ?? undefined;
+        if (!serverId) return;
+        const token = await getTokenRef.current();
+        const { id: _i, reviews: _r, approved: _a, serverId: _s, ...body } = { ...target, ...patch } as any;
+        const ok = await patchPlace(serverId, body, token);
+        if (ok) reloadPlaces();
+      } catch {}
+    })();
+  }, [remotePlaces, reloadPlaces]);
 
   const toggleFav = useCallback((id: string) => {
     setFavs((prev) => { const n = prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]; saveJSON('dvg.placeFavs', n); return n; });
   }, []);
 
   const addReview = useCallback((placeId: string, r: Omit<Review, 'id' | 'date'>) => {
-    const review: Review = { ...r, id: `ur_${Date.now()}`, date: 'сейчас' };
+    const localId = `ur_${Date.now()}`;
+    const review: Review = { ...r, id: localId, date: 'сейчас', mine: true };
+    // Показываем сразу, не дожидаясь сервера.
     setUserReviews((prev) => {
       const n = { ...prev, [placeId]: [review, ...(prev[placeId] ?? [])] };
       saveJSON('dvg.placeReviews', n);
       return n;
     });
-    // Publish the review to the server (best-effort) so others see it too.
     (async () => {
-      try { const token = await getToken(); await postReview(placeId, { rating: r.rating, text: r.text }, token); } catch {}
+      let ok = false;
+      try { const token = await getToken(); ok = await postReview(placeId, { rating: r.rating, text: r.text }, token); } catch {}
+      if (!ok) return; // не ушло (офлайн) — локальная копия остаётся
+      // Ушло: локальную копию убираем, иначе после перезагрузки списка отзыв
+      // показывался дважды и задваивался в средней оценке.
+      setUserReviews((prev) => {
+        const rest = (prev[placeId] ?? []).filter((x) => x.id !== localId);
+        const n = { ...prev };
+        if (rest.length) n[placeId] = rest; else delete n[placeId];
+        saveJSON('dvg.placeReviews', n);
+        return n;
+      });
+      reloadPlaces();
     })();
-  }, [getToken]);
+  }, [getToken, reloadPlaces]);
 
   const places = useMemo(() => {
     // Once a locally-added place has synced to the server, the server copy comes
     // back via fetchPlaces — hide the local duplicate (match by name + coords).
     const key = (p: Place) => `${p.name.trim().toLowerCase()}|${p.lat.toFixed(4)}|${p.lng.toFixed(4)}`;
     const remoteKeys = new Set(remotePlaces.map(key));
-    const localOnly = userPlaces.filter((p) => !remoteKeys.has(key(p)));
+    const remoteIds = new Set(remotePlaces.map((p) => p.id));
+    const localOnly = userPlaces.filter((p) => {
+      // Точка уже на сервере — локальная копия не нужна.
+      if (p.serverId && remoteIds.has(p.serverId)) return false;
+      // Запасная сверка для мест, добавленных до появления serverId.
+      return !remoteKeys.has(key(p));
+    });
     const base = [...localOnly, ...remotePlaces];
     return base.map((p) => ({ ...p, reviews: [...(userReviews[p.id] ?? []), ...p.reviews] }));
   }, [userPlaces, remotePlaces, userReviews]);

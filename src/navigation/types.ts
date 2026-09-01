@@ -2,7 +2,6 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type LMSStackParams = {
   LMSHome: undefined;
-  Catalog: undefined;
   CourseDetail: { courseId: string };
   Video: { courseId: string; lessonId: string };
   Downloads: undefined;

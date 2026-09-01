@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { tr } from '../../state/LanguageContext';
-import { View, Text, ScrollView, Share, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Share, Alert, ActivityIndicator, Linking, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,19 +10,37 @@ import { SF } from '../../components/SFIcon';
 import { NavHeader, NavRoundButton } from '../../components/NavHeader';
 import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, ty } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
-import { fetchTrip, Trip } from '../../data/community';
+import { fetchTrip, Trip, spotsLeft, UNLIMITED_SPOTS } from '../../data/community';
 import { useEnrollment } from '../../state/EnrollmentContext';
-import { imgUrl, applyToTrip } from '../../data/api';
+import { imgUrl, applyToTrip, joinFailureMessage } from '../../data/api';
 import { useAuth } from '@clerk/clerk-expo';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
 
+// «12 авг · 3 дн.» — собираем только из непустых кусков, иначе в шапке
+// появлялось голое «· 0 дн.» у поездки без даты и длительности.
+function heroMeta(trip: Trip): string {
+  return [trip.date, trip.days > 0 ? `${trip.days} дн.` : ''].filter(Boolean).join(' · ');
+}
+function heroSubtitle(trip: Trip): string {
+  return [trip.region, trip.difficulty ? `сложность: ${trip.difficulty}` : ''].filter(Boolean).join(' · ');
+}
+
+// Время сбора приходит как «2026-07-12 09:00» или ISO — показываем как есть,
+// заменяя только разделитель, чтобы не выдумывать формат за организатора.
+function meetAtLabel(raw: string): string {
+  const s = raw.replace('T', ' ').replace(/Z$/, '').trim();
+  // «2026-07-12 09:00:00» → «2026-07-12 09:00»; всё остальное оставляем как есть.
+  const m = s.match(/^(.*\d{1,2}:\d{2})(?::\d{2})?(?:\.\d+)?$/);
+  return m ? m[1] : s;
+}
+
 export function TripDetailScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
-  const { has, toggle, add } = useEnrollment();
-  const { getToken } = useAuth();
+  const { has, toggle, add, statusOf } = useEnrollment();
+  const { getToken, isSignedIn } = useAuth();
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,9 +49,16 @@ export function TripDetailScreen({ route, navigation }: Props) {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetchTrip(route.params.tripId).then((t) => { if (alive) { setTrip(t); setLoading(false); } });
+    (async () => {
+      // Токен нужен, чтобы участник видел и УЖЕ ЗАКРЫТУЮ поездку: публичный
+      // список отдаёт только открытые.
+      let token: string | null = null;
+      try { token = isSignedIn ? await getToken() : null; } catch { token = null; }
+      const t = await fetchTrip(route.params.tripId, token);
+      if (alive) { setTrip(t); setLoading(false); }
+    })();
     return () => { alive = false; };
-  }, [route.params.tripId]);
+  }, [route.params.tripId, isSignedIn]);
 
   // ── Loading ──
   if (loading) {
@@ -64,14 +89,64 @@ export function TripDetailScreen({ route, navigation }: Props) {
   }
 
   const fav = has(`tripfav:${trip.id}`);
-  const joined = has(`trip:${trip.id}`);
-  const goingCount = trip.going + (joined ? 1 : 0);
-  const spotsCount = Math.max(0, trip.spots - (joined ? 1 : 0));
+  const status = statusOf(`trip:${trip.id}`);
+  const joined = status === 'approved';
+  const pending = status === 'pending';
+  // trip.going — это _count.applications с сервера, и заявка пользователя в нём
+  // УЖЕ учтена: прибавлять себя ещё раз значило считать себя дважды.
+  const goingCount = trip.going;
+  const left = spotsLeft(trip.spots, goingCount);
+  const meta = heroMeta(trip);
+  const subtitle = heroSubtitle(trip);
+  const meetAt = trip.meetAt ? meetAtLabel(trip.meetAt) : '';
+  const hasCoords = trip.meetLat != null && trip.meetLng != null;
   const stats = [
     { v: String(goingCount), l: tr('Идут') },
-    { v: String(spotsCount), l: tr('Мест') },
+    // Показываем ОСТАТОК, а не вместимость: «Мест 20» при 20 занятых вводило в
+    // заблуждение. spots === 0 — «без ограничения», а не «ноль мест».
+    left === null
+      ? { v: '∞', l: `${tr('Мест')} ${tr(UNLIMITED_SPOTS)}` }
+      : { v: String(left), l: tr('Свободных мест') },
     { v: trip.price, l: tr('Стоимость') },
   ];
+
+  const openMeetOnMap = () => {
+    if (!hasCoords) return;
+    const q = `${trip.meetLat},${trip.meetLng}`;
+    const label = encodeURIComponent(trip.meetPlace || trip.title);
+    const url = Platform.OS === 'ios'
+      ? `http://maps.apple.com/?ll=${q}&q=${label}`
+      : `https://www.google.com/maps/search/?api=1&query=${q}`;
+    Linking.openURL(url).catch(() => {});
+  };
+
+  const apply = async () => {
+    if (joined || pending || joining) return;
+    setJoining(true);
+    try {
+      const token = await getToken();
+      const res = await applyToTrip(token, trip.id);
+      if (res.ok) {
+        // Заявку ещё рассматривает организатор — местом это не является.
+        add(`trip:${trip.id}`, 'pending');
+        Alert.alert(tr('Заявка отправлена'), `Организатор рассмотрит заявку на «${trip.title}» и свяжется с вами.`);
+      } else {
+        const m = joinFailureMessage(res);
+        Alert.alert(tr(m.title), tr(m.body));
+        // Мест уже нет — обновим карточку, чтобы счётчик стал честным.
+        if (res.reason === 'full' || res.reason === 'closed') {
+          const t = await fetchTrip(trip.id, token).catch(() => null);
+          if (t) setTrip(t);
+        }
+      }
+    } catch {
+      Alert.alert(tr('Нет связи'), tr('Проверьте подключение и попробуйте снова.'));
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const buttonLabel = joined ? 'Вы записаны ✓' : pending ? 'Заявка на рассмотрении' : `Записаться · ${trip.price}`;
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg }}>
@@ -94,13 +169,13 @@ export function TripDetailScreen({ route, navigation }: Props) {
             backLabel={tr('Сообщество')} onBack={() => navigation.goBack()}
             trailing={<>
               <NavRoundButton icon={fav ? 'heart.fill' : 'heart'} scheme="light" accessibilityLabel={tr('В избранное')} onPress={() => toggle(`tripfav:${trip.id}`)} />
-              <NavRoundButton icon="square.and.arrow.up" scheme="light" accessibilityLabel={tr('Поделиться')} onPress={() => Share.share({ message: `${trip.title} — поездка Divergents · ${trip.region} · ${trip.date}` })} />
+              <NavRoundButton icon="square.and.arrow.up" scheme="light" accessibilityLabel={tr('Поделиться')} onPress={() => Share.share({ message: [`${trip.title} — поездка Divergents`, trip.region, trip.date].filter(Boolean).join(' · ') })} />
             </>}
           />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
-            <Capsule bg="rgba(255,255,255,0.75)" color={T.label}><SF name="calendar" size={11} color={T.brand} />{trip.date} · {trip.days} дн.</Capsule>
+            {meta ? <Capsule bg="rgba(255,255,255,0.75)" color={T.label}><SF name="calendar" size={11} color={T.brand} />{meta}</Capsule> : null}
             <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]} numberOfLines={1}>{trip.title}</Text>
-            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={1}>{trip.region} · сложность: {trip.difficulty}</Text>
+            {subtitle ? <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={1}>{subtitle}</Text> : null}
           </View>
         </View>
 
@@ -109,25 +184,49 @@ export function TripDetailScreen({ route, navigation }: Props) {
           {stats.map((s, i) => (
             <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < stats.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
               <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{s.v}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{s.l}</Text>
+              {/* «Мест без ограничения» не влезает в одну строку у трети ширины. */}
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1, textAlign: 'center' }]} numberOfLines={2}>{s.l}</Text>
             </View>
           ))}
         </View>
 
-        <ListSection header={tr('О поездке')}>
-          <View style={{ padding: 14 }}>
-            <Text style={[ty.body, { color: T.label }]}>{trip.description}</Text>
-          </View>
-        </ListSection>
+        {trip.description ? (
+          <ListSection header={tr('О поездке')}>
+            <View style={{ padding: 14 }}>
+              <Text style={[ty.body, { color: T.label }]}>{trip.description}</Text>
+            </View>
+          </ListSection>
+        ) : null}
 
-        <ListSection header={tr('Организатор')}>
-          <ListRow
-            leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{(trip.organizer || '?').charAt(0)}</Text></View>}
-            title={trip.organizer} subtitle={trip.organizerType} last />
-        </ListSection>
+        {/* Место сбора: сервер его сохранял, но экран никогда не показывал. */}
+        {(trip.meetPlace || meetAt || hasCoords) ? (
+          <ListSection header={tr('Место сбора')}>
+            {trip.meetPlace ? (
+              <ListRow leading={<SF name="mappin.and.ellipse" size={18} color={T.brand} />} title={trip.meetPlace} last={!meetAt && !hasCoords} />
+            ) : null}
+            {meetAt ? (
+              <ListRow leading={<SF name="clock.fill" size={18} color={T.brand} />} title={meetAt} subtitle={tr('Время сбора')} last={!hasCoords} />
+            ) : null}
+            {hasCoords ? (
+              <ListRow
+                leading={<SF name="map.fill" size={18} color={T.brand} />}
+                title={tr('Открыть точку на карте')}
+                subtitle={`${trip.meetLat!.toFixed(5)}, ${trip.meetLng!.toFixed(5)}`}
+                chevron onPress={openMeetOnMap} last />
+            ) : null}
+          </ListSection>
+        ) : null}
+
+        {trip.organizer ? (
+          <ListSection header={tr('Организатор')}>
+            <ListRow
+              leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
+              title={trip.organizer} subtitle={trip.organizerType} last />
+          </ListSection>
+        ) : null}
 
         {trip.itinerary.length > 0 ? (
-        <ListSection header={`Маршрут · ${trip.days} дн.`}>
+        <ListSection header={trip.days > 0 ? `Маршрут · ${trip.days} дн.` : tr('Маршрут')}>
           {trip.itinerary.map((r, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
               <View style={{ width: 32, alignItems: 'center', gap: 4 }}>
@@ -176,29 +275,21 @@ export function TripDetailScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+        {pending ? (
+          <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginBottom: 8 }]}>
+            {tr('Организатор рассмотрит заявку и подтвердит участие.')}
+          </Text>
+        ) : left === 0 && !joined ? (
+          <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginBottom: 8 }]}>
+            {tr('Свободных мест нет — можно оставить заявку в лист ожидания у организатора.')}
+          </Text>
+        ) : null}
         <PrimaryButton
-          label={joined ? 'Вы записаны ✓' : `Записаться · ${trip.price}`}
-          icon={joined ? 'checkmark' : 'paperplane.fill'}
+          label={buttonLabel}
+          icon={joined ? 'checkmark' : pending ? 'clock.fill' : 'paperplane.fill'}
           loading={joining}
-          color={joined ? T.green : T.brand}
-          onPress={async () => {
-            if (joined || joining) return;
-            setJoining(true);
-            try {
-              const token = await getToken();
-              const ok = await applyToTrip(token, trip.id);
-              if (ok) {
-                add(`trip:${trip.id}`);
-                Alert.alert('Заявка принята', `Мы свяжемся с вами по деталям поездки «${trip.title}».`);
-              } else {
-                Alert.alert('Не удалось записаться', 'Проверьте подключение и попробуйте снова.');
-              }
-            } catch {
-              Alert.alert('Не удалось записаться', 'Проверьте подключение и попробуйте снова.');
-            } finally {
-              setJoining(false);
-            }
-          }}
+          color={joined ? T.green : pending ? T.orange : T.brand}
+          onPress={apply}
         />
       </View>
     </View>

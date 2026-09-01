@@ -13,7 +13,7 @@ import { EmptyState, ErrorState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useEnrollment } from '../../state/EnrollmentContext';
-import { joinSport } from '../../data/api';
+import { joinSport, leaveSport, joinFailureMessage } from '../../data/api';
 import { useAuth } from '@clerk/clerk-expo';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
@@ -39,14 +39,24 @@ function openCreateSheet(navigation: Nav) {
 }
 
 const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_sport'] as const;
+// Разделы «Сообщества» можно выключать в админ-панели сайта. Лента и челленджи
+// флага не имеют: без них вкладка теряет смысл.
+const SECTION_FEATURE: Record<number, string> = { 1: 'channels', 3: 'trips', 4: 'sport' };
 
 export function CommunityHomeScreen({ navigation, route }: Props) {
   const { T } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
   const { reload: reloadChannels } = useChannel();
-  const { canCreate } = useRole();
+  const { canCreate, feature } = useRole();
   const [seg, setSeg] = useState(0);
+  const sectionOn = (i: number) => {
+    const key = SECTION_FEATURE[i];
+    return !key || feature(key);
+  };
+  // Раздел выключили, пока пользователь в нём стоял — возвращаем на ленту,
+  // иначе экран остался бы пустым без единой кнопки.
+  React.useEffect(() => { if (!sectionOn(seg)) setSeg(0); }, [seg, feature]);
   const refreshToken = route.params?.refresh;
   const focusParam = route.params?.focus;
 
@@ -82,19 +92,26 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
   }, [load, reloadChannels]);
 
   // A create modal sets route.params.refresh on dismissal — reload the lists
-  // once so newly published content shows immediately, and switch to the tab
-  // that actually shows the created kind (the home tab lists channels/trips/sport
-  // but NOT open challenges, so a new challenge would otherwise look missing).
+  // once so newly published content shows immediately.
   useEffect(() => {
     if (refreshToken === undefined) return;
     reloadChannels();
     load();
-    if (focusParam) {
-      const idx = focusParam === 'channel' ? 1 : focusParam === 'challenge' ? 2 : focusParam === 'trip' ? 3 : 4;
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setSeg(idx);
-    }
-  }, [refreshToken, focusParam, load, reloadChannels]);
+  }, [refreshToken, load, reloadChannels]);
+
+  // Switch to the section that actually shows the content we were sent to (the
+  // home tab lists channels/trips/sport but NOT open challenges, so a new
+  // challenge would otherwise look missing). Kept SEPARATE from the refresh
+  // effect: notification deep links arrive with `focus` and no `refresh`, and
+  // used to land on the feed with nothing switched.
+  useEffect(() => {
+    if (!focusParam) return;
+    const idx = focusParam === 'channel' ? 1 : focusParam === 'challenge' ? 2 : focusParam === 'trip' ? 3 : 4;
+    if (!sectionOn(idx)) return;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSeg(idx);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusParam, refreshToken, feature]);
 
   return (
     <Screen largeTitle={tr('Сообщество')} onRefresh={onRefresh}>
@@ -102,7 +119,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       <NavBarLarge title={t('community')} trailing={(
         <>
           {canCreate ? <HeaderIcon name="plus" color={T.brand} label="Создать" onPress={() => openCreateSheet(navigation)} /> : null}
-          <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={42} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
+          <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={48} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
         </>
       )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
@@ -111,14 +128,16 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
-        {SECTION_KEYS.map((k, i) => <Chip key={k} label={t(k)} active={seg === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(i); }} />)}
+        {SECTION_KEYS.map((k, i) => (sectionOn(i)
+          ? <Chip key={k} label={t(k)} active={seg === i} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(i); }} />
+          : null))}
       </ScrollView>
 
       {seg === 0 && <HomeFeed navigation={navigation} setSeg={setSeg} trips={trips} sport={sport} challenges={challenges} error={error} onRetry={load} />}
-      {seg === 1 && <ChannelTab navigation={navigation} />}
+      {seg === 1 && sectionOn(1) && <ChannelTab navigation={navigation} />}
       {seg === 2 && <ChallengesTab navigation={navigation} challenges={challenges} error={error} onRetry={load} />}
-      {seg === 3 && <TripsTab navigation={navigation} trips={trips} error={error} onRetry={load} />}
-      {seg === 4 && <SportTab sport={sport} error={error} onRetry={load} />}
+      {seg === 3 && sectionOn(3) && <TripsTab navigation={navigation} trips={trips} error={error} onRetry={load} />}
+      {seg === 4 && sectionOn(4) && <SportTab sport={sport} error={error} onRetry={load} />}
       <View style={{ height: 16 }} />
     </Screen>
   );
@@ -139,12 +158,17 @@ function EmptyOrError({ error, onRetry, icon, title, subtitle }: { error: boolea
 // ─── Active challenge card (only when there's a live one) ───────────
 function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
   const { T } = useTheme();
-  const { challenge: c, teamPoints, myRank, pointsToday } = useChallenge();
+  const { challenge: c, teamPoints, pointsToday } = useChallenge();
   const open = () => navigation.navigate('ChallengeDetail', { challengeId: c.id });
   const stats = [
-    { v: `${c.currentDay} дн`, l: tr('Серия') },
+    // «Серия» показывала номер текущего дня: пропустив пять дней, человек всё
+    // равно видел «Серия 12 дн». Настоящей серии в приложении нет — подписываем
+    // честно, номером дня челленджа.
+    { v: `${c.currentDay}/${c.totalDays}`, l: tr('День') },
     { v: `${teamPoints}`, l: tr('Очки команды') },
-    { v: `${myRank} / ${c.teamCount}`, l: tr('Место') },
+    // Раньше здесь было «место в СВОЕЙ команде / число КОМАНД» — 12 / 6.
+    // Показываем место команды рядом с её же очками.
+    { v: c.teamRank > 0 ? `${c.teamRank} / ${c.teamCount}` : '—', l: tr('Место команды') },
   ];
   return (
     <Pressable onPress={open} style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', backgroundColor: T.cardBg, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}>
@@ -157,7 +181,7 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
           <Logo size={22} body="#fff" head="#fff" />
           <Text style={[ty.title2, { color: '#fff', flex: 1 }]} numberOfLines={1}>{c.title}</Text>
         </View>
-        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>{c.teamName ? `${tr('Команда')} «${c.teamName}» · ` : ''}{tr('сегодня')} +{pointsToday} pts</Text>
+        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>{c.teamName ? `${tr('Команда')} «${c.teamName}» · ` : ''}{c.eliminated ? tr('очки зафиксированы') : `${tr('сегодня')} +${pointsToday} pts`}</Text>
         <View style={{ marginTop: 12, height: 6, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
           <View style={{ width: `${(c.totalDays > 0 ? c.currentDay / c.totalDays : 0) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6 }} />
         </View>
@@ -277,8 +301,10 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
   const { T } = useTheme();
   const { channels, error: channelsError, reload: reloadChannels } = useChannel();
   const { isParticipant } = useChallenge();
-  const { has, ready } = useEnrollment();
+  const { has, ready, statusOf } = useEnrollment();
   const openChallenges = (challenges ?? []).filter((x) => x.status === 'upcoming');
+  // Отклонённых заявок здесь уже нет (сервер их не отдаёт), но заявка на
+  // рассмотрении — это ещё НЕ «Ваша поездка»: подписываем её честно.
   const myTrips = ready ? (trips ?? []).filter((trip) => has(`trip:${trip.id}`)) : [];
   const mySport = ready ? (sport ?? []).filter((activity) => has(`sport:${activity.id}`)) : [];
   const hasPersonalActivity = isParticipant || myTrips.length > 0 || mySport.length > 0;
@@ -288,7 +314,8 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
       {hasPersonalActivity ? <SectionHeader title={tr('Мои активности')} /> : null}
       {isParticipant ? <ActiveChallengeCard navigation={navigation} /> : null}
       {myTrips.map((trip) => (
-        <PersonalActivityCard key={`mine-trip:${trip.id}`} icon="map.fill" eyebrow={tr('Ваша поездка')}
+        <PersonalActivityCard key={`mine-trip:${trip.id}`} icon="map.fill"
+          eyebrow={statusOf(`trip:${trip.id}`) === 'pending' ? tr('Заявка на рассмотрении') : tr('Ваша поездка')}
           title={trip.title} subtitle={[trip.date, trip.region].filter(Boolean).join(' · ')}
           onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })} />
       ))}
@@ -407,7 +434,7 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           <Capsule bg="rgba(255,149,0,0.14)" color={T.orange}><SF name="figure.walk" size={11} color={T.orange} />{tr('Офлайн')}</Capsule>
           {trip.region ? <Capsule bg={T.fillTertiary} color={T.label}><SF name="mappin.and.ellipse" size={11} color={T.labelSecondary} />{trip.region}</Capsule> : null}
-          {trip.difficulty && trip.difficulty !== '—' ? <Capsule bg={T.fillTertiary} color={T.label}>{trip.difficulty}</Capsule> : null}
+          {trip.difficulty ? <Capsule bg={T.fillTertiary} color={T.label}>{trip.difficulty}</Capsule> : null}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
           <Text style={[ty.caption1, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{trip.meta}</Text>
@@ -430,8 +457,13 @@ function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trip
           <Image source={imgUrl(t.imageUrl, 256)} style={{ width: 64, height: 64, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{t.title}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{t.region} · {t.difficulty}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{t.date} · {t.meta} · {t.price}</Text>
+            {/* `meta` — это уже «регион · дата», поэтому строка «{date} · {meta} · {price}»
+                читалась как «12 авг · Алматы · 12 авг · Бесплатно». Собираем один раз
+                и только из непустых кусков. */}
+            {[t.region, t.difficulty].filter(Boolean).length > 0 ? (
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{[t.region, t.difficulty].filter(Boolean).join(' · ')}</Text>
+            ) : null}
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{[t.date, t.price].filter(Boolean).join(' · ')}</Text>
           </View>
           <SF name="chevron.forward" size={14} color={T.labelTertiary} />
           {i < trips.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 88, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
@@ -444,8 +476,9 @@ function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trip
 // ─── Спорт ──────────────────────────────────────────────────────────
 function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; error: boolean; onRetry: () => void }) {
   const { T } = useTheme();
-  const { has, toggle } = useEnrollment();
+  const { has, add, remove } = useEnrollment();
   const { getToken } = useAuth();
+  const [busy, setBusy] = useState<string | null>(null);
   if (sport === null) return <Loading />;
   if (sport.length === 0) return <EmptyOrError error={error} onRetry={onRetry} icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />;
   return (
@@ -453,7 +486,9 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
       {sport.map((sp, i) => {
         const k = `sport:${sp.id}`;
         const on = has(k);
-        const going = sp.going + (on ? 1 : 0);
+        // sp.going — серверный счётчик, в котором пользователь УЖЕ учтён;
+        // прибавлять себя ещё раз значило считать себя дважды.
+        const going = sp.going;
         return (
           <View key={sp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
             <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: sp.tint, alignItems: 'center', justifyContent: 'center' }}>
@@ -461,19 +496,36 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{sp.title}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place} · {sp.date}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{[sp.place, sp.date].filter(Boolean).join(' · ')}</Text>
+              {/* spotsLabel теперь остаток, а не вместимость: «12 идут · 10 мест»
+                  раньше выглядело так, будто мест больше, чем участников. */}
               <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{going} идут · {sp.spotsLabel}</Text>
               {sp.note ? <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 2 }]} numberOfLines={2}>{sp.note}</Text> : null}
             </View>
-            <Pressable onPress={async () => {
+            <Pressable disabled={busy === sp.id} onPress={async () => {
+              if (busy) return;
+              setBusy(sp.id);
               const joining = !on;
-              toggle(k); // optimistic
-              if (joining) {
-                let okJoin = false;
-                try { const tk = await getToken(); okJoin = await joinSport(tk, sp.id); } catch { okJoin = false; }
-                if (!okJoin) { toggle(k); Alert.alert(tr('Не удалось записаться'), tr('Проверьте подключение и попробуйте снова.')); }
+              // Оптимистично — но с откатом, если сервер отказал.
+              if (joining) add(k); else remove(k);
+              try {
+                const tk = await getToken();
+                const res = joining ? await joinSport(tk, sp.id) : await leaveSport(tk, sp.id);
+                // Отмена записи, которой на сервере нет, — уже нужный результат.
+                if (!res.ok && !(!joining && res.status === 404)) {
+                  if (joining) remove(k); else add(k);
+                  const m = joinFailureMessage(res);
+                  Alert.alert(tr(joining ? m.title : 'Не удалось отменить запись'), tr(m.body));
+                } else {
+                  onRetry(); // перечитать счётчики «идут / осталось мест»
+                }
+              } catch {
+                if (joining) remove(k); else add(k);
+                Alert.alert(tr('Нет связи'), tr('Проверьте подключение и попробуйте снова.'));
+              } finally {
+                setBusy(null);
               }
-            }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 }}>
+            }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14, opacity: busy === sp.id ? 0.6 : 1 }}>
               <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]} numberOfLines={1}>{on ? 'Вы идёте' : 'Участвую'}</Text>
             </Pressable>
             {i < sport.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}

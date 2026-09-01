@@ -55,9 +55,11 @@ export function ChallengeTaskRow({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
         <SF name={done ? 'checkmark.circle.fill' : 'circle'} size={21} color={done ? T.brand : T.labelTertiary} />
         <Text style={[ty.subheadEm, { flex: 1, color: T.label }]} numberOfLines={1}>{task.title}</Text>
+        {/* Баллы начисляются за каждую единицу, а не только при норме: ниже
+            нормы показываем уже заработанное, а не награду за норму. */}
         {done
           ? <Capsule bg={over ? 'rgba(52,199,89,0.18)' : T.brandTinted} color={over ? T.green : T.brand} style={{ alignSelf: 'center' }}>{`+${pts} pts`}</Capsule>
-          : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{task.basePts}</Text>}
+          : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{pts}</Text>}
       </View>
 
       <View style={{ marginTop: 6, marginLeft: 30 }}>

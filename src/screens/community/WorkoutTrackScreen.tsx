@@ -40,7 +40,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   const { T } = useTheme();
   const insets = useSafeAreaInsets();
   const { addWorkout } = useActivities();
-  const { challenge, setMetric } = useChallenge();
+  const { challenge, setMetric, isParticipant, dayLocked } = useChallenge();
 
   const [type, setType] = useState<WorkoutType>('run');
   const [status, setStatus] = useState<'idle' | 'tracking' | 'paused' | 'done'>('idle');
@@ -110,7 +110,10 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   };
   const pause = () => { hTap(); setStatus('paused'); subRef.current?.remove(); subRef.current = null; stopTimer(); };
   const resume = async () => {
-    hTap(); setStatus('tracking'); lastRef.current = user;
+    // Во время паузы человек мог уехать/уйти. Опорной точкой была последняя
+    // фиксация ДО паузы, и весь этот путь падал в дистанцию первым же фиксом
+    // после «Продолжить». Сбрасываем: опорой станет первый фикс после паузы.
+    hTap(); setStatus('tracking'); lastRef.current = null;
     try { await startWatch(); startTimer(); }
     catch { setStatus('paused'); Alert.alert('Не удалось продолжить', 'Проверьте доступ к геолокации и попробуйте снова.'); }
   };
@@ -122,16 +125,28 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
     const w = addWorkout({ type, dateISO: new Date().toISOString(), distanceM, durationSec: elapsed, steps, coords });
     savedRef.current = w;
     hSuccess();
-    const act = challenge.tasks.find((t) => t.kind === 'metric' && (t.id === 'steps' || /шаг/i.test(t.unit)));
     const km = (distanceM / 1000).toFixed(2);
     const kind = type === 'run' ? 'Пробежка' : 'Ходьба';
-    if (act && act.kind === 'metric' && steps > 0) {
-      Alert.alert('Активность записана', `${kind} · ${km} км · ≈${steps} шагов.\n\nДобавить в челлендж?`, [
+    const body = `${kind} · ${km} км · ≈${steps} шагов.`;
+    // Предлагать «добавить в челлендж» можно только реальному участнику:
+    // у DEFAULT_CHALLENGE тоже есть задача «шаги», поэтому раньше предложение
+    // видели все, а отметка уходила в несуществующий челлендж
+    // 'divergents-daily' и молча терялась.
+    const act = isParticipant
+      ? challenge.tasks.find((t) => t.kind === 'metric' && (t.id === 'steps' || /шаг/i.test(t.unit)))
+      : undefined;
+    if (act && act.kind === 'metric' && steps > 0 && !dayLocked) {
+      Alert.alert('Активность записана', `${body}\n\nДобавить в челлендж?`, [
         { text: 'Не сейчас', style: 'cancel', onPress: () => navigation.goBack() },
         { text: `+${steps} шагов`, onPress: () => { setMetric(act.id, act.current + steps); navigation.goBack(); } },
       ]);
+    } else if (act && steps > 0 && dayLocked) {
+      // День уже закрыт (23:00 по Алматы) — говорим об этом прямо, а не молчим.
+      Alert.alert('Активность записана', `${body}\n\nДень челленджа уже закрыт — эти шаги пойдут в статистику тренировок, но в челлендж не попадут.`, [
+        { text: 'Понятно', onPress: () => navigation.goBack() },
+      ]);
     } else {
-      Alert.alert('Активность записана', `${kind} · ${km} км · ≈${steps} шагов.`, [{ text: 'Готово', onPress: () => navigation.goBack() }]);
+      Alert.alert('Активность записана', body, [{ text: 'Готово', onPress: () => navigation.goBack() }]);
     }
   };
 

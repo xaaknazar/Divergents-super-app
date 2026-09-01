@@ -56,6 +56,9 @@ const ApiChannelPostSchema = z.object({
   body: z.string().nullish(),
   audioUrl: z.string().nullish(),
   createdAt: zStr(),
+  // Сервер отдаёт агрегированные реакции и реакцию текущего пользователя прямо
+  // в этом ответе — счётчик берём оттуда, а не выдумываем на клиенте.
+  reactions: z.record(z.string(), z.number()).nullish(),
 }).passthrough();
 
 const ApiChannelSchema = z.object({
@@ -154,7 +157,7 @@ function mapPost(p: ApiChannelPost, channelId: string): ChannelPost {
     icon: isAudio ? 'waveform' : 'doc.text.fill',
     excerpt: excerptFrom(paras),
     body: paras,
-    likes: 0,
+    likes: Object.values(p.reactions ?? {}).reduce((s, n) => s + (n || 0), 0),
     views: '0',
   };
   if (isAudio) {

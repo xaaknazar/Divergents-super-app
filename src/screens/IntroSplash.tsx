@@ -25,16 +25,15 @@ export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onD
   const { width } = useWindowDimensions();
   const logoSize = Math.min(120, Math.round(width * 0.3));
 
-  // Brand lockup must never truncate. Size it from the ACTUAL available width
-  // (independent of the app's personalised text scale, which previously pushed
-  // the wordmark past the screen edge and produced «Diverg…»).
-  const avail = width - 48; // styles.center paddingHorizontal: 24 on both sides
-  const fit = (text: string, max: number, min: number, em: number, extra = 0) =>
-    Math.max(min, Math.min(max, Math.floor((avail - 4) / (text.length * em + extra))));
-  const wordSize = fit(WORDMARK, 34, 20, 0.74);
-  // Uppercase + letter-spacing: solve for size with spacing proportional to it.
-  const sloganSize = fit(SLOGAN, 13, 9, 0.72, 1.4);
-  const sloganSpacing = sloganSize >= 12 ? 1.4 : 0.8;
+  // Лого-локап масштабируется от ширины экрана, а не «подгоняется» по буквам:
+  // прошлая обрезка («Diverg…») была из-за ширины контейнера, а не из-за
+  // размера шрифта, поэтому здесь нужны нормальные, читаемые кегли.
+  // 393pt (iPhone 15) — базовая ширина: 34pt заголовок / 13pt слоган.
+  const avail = width - 48; // styles.center paddingHorizontal: 24 с двух сторон
+  const clamp = (min: number, max: number, v: number) => Math.max(min, Math.min(max, Math.round(v)));
+  const wordSize = clamp(26, 38, width * 0.088);
+  const sloganSize = clamp(11, 15, width * 0.033);
+  const sloganSpacing = sloganSize * 0.12;
 
   const logoScale = useRef(new Animated.Value(0.9)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -95,7 +94,7 @@ export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onD
             style={[styles.wordmark, { fontSize: wordSize, lineHeight: Math.round(wordSize * 1.2) }]}
             numberOfLines={1}
             adjustsFontSizeToFit
-            minimumFontScale={0.6}
+            minimumFontScale={0.85}
             allowFontScaling={false}
           >
             {WORDMARK}
@@ -104,7 +103,7 @@ export function IntroSplash({ fontsLoaded, onDone }: { fontsLoaded: boolean; onD
             style={[styles.slogan, { fontSize: sloganSize, lineHeight: Math.round(sloganSize * 1.35), letterSpacing: sloganSpacing }]}
             numberOfLines={1}
             adjustsFontSizeToFit
-            minimumFontScale={0.6}
+            minimumFontScale={0.85}
             allowFontScaling={false}
           >
             {SLOGAN}
@@ -132,7 +131,7 @@ const styles = StyleSheet.create({
   },
   slogan: {
     fontFamily: ty.caption1.fontFamily,
-    color: 'rgba(255,255,255,0.62)',
+    color: 'rgba(255,255,255,0.78)',
     marginTop: 8,
     textTransform: 'uppercase',
     textAlign: 'center',

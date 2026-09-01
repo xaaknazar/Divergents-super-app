@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { SF, SFName } from '../components/SFIcon';
 import { hSelect } from '../lib/haptics';
 import { useLang } from '../state/LanguageContext';
+import { useRole } from '../state/useRole';
 
 const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | 'tab_map' | 'tab_career' | 'tab_profile'; on: SFName; off: SFName }> = {
   LMSTab: { label: 'tab_learn', on: 'book.fill', off: 'book' },
@@ -53,12 +54,21 @@ function focusedLeafName(route: { name: string; state?: any }): string {
   return r?.name ?? route.name;
 }
 
+// Вкладка ↔ флаг показа из админ-панели сайта. «Обучение» и «Сообщество»
+// скрыть нельзя — без них приложение остаётся без содержимого.
+const TAB_FEATURE: Record<string, string> = {
+  AITab: 'ai',
+  MapTab: 'map',
+  CareerTab: 'career',
+};
+
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { T, isDark, reduceTransparency, ty } = useTheme();
   const { t } = useLang();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const fontScale = PixelRatio.getFontScale();
+  const { feature } = useRole();
   const active = state.routes[state.index] as { name: string; state?: any };
   const leaf = focusedLeafName(active);
   if (!ROOT_ROUTES.has(leaf)) return null;
@@ -68,7 +78,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   // included); when it doesn't fit the per-tab slot, fall back to icons-only —
   // the same thing iOS does at accessibility text sizes. Screen readers still
   // announce each tab via accessibilityLabel.
-  const visible = state.routes.filter((r) => TABS[r.name]);
+  const shown = (name: string) => {
+    if (!TABS[name]) return false;
+    const key = TAB_FEATURE[name];
+    // Открытую сейчас вкладку не прячем: иначе пользователь окажется на экране,
+    // до которого больше нет кнопки.
+    if (key && !feature(key) && name !== active.name) return false;
+    return true;
+  };
+  const visible = state.routes.filter((r) => shown(r.name));
   const tabCount = Math.max(1, visible.length);
   const slotW = (width - 8) / tabCount - 6; // bar padding + per-tab padding
   const labelSize = ((ty.caption2 as { fontSize?: number }).fontSize ?? 11) * fontScale;
@@ -102,7 +120,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       {state.routes.map((route, index) => {
         const focused = state.index === index;
         const meta = TABS[route.name];
-        if (!meta) return null;
+        if (!meta || !shown(route.name)) return null;
         const color = focused ? T.brandText : T.labelSecondary;
         const label = labelFor(route.name);
         return (

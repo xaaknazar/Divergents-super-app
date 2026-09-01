@@ -43,7 +43,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
   const onRefresh = async () => { setRefreshing(true); try { await load(); } finally { setRefreshing(false); } };
 
   const open = (id: string) =>
-    navigation.getParent()?.navigate('CommunityTab', { screen: 'ChallengeDetail', params: { challengeId: id } });
+    navigation.getParent()?.navigate('CommunityTab', { screen: 'ChallengeDetail', params: { challengeId: id }, initial: false });
 
   const active = items.filter((i) => i.challengeStatus !== 'archived');
   const past = items.filter((i) => i.challengeStatus === 'archived');

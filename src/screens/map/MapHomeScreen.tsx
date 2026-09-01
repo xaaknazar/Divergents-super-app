@@ -15,7 +15,7 @@ import { usePlaces, filterPlaces, ratingOf } from '../../state/PlacesContext';
 import { COUNTRIES, CATEGORY_META, TAG_META, TAGS, CATEGORIES, PlaceCategory, PlaceTag, safeCityCenter, nearestCity, Place, isOpenNow, City, fetchPendingPlaces } from '../../data/places';
 import { offlineAvailable, listOfflinePacks, findCityPack, downloadCityPack, deleteCityPack } from '../../data/offlineMap';
 import { useRole } from '../../state/useRole';
-import { fetchLiveTrips, fetchMyTripIds, LiveTrip, fetchLiveSport, fetchMySportIds, LiveSport } from '../../data/api';
+import { fetchLiveTrips, fetchMyTrips, LiveTrip, fetchLiveSport, fetchMySport, LiveSport } from '../../data/api';
 import { MapStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
 import { loadJSON, saveJSON } from '../../state/persist';
@@ -124,18 +124,22 @@ export function MapHomeScreen({ navigation }: Props) {
   useEffect(() => {
     let alive = true;
     (async () => {
+      // Метку сбора ставим только ПОДТВЕРЖДЁННЫМ участникам: заявка на
+      // рассмотрении (и тем более отклонённая) — ещё не приглашение прийти.
       try {
         const token = isSignedIn ? await getToken() : null;
-        const [trips, myIds] = await Promise.all([fetchLiveTrips(), fetchMyTripIds(token)]);
+        const [trips, myTrips] = await Promise.all([fetchLiveTrips(), fetchMyTrips(token)]);
+        const approved = new Set(myTrips.filter((x) => x.status === 'approved').map((x) => x.id));
         const now = Date.now();
-        const mine = trips.filter((t) => myIds.includes(t.id) && t.meetLat != null && t.meetLng != null && (() => { const d = t.meetAt ? Date.parse(t.meetAt.replace(' ', 'T')) : NaN; return isNaN(d) ? true : d >= now; })());
+        const mine = trips.filter((t) => approved.has(t.id) && t.meetLat != null && t.meetLng != null && (() => { const d = t.meetAt ? Date.parse(t.meetAt.replace(' ', 'T')) : NaN; return isNaN(d) ? true : d >= now; })());
         if (alive) setMeetings(mine);
       } catch {}
       try {
         const token = isSignedIn ? await getToken() : null;
-        const [sport, mySportIds] = await Promise.all([fetchLiveSport(), fetchMySportIds(token)]);
+        const [sport, mySport] = await Promise.all([fetchLiveSport(), fetchMySport(token)]);
+        const approvedSport = new Set(mySport.filter((x) => x.status === 'approved').map((x) => x.id));
         const now2 = Date.now();
-        const mineS = sport.filter((sp) => mySportIds.includes(sp.id) && sp.meetLat != null && sp.meetLng != null && (() => { const d = sp.meetAt ? Date.parse(sp.meetAt.replace(' ', 'T')) : NaN; return isNaN(d) ? true : d >= now2; })());
+        const mineS = sport.filter((sp) => approvedSport.has(sp.id) && sp.meetLat != null && sp.meetLng != null && (() => { const d = sp.meetAt ? Date.parse(sp.meetAt.replace(' ', 'T')) : NaN; return isNaN(d) ? true : d >= now2; })());
         if (alive) setSportMeets(mineS);
       } catch {}
     })();

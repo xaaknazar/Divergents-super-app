@@ -12,6 +12,7 @@ import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/Sta
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useNotifications } from '../../state/NotificationsContext';
+import { useRole } from '../../state/useRole';
 import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useDownloads } from '../../state/downloads';
@@ -28,6 +29,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   const my = useMyCourses();
   const { unread } = useNotifications();
   const { t } = useLang();
+  const { feature } = useRole();
   const { user } = useUser();
   const { profile, live } = useTalentProfile();
   const downloads = useDownloads();
@@ -75,7 +77,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   return (
     <Screen largeTitle={t('tab_learn')} onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
       <PageIntro page="lms" />
-      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="person.crop.circle.fill" color={T.brand} size={42} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
+      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="person.crop.circle.fill" color={T.brand} size={48} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 16 }}>
         <Logo size={36} />
@@ -126,7 +128,9 @@ export function LMSHomeScreen({ navigation }: Props) {
         {categories.map((c) => <Chip key={c} label={c} active={cat === c} onPress={() => setCat(c)} />)}
       </ScrollView>
 
-      {/* Books library entry — compact card with a gradient background */}
+      {/* Books library entry — compact card with a gradient background.
+          Раздел можно выключить в админ-панели сайта. */}
+      {feature('books') ? (
       <Pressable onPress={() => navigation.navigate('Books')}
         style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
         <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -140,6 +144,7 @@ export function LMSHomeScreen({ navigation }: Props) {
           <SF name="chevron.right" size={15} color={T.labelTertiary} />
         </LinearGradient>
       </Pressable>
+      ) : null}
 
       {loading ? (
         <View style={{ paddingTop: 8 }}><CourseGridSkeleton count={4} /></View>
@@ -198,7 +203,7 @@ export function LMSHomeScreen({ navigation }: Props) {
           ) : null}
 
 {/* All courses grid */}
-          <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} action="Каталог" onAction={() => navigation.navigate('Catalog')} />
+          <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16 }}>
             {filtered.map((c) => (
               <View key={c.id} style={{ width: '48.5%', marginBottom: 14 }}>

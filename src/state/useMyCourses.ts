@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { Course } from '../data/courses';
 import { fetchMyCourses } from '../data/api';
+import { revalidateDownloads } from './downloads';
 import { useCourses } from './CourseContext';
 
 export function useMyCourses() {
@@ -37,6 +38,13 @@ export function useMyCourses() {
         const list = await fetchMyCourses(token);
         setCourses(list);
         mergeRef.current(list);
+        // This is the app's single source of truth for ownership, and it runs on
+        // mount and on every foreground — so it's also where offline downloads
+        // get revalidated. A lesson downloaded from a course the user has since
+        // lost (refund, expired purchase, removed from a team) is deleted here
+        // instead of playing forever. Only on a SUCCESSFUL fetch: the throw
+        // below is caught and leaves the files alone.
+        void revalidateDownloads(list.map((c) => c.id));
       } else {
         setCourses([]);
       }

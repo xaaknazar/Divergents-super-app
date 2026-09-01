@@ -33,12 +33,13 @@ function whenReady(fn: () => void, tries = 0) {
 function routeFromResponse(response: Notifications.NotificationResponse | null, signedIn: boolean) {
   if (!response || !signedIn) return;
   const data: any = response.notification.request.content.data || {};
-  const target = data.target || (data.tab && data.screen ? data : null);
+  const target = data.target || (data.tab ? data : null);
   const nav = navigationRef as any;
   whenReady(() => {
     try {
-      if (target?.tab && target?.screen) {
-        nav.navigate('Tabs', normalizeTabTarget(target.tab, target.screen, target.params));
+      // A tab without a screen is still a destination — open the tab.
+      if (target?.tab) {
+        nav.navigate('Tabs', normalizeTabTarget(target.tab, target.screen ?? null, target.params));
       } else {
         // No specific target → open the notifications list.
         nav.navigate('Notifications');
@@ -58,7 +59,7 @@ export async function unregisterPushToken(getToken: () => Promise<string | null>
 }
 
 export function usePush() {
-  const { isSignedIn, getToken } = useAuth();
+  const { isSignedIn, getToken, isLoaded } = useAuth();
   // Keep the latest getToken / auth state in refs so the effect can depend only
   // on isSignedIn without re-subscribing each time Clerk hands back a new fn.
   const getTokenRef = useRef(getToken);
@@ -93,7 +94,14 @@ export function usePush() {
   }, [isSignedIn]);
 
   // Handle taps: cold-start (app launched by a tap) + while running.
+  //
+  // Wait for Clerk to finish restoring the session (isLoaded), not just for
+  // navigation. On a cold start this effect used to run while isSignedIn was
+  // still false, so routeFromResponse bailed out and the tap that LAUNCHED the
+  // app was silently dropped. isLoaded flips false→true once, so the
+  // last-response read still happens exactly once.
   useEffect(() => {
+    if (!isLoaded) return;
     Notifications.getLastNotificationResponseAsync()
       .then((resp) => routeFromResponse(resp, signedInRef.current))
       .catch(() => {});
@@ -101,5 +109,5 @@ export function usePush() {
       routeFromResponse(resp, signedInRef.current),
     );
     return () => sub.remove();
-  }, []);
+  }, [isLoaded]);
 }

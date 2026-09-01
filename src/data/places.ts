@@ -51,6 +51,8 @@ export interface Place {
   addedBy: string;
   photo?: string | null;
   reviews: Review[];
+  /** Только на устройстве: id копии на сервере, если точка уже отправлена. */
+  serverId?: string;
 }
 
 export interface City { key: string; name: string; lat: number; lng: number }
@@ -232,6 +234,34 @@ export async function postPlace(
 // POST a review so other users can see it. Best-effort: the local optimistic
 // review (PlacesContext) is shown regardless. Returns true only on a real 2xx
 // (the caller may surface "synced" vs "saved locally" feedback honestly).
+/**
+ * Правка своего места. Раньше приложение писало «Сохранено», но изменения
+ * оставались только на устройстве, а точка задваивалась на карте.
+ */
+export async function patchPlace(
+  placeId: string,
+  patch: Partial<Omit<Place, 'id' | 'reviews' | 'approved' | 'serverId'>>,
+  token?: string | null,
+  timeoutMs = 12000,
+): Promise<boolean> {
+  if (!placeId || !token) return false;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/mobile/places/${encodeURIComponent(placeId)}`, {
+      method: 'PATCH',
+      signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(patch),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 export async function postReview(
   placeId: string,
   body: { rating: number; text: string },

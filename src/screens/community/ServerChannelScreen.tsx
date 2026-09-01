@@ -16,7 +16,7 @@ import { useModeration } from '../../state/ModerationContext';
 import { useChannel } from '../../state/ChannelContext';
 import { hSelect, hSuccess } from '../../lib/haptics';
 import {
-  fetchServerChannels, fetchMyChannelMemberships, joinChannel, fetchChannelRequests,
+  fetchServerChannels, fetchChannelRequests,
   actChannelRequest, createChannelPost, reactChannelPost, uploadFile, updateChannel, deleteChannel,
   deleteChannelPost, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
 } from '../../data/api';
@@ -44,11 +44,13 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
   const { email } = useRole();
-  const { reload: reloadChannels } = useChannel();
+  // Членство и список каналов берём из ChannelContext: он единственный источник
+  // правды, иначе этот экран расходится со списком каналов и вкладкой «Сообщество».
+  const { reload: reloadChannels, memberships, join: joinCtx, markSeen } = useChannel();
   const id = route.params.channelId;
 
   const [ch, setCh] = useState<ServerChannel | null>(null);
-  const [state, setState] = useState<string | null>(null); // membership state
+  const state = memberships[id] ?? null; // membership state (server-authoritative)
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [postOpen, setPostOpen] = useState(false);
@@ -90,27 +92,33 @@ export function ServerChannelScreen({ route, navigation }: Props) {
     ]);
   };
 
+  // Обновляет и этот экран, и контекст — поэтому любое изменение канала
+  // (переименование, аватар, новый пост, принятая заявка) сразу видно в списке
+  // каналов и на карточках вкладки «Сообщество», а не после перезапуска.
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await getToken();
-      const [channels, mem] = await Promise.all([fetchServerChannels(), fetchMyChannelMemberships(token)]);
-      const found = channels.find((c) => c.id === id) ?? null;
-      setCh(found); setState(mem[id] ?? null);
+      const channels = await fetchServerChannels();
+      setCh(channels.find((c) => c.id === id) ?? null);
+      reloadChannels();
     } finally { setLoading(false); }
-  }, [id]);
+  }, [id, reloadChannels]);
   useEffect(() => { load(); }, [load]);
 
   // Pull-to-refresh: re-fetch without flipping the full-screen loading spinner.
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const token = await getToken();
-      const [channels, mem] = await Promise.all([fetchServerChannels(), fetchMyChannelMemberships(token)]);
-      const found = channels.find((c) => c.id === id) ?? null;
-      setCh(found); setState(mem[id] ?? null);
+      const channels = await fetchServerChannels();
+      setCh(channels.find((c) => c.id === id) ?? null);
+      reloadChannels();
     } finally { setRefreshing(false); }
-  }, [id]);
+  }, [id, reloadChannels]);
+
+  // Канал открыт — значит его публикации прочитаны. Сервер не хранит «последний
+  // просмотренный пост», поэтому отметка локальная; здесь единственное место,
+  // где она вообще записывается.
+  useEffect(() => { markSeen(id); }, [id, markSeen]);
 
   const loadRequests = useCallback(async () => {
     const token = await getToken();
@@ -123,7 +131,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   const join = async () => {
     if (!ch) return;
     setBusy(true);
-    try { const token = await getToken(); const s = await joinChannel(token, id); if (s) setState(s); } finally { setBusy(false); }
+    try { await joinCtx(id); } finally { setBusy(false); }
   };
 
   const confirmDeletePost = (p: ServerChannelPost) => {

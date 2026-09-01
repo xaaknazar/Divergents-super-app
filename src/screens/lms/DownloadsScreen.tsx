@@ -77,7 +77,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
   }, [courseIdsKey, isSignedIn]);
 
   const onDownload = async (g: { courseId: string; courseTitle: string }, l: { id: string; n: number; title: string; audioUrl: string }) => {
-    const ok = await downloadLesson({ lessonId: l.id, courseId: g.courseId, courseTitle: g.courseTitle, title: l.title, n: l.n, owned: true }, l.audioUrl);
+    const ok = await downloadLesson({ lessonId: l.id, courseId: g.courseId, courseTitle: g.courseTitle, title: l.title, n: l.n }, l.audioUrl);
     if (!ok) Alert.alert(tr('Не удалось скачать'), tr('Попробуйте ещё раз позже.'));
   };
 
@@ -184,7 +184,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
           {loadingAvail ? (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
           ) : (
-            <EmptyState icon="arrow.down.circle" title={tr('Нет загрузок')} subtitle={tr('Скачайте аудио уроков из купленного курса, чтобы слушать их без интернета.')} />
+            <EmptyState icon="arrow.down.circle" title={tr('Нет загрузок')} subtitle={tr('Скачайте аудио уроков из доступного вам курса, чтобы слушать их без интернета.')} />
           )}
         </View>
       ) : (

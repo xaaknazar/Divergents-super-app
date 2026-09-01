@@ -7,7 +7,7 @@ import { Image } from 'expo-image';
 import { SF } from './SFIcon';
 import { ProgressBar, Capsule, ty } from './ui';
 import { Course } from '../data/courses';
-import { formatPrice, imgUrl } from '../data/api';
+import { imgUrl } from '../data/api';
 
 export function lessonsWord(n: number) {
   if (n === 1) return 'Тренинг';
@@ -33,6 +33,7 @@ function Cover({ course, height }: { course: Course; height: number | string }) 
 export function CourseCardPremium({
   course, owned, progress, width, onPress,
 }: { course: Course; owned?: boolean; progress?: number; width?: number | string; onPress?: () => void }) {
+  const free = course.price == null || course.price <= 0;
   const { T } = useTheme();
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
@@ -67,7 +68,12 @@ export function CourseCardPremium({
                 <SF name="book.fill" size={12} color={T.labelTertiary} />
                 <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{count}</Text>
               </View>
-              <Text style={[ty.subheadEm, { color: T.brand, flexShrink: 0, marginLeft: 8 }]} numberOfLines={1}>{formatPrice(course.price)}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 8 }}>
+                <SF name={free ? 'play.circle.fill' : 'lock.fill'} size={12} color={free ? T.brand : T.labelTertiary} />
+                <Text style={[ty.caption1, { color: free ? T.brand : T.labelSecondary }]} numberOfLines={1}>
+                  {free ? 'Бесплатно' : 'Нет доступа'}
+                </Text>
+              </View>
             </View>
           )}
         </View>
@@ -80,6 +86,7 @@ export function CourseCardPremium({
 export function FeaturedCard({
   course, owned, progress, eyebrow, onPress,
 }: { course: Course; owned?: boolean; progress?: number; eyebrow?: string; onPress?: () => void }) {
+  const free = course.price == null || course.price <= 0;
   const { T } = useTheme();
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
@@ -112,7 +119,12 @@ export function FeaturedCard({
             <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{pct > 0 ? `Продолжить · ${pct}%` : 'Начать'}</Text>
           </View>
         ) : (
-          <Text style={[ty.headline, { color: T.brand, flexShrink: 0, marginLeft: 8 }]} numberOfLines={1}>{formatPrice(course.price)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 }}>
+            <SF name={free ? 'play.circle.fill' : 'lock.fill'} size={16} color={free ? T.brand : T.labelSecondary} />
+            <Text style={[ty.subheadEm, { color: free ? T.brand : T.labelSecondary }]} numberOfLines={1}>
+              {free ? 'Бесплатно' : 'Нет доступа'}
+            </Text>
+          </View>
         )}
       </View>
     </PressableScale>

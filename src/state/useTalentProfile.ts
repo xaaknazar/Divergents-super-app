@@ -15,8 +15,13 @@ import {
 } from '../data/talentslab';
 import { loadJSON, saveJSON } from './persist';
 import { onProfileChanged } from './profileBus';
+import { syncNicknameToSite } from '../data/api';
 
 const CACHE_KEY = 'dvg.talentProfileCache.v1';
+// Псевдоним живёт в анкете (Talentslab), а комментарии/рецензии/челлендж — на
+// сайте, поэтому его нужно один раз передать туда. Ключ — «кому уже передали»,
+// на уровне модуля: хук смонтирован на многих экранах, а запрос нужен один.
+const nicknameSyncedFor = new Map<string, string>();
 type ProfileSource = 'live' | 'cache' | 'local' | null;
 interface CachedTalentProfile { identity: string; profile: TalentProfile; savedAt: number }
 
@@ -146,6 +151,29 @@ export function useTalentProfile() {
   // real data.
   const currentProfile = profileIdentityRef.current === identity ? profile : null;
   const live = source === 'live' && currentProfile?.found === true;
+
+  // Один раз за сессию передаём псевдоним на сайт, чтобы другие пользователи
+  // видели его вместо ФИО в комментариях, рецензиях, отзывах и челлендже.
+  const nickname = typeof (currentProfile?.resume as any)?.nickname === 'string'
+    ? ((currentProfile!.resume as any).nickname as string).trim()
+    : '';
+  useEffect(() => {
+    if (!isSignedIn || !nickname) return;
+    if (nicknameSyncedFor.get(identity) === nickname) return;
+    nicknameSyncedFor.set(identity, nickname);
+    (async () => {
+      try {
+        const token = await getTokenRef.current();
+        if (token) {
+          const ok = await syncNicknameToSite(nickname, token);
+          // Не получилось — пробуем снова при следующем запуске.
+          if (!ok) nicknameSyncedFor.delete(identity);
+        } else {
+          nicknameSyncedFor.delete(identity);
+        }
+      } catch { nicknameSyncedFor.delete(identity); }
+    })();
+  }, [isSignedIn, identity, nickname]);
 
   return { profile: currentProfile, loading, live, unavailable, source, reload: run };
 }

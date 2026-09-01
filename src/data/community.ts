@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
-import { API_BASE, formatPrice } from './api';
+import { API_BASE } from './api';
 import { fetchJson, arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 import { TalentProfile, normalizeProfile } from './talentslab';
 
@@ -35,8 +35,13 @@ const RawChallengeSchema = z.object({
   startISO: zStrN,
   durationDays: zNumN,
   categories: z.union([z.array(z.string()), z.string()]).nullish().catch(null),
-  rules: zStrN,
-  price: zNumN,
+  // Правила — свободный текст. Сервер может отдать и объект настроек
+  // ({ flagsToEliminate, … }), поэтому схема принимает оба варианта.
+  rules: z.union([z.string(), z.record(z.unknown())]).nullish().catch(null),
+  // Цена — СВОБОДНЫЙ ТЕКСТ («12 000 ₸»), а не число: в Prisma это String?.
+  // С числовой схемой любой челлендж с ценой не проходил валидацию и молча
+  // выпадал из каталога.
+  price: zStrN,
   status: zStr(''),
   teams: arrayOf(RawTeamSchema, 'team'),
   _count: CountSchema,
@@ -48,10 +53,19 @@ const RawTripSchema = z.object({
   region: zStrN,
   date: zStrN,
   days: zNumN,
-  price: zNumN,
+  // Цена поездки — СВОБОДНЫЙ ТЕКСТ («от 45 000 ₸»): и веб-форма, и форма в
+  // приложении пишут строку, в Prisma это String?. Числовая схема роняла
+  // валидацию, arrayOf выбрасывал такую поездку, и вкладка показывала
+  // «Пока ничего нет» вообще без признака ошибки.
+  price: zStrN,
   spots: zNumN,
   difficulty: zStrN,
   description: zStrN,
+  // Точка и время сбора — сервер их сохраняет, но раньше клиент не читал.
+  meetPlace: zStrN,
+  meetLat: zNumN,
+  meetLng: zNumN,
+  meetAt: zStrN,
   status: zStr(''),
   createdBy: zStrN,
   _count: CountSchema,
@@ -62,6 +76,7 @@ const RawSportSchema = z.object({
   title: zStr(''),
   place: zStr(''),
   date: zStr(''),
+  // У спорт-активности цены нет; spots — вместимость (0 = без ограничения).
   spots: zNumN,
   description: zStrN,
   meetLat: zNumN,
@@ -112,6 +127,37 @@ function tripDateLabel(raw: string | null | undefined): string {
   return ruShortDate(raw) || String(raw);
 }
 
+// Russian plural: ruPlural(1,'место','места','мест') → 'место'.
+function ruPlural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+// Цена офлайн-события — свободный текст. Пустая цена НЕ значит «Бесплатно»:
+// её просто не заполнили, поэтому пишем нейтральное «Цена уточняется».
+export function priceText(raw: string | null | undefined): string {
+  const s = (raw ?? '').trim();
+  return s.length > 0 ? s : 'Цена уточняется';
+}
+
+// spots — ВМЕСТИМОСТЬ. Пользователю нужно оставшееся: сколько ещё можно
+// записаться. spots === 0 у нас означает «без ограничения».
+export const UNLIMITED_SPOTS = 'без ограничения';
+
+export function spotsLeft(spots: number, going: number): number | null {
+  if (!spots || spots <= 0) return null; // без ограничения
+  return Math.max(0, spots - Math.max(0, going));
+}
+
+export function spotsLeftLabel(spots: number, going: number): string {
+  const left = spotsLeft(spots, going);
+  if (left === null) return `мест ${UNLIMITED_SPOTS}`;
+  if (left === 0) return 'мест нет';
+  return `осталось ${left} ${ruPlural(left, 'место', 'места', 'мест')}`;
+}
+
 function applicationsOf(c: { _count?: { applications?: number | null } | null } | null | undefined): number {
   const n = c?._count?.applications;
   return typeof n === 'number' && Number.isFinite(n) ? n : 0;
@@ -123,21 +169,62 @@ function categoriesText(categories: string[] | string | null | undefined): strin
   return '';
 }
 
-function rulesSnippet(rules: string | null | undefined): string {
-  if (!rules) return '';
-  const s = rules.trim();
+function rulesSnippet(rules: string | { [k: string]: unknown } | null | undefined): string {
+  const s = rulesText(rules).trim();
+  if (!s) return '';
   return s.length > 80 ? `${s.slice(0, 77)}…` : s;
 }
 
-// maxFlags defaults to 3; if the rules text mentions "N 🚩" / "N флаг" use it.
-function parseMaxFlags(rules: string | null | undefined): number {
-  if (!rules) return 3;
-  const m = rules.match(/(\d+)\s*🚩/) || rules.match(/(\d+)\s*флаг/i);
+// Порог вылета и дедлайн отчёта задаёт админ-панель сайта. Значения ниже —
+// только запасные, для старого сервера, который ещё не отдаёт challenge.rules.
+export const DEFAULT_FLAGS_TO_ELIMINATE = 3;
+export const DEFAULT_REPORT_DEADLINE_HOUR = 23;
+
+export interface ChallengeRules {
+  flagsToEliminate: number;
+  reportDeadlineHour: number;
+}
+
+export const DEFAULT_CHALLENGE_RULES: ChallengeRules = {
+  flagsToEliminate: DEFAULT_FLAGS_TO_ELIMINATE,
+  reportDeadlineHour: DEFAULT_REPORT_DEADLINE_HOUR,
+};
+
+// Сколько 🚩 в одной категории означает вылет. Раньше это число либо угадывали
+// регуляркой из текста правил, либо держали зашитым `>= 3`, и при пороге 2 из
+// админки приложение обещало три попытки, а сервер выбивал на второй.
+export function flagsToEliminate(rules: ChallengeRules | null | undefined): number {
+  const n = rules?.flagsToEliminate;
+  return typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : DEFAULT_FLAGS_TO_ELIMINATE;
+}
+
+function mapRules(raw: unknown): ChallengeRules {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const flags = numOf(r.flagsToEliminate, 0);
+  const hour = numOf(r.reportDeadlineHour, 0);
+  return {
+    flagsToEliminate: flags > 0 ? flags : DEFAULT_FLAGS_TO_ELIMINATE,
+    reportDeadlineHour: hour > 0 ? hour : DEFAULT_REPORT_DEADLINE_HOUR,
+  };
+}
+
+// Каталог (/api/mobile/challenges) отдаёт `rules` свободным текстом, но может
+// отдать и объект правил. Объект — источник истины, текст — запасной разбор.
+function rulesText(rules: string | { [k: string]: unknown } | null | undefined): string {
+  return typeof rules === 'string' ? rules : '';
+}
+
+// maxFlags: из challenge.rules, иначе — «N 🚩» / «N флаг» в тексте, иначе 3.
+function parseMaxFlags(rules: string | { [k: string]: unknown } | null | undefined): number {
+  if (rules && typeof rules === 'object') return flagsToEliminate(mapRules(rules));
+  const text = rulesText(rules);
+  if (!text) return DEFAULT_FLAGS_TO_ELIMINATE;
+  const m = text.match(/(\d+)\s*🚩/) || text.match(/(\d+)\s*флаг/i);
   if (m) {
     const n = parseInt(m[1], 10);
     if (Number.isFinite(n) && n > 0 && n < 100) return n;
   }
-  return 3;
+  return DEFAULT_FLAGS_TO_ELIMINATE;
 }
 
 function mapStatus(status: string): 'upcoming' | 'active' | 'finished' {
@@ -234,6 +321,8 @@ export interface Challenge {
   trainer: string;
   price: string;
   tasks: ChallengeTask[];
+  // Настроенные в админ-панели правила зачёта (порог вылета, дедлайн отчёта).
+  rules?: ChallengeRules;
   // The signed-in user's own disciplinary state (server-computed).
   flags?: FlagCounts;
   eliminated?: boolean;
@@ -257,6 +346,7 @@ export const DEFAULT_CHALLENGE: Challenge = {
   teamRank: 0,
   teamCount: 0,
   teamStandings: [],
+  rules: DEFAULT_CHALLENGE_RULES,
   trainer: '',
   price: '',
   // Scoring mirrors the Divergents rules exactly (see CHALLENGE_RULES):
@@ -270,7 +360,7 @@ export const DEFAULT_CHALLENGE: Challenge = {
   ],
 };
 
-// Points helpers (pure functions — the single source of truth for scoring).
+// Points helpers — ЗЕРКАЛО серверного `dayPositive` (lib/challenge-scoring.ts).
 export function taskBonus(t: ChallengeTask): number {
   if (t.kind !== 'metric') return 0;
   if (t.current <= t.min) return 0;
@@ -281,13 +371,24 @@ export function taskDone(t: ChallengeTask): boolean {
   return t.kind === 'binary' ? t.done : t.current >= t.min;
 }
 
+// Баллы за задачу НЕ «всё или ничего»: сервер начисляет за каждую единицу
+// (страница = 1 балл, 400 шагов = 1 балл) независимо от нормы. Приложение до
+// этого давало 0 баллов ниже нормы — при 19 страницах экран показывал 0, а
+// сервер хранил 19. basePts — это норма дня (20 стр. = 20 баллов), отдельно
+// она не начисляется. Бинарная задача (No Sugar) баллов не даёт вовсе.
 export function taskPoints(t: ChallengeTask): number {
-  if (!taskDone(t)) return 0;
-  return t.basePts + taskBonus(t);
+  if (t.kind === 'binary') return t.done ? t.basePts : 0;
+  const unit = t.unitSize > 0 ? t.unitSize : 1;
+  return Math.floor(Math.max(0, t.current) / unit) * t.ptsPerUnit;
 }
 
-export function challengePointsToday(tasks: ChallengeTask[]): number {
-  return tasks.reduce((sum, t) => sum + taskPoints(t), 0);
+// Коэффициент участника (1.5 у беременных/кормящих/с детьми до 3 лет) сервер
+// применяет ко ВСЕЙ сумме за день — иначе такая участница видела две трети
+// своих настоящих баллов.
+export function challengePointsToday(tasks: ChallengeTask[], coefficient = 1): number {
+  const raw = tasks.reduce((sum, t) => sum + taskPoints(t), 0);
+  const k = Number.isFinite(coefficient) && coefficient > 0 ? coefficient : 1;
+  return k * raw;
 }
 
 export function challengeBonusToday(tasks: ChallengeTask[]): number {
@@ -301,6 +402,8 @@ export interface Member {
   name: string;
   weekBase: number;
   day: number;
+  /** Множитель дневных баллов (1.5 у беременных/кормящих/с детьми до 3 лет). */
+  coefficient: number;
   isMe?: boolean;
   // Server-computed disciplinary state. flags are per-category 🚩 counts;
   // eliminated freezes the member's points (🏳️ / «выбыл»). penalty is the total
@@ -348,9 +451,10 @@ interface RawActiveChallenge {
   currentDay?: unknown; members?: unknown; startedLabel?: unknown;
   teamRank?: unknown; teamCount?: unknown; trainer?: unknown; price?: unknown;
   tasks?: unknown; flags?: unknown; eliminated?: unknown; teamStandings?: unknown;
+  rules?: unknown;
 }
 interface RawActiveMember {
-  id?: unknown; name?: unknown; weekBase?: unknown; day?: unknown; isMe?: unknown;
+  id?: unknown; name?: unknown; weekBase?: unknown; day?: unknown; coefficient?: unknown; isMe?: unknown;
   flags?: unknown; eliminated?: unknown; penalty?: unknown;
   previousRank?: unknown; rankChange?: unknown; averagePoints?: unknown; todayTasks?: unknown;
 }
@@ -434,6 +538,7 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
     trainer: strOf(raw.trainer),
     price: strOf(raw.price),
     tasks,
+    rules: mapRules(raw.rules),
     flags: flagsOf(raw.flags),
     eliminated: raw.eliminated === true,
     teamId: (raw as any).teamId ?? null,
@@ -450,6 +555,8 @@ function mapActiveMember(raw: RawActiveMember): Member | null {
     name: strOf(raw.name, 'Участник'),
     weekBase: numOf(raw.weekBase),
     day: numOf(raw.day),
+    // Старый сервер коэффициент не отдаёт — тогда обычный ×1.
+    coefficient: numOf(raw.coefficient, 1) > 0 ? numOf(raw.coefficient, 1) : 1,
     isMe: raw.isMe === true,
     flags: flagsOf(raw.flags),
     eliminated: raw.eliminated === true,
@@ -510,17 +617,29 @@ export async function fetchActiveChallenge(
   }
 }
 
-// POST /api/mobile/challenges/:id/progress (Clerk Bearer) — best-effort sync of
-// a single daily task update ({ taskId, value } for metric, { taskId, done } for
-// binary). Local optimistic state is the source of truth, so this never throws
-// and simply resolves false when the sync isn't possible.
+// Результат отправки отметки. Раньше возвращался голый boolean, и отказ «время
+// вышло» (409 deadline_passed) был неотличим от обрыва связи: приложение молча
+// оставляло отметку на экране и вечно её переотправляло.
+export interface ProgressResult {
+  ok: boolean;
+  /** HTTP-статус; 0 — сети не было вовсе (или таймаут). */
+  status: number;
+  /** 'deadline_passed' | 'challenge_not_active' | 'network' | … */
+  reason?: string;
+  /** Для reason === 'deadline_passed': час дедлайна по Алматы. */
+  deadlineHour?: number;
+}
+
+// POST /api/mobile/challenges/:id/progress (Clerk Bearer) — sync of a single
+// daily task update ({ taskId, value } for metric, { taskId, done } for binary).
+// Never throws: сетевой сбой возвращается как { ok:false, status:0 }.
 export async function postChallengeProgress(
   challengeId: string,
   body: { taskId: string; value?: number; done?: boolean },
   token?: string | null,
   timeoutMs = 12000,
-): Promise<boolean> {
-  if (!challengeId || !body.taskId || !token) return false;
+): Promise<ProgressResult> {
+  if (!challengeId || !body.taskId || !token) return { ok: false, status: 401, reason: 'no-token' };
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -530,9 +649,17 @@ export async function postChallengeProgress(
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(body),
     });
-    return res.ok;
+    if (res.ok) return { ok: true, status: res.status };
+    let data: any = null;
+    try { data = await res.json(); } catch { /* пустое / не-JSON тело */ }
+    return {
+      ok: false,
+      status: res.status,
+      reason: typeof data?.reason === 'string' ? data.reason : undefined,
+      deadlineHour: typeof data?.deadlineHour === 'number' ? data.deadlineHour : undefined,
+    };
   } catch {
-    return false;
+    return { ok: false, status: 0, reason: 'network' };
   } finally {
     clearTimeout(t);
   }
@@ -550,11 +677,18 @@ export interface Trip {
   days: number;
   going: number;
   spots: number;
+  /** Цена как её ввёл организатор («от 45 000 ₸») либо «Цена уточняется». */
   price: string;
+  /** Сложность или '' — экран сам решает, показывать ли строку. */
   difficulty: string;
   organizer: string;
   organizerType: string;
   description: string;
+  // Точка сбора: свободный текст + опциональные координаты и время.
+  meetPlace: string;
+  meetLat: number | null;
+  meetLng: number | null;
+  meetAt: string;
   itinerary: ItineraryItem[];
   included: { icon: SFName; t: string }[];
   imageUrl?: string | null;
@@ -574,11 +708,16 @@ function mapTrip(raw: RawTrip, index: number): Trip {
     days: typeof raw.days === 'number' ? raw.days : 0,
     going: applicationsOf(raw),
     spots: typeof raw.spots === 'number' ? raw.spots : 0,
-    price: formatPrice(raw.price),
-    difficulty: raw.difficulty ?? '—',
+    price: priceText(raw.price),
+    // '—' раньше рендерилось как «сложность: —»; пусто = поля просто нет.
+    difficulty: (raw.difficulty ?? '').trim(),
     organizer: raw.createdBy ?? '',
     organizerType: 'Divergents',
     description: raw.description ?? '',
+    meetPlace: (raw.meetPlace ?? '').trim(),
+    meetLat: raw.meetLat ?? null,
+    meetLng: raw.meetLng ?? null,
+    meetAt: (raw.meetAt ?? '').trim(),
     itinerary: [],
     included: [],
     imageUrl: null,
@@ -590,10 +729,14 @@ export async function fetchTrips(): Promise<Trip[]> {
   return (data ?? []).map(mapTrip);
 }
 
-// The server has no trip-detail endpoint — fetch the list and find by id.
-export async function fetchTrip(id: string): Promise<Trip | null> {
-  const trips = await fetchTrips();
-  return trips.find((t) => t.id === id) ?? null;
+const TripDetailSchema = z.object({ trip: RawTripSchema }).passthrough();
+
+// GET /api/mobile/trips/:id — отдельный эндпоинт детали. Список отдаёт только
+// опубликованные поездки, поэтому поиск по нему терял закрытую поездку у
+// человека, который на неё записан. С токеном сервер вернёт её участнику.
+export async function fetchTrip(id: string, token?: string | null): Promise<Trip | null> {
+  const { data } = await fetchJson(`/api/mobile/trips/${encodeURIComponent(id)}`, TripDetailSchema, { token });
+  return data ? mapTrip(data.trip, 0) : null;
 }
 
 // ─── Creator/admin: publish new content (Clerk Bearer) ──────────────────────
@@ -636,7 +779,8 @@ export interface NewChallengeInput {
   startISO: string;
   durationDays: number;
   teams: NewChallengeTeam[];
-  price?: number | null;
+  // Свободный текст («12 000 ₸») — сервер хранит цену строкой.
+  price?: string | null;
   categories?: string[];
 }
 
@@ -651,7 +795,8 @@ export interface NewTripInput {
   region: string;
   date: string;
   days: number;
-  price?: number | null;
+  // Свободный текст («от 45 000 ₸») — сервер хранит цену строкой.
+  price?: string | null;
   spots: number;
   difficulty?: string;
   description?: string;
@@ -675,7 +820,9 @@ export interface ChallengeCategory {
 }
 
 export const CHALLENGE_CATEGORIES: ChallengeCategory[] = [
-  { key: 'R', title: 'Чтение', norm: '20 страниц в день', scoring: '1 балл за страницу · худлит — 0.5', icon: 'book.fill', color: T.brand },
+  // Половинных баллов за худлит нет ни в приложении, ни в зачёте на сервере —
+  // не обещаем то, чего механика не считает.
+  { key: 'R', title: 'Чтение', norm: '20 страниц в день', scoring: '1 балл за страницу', icon: 'book.fill', color: T.brand },
   { key: 'NS', title: 'No Sugar', norm: 'Полностью без сахара', scoring: 'Читмил: 2 ч.л. мёда/день; фрукты и финики — без ограничений', icon: 'cube.fill', color: T.red },
   { key: 'A', title: 'Активность', norm: '10 000 шагов в день', scoring: '1 балл за 400 шагов · минимум 5 000', icon: 'figure.walk', color: T.green },
 ];
@@ -684,14 +831,14 @@ export const CHALLENGE_RULES: string[] = [
   'Старт: челлендж активируется в 23:00 накануне первого дня. Например, старт «28-го» — трекер открывается в 23:00 27-го.',
   'День идёт с 23:01 до 23:00 следующего дня. Каждая отметка сразу сохраняется; отдельный отчёт отправлять не нужно.',
   'Три категории: Чтение (R), No Sugar (NS), Активность (A). Норма: 20 страниц и 10 000 шагов в день.',
-  'Баллы: 1 страница = 1 балл (худлит — 0.5), день без сахара = 0 баллов, 400 шагов = 1 балл.',
+  'Баллы: 1 страница = 1 балл, день без сахара = 0 баллов, 400 шагов = 1 балл.',
   'Активность можно набирать бегом, плаванием, велосипедом и силовыми (см. таблицу пересчёта).',
   'Изменения принимаются до закрытия дня. Если за день нет ни одной отметки: −300 баллов и три 🚩.',
   'Штраф за невыполнение нормы: −100 баллов и 🚩 по этой категории. Баллы не уходят в минус (минимум 0).',
   'Баллы команды обновляются по отметкам и окончательно пересчитываются в 23:01 при закрытии дня.',
   '3 🚩 по одной категории → 🏳️ и вылет. Очки фиксируются.',
   'Размер команды задаёт организатор (например, 20–35 человек): капитан и 2 советника, выбранные участниками.',
-  'Никнейм ≤ 9 символов и не более одной заглавной буквы, близкий к ФИО. Фиксируйте аэробную нагрузку для проверки.',
+  'В рейтинге команды вас видят под псевдонимом из анкеты профиля. Фиксируйте аэробную нагрузку для проверки.',
   'Читмил: до 2 ч.л. мёда с горкой в день; фрукты, несладкие сухофрукты и финики — без ограничений.',
   'Побеждает команда с наибольшей суммой баллов всех участников.',
 ];
@@ -811,6 +958,9 @@ export interface SportActivity {
   date: string;
   icon: SFName;
   going: number;
+  /** Вместимость (0 = без ограничения). */
+  spots: number;
+  /** Сколько ещё МОЖНО записаться — не общая вместимость. */
   spotsLabel: string;
   tint: string;
   note?: string;
@@ -823,20 +973,27 @@ export interface SportActivity {
 // the contracts layer, which also gives it the 12s abort-timeout it lacked.
 export async function fetchSport(): Promise<SportActivity[]> {
   const { data } = await fetchJson('/api/mobile/sport', SportListSchema);
-  return (data ?? []).map((x): SportActivity => ({
-    id: x.id,
-    title: x.title,
-    place: x.place,
-    date: x.date,
-    icon: 'figure.run',
-    going: applicationsOf(x),
-    spotsLabel: x.spots ? `${x.spots} мест` : 'Открыто',
-    tint: 'rgba(35,64,136,0.12)',
-    note: x.description ?? undefined,
-    meetLat: x.meetLat ?? null,
-    meetLng: x.meetLng ?? null,
-    meetAt: x.meetAt ?? null,
-  }));
+  return (data ?? []).map((x): SportActivity => {
+    const spots = typeof x.spots === 'number' ? x.spots : 0;
+    const going = applicationsOf(x);
+    return {
+      id: x.id,
+      title: x.title,
+      place: x.place,
+      date: x.date,
+      icon: 'figure.run',
+      going,
+      spots,
+      // Раньше здесь была ВМЕСТИМОСТЬ, и строка читалась как «12 идут · 10 мест»
+      // — будто мест больше, чем участников. Показываем остаток.
+      spotsLabel: spotsLeftLabel(spots, going),
+      tint: 'rgba(35,64,136,0.12)',
+      note: x.description ?? undefined,
+      meetLat: x.meetLat ?? null,
+      meetLng: x.meetLng ?? null,
+      meetAt: x.meetAt ?? null,
+    };
+  });
 }
 
 // ─── Встречи: онлайн-лекции ─────────────────────────────────────────

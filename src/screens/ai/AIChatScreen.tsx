@@ -23,7 +23,9 @@ import { loadJSON, saveJSON } from '../../state/persist';
 import { AIStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<AIStackParams, 'AIChat'>;
-type Msg = { id: string; role: 'user' | 'bot'; text: string };
+// `err` marks a bubble the APP produced locally (network/server failure), not
+// something the assistant said. Those must never be replayed as assistant turns.
+type Msg = { id: string; role: 'user' | 'bot'; text: string; err?: boolean };
 
 const GENERAL = 'general';
 const HISTORY_KEY = 'ai.history.v1';
@@ -143,14 +145,24 @@ export function AIChatScreen({}: Props) {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     try {
       const token = isSignedIn ? await getToken() : null;
-      const history: AiMessage[] = (byMode[mode] ?? []).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
+      // Skip our own error bubbles: resending «⚠️ Не удалось получить ответ…»
+      // as an assistant turn taught the model it had said that, and skewed the
+      // next reply.
+      const history: AiMessage[] = (byMode[mode] ?? [])
+        .filter((m) => !m.err && m.text.trim())
+        .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       const turns: AiMessage[] = [...history, { role: 'user', content: q }];
       const answer = isGeneral
-        ? (await askAi(turns, token, { profileContext: [profileSummary(profile), coursesContext].filter(Boolean).join('\n\n') })).answer
+        // Профиль и каталог — РАЗНЫЕ поля: у сервера на них разные бюджеты, а
+        // склеенные в одну строку они резались так, что каталог пропадал.
+        ? (await askAi(turns, token, { profileContext: profileSummary(profile), coursesContext })).answer
         : (await askCourseAI(mode, q, turns, token ?? '')).answer;
-      const full = (answer && answer.trim()) ? answer : tr('Не удалось получить ответ. Попробуйте переформулировать вопрос.');
+      // An empty answer is our fallback copy, not the assistant's — flag it so
+      // it stays out of the next request's history too.
+      const failed = !(answer && answer.trim());
+      const full = failed ? tr('Не удалось получить ответ. Попробуйте переформулировать вопрос.') : answer;
       const botId = uid();
-      setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), { id: botId, role: 'bot', text: '' }] }));
+      setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), { id: botId, role: 'bot', text: '', err: failed }] }));
       streamInto(mode, botId, full);
     } catch (e: unknown) {
       if (e instanceof AiUnavailableError) {
@@ -166,7 +178,7 @@ export function AIChatScreen({}: Props) {
       // network error like "Network request failed" / "Aborted".
       const raw = e instanceof Error && typeof e.message === 'string' ? e.message : '';
       const msg = /[а-яА-ЯёЁ]/.test(raw) ? raw : tr('Не удалось получить ответ. Проверьте подключение и попробуйте снова.');
-      const botMsg: Msg = { id: uid(), role: 'bot', text: `⚠️ ${msg}` };
+      const botMsg: Msg = { id: uid(), role: 'bot', text: `⚠️ ${msg}`, err: true };
       setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), botMsg] }));
     } finally {
       setBusy(false);
@@ -190,8 +202,10 @@ export function AIChatScreen({}: Props) {
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Divergents AI</Text>
             <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>
+              {/* Ассистент знает КАТАЛОГ (названия, категории, описания), но не
+                  содержимое уроков — обещать «знает все курсы» нечестно. */}
               {isGeneral
-                ? (isSignedIn && profile?.found ? tr('Знает все курсы и ваш профиль') : tr('Знает все курсы Divergents'))
+                ? (isSignedIn && profile?.found ? tr('Знает каталог курсов и ваш профиль') : tr('Знает каталог курсов Divergents'))
                 : `${tr('Знает материалы курса')} «${activeCourse?.title ?? ''}»`}
             </Text>
           </View>

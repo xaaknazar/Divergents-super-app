@@ -14,7 +14,7 @@ import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useRole } from '../../state/useRole';
-import { totalFlags, MEDAL_FOR_RANK } from '../../data/community';
+import { totalFlags, flagsToEliminate, MEDAL_FOR_RANK } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeRoster'>;
@@ -26,6 +26,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
   const { canCreate } = useRole();
   const { challenge, leaderboard } = useChallenge();
   const isCaptain = !!challenge.captainId && challenge.captainId === userId;
+  const maxFlags = flagsToEliminate(challenge.rules);
   // Only a captain of this team or a manager may open teammates' anketas.
   const canSeeAnketa = isCaptain || canCreate;
 
@@ -48,7 +49,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
         {leaderboard.length === 0 ? (
           <EmptyState icon="person.2.fill" title={tr('Команда ещё формируется')} subtitle={tr('Участники появятся здесь после одобрения заявок.')} />
         ) : (
-          <ListSection header={tr('Участники')} footer={tr('🚩 — флаги за пропуск дневной нормы (чтение / без сахара / активность). 3 в одной категории → 🏳️ вылет.')}>
+          <ListSection header={tr('Участники')} footer={`${tr('🚩 — флаги за пропуск дневной нормы (чтение / без сахара / активность).')} ${maxFlags} ${tr('в одной категории → 🏳️ вылет.')}`}>
             {leaderboard.map((m, i) => {
               const flagN = totalFlags(m.flags);
               const out = m.eliminated === true;
@@ -62,8 +63,10 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
                     <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>
                       {m.name}{m.isMe ? <Text style={[ty.caption1, { color: T.brand }]}>{`  · ${tr('вы')}`}</Text> : null}
                     </Text>
+                    {/* m.day — это БАЛЛЫ ЗА СЕГОДНЯ, а не номер дня: подпись
+                        «День 45» читалась как 45-й день челленджа. */}
                     <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
-                      {tr('День')} {m.day} · {m.points} pts{out ? ` · ${tr('выбыл')}` : ''}
+                      {tr('Сегодня')} {m.day} · {tr('всего')} {m.points} pts{out ? ` · ${tr('выбыл')}` : ''}
                     </Text>
                   </View>
                   {flagN > 0 ? (
