@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Typography } from '../../theme/tokens';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -11,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { PrimaryButton, ty } from '../../components/ui';
+import { PrimaryButton, Chip } from '../../components/ui';
 import { usePlaces } from '../../state/PlacesContext';
 import { Place, postPlace } from '../../data/places';
 import { uploadFile } from '../../data/api';
@@ -38,7 +39,7 @@ async function persistImage(uri: string): Promise<string> {
 }
 
 export function AddPlaceScreen({ navigation, route }: Props) {
-  const { T, isDark } = useTheme();
+  const { T, isDark, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { user } = useUser();
@@ -63,18 +64,31 @@ export function AddPlaceScreen({ navigation, route }: Props) {
   const toggle = (t: PlaceTag) => setTags((p) => p.includes(t) ? p.filter((x) => x !== t) : [...p, t]);
   const pickPhoto = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { Alert.alert('Нет доступа к фото', 'Разрешите доступ к галерее в настройках.'); return; }
+    if (!perm.granted) {
+      Alert.alert('Нет доступа к фото', 'Разрешите доступ к галерее в настройках.', [
+        { text: tr('Открыть настройки'), onPress: () => Linking.openSettings().catch(() => {}) },
+        { text: tr('Отмена'), style: 'cancel' },
+      ]);
+      return;
+    }
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, allowsEditing: true, aspect: [4, 3] });
     if (!r.canceled && r.assets?.[0]?.uri) setPhoto(await persistImage(r.assets[0].uri));
   };
-  const ok = name.trim().length > 1 && highlights.trim().length > 2;
+  // What is still missing for the CTA — shown as a hint so the disabled button
+  // never leaves the user guessing.
+  const missing = [
+    name.trim().length > 1 ? null : tr('название'),
+    highlights.trim().length > 2 ? null : tr('чем хорошо место'),
+  ].filter(Boolean) as string[];
+  const ok = missing.length === 0;
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
     if (submitting) return;
     if (editing) {
+      // updatePlace is local-only (own places live on-device) — say so honestly.
       updatePlace(editing.id, { name: name.trim(), category: cat, lat: coord.latitude, lng: coord.longitude, tags, highlights: highlights.trim(), hours: hours.trim() || 'Не указано', photo });
-      Alert.alert('Сохранено', 'Изменения применены.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
+      Alert.alert('Сохранено', 'Изменения сохранены на этом устройстве.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
       return;
     }
     setSubmitting(true);
@@ -115,7 +129,8 @@ export function AddPlaceScreen({ navigation, route }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader title={editing ? 'Редактировать' : 'Новое место'} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {/* The header sits outside the KAV, so offset by its height (safe-area + bar). */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 52}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 12 }]}>{tr('Город:')} {cityName}, {countryName} · {tr('нажмите на карту, чтобы поставить точку')}</Text>
 
@@ -130,38 +145,26 @@ export function AddPlaceScreen({ navigation, route }: Props) {
           </MapView>
         </View>
 
-        <Field label={tr('НАЗВАНИЕ')}><TextInput value={name} onChangeText={setName} placeholder={tr('напр. Coffee BOOM')} placeholderTextColor={T.labelTertiary} style={inp(T)} /></Field>
+        <Field label={tr('Название')}><TextInput value={name} onChangeText={setName} placeholder={tr('напр. Coffee BOOM')} placeholderTextColor={T.labelTertiary} accessibilityLabel={tr('Название')} style={inp(T, ty)} /></Field>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{tr('КАТЕГОРИЯ')}</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          {CATEGORIES.map((c) => {
-            const on = cat === c;
-            return (
-              <Pressable key={c} onPress={() => setCat(c)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 13, borderRadius: 18, backgroundColor: on ? T.brand : T.cardBg, borderWidth: 0.5, borderColor: on ? 'transparent' : T.separator }}>
-                <SF name={CATEGORY_META[c].icon} size={12} color={on ? '#fff' : T.brand} />
-                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]} numberOfLines={1}>{CATEGORY_META[c].label}</Text>
-              </Pressable>
-            );
-          })}
+        <FieldLabel>{tr('Категория')}</FieldLabel>
+        <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          {CATEGORIES.map((c) => (
+            <Chip key={c} label={CATEGORY_META[c].label} icon={CATEGORY_META[c].icon} active={cat === c} onPress={() => setCat(c)} />
+          ))}
         </View>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{tr('ОСОБЕННОСТИ')}</Text>
+        <FieldLabel>{tr('Особенности')}</FieldLabel>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          {TAGS.map((t) => {
-            const on = tags.includes(t);
-            return (
-              <Pressable key={t} onPress={() => toggle(t)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 13, borderRadius: 18, backgroundColor: on ? T.brand : T.cardBg, borderWidth: 0.5, borderColor: on ? 'transparent' : T.separator }}>
-                <SF name={TAG_META[t].icon} size={12} color={on ? '#fff' : T.brand} />
-                <Text style={[ty.footnoteEm, { color: on ? '#fff' : T.label }]} numberOfLines={1}>{TAG_META[t].label}</Text>
-              </Pressable>
-            );
-          })}
+          {TAGS.map((t) => (
+            <Chip key={t} label={TAG_META[t].label} icon={TAG_META[t].icon} active={tags.includes(t)} onPress={() => toggle(t)} />
+          ))}
         </View>
 
-        <Field label={tr('ЧЕМ ХОРОШО')}><TextInput value={highlights} onChangeText={setHighlights} placeholder={tr('напр. Вкусный колд брю, тихо, есть розетки')} placeholderTextColor={T.labelTertiary} multiline style={[inp(T), { minHeight: 80, textAlignVertical: 'top' }]} /></Field>
-        <Field label={tr('ЧАСЫ РАБОТЫ')}><TextInput value={hours} onChangeText={setHours} placeholder={tr('напр. 09:00–23:00')} placeholderTextColor={T.labelTertiary} style={inp(T)} /></Field>
+        <Field label={tr('Чем хорошо')}><TextInput value={highlights} onChangeText={setHighlights} placeholder={tr('напр. Вкусный колд брю, тихо, есть розетки')} placeholderTextColor={T.labelTertiary} accessibilityLabel={tr('Чем хорошо')} multiline style={[inp(T, ty), { minHeight: 80, textAlignVertical: 'top' }]} /></Field>
+        <Field label={tr('Часы работы')}><TextInput value={hours} onChangeText={setHours} placeholder={tr('напр. 09:00–23:00')} placeholderTextColor={T.labelTertiary} accessibilityLabel={tr('Часы работы')} style={inp(T, ty)} /></Field>
 
-        <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{tr('ФОТО')}</Text>
+        <FieldLabel>{tr('Фото')}</FieldLabel>
         {photo ? (
           <View style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
             <Image source={{ uri: photo }} style={{ width: '100%', height: 180 }} contentFit="cover" />
@@ -171,27 +174,40 @@ export function AddPlaceScreen({ navigation, route }: Props) {
             </View>
           </View>
         ) : (
-          <Pressable onPress={pickPhoto} style={{ height: 90, borderRadius: 14, borderWidth: 1, borderColor: T.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexDirection: 'row' }}>
-            <SF name="photo" size={18} color={T.brand} /><Text style={[ty.subhead, { color: T.brand }]} numberOfLines={1}>{tr('Добавить фото')}</Text>
+          <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel={tr('Добавить фото')} style={{ minHeight: 90, borderRadius: 14, borderWidth: 1, borderColor: T.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexDirection: 'row' }}>
+            <SF name="photo" size={18} color={T.brandText} /><Text style={[ty.subhead, { color: T.brandText }]} numberOfLines={1}>{tr('Добавить фото')}</Text>
           </Pressable>
         )}
       </ScrollView>
       </KeyboardAvoidingView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+        {!ok ? (
+          <Text accessibilityLiveRegion="polite" style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginBottom: 8 }]} numberOfLines={2}>
+            {tr('Осталось заполнить:')} {missing.join(', ')}
+          </Text>
+        ) : null}
         <PrimaryButton label={editing ? 'Сохранить' : 'Добавить место'} icon="checkmark" loading={submitting} disabled={!ok || submitting} onPress={submit} />
       </View>
     </View>
   );
 }
 
+// Section label: source text stays in sentence case, the uppercase is a style
+// (so VoiceOver reads a word, not a spelled-out acronym).
+function FieldLabel({ children }: { children: string }) {
+  const { T, ty } = useTheme();
+  return (
+    <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4, textTransform: 'uppercase', letterSpacing: 0.4 }]} numberOfLines={1}>{children}</Text>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  const { T } = useTheme();
   return (
     <View style={{ marginBottom: 16 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{label}</Text>
+      <FieldLabel>{label}</FieldLabel>
       {children}
     </View>
   );
 }
-function inp(T: any) { return { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body }; }
+function inp(T: any, ty: Typography) { return { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body }; }

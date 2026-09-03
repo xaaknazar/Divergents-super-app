@@ -4,7 +4,7 @@ import { View, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF, SFName } from '../components/SFIcon';
-import { PrimaryButton, ty } from '../components/ui';
+import { PrimaryButton } from '../components/ui';
 import { useAppFlow } from '../state/AppFlowContext';
 import { useLang } from '../state/LanguageContext';
 import { RootStackParams } from '../navigation/types';
@@ -19,7 +19,7 @@ const STEPS: { icon: SFName; accent: SFName; tKey: 'ob1' | 'ob2' | 'ob3' | 'ob4'
 ];
 
 export function OnboardingScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const s = STEPS[step];
@@ -30,8 +30,14 @@ export function OnboardingScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top + 20, paddingBottom: insets.bottom + 30, paddingHorizontal: 28 }}>
-      {/* Dots */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 7, paddingVertical: 8, paddingBottom: 30 }}>
+      {/* Dots — one accessible element announcing the position instead of four mute views */}
+      <View
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel={lang === 'ru' ? `Шаг ${step + 1} из ${STEPS.length}` : `Step ${step + 1} of ${STEPS.length}`}
+        accessibilityValue={{ min: 1, max: STEPS.length, now: step + 1 }}
+        style={{ flexDirection: 'row', justifyContent: 'center', gap: 7, paddingVertical: 8, paddingBottom: 30 }}
+      >
         {STEPS.map((_, i) => (
           <View key={i} style={{ width: i === step ? 22 : 6, height: 6, borderRadius: 3, backgroundColor: i === step ? T.brand : T.fillSecondary }} />
         ))}
@@ -57,7 +63,8 @@ export function OnboardingScreen({ navigation }: Props) {
       {/* Buttons */}
       <View style={{ gap: 10 }}>
         <PrimaryButton label={last ? t('start') : t('next')} onPress={() => (last ? finish() : setStep((v) => v + 1))} />
-        {last ? null : <PrimaryButton label={lang === 'ru' ? 'Пропустить' : 'Skip'} color="transparent" onPress={finish} />}
+        {/* PrimaryButton is minHeight 50 (≥ 44 pt) — the skip target is already HIG-sized. */}
+        {last ? null : <PrimaryButton label={lang === 'ru' ? 'Пропустить' : 'Skip'} color="transparent" onPress={finish} style={{ minHeight: 48 }} />}
       </View>
     </View>
   );

@@ -8,6 +8,7 @@
 import { deleteAsync, documentDirectory } from 'expo-file-system/legacy';
 import { clearKeys } from './persist';
 import { resetDownloadsState } from './downloads';
+import { resetAiChatState } from './aiChat';
 
 // Every user-scoped persisted key in the app. Grep the codebase for "dvg." to
 // keep this in sync when new persisted state is added.
@@ -19,7 +20,7 @@ export const USER_DATA_KEYS: string[] = [
   'dvg.applied',            // CareerContext — applied jobs
   'dvg.saved',              // CareerContext — saved jobs
   'dvg.resume',             // useResume — local resume answers (Talentslab)
-  'dvg.resumeComplete',     // ResumeGateContext — cached "resume 100% filled" flag
+  'dvg.resumeComplete',     // наследие обязательного гейта анкеты — чистим, чтобы не осталось мусора
   'dvg.resumePending',      // useResume — failed-submit resend flag
   'dvg.talentProfileCache.v1', // last verified Talentslab profile for offline fallback
   'dvg.gallup.order',       // Talentslab — local Gallup priority ordering
@@ -70,6 +71,9 @@ export async function clearAllAppData(): Promise<void> {
   // Stop active audio downloads and clear the module-level registry first, so
   // no in-flight task can repopulate state while its files are being removed.
   await resetDownloadsState();
+  // История ИИ-чата тоже живёт в модуле: без сброса в памяти следующий вошедший
+  // увидел бы чужую переписку до перезапуска приложения.
+  resetAiChatState();
   await clearKeys(USER_DATA_KEYS);
   // Remove downloaded audio files from disk. Idempotent; failures (e.g. folder
   // never created) are swallowed so sign-out never blocks on cleanup.

@@ -8,7 +8,7 @@ import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-n
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Logo } from '../components/Logo';
-import { ty } from '../theme/tokens';
+import { ty as tyBase } from '../theme/tokens';
 
 // Fixed brand palette (independent of light/dark theme) so the JS splash always
 // matches the native one and reads cleanly in white-on-navy.
@@ -123,14 +123,14 @@ const styles = StyleSheet.create({
   },
   center: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   wordmark: {
-    fontFamily: ty.largeTitle.fontFamily,
+    fontFamily: tyBase.largeTitle.fontFamily,
     color: WHITE,
     marginTop: 22,
     letterSpacing: 0.5,
     textAlign: 'center',
   },
   slogan: {
-    fontFamily: ty.caption1.fontFamily,
+    fontFamily: tyBase.caption1.fontFamily,
     color: 'rgba(255,255,255,0.78)',
     marginTop: 8,
     textTransform: 'uppercase',

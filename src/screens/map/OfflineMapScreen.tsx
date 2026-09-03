@@ -4,7 +4,6 @@ import { View, Text, Pressable, ScrollView, Modal, Alert, ActivityIndicator } fr
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
-import { ty } from '../../components/ui';
 import { NavHeader } from '../../components/NavHeader';
 import { usePlaces, filterPlaces } from '../../state/PlacesContext';
 import { CATEGORY_META, safeCityCenter } from '../../data/places';
@@ -31,7 +30,7 @@ const AREAS = [
 ] as const;
 
 export function OfflineMapScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   useLang();
   const { country, city, places } = usePlaces();
@@ -98,7 +97,13 @@ export function OfflineMapScreen({ navigation }: Props) {
     }
   };
 
-  const removePack = (id: string) => ML?.OfflineManager?.deletePack?.(id).then(loadPacks).catch(() => {});
+  // Destructive → confirm first (the tiles are gone for good and re-download costs data).
+  const removePack = (id: string, name: string) => {
+    Alert.alert(tr('Удалить офлайн-карту?'), `«${name}» — ${tr('скачанные тайлы будут удалены.')}`, [
+      { text: tr('Отмена'), style: 'cancel' },
+      { text: tr('Удалить'), style: 'destructive', onPress: () => { ML?.OfflineManager?.deletePack?.(id).then(loadPacks).catch(() => {}); } },
+    ]);
+  };
 
   // Expo Go (or any build without the native module): graceful notice.
   if (!available) {
@@ -150,12 +155,14 @@ export function OfflineMapScreen({ navigation }: Props) {
 
         <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
           <Pressable onPress={() => cameraRef.current?.flyTo?.({ center: [center.lng, center.lat], zoom: 13, duration: 500 })}
+            accessibilityRole="button" accessibilityLabel={`${tr('Центр города')}: ${center.name}`}
             style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
-            <SF name="location.fill" size={20} color={T.brand} />
+            <SF name="location.fill" size={20} color={T.brandText} />
           </Pressable>
           <Pressable onPress={() => setSheet(true)}
+            accessibilityRole="button" accessibilityLabel={tr('Скачать офлайн')}
             style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
-            <SF name="arrow.down.circle" size={22} color="#fff" />
+            <SF name="arrow.down.circle" size={22} color={T.onBrand} />
           </Pressable>
         </View>
       </View>
@@ -190,6 +197,7 @@ export function OfflineMapScreen({ navigation }: Props) {
           <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingTop: 14 }}>
             {AREAS.map((a) => (
               <Pressable key={a.key} disabled={busy} onPress={() => download(a.km, tr(a.key))}
+                accessibilityRole="button" accessibilityLabel={`${tr('Скачать')}: ${tr(a.key)}`} accessibilityState={{ disabled: busy }}
                 style={{ flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, alignItems: 'center', gap: 6 }}>
                 <SF name="square.and.arrow.down" size={20} color={T.brand} />
                 <Text style={[ty.footnoteEm, { color: T.label, textAlign: 'center' }]} numberOfLines={1}>{tr(a.key)}</Text>
@@ -201,13 +209,19 @@ export function OfflineMapScreen({ navigation }: Props) {
           <ScrollView style={{ maxHeight: 220 }} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8 }}>
             {packs.length === 0 ? (
               <Text style={[ty.subhead, { color: T.labelTertiary, paddingHorizontal: 4, paddingVertical: 10 }]} numberOfLines={1}>{tr('Нет скачанных областей')}</Text>
-            ) : packs.map((p) => (
-              <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, padding: 12, marginBottom: 8 }}>
-                <SF name="map.fill" size={18} color={T.brand} />
-                <Text style={[ty.subhead, { color: T.label, flex: 1 }]} numberOfLines={1}>{String((p.metadata as any)?.name ?? p.id)}</Text>
-                <Pressable onPress={() => removePack(p.id)} hitSlop={8}><SF name="trash.fill" size={16} color={T.red} /></Pressable>
-              </View>
-            ))}
+            ) : packs.map((p) => {
+              const packName = String((p.metadata as any)?.name ?? p.id);
+              return (
+                <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 4, paddingLeft: 12, paddingRight: 4, marginBottom: 8 }}>
+                  <SF name="map.fill" size={18} color={T.brand} />
+                  <Text style={[ty.subhead, { color: T.label, flex: 1 }]} numberOfLines={1}>{packName}</Text>
+                  <Pressable onPress={() => removePack(p.id, packName)} accessibilityRole="button" accessibilityLabel={`${tr('Удалить')} ${packName}`}
+                    style={({ pressed }) => ({ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1 })}>
+                    <SF name="trash.fill" size={16} color={T.red} />
+                  </Pressable>
+                </View>
+              );
+            })}
           </ScrollView>
           <Text style={[ty.caption2, { color: T.labelTertiary, paddingHorizontal: 20, paddingTop: 6 }]}>{tr('Карта работает без интернета в скачанных областях.')}</Text>
         </View>

@@ -8,7 +8,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF, SFName } from '../../components/SFIcon';
-import { Capsule, PrimaryButton, Segmented, ProgressBar, ty } from '../../components/ui';
+import { Capsule, PrimaryButton, Segmented, ProgressBar } from '../../components/ui';
 import { Ring } from '../../components/talentUI';
 import { ACCENTS, BACKGROUNDS, hexToRgba } from '../../theme/personalization';
 import { TEXT_SIZES } from '../../theme/tokens';
@@ -24,7 +24,7 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'Personalize'>;
 // iOS inset-grouped card: leading tinted glyph, title, and the live current value
 // on the right (Settings-style), with the control laid out beneath.
 function Group({ icon, title, value, children }: { icon: SFName; title: string; value?: string; children: React.ReactNode }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View
       accessibilityRole="summary"
@@ -51,7 +51,7 @@ function Group({ icon, title, value, children }: { icon: SFName; title: string; 
 // (soft off-corner glow blobs) instead of a flat gradient, so the preview matches
 // what the user actually gets on-screen.
 function BgSwatch({ colors, none, selected }: { colors: string[]; none?: boolean; selected?: boolean }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const [c1, c2, c3] = colors;
   return (
     <View style={{ height: 60, backgroundColor: T.secondaryBg, alignItems: 'center', justifyContent: 'center' }}>
@@ -77,7 +77,7 @@ function BgSwatch({ colors, none, selected }: { colors: string[]; none?: boolean
 }
 
 export function PersonalizeScreen({ navigation }: Props) {
-  const { T, scheme, mode, setMode, accent, setAccent, background, setBackground, textSize, setTextSize, reduceMotion } = useTheme();
+  const { T, scheme, mode, setMode, accent, setAccent, background, setBackground, textSize, setTextSize, reduceMotion, ty } = useTheme();
   const { lang } = useLang();
 
   // Real user identity for a personal "this is YOUR theme" preview.
@@ -113,12 +113,13 @@ export function PersonalizeScreen({ navigation }: Props) {
   const textIndex = Math.max(0, TEXT_SIZES.findIndex((t) => t.key === textSize));
 
   // Reset-to-defaults affordance: lets users experiment freely and revert.
-  const isDefault = mode === 'system' && accent === 'divergents' && background === 'none' && textSize === 'md';
+  // 'accent' is the ThemeContext default (and its migration target) — keep in sync.
+  const isDefault = mode === 'system' && accent === 'divergents' && background === 'accent' && textSize === 'md';
   const resetAll = () => {
     hSuccess();
     setMode('system');
     setAccent('divergents');
-    setBackground('none');
+    setBackground('accent');
     setTextSize('md');
     animate();
   };
@@ -134,10 +135,10 @@ export function PersonalizeScreen({ navigation }: Props) {
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={tr('Сбросить настройки')}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, opacity: pressed ? 0.5 : 1 })}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 4, opacity: pressed ? 0.5 : 1 })}
           >
-            <SF name="arrow.counterclockwise" size={14} color={T.brandAccent} />
-            <Text style={[ty.body, { color: T.brandAccent }]}>{tr('Сбросить')}</Text>
+            <SF name="arrow.counterclockwise" size={14} color={T.brandText} />
+            <Text style={[ty.body, { color: T.brandText }]}>{tr('Сбросить')}</Text>
           </Pressable>
         ) : undefined}
       />

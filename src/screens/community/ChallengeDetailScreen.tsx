@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, Modal, ActionSheetIOS, Platform, Alert, Linking, TextInput, KeyboardAvoidingView } from 'react-native';
+import { View, Text, ScrollView, Pressable, Animated, ActivityIndicator, Modal, ActionSheetIOS, Platform, Alert, Linking, TextInput, KeyboardAvoidingView, Share } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
 import { Aurora } from '../../components/Aurora';
-import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
@@ -27,6 +27,7 @@ import {
   setTeamChat, broadcastTeam,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
+import * as pl from '../../data/plural';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeDetail'>;
 
@@ -39,9 +40,9 @@ function backToCommunity(navigation: Props['navigation']) {
 }
 
 export function ChallengeDetailScreen({ route, navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const challengeId = route.params?.challengeId ?? '';
-  const { challenge: active, isParticipant, loading: activeLoading, refresh: refreshChallenge } = useChallenge();
+  const { challenge: active, isParticipant, loading: activeLoading, error: activeError, refresh: refreshChallenge } = useChallenge();
   const [list, setList] = useState<ChallengeListItem[] | null>(null);
   const [error, setError] = useState(false);
 
@@ -92,11 +93,14 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
     );
   }
   // Daily tracking is private to accepted participants of the active challenge.
+  // Если активный челлендж не загрузился, «нет доступа» — ложный вывод: даём повторить.
   if (meta?.status === 'active' && !isParticipant) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} />
-        <EmptyState icon="lock.fill" title={tr('Доступ только участникам')} subtitle={tr('Активный план и результаты доступны участникам этого челленджа.')} actionLabel={tr('Назад')} onAction={() => backToCommunity(navigation)} />
+        {activeError
+          ? <ErrorState onRetry={() => { refreshChallenge(); load(); }} />
+          : <EmptyState icon="lock.fill" title={tr('Доступ только участникам')} subtitle={tr('Активный план и результаты доступны участникам этого челленджа.')} actionLabel={tr('Назад')} onAction={() => backToCommunity(navigation)} />}
       </View>
     );
   }
@@ -116,14 +120,19 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
 
 // ─── Upcoming challenge — rules, teams, join ──────────────
 function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListItem; teams: ChallengeTeam[]; navigation: Props['navigation'] }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const left = daysUntil(meta.startISO);
   // All team spots taken → recruitment closed, waiting for the start.
   const full = teams.length > 0 && teamsNeed(teams) === 0;
   const [rulesOpen, setRulesOpen] = useState(false);
+  // Высота нижней панели — чтобы контент не уходил под неё (вместо фиксированных 90).
+  const [panelH, setPanelH] = useState(0);
   const { canCreate } = useRole();
+  const shareChallenge = () => {
+    Share.share({ message: `${meta.title} — челлендж Divergents · ${tr('Старт')} ${meta.startLabel}` }).catch(() => {});
+  };
   const { refresh: refreshChallenge } = useChallenge();
   const { getToken, userId } = useAuth();
   // Reviewers: admins/creators, plus a captain of any team in this challenge.
@@ -186,7 +195,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
           transparent tint="#fff" backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)}
           trailing={canCreate
             ? <Pressable onPress={confirmDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel="Удалить челлендж"><SF name="trash.fill" size={19} color="#fff" /></Pressable>
-            : <SF name="square.and.arrow.up" size={20} color="#fff" />}
+            : <Pressable onPress={shareChallenge} hitSlop={10} accessibilityRole="button" accessibilityLabel={tr('Поделиться')}><SF name="square.and.arrow.up" size={20} color="#fff" /></Pressable>}
         />
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 22, position: 'relative' }}>
           <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
@@ -194,20 +203,20 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
           </View>
           <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="calendar" size={11} color="#fff" />{tr('Старт')} {meta.startLabel}</Capsule>
           <Text style={[ty.largeTitle, { color: '#fff', marginTop: 12 }]} numberOfLines={1}>{meta.title}</Text>
-          <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 4 }]} numberOfLines={1}>{meta.durationDays} дней · 3 категории · {meta.maxFlags} 🚩 — вылет</Text>
+          <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 4 }]} numberOfLines={1}>{pl.days(meta.durationDays)} · 3 категории · {meta.maxFlags} 🚩 — вылет</Text>
         </View>
       </LinearGradient>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 90 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: panelH > 0 ? panelH + 16 : insets.bottom + 90 }}>
 
         {/* Countdown */}
         <View style={{ marginHorizontal: 16, marginBottom: 18, backgroundColor: T.cardBg, borderRadius: 16, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 18 }}>
           <View style={{ alignItems: 'center', minWidth: 86 }}>
             <Text style={[ty.largeTitle, { color: T.brand }]} numberOfLines={1}>{left}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{tr('дней до старта')}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{tr(`${pl.daysWord(left)} до старта`)}</Text>
           </View>
           <View style={{ flex: 1, gap: 6 }}>
             <Row icon="calendar" label={tr('Старт')} value={meta.startLabel} />
-            <Row icon="flame.fill" label={tr('Длительность')} value={`${meta.durationDays} дней`} />
+            <Row icon="flame.fill" label={tr('Длительность')} value={pl.days(meta.durationDays)} />
             <Row icon="person.3.fill" label={tr('Заявок')} value={`${meta.participants}`} />
           </View>
         </View>
@@ -240,7 +249,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         </ListSection>
 
         {/* Teams */}
-        <ListSection header={teams.length === 0 ? tr('Команды') : full ? tr('Команды · набор завершён') : `Команды · нужно ещё ${teamsNeed(teams)} человек`}>
+        <ListSection header={teams.length === 0 ? tr('Команды') : full ? tr('Команды · набор завершён') : `Команды · нужно ещё ${pl.people(teamsNeed(teams))}`}>
           {teams.length === 0 ? (
             <View style={{ padding: 18, alignItems: 'center' }}>
               <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команды пока не сформированы.')}</Text>
@@ -269,7 +278,8 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
 
         {/* Rules */}
         {/* Rules — open/hide */}
-        <Pressable onPress={() => setRulesOpen((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 }}>
+        <Pressable onPress={() => setRulesOpen((v) => !v)} accessibilityRole="button" accessibilityLabel={tr('Правила')} accessibilityState={{ expanded: rulesOpen }}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6, minHeight: 44 }}>
           <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Правила')}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={[ty.subheadEm, { color: T.brand }]}>{rulesOpen ? tr('Скрыть') : tr('Открыть')}</Text>
@@ -290,9 +300,11 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
       </ScrollView>
 
       {/* CTA */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, gap: 10 }}>
+      <View onLayout={(e) => setPanelH(e.nativeEvent.layout.height)}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, gap: 10 }}>
         {canCreate ? (
           <Pressable onPress={() => navigation.navigate('ManageChallenge', { challengeId: meta.id })}
+            accessibilityRole="button" accessibilityLabel="Управление челленджем"
             style={{ height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="slider.horizontal.3" size={16} color="#fff" />
             <Text style={[ty.headline, { color: '#fff' }]}>Управление челленджем</Text>
@@ -300,6 +312,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         ) : null}
         {canReview ? (
           <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId: meta.id })}
+            accessibilityRole="button" accessibilityLabel={canCreate ? 'Заявки (все команды)' : 'Заявки моей команды'}
             style={{ height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="person.2.fill" size={16} color={T.brand} />
             <Text style={[ty.headline, { color: T.brand }]}>{canCreate ? 'Заявки (все команды)' : 'Заявки моей команды'}</Text>
@@ -310,8 +323,8 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         {myApp?.status === 'approved' ? (
           <>
             <View style={{ height: 50, borderRadius: 14, backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
-              <SF name="checkmark.circle.fill" size={18} color={T.green} />
-              <Text style={[ty.headline, { color: T.green }]}>Вы в команде{myApp.teamName ? ` «${myApp.teamName}»` : ''}</Text>
+              <SF name="checkmark.circle.fill" size={18} color={T.greenText} />
+              <Text style={[ty.headline, { color: T.greenText }]}>Вы в команде{myApp.teamName ? ` «${myApp.teamName}»` : ''}</Text>
             </View>
             {!isCaptainHere ? (
               <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center' }]} numberOfLines={2}>Вас приняли — отозвать заявку уже нельзя. Выйти из команды можно только через капитана.</Text>
@@ -336,10 +349,10 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         ) : full ? (
           <View style={{ borderRadius: 14, backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', paddingVertical: 11, gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <SF name="checkmark.seal.fill" size={18} color={T.green} />
-              <Text style={[ty.headline, { color: T.green }]} numberOfLines={1}>Команды сформированы</Text>
+              <SF name="checkmark.seal.fill" size={18} color={T.greenText} />
+              <Text style={[ty.headline, { color: T.greenText }]} numberOfLines={1}>Команды сформированы</Text>
             </View>
-            <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>Набор завершён — ждём старта</Text>
+            <Text style={[ty.caption1, { color: T.greenText }]} numberOfLines={1}>Набор завершён — ждём старта</Text>
           </View>
         ) : (
           <>
@@ -359,7 +372,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
 }
 
 function Row({ icon, label, value }: { icon: any; label: string; value: string }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <SF name={icon} size={14} color={T.labelSecondary} />
@@ -371,7 +384,7 @@ function Row({ icon, label, value }: { icon: any; label: string; value: string }
 
 // ─── Active challenge (daily tracker) ──────────────────────────────
 function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints, teamFlags, teamPenalty, syncPending, dayLocked } = useChallenge();
   const { userId, getToken } = useAuth();
   const { canCreate } = useRole();
@@ -473,8 +486,9 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
     setMetricEditor(null);
   };
 
-  // "Покинуть челлендж" gate: you can only leave AFTER it ends, or when the team
-  // captain raises a white flag 🏳️ for a valid reason (captain-side, server).
+  // «Об условиях выхода» — справка: выйти можно только ПОСЛЕ завершения или
+  // если капитан поднимет белый флаг 🏳️ (серверная сторона). Само действие
+  // «покинуть» в приложении не выполняется, поэтому пункт информационный.
   const attemptLeave = () => {
     if (myEliminated) { Alert.alert(tr('Вы уже вне челленджа'), tr('Ваши очки зафиксированы до конца сезона.')); return; }
     if (!finished) {
@@ -504,35 +518,29 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
     0,
   );
   const totalTeamGoals = leaderboard.reduce((sum, member) => sum + member.todayTasks.length, 0);
+  // Один список действий для обеих платформ: iOS — системный ActionSheet,
+  // Android — собственный лист в Modal (Alert там показывает максимум 3 кнопки,
+  // и капитанские пункты в него не помещались).
+  const [menuActions, setMenuActions] = useState<MenuAction[] | null>(null);
   const openMenu = () => {
+    const actions: MenuAction[] = [
+      { label: tr('Состав команды'), icon: 'person.2.fill', run: openRoster },
+      { label: tr('Рейтинг команд'), icon: 'trophy.fill', run: openStandings },
+      ...(isCaptain ? [
+        { label: chat ? tr('Изменить чат команды') : tr('Добавить чат команды'), icon: 'paperplane.fill', run: editChat },
+        { label: tr('Написать всей команде'), icon: 'megaphone.fill', run: broadcast },
+        { label: tr('Заявки и анкеты'), icon: 'person.crop.circle.badge.checkmark', run: () => navigation.navigate('ChallengeApplicants', { challengeId: c.id }) },
+      ] : []),
+      { label: tr('Как засчитать активность'), icon: 'info.circle', run: () => setShowConv(true) },
+      { label: tr('Об условиях выхода'), icon: 'questionmark.circle', run: attemptLeave },
+    ];
     if (Platform.OS === 'ios') {
-      const actions: { label: string; run: () => void; destructive?: boolean }[] = [
-        { label: tr('Состав команды'), run: openRoster },
-        { label: tr('Рейтинг команд'), run: openStandings },
-        ...(isCaptain ? [
-          { label: chat ? tr('Изменить чат команды') : tr('Добавить чат команды'), run: editChat },
-          { label: tr('Написать всей команде'), run: broadcast },
-          { label: tr('Заявки и анкеты'), run: () => navigation.navigate('ChallengeApplicants', { challengeId: c.id }) },
-        ] : []),
-        { label: tr('Как засчитать активность'), run: () => setShowConv(true) },
-        { label: tr('Покинуть челлендж'), run: attemptLeave, destructive: true },
-      ];
       ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: [tr('Отмена'), ...actions.map((a) => a.label)],
-          cancelButtonIndex: 0,
-          destructiveButtonIndex: actions.findIndex((a) => a.destructive) + 1,
-        },
+        { options: [tr('Отмена'), ...actions.map((a) => a.label)], cancelButtonIndex: 0 },
         (i) => { if (i > 0) actions[i - 1]?.run(); },
       );
     } else {
-      Alert.alert(c.title, undefined, [
-        { text: tr('Состав команды'), onPress: openRoster },
-        { text: tr('Рейтинг команд'), onPress: openStandings },
-        { text: tr('Как засчитать активность'), onPress: () => setShowConv(true) },
-        { text: tr('Покинуть челлендж'), style: 'destructive', onPress: attemptLeave },
-        { text: tr('Отмена'), style: 'cancel' },
-      ]);
+      setMenuActions(actions);
     }
   };
 
@@ -548,13 +556,13 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <Text style={{ fontSize: 18 }}>🎉</Text>
-          <Text style={[ty.headline, { color: '#fff' }]}>{tr('День закрыт! Серия')} {c.currentDay} 🔥</Text>
+          <Text style={[ty.headline, { color: '#fff' }]}>{tr('День закрыт!')} · {tr('День')} {c.currentDay} 🔥</Text>
         </View>
       </Animated.View>
       <Screen tabPadding={false} topInset={false} bg="transparent" aurora={false}>
 
       {/* Compact overview: context and season progress, without repeating daily data. */}
-      <View accessible accessibilityLabel={`${c.title}. ${tr('День')} ${c.currentDay} ${tr('из')} ${c.totalDays}. ${myEliminated ? tr('Очки зафиксированы') : `+${pointsToday} pts ${tr('сегодня')}`}. ${c.teamName ? `${tr('Команда')} ${c.teamName}. ` : ''}${finished ? tr('Челлендж завершён') : `${tr('Осталось')} ${remainingDays} ${tr('дн')}`}`}
+      <View accessible accessibilityLabel={`${c.title}. ${tr('День')} ${c.currentDay} ${tr('из')} ${c.totalDays}. ${myEliminated ? tr('Очки зафиксированы') : `+${pointsToday} pts ${tr('сегодня')}`}. ${c.teamName ? `${tr('Команда')} ${c.teamName}. ` : ''}${finished ? tr('Челлендж завершён') : `${tr('Осталось')} ${pl.days(remainingDays)}`}`}
         style={{ marginHorizontal: 16, marginTop: 6, marginBottom: 12, borderRadius: 18, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -600,8 +608,8 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         <View style={{ paddingHorizontal: 14, paddingTop: 12, paddingBottom: 2 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Text style={[ty.headline, { color: T.label, flex: 1 }]}>{tr('План на сегодня')}</Text>
-            <Capsule bg={allDone ? 'rgba(52,199,89,0.14)' : T.brandTinted} color={allDone ? T.green : T.brand} style={{ alignSelf: 'center' }}>
-              <SF name={allDone ? 'checkmark.circle.fill' : 'target'} size={12} color={allDone ? T.green : T.brand} />
+            <Capsule bg={allDone ? 'rgba(52,199,89,0.14)' : T.brandTinted} color={allDone ? T.greenText : T.brandText} style={{ alignSelf: 'center' }}>
+              <SF name={allDone ? 'checkmark.circle.fill' : 'target'} size={12} color={allDone ? T.greenText : T.brandText} />
               {allDone ? tr('Готово') : `${completedTasks}/${c.tasks.length}`}
             </Capsule>
           </View>
@@ -662,7 +670,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
               style={{ minHeight: 38, borderTopWidth: 0.5, borderTopColor: T.separator, flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <SF name={dayLocked || syncPending ? 'clock.arrow.circlepath' : 'checkmark.icloud.fill'} size={14} color={dayLocked || syncPending ? T.orange : T.green} />
               <Text style={[ty.caption2, { color: dayLocked || syncPending ? T.orange : T.labelSecondary, flex: 1 }]}>
-                {dayLocked ? tr('День закрыт · ждём расчёт сервера') : syncPending ? tr('Ожидает интернет · отправим автоматически') : tr('Сохранено · итог дня в 23:01')}
+                {dayLocked ? tr('Отметки закрыты · откроются в 00:00') : syncPending ? tr('Ожидает интернет · отправим автоматически') : tr('Сохранено · итог дня в 23:01')}
               </Text>
             </View>
           ) : null}
@@ -688,7 +696,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           <View accessible accessibilityLabel={ratingMode === 'overall' ? `${tr('Штрафы команды')}: ${teamFlags} ${tr('флагов')}` : `${tr('Выполнено целей')}: ${completedTeamGoals} ${tr('из')} ${totalTeamGoals}`} style={{ flex: 1, minWidth: 0, alignItems: 'flex-end' }}>
             <Text style={[ty.footnoteEm, { color: T.labelSecondary, textAlign: 'right' }]}>{ratingMode === 'overall' ? tr('Штрафы команды') : tr('Выполнено целей')}</Text>
             {ratingMode === 'today' ? (
-              <Text style={[ty.title2, { color: T.green, marginTop: 4 }]} numberOfLines={1}>{completedTeamGoals}/{totalTeamGoals}</Text>
+              <Text style={[ty.title2, { color: T.greenText, marginTop: 4 }]} numberOfLines={1}>{completedTeamGoals}/{totalTeamGoals}</Text>
             ) : teamFlags > 0 ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 7 }}>
                 <SF name="flag.fill" size={13} color={T.red} />
@@ -696,8 +704,8 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
               </View>
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 7 }}>
-                <SF name="checkmark.circle.fill" size={13} color={T.green} />
-                <Text style={[ty.footnoteEm, { color: T.green }]}>{tr('Нет штрафов')}</Text>
+                <SF name="checkmark.circle.fill" size={13} color={T.greenText} />
+                <Text style={[ty.footnoteEm, { color: T.greenText }]}>{tr('Нет штрафов')}</Text>
               </View>
             )}
           </View>
@@ -715,7 +723,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         {chat ? (
           <>
             <View style={{ marginLeft: 58, height: 0.5, backgroundColor: T.separator }} />
-            <QuickLink icon="paperplane.fill" title={tr('Чат команды')} detail="Telegram" onPress={() => Linking.openURL(chat).catch(() => {})} T={T} accent="#229ED9" />
+            <QuickLink icon="paperplane.fill" title={tr('Чат команды')} detail="Telegram" onPress={() => openChatLink(chat)} T={T} accent="#229ED9" />
           </>
         ) : null}
       </View>
@@ -749,10 +757,12 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
                 selectTextOnFocus accessibilityLabel={tr('Значение активности')}
                 style={[ty.title2, { color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, minHeight: 52, paddingHorizontal: 14, marginTop: 14 }]} />
               <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 14 }}>
-                <Pressable onPress={() => setMetricEditor(null)} style={{ minHeight: 44, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => setMetricEditor(null)} accessibilityRole="button" accessibilityLabel={tr('Отмена')}
+                  style={{ minHeight: 44, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.headline, { color: T.labelSecondary }]}>{tr('Отмена')}</Text>
                 </Pressable>
                 <Pressable onPress={saveMetric} disabled={!/\d/.test(metricDraft)}
+                  accessibilityRole="button" accessibilityLabel={tr('Сохранить')} accessibilityState={{ disabled: !/\d/.test(metricDraft) }}
                   style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: /\d/.test(metricDraft) ? 1 : 0.45 }}>
                   <Text style={[ty.headline, { color: T.onBrand }]}>{tr('Сохранить')}</Text>
                 </Pressable>
@@ -792,10 +802,46 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Android: действия меню тем же списком, что и в iOS ActionSheet. */}
+      <Modal visible={menuActions !== null} transparent animationType="slide" onRequestClose={() => setMenuActions(null)}>
+        <Pressable onPress={() => setMenuActions(null)} accessibilityRole="button" accessibilityLabel={tr('Закрыть меню')}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
+          <Pressable onPress={() => {}} accessible={false}
+            style={{ backgroundColor: T.cardBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 12, paddingTop: 10, paddingBottom: insets.bottom + 12 }}>
+            <View style={{ alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillTertiary, marginBottom: 10 }} />
+            <Text style={[ty.footnoteEm, { color: T.labelSecondary, paddingHorizontal: 8, paddingBottom: 6 }]} numberOfLines={1}>{c.title}</Text>
+            {(menuActions ?? []).map((a) => (
+              <Pressable key={a.label} onPress={() => { setMenuActions(null); a.run(); }} accessibilityRole="button" accessibilityLabel={a.label}
+                style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, backgroundColor: pressed ? T.fillTertiary : 'transparent' })}>
+                <SF name={a.icon} size={17} color={T.brandText} />
+                <Text style={[ty.body, { color: T.label, flex: 1 }]}>{a.label}</Text>
+              </Pressable>
+            ))}
+            <Pressable onPress={() => setMenuActions(null)} accessibilityRole="button" accessibilityLabel={tr('Отмена')}
+              style={{ minHeight: 48, marginTop: 6, borderRadius: 12, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={[ty.headline, { color: T.label }]}>{tr('Отмена')}</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <View style={{ height: 30 }} />
       </Screen>
     </View>
   );
+}
+
+type MenuAction = { label: string; icon: string; run: () => void };
+
+// Ссылку на чат открываем только если это http(s)/tg — иначе Linking падал
+// молча, а пользователь видел «ничего не происходит».
+function openChatLink(raw: string) {
+  const url = raw.trim();
+  if (!/^(https?:\/\/|tg:\/\/)\S+$/i.test(url)) {
+    Alert.alert(tr('Ссылка на чат некорректна'), tr('Попросите капитана указать ссылку вида https://t.me/…'));
+    return;
+  }
+  Linking.openURL(url).catch(() => Alert.alert(tr('Ссылка на чат некорректна')));
 }
 
 const teamNumberFormatter = new Intl.NumberFormat('ru-RU', { useGrouping: false });
@@ -838,6 +884,7 @@ function RatingModeSwitch({ value, onChange, T }: {
   onChange: (value: 'overall' | 'today') => void;
   T: any;
 }) {
+  const { ty } = useTheme();
   return (
     <View style={{ marginHorizontal: 12, marginBottom: 10, minHeight: 44, padding: 3, borderRadius: 12, backgroundColor: T.fillTertiary, flexDirection: 'row' }}>
       {([
@@ -881,6 +928,7 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
   mode: 'overall' | 'today';
   displayRank: number;
 }) {
+  const { ty } = useTheme();
   const flagCount = totalFlags(member.flags);
   const flagDetail = memberFlagDetail(member.flags);
   const rankMark = displayRank === 1 ? '🥇' : displayRank === 2 ? '🥈' : displayRank === 3 ? '🥉' : null;
@@ -916,7 +964,7 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               <View accessible accessibilityLabel={rankMovement} style={{ minHeight: 24, paddingHorizontal: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: rankChange > 0 ? 'rgba(52,199,89,0.13)' : rankChange < 0 ? 'rgba(255,149,0,0.13)' : T.fillTertiary }}>
-                <Text style={[ty.caption2Em, { color: rankChange > 0 ? T.green : rankChange < 0 ? T.orange : T.labelSecondary }]}>{rankMovement}</Text>
+                <Text style={[ty.caption2Em, { color: rankChange > 0 ? T.greenText : rankChange < 0 ? T.orangeText : T.labelSecondary }]}>{rankMovement}</Text>
               </View>
               {rankMark ? <Text style={{ fontSize: 14 }}>{rankMark}</Text> : null}
               {flagCount > 0 ? (
@@ -953,6 +1001,7 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
 }
 
 function TodayGoalBadge({ task, T }: { task: MemberTaskProgress; T: any }) {
+  const { ty } = useTheme();
   const complete = task.completed;
   // The short title already says what the metric is ("Активность", "Чтение"),
   // so the unit is dropped for steps — it only made the badge wrap.
@@ -974,13 +1023,14 @@ function TodayGoalBadge({ task, T }: { task: MemberTaskProgress; T: any }) {
   return (
     <View accessible accessibilityLabel={`${shortTitle}: ${value}, ${complete ? tr('выполнено') : tr('не выполнено')}`}
       style={{ minHeight: 26, maxWidth: '100%', paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: complete ? 'rgba(52,199,89,0.13)' : 'rgba(255,59,48,0.10)' }}>
-      <SF name={complete ? 'checkmark.circle.fill' : 'xmark.circle.fill'} size={12} color={complete ? T.green : T.red} />
-      <Text numberOfLines={2} style={[ty.caption2Em, { color: complete ? T.green : T.red, flexShrink: 1 }]}>{shortTitle} · {value}</Text>
+      <SF name={complete ? 'checkmark.circle.fill' : 'xmark.circle.fill'} size={12} color={complete ? T.greenText : T.redText} />
+      <Text numberOfLines={2} style={[ty.caption2Em, { color: complete ? T.greenText : T.redText, flexShrink: 1 }]}>{shortTitle} · {value}</Text>
     </View>
   );
 }
 
 function QuickLink({ icon, title, detail, onPress, T, accent }: { icon: any; title: string; detail?: string; onPress: () => void; T: any; accent?: string }) {
+  const { ty } = useTheme();
   const color = accent ?? T.brand;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={detail ? `${title}, ${detail}` : title}
@@ -1007,6 +1057,7 @@ function challengeDayOneUtc(startISO?: string): number | null {
 }
 
 function ChallengeCalendar({ totalDays, currentDay, startISO, T }: { totalDays: number; currentDay: number; startISO?: string; T: any }) {
+  const { ty } = useTheme();
   const almatyNow = new Date(Date.now() + 5 * 3_600_000);
   const todayUtc = Date.UTC(almatyNow.getUTCFullYear(), almatyNow.getUTCMonth(), almatyNow.getUTCDate());
   const safeTotal = Math.max(0, totalDays);
@@ -1065,7 +1116,7 @@ function isActivityTask(t: ChallengeTask): boolean {
 // Порог вылета приходит с сервера (challenge.rules.flagsToEliminate): зашитая
 // тройка при пороге 2 из админки красила строку уже после вылета.
 function MyFlagRow({ flags, maxFlags }: { flags: FlagCounts; maxFlags: number }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {CHALLENGE_CATEGORIES.map((cat) => {

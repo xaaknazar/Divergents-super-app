@@ -20,3 +20,14 @@ export function normalizeTabTarget(tab: string, screen?: string | null, params?:
   if (!screen) return { screen: tab, ...(params != null ? { params } : {}) };
   return { screen: tab, params: { screen, params, initial: false } };
 }
+
+/**
+ * Открыть анкету на нужном шаге из любого места приложения.
+ *
+ * Форма зарегистрирована в стеках «Карьера» и «Профиль»; из сообщества до неё
+ * иначе не дотянуться, а заводить третью копию экрана — плодить расхождения.
+ */
+export function openResume(step = 0) {
+  if (!navigationRef.isReady()) return;
+  (navigationRef as any).navigate('Tabs', normalizeTabTarget('ProfileTab', 'Resume', { step }));
+}

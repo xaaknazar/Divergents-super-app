@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Keyboard, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { Segmented, PrimaryButton, ty } from '../../components/ui';
+import { Segmented, PrimaryButton, SecondaryButton } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useModeration } from '../../state/ModerationContext';
 import { useDownloads } from '../../state/downloads';
-import { API_BASE, stripHtml, fetchComments, postComment, ChapterComment, lessonAudioUrl } from '../../data/api';
+import { stripHtml, fetchComments, postComment, ChapterComment, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Video'>;
@@ -35,11 +35,11 @@ const fullName = (c: ChapterComment) =>
   c.user.nickname?.trim() || c.user.firstName?.trim() || 'Участник';
 
 export function VideoScreen({ route, navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { courseId, lessonId } = route.params;
-  const { getCourse, completeLesson, isCompleted, loadDetail, detailLoading } = useCourses();
+  const { getCourse, completeLesson, isCompleted, loadDetail, detailLoading, detailError } = useCourses();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
   const course = getCourse(courseId);
@@ -53,6 +53,17 @@ export function VideoScreen({ route, navigation }: Props) {
   const chaptersPending = !!course && course.lessons.length === 0
     && course.source === 'live' && detailLoading[courseId] !== false;
   const [tab, setTab] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  // The bottom CTA panel gives way to the keyboard so the comment composer at
+  // the end of the discussion tab is never covered while typing.
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const s = Keyboard.addListener(showEvt, () => setKeyboardOpen(true));
+    const h = Keyboard.addListener(hideEvt, () => setKeyboardOpen(false));
+    return () => { s.remove(); h.remove(); };
+  }, []);
 
   // Ownership: free, purchased (in "Мои курсы" OR confirmed by owned-detail
   // endpoint), or a non-live (local) course. course.owned survives a failed
@@ -145,6 +156,11 @@ export function VideoScreen({ route, navigation }: Props) {
   }, [tab, comments, commentsError, loadComments]);
 
   if (!course || !lesson) {
+    const retryDetail = async () => {
+      let token: string | null = null;
+      if (isSignedIn) { try { token = await getToken(); } catch {} }
+      await loadDetail(courseId, token);
+    };
     return (
       <View style={{ flex: 1, backgroundColor: T.systemBg }}>
         <NavHeader transparent hideBackLabel onBack={() => navigation.goBack()} />
@@ -152,6 +168,10 @@ export function VideoScreen({ route, navigation }: Props) {
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 }}>
             <ActivityIndicator color={T.brand} />
           </View>
+        ) : course && detailError[courseId] && course.lessons.length === 0 ? (
+          // The chapters never arrived because the network failed — say so and
+          // offer a retry instead of the «not found» copy.
+          <ErrorState message={tr('Не удалось загрузить урок. Проверьте подключение.')} onRetry={retryDetail} />
         ) : (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingBottom: 80, gap: 10 }}>
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
@@ -166,6 +186,15 @@ export function VideoScreen({ route, navigation }: Props) {
     );
   }
   const alreadyDone = isCompleted(courseId, lesson.id);
+  // Next lesson in the course programme (undefined on the last one).
+  const lessonIdx = course.lessons.findIndex((l) => l.id === lesson.id);
+  const nextLesson = lessonIdx >= 0 ? course.lessons[lessonIdx + 1] : undefined;
+  // `replace` keeps the stack flat (Video → Video → Video would otherwise pile
+  // up) and gives the next lesson a fresh screen: clean tab, comments, player.
+  const goNext = () => {
+    if (nextLesson) navigation.replace('Video', { courseId, lessonId: nextLesson.id });
+    else navigation.goBack();
+  };
   const audioUrl = lessonAudioUrl(lesson);
   const downloaded = isDownloaded(lesson.id);
   const dlBusy = isDownloading(lesson.id);
@@ -181,10 +210,12 @@ export function VideoScreen({ route, navigation }: Props) {
   const attachments = course.attachments ?? [];
 
   const complete = async () => {
+    // Never re-send `complete` for a lesson that is already done.
+    if (alreadyDone) { goNext(); return; }
     const token = isSignedIn && course.source === 'live' ? await getToken() : null;
     const synced = await completeLesson(courseId, lesson.id, token);
     if (!token || synced) {
-      navigation.goBack();
+      goNext();
       return;
     }
     Alert.alert(
@@ -219,7 +250,7 @@ export function VideoScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000' }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#000' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
       {/* Video area */}
       <View style={{ paddingTop: insets.top, height: 240 + insets.top, backgroundColor: '#0E1729' }}>
         <View style={{ position: 'absolute', top: insets.top + 12, left: 12, right: 12, zIndex: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -245,7 +276,7 @@ export function VideoScreen({ route, navigation }: Props) {
           ) : needsPurchase ? (
             <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
               <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1}>{tr('Урок по подписке')}</Text>
+              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={2}>{tr('Урок доступен владельцам курса')}</Text>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Этот урок откроется вместе с доступом к курсу')}</Text>
             </View>
           ) : unavailable ? (
@@ -282,7 +313,7 @@ export function VideoScreen({ route, navigation }: Props) {
           <Segmented items={['Заметки', 'Материалы', 'Обсуждение']} value={tab} onChange={setTab} />
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 90 }} keyboardShouldPersistTaps="handled">
+        <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: keyboardOpen ? insets.bottom + 16 : 16 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
           {/* НОТES */}
           {tab === 0 ? (
             stripHtml(lesson.description) ? (
@@ -367,8 +398,12 @@ export function VideoScreen({ route, navigation }: Props) {
                       onSubmitEditing={send}
                       returnKeyType="send"
                       editable={!sending}
+                      // The composer is the last row — bring it above the keyboard.
+                      onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 250)}
+                      accessibilityLabel={tr('Написать комментарий')}
                     />
-                    <Pressable onPress={send} disabled={sending || !draft.trim()} hitSlop={6}>
+                    <Pressable onPress={send} disabled={sending || !draft.trim()} hitSlop={6}
+                      accessibilityRole="button" accessibilityLabel={tr('Отправить комментарий')} accessibilityState={{ disabled: sending || !draft.trim() }}>
                       {sending ? <ActivityIndicator color={T.brand} /> : <SF name="arrow.up.circle.fill" size={32} color={draft.trim() ? T.brand : T.labelTertiary} />}
                     </Pressable>
                   </View>
@@ -384,21 +419,30 @@ export function VideoScreen({ route, navigation }: Props) {
             </View>
           ) : null}
         </ScrollView>
-      </View>
 
-      {/* Bottom CTA */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        {needsPurchase ? (
-          <PrimaryButton label={tr('Открыть на сайте')} icon="globe" onPress={() => Linking.openURL(`${API_BASE}/courses/${courseId}`)} />
-        ) : (
-          <PrimaryButton
-            label={alreadyDone ? 'Урок завершён ✓' : 'Завершить урок'}
-            icon={alreadyDone ? 'checkmark' : undefined}
-            color={alreadyDone ? T.green : T.brand}
-            onPress={complete}
-          />
+        {/* Bottom CTA — in normal flow (not absolute) so it never covers the
+            composer; it hides while the keyboard is up. No website deep link:
+            purchases are not offered in the app (App Store 3.1.1). */}
+        {keyboardOpen ? null : (
+          <View style={{ padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+            {needsPurchase ? (
+              <SecondaryButton label={tr('К программе курса')} icon="chevron.left" onPress={() => navigation.goBack()} />
+            ) : alreadyDone ? (
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <SecondaryButton label={tr('Урок пройден')} icon="checkmark" disabled style={{ flex: 1 }} />
+                <PrimaryButton
+                  label={nextLesson ? tr('Следующий урок') : tr('К программе курса')}
+                  icon={nextLesson ? 'arrow.right' : 'chevron.left'}
+                  style={{ flex: 1 }}
+                  onPress={goNext}
+                />
+              </View>
+            ) : (
+              <PrimaryButton label={tr('Завершить урок')} icon="checkmark" onPress={complete} />
+            )}
+          </View>
         )}
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

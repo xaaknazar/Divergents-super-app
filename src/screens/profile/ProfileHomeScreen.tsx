@@ -11,7 +11,7 @@ import { PageIntro } from '../../components/PageIntro';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
-import { Capsule, IconCircle, ListSection, ListRow, Segmented, ty } from '../../components/ui';
+import { Capsule, IconCircle, ListSection, ListRow, Segmented } from '../../components/ui';
 import { Ring } from '../../components/talentUI';
 import { GardnerChart } from '../../components/GardnerChart';
 import { fetchMyShelf, ShelfEntry } from '../../data/books';
@@ -35,7 +35,7 @@ import { fetchCommunityHome, SportActivity, Trip } from '../../data/community';
 type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 
 export function ProfileHomeScreen({ navigation }: Props) {
-  const { T, mode, setMode } = useTheme();
+  const { T, mode, setMode, ty } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
   const { challenge, isParticipant } = useChallenge();
@@ -198,6 +198,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
     // "День челленджа" didn't fit the narrow tile — shortened to «День».
     { v: challengeActive ? String(challenge.currentDay) : '—', l: tr('День'), icon: 'flame.fill', c: T.red, onPress: () => navigation.navigate('ChallengeHistory') },
   ];
+  // VoiceOver reads «—» as nothing useful — spell it out.
+  const tileA11y = (l: string, v: string) => `${l}: ${v === '—' ? tr('нет данных') : v}`;
 
   const mk = (items: [string, any][]) => items
     .map(([l, v]) => [l, Array.isArray(v) ? fmtList(v) : (v == null ? '' : String(v))] as [string, string])
@@ -234,30 +236,38 @@ export function ProfileHomeScreen({ navigation }: Props) {
       <Pressable onPress={editAnketa} accessibilityRole="button" accessibilityLabel="Редактировать анкету"
         style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
+          {/* Legibility scrim (same as PersonalizeScreen): white copy must stay
+              readable when the user's accent is a pastel, esp. in dark theme. */}
+          <LinearGradient
+            pointerEvents="none"
+            colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.06)']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             {photoUrl ? (
               <Image source={{ uri: photoUrl }} style={{ width: 64, height: 64, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
             ) : (
               <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={[ty.title1, { color: '#fff' }]}>{initial}</Text>
+                <Text style={[ty.title1, { color: T.onBrand }]}>{initial}</Text>
               </View>
             )}
             <View style={{ flex: 1 }}>
-              <Text style={[ty.title2, { color: '#fff' }]} numberOfLines={1}>{name}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.85)', marginTop: 2 }]} numberOfLines={1}>
+              <Text style={[ty.title2, { color: T.onBrand }]} numberOfLines={1}>{name}</Text>
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>
                 {email ?? 'Divergents'}
               </Text>
               {profile?.mbtiType ? (
                 <View style={{ marginTop: 8 }}>
-                  <Capsule bg="rgba(255,255,255,0.2)" color="#fff"><SF name="sparkles" size={11} color="#fff" />MBTI · {profile.mbtiName || `${profile.mbtiType} ${mbtiName(profile.mbtiType)}`}</Capsule>
+                  <Capsule bg="rgba(255,255,255,0.2)" color={T.onBrand}><SF name="sparkles" size={11} color={T.onBrand} />MBTI · {profile.mbtiName || `${profile.mbtiType} ${mbtiName(profile.mbtiType)}`}</Capsule>
                 </View>
               ) : null}
             </View>
-            <Ring value={completeness / 100} size={62} color="#fff" label={`${completeness}%`} sub={t('questionnaire')} textColor="#fff" />
+            <Ring value={completeness / 100} size={62} color={T.onBrand} label={`${completeness}%`} sub={t('questionnaire')} textColor={T.onBrand} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 14, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.22)' }}>
-            <Text style={[ty.footnoteEm, { color: '#fff' }]}>Редактировать анкету</Text>
-            <SF name="chevron.right" size={12} color="rgba(255,255,255,0.85)" />
+            <Text style={[ty.footnoteEm, { color: T.onBrand }]}>Редактировать анкету</Text>
+            <SF name="chevron.right" size={12} color="rgba(255,255,255,0.9)" />
           </View>
         </LinearGradient>
       </Pressable>
@@ -267,7 +277,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
         <ListSection header={t('active_challenge')} style={{ marginBottom: 18 }}>
           <Pressable onPress={goChallenge} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
             <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-              <Logo size={19} body="#FFFFFF" head="#FFFFFF" />
+              <Logo size={19} body={T.onBrand} head={T.onBrand} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{challenge.title}</Text>
@@ -281,7 +291,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {(myTrips.length > 0 || mySport.length > 0) ? (
         <ListSection header={tr('Мои активности')} style={{ marginBottom: 18 }}>
           {myTrips.map((trip, index) => (
-            <ListRow key={`trip:${trip.id}`} leading={<IconCircle icon="map.fill" color="#fff" bg={T.brand} size={30} />}
+            <ListRow key={`trip:${trip.id}`} leading={<IconCircle icon="map.fill" color={T.onBrand} bg={T.brand} size={30} />}
               title={trip.title} subtitle={`${statusOf(`trip:${trip.id}`) === 'pending' ? tr('Заявка на рассмотрении') : tr('Ваша поездка')}${trip.date ? ` · ${trip.date}` : ''}`}
               chevron onPress={() => goTrip(trip.id)} last={index === myTrips.length - 1 && mySport.length === 0} />
           ))}
@@ -296,7 +306,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Stat tiles */}
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
         {tiles.map((t, i) => (
-          <Pressable key={i} onPress={t.onPress} accessibilityRole="button" accessibilityLabel={`${t.l}: ${t.v}`}
+          <Pressable key={i} onPress={t.onPress} accessibilityRole="button" accessibilityLabel={tileA11y(t.l, t.v)}
             style={({ pressed }) => ({ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.7 : 1 })}>
             <SF name={t.icon} size={18} color={t.c} />
             <Text style={[ty.title2, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{t.v}</Text>
@@ -309,7 +319,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
       <ListSection header={`${t('achievements_n')} · ${ach.earned}/${ach.total}`}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
           {ach.badges.map((b) => (
-            <View key={b.id} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+            <View key={b.id} accessible accessibilityRole="image"
+              accessibilityLabel={`${b.title} — ${b.earned ? tr('получено') : tr('заблокировано')}`}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={b.icon} size={20} color={b.earned ? '#fff' : T.labelTertiary} />
             </View>
           ))}
@@ -330,7 +342,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
           <ListRow leading={<IconCircle icon="checkmark.circle.fill" color="#fff" bg={T.green} size={30} />}
             title={tr('Прочитано')} detail={String(readBooks.length)} chevron onPress={openLibrary} />
         ) : null}
-        <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />}
+        <ListRow leading={<IconCircle icon="book.fill" color={T.onBrand} bg={T.brand} size={30} />}
           title={tr('Библиотека книг')} chevron last onPress={openLibrary} />
       </ListSection>
 
@@ -340,7 +352,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{t('strengths')}</Text>
             {!live ? (
-              <Pressable onPress={() => reload()} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Pressable onPress={() => reload()} accessibilityRole="button" accessibilityLabel={t('demo_refresh')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 6 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
                 <Text style={[ty.caption2Em, { color: T.labelSecondary }]} numberOfLines={1}>{t('demo_refresh')}</Text>
               </Pressable>
@@ -370,26 +382,16 @@ export function ProfileHomeScreen({ navigation }: Props) {
         </View>
       ) : null}
 
-      {/* Account */}
-      <ListSection header={t('account')} style={{ marginTop: 18 }}>
-        <ListRow leading={<IconCircle icon="person.crop.circle.fill" color="#fff" bg={T.brand} size={30} />} title={email ?? t('signed_in')} subtitle="Divergents LMS · Talentslab" />
-        {blocked.length > 0 ? (
-          <ListRow leading={<IconCircle icon="hand.raised.fill" color="#fff" bg={T.labelSecondary} size={30} />} title="Заблокированные" detail={String(blocked.length)} chevron onPress={manageBlocked} />
-        ) : null}
-        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.red} onPress={handleSignOut} />
-        <ListRow leading={<SF name="trash.fill" size={20} color={T.red} />} title="Удалить аккаунт" subtitle="Без возможности восстановления" valueColor={T.red} last onPress={handleDeleteAccount} />
-      </ListSection>
-
       {coursesInProgress > 0 ? (
-        <ListSection header={t('continue_')}>
-          <ListRow leading={<IconCircle icon="book.fill" color="#fff" bg={T.brand} size={30} />} title={t('continue_learning')} subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? t('in_progress_1') : t('in_progress_n')}`} chevron last onPress={goLearning} />
+        <ListSection header={t('continue_')} style={{ marginTop: 18 }}>
+          <ListRow leading={<IconCircle icon="book.fill" color={T.onBrand} bg={T.brand} size={30} />} title={t('continue_learning')} subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? t('in_progress_1') : t('in_progress_n')}`} chevron last onPress={goLearning} />
         </ListSection>
       ) : null}
 
       {/* Anketa — single entry that opens the full Talentslab report */}
       <ListSection header={tr('Анкета')} style={{ marginTop: 18 }}>
         <ListRow
-          leading={<IconCircle icon="doc.text.fill" color="#fff" bg={T.brand} size={30} />}
+          leading={<IconCircle icon="doc.text.fill" color={T.onBrand} bg={T.brand} size={30} />}
           title={tr('Открыть свою анкету')}
           subtitle={tr('Полный отчёт: таланты, MBTI, Гарднер')}
           chevron last
@@ -419,22 +421,32 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
       {/* Offline downloads — its own section */}
       <ListSection header={tr('Офлайн')}>
-        <ListRow leading={<IconCircle icon="arrow.down.circle" color="#fff" bg={T.brand} size={30} />}
+        <ListRow leading={<IconCircle icon="arrow.down.circle" color={T.onBrand} bg={T.brand} size={30} />}
           title={tr('Загрузки')} subtitle={tr('Скачанные аудио-уроки и доступные к скачиванию')} chevron last onPress={() => navigation.navigate('Downloads')} />
       </ListSection>
 
       {/* Appearance */}
       <ListSection header={t('appearance')}>
-        <ListRow leading={<IconCircle icon="paintpalette.fill" color="#fff" bg={T.brand} size={30} />}
+        <ListRow leading={<IconCircle icon="paintpalette.fill" color={T.onBrand} bg={T.brand} size={30} />}
           title={t('personalization')} subtitle={t('personalization_sub')} chevron last onPress={() => navigation.navigate('Personalize')} />
         {/* Язык РУС/ENG временно скрыт — английский перевод на паузе */}
       </ListSection>
 
       {/* Support — write to us on Telegram */}
       <ListSection header={tr('Поддержка')} footer={tr('Вопросы, ошибки или предложения — напишите нам в Telegram.')}>
-        <ListRow leading={<IconCircle icon="paperplane.fill" color="#fff" bg={T.brand} size={30} />}
+        <ListRow leading={<IconCircle icon="paperplane.fill" color={T.onBrand} bg={T.brand} size={30} />}
           title={tr('Написать в поддержку')} subtitle="@haaknazar" chevron last
           onPress={() => Linking.openURL('https://t.me/haaknazar').catch(() => {})} />
+      </ListSection>
+
+      {/* Account — destructive actions live last (iOS Settings convention) */}
+      <ListSection header={t('account')} style={{ marginTop: 18 }}>
+        <ListRow leading={<IconCircle icon="person.crop.circle.fill" color={T.onBrand} bg={T.brand} size={30} />} title={email ?? t('signed_in')} subtitle="Divergents LMS · Talentslab" />
+        {blocked.length > 0 ? (
+          <ListRow leading={<IconCircle icon="hand.raised.fill" color="#fff" bg={T.labelSecondary} size={30} />} title="Заблокированные" detail={String(blocked.length)} chevron onPress={manageBlocked} />
+        ) : null}
+        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.redText} onPress={handleSignOut} />
+        <ListRow leading={<SF name="trash.fill" size={20} color={T.red} />} title="Удалить аккаунт" subtitle="Без возможности восстановления" valueColor={T.redText} last onPress={handleDeleteAccount} />
       </ListSection>
 
       <View style={{ height: 30 }} />

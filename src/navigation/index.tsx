@@ -8,7 +8,6 @@ import {
 import { TabBar } from './TabBar';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAppFlow } from '../state/AppFlowContext';
-import { useResumeGate } from '../state/ResumeGateContext';
 import { useResume } from '../state/useResume';
 import { isValidNickname } from '../data/nickname';
 import { usePush } from '../state/usePush';
@@ -54,8 +53,6 @@ import { AchievementsScreen } from '../screens/profile/AchievementsScreen';
 import { PersonalizeScreen } from '../screens/profile/PersonalizeScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { AuthScreen } from '../screens/AuthScreen';
-import { RegisterScreen } from '../screens/RegisterScreen';
-import { ResumeGateScreen } from '../screens/ResumeGateScreen';
 import { NicknameGateScreen } from '../screens/NicknameGateScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 
@@ -162,8 +159,7 @@ function Tabs() {
 const Root = createNativeStackNavigator<RootStackParams>();
 export function RootNavigator() {
   const { isLoaded, isSignedIn } = useAuth();
-  const { ready, onboarded, pendingRegistration } = useAppFlow();
-  const { complete: resumeComplete } = useResumeGate();
+  const { ready, onboarded } = useAppFlow();
   // Existing accounts predate nicknames: once the anketa is complete, ask for a
   // public псевдоним before letting them into the app (one short screen).
   const { answers: resumeAnswers, hydrated: resumeHydrated } = useResume();
@@ -171,7 +167,11 @@ export function RootNavigator() {
   const downloads = useDownloads();
   const [authWaitElapsed, setAuthWaitElapsed] = useState(false);
   const [offlineDismissed, setOfflineDismissed] = useState(false);
-  usePush();
+  // Push permission + token registration only once the user is past every gate
+  // (onboarding → auth → nickname) and the main Tabs are mounted. Tap routing
+  // inside usePush stays active regardless.
+  const inMainApp = isLoaded && ready && onboarded && !!isSignedIn && !needsNickname;
+  usePush(inMainApp);
   useInviteLinks();
 
   // Clerk normally restores the cached signed-in session immediately. If it
@@ -204,11 +204,6 @@ export function RootNavigator() {
         <Root.Screen name="Onboarding" component={OnboardingScreen} options={{ presentation: 'fullScreenModal' }} />
       ) : !isSignedIn ? (
         <Root.Screen name="Auth" component={AuthScreen} />
-      ) : pendingRegistration ? (
-        <Root.Screen name="Register" component={RegisterScreen} />
-      ) : !resumeComplete ? (
-        // Mandatory: no entry to the app until the Talentslab resume is 100% filled.
-        <Root.Screen name="ResumeGate" component={ResumeGateScreen} />
       ) : needsNickname ? (
         <Root.Screen name="NicknameGate" component={NicknameGateScreen} />
       ) : (

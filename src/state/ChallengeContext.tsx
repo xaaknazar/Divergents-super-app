@@ -13,12 +13,15 @@ import {
   challengePointsToday, challengeBonusToday, taskPoints, taskBonus, taskDone, totalFlags,
   DEFAULT_REPORT_DEADLINE_HOUR,
 } from '../data/community';
+import { expectedChallengeDay, isChallengeDayLocked } from '../data/challengeDay';
 
 export interface RankedMember extends Member { rank: number; points: number }
 
 interface ChallengeState {
   challenge: Challenge;
   loading: boolean;
+  /** Последняя загрузка активного челленджа с сервера не удалась. */
+  error: boolean;
   isParticipant: boolean;
   syncPending: boolean;
   dayLocked: boolean;
@@ -82,26 +85,6 @@ function nextAlmatyTime(hour: number, minute: number, nowMs = Date.now()): numbe
   return today > nowMs ? today : today + 24 * 60 * 60 * 1000;
 }
 
-function expectedChallengeDay(c: Challenge, nowMs = Date.now()): number {
-  if (!c.startISO) return c.currentDay;
-  const startMs = Date.parse(c.startISO);
-  if (!Number.isFinite(startMs)) return c.currentDay;
-  const start = new Date(startMs + ALMATY_OFFSET_MS);
-  const now = new Date(nowMs + ALMATY_OFFSET_MS);
-  const startDate = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-  const nowDate = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  const dateOffset = Math.floor((nowDate - startDate) / (24 * 60 * 60 * 1000));
-  const afterRollover = now.getUTCHours() * 60 + now.getUTCMinutes() >= 23 * 60 + 1 ? 1 : 0;
-  return Math.max(1, dateOffset + 1 + afterRollover);
-}
-
-function isChallengeDayLocked(c: Challenge, nowMs = Date.now()): boolean {
-  if (c.id === DEFAULT_CHALLENGE.id || c.currentDay <= 0) return false;
-  // At 23:01 keep the old server day locked until `/active` advances it. Before
-  // 23:01 marks still belong to the current day and are accepted normally.
-  return expectedChallengeDay(c, nowMs) > c.currentDay;
-}
-
 // Overlay persisted daily inputs onto a challenge's task definitions (only when
 // the saved progress belongs to the same challenge).
 function applyProgress(base: Challenge, saved: SavedProgress | null): Challenge {
@@ -130,6 +113,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const [challenge, setChallenge] = useState<Challenge>(DEFAULT_CHALLENGE);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [timeTick, setTimeTick] = useState(() => Date.now());
   const savedRef = useRef<SavedProgress | null>(null);
@@ -164,7 +148,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     const h = typeof hour === 'number' && hour > 0 ? hour : DEFAULT_REPORT_DEADLINE_HOUR;
     Alert.alert(
       'Отметки на сегодня закрыты',
-      `Изменения принимаются до ${h}:00 по Алматы. Эта отметка не сохранена и в зачёт дня не попадёт.`,
+      `Отметки принимаются до ${h}:00 по Алматы включительно. Эта отметка не сохранена и в зачёт дня не попадёт — следующий день откроется в 00:00.`,
     );
   }, []);
 
@@ -176,7 +160,8 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = await getTokenRef.current();
       const { challenge: live, members: nextMembers, ok } = await fetchActiveChallenge(token);
-      if (!ok) return false;
+      if (!ok) { setError(true); return false; }
+      setError(false);
       const belongsToUser = !!live && nextMembers.some((member) => member.isMe);
       if (live && belongsToUser) {
         // Older `/active` payloads do not include startISO. Read it from the
@@ -200,6 +185,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       }
       return true;
     } catch {
+      setError(true);
       return false;
     }
   }, [isSignedIn]);
@@ -226,12 +212,13 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
         pendingRef.current = pending;
         if (alive) setPendingCount(pending?.updates.length ?? 0);
         if (!isSignedIn) {
-          if (alive) { setChallenge(DEFAULT_CHALLENGE); setMembers([]); }
+          if (alive) { setChallenge(DEFAULT_CHALLENGE); setMembers([]); setError(false); }
           return;
         }
         await refreshLive();
       } catch {
         // best-effort: keep the locally-restored challenge on any failure
+        if (alive) setError(true);
       } finally {
         // Always clear loading, even if getToken()/fetch throws — otherwise the
         // screen would spin forever.
@@ -281,7 +268,12 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     const pending = pendingRef.current;
     if (!pending) return;
     if (pending.id !== challenge.id || pending.day !== challenge.currentDay) {
+      // Отметки за прошлый день сервер уже не примет (дедлайн). Раньше очередь
+      // просто стиралась, и человек был уверен, что его вчерашний офлайн-ввод
+      // ушёл в зачёт.
+      const stale = pending.id === challenge.id && pending.updates.length > 0;
       savePending(null);
+      if (stale) warnDeadlinePassed(challenge.id, pending.day);
       return;
     }
     flushingRef.current = true;
@@ -504,14 +496,14 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     }, 0);
 
     return {
-      challenge, loading, isParticipant: challenge.id !== DEFAULT_CHALLENGE.id && members.some((m) => m.isMe),
+      challenge, loading, error, isParticipant: challenge.id !== DEFAULT_CHALLENGE.id && members.some((m) => m.isMe),
       syncPending: pendingCount > 0,
       dayLocked: isChallengeDayLocked(challenge, timeTick),
       setMetric, toggleBinary, pointsToday, bonusToday,
       leaderboard: ranked, myRank, teamPoints, teamFlags, teamPenalty,
       refresh: refreshLive,
     };
-  }, [challenge, members, loading, pendingCount, setMetric, timeTick, toggleBinary, refreshLive]);
+  }, [challenge, members, loading, error, pendingCount, setMetric, timeTick, toggleBinary, refreshLive]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

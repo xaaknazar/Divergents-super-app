@@ -2,18 +2,18 @@
 // прямо из приложения (регистрация и редактирование анкеты). Загружается в тот
 // же storage, что и на сайте, поэтому фото совпадает в обоих местах.
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Alert, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
-import { ty } from './ui';
+import { hSuccess } from '../lib/haptics';
 import { fetchTalentProfile, uploadProfilePhoto, getTalentslabToken } from '../data/talentslab';
 import { emitProfileChanged } from '../state/profileBus';
 
 export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { getToken } = useAuth();
   const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,14 @@ export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => 
   const pick = async () => {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) { Alert.alert('Нет доступа к фото'); return; }
+      if (!perm.granted) {
+        // Без пути в Настройки кнопка выглядит сломанной: второй раз iOS уже не спросит.
+        Alert.alert('Нет доступа к фото', 'Разрешите доступ к фото в настройках iOS.', [
+          { text: 'Отмена', style: 'cancel' },
+          { text: 'Открыть настройки', onPress: () => { Linking.openSettings().catch(() => {}); } },
+        ]);
+        return;
+      }
       const r = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -50,10 +57,16 @@ export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => 
       });
       if ('error' in res) Alert.alert('Не удалось загрузить фото', res.error);
       else {
-        setUrl(res.url || a.uri);
+        // Показываем ровно то, что вернул сервер: подстановка локального файла
+        // скрывала бы неудачную загрузку.
+        setUrl(res.url);
         onChanged?.(res.url);
         emitProfileChanged(); // аватар в профиле обновится сразу
-        Alert.alert('Фото обновлено', 'Оно появится в профиле и на сайте Talentslab.');
+        // Перечитываем профиль с сервера — так видно, что фото действительно
+        // сохранилось, а не только отрисовалось на экране.
+        load();
+        // Новое фото уже на экране — Alert про это был бы лишним; хватит хаптики.
+        hSuccess();
       }
     } catch {
       Alert.alert('Не удалось загрузить фото', 'Попробуйте ещё раз.');

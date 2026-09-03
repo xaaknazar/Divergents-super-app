@@ -8,7 +8,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { ListSection, ty } from '../../components/ui';
+import { ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
@@ -18,7 +18,7 @@ import { CommunityStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<CommunityStackParams, 'TeamStandings'>;
 
 export function TeamStandingsScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { challenge } = useChallenge();
   const standings = challenge.teamStandings ?? [];
 

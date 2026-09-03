@@ -3,13 +3,12 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeContext';
-import { ty } from '../theme/tokens';
 import { GALLUP_DOMAIN_META, GallupDomain, GallupTalent } from '../data/talentslab';
 
 export function Ring({
   value, size = 64, stroke = 7, color, label, sub, textColor,
 }: { value: number; size?: number; stroke?: number; color?: string; label?: string; sub?: string; textColor?: string }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const c = color ?? T.brand;
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -32,7 +31,7 @@ export function Ring({
 const ORDER: GallupDomain[] = ['executing', 'influencing', 'relationship', 'strategic'];
 
 export function DomainBar({ gallup }: { gallup: GallupTalent[] }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const counts = ORDER.map((d) => ({ d, n: gallup.filter((g) => g.domain === d).length }));
   const total = counts.reduce((s, c) => s + c.n, 0) || 1;
   return (

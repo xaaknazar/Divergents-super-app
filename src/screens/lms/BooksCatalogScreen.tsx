@@ -5,9 +5,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
-import { BackNav, HeaderIcon } from '../../components/headers';
+import { HeaderIcon } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Chip, SectionHeader, ty } from '../../components/ui';
+import { Chip, SectionHeader } from '../../components/ui';
 import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
 import { fetchBooks, fetchMyShelf, BookListItem, ShelfEntry, ShelfStatus } from '../../data/books';
@@ -26,7 +27,7 @@ const SORTS: { key: Sort; label: string }[] = [
 ];
 
 export function BooksCatalogScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { getToken, isSignedIn } = useAuth();
   const [books, setBooks] = useState<BookListItem[]>([]);
   const [shelf, setShelf] = useState<ShelfEntry[]>([]);
@@ -84,12 +85,13 @@ export function BooksCatalogScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Обучение" onBack={() => navigation.goBack()}
+      <NavHeader title="Библиотека" backLabel="Обучение" onBack={() => navigation.goBack()}
         trailing={<HeaderIcon name="sparkles" color={T.brand} label="AI-помощник" onPress={() => navigation.navigate('BookAI')} />} />
       <Screen topInset={false} aurora={false} onRefresh={load}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
           <Text style={[ty.largeTitle, { color: T.label }]}>Книги</Text>
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>Библиотека Divergents · {books.length}</Text>
+          {/* Count only once loaded — «· 0» during the fetch reads as an empty library. */}
+          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{loading ? 'Библиотека Divergents' : `Библиотека Divergents · ${books.length}`}</Text>
         </View>
 
         <Pressable onPress={() => navigation.navigate('BookAI')} accessibilityRole="button" accessibilityLabel="Спросить ИИ, что почитать" accessibilityHint="Открывает подбор книг с AI-помощником"

@@ -2,7 +2,7 @@
 // Rename the challenge, rename teams, change each team's size and captain, move
 // participants between teams and remove them. Once the challenge starts the
 // whole screen becomes read-only (server enforces the same rule).
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, Pressable, ScrollView, TextInput, ActivityIndicator, Alert,
   ActionSheetIOS, Platform, KeyboardAvoidingView,
@@ -13,7 +13,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ty } from '../../components/ui';
+import { Capsule, ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import {
@@ -47,7 +47,7 @@ function showSheet(
 
 export function ManageChallengeScreen({ route, navigation }: Props) {
   const { challengeId } = route.params;
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { getToken } = useAuth();
 
   const [manage, setManage] = useState<ChallengeManage | null>(null);
@@ -59,6 +59,15 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
   const [teams, setTeams] = useState<ManageTeam[]>([]);
   const [members, setMembers] = useState<ManageMember[]>([]);
   const [savingCh, setSavingCh] = useState(false);
+  // Controlled team-name drafts + a short «Сохранено» / «Не сохранено» note per team.
+  const [teamNames, setTeamNames] = useState<Record<string, string>>({});
+  const [teamNote, setTeamNote] = useState<Record<string, 'saved' | 'error' | undefined>>({});
+  const noteTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  // Capacity taps are coalesced: one request 500 ms after the last tap.
+  const capTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const committedCap = useRef<Record<string, number>>({});
+  const teamsRef = useRef<ManageTeam[]>([]);
+  teamsRef.current = teams;
 
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
@@ -72,10 +81,23 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
       setDays(String(d.challenge.durationDays));
       setPrice(d.challenge.price ?? '');
       setTeams(d.teams);
+      setTeamNames(Object.fromEntries(d.teams.map((t) => [t.id, t.name])));
+      committedCap.current = Object.fromEntries(d.teams.map((t) => [t.id, t.capacity]));
       setMembers(d.members);
     }
     setLoading(false);
   }, [challengeId]);
+
+  useEffect(() => () => {
+    Object.values(noteTimers.current).forEach(clearTimeout);
+    Object.values(capTimers.current).forEach(clearTimeout);
+  }, []);
+
+  const flashNote = (teamId: string, note: 'saved' | 'error') => {
+    setTeamNote((p) => ({ ...p, [teamId]: note }));
+    clearTimeout(noteTimers.current[teamId]);
+    noteTimers.current[teamId] = setTimeout(() => setTeamNote((p) => ({ ...p, [teamId]: undefined })), note === 'saved' ? 2000 : 4000);
+  };
   // Fires on mount and whenever the screen refocuses (e.g. back from «Заявки»),
   // so a just-accepted applicant shows up in the roster.
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -125,10 +147,33 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
     else { Alert.alert('Не удалось сохранить', 'Попробуйте ещё раз.'); load(); }
   };
 
-  const saveTeamName = (team: ManageTeam, name: string) => {
-    const nm = name.trim();
-    if (!nm || nm === team.name) return;
-    patchTeam(team, { name: nm }, { name: nm });
+  const saveTeamName = async (team: ManageTeam) => {
+    const nm = (teamNames[team.id] ?? '').trim();
+    if (!nm || nm === team.name) {
+      // Пустое имя не сохраняем — возвращаем последнее сохранённое.
+      setTeamNames((p) => ({ ...p, [team.id]: team.name }));
+      return;
+    }
+    const token = await getToken();
+    const r = await updateChallengeTeam(challengeId, team.id, { name: nm }, token);
+    if (r.ok) {
+      hSuccess();
+      setTeams((prev) => prev.map((t) => (t.id === team.id ? { ...t, name: nm } : t)));
+      flashNote(team.id, 'saved');
+      return;
+    }
+    // Ошибка → откатываем поле к последнему сохранённому значению.
+    setTeamNames((p) => ({ ...p, [team.id]: team.name }));
+    if (r.reason === 'started') reloadWithNotice('Команды менять уже нельзя.');
+    else flashNote(team.id, 'error');
+  };
+
+  const commitCapacity = (teamId: string) => {
+    delete capTimers.current[teamId];
+    const latest = teamsRef.current.find((t) => t.id === teamId);
+    if (!latest || latest.capacity === committedCap.current[teamId]) return;
+    committedCap.current[teamId] = latest.capacity;
+    patchTeam(latest, { capacity: latest.capacity }, {});
   };
 
   const changeCapacity = (team: ManageTeam, delta: number) => {
@@ -138,7 +183,10 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
       if (delta < 0) Alert.alert('Нельзя меньше', `В команде уже ${countFor(team.id)} участник(ов).`);
       return;
     }
-    patchTeam(team, { capacity: next }, { capacity: next });
+    // Оптимистично сразу, запрос — один после паузы в нажатиях.
+    setTeams((prev) => prev.map((t) => (t.id === team.id ? { ...t, capacity: next } : t)));
+    clearTimeout(capTimers.current[team.id]);
+    capTimers.current[team.id] = setTimeout(() => commitCapacity(team.id), 500);
   };
 
   const pickCaptain = (team: ManageTeam) => {
@@ -248,7 +296,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                 <Text style={[ty.caption1, { color: T.red }]}>Минимальная длительность — 14 дней.</Text>
               ) : null}
               {!locked ? (
-                <Pressable onPress={saveChallenge} disabled={!chDirty || savingCh}
+                <Pressable onPress={saveChallenge} disabled={!chDirty || savingCh} accessibilityRole="button" accessibilityLabel="Сохранить" accessibilityState={{ disabled: !chDirty || savingCh, busy: savingCh }}
                   style={{ height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: chDirty ? T.brand : T.fillSecondary }}>
                   {savingCh ? <ActivityIndicator color="#fff" /> : (
                     <>
@@ -271,13 +319,23 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                     <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="person.3.fill" size={18} color={T.brand} />
                     </View>
-                    <TextInput
-                      defaultValue={team.name}
-                      editable={!locked}
-                      onEndEditing={(e) => saveTeamName(team, e.nativeEvent.text)}
-                      placeholder="Название команды" placeholderTextColor={T.labelTertiary}
-                      style={[ty.headline, { flex: 1, color: T.label, paddingVertical: 6 }]}
-                    />
+                    <View style={{ flex: 1 }}>
+                      <TextInput
+                        value={teamNames[team.id] ?? team.name}
+                        onChangeText={(v) => setTeamNames((p) => ({ ...p, [team.id]: v }))}
+                        editable={!locked}
+                        onEndEditing={() => saveTeamName(team)}
+                        returnKeyType="done"
+                        placeholder="Название команды" placeholderTextColor={T.labelTertiary}
+                        accessibilityLabel={`Название команды ${team.name}`}
+                        style={[ty.headline, { color: T.label, paddingVertical: 6 }]}
+                      />
+                      {teamNote[team.id] ? (
+                        <Text accessibilityLiveRegion="polite" style={[ty.caption2, { color: teamNote[team.id] === 'saved' ? T.greenText : T.redText }]} numberOfLines={1}>
+                          {teamNote[team.id] === 'saved' ? 'Сохранено' : 'Не сохранено — прежнее название возвращено'}
+                        </Text>
+                      ) : null}
+                    </View>
                   </View>
 
                   {/* Size stepper */}
@@ -298,8 +356,9 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                   </View>
 
                   {/* Captain */}
-                  <Pressable onPress={() => pickCaptain(team)} disabled={locked}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: T.fillTertiary }}>
+                  <Pressable onPress={() => pickCaptain(team)} disabled={locked} accessibilityRole="button"
+                    accessibilityLabel={`Капитан: ${team.captainName || 'не назначен'}`} accessibilityState={{ disabled: locked }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: T.fillTertiary }}>
                     <SF name="star.fill" size={15} color={team.captainId ? T.brand : T.labelTertiary} />
                     <View style={{ flex: 1 }}>
                       <Text style={[ty.caption1, { color: T.labelSecondary }]}>Капитан</Text>
@@ -342,7 +401,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
           </ListSection>
 
           {/* Link to the applications review */}
-          <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId })}
+          <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId })} accessibilityRole="button" accessibilityLabel="Заявки на вступление"
             style={{ marginHorizontal: 16, marginTop: 4, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="person.2.fill" size={16} color={T.brand} />
             <Text style={[ty.headline, { color: T.brand }]}>Заявки на вступление</Text>
@@ -354,6 +413,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
 }
 
 function LabeledInput({ label, value, onChangeText, editable, placeholder, keyboardType, T }: { label: string; value: string; onChangeText: (v: string) => void; editable: boolean; placeholder?: string; keyboardType?: 'default' | 'number-pad'; T: any }) {
+  const { ty } = useTheme();
   return (
     <View>
       <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 5 }]} numberOfLines={1}>{label}</Text>
@@ -375,9 +435,13 @@ function StepBtn({ icon, onPress, T }: { icon: any; onPress: () => void; T: any 
 }
 
 function MemberRow({ m, captain, locked, onPress, T }: { m: ManageMember; captain: boolean; locked: boolean; onPress: () => void; T: any }) {
+  const { ty } = useTheme();
   const name = m.userName || m.userEmail || 'Участник';
   return (
-    <Pressable onPress={onPress} disabled={locked} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16 }}>
+    <Pressable onPress={onPress} disabled={locked} accessibilityRole="button"
+      accessibilityLabel={`${name}${captain ? ', капитан' : ''}${m.status === 'pending' ? ', заявка' : ''}`}
+      accessibilityHint={locked ? undefined : 'Переместить или удалить'} accessibilityState={{ disabled: locked }}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingVertical: 10, paddingHorizontal: 16, opacity: pressed ? 0.7 : 1 })}>
       <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={[ty.subheadEm, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
       </View>
@@ -385,7 +449,7 @@ function MemberRow({ m, captain, locked, onPress, T }: { m: ManageMember; captai
         <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{name}{captain ? '  👑' : ''}</Text>
         {m.userEmail ? <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{m.userEmail}</Text> : null}
       </View>
-      {m.status === 'pending' ? <Capsule bg="rgba(142,142,147,0.16)" color="#8E8E93">заявка</Capsule> : null}
+      {m.status === 'pending' ? <Capsule bg="rgba(142,142,147,0.16)" color={T.labelSecondary}>заявка</Capsule> : null}
       {!locked ? <SF name="ellipsis" size={18} color={T.labelTertiary} /> : null}
     </Pressable>
   );

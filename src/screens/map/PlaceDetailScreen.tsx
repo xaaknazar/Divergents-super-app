@@ -8,13 +8,14 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { Capsule, PrimaryButton, ty } from '../../components/ui';
+import { Capsule, PrimaryButton } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { NavHeader } from '../../components/NavHeader';
 import { usePlaces, ratingOf } from '../../state/PlacesContext';
 import { useModeration } from '../../state/ModerationContext';
 import { CATEGORY_META, TAG_META, isOpenNow, reportPlace, postReview, updatePlaceReview, deletePlaceReview } from '../../data/places';
 import { MapStackParams } from '../../navigation/types';
+import * as pl from '../../data/plural';
 
 type Props = NativeStackScreenProps<MapStackParams, 'PlaceDetail'>;
 
@@ -23,7 +24,7 @@ type Props = NativeStackScreenProps<MapStackParams, 'PlaceDetail'>;
 const PHOTO_BLURHASH = 'L6Pj0^i_.AyE_3t7t7R**0o#DgR4';
 
 export function PlaceDetailScreen({ route, navigation }: Props) {
-  const { T, isDark } = useTheme();
+  const { T, isDark, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { isSignedIn, getToken } = useAuth();
@@ -36,11 +37,16 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const [text, setText] = useState('');
   const [reporting, setReporting] = useState(false);
 
-  // UGC moderation (App Store 1.2): report a review or block its author.
-  const moderateReview = (author: string) => {
-    Alert.alert(author, tr('Пожаловаться на отзыв или скрыть автора?'), [
-      { text: tr('Пожаловаться'), onPress: () => Alert.alert(tr('Спасибо'), tr('Мы проверим этот отзыв.')) },
-      { text: tr('Заблокировать автора'), style: 'destructive', onPress: () => { block(author); Alert.alert(tr('Автор заблокирован'), tr('Его отзывы и записи скрыты для вас.')); } },
+  // UGC moderation (App Store 1.2): report a review or block its author. The
+  // report really goes to moderators through the place's report endpoint (the
+  // reason encodes the review id) — no fake «спасибо» when nothing was sent.
+  const moderateReview = (rev: { id: string; author: string }) => {
+    Alert.alert(rev.author, tr('Пожаловаться на отзыв или скрыть автора?'), [
+      { text: tr('Пожаловаться'), onPress: () => {
+        if (!isSignedIn) { Alert.alert(tr('Войдите в аккаунт'), tr('Чтобы пожаловаться на отзыв, войдите в аккаунт Divergents.')); return; }
+        sendReport(`review:${rev.id}`);
+      } },
+      { text: tr('Заблокировать автора'), style: 'destructive', onPress: () => { block(rev.author); Alert.alert(tr('Автор заблокирован'), tr('Его отзывы и записи скрыты для вас.')); } },
       { text: tr('Отмена'), style: 'cancel' },
     ]);
   };
@@ -96,6 +102,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     setStars(rev.rating);
     setText(rev.text);
   };
+  const cancelEditReview = () => { setEditingReview(null); setStars(0); setText(''); };
   const confirmDeleteReview = (rev: { id: string }) => {
     Alert.alert(tr('Удалить отзыв?'), undefined, [
       { text: tr('Отмена'), style: 'cancel' },
@@ -135,7 +142,8 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader backLabel={tr('Места')} onBack={() => navigation.goBack()} />
+      {/* No photo hero → the bar would be blank; name the screen in the title. */}
+      <NavHeader title={place.photo ? undefined : place.name} backLabel={tr('Места')} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
         {place.photo ? (
           <Image
@@ -161,19 +169,19 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                 {place.approved ? <SF name="checkmark.seal.fill" size={18} color={T.sky} /> : null}
               </View>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{meta.label} · {place.hours}</Text>
-              {open.known ? <Text style={[ty.caption1, { color: open.open ? T.green : T.red, marginTop: 2 }]} numberOfLines={1}>{open.label}</Text> : null}
+              {open.known ? <Text style={[ty.caption1, { color: open.open ? T.greenText : T.redText, marginTop: 2 }]} numberOfLines={1}>{open.label}</Text> : null}
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
             {r > 0 ? <Text style={[ty.title1, { color: T.label }]} numberOfLines={1}>{r.toFixed(1)}</Text> : null}
             <View style={{ flexShrink: 1 }}>
               <Stars value={r} size={16} />
-              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{place.reviews.length} отзывов · добавил {place.addedBy}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{pl.count(place.reviews.length, 'отзыв', 'отзыва', 'отзывов')} · добавил {place.addedBy}</Text>
             </View>
           </View>
           {place.approved ? (
             <View style={{ marginTop: 10 }}>
-              <Capsule bg={T.skyBadgeBg} color={T.sky}><SF name="checkmark.seal.fill" size={11} color={T.sky} />Divergents Approved</Capsule>
+              <Capsule bg={T.skyBadgeBg} color={T.sky}><SF name="checkmark.seal.fill" size={11} color={T.sky} />{tr('Одобрено Divergents')}</Capsule>
             </View>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
@@ -206,10 +214,10 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             <Marker coordinate={{ latitude: place.lat, longitude: place.lng }} pinColor={meta.color} />
           </MapView>
         </View>
-        <Pressable onPress={() => Linking.openURL(`https://2gis.kz/geo/${place.lng},${place.lat}`)}
-          style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 12, backgroundColor: T.brandTinted }}>
-          <SF name="map.fill" size={15} color={T.brand} />
-          <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1}>{tr('Открыть на карте')}</Text>
+        <Pressable onPress={() => Linking.openURL(`https://2gis.kz/geo/${place.lng},${place.lat}`)} accessibilityRole="link" accessibilityLabel={tr('Открыть на карте')}
+          style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44, borderRadius: 12, backgroundColor: T.brandTinted }}>
+          <SF name="map.fill" size={15} color={T.brandText} />
+          <Text style={[ty.headline, { color: T.brandText }]} numberOfLines={1}>{tr('Открыть на карте')}</Text>
         </Pressable>
 
         {/* Reviews (blocked authors filtered out) */}
@@ -224,7 +232,8 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                     <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{rev.date}</Text>
-                      <Pressable onPress={() => moderateReview(rev.author)} hitSlop={10} accessibilityLabel={tr('Пожаловаться или заблокировать')}>
+                      <Pressable onPress={() => moderateReview(rev)} accessibilityRole="button" accessibilityLabel={tr('Пожаловаться или заблокировать')}
+                        style={{ width: 44, height: 44, marginVertical: -12, marginRight: -12, alignItems: 'center', justifyContent: 'center' }}>
                         <SF name="ellipsis" size={16} color={T.labelTertiary} />
                       </Pressable>
                     </View>
@@ -233,19 +242,21 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                   {rev.text ? <Text style={[ty.body, { color: T.label, marginTop: 6 }]}>{rev.text}</Text> : null}
                   {/* Own review: edit or delete it. */}
                   {rev.mine ? (
-                    <View style={{ flexDirection: 'row', gap: 16, marginTop: 10 }}>
-                      <Pressable onPress={() => startEditReview(rev)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Изменить отзыв')}>
-                        <Text style={[ty.caption2Em, { color: T.brandAccent }]}>{tr('Изменить')}</Text>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                      <Pressable onPress={() => startEditReview(rev)} accessibilityRole="button" accessibilityLabel={tr('Изменить отзыв')}
+                        style={({ pressed }) => ({ minHeight: 44, minWidth: 44, justifyContent: 'center', paddingRight: 8, opacity: pressed ? 0.5 : 1 })}>
+                        <Text style={[ty.footnoteEm, { color: T.brandText }]}>{tr('Изменить')}</Text>
                       </Pressable>
-                      <Pressable onPress={() => confirmDeleteReview(rev)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Удалить отзыв')}>
-                        <Text style={[ty.caption2Em, { color: T.red }]}>{tr('Удалить')}</Text>
+                      <Pressable onPress={() => confirmDeleteReview(rev)} accessibilityRole="button" accessibilityLabel={tr('Удалить отзыв')}
+                        style={({ pressed }) => ({ minHeight: 44, minWidth: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: pressed ? 0.5 : 1 })}>
+                        <Text style={[ty.footnoteEm, { color: T.redText }]}>{tr('Удалить')}</Text>
                       </Pressable>
                     </View>
                   ) : null}
                 </View>
               ))}
               {visibleReviews.length === 0 ? (
-                <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Пока нет отзывов — оставь первый.')}</Text>
+                <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Пока нет отзывов — оставьте первый.')}</Text>
               ) : null}
             </>
           );
@@ -254,11 +265,20 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         {/* Add review */}
         {isSignedIn ? (
           <View style={{ marginHorizontal: 16, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
-            <Text style={[ty.headline, { color: T.label, marginBottom: 10 }]} numberOfLines={1}>{tr('Ваш отзыв')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{editingReview ? tr('Изменить отзыв') : tr('Ваш отзыв')}</Text>
+              {editingReview ? (
+                <Pressable onPress={cancelEditReview} accessibilityRole="button" accessibilityLabel={tr('Отменить редактирование')}
+                  style={({ pressed }) => ({ minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end', marginVertical: -10, opacity: pressed ? 0.5 : 1 })}>
+                  <Text style={[ty.footnoteEm, { color: T.brandText }]}>{tr('Отмена')}</Text>
+                </Pressable>
+              ) : null}
+            </View>
             <Stars value={stars} size={28} onChange={setStars} />
             <TextInput value={text} onChangeText={setText} placeholder={tr('Чем понравилось / что улучшить')} placeholderTextColor={T.labelTertiary} multiline
+              accessibilityLabel={tr('Текст отзыва')}
               style={[ty.body, { backgroundColor: T.fillTertiary, borderRadius: 12, padding: 12, color: T.label, minHeight: 70, textAlignVertical: 'top', marginTop: 12 }]} />
-            <PrimaryButton label={tr('Отправить отзыв')} icon="paperplane.fill" style={{ marginTop: 12 }} disabled={!stars} onPress={submit} />
+            <PrimaryButton label={editingReview ? tr('Сохранить отзыв') : tr('Отправить отзыв')} icon={editingReview ? 'checkmark' : 'paperplane.fill'} style={{ marginTop: 12 }} disabled={!stars} onPress={submit} />
           </View>
         ) : null}
       </ScrollView>
@@ -268,10 +288,12 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
 
 function ActBtn({ icon, label, active, onPress, T }: { icon: any; label: string; active?: boolean; onPress: () => void; T: any }) {
+  const { ty } = useTheme();
   return (
-    <Pressable onPress={onPress} style={{ flex: 1, height: 62, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4 }}>
-      <SF name={icon} size={20} color={active ? T.brand : T.label} />
-      <Text style={[ty.caption1, { color: active ? T.brand : T.labelSecondary }]} numberOfLines={1}>{label}</Text>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }}
+      style={({ pressed }) => ({ flex: 1, minHeight: 62, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4, opacity: pressed ? 0.7 : 1 })}>
+      <SF name={icon} size={20} color={active ? T.brandText : T.label} />
+      <Text style={[ty.caption1, { color: active ? T.brandText : T.labelSecondary }]} numberOfLines={1}>{label}</Text>
     </Pressable>
   );
 }

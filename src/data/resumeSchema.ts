@@ -2,7 +2,7 @@
 // Required/optional flags and option strings match Talentslab's CandidateForm validation.
 import { SFName } from '../components/SFIcon';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'bool' | 'select' | 'tags';
+export type FieldType = 'text' | 'textarea' | 'number' | 'bool' | 'select' | 'tags' | 'date' | 'countries';
 
 export interface ResumeField {
   key: string;
@@ -11,6 +11,8 @@ export interface ResumeField {
   placeholder?: string;
   options?: string[];
   optional?: boolean;
+  /** Для `select` с 2–5 короткими вариантами: рисуется как сегментный контрол, а не облако чипов. */
+  segmented?: boolean;
 }
 
 export interface ResumeStep {
@@ -32,7 +34,7 @@ export const RESUME_STEPS: ResumeStep[] = [
       { key: 'phone', label: 'Телефон', type: 'text', placeholder: '+7 700 000 00 00' },
       { key: 'gender', label: 'Пол', type: 'select', options: ['Мужской', 'Женский'] },
       { key: 'marital_status', label: 'Семейное положение', type: 'select', options: ['Холост/Не замужем', 'Женат/Замужем', 'Разведен(а)', 'Вдовец/Вдова'] },
-      { key: 'birth_date', label: 'Дата рождения', type: 'text', placeholder: 'ДД.ММ.ГГГГ' },
+      { key: 'birth_date', label: 'Дата рождения', type: 'date', placeholder: 'ДД.ММ.ГГГГ' },
       { key: 'birth_place', label: 'Место рождения', type: 'text' },
       { key: 'current_city', label: 'Текущий город', type: 'text' },
       { key: 'citizenship', label: 'Гражданство', type: 'text' },
@@ -43,11 +45,13 @@ export const RESUME_STEPS: ResumeStep[] = [
   {
     key: 'additional', title: 'Дополнительно', icon: 'heart.fill',
     fields: [
-      { key: 'religion', label: 'Религия', type: 'text' },
+      // Свободный текст, как на сайте. Подсказка показывает честный вариант для
+      // тех, кто не хочет отвечать: пустое поле анкету не пропустит.
+      { key: 'religion', label: 'Религия', type: 'text', placeholder: 'Например: Ислам, Христианство или «Не указываю»' },
       { key: 'is_practicing', label: 'Практикующий(ая)', type: 'bool' },
       { key: 'hobbies', label: 'Хобби', type: 'textarea' },
       { key: 'interests', label: 'Интересы', type: 'textarea' },
-      { key: 'visited_countries', label: 'Посещённые страны', type: 'tags', placeholder: 'Добавить страну' },
+      { key: 'visited_countries', label: 'Посещённые страны', type: 'countries' },
       { key: 'favorite_sports', label: 'Любимые виды спорта', type: 'tags', placeholder: 'Добавить вид спорта' },
       { key: 'books_per_year', label: 'Книг в год', type: 'number' },
       { key: 'educational_hours_weekly', label: 'Часов на обучение в неделю', type: 'number' },
@@ -65,7 +69,8 @@ export const RESUME_STEPS: ResumeStep[] = [
       { key: 'computer_skills', label: 'Компьютерные навыки', type: 'textarea' },
       { key: 'work_experience', label: 'Опыт работы', type: 'textarea', optional: true },
       { key: 'total_experience_years', label: 'Общий стаж (лет)', type: 'number' },
-      { key: 'job_satisfaction', label: 'Удовлетворённость работой (1–5)', type: 'number' },
+      // Шкала 1–5: выбор вместо ввода числа. На сервер уходит та же строка «3».
+      { key: 'job_satisfaction', label: 'Удовлетворённость работой (1–5)', type: 'select', options: ['1', '2', '3', '4', '5'], segmented: true },
       { key: 'desired_position', label: 'Желаемая должность', type: 'text' },
       { key: 'activity_sphere', label: 'Сфера деятельности', type: 'text', optional: true },
       { key: 'awards', label: 'Награды и достижения', type: 'textarea', optional: true },

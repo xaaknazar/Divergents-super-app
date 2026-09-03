@@ -8,13 +8,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 import { SF } from '../../components/SFIcon';
 import { NavHeader, NavRoundButton } from '../../components/NavHeader';
-import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { fetchTrip, Trip, spotsLeft, UNLIMITED_SPOTS } from '../../data/community';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { imgUrl, applyToTrip, joinFailureMessage } from '../../data/api';
 import { useAuth } from '@clerk/clerk-expo';
 import { CommunityStackParams } from '../../navigation/types';
+import { useResumeAccess } from '../../state/useResumeAccess';
+import * as pl from '../../data/plural';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TripDetail'>;
 
@@ -37,9 +39,10 @@ function meetAtLabel(raw: string): string {
 }
 
 export function TripDetailScreen({ route, navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { has, toggle, add, statusOf } = useEnrollment();
+  const { require: requireResume } = useResumeAccess();
   const { getToken, isSignedIn } = useAuth();
 
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -122,6 +125,8 @@ export function TripDetailScreen({ route, navigation }: Props) {
 
   const apply = async () => {
     if (joined || pending || joining) return;
+    // Организатор решает по анкете — без неё заявка для него пустая.
+    if (!requireResume('community')) return;
     setJoining(true);
     try {
       const token = await getToken();
@@ -252,7 +257,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
         </ListSection>
         ) : null}
 
-        <ListSection header={`Идут · ${goingCount} человек`}>
+        <ListSection header={`Идут · ${pl.people(goingCount)}`}>
           {goingCount === 0 ? (
             <View style={{ padding: 16, alignItems: 'center' }}>
               <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Пока никто не записался — будьте первым.')}</Text>

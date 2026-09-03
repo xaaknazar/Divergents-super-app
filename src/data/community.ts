@@ -11,6 +11,7 @@ import { SFName } from '../components/SFIcon';
 import { API_BASE } from './api';
 import { fetchJson, arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 import { TalentProfile, normalizeProfile } from './talentslab';
+import * as pl from './plural';
 
 // ─── Server contracts (GET /api/mobile/{trips,challenges,sport}) ─────────────
 // Zod schemas validate every response at the network boundary and are the single
@@ -127,14 +128,6 @@ function tripDateLabel(raw: string | null | undefined): string {
   return ruShortDate(raw) || String(raw);
 }
 
-// Russian plural: ruPlural(1,'место','места','мест') → 'место'.
-function ruPlural(n: number, one: string, few: string, many: string): string {
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
-  return many;
-}
-
 // Цена офлайн-события — свободный текст. Пустая цена НЕ значит «Бесплатно»:
 // её просто не заполнили, поэтому пишем нейтральное «Цена уточняется».
 export function priceText(raw: string | null | undefined): string {
@@ -155,7 +148,7 @@ export function spotsLeftLabel(spots: number, going: number): string {
   const left = spotsLeft(spots, going);
   if (left === null) return `мест ${UNLIMITED_SPOTS}`;
   if (left === 0) return 'мест нет';
-  return `осталось ${left} ${ruPlural(left, 'место', 'места', 'мест')}`;
+  return `осталось ${pl.spots(left)}`;
 }
 
 function applicationsOf(c: { _count?: { applications?: number | null } | null } | null | undefined): number {
@@ -1063,7 +1056,12 @@ export interface ChallengeApplicant {
   id: string;
   applicantUserId: string;
   userEmail: string;
+  /** Публичное имя — псевдоним. Его и показываем в списке заявок. */
   userName: string;
+  /** ФИО. Только для раскрытой заявки, где капитан уже смотрит анкету. */
+  fullName: string;
+  /** 'site' — заявка подана с сайта: анкеты Talentslab у неё нет, это не сбой. */
+  source: string;
   status: ChallengeAppStatus;
   feedback: string;
   telegram: string | null;
@@ -1096,6 +1094,8 @@ export async function fetchChallengeApplicants(
         applicantUserId: String(a.applicantUserId ?? ''),
         userEmail: a.userEmail ?? '',
         userName: a.userName ?? '',
+        fullName: a.fullName ?? '',
+        source: a.source === 'site' ? 'site' : 'app',
         status: (a.status ?? 'pending') as ChallengeAppStatus,
         feedback: a.feedback ?? '',
         telegram: a.telegram ?? null,

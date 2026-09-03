@@ -27,7 +27,8 @@ export type SFName =
   | 'wifi.slash' | 'arrow.clockwise' | 'tray' | 'moon.fill' | 'sun.max.fill'
   | 'rosette' | 'checkmark.circle' | 'gearshape.fill' | 'paintpalette.fill'
   | 'circle.lefthalf.filled' | 'textformat.size' | 'arrow.counterclockwise'
-  | 'square.and.pencil' | 'info.circle' | 'rectangle.portrait.and.arrow.right';
+  | 'square.and.pencil' | 'info.circle' | 'rectangle.portrait.and.arrow.right'
+  | 'gift.fill' | 'gift';
 
 type Lib = 'ion' | 'mci';
 // name -> [library, icon]
@@ -99,6 +100,7 @@ const MAP: Record<string, [Lib, string]> = {
   'arrow.counterclockwise': ['ion', 'arrow-undo'],
   'square.and.pencil': ['ion', 'create-outline'], 'info.circle': ['ion', 'information-circle-outline'],
   'rectangle.portrait.and.arrow.right': ['ion', 'exit-outline'],
+  'gift.fill': ['ion', 'gift'], 'gift': ['ion', 'gift-outline'],
 };
 
 export interface SFProps {

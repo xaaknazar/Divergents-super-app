@@ -9,8 +9,8 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ty } from '../../components/ui';
-import { EmptyState } from '../../components/StateViews';
+import { Capsule } from '../../components/ui';
+import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import { usePlaces } from '../../state/PlacesContext';
 import { useRole } from '../../state/useRole';
@@ -21,23 +21,27 @@ import { MapStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<MapStackParams, 'AdminPlaces'>;
 
 export function AdminPlacesScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { getToken } = useAuth();
   const { canCreate: canModerate } = useRole();
   const { reloadPlaces } = usePlaces();
   const [items, setItems] = useState<PendingPlace[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // A failed fetch must not masquerade as «Заявок нет».
+  const [error, setError] = useState(false);
 
   // Clerk's getToken is a fresh reference each render — keep it in a ref so
   // `load` stays stable and the effect below runs once (not on every render).
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
   const load = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setError(false);
     try {
       const token = await getTokenRef.current();
       setItems(await fetchPendingPlaces(token));
+    } catch {
+      setError(true);
     } finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -74,6 +78,8 @@ export function AdminPlacesScreen({ navigation }: Props) {
         <EmptyState icon="lock.fill" title={tr('Нет доступа')} subtitle={tr('Модерация меток доступна только администратору.')} />
       ) : loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+      ) : error && items.length === 0 ? (
+        <ErrorState message={tr('Не удалось загрузить заявки. Проверьте подключение.')} onRetry={load} />
       ) : items.length === 0 ? (
         <EmptyState icon="checkmark.seal.fill" title={tr('Заявок нет')} subtitle={tr('Новые предложенные метки появятся здесь на одобрение.')} />
       ) : (
@@ -110,11 +116,13 @@ export function AdminPlacesScreen({ navigation }: Props) {
                   </Text>
 
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-                    <Pressable onPress={() => reject(p)} disabled={busy} style={{ flex: 1, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
-                      <Text style={[ty.headline, { color: '#FF3B30' }]} numberOfLines={1}>{tr('Отклонить')}</Text>
+                    <Pressable onPress={() => reject(p)} disabled={busy} accessibilityRole="button" accessibilityLabel={`${tr('Отклонить')} «${p.name}»`} accessibilityState={{ disabled: busy }}
+                      style={{ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
+                      <Text style={[ty.headline, { color: T.redText }]} numberOfLines={1}>{tr('Отклонить')}</Text>
                     </Pressable>
-                    <Pressable onPress={() => approve(p)} disabled={busy} style={{ flex: 1, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: T.brand }}>
-                      {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{tr('Одобрить')}</Text>}
+                    <Pressable onPress={() => approve(p)} disabled={busy} accessibilityRole="button" accessibilityLabel={`${tr('Одобрить')} «${p.name}»`} accessibilityState={{ disabled: busy, busy }}
+                      style={{ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: T.brand }}>
+                      {busy ? <ActivityIndicator color={T.onBrand} /> : <Text style={[ty.headline, { color: T.onBrand }]} numberOfLines={1}>{tr('Одобрить')}</Text>}
                     </Pressable>
                   </View>
                 </View>

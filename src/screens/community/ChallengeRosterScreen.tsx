@@ -9,19 +9,20 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ty } from '../../components/ui';
+import { Capsule, ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useRole } from '../../state/useRole';
 import { totalFlags, flagsToEliminate, MEDAL_FOR_RANK } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
+import * as pl from '../../data/plural';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeRoster'>;
 
 export function ChallengeRosterScreen({ navigation, route }: Props) {
   const { challengeId } = route.params;
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { userId } = useAuth();
   const { canCreate } = useRole();
   const { challenge, leaderboard } = useChallenge();
@@ -37,7 +38,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
           <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={2}>{tr('Состав команды')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]} numberOfLines={1}>
-            {challenge.teamName ? `«${challenge.teamName}» · ` : ''}{leaderboard.length} {tr('участников')}
+            {challenge.teamName ? `«${challenge.teamName}» · ` : ''}{pl.count(leaderboard.length, 'участник', 'участника', 'участников')}
           </Text>
           {canSeeAnketa ? (
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 6 }]} numberOfLines={2}>

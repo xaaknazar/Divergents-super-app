@@ -1,6 +1,7 @@
 // Live data client for the Divergents LMS website.
 // Talks to the public read-only API added at /api/mobile on divergents-lms.kz.
 import { z } from 'zod';
+import * as WebBrowser from 'expo-web-browser';
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { Course, Lesson } from './courses';
@@ -10,6 +11,7 @@ import { arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 // re-exported so the many `from './api'` importers keep working without a
 // second hardcoded literal.
 import { API_BASE } from '../config';
+import * as pl from './plural';
 export { API_BASE };
 
 // A Lesson that also carries an optional offline-audio URL (Mux audio.m4a).
@@ -35,6 +37,8 @@ const ApiCourseSummarySchema = z.object({
   category: zStrN,
   categoryId: zStrN,
   chaptersCount: zNumN,
+  // Подарен ли курс по стартовой акции — приходит со списочных эндпоинтов.
+  gifted: z.boolean().nullish(),
 }).passthrough();
 
 const ApiChapterSchema = z.object({
@@ -103,14 +107,7 @@ function decor(seed: string) {
   return PALETTE[h % PALETTE.length];
 }
 
-function plural(n: number, one: string, few: string, many: string) {
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return `${n} ${one}`;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return `${n} ${few}`;
-  return `${n} ${many}`;
-}
-
-const lessonsLabel = (n: number) => plural(n, 'урок', 'урока', 'уроков');
+const lessonsLabel = (n: number) => pl.lessons(n);
 
 function mapSummary(c: ApiCourseSummary): Course {
   const id = String(c?.id ?? '');
@@ -126,6 +123,7 @@ function mapSummary(c: ApiCourseSummary): Course {
     chaptersCount: count,
     imageUrl: c.imageUrl,
     price: c.price,
+    gifted: c.gifted === true,
     icon: d.icon,
     tint: d.tint,
     iconColor: d.iconColor,
@@ -160,6 +158,9 @@ function mapDetail(c: ApiCourseDetail): Course {
   const attachments = Array.isArray(safe.attachments)
     ? safe.attachments.filter((a) => a && a.id != null && a.url != null)
     : [];
+  // `gifted` здесь намеренно НЕ выставляется: детальные эндпоинты его не отдают,
+  // а деталь накладывается поверх карточки из каталога (CourseContext.loadDetail).
+  // Записав сюда false, мы бы стирали признак подарка при открытии курса.
   return {
     id,
     title: safe.title || 'Без названия',
@@ -568,6 +569,47 @@ export interface MyRole {
   email?: string | null;
   perms?: string[];
   features?: Record<string, boolean>;
+  gift?: GiftInfo;
+}
+
+// Стартовая акция «подарок ранним участникам». `active` — акция идёт прямо
+// сейчас, `eligible` — этот аккаунт под неё подходит. Подарок бессрочный:
+// `until` ограничивает, КОГО дарим, а не как долго курс остаётся открытым.
+export interface GiftInfo {
+  active: boolean;
+  /** `YYYY-MM-DD` или null, если дата не задана. */
+  until: string | null;
+  eligible: boolean;
+  courseIds: string[];
+}
+
+export const NO_GIFT: GiftInfo = { active: false, until: null, eligible: false, courseIds: [] };
+
+/** Ответ старого сервера (или частичный) приводим к безопасному виду. */
+export function normalizeGift(raw: unknown): GiftInfo {
+  if (!raw || typeof raw !== 'object') return NO_GIFT;
+  const g = raw as Partial<Record<keyof GiftInfo, unknown>>;
+  return {
+    active: g.active === true,
+    until: typeof g.until === 'string' && g.until ? g.until : null,
+    eligible: g.eligible === true,
+    courseIds: Array.isArray(g.courseIds) ? g.courseIds.filter((x) => x != null).map(String) : [],
+  };
+}
+
+/** «1 курс» / «2 курса» / «5 курсов». */
+export const coursesWord = (n: number) => pl.courses(n);
+
+const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+
+/** `2026-09-30` → «30 сентября». Нераспознанная дата даёт пустую строку. */
+export function formatGiftDate(ymd: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((ymd ?? '').trim());
+  if (!m) return '';
+  const month = Number(m[2]), day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return '';
+  return `${day} ${MONTHS_GEN[month - 1]}`;
 }
 
 export async function fetchMyRole(token: string | null): Promise<MyRole> {
@@ -833,6 +875,39 @@ export async function getSignInTicket(token: string | null): Promise<string | nu
 export function webAuthedUrl(ticket: string | null, path: string): string {
   if (ticket) return `${API_BASE}/sign-in?__clerk_ticket=${encodeURIComponent(ticket)}&redirect_url=${encodeURIComponent(path)}`;
   return `${API_BASE}${path}`;
+}
+
+// ───────── Покупка курса (TipTopPay через страницу сайта) ─────────
+// Родной iOS SDK TipTopPay потребовал бы нативного модуля, поэтому оплату
+// открываем во встроенном браузере на странице сайта /pay/:courseId — том же
+// виджете, что и на divergents-lms.kz. Страница возвращает результат deep
+// link'ом divergents://pay?status=…, по нему браузер и закрывается.
+export type PaymentStatus = 'success' | 'fail' | 'cancel';
+
+const PAY_RETURN_URL = 'divergents://pay';
+
+/** Статус из вернувшегося deep link'а. Всё непонятное считаем отменой. */
+export function parsePaymentReturnUrl(url: string | null | undefined): PaymentStatus {
+  const m = /[?&]status=([^&#]*)/.exec(url ?? '');
+  const status = m ? decodeURIComponent(m[1]) : '';
+  return status === 'success' || status === 'fail' ? status : 'cancel';
+}
+
+export async function startCoursePayment(
+  courseId: string, token: string | null,
+): Promise<{ status: PaymentStatus }> {
+  // Билет открывает страницу оплаты уже авторизованной: /pay не публичный, а
+  // сессии сайта во встроенном браузере у пользователя нет.
+  const ticket = await getSignInTicket(token);
+  const url = webAuthedUrl(ticket, `/pay/${encodeURIComponent(courseId)}`);
+  try {
+    const result = await WebBrowser.openAuthSessionAsync(url, PAY_RETURN_URL);
+    if (result.type === 'success') return { status: parsePaymentReturnUrl(result.url) };
+    // 'cancel' / 'dismiss' — пользователь закрыл браузер сам.
+    return { status: 'cancel' };
+  } catch {
+    return { status: 'cancel' };
+  }
 }
 
 // ───────── Sport (server) ─────────

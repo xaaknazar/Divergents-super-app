@@ -2,15 +2,17 @@ import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeContext';
-import { BackNav } from '../../components/headers';
+import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Chip, ty } from '../../components/ui';
+import { Chip } from '../../components/ui';
 import { MarkdownText } from '../../components/MarkdownText';
 import { askAi, AiMessage, AiUnavailableError } from '../../data/ai';
 import { profileSummary } from '../../data/talentslab';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { LMSStackParams } from '../../navigation/types';
+import { useAiThread, getAiThread } from '../../state/aiChat';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'BookAI'>;
 type Msg = { id: string; role: 'user' | 'bot'; text: string };
@@ -30,10 +32,13 @@ const BOOK_FOCUS =
   'Вопрос пользователя: ';
 
 export function BookAIScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
+  const insets = useSafeAreaInsets();
   const { getToken, isSignedIn } = useAuth();
   const { profile } = useTalentProfile();
-  const [msgs, setMsgs] = useState<Msg[]>([]);
+  // Та же история, что у общего ассистента, но своей веткой: советник по книгам
+  // — отдельный разговор, и терять его при выходе с экрана незачем.
+  const { messages: msgs, setMessages: setMsgs } = useAiThread('books');
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -48,7 +53,7 @@ export function BookAIScreen({ navigation }: Props) {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     try {
       const token = isSignedIn ? await getToken() : null;
-      const history: AiMessage[] = msgs.map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
+      const history: AiMessage[] = getAiThread('books').map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       const turns: AiMessage[] = [...history, { role: 'user', content: BOOK_FOCUS + q }];
       const { answer } = await askAi(turns, token, { profileContext: profileSummary(profile) });
       const full = (answer && answer.trim()) ? answer : 'Не удалось получить ответ. Попробуйте переформулировать.';
@@ -68,8 +73,10 @@ export function BookAIScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Книги" onBack={() => navigation.goBack()} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={84}>
+      {/* Title lives in the header, so it stays visible once the intro card
+          (which carried the only title before) scrolls away after the first message. */}
+      <NavHeader title="Книжный советник" backLabel="Книги" onBack={() => navigation.goBack()} />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 64}>
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
           {msgs.length === 0 ? (
             <View style={{ alignItems: 'center', paddingTop: 28, paddingHorizontal: 12 }}>
@@ -110,9 +117,9 @@ export function BookAIScreen({ navigation }: Props) {
           </ScrollView>
         ) : null}
 
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 28, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
           <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
-            <TextInput value={text} onChangeText={setText} multiline placeholder="Спросить про книги…" placeholderTextColor={T.labelTertiary} style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
+            <TextInput value={text} onChangeText={setText} multiline placeholder="Спросить про книги…" placeholderTextColor={T.labelTertiary} accessibilityLabel="Спросить про книги" style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Отправить сообщение" accessibilityState={{ disabled: busy || !text.trim() }} onPress={() => send()} disabled={busy || !text.trim()} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: text.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="arrow.up" size={18} color={text.trim() ? '#fff' : T.labelTertiary} />

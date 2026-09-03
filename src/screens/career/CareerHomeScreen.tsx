@@ -5,24 +5,25 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { Screen } from '../../components/Screen';
-import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { NavBarLarge } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ty } from '../../components/ui';
+import { Capsule } from '../../components/ui';
 import { useNotifications } from '../../state/NotificationsContext';
 import { CareerStackParams } from '../../navigation/types';
 import { navigationRef } from '../../navigation/ref';
+import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'CareerHome'>;
 
 export function CareerHomeScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
 
   return (
     <Screen largeTitle={t('tab_career')}>
       <NavBarLarge title={t('tab_career')} trailing={(
-        <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={48} label={tr('Профиль')} onPress={() => (navigationRef as any).navigate('Tabs', { screen: 'ProfileTab' })} />
+        <ProfileAvatarButton onPress={() => (navigationRef as any).navigate('Tabs', { screen: 'ProfileTab' })} />
       )} />
 
       <View style={{ alignItems: 'center', paddingHorizontal: 36, paddingTop: 48 }}>

@@ -20,21 +20,22 @@ const config: ExpoConfig = {
     bundleIdentifier: 'kz.divergents.app',
     // Pinned so a LOCAL build (eas build --local) produces an explicit number
     // instead of asking the EAS server. Bump this for every new TestFlight upload.
-    buildNumber: '51',
+    buildNumber: '59',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       UIBackgroundModes: ['audio'],
       NSLocationWhenInUseUsageDescription: 'Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.',
       NSLocationAlwaysAndWhenInUseUsageDescription: 'Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.',
-      NSPhotoLibraryUsageDescription: 'Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества.',
+      NSPhotoLibraryUsageDescription: 'Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества, добавлять фото в анкету и загружать отчёт Gallup.',
       NSPhotoLibraryAddUsageDescription: 'Divergents сохраняет фото в вашу медиатеку при работе с местами на карте сообщества.',
-      NSCameraUsageDescription: 'Divergents использует камеру, чтобы делать снимки для мест на карте сообщества.',
+      NSCameraUsageDescription: 'Divergents использует камеру, чтобы делать снимки для мест на карте сообщества, фото профиля и снимка отчёта Gallup.',
       NSMicrophoneUsageDescription: 'Divergents использует микрофон для записи голосовых постов в каналах.',
       CFBundleDisplayName: 'Divergents',
     },
   },
   android: {
     package: 'kz.divergents.app',
+    versionCode: 1,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundImage: './assets/icon-bg.png',
@@ -47,8 +48,8 @@ const config: ExpoConfig = {
   plugins: [
     ['expo-location', { locationWhenInUsePermission: 'Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.' }],
     ['expo-image-picker', {
-      photosPermission: 'Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества.',
-      cameraPermission: 'Divergents использует камеру, чтобы делать снимки для мест на карте сообщества.',
+      photosPermission: 'Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества, добавлять фото в анкету и загружать отчёт Gallup.',
+      cameraPermission: 'Divergents использует камеру, чтобы делать снимки для мест на карте сообщества, фото профиля и снимка отчёта Gallup.',
     }],
     'expo-localization',
     '@maplibre/maplibre-react-native',

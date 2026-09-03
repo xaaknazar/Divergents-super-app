@@ -8,7 +8,7 @@ import {
   View, Text, ScrollView, Animated, LayoutChangeEvent,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { ty, radius, space } from '../theme/tokens';
+import { radius, space } from '../theme/tokens';
 
 // ─── Type config ───────────────────────────────────────────────────
 // Exported so screens can reuse the same colours / emoji / labels. `match`
@@ -58,7 +58,7 @@ const GRID_VALUES = [0, 25, 50, 75, 100];
 export function GardnerChart({
   data, compact,
 }: { data: { category: string; score: number }[]; compact?: boolean }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const [plotW, setPlotW] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
 

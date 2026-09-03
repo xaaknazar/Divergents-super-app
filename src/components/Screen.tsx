@@ -5,7 +5,6 @@ import { View, ScrollView, Animated, RefreshControl, StyleProp, ViewStyle, Text 
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
-import { ty } from '../theme/tokens';
 import { Aurora } from './Aurora';
 
 export function Screen({
@@ -22,7 +21,7 @@ export function Screen({
   largeTitle?: string;
   onRefresh?: () => void | Promise<void>;
 }) {
-  const { T, isDark, reduceTransparency } = useTheme();
+  const { T, isDark, reduceTransparency, ty } = useTheme();
   const _bg = bg ?? T.groupedBg;
   const insets = useSafeAreaInsets();
   const top = topInset ? insets.top : 0;

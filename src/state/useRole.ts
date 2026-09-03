@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
-import { fetchMyRole } from '../data/api';
+import { fetchMyRole, normalizeGift, GiftInfo, NO_GIFT } from '../data/api';
 
-// Показ разделов задаётся в админ-панели сайта. По умолчанию включено всё:
+// Показ разделов задаётся в админ-панели сайта. Разделы по умолчанию включены:
 // пока ответ не пришёл (или сервер старой версии), приложение выглядит как
 // раньше, а не мигает пустыми вкладками.
-export const ALL_FEATURES_ON: Record<string, boolean> = {
+//
+// `purchases` — исключение и по умолчанию ВЫКЛЮЧЕН: оплата курса мимо встроенных
+// покупок Apple — повод для отказа в App Store. Молчание сервера (старая версия,
+// неудачный запрос, гость) должно означать «покупок нет», а не наоборот.
+export const DEFAULT_FEATURES: Record<string, boolean> = {
   books: true, map: true, ai: true, sport: true, trips: true, channels: true, career: true,
+  purchases: false,
 };
 
 export function useRole() {
@@ -15,13 +20,16 @@ export function useRole() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [perms, setPerms] = useState<string[]>([]);
-  const [features, setFeatures] = useState<Record<string, boolean>>(ALL_FEATURES_ON);
+  const [features, setFeatures] = useState<Record<string, boolean>>(DEFAULT_FEATURES);
+  // Стартовая акция. По умолчанию выключена: пока ответа нет (или сервер старой
+  // версии), ничего не обещаем — предложение лучше не показать, чем показать зря.
+  const [gift, setGift] = useState<GiftInfo>(NO_GIFT);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       if (!isSignedIn) {
-        setCanCreate(false); setIsAdmin(false); setEmail(null); setPerms([]);
+        setCanCreate(false); setIsAdmin(false); setEmail(null); setPerms([]); setGift(NO_GIFT);
         return;
       }
       // Retry on transient network failure so admin controls don't vanish on a blip.
@@ -36,8 +44,9 @@ export function useRole() {
             setPerms(Array.isArray(r.perms) ? r.perms : []);
             // Флаги приходят целиком; отсутствующий ответ не должен ничего гасить.
             if (r.features && typeof r.features === 'object') {
-              setFeatures({ ...ALL_FEATURES_ON, ...r.features });
+              setFeatures({ ...DEFAULT_FEATURES, ...r.features });
             }
+            setGift(normalizeGift(r.gift));
           }
           return;
         } catch {
@@ -53,5 +62,5 @@ export function useRole() {
   /** Включён ли раздел в приложении. */
   const feature = (key: string) => features[key] !== false;
 
-  return { canCreate, isAdmin, email, perms, features, has, feature };
+  return { canCreate, isAdmin, email, perms, features, gift, has, feature };
 }

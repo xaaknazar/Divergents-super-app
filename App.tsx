@@ -22,7 +22,6 @@ import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { AppFlowProvider } from './src/state/AppFlowContext';
-import { ResumeGateProvider } from './src/state/ResumeGateContext';
 import { ModerationProvider } from './src/state/ModerationContext';
 import { LanguageProvider } from './src/state/LanguageContext';
 import { PageIntroProvider } from './src/state/PageIntroContext';
@@ -35,8 +34,6 @@ const linking = {
     screens: {
       Onboarding: 'onboarding',
       Auth: 'auth',
-      Register: 'register',
-      ResumeGate: 'resume-gate',
       Notifications: 'notifications',
       Tabs: {
         screens: {
@@ -129,9 +126,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
                 <ChannelProvider>
                   <NotificationsProvider>
                     <ModerationProvider>
-                      <ResumeGateProvider>
-                        {children}
-                      </ResumeGateProvider>
+                      {children}
                     </ModerationProvider>
                   </NotificationsProvider>
                 </ChannelProvider>

@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { PrimaryButton, ty } from '../../components/ui';
+import { PrimaryButton } from '../../components/ui';
 import { useCareer } from '../../state/CareerContext';
 import { createVacancy } from '../../data/career';
 import { uploadFile } from '../../data/api';
@@ -19,7 +19,7 @@ const FORMATS = ['Гибрид', 'Офис', 'Удалёнка'];
 const EXP_OPTS = ['Опыт 1-3 года', 'Опыт 3-6 лет', 'Без опыта'];
 
 export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () => void } }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
   const { reloadJobs } = useCareer();
@@ -216,7 +216,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
 // identity is stable — otherwise every keystroke would remount each wrapped
 // TextInput, dismissing the keyboard after a single character.
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 6, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{label}</Text>
@@ -227,6 +227,6 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 function Sec({ title }: { title: string }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return <Text style={[ty.headline, { color: T.label, marginTop: 8, marginBottom: 10 }]}>{title}</Text>;
 }

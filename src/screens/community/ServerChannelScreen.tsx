@@ -9,7 +9,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { ty, Segmented } from '../../components/ui';
+import { Segmented } from '../../components/ui';
 import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
 import { useModeration } from '../../state/ModerationContext';
@@ -40,7 +40,7 @@ function waveHeights(seed: string, n = 22): number[] {
 }
 
 export function ServerChannelScreen({ route, navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
   const { email } = useRole();
@@ -437,7 +437,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
 }
 
 function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose: () => void; onDone: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
   const [type, setType] = useState<'article' | 'audio'>('article');
@@ -523,7 +523,7 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
 }
 
 function ManageChannel({ channel, onClose, onSaved, onDeleted }: { channel: ServerChannel; onClose: () => void; onSaved: () => void; onDeleted: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
   const [name, setName] = useState(channel.name);

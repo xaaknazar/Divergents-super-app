@@ -6,19 +6,29 @@ import { useLang, tr } from '../../state/LanguageContext';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { ProgressBar, ty } from '../../components/ui';
+import { ProgressBar } from '../../components/ui';
 import { useAchievements, EarnedBadge } from '../../data/achievements';
 import { ProfileStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<ProfileStackParams, 'Achievements'>;
 
 export function BadgeTile({ b }: { b: EarnedBadge }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   useLang();
   const circle = b.earned ? b.color : T.fillTertiary;
   const iconColor = b.earned ? '#fff' : T.labelTertiary;
+  const pct = Math.round(Math.min(1, Math.max(0, b.progress)) * 100);
+  // One accessible element: name, status, and progress in a single announcement
+  // instead of four separate focus stops per tile.
+  const a11y = [
+    b.title,
+    b.earned ? tr('получено') : tr('заблокировано'),
+    !b.earned && b.goal > 1 ? `${tr('прогресс')} ${pct}%, ${Math.min(b.value, b.goal)} ${tr('из')} ${b.goal}` : null,
+    b.desc,
+  ].filter(Boolean).join('. ');
   return (
-    <View style={{ width: '47.6%', backgroundColor: T.cardBg, borderRadius: 16, padding: 14, opacity: b.earned ? 1 : 0.92 }}>
+    <View accessible accessibilityLabel={a11y}
+      style={{ width: '48%', backgroundColor: T.cardBg, borderRadius: 16, padding: 14, opacity: b.earned ? 1 : 0.92 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: circle, alignItems: 'center', justifyContent: 'center' }}>
           <SF name={b.icon} size={22} color={iconColor} />
@@ -39,7 +49,7 @@ export function BadgeTile({ b }: { b: EarnedBadge }) {
 }
 
 export function AchievementsScreen({ navigation }: Props) {
-  const { T, isDark } = useTheme();
+  const { T, isDark, ty } = useTheme();
   const { lang } = useLang();
   const { badges, earned, total } = useAchievements();
   const pct = total ? earned / total : 0;
@@ -64,7 +74,8 @@ export function AchievementsScreen({ navigation }: Props) {
         <ProgressBar value={pct} height={8} />
       </View>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16, justifyContent: 'space-between' }}>
+      {/* 2 × 48% tiles; the remaining 4% is the column gutter, rows use rowGap. */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 12, paddingHorizontal: 16, justifyContent: 'space-between' }}>
         {badges.map((b) => <BadgeTile key={b.id} b={b} />)}
       </View>
       <View style={{ height: 30 }} />

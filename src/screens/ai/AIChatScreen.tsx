@@ -1,12 +1,12 @@
 import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ty } from '../../components/ui';
+import { Capsule } from '../../components/ui';
 import { PageIntro } from '../../components/PageIntro';
 import { EmptyState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
@@ -19,24 +19,24 @@ import { askCourseAI } from '../../data/api';
 import { askAi, AiMessage, AiUnavailableError } from '../../data/ai';
 import { profileSummary } from '../../data/talentslab';
 import { useTalentProfile } from '../../state/useTalentProfile';
-import { loadJSON, saveJSON } from '../../state/persist';
 import { AIStackParams } from '../../navigation/types';
+import * as pl from '../../data/plural';
+import { useAiThread, setAiThread, getAiThread, AiChatMsg } from '../../state/aiChat';
+import { minTouch } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<AIStackParams, 'AIChat'>;
 // `err` marks a bubble the APP produced locally (network/server failure), not
 // something the assistant said. Those must never be replayed as assistant turns.
-type Msg = { id: string; role: 'user' | 'bot'; text: string; err?: boolean };
+type Msg = AiChatMsg;
 
 const GENERAL = 'general';
-const HISTORY_KEY = 'ai.history.v1';
-const MAX_PERSIST = 24; // messages kept per conversation when persisting
 const QUICK_GENERAL = ['Какой курс мне подойдёт?', 'Объясни мой психотип', 'С чего начать развитие?'];
 const QUICK_COURSE = ['О чём этот курс?', 'Краткое содержание', 'Что в уроке 1?'];
 let counter = 0;
 const uid = () => `${Date.now()}_${counter++}`;
 
 export function AIChatScreen({}: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { isSignedIn, getToken } = useAuth();
@@ -44,53 +44,21 @@ export function AIChatScreen({}: Props) {
   const { courses } = useCourses();
   const { profile } = useTalentProfile();
   const [mode] = useState<string>(GENERAL); // always general — one assistant that knows everything
-  const [byMode, setByMode] = useState<Record<string, Msg[]>>({});
+  // История живёт вне экрана: вкладки отсоединяются, и состояние экрана вместе
+  // с несохранёнными сообщениями пропадало.
+  const { messages, setMessages, clear: clearThread } = useAiThread(mode);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [kbShown, setKbShown] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const loadedRef = useRef(false);
   const lastQueryRef = useRef('');
   // Active stream timer + mounted flag so the simulated typewriter stops (and
   // never calls setState) once the screen is unmounted.
   const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; if (streamTimerRef.current) clearTimeout(streamTimerRef.current); }, []);
-
-  // Restore the persisted conversation history once, on mount.
-  useEffect(() => {
-    let alive = true;
-    loadJSON<Record<string, Msg[]>>(HISTORY_KEY, {}).then((saved) => {
-      if (alive && saved && typeof saved === 'object') {
-        // Drop any half-streamed empty bot bubbles from a previous session.
-        const clean: Record<string, Msg[]> = {};
-        for (const k of Object.keys(saved)) {
-          const arr = Array.isArray(saved[k]) ? saved[k].filter((m) => m && m.text) : [];
-          if (arr.length) clean[k] = arr;
-        }
-        setByMode(clean);
-      }
-      loadedRef.current = true;
-    });
-    return () => { alive = false; };
-  }, []);
-
-  // Persist (debounced) whenever history changes, after the initial load.
-  // Debouncing avoids hammering SecureStore during the simulated stream.
-  useEffect(() => {
-    if (!loadedRef.current) return;
-    const id = setTimeout(() => {
-      const trimmed: Record<string, Msg[]> = {};
-      for (const k of Object.keys(byMode)) {
-        const arr = byMode[k];
-        if (Array.isArray(arr) && arr.length) trimmed[k] = arr.slice(-MAX_PERSIST).filter((m) => m.text);
-      }
-      saveJSON(HISTORY_KEY, trimmed);
-    }, 700);
-    return () => clearTimeout(id);
-  }, [byMode]);
 
   // Track keyboard visibility so the input bar can sit right above the keyboard
   // (no tab-bar gap) while typing, and clear the tab bar when it's hidden.
@@ -107,7 +75,6 @@ export function AIChatScreen({}: Props) {
 
   const activeCourse = my.courses.find((c) => c.id === mode);
   const isGeneral = mode === GENERAL;
-  const messages = useMemo(() => byMode[mode] ?? [], [byMode, mode]);
   const quick = isGeneral ? QUICK_GENERAL : QUICK_COURSE;
   // Full course catalog (titles + categories + short descriptions) so the
   // general assistant knows every Divergents course by default.
@@ -115,7 +82,7 @@ export function AIChatScreen({}: Props) {
     if (!courses.length) return '';
     const lines = courses.slice(0, 120).map((c) => {
       const desc = (c.description || '').replace(/\s+/g, ' ').trim().slice(0, 220);
-      return `- "${c.title}"${c.category ? ` [${c.category}]` : ''}${c.chaptersCount ? ` · ${c.chaptersCount} уроков` : ''}${desc ? `: ${desc}` : ''}`;
+      return `- "${c.title}"${c.category ? ` [${c.category}]` : ''}${c.chaptersCount ? ` · ${pl.lessons(c.chaptersCount)}` : ''}${desc ? `: ${desc}` : ''}`;
     });
     return 'Каталог курсов Divergents (полный, с кратким описанием — отвечай о любом из них):\n' + lines.join('\n');
   }, [courses]);
@@ -126,7 +93,7 @@ export function AIChatScreen({}: Props) {
     const tick = () => {
       if (!mountedRef.current) return;
       i = Math.min(full.length, i + 4);
-      setByMode((p) => ({ ...p, [m]: (p[m] ?? []).map((msg) => (msg.id === id ? { ...msg, text: full.slice(0, i) } : msg)) }));
+      setAiThread(m, (prev) => prev.map((msg) => (msg.id === id ? { ...msg, text: full.slice(0, i) } : msg)));
       if (i % 80 === 0) scrollRef.current?.scrollToEnd({ animated: true });
       if (i < full.length) streamTimerRef.current = setTimeout(tick, 16);
       else { setStreaming(false); scrollRef.current?.scrollToEnd({ animated: true }); }
@@ -139,7 +106,7 @@ export function AIChatScreen({}: Props) {
     if (!q || locked) return;
     setUnavailable(false);
     const userMsg: Msg = { id: uid(), role: 'user', text: q };
-    setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), userMsg] }));
+    setMessages((prev) => [...prev, userMsg]);
     setText('');
     setBusy(true);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
@@ -148,7 +115,7 @@ export function AIChatScreen({}: Props) {
       // Skip our own error bubbles: resending «⚠️ Не удалось получить ответ…»
       // as an assistant turn taught the model it had said that, and skewed the
       // next reply.
-      const history: AiMessage[] = (byMode[mode] ?? [])
+      const history: AiMessage[] = getAiThread(mode)
         .filter((m) => !m.err && m.text.trim())
         .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       const turns: AiMessage[] = [...history, { role: 'user', content: q }];
@@ -162,14 +129,14 @@ export function AIChatScreen({}: Props) {
       const failed = !(answer && answer.trim());
       const full = failed ? tr('Не удалось получить ответ. Попробуйте переформулировать вопрос.') : answer;
       const botId = uid();
-      setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), { id: botId, role: 'bot', text: '', err: failed }] }));
+      setMessages((prev) => [...prev, { id: botId, role: 'bot', text: '', err: failed }]);
       streamInto(mode, botId, full);
     } catch (e: unknown) {
       if (e instanceof AiUnavailableError) {
         // Roll back the optimistic user message and show the graceful
         // "coming soon" state; stash the query so Retry can resend it.
         lastQueryRef.current = q;
-        setByMode((p) => ({ ...p, [mode]: (p[mode] ?? []).filter((m) => m.id !== userMsg.id) }));
+        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
         setUnavailable(true);
         return;
       }
@@ -179,7 +146,7 @@ export function AIChatScreen({}: Props) {
       const raw = e instanceof Error && typeof e.message === 'string' ? e.message : '';
       const msg = /[а-яА-ЯёЁ]/.test(raw) ? raw : tr('Не удалось получить ответ. Проверьте подключение и попробуйте снова.');
       const botMsg: Msg = { id: uid(), role: 'bot', text: `⚠️ ${msg}`, err: true };
-      setByMode((p) => ({ ...p, [mode]: [...(p[mode] ?? []), botMsg] }));
+      setMessages((prev) => [...prev, botMsg]);
     } finally {
       setBusy(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
@@ -209,6 +176,25 @@ export function AIChatScreen({}: Props) {
                 : `${tr('Знает материалы курса')} «${activeCourse?.title ?? ''}»`}
             </Text>
           </View>
+          {/* Переписка теперь сохраняется между запусками — значит, нужен и
+              честный способ начать заново. */}
+          {messages.length > 0 ? (
+            <Pressable
+              onPress={() => Alert.alert(
+                tr('Начать новый чат?'),
+                tr('Переписка будет удалена с этого устройства.'),
+                [
+                  { text: tr('Отмена'), style: 'cancel' },
+                  { text: tr('Начать заново'), style: 'destructive', onPress: () => { clearThread(); setUnavailable(false); } },
+                ],
+              )}
+              accessibilityRole="button"
+              accessibilityLabel={tr('Новый чат')}
+              style={{ minWidth: minTouch, minHeight: minTouch, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <SF name="square.and.pencil" size={19} color={T.brand} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 

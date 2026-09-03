@@ -8,10 +8,11 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, PrimaryButton, ty } from '../../components/ui';
+import { Capsule, ListSection, PrimaryButton } from '../../components/ui';
 import { ListSkeleton, EmptyState } from '../../components/StateViews';
 import { Job, fetchVacancy, formatSalary, fetchMyVacancyApplications, MyApplication } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
+import { useResumeAccess } from '../../state/useResumeAccess';
 import { useRole } from '../../state/useRole';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { talentMatch } from '../../data/talentslab';
@@ -20,10 +21,11 @@ import { CareerStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<CareerStackParams, 'VacancyDetail'>;
 
 export function VacancyDetailScreen({ route, navigation }: Props) {
-  const { T, isDark } = useTheme();
+  const { T, isDark, ty } = useTheme();
   useLang();
   const { jobId } = route.params;
   const { getJob, jobsLoading, hydrated, isApplied, isSaved, apply, toggleSave } = useCareer();
+  const { require: requireResume } = useResumeAccess();
   const { profile, live } = useTalentProfile();
 
   const fromList = getJob(jobId);
@@ -96,6 +98,9 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
   const applied = isApplied(job.id) || myApp !== null;
   const submitApplication = async () => {
     if (applied || applying) return;
+    // Работодатель смотрит опыт, оценки и тесты — отклик без них он всё равно
+    // отклонит, а человек не поймёт почему.
+    if (!requireResume('career')) return;
     setApplying(true);
     const ok = await apply(job.id);
     setApplying(false);

@@ -1,7 +1,6 @@
 // Unified loading / empty / error states — theme-aware.
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleProp, ViewStyle, DimensionValue } from 'react-native';
-import { ty } from '../theme/tokens';
+import { View, Text, Animated, StyleProp, ViewStyle, DimensionValue, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useThemedShimmer } from './_shimmer';
 import { SF, SFName } from './SFIcon';
@@ -11,7 +10,7 @@ import { PrimaryButton } from './ui';
 export function Skeleton({
   w = '100%', h = 14, radius = 8, style,
 }: { w?: DimensionValue; h?: number; radius?: number; style?: StyleProp<ViewStyle> }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const opacity = useThemedShimmer();
   return (
     <Animated.View style={[{ width: w, height: h, borderRadius: radius, backgroundColor: T.fillSecondary, opacity }, style]} />
@@ -20,7 +19,7 @@ export function Skeleton({
 
 // One course-card placeholder
 function CardSkeleton({ width }: { width: number }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View style={{ width, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
       <Skeleton w="100%" h={110} radius={0} />
@@ -35,7 +34,10 @@ function CardSkeleton({ width }: { width: number }) {
 
 // 2-column grid of card skeletons
 export function CourseGridSkeleton({ count = 4 }: { count?: number }) {
-  const cardW = 168;
+  // Two columns that fit the actual screen width (a fixed 168 overflowed on
+  // narrow phones and left a gap on wide ones).
+  const { width } = useWindowDimensions();
+  const cardW = Math.floor((width - 16 * 2 - 14) / 2);
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, paddingHorizontal: 16, justifyContent: 'space-between' }}>
       {Array.from({ length: count }).map((_, i) => <CardSkeleton key={i} width={cardW} />)}
@@ -45,7 +47,7 @@ export function CourseGridSkeleton({ count = 4 }: { count?: number }) {
 
 // Horizontal list skeleton (rows)
 export function ListSkeleton({ rows = 4 }: { rows?: number }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <View style={{ backgroundColor: T.cardBg, borderRadius: 12, marginHorizontal: 16, overflow: 'hidden' }}>
       {Array.from({ length: rows }).map((_, i) => (
@@ -89,7 +91,7 @@ function GlyphBadge({ icon, tint, fg }: { icon: SFName | string; tint: string; f
 export function EmptyState({
   icon = 'tray', title, subtitle, actionLabel, onAction,
 }: { icon?: SFName | string; title: string; subtitle?: string; actionLabel?: string; onAction?: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const anim = useEntrance();
   return (
     <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 40, gap: 10 }, anim]}>
@@ -107,7 +109,7 @@ export function EmptyState({
 export function ErrorState({
   message = 'Не удалось загрузить данные. Проверьте подключение к интернету.', onRetry,
 }: { message?: string; onRetry?: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const anim = useEntrance();
   return (
     <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 40, gap: 10 }, anim]}>

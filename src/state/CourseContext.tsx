@@ -23,6 +23,10 @@ interface CourseState {
   getCourse: (id: string) => Course | undefined;
   loadDetail: (id: string, token?: string | null) => Promise<void>;
   detailLoading: Record<string, boolean>;
+  // True when the last detail fetch for a course failed AND nothing is cached
+  // for it (no lessons) — the screens then show a network error with retry
+  // instead of pretending the programme is «в подготовке».
+  detailError: Record<string, boolean>;
   // Merge server-side progress (0..100) for owned courses into the catalog so
   // progress() / the detail screen reflect what was completed on the website.
   mergeServerProgress: (list: { id: string; serverProgress?: number }[]) => void;
@@ -66,6 +70,7 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Record<string, string[]>>({});
   const [detailLoading, setDetailLoading] = useState<Record<string, boolean>>({});
+  const [detailError, setDetailError] = useState<Record<string, boolean>>({});
   const [hydrated, setHydrated] = useState(false);
   // Mirror of `courses` so reload() can tell an initial load (show skeleton,
   // clear on failure) from a pull-to-refresh (keep content, keep spinner) without
@@ -108,6 +113,7 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
 
   const loadDetail = useCallback(async (id: string, token?: string | null) => {
     setDetailLoading((p) => ({ ...p, [id]: true }));
+    setDetailError((p) => (p[id] ? { ...p, [id]: false } : p));
     try {
       let detail;
       let ownedConfirmed = false;
@@ -141,7 +147,10 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
         });
       }
     } catch {
-      // keep whatever we have (mock courses already include lessons)
+      // Keep whatever we have (mock courses already include lessons). Flag the
+      // failure only when there is nothing to show for this course.
+      const cached = coursesRef.current.find((c) => c.id === id);
+      if (!cached || cached.lessons.length === 0) setDetailError((p) => ({ ...p, [id]: true }));
     } finally {
       setDetailLoading((p) => ({ ...p, [id]: false }));
     }
@@ -218,11 +227,11 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
 
     return {
       courses, source, loading: source === 'loading', error, reload: load,
-      getCourse, loadDetail, detailLoading, mergeServerProgress,
+      getCourse, loadDetail, detailLoading, detailError, mergeServerProgress,
       completed, completeLesson, isCompleted, completedCount, totalLessons,
       progress, currentLessonIndex, lessonStatus,
     };
-  }, [courses, source, error, load, loadDetail, detailLoading, mergeServerProgress, completed, completeLesson]);
+  }, [courses, source, error, load, loadDetail, detailLoading, detailError, mergeServerProgress, completed, completeLesson]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

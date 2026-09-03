@@ -57,12 +57,14 @@ const PAGE_INTROS: Record<PageKey, IntroInfo> = {
   map: {
     icon: 'map.fill',
     title: 'Карта',
-    tagline: 'Места сообщества и точки встреч рядом с вами — даже офлайн.',
+    tagline: 'Места сообщества и точки встреч рядом с вами.',
     points: [
       { icon: 'mappin.and.ellipse', text: 'Полезные места сообщества на карте' },
       { icon: 'location.fill', text: 'Точки встреч поездок и активностей' },
       { icon: 'plus.circle.fill', text: 'Добавляйте свои места' },
-      { icon: 'arrow.down.circle', text: 'Офлайн-карта — работает без интернета' },
+      // Offline packs are disabled (OFFLINE_ENABLED=false in MapHomeScreen) —
+      // promise what the map actually does today.
+      { icon: 'heart.fill', text: 'Избранное, отзывы и маршруты до места' },
     ],
     cta: 'Открыть карту',
   },
@@ -99,13 +101,20 @@ function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: bool
           <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
             {/* Gradient header with a big soft glyph */}
             <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: 28, paddingBottom: 22, paddingHorizontal: 20, alignItems: 'center' }}>
+              {/* Legibility scrim: white copy stays readable on pastel accents (dark theme). */}
+              <LinearGradient
+                pointerEvents="none"
+                colors={['rgba(0,0,0,0.26)', 'rgba(0,0,0,0.06)']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+              />
               <View pointerEvents="none" style={{ position: 'absolute', right: -12, top: -20, opacity: 0.16 }}>
-                <SF name={info.icon} size={132} color="#fff" />
+                <SF name={info.icon} size={132} color={T.onBrand} />
               </View>
               <View style={{ width: 74, height: 74, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-                <SF name={info.icon} size={38} color="#fff" />
+                <SF name={info.icon} size={38} color={T.onBrand} />
               </View>
-              <Text style={[ty.title2, { color: '#fff', marginTop: 14, textAlign: 'center' }]}>{info.title}</Text>
+              <Text accessibilityRole="header" style={[ty.title2, { color: T.onBrand, marginTop: 14, textAlign: 'center' }]}>{info.title}</Text>
             </LinearGradient>
 
             {/* Body: tagline + feature rows + CTA */}

@@ -4,12 +4,12 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
 import { BackNav, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { ty } from '../../components/ui';
-import { ErrorState } from '../../components/StateViews';
+import { ErrorState, ListSkeleton } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
 import { fetchBook, postBookComment, updateBookComment, deleteBookComment, rateBook, setBookShelf, BookDetailResponse, BookComment, ShelfStatus } from '../../data/books';
 import { emitShelfChanged } from '../../state/shelfBus';
@@ -38,7 +38,8 @@ function plurRatings(n: number): string {
 
 export function BookDetailScreen({ route, navigation }: Props) {
   const { bookId } = route.params;
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
+  const insets = useSafeAreaInsets();
   const { getToken, isSignedIn } = useAuth();
   const [data, setData] = useState<BookDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -140,7 +141,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <BackNav back="Книги" onBack={() => navigation.goBack()} />
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
+        <View style={{ paddingTop: 16 }}><ListSkeleton rows={5} /></View>
       </View>
     );
   }
@@ -183,7 +184,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
             <View style={{ gap: 4, marginTop: 8 }}>
               {b.rating ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SF name="star.fill" size={14} color="#FF9500" />
+                  <SF name="star.fill" size={14} color={T.orange} />
                   <Text style={[ty.subheadEm, { color: T.label }]}>{b.rating.toFixed(1)}</Text>
                   <Text style={[ty.footnote, { color: T.labelTertiary, flexShrink: 1 }]} numberOfLines={1}>Оценка Divergents</Text>
                 </View>
@@ -250,7 +251,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
               accessibilityRole="button" accessibilityLabel="Убрать книгу с полки"
               style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' }}>
               <SF name="trash.fill" size={13} color={T.red} />
-              <Text style={[ty.footnoteEm, { color: T.red }]}>Убрать с полки</Text>
+              <Text style={[ty.footnoteEm, { color: T.redText }]}>Убрать с полки</Text>
             </Pressable>
           ) : null}
         </View>
@@ -258,12 +259,19 @@ export function BookDetailScreen({ route, navigation }: Props) {
         {/* My rating */}
         <View style={{ marginHorizontal: 16, marginTop: 12, padding: 14, borderRadius: 16, backgroundColor: T.cardBg }}>
           <Text style={[ty.caption2Em, { color: T.labelTertiary, marginBottom: 10, letterSpacing: 0.4 }]}>МОЯ ОЦЕНКА</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <Pressable key={n} onPress={() => onRate(n)} hitSlop={6}>
-                <SF name={(data.myRating ?? 0) >= n ? 'star.fill' : 'star'} size={30} color={(data.myRating ?? 0) >= n ? '#FF9500' : T.labelTertiary} />
-              </Pressable>
-            ))}
+          {/* Each star is its own 44×44 target with no hitSlop, so neighbouring
+              targets never overlap and VoiceOver reads «3 из 5». */}
+          <View style={{ flexDirection: 'row', gap: 4, marginLeft: -7 }}>
+            {[1, 2, 3, 4, 5].map((n) => {
+              const on = (data.myRating ?? 0) >= n;
+              return (
+                <Pressable key={n} onPress={() => onRate(n)}
+                  accessibilityRole="button" accessibilityLabel={`${n} из 5`} accessibilityState={{ selected: on }}
+                  style={({ pressed }) => ({ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}>
+                  <SF name={on ? 'star.fill' : 'star'} size={30} color={on ? T.orange : T.labelTertiary} />
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
@@ -322,17 +330,19 @@ export function BookDetailScreen({ route, navigation }: Props) {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 8 }}>
                 {c.likes ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <SF name="heart.fill" size={12} color="#FF3B30" /><Text style={[ty.caption2, { color: T.labelTertiary }]}>{c.likes}</Text>
+                    <SF name="heart.fill" size={12} color={T.red} /><Text style={[ty.caption2, { color: T.labelTertiary }]}>{c.likes}</Text>
                   </View>
                 ) : null}
                 {/* Own comment/review: edit or delete it. */}
                 {c.mine ? (
                   <>
-                    <Pressable onPress={() => startEdit(c)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Изменить">
-                      <Text style={[ty.caption2Em, { color: T.brandAccent }]}>Изменить</Text>
+                    <Pressable onPress={() => startEdit(c)} accessibilityRole="button" accessibilityLabel="Изменить"
+                      style={({ pressed }) => ({ minHeight: 44, paddingVertical: 12, paddingHorizontal: 4, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}>
+                      <Text style={[ty.caption2Em, { color: T.brandText }]}>Изменить</Text>
                     </Pressable>
-                    <Pressable onPress={() => confirmDelete(c)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Удалить">
-                      <Text style={[ty.caption2Em, { color: T.red }]}>Удалить</Text>
+                    <Pressable onPress={() => confirmDelete(c)} accessibilityRole="button" accessibilityLabel="Удалить"
+                      style={({ pressed }) => ({ minHeight: 44, paddingVertical: 12, paddingHorizontal: 4, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}>
+                      <Text style={[ty.caption2Em, { color: T.redText }]}>Удалить</Text>
                     </Pressable>
                   </>
                 ) : null}
@@ -344,9 +354,9 @@ export function BookDetailScreen({ route, navigation }: Props) {
       </Screen>
 
       {/* Composer */}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 28, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
         <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
-          <TextInput value={draft} onChangeText={setDraft} multiline placeholder={editingId ? 'Изменить текст…' : tab === 'review' ? 'Написать рецензию…' : 'Написать комментарий…'} placeholderTextColor={T.labelTertiary} style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
+          <TextInput value={draft} onChangeText={setDraft} multiline placeholder={editingId ? 'Изменить текст…' : tab === 'review' ? 'Написать рецензию…' : 'Написать комментарий…'} placeholderTextColor={T.labelTertiary} accessibilityLabel={editingId ? 'Изменить текст' : tab === 'review' ? 'Написать рецензию' : 'Написать комментарий'} style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Отправить комментарий" accessibilityState={{ disabled: sending || !draft.trim() }} onPress={onSend} disabled={sending || !draft.trim()} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: draft.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
           {sending ? <ActivityIndicator color="#fff" size="small" /> : <SF name="arrow.up" size={18} color={draft.trim() ? '#fff' : T.labelTertiary} />}

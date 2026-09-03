@@ -3,53 +3,64 @@
 // of a full name everywhere, so it cannot be empty. There is no skip, but the
 // screen is a single short field (not the whole anketa).
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { Logo } from '../components/Logo';
-import { PrimaryButton, ty } from '../components/ui';
+import { PrimaryButton, SecondaryButton } from '../components/ui';
 import { SF } from '../components/SFIcon';
 import { useResume } from '../state/useResume';
 import { NICKNAME_HINT, NICKNAME_MAX, nicknameError, sanitizeNickname } from '../data/nickname';
 import { checkNicknameAvailable, getTalentslabToken } from '../data/talentslab';
-import { useAuth } from '@clerk/clerk-expo';
+import { signOutAndClear } from '../state/signOut';
+import { useAuth, useClerk } from '@clerk/clerk-expo';
 
 export function NicknameGateScreen() {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { answers, setField, submit, submitting } = useResume();
   const { getToken } = useAuth();
+  const { signOut } = useClerk();
   const [value, setValue] = useState(typeof answers.nickname === 'string' ? answers.nickname : '');
   const [touched, setTouched] = useState(false);
   // Server-side uniqueness: псевдоним должен быть свободен. null = не проверено
   // (нет сети) — тогда финальную проверку делает сервер при сохранении.
   const [taken, setTaken] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
+  // Inline (not Alert-only) failure states, each with a «Повторить» action:
+  // the availability request failed / the save request failed.
+  const [checkFailed, setCheckFailed] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [checkNonce, setCheckNonce] = useState(0);
   const reqIdRef = useRef(0);
 
   const formatError = nicknameError(value);
 
-  // Debounced availability check while typing.
+  // Debounced availability check while typing (or on «Повторить» → checkNonce).
   useEffect(() => {
-    if (formatError) { setTaken(null); setChecking(false); return; }
+    setSaveError(null);
+    if (formatError) { setTaken(null); setChecking(false); setCheckFailed(false); return; }
     const id = ++reqIdRef.current;
-    setChecking(true);
+    setChecking(true); setCheckFailed(false);
     const timer = setTimeout(async () => {
       const token = await getTalentslabToken(getToken);
       const available = await checkNicknameAvailable(token, value.trim());
       if (reqIdRef.current !== id) return; // устарел
       setTaken(available === null ? null : !available);
+      setCheckFailed(available === null);
       setChecking(false);
     }, 450);
     return () => { clearTimeout(timer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, formatError]);
+  }, [value, formatError, checkNonce]);
 
   const error = formatError ?? (taken ? 'Этот псевдоним уже занят — придумайте другой' : null);
   const showError = (touched || taken === true) && !!error;
 
   const save = async () => {
     setTouched(true);
+    setSaveError(null);
     if (error || checking) return;
     setField('nickname', value.trim());
     // Persist to Talentslab. The server is the final authority on uniqueness —
@@ -61,11 +72,28 @@ export function NicknameGateScreen() {
       const available = await checkNicknameAvailable(token, value.trim());
       if (available === false) {
         setTaken(true);
-        Alert.alert('Псевдоним занят', 'Кто-то уже выбрал этот псевдоним. Придумайте другой.');
       } else {
-        Alert.alert('Не удалось сохранить', 'Проверьте подключение и попробуйте снова.');
+        setSaveError('Не удалось сохранить псевдоним. Проверьте подключение.');
       }
     }
+  };
+
+  // The gate has no skip — but it must not be a dead end: let the user leave
+  // the account (e.g. signed in with the wrong email) and start over.
+  const handleSignOut = () => {
+    if (signingOut) return;
+    Alert.alert('Выйти из аккаунта?', undefined, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Выйти', style: 'destructive',
+        onPress: async () => {
+          setSigningOut(true);
+          try { await signOutAndClear({ getToken, signOut }); }
+          catch { Alert.alert('Не удалось выйти', 'Проверьте подключение и попробуйте снова.'); }
+          finally { setSigningOut(false); }
+        },
+      },
+    ]);
   };
 
   return (
@@ -90,7 +118,7 @@ export function NicknameGateScreen() {
             value={value}
             onChangeText={(v) => setValue(sanitizeNickname(v))}
             onBlur={() => setTouched(true)}
-            placeholder="Например: Aknazar"
+            placeholder="Например: alex_k"
             placeholderTextColor={T.labelTertiary}
             autoCapitalize="none"
             autoCorrect={false}
@@ -107,13 +135,32 @@ export function NicknameGateScreen() {
             {checking ? <ActivityIndicator size="small" color={T.labelTertiary} />
               : <SF name={showError ? 'xmark.circle.fill' : taken === false ? 'checkmark.circle.fill' : 'checkmark.seal.fill'} size={13}
                   color={showError ? T.red : taken === false ? T.green : T.labelTertiary} />}
-            <Text style={[ty.caption1, { color: showError ? T.red : taken === false ? T.green : T.labelTertiary, flex: 1 }]}>
+            <Text style={[ty.caption1, { color: showError ? T.redText : taken === false ? T.greenText : T.labelTertiary, flex: 1 }]}>
               {checking ? 'Проверяем, свободен ли псевдоним…'
                 : showError ? error
                 : taken === false ? 'Псевдоним свободен'
                 : NICKNAME_HINT}
             </Text>
           </View>
+          {/* Availability request failed: say so inline and offer a retry (the
+              server still validates uniqueness on save, so saving stays allowed). */}
+          {!checking && checkFailed && !formatError ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, marginLeft: 2 }}>
+              <Text style={[ty.caption1, { color: T.orangeText, flex: 1 }]}>Не удалось проверить, свободен ли псевдоним.</Text>
+              <Pressable onPress={() => setCheckNonce((n) => n + 1)} accessibilityRole="button" accessibilityLabel="Повторить проверку" style={{ minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 4 }}>
+                <Text style={[ty.footnoteEm, { color: T.brandText }]}>Повторить</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          {saveError ? (
+            <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderColor: T.red }}>
+              <SF name="wifi.slash" size={14} color={T.redText} />
+              <Text style={[ty.footnote, { color: T.redText, flex: 1 }]}>{saveError}</Text>
+              <Pressable onPress={save} accessibilityRole="button" accessibilityLabel="Повторить сохранение" style={{ minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 4 }}>
+                <Text style={[ty.footnoteEm, { color: T.brandText }]}>Повторить</Text>
+              </Pressable>
+            </View>
+          ) : null}
 
           <View style={{ height: 22 }} />
           <PrimaryButton
@@ -122,6 +169,16 @@ export function NicknameGateScreen() {
             loading={submitting}
             disabled={!!error || submitting || checking}
             onPress={save}
+          />
+          <SecondaryButton
+            label="Выйти из аккаунта"
+            icon="arrow.right"
+            tinted={false}
+            color={T.labelSecondary}
+            loading={signingOut}
+            disabled={submitting}
+            onPress={handleSignOut}
+            style={{ marginTop: 12, borderWidth: 0 }}
           />
         </ScrollView>
       </KeyboardAvoidingView>

@@ -1,20 +1,22 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { PrimaryButton, ty } from '../../components/ui';
+import { PrimaryButton } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import {
   fetchChallengesAndTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam, CHALLENGE_RULES,
 } from '../../data/community';
 import { applyToChallenge, challengeApplyFailureMessage } from '../../data/api';
 import { useTalentProfile } from '../../state/useTalentProfile';
+import { useResumeAccess } from '../../state/useResumeAccess';
 import { CommunityStackParams } from '../../navigation/types';
+import * as pl from '../../data/plural';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'JoinChallenge'>;
 
@@ -28,7 +30,7 @@ function profileNickname(profile: unknown): string {
 }
 
 export function JoinChallengeScreen({ route, navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const [meta, setMeta] = useState<ChallengeListItem | undefined>(undefined);
@@ -46,6 +48,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   // The applicant's own анкета — attached to the application so the captain/admin
   // reliably sees it (independent of the server→Talentslab by-email lookup).
   const { profile, live } = useTalentProfile();
+  const { require: requireResume } = useResumeAccess();
 
   const load = useCallback(() => {
     let alive = true;
@@ -70,12 +73,23 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const tgOk = tgHandle.length >= 3;
   const canSubmit = tgOk && !!teamId && agree && track;
   const team = teams.find((t) => t.id === teamId);
+  // Подсказка под кнопкой: что именно ещё не заполнено.
+  const missing = [
+    !tgOk ? tr('укажите Telegram') : '',
+    !teamId ? tr('выберите команду') : '',
+    !track ? tr('разрешите запись тренировок') : '',
+    !agree ? tr('подтвердите правила') : '',
+  ].filter(Boolean);
+  const missingHint = missing.length ? missing.join(', ').replace(/^./, (ch) => ch.toUpperCase()) : '';
 
   // Real submit: send the application to the server; only show success when the
   // server actually accepted it. Отказ показываем настоящей причиной — «заявка
   // уже на рассмотрении» или «в команде нет мест», а не «проверьте подключение».
   const submit = async () => {
     if (!canSubmit || submitting) return;
+    // Капитан команды видит анкету заявителя: пустая карточка не даёт ему
+    // ничего решить, поэтому разделы анкеты обязательны до отправки.
+    if (!requireResume('community')) return;
     setSubmitting(true);
     try {
       const token = await getToken();
@@ -115,9 +129,9 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader title={tr('Заявка')} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 130 }} keyboardShouldPersistTaps="handled">
         <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{meta?.title}</Text>
-        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]} numberOfLines={1}>{tr('Старт')} {meta?.startLabel} · {meta?.durationDays} {tr('дней')}</Text>
+        <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]} numberOfLines={1}>{tr('Старт')} {meta?.startLabel} · {pl.days(meta?.durationDays ?? 0)}</Text>
 
         {/* Псевдоним — только для сведения: он берётся из анкеты профиля, и
             именно его команда видит в рейтинге. Отдельного поля здесь нет. */}
@@ -149,11 +163,17 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
             onChangeText={(t) => setTg(t.replace(/[^a-zA-Z0-9_@]/g, ''))}
             placeholder={tr('username')}
             placeholderTextColor={T.labelTertiary}
-            autoCapitalize="none" autoCorrect={false}
+            autoCapitalize="none" autoCorrect={false} returnKeyType="done"
+            keyboardType={Platform.OS === 'ios' ? 'ascii-capable' : 'default'}
+            accessibilityLabel={tr('Username в Telegram')}
             style={[ty.body, { flex: 1, paddingVertical: 12, color: T.label }]}
           />
         </View>
-        <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 6, marginLeft: 4 }]}>{tr('Капитан свяжется с вами в Telegram и добавит в чат команды.')}</Text>
+        {tg && !tgOk ? (
+          <Text style={[ty.caption1, { color: T.redText, marginTop: 6, marginLeft: 4 }]} accessibilityLiveRegion="polite">{tr('Минимум 3 символа: латиница, цифры и «_».')}</Text>
+        ) : (
+          <Text style={[ty.caption1, { color: T.labelTertiary, marginTop: 6, marginLeft: 4 }]}>{tr('Капитан свяжется с вами в Telegram и добавит в чат команды.')}</Text>
+        )}
 
         {/* Team */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('ВЫБЕРИТЕ КОМАНДУ')}</Text>
@@ -184,22 +204,26 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
           })}
         </View>
 
-        {/* Step / watch tracking consent */}
+        {/* Activity tracking consent — describes what the app actually does:
+            GPS-запись бега/ходьбы внутри приложения + ручной ввод. Шагомера и
+            интеграции с часами нет, поэтому их не обещаем. */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 8, marginLeft: 4 }]}>{tr('ОТСЛЕЖИВАНИЕ АКТИВНОСТИ')}</Text>
         <Pressable onPress={() => setTrack((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: track }}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, padding: 14 }}>
+          accessibilityLabel={tr('Разрешить запись тренировок по GPS')}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, padding: 14, minHeight: 48 }}>
           <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="figure.walk" size={20} color={T.brand} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{tr('Разрешить отслеживание шагов')}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{tr('Приложение будет считать шаги и, при наличии, подключится к вашим часам (Apple Watch / Google Fit) для авто-учёта активности.')}</Text>
+            <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={2}>{tr('Разрешить запись тренировок по GPS')}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{tr('Бег и ходьбу можно записывать в приложении по геолокации — дистанция пересчитывается в шаги. Остальную активность вы вносите вручную; часы и шагомер не подключаются.')}</Text>
           </View>
           <SF name={track ? 'checkmark.circle.fill' : 'circle'} size={24} color={track ? T.brand : T.labelTertiary} />
         </Pressable>
 
         {/* Rules — open/hide, then the mandatory acknowledgment */}
-        <Pressable onPress={() => setShowRules((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, marginBottom: showRules ? 8 : 0 }}>
+        <Pressable onPress={() => setShowRules((v) => !v)} accessibilityRole="button" accessibilityLabel={tr('Правила челленджа')} accessibilityState={{ expanded: showRules }}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, marginTop: 14, marginBottom: showRules ? 4 : 0 }}>
           <Text style={[ty.footnote, { color: T.labelSecondary, marginLeft: 4 }]}>{tr('ПРАВИЛА ЧЕЛЛЕНДЖА')}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={[ty.caption1, { color: T.brand }]}>{showRules ? tr('Скрыть') : tr('Открыть')}</Text>
@@ -218,14 +242,17 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         ) : null}
 
         {/* Mandatory acknowledgment */}
-        <Pressable onPress={() => setAgree((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agree }} accessibilityLabel="Ознакомился с правилами" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 }}>
+        <Pressable onPress={() => setAgree((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: agree }} accessibilityLabel="Ознакомился с правилами" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, minHeight: 44 }}>
           <SF name={agree ? 'checkmark.circle.fill' : 'circle'} size={24} color={agree ? T.brand : T.labelTertiary} />
           <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{tr('Я прочитал(а) и ознакомился с правилами челленджа выше и согласен(на) их соблюдать.')}</Text>
         </Pressable>
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label={tr('Отправить заявку')} icon="paperplane.fill" loading={submitting} color={canSubmit ? T.brand : T.labelTertiary} onPress={submit} />
+        <PrimaryButton label={tr('Отправить заявку')} icon="paperplane.fill" loading={submitting} disabled={!canSubmit} onPress={submit} />
+        {missingHint ? (
+          <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginTop: 8 }]} numberOfLines={2}>{missingHint}</Text>
+        ) : null}
       </View>
     </View>
   );

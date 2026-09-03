@@ -7,16 +7,25 @@ import { Image } from 'expo-image';
 import { SF } from './SFIcon';
 import { ProgressBar, Capsule, ty } from './ui';
 import { Course } from '../data/courses';
-import { imgUrl } from '../data/api';
+import { formatPrice, imgUrl } from '../data/api';
+import * as pl from '../data/plural';
 
-export function lessonsWord(n: number) {
-  if (n === 1) return 'Тренинг';
-  const d = n % 10, dd = n % 100;
-  if (dd >= 11 && dd <= 19) return `${n} уроков`;
-  if (d === 1) return `${n} урок`;
-  if (d >= 2 && d <= 4) return `${n} урока`;
-  return `${n} уроков`;
+// Что писать на карточке некупленного курса. `showPrice` — фича-флаг покупки в
+// приложении (по умолчанию выключен, тогда всё как раньше: «Нет доступа»).
+// Подарок важнее цены: такой курс человеку ничего не стоит.
+function accessBadge(course: Course, showPrice?: boolean) {
+  const free = course.price == null || course.price <= 0;
+  const gifted = course.gifted === true;
+  const priced = !free && !gifted && showPrice === true;
+  return {
+    icon: gifted ? 'gift.fill' : free ? 'play.circle.fill' : priced ? 'creditcard.fill' : 'lock.fill',
+    label: gifted ? 'Подарок' : free ? 'Бесплатно' : priced ? formatPrice(course.price) : 'Нет доступа',
+    accent: gifted || free || priced,
+  };
 }
+
+/** «1 урок / 2 урока / 5 уроков». */
+export const lessonsWord = (n: number) => pl.lessons(n);
 
 function Cover({ course, height }: { course: Course; height: number | string }) {
   if (course.imageUrl) {
@@ -31,9 +40,9 @@ function Cover({ course, height }: { course: Course; height: number | string }) 
 
 // Grid / horizontal card
 export function CourseCardPremium({
-  course, owned, progress, width, onPress,
-}: { course: Course; owned?: boolean; progress?: number; width?: number | string; onPress?: () => void }) {
-  const free = course.price == null || course.price <= 0;
+  course, owned, progress, width, showPrice, onPress,
+}: { course: Course; owned?: boolean; progress?: number; width?: number | string; showPrice?: boolean; onPress?: () => void }) {
+  const badge = accessBadge(course, showPrice);
   const { T } = useTheme();
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
@@ -69,9 +78,9 @@ export function CourseCardPremium({
                 <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{count}</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 8 }}>
-                <SF name={free ? 'play.circle.fill' : 'lock.fill'} size={12} color={free ? T.brand : T.labelTertiary} />
-                <Text style={[ty.caption1, { color: free ? T.brand : T.labelSecondary }]} numberOfLines={1}>
-                  {free ? 'Бесплатно' : 'Нет доступа'}
+                <SF name={badge.icon} size={12} color={badge.accent ? T.brand : T.labelTertiary} />
+                <Text style={[ty.caption1, { color: badge.accent ? T.brand : T.labelSecondary }]} numberOfLines={1}>
+                  {badge.label}
                 </Text>
               </View>
             </View>
@@ -84,9 +93,9 @@ export function CourseCardPremium({
 
 // Big featured / continue card
 export function FeaturedCard({
-  course, owned, progress, eyebrow, onPress,
-}: { course: Course; owned?: boolean; progress?: number; eyebrow?: string; onPress?: () => void }) {
-  const free = course.price == null || course.price <= 0;
+  course, owned, progress, eyebrow, showPrice, onPress,
+}: { course: Course; owned?: boolean; progress?: number; eyebrow?: string; showPrice?: boolean; onPress?: () => void }) {
+  const badge = accessBadge(course, showPrice);
   const { T } = useTheme();
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
@@ -120,9 +129,9 @@ export function FeaturedCard({
           </View>
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 }}>
-            <SF name={free ? 'play.circle.fill' : 'lock.fill'} size={16} color={free ? T.brand : T.labelSecondary} />
-            <Text style={[ty.subheadEm, { color: free ? T.brand : T.labelSecondary }]} numberOfLines={1}>
-              {free ? 'Бесплатно' : 'Нет доступа'}
+            <SF name={badge.icon} size={16} color={badge.accent ? T.brand : T.labelSecondary} />
+            <Text style={[ty.subheadEm, { color: badge.accent ? T.brand : T.labelSecondary }]} numberOfLines={1}>
+              {badge.label}
             </Text>
           </View>
         )}

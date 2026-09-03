@@ -12,11 +12,11 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { ty } from '../../components/ui';
 import { hTap, hSuccess } from '../../lib/haptics';
 import { useActivities, distanceToSteps, WorkoutType, WorkoutCoord, Workout } from '../../state/ActivityContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { CommunityStackParams } from '../../navigation/types';
+import * as pl from '../../data/plural';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'WorkoutTrack'>;
 
@@ -37,7 +37,7 @@ function fmtPace(sec: number, m: number): string {
 }
 
 export function WorkoutTrackScreen({ route, navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { addWorkout } = useActivities();
   const { challenge, setMetric, isParticipant, dayLocked } = useChallenge();
@@ -127,7 +127,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
     hSuccess();
     const km = (distanceM / 1000).toFixed(2);
     const kind = type === 'run' ? 'Пробежка' : 'Ходьба';
-    const body = `${kind} · ${km} км · ≈${steps} шагов.`;
+    const body = `${kind} · ${km} км · ≈${pl.steps(steps)}.`;
     // Предлагать «добавить в челлендж» можно только реальному участнику:
     // у DEFAULT_CHALLENGE тоже есть задача «шаги», поэтому раньше предложение
     // видели все, а отметка уходила в несуществующий челлендж
@@ -138,7 +138,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
     if (act && act.kind === 'metric' && steps > 0 && !dayLocked) {
       Alert.alert('Активность записана', `${body}\n\nДобавить в челлендж?`, [
         { text: 'Не сейчас', style: 'cancel', onPress: () => navigation.goBack() },
-        { text: `+${steps} шагов`, onPress: () => { setMetric(act.id, act.current + steps); navigation.goBack(); } },
+        { text: `+${pl.steps(steps)}`, onPress: () => { setMetric(act.id, act.current + steps); navigation.goBack(); } },
       ]);
     } else if (act && steps > 0 && dayLocked) {
       // День уже закрыт (23:00 по Алматы) — говорим об этом прямо, а не молчим.

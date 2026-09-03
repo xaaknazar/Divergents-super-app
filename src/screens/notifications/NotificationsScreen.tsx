@@ -5,8 +5,9 @@ import { View, Text, Pressable, FlatList, RefreshControl, InteractionManager } f
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
-import { ty } from '../../components/ui';
+import { NavHeader } from '../../components/NavHeader';
 import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
+import { minTouch } from '../../theme/tokens';
 import { useNotifications } from '../../state/NotificationsContext';
 import { NotifTarget } from '../../data/notifications';
 import { RootStackParams } from '../../navigation/types';
@@ -28,7 +29,7 @@ function fmtDate(iso: string, ru: boolean): string {
 type Props = NativeStackScreenProps<RootStackParams, 'Notifications'>;
 
 export function NotificationsScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { lang } = useLang();
   const insets = useSafeAreaInsets();
   const { items, unread, loading, error, refresh, markRead, markAllRead } = useNotifications();
@@ -78,13 +79,23 @@ export function NotificationsScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.cardBg, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel={tr('Закрыть')} style={{ flex: 1, minHeight: 48, justifyContent: 'center', alignItems: 'flex-start' }}><Text style={[ty.body, { color: T.brandAccent }]}>{tr('Закрыть')}</Text></Pressable>
-        <Text style={[ty.headline, { color: T.label, flex: 1, textAlign: 'center' }]}>{tr('Уведомления')}</Text>
-        <Pressable onPress={markAllRead} disabled={unread === 0} accessibilityRole="button" accessibilityLabel={tr('Прочитать')} accessibilityState={{ disabled: unread === 0 }} style={{ flex: 1, minHeight: 48, justifyContent: 'center', alignItems: 'flex-end' }}>
-          <Text style={[ty.subhead, { color: unread ? T.brandAccent : T.labelTertiary, textAlign: 'right' }]}>{tr('Прочитать')}</Text>
-        </Pressable>
-      </View>
+      {/* Shared header: modal «Закрыть» on the left, «Прочитать все» as the trailing
+          text action (a bare icon would hide what it does). */}
+      <NavHeader
+        title={tr('Уведомления')}
+        backLabel={tr('Закрыть')}
+        hideBackLabel={false}
+        onBack={() => navigation.goBack()}
+        hairline
+        trailing={(
+          <Pressable onPress={markAllRead} disabled={unread === 0} accessibilityRole="button"
+            accessibilityLabel={lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
+            accessibilityState={{ disabled: unread === 0 }}
+            style={({ pressed }) => ({ minHeight: minTouch, minWidth: minTouch, justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 4, opacity: pressed ? 0.5 : 1 })}>
+            <Text style={[ty.subhead, { color: unread ? T.brandText : T.labelTertiary, textAlign: 'right' }]} numberOfLines={1}>{lang === 'ru' ? 'Прочитать все' : 'Mark all read'}</Text>
+          </Pressable>
+        )}
+      />
 
       {showSkeleton ? (
         <View style={{ paddingTop: 12 }}>
@@ -132,9 +143,19 @@ export function NotificationsScreen({ navigation }: Props) {
 
 // Memoized row — keeps FlatList re-renders cheap so opening the modal stays smooth.
 const NotifRow = React.memo(function NotifRow({ it, T, ru, onPress }: { it: any; T: any; ru: boolean; onPress: (id: string, target?: any) => void }) {
+  const { ty } = useTheme();
+  const a11y = [
+    it.read ? null : (ru ? 'непрочитано' : 'unread'),
+    it.title,
+    it.body,
+    fmtDate(it.date, ru),
+  ].filter(Boolean).join('. ');
   return (
     <Pressable onPress={() => onPress(it.id, it.target)}
-      style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
+      accessibilityRole="button"
+      accessibilityLabel={a11y}
+      accessibilityHint={it.target ? (ru ? 'Открывает связанный экран' : 'Opens the related screen') : undefined}
+      style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, minHeight: minTouch, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
       <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: (it.color || T.brand) + '33', alignItems: 'center', justifyContent: 'center' }}>
         <SF name={it.icon || 'bell.fill'} size={20} color={it.color || T.brand} />
       </View>

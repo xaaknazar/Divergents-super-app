@@ -24,6 +24,36 @@ const openUrl = (url: string) => { WebBrowser.openBrowserAsync(url).catch(() => 
 // Нужно для Clerk SSO: корректно закрывает web-браузер после возврата в приложение.
 WebBrowser.maybeCompleteAuthSession();
 
+// Clerk returns English developer-facing messages. Map the known error codes to
+// user text; anything unknown falls back to the caller's generic Russian text
+// (never surface the raw English message).
+const CLERK_ERRORS: Record<string, string> = {
+  form_identifier_not_found: 'Аккаунт с такой почтой не найден. Проверьте адрес или зарегистрируйтесь.',
+  form_identifier_exists: 'Аккаунт с такой почтой уже есть — войдите.',
+  form_email_address_exists: 'Аккаунт с такой почтой уже есть — войдите.',
+  form_param_format_invalid: 'Проверьте формат адреса электронной почты.',
+  form_param_nil: 'Введите адрес электронной почты.',
+  form_code_incorrect: 'Неверный код. Проверьте письмо и попробуйте ещё раз.',
+  verification_failed: 'Неверный код. Проверьте письмо и попробуйте ещё раз.',
+  verification_expired: 'Код устарел. Запросите новый код.',
+  verification_already_verified: 'Почта уже подтверждена — нажмите «Подтвердить».',
+  too_many_requests: 'Слишком много попыток. Подождите немного и попробуйте снова.',
+  session_exists: 'Вы уже вошли в аккаунт. Перезапустите приложение.',
+  identifier_already_signed_in: 'Вы уже вошли в аккаунт. Перезапустите приложение.',
+  network_error: 'Нет соединения. Проверьте интернет и попробуйте снова.',
+  oauth_access_denied: 'Вход отменён.',
+  oauth_callback_invalid: 'Не удалось завершить вход. Попробуйте ещё раз.',
+  user_locked: 'Аккаунт временно заблокирован. Попробуйте позже.',
+  form_identifier_not_allowed: 'Эта почта не может быть использована для входа.',
+};
+function clerkErrorText(e: any, fallback: string): string {
+  const code = e?.errors?.[0]?.code as string | undefined;
+  if (code && CLERK_ERRORS[code]) return CLERK_ERRORS[code];
+  if (code || e?.errors?.[0]?.message) console.warn('[auth] clerk error', code, e?.errors?.[0]?.message);
+  return fallback;
+}
+const SIGNUP_UNAVAILABLE = 'Регистрация временно недоступна. Попробуйте позже.';
+
 export function AuthScreen({}: Props) {
   const { T, isDark, ty } = useTheme();
   const insets = useSafeAreaInsets();
@@ -46,7 +76,7 @@ export function AuthScreen({}: Props) {
       if (createdSessionId && setActive) { finishRegistration(); await setActive({ session: createdSessionId }); }
       else setError(t('err_generic'));
     } catch (e: any) {
-      setError(e?.errors?.[0]?.message || t('err_generic'));
+      setError(clerkErrorText(e, t('err_generic')));
     } finally { setBusy(false); setSso(null); }
   };
 
@@ -105,7 +135,7 @@ export function AuthScreen({}: Props) {
       }
       setCode(''); setLeft(30); setStep('code');
     } catch (e: any) {
-      setError(e?.errors?.[0]?.message || t('err_generic'));
+      setError(clerkErrorText(e, t('err_generic')));
     } finally { setBusy(false); }
   };
 
@@ -127,7 +157,7 @@ export function AuthScreen({}: Props) {
           } else throw e;
         }
       }
-    } catch (e: any) { setError(e?.errors?.[0]?.message || t('err_generic')); }
+    } catch (e: any) { setError(clerkErrorText(e, t('err_generic'))); }
     finally { setBusy(false); }
   };
 
@@ -149,7 +179,7 @@ export function AuthScreen({}: Props) {
   };
 
   const verify = async () => {
-    if (!isLoaded || code.trim().length < 4) return;
+    if (!isLoaded || busy || code.trim().length !== 6) return;
     setBusy(true); setError(null);
     try {
       // A wrong code throws (caught below); a non-'complete' status here means
@@ -171,9 +201,10 @@ export function AuthScreen({}: Props) {
           if (isAlreadyVerified(e)) {
             if (await activateComplete()) return;
             const miss = [...((signUp as any)?.missingFields ?? []), ...((signUp as any)?.unverifiedFields ?? [])].join(', ');
-            setError(miss
-              ? `${tr('Почта подтверждена, но Clerk требует ещё поля:')} ${miss}. ${tr('Оставьте обязательным только email.')}`
-              : tr('Почта уже подтверждена, но вход не завершился — обновите приложение или свяжитесь с поддержкой.'));
+            // Config problem (sign-up requires more than email) — developer detail
+            // goes to the log, the user gets plain text.
+            console.warn('[auth] sign-up already verified but incomplete; missing fields:', miss || 'none');
+            setError(miss ? SIGNUP_UNAVAILABLE : tr('Почта уже подтверждена, но вход не завершился — обновите приложение или свяжитесь с поддержкой.'));
             return;
           }
           throw e;
@@ -181,13 +212,25 @@ export function AuthScreen({}: Props) {
         if (res.status === 'complete') { await setActiveSignUp!({ session: res.createdSessionId }); }
         else if (res.status === 'missing_requirements') {
           const miss = [...(res.missingFields ?? []), ...(res.unverifiedFields ?? [])].join(', ');
-          setError(`${tr('Регистрация требует доп. полей в Clerk:')} ${miss || tr('неизвестно')}. ${tr('Оставьте обязательным только email.')}`);
+          console.warn('[auth] sign-up missing_requirements; fields:', miss || 'unknown');
+          setError(SIGNUP_UNAVAILABLE);
         } else setError(needMore);
       }
     } catch (e: any) {
-      setError(e?.errors?.[0]?.message || t('err_code'));
+      setError(clerkErrorText(e, t('err_code')));
     } finally { setBusy(false); }
   };
+
+  // Auto-submit once all 6 digits are in (iOS OTP autofill pastes them at once).
+  // The ref guards against re-submitting the same code after an error re-render.
+  const autoSubmitRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (step !== 'code' || code.length !== 6 || busy) return;
+    if (autoSubmitRef.current === code) return;
+    autoSubmitRef.current = code;
+    verify();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, step]);
 
   // Passwordless "forgot" path: there is no password to reset — recovery just
   // means sending a fresh sign-in code. If the email is filled we send it right
@@ -213,7 +256,7 @@ export function AuthScreen({}: Props) {
         >
           {/* Hero */}
           <View style={{ alignItems: 'center', marginTop: 14, marginBottom: 20 }}>
-            <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
+            <View style={{ width: 84, height: 84, borderRadius: 24, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}>
               <Logo size={50} />
             </View>
             <Text style={[ty.largeTitle, { color: T.label, marginTop: 18, textAlign: 'center' }]}>{t('welcome')}</Text>
@@ -251,6 +294,8 @@ export function AuthScreen({}: Props) {
                     onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
                     placeholder={t('email_ph')} placeholderTextColor={T.labelTertiary}
                     autoCapitalize="none" keyboardType="email-address" autoCorrect={false}
+                    textContentType="emailAddress" autoComplete="email"
+                    accessibilityLabel={t('email')}
                     style={[ty.body, { flex: 1, color: T.label, minHeight: 38, paddingVertical: 6 }]}
                     onSubmitEditing={() => sendCode()} returnKeyType="go"
                   />
@@ -299,9 +344,10 @@ export function AuthScreen({}: Props) {
                     accessibilityRole="button"
                     accessibilityLabel={lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}
                     accessibilityState={{ disabled: busy || !isLoaded, busy: sso === 'oauth_apple' }}
-                    style={{ marginTop: 10, minHeight: 54, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 15, backgroundColor: '#000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy && sso !== 'oauth_apple') || !isLoaded ? 0.5 : 1 }}>
-                    {sso === 'oauth_apple' ? <ActivityIndicator size="small" color="#fff" /> : <SF name="applelogo" size={18} color="#fff" />}
-                    <Text style={[ty.headline, { color: '#fff', flexShrink: 1, textAlign: 'center' }]}>{lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}</Text>
+                    // HIG: black button in light appearance, white with black content in dark.
+                    style={{ marginTop: 10, minHeight: 54, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 15, backgroundColor: isDark ? '#FFFFFF' : '#000000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy && sso !== 'oauth_apple') || !isLoaded ? 0.5 : 1 }}>
+                    {sso === 'oauth_apple' ? <ActivityIndicator size="small" color={isDark ? '#000000' : '#FFFFFF'} /> : <SF name="applelogo" size={18} color={isDark ? '#000000' : '#FFFFFF'} />}
+                    <Text style={[ty.headline, { color: isDark ? '#000000' : '#FFFFFF', flexShrink: 1, textAlign: 'center' }]}>{lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}</Text>
                   </Pressable>
                 ) : null}
               </>
@@ -321,24 +367,44 @@ export function AuthScreen({}: Props) {
                   </View>
                 ) : null}
 
-                {/* OTP boxes */}
-                <Pressable onPress={() => otpRef.current?.focus()} accessibilityRole="button" accessibilityLabel={t('code_title')} style={{ flexDirection: 'row', gap: 6, marginTop: 18 }}>
-                  {Array.from({ length: 6 }).map((_, i) => {
-                    const ch = code[i] ?? '';
-                    const active = i === code.length;
-                    return (
-                      <View key={i} style={{ flex: 1, maxWidth: 46, minHeight: 56, borderRadius: 13, backgroundColor: T.fillTertiary, borderWidth: 1.5, borderColor: ch ? T.brand : active ? T.brandAccent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={[ty.title2, { color: T.label }]}>{ch}</Text>
-                      </View>
-                    );
-                  })}
-                </Pressable>
-                <TextInput ref={otpRef} value={code} onChangeText={(t2) => setCode(t2.replace(/[^0-9]/g, '').slice(0, 6))} keyboardType="number-pad" autoFocus maxLength={6}
-                  style={{ position: 'absolute', opacity: 0, height: 1, width: 1 }} onSubmitEditing={verify} />
+                {/* OTP boxes. The cells are purely visual; the real TextInput is laid
+                    over them (near-transparent, caret hidden) so it is the single
+                    accessible element: VoiceOver reads its label + typed count, a
+                    tap anywhere on the row focuses it, and iOS OTP autofill works. */}
+                <View style={{ position: 'relative', marginTop: 18 }}>
+                  <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', gap: 6 }}>
+                    {Array.from({ length: 6 }).map((_, i) => {
+                      const ch = code[i] ?? '';
+                      const active = i === code.length;
+                      return (
+                        <View key={i} style={{ flex: 1, maxWidth: 46, minHeight: 56, borderRadius: 13, backgroundColor: T.fillTertiary, borderWidth: 1.5, borderColor: ch ? T.brand : active ? T.brandAccent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={[ty.title2, { color: T.label }]}>{ch}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                  <TextInput
+                    ref={otpRef}
+                    value={code}
+                    onChangeText={(t2) => setCode(t2.replace(/[^0-9]/g, '').slice(0, 6))}
+                    keyboardType="number-pad"
+                    textContentType="oneTimeCode"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    maxLength={6}
+                    caretHidden
+                    contextMenuHidden
+                    accessibilityLabel={lang === 'ru' ? 'Код из письма' : 'Code from the email'}
+                    accessibilityHint={lang === 'ru' ? 'Введите 6 цифр' : 'Enter 6 digits'}
+                    accessibilityValue={{ text: lang === 'ru' ? `Введено ${code.length} из 6 цифр` : `${code.length} of 6 digits entered` }}
+                    onSubmitEditing={verify}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.02, color: 'transparent', fontSize: 1 }}
+                  />
+                </View>
 
                 {error ? <Text style={[ty.footnote, { color: T.red, marginTop: 12, marginLeft: 2 }]}>{error}</Text> : null}
 
-                <GradientButton label={mode === 'up' ? t('verify_up') : t('verify_in')} icon="checkmark" loading={busy} onPress={verify} T={T} style={{ marginTop: 18 }} />
+                <GradientButton label={mode === 'up' ? t('verify_up') : t('verify_in')} icon="checkmark" loading={busy} disabled={code.length !== 6} onPress={verify} T={T} style={{ marginTop: 18 }} />
 
                 <Pressable onPress={resend} disabled={left > 0 || busy} accessibilityRole="button" accessibilityLabel={t('resend')} accessibilityState={{ disabled: left > 0 || busy }} style={{ minHeight: 48, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', marginTop: 6 }}>
                   <Text style={[ty.subhead, { color: left > 0 ? T.labelTertiary : T.brandAccent, textAlign: 'center' }]}>

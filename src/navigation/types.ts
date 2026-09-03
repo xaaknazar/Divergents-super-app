@@ -54,9 +54,7 @@ export type TabParams = {
 export type RootStackParams = {
   Onboarding: undefined;
   Auth: undefined;
-  Register: undefined;
   NicknameGate: undefined;
-  ResumeGate: undefined;
   Tabs: NavigatorScreenParams<TabParams>;
   Notifications: undefined;
 };

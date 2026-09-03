@@ -4,7 +4,7 @@
 // stripped so the text always reads cleanly.
 import React from 'react';
 import { View, Text, TextStyle, Platform, Linking } from 'react-native';
-import { ty } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
 
 const BOLD = 'GothamRnd-Bold';
 const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }) as string;
@@ -45,6 +45,7 @@ function span(p: string, key: number, color: string): React.ReactNode {
 }
 
 function Inline({ text, color, bold }: { text: string; color: string; bold?: boolean }) {
+  const { ty } = useTheme();
   const parts = text.split(INLINE_RE).filter((p) => p !== '' && p !== undefined);
   return (
     <Text style={[ty.body, { color, ...(bold ? { fontFamily: BOLD } : null) } as TextStyle]}>
@@ -54,6 +55,7 @@ function Inline({ text, color, bold }: { text: string; color: string; bold?: boo
 }
 
 export function MarkdownText({ text, color }: { text: string; color: string }) {
+  const { ty } = useTheme();
   const lines = text.replace(/\r/g, '').split('\n');
   return (
     <View>

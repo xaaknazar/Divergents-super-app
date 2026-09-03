@@ -8,7 +8,7 @@ import { useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { ListSection, ty } from '../../components/ui';
+import { ListSection, ProgressBar } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { useDownloads, DownloadRecord } from '../../state/downloads';
 import { useAuth } from '@clerk/clerk-expo';
@@ -38,7 +38,7 @@ function fmtSize(bytes: number): string {
 }
 
 export function DownloadsScreen({ navigation, offlineStandalone = false, onExitOffline }: DownloadsProps) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { items, pending, removeDownload, cancelDownload, downloadLesson, isDownloaded, isDownloading, progress } = useDownloads();
@@ -81,10 +81,11 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
     if (!ok) Alert.alert(tr('Не удалось скачать'), tr('Попробуйте ещё раз позже.'));
   };
 
-  // Available = owned-course audio lessons not already downloaded.
+  // Available = owned-course audio lessons neither downloaded nor in flight, so a
+  // lesson never shows in «Скачивается» and «Доступно для скачивания» at once.
   const availFiltered = useMemo(() => avail
-    .map((g) => ({ ...g, lessons: g.lessons.filter((l) => !isDownloaded(l.id)) }))
-    .filter((g) => g.lessons.length > 0), [avail, items]);
+    .map((g) => ({ ...g, lessons: g.lessons.filter((l) => !isDownloaded(l.id) && !isDownloading(l.id)) }))
+    .filter((g) => g.lessons.length > 0), [avail, items, pending]);
 
   // Single audio player reused for whichever lesson is tapped. Audio-only m4a
   // plays fine through expo-video; background playback keeps it going off-screen.
@@ -202,12 +203,12 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
                       <Text style={[ty.body, { color: T.label }]} numberOfLines={2}>{p.n ? `${p.n}. ` : ''}{p.title}</Text>
                       <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{p.courseTitle} · {Math.round(p.progress * 100)}%</Text>
                     </View>
-                    <Pressable onPress={() => cancelDownload(p.lessonId)} hitSlop={10} style={{ padding: 4 }} accessibilityLabel={tr('Остановить загрузку')}>
+                    <Pressable onPress={() => cancelDownload(p.lessonId)} hitSlop={10} style={{ padding: 4 }} accessibilityRole="button" accessibilityLabel={tr('Остановить загрузку')}>
                       <SF name="xmark.circle.fill" size={22} color={T.labelTertiary} />
                     </Pressable>
                   </View>
-                  <View style={{ height: 3, borderRadius: 2, backgroundColor: T.fillTertiary, overflow: 'hidden', marginTop: 8, marginLeft: 50 }}>
-                    <View style={{ width: `${Math.max(3, p.progress * 100)}%`, height: '100%', borderRadius: 2, backgroundColor: T.brand }} />
+                  <View style={{ marginTop: 8, marginLeft: 50 }}>
+                    <ProgressBar value={Math.max(0.03, p.progress)} height={3} color={T.brand} accessibilityLabel={tr('Загрузка')} />
                   </View>
                   {i < pending.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
                 </View>
@@ -235,7 +236,8 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
                         {[fmtSize(rec.size), tr('Доступно офлайн')].filter(Boolean).join(' · ')}
                       </Text>
                     </View>
-                    <Pressable onPress={() => confirmDelete(rec)} hitSlop={10} style={{ padding: 4 }}>
+                    <Pressable onPress={() => confirmDelete(rec)} hitSlop={10} style={{ padding: 4 }}
+                      accessibilityRole="button" accessibilityLabel={tr('Удалить загрузку')}>
                       <SF name="trash" size={18} color={T.red} />
                     </Pressable>
                     {i < g.rows.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
@@ -265,7 +267,8 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
                         {downloading ? `${tr('Скачивание')} ${Math.round((pct ?? 0) * 100)}%` : tr('Аудио для офлайна')}
                       </Text>
                     </View>
-                    <Pressable onPress={() => onDownload(g, l)} disabled={downloading} hitSlop={10} style={{ padding: 4 }}>
+                    <Pressable onPress={() => onDownload(g, l)} disabled={downloading} hitSlop={10} style={{ padding: 4 }}
+                      accessibilityRole="button" accessibilityLabel={tr('Скачать аудио')} accessibilityState={{ disabled: downloading }}>
                       {downloading ? <ActivityIndicator size="small" color={T.brand} /> : <SF name="arrow.down.circle" size={24} color={T.brand} />}
                     </Pressable>
                     {i < g.lessons.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
@@ -282,6 +285,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable onPress={() => { try { isPlaying ? player.pause() : player.play(); } catch {} }}
+              accessibilityRole="button" accessibilityLabel={isPlaying ? tr('Пауза') : tr('Воспроизвести')}
               style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={isPlaying ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
             </Pressable>
@@ -298,10 +302,19 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
               onStartShouldSetResponder={() => true}
               onResponderGrant={seek}
               onResponderMove={seek}
+              accessible
+              accessibilityRole="adjustable"
+              accessibilityLabel={tr('Позиция воспроизведения')}
+              accessibilityValue={{ min: 0, max: 100, now: Math.round(frac * 100), text: `${fmtTime(currentTime)} ${tr('из')} ${fmtTime(duration)}` }}
+              // VoiceOver swipe up/down: nudge by 15 seconds.
+              onAccessibilityAction={(e) => {
+                if (duration <= 0) return;
+                const delta = e.nativeEvent.actionName === 'increment' ? 15 : e.nativeEvent.actionName === 'decrement' ? -15 : 0;
+                if (delta) { try { player.currentTime = Math.max(0, Math.min(duration, currentTime + delta)); } catch {} }
+              }}
+              accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
               style={{ flex: 1, height: 24, justifyContent: 'center' }}>
-              <View style={{ height: 4, borderRadius: 2, backgroundColor: T.fillTertiary, overflow: 'hidden' }}>
-                <View style={{ width: `${frac * 100}%`, height: '100%', borderRadius: 2, backgroundColor: T.brand }} />
-              </View>
+              <ProgressBar value={frac} height={4} color={T.brand} accessibilityLabel={tr('Позиция воспроизведения')} />
             </View>
             <Text style={[ty.caption2, { color: T.labelSecondary, width: 38 }]} numberOfLines={1}>{fmtTime(duration)}</Text>
           </View>

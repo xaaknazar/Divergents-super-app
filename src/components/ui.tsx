@@ -138,7 +138,9 @@ export function ListRow({
   );
   if (onPress) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={title}
+      <Pressable onPress={onPress} accessibilityRole="button"
+        // Announce the whole row (title, subtitle, value), not just the title.
+        accessibilityLabel={[title, subtitle, detail].filter(Boolean).join(', ') || undefined}
         style={({ pressed }) => [rowStyle, { opacity: pressed ? 0.6 : 1 }]}>
         {inner}
       </Pressable>

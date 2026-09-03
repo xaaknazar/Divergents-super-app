@@ -8,7 +8,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
-import { ty } from '../../components/ui';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { useChannel } from '../../state/ChannelContext';
 import { tr } from '../../state/LanguageContext';
@@ -17,7 +16,7 @@ import { CommunityStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<CommunityStackParams, 'Channels'>;
 
 export function ChannelsScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { channels, loading, error, reload, isJoined, unread, postsByChannel } = useChannel();
 
   return (

@@ -27,6 +27,10 @@ export function useResume() {
   const [answers, setAnswers] = useState<ResumeAnswers>({});
   const [hydrated, setHydrated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Есть ли правки, которые ещё не дошли до Talentslab. Локально всё сохранено
+  // всегда (setField пишет в хранилище синхронно), поэтому «грязным» считаем
+  // только то, что не отправлено на сервер после последнего успешного submit.
+  const [dirty, setDirty] = useState(false);
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
   const answersRef = useRef(answers);
@@ -95,9 +99,24 @@ export function useResume() {
     });
   }), []);
 
-  const setField = useCallback((key: string, value: any) => {
+  /**
+   * `opts.silent` — техническая подстановка (например, подтверждённая почта из
+   * Clerk), а не правка человека: она не должна делать анкету «несохранённой».
+   */
+  const setField = useCallback((key: string, value: any, opts?: { silent?: boolean }) => {
     setAnswers((p) => { const n = { ...p, [key]: value }; saveJSON(KEY, n); return n; });
+    if (!opts?.silent) setDirty(true);
   }, []);
+
+  // Ответы человека вместе с тем, что уже лежит на сервере. Проверять доступ
+  // нужно именно по этому объединению: анкету могли заполнить на сайте, и на
+  // новом устройстве локальных ответов ещё нет.
+  const mergedAnswers: ResumeAnswers = (() => {
+    const src: any = live && profile?.resume ? profile.resume : {};
+    const out: ResumeAnswers = { ...answers };
+    for (const k of ALL_KEYS) if (isEmpty(out[k]) && !isEmpty(src[k])) out[k] = src[k];
+    return out;
+  })();
 
   const completeness = (() => {
     // Count a required field as filled if the user has it locally OR the server
@@ -129,7 +148,7 @@ export function useResume() {
       const ok = await send(answers);
       // The Talentslab profile is cached on-device; drop it so the next read
       // fetches the freshly saved anketa instead of showing stale values.
-      if (ok) { try { await saveJSON('dvg.talentProfileCache.v1', null); } catch {} }
+      if (ok) { setDirty(false); try { await saveJSON('dvg.talentProfileCache.v1', null); } catch {} }
       // Сообщаем всем экранам, что анкета изменилась — они обновятся сразу,
       // без перезапуска приложения.
       emitProfileChanged();
@@ -159,5 +178,5 @@ export function useResume() {
     });
   }, [hydrated, send]);
 
-  return { answers, setField, completeness, submit, submitting, hydrated };
+  return { answers, mergedAnswers, setField, completeness, submit, submitting, hydrated, dirty };
 }

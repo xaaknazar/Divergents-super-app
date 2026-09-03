@@ -4,11 +4,13 @@ import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PageIntro } from '../../components/PageIntro';
-import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { NavBarLarge } from '../../components/headers';
+import { ResumeCallout } from '../../components/ResumeCallout';
 import { SF } from '../../components/SFIcon';
-import { Chip, SectionHeader, ty } from '../../components/ui';
+import { Chip, SectionHeader } from '../../components/ui';
 import { CourseCardPremium, FeaturedCard } from '../../components/CourseCardPremium';
-import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
+import { CourseGridSkeleton, ListSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
+import { minTouch } from '../../theme/tokens';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useNotifications } from '../../state/NotificationsContext';
@@ -19,17 +21,19 @@ import { useDownloads } from '../../state/downloads';
 import { useUser } from '@clerk/clerk-expo';
 import { Logo } from '../../components/Logo';
 import { LinearGradient } from 'expo-linear-gradient';
+import { coursesWord, formatGiftDate } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
+import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
 
 export function LMSHomeScreen({ navigation }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { courses, loading, error, reload, source, progress } = useCourses();
   const my = useMyCourses();
   const { unread } = useNotifications();
   const { t } = useLang();
-  const { feature } = useRole();
+  const { feature, gift } = useRole();
   const { user } = useUser();
   const { profile, live } = useTalentProfile();
   const downloads = useDownloads();
@@ -74,10 +78,24 @@ export function LMSHomeScreen({ navigation }: Props) {
 
   const showSearch = !query && cat === 'Все';
 
+  // Стартовая акция: показываем, только если она идёт и этот аккаунт под неё
+  // подходит. Нажатие ведёт в первый подаренный курс.
+  const giftCourseId = gift.active && gift.eligible ? gift.courseIds[0] ?? null : null;
+  const giftSubtitle = useMemo(() => {
+    const n = gift.courseIds.length;
+    const line = `${coursesWord(n)} ${n === 1 ? 'открыт' : 'открыты'} бесплатно`;
+    const date = formatGiftDate(gift.until);
+    return date ? `${line} — до ${date}` : line;
+  }, [gift.courseIds.length, gift.until]);
+
   return (
     <Screen largeTitle={t('tab_learn')} onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
       <PageIntro page="lms" />
-      <NavBarLarge title={t('tab_learn')} trailing={<HeaderIcon name="person.crop.circle.fill" color={T.brand} size={48} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
+      <NavBarLarge title={t('tab_learn')} trailing={<ProfileAvatarButton onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
+
+      <View style={{ paddingHorizontal: 16 }}>
+        <ResumeCallout />
+      </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 16 }}>
         <Logo size={36} />
@@ -86,7 +104,9 @@ export function LMSHomeScreen({ navigation }: Props) {
             {displayName ? `Привет, ${displayName}` : 'Divergents'}
           </Text>
           <Text style={[ty.headline, { color: T.label, marginTop: 2 }]} numberOfLines={1}>
-            {courses.length ? `${courses.length} курсов · non-stop development` : 'Non-stop development'}
+            {/* «non-stop development» — часть логотипа (она же на заставке),
+                поэтому не переводится и не склоняется. */}
+            {courses.length ? `${coursesWord(courses.length)} · non-stop development` : 'Non-stop development'}
           </Text>
         </View>
       </View>
@@ -108,17 +128,21 @@ export function LMSHomeScreen({ navigation }: Props) {
 
       {/* Search (iOS fill style) */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, paddingHorizontal: 12, height: 42 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, paddingLeft: 12, paddingRight: query ? 0 : 12, minHeight: minTouch }}>
           <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder={t('search_course')}
             placeholderTextColor={T.labelTertiary}
-            style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]}
+            accessibilityLabel={t('search_course')}
+            style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0, minHeight: minTouch }]}
           />
           {query ? (
-            <Pressable onPress={() => setQuery('')} hitSlop={8}><SF name="xmark" size={15} color={T.labelTertiary} /></Pressable>
+            <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Очистить поиск"
+              style={({ pressed }) => ({ width: minTouch, height: minTouch, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1 })}>
+              <SF name="xmark.circle.fill" size={17} color={T.labelTertiary} />
+            </Pressable>
           ) : null}
         </View>
       </View>
@@ -128,11 +152,31 @@ export function LMSHomeScreen({ navigation }: Props) {
         {categories.map((c) => <Chip key={c} label={c} active={cat === c} onPress={() => setCat(c)} />)}
       </ScrollView>
 
+      {/* Подарочные курсы стартовой акции. Отдельного фича-флага у баннера нет:
+          он часть «Обучения» и исчезает вместе с разделом. */}
+      {giftCourseId ? (
+      <Pressable onPress={() => navigation.navigate('CourseDetail', { courseId: giftCourseId })}
+        accessibilityRole="button" accessibilityLabel={`Подарок новым участникам. ${giftSubtitle}`}
+        style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
+        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <SF name="gift.fill" size={23} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Подарок новым участникам</Text>
+            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>{giftSubtitle}</Text>
+          </View>
+          <SF name="chevron.right" size={15} color={T.labelTertiary} />
+        </LinearGradient>
+      </Pressable>
+      ) : null}
+
       {/* Books library entry — compact card with a gradient background.
           Раздел можно выключить в админ-панели сайта. */}
       {feature('books') ? (
       <Pressable onPress={() => navigation.navigate('Books')}
-        style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden' }}>
+        accessibilityRole="button" accessibilityLabel="Библиотека книг" accessibilityHint="Каталог, рецензии и ИИ-советник по книгам"
+        style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
         <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="book.fill" size={23} color="#fff" />
@@ -154,8 +198,17 @@ export function LMSHomeScreen({ navigation }: Props) {
         <>
           {source === 'mock' ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 20, marginBottom: 12, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(255,149,0,0.12)' }}>
-              <SF name="wifi.slash" size={11} color={T.orange} />
-              <Text style={[ty.caption2Em, { color: T.orange }]} numberOfLines={1}>{t('demo_mode')}</Text>
+              <SF name="wifi.slash" size={11} color={T.orangeText} />
+              <Text style={[ty.caption2Em, { color: T.orangeText }]} numberOfLines={1}>{t('demo_mode')}</Text>
+            </View>
+          ) : null}
+
+          {/* «Мои курсы» still loading: hold the space with a skeleton so the
+              catalog below doesn't jump down once the owned list arrives. */}
+          {showSearch && my.isSignedIn && my.loading && !my.ready ? (
+            <View style={{ marginBottom: 18 }}>
+              <SectionHeader title={t('my_courses')} />
+              <ListSkeleton rows={2} />
             </View>
           ) : null}
 
@@ -197,6 +250,7 @@ export function LMSHomeScreen({ navigation }: Props) {
               <SectionHeader title={t('recommended')} />
               <FeaturedCard
                 course={featured}
+                showPrice={feature('purchases')}
                 onPress={() => navigation.navigate('CourseDetail', { courseId: featured.id })}
               />
             </View>
@@ -211,6 +265,7 @@ export function LMSHomeScreen({ navigation }: Props) {
                   course={c}
                   owned={c.id in ownedProgress}
                   progress={ownedProgress[c.id]}
+                  showPrice={feature('purchases')}
                   onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })}
                 />
               </View>

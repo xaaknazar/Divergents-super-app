@@ -45,5 +45,8 @@ export interface Course {
   source?: 'live' | 'mock';
   serverProgress?: number; // 0..100 from the website (owned courses)
   owned?: boolean;         // true once the owned-course detail endpoint confirmed access
+  // Курс подарен по стартовой акции. Поле необязательное: старый сервер его не
+  // присылает, и приложение работает как раньше.
+  gifted?: boolean;
   attachments?: { id: string; name: string; url: string }[];
 }

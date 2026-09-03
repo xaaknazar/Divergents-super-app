@@ -7,8 +7,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PageIntro } from '../../components/PageIntro';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
+import { ResumeCallout } from '../../components/ResumeCallout';
+import { useResumeAccess } from '../../state/useResumeAccess';
 import { SF } from '../../components/SFIcon';
-import { SectionHeader, ListSection, Capsule, Chip, PrimaryButton, ty } from '../../components/ui';
+import { SectionHeader, ListSection, Capsule, Chip, PrimaryButton } from '../../components/ui';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { Logo } from '../../components/Logo';
 import { useChallenge } from '../../state/ChallengeContext';
@@ -27,6 +29,8 @@ import { CommunityStackParams } from '../../navigation/types';
 import { useLang, tr } from '../../state/LanguageContext';
 import { useRole } from '../../state/useRole';
 import { hTap } from '../../lib/haptics';
+import * as pl from '../../data/plural';
+import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
@@ -44,7 +48,7 @@ const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips',
 const SECTION_FEATURE: Record<number, string> = { 1: 'channels', 3: 'trips', 4: 'sport' };
 
 export function CommunityHomeScreen({ navigation, route }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
   const { reload: reloadChannels } = useChannel();
@@ -119,12 +123,16 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       <NavBarLarge title={t('community')} trailing={(
         <>
           {canCreate ? <HeaderIcon name="plus" color={T.brand} label="Создать" onPress={() => openCreateSheet(navigation)} /> : null}
-          <HeaderIcon name="person.crop.circle.fill" color={T.brand} size={48} label="Профиль" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
+          <ProfileAvatarButton onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
         </>
       )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Logo size={22} />
         <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>{t('community_tagline')}</Text>
+      </View>
+
+      <View style={{ paddingHorizontal: 16 }}>
+        <ResumeCallout area="community" />
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
@@ -145,7 +153,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
 
 // Small inline loading spinner row.
 function Loading() {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return <View style={{ paddingVertical: 28, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>;
 }
 
@@ -157,7 +165,7 @@ function EmptyOrError({ error, onRetry, icon, title, subtitle }: { error: boolea
 
 // ─── Active challenge card (only when there's a live one) ───────────
 function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { challenge: c, teamPoints, pointsToday } = useChallenge();
   const open = () => navigation.navigate('ChallengeDetail', { challengeId: c.id });
   const stats = [
@@ -201,14 +209,6 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
   );
 }
 
-// Russian plural: ruPlural(1,'день','дня','дней') → 'день', (3)→'дня', (10)→'дней'.
-function ruPlural(n: number, one: string, few: string, many: string): string {
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
-  return many;
-}
-
 // White text over a brand gradient can wash out where the gradient goes light
 // (esp. dark-mode brandAccent). This shadow keeps every white label legible.
 const HERO_TEXT_SHADOW = { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 } as const;
@@ -220,7 +220,7 @@ function PersonalActivityCard({ icon, eyebrow, title, subtitle, onPress }: {
   subtitle: string;
   onPress: () => void;
 }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${eyebrow}: ${title}`}
       style={({ pressed }) => ({
@@ -246,12 +246,12 @@ function PersonalActivityCard({ icon, eyebrow, title, subtitle, onPress }: {
 // Shared by the home feed and the Челленджи tab so an open challenge always
 // renders as one full-width card — never a narrow, left-floating carousel item.
 function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const left = daysUntil(ch.startISO);
   // All team spots taken → recruitment done, waiting for the start.
   const full = ch.teamList.length > 0 && teamsNeed(ch.teamList) === 0;
   const countdown = left > 0
-    ? `${tr('Старт через')} ${left} ${ruPlural(left, 'день', 'дня', 'дней')}${ch.startLabel ? ` · ${ch.startLabel}` : ''}`
+    ? `${tr('Старт через')} ${pl.days(left)}${ch.startLabel ? ` · ${ch.startLabel}` : ''}`
     : tr('Старт скоро');
   return (
     <Pressable onPress={onPress}
@@ -276,8 +276,8 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
         {ch.subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]} numberOfLines={2}>{ch.subtitle}</Text> : null}
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           <Capsule bg="rgba(52,199,89,0.14)" color={T.green}><SF name="globe" size={11} color={T.green} />{tr('Онлайн')}</Capsule>
-          <Capsule bg={T.brandTinted} color={T.brand}><SF name="flame.fill" size={11} color={T.brand} />{ch.durationDays} {ruPlural(ch.durationDays, 'день', 'дня', 'дней')}</Capsule>
-          <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{ch.participants} {ruPlural(ch.participants, 'заявка', 'заявки', 'заявок')}</Capsule>
+          <Capsule bg={T.brandTinted} color={T.brand}><SF name="flame.fill" size={11} color={T.brand} />{pl.days(ch.durationDays)}</Capsule>
+          <Capsule bg={T.fillTertiary} color={T.label}><SF name="person.3.fill" size={11} color={T.labelSecondary} />{pl.applications(ch.participants)}</Capsule>
           <Capsule bg="rgba(255,59,48,0.12)" color={T.red}>{ch.maxFlags} 🚩 {tr('вылет')}</Capsule>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
@@ -298,7 +298,7 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
 // ─── Главная ────────────────────────────────────────────────────────
 function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { t } = useLang();
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { channels, error: channelsError, reload: reloadChannels } = useChannel();
   const { isParticipant } = useChallenge();
   const { has, ready, statusOf } = useEnrollment();
@@ -403,7 +403,7 @@ function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation:
 // Full-width trip card — same footprint as the challenge card. Uses the photo
 // when there is one, otherwise a brand gradient header (trips have no image yet).
 function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <Pressable onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
       style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
@@ -446,7 +446,7 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
 }
 
 function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trips: Trip[] | null; error: boolean; onRetry: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   if (trips === null) return <Loading />;
   if (trips.length === 0) return <EmptyOrError error={error} onRetry={onRetry} icon="map" title={tr('Пока ничего нет')} subtitle={tr('Поездки сообщества появятся здесь.')} />;
   return (
@@ -475,8 +475,9 @@ function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trip
 
 // ─── Спорт ──────────────────────────────────────────────────────────
 function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; error: boolean; onRetry: () => void }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { has, add, remove } = useEnrollment();
+  const { require: requireResume } = useResumeAccess();
   const { getToken } = useAuth();
   const [busy, setBusy] = useState<string | null>(null);
   if (sport === null) return <Loading />;
@@ -504,8 +505,11 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
             </View>
             <Pressable disabled={busy === sp.id} onPress={async () => {
               if (busy) return;
-              setBusy(sp.id);
               const joining = !on;
+              // Записаться можно только с заполненной анкетой; отменить запись —
+              // всегда: держать человека в активности насильно было бы странно.
+              if (joining && !requireResume('community')) return;
+              setBusy(sp.id);
               // Оптимистично — но с откатом, если сервер отказал.
               if (joining) add(k); else remove(k);
               try {
@@ -538,7 +542,7 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
 
 // ─── Каналы (Telegram-style список) ─────────────────────────────────
 function ChannelTab({ navigation }: { navigation: Nav }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { t } = useLang();
   const { channels, loading, error, reload } = useChannel();
   return (
@@ -552,7 +556,7 @@ function ChannelTab({ navigation }: { navigation: Nav }) {
 }
 
 function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { isJoined, unread, postsByChannel } = useChannel();
   const joined = isJoined(channel.id);
   const count = unread(channel.id);

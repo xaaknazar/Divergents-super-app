@@ -569,7 +569,13 @@ export async function uploadProfilePhoto(
     });
     if (res.ok) {
       const d = await res.json().catch(() => null);
-      return { url: d?.photoUrl ?? '' };
+      const url = typeof d?.photoUrl === 'string' ? d.photoUrl.trim() : '';
+      // Пустой photoUrl означает, что сервер файл не сохранил (не записался на
+      // диск, либо ответ вообще не тот). Раньше это считалось успехом, и
+      // приложение показывало локальный файл с телефона — фото выглядело
+      // изменённым, хотя на сервере оставалось прежнее.
+      if (!url) return { error: 'Сервер не сохранил фото. Попробуйте ещё раз.' };
+      return { url };
     }
     if (res.status === 404) return { error: 'Анкета не найдена — сначала сохраните анкету.' };
     if (res.status === 422) return { error: 'Нужен JPG, PNG или WebP до 8 МБ.' };

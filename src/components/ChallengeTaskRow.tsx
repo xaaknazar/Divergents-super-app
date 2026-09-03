@@ -4,7 +4,6 @@
 import React from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import { View, Text, Pressable } from 'react-native';
-import { ty } from '../theme/tokens';
 import { SF } from './SFIcon';
 import { Capsule } from './ui';
 import { ChallengeTask, taskDone, taskPoints } from '../data/community';
@@ -23,7 +22,7 @@ export function ChallengeTaskRow({
   step?: number;
   disabled?: boolean;
 }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const done = taskDone(task);
   const pts = taskPoints(task);
 
@@ -96,7 +95,7 @@ export function ChallengeTaskRow({
 }
 
 function Stepper({ label, accessibilityLabel, onPress, primary, disabled }: { label: string; accessibilityLabel: string; onPress: () => void; primary?: boolean; disabled?: boolean }) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   return (
     <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={{ disabled }}
       // Visually compact, but hitSlop keeps the real touch target at ~44pt (HIG).

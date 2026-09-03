@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ListRow, PrimaryButton, ty } from '../../components/ui';
+import { Capsule, ListSection, ListRow, PrimaryButton } from '../../components/ui';
 import { GardnerChart } from '../../components/GardnerChart';
 import { ErrorState } from '../../components/StateViews';
 import { useTalentProfile } from '../../state/useTalentProfile';
@@ -31,7 +31,7 @@ type Props = {
 const stepIndex = (key: string) => Math.max(0, RESUME_STEPS.findIndex((s) => s.key === key));
 
 export function TalentProfileScreen({ navigation, route }: Props) {
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   useLang();
   const { profile: realProfile, loading, unavailable, source, reload } = useTalentProfile();
   const { completeness: localCompleteness } = useResume();

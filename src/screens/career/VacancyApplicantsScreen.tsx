@@ -7,7 +7,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ty } from '../../components/ui';
+import { Capsule, ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { fetchApplicants, decideApplication, Applicant, AppStatus } from '../../data/career';
 import { resumeRows } from '../../data/talentslab';
@@ -23,7 +23,7 @@ const STATUS_META: Record<AppStatus, { label: string; bg: string; color: string 
 
 export function VacancyApplicantsScreen({ route, navigation }: Props) {
   const { jobId } = route.params;
-  const { T } = useTheme();
+  const { T, ty } = useTheme();
   const { getToken } = useAuth();
   const [items, setItems] = useState<Applicant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,6 +189,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
 }
 
 function Row({ T, k, v }: { T: any; k: string; v: string }) {
+  const { ty } = useTheme();
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
       <Text style={[ty.subhead, { color: T.labelSecondary, flexShrink: 0, maxWidth: '45%' }]}>{k}</Text>

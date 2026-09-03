@@ -49,27 +49,39 @@ function utf8Bytes(s: string): number {
   return bytes;
 }
 
-export async function loadJSON<T>(key: string, fallback: T): Promise<T> {
+/**
+ * Чтение с честным признаком неудачи.
+ *
+ * `loadJSON` возвращает fallback и при «ничего не сохранено», и при сбое чтения
+ * — по такому ответу нельзя решить, можно ли перезаписывать ключ. Из-за этого
+ * история чата стиралась: одно неудачное чтение выглядело как «истории нет», и
+ * следующее сохранение затирало файл пустотой.
+ */
+export async function readJSON<T>(key: string, fallback: T): Promise<{ value: T; ok: boolean }> {
   try {
     await queues.get(key)?.catch(() => {});
     const stored = await SecureStore.getItemAsync(key);
-    if (!stored) return fallback;
+    if (!stored) return { value: fallback, ok: true }; // пусто — это успешное чтение
     if (stored === FILE_MARKER || stored.startsWith(FILE_MARKER_PREFIX)) {
-      if (!documentDirectory) return fallback;
+      if (!documentDirectory) return { value: fallback, ok: false };
       const slot = stored.startsWith(FILE_MARKER_PREFIX) ? stored.slice(FILE_MARKER_PREFIX.length) : 'legacy';
-      if (slot !== 'a' && slot !== 'b' && slot !== 'legacy') return fallback;
-      return JSON.parse(await readAsStringAsync(fileUri(key, slot))) as T;
+      if (slot !== 'a' && slot !== 'b' && slot !== 'legacy') return { value: fallback, ok: false };
+      return { value: JSON.parse(await readAsStringAsync(fileUri(key, slot))) as T, ok: true };
     }
     const parsed = JSON.parse(stored) as T;
     // Lazy migration from the old all-SecureStore implementation.
     if (FILE_BACKED_KEYS.has(key) || utf8Bytes(stored) > SECURE_STORE_MAX_BYTES) {
       await saveJSON(key, parsed);
     }
-    return parsed;
+    return { value: parsed, ok: true };
   } catch (error) {
     if (__DEV__) console.warn(`[persist] Failed to load "${key}"`, error);
-    return fallback;
+    return { value: fallback, ok: false };
   }
+}
+
+export async function loadJSON<T>(key: string, fallback: T): Promise<T> {
+  return (await readJSON(key, fallback)).value;
 }
 
 export async function saveJSON(key: string, val: unknown): Promise<void> {

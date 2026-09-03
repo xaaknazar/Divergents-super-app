@@ -58,7 +58,13 @@ export async function unregisterPushToken(getToken: () => Promise<string | null>
   } catch {}
 }
 
-export function usePush() {
+/**
+ * @param enabled  Gate for the permission prompt + token registration. Pass
+ *   `true` only once the user is inside the main app (past onboarding, auth and
+ *   the nickname gate) — asking for push permission on a gate screen is both
+ *   confusing and burns the one-shot iOS prompt. Tap routing is unaffected.
+ */
+export function usePush(enabled = true) {
   const { isSignedIn, getToken, isLoaded } = useAuth();
   // Keep the latest getToken / auth state in refs so the effect can depend only
   // on isSignedIn without re-subscribing each time Clerk hands back a new fn.
@@ -67,11 +73,12 @@ export function usePush() {
   const signedInRef = useRef(!!isSignedIn);
   signedInRef.current = !!isSignedIn;
 
-  // Register the device token with the backend.
+  // Register the device token with the backend (only when enabled — see above).
+  const register = !!isSignedIn && enabled;
   useEffect(() => {
     let alive = true;
     (async () => {
-      if (!isSignedIn) return;
+      if (!register) return;
       try {
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('challenge-reminders', {
@@ -91,7 +98,7 @@ export function usePush() {
       } catch {}
     })();
     return () => { alive = false; };
-  }, [isSignedIn]);
+  }, [register]);
 
   // Handle taps: cold-start (app launched by a tap) + while running.
   //
