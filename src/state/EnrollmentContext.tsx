@@ -7,7 +7,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
-import { fetchMySport, fetchMyTrips, EnrollStatus } from '../data/api';
+import { fetchMySport, fetchMyTrips, fetchMyMeetups, EnrollStatus } from '../data/api';
 
 const KEY = 'dvg.enrollments';
 
@@ -16,7 +16,10 @@ export type { EnrollStatus };
 type EnrollMap = Record<string, EnrollStatus>;
 
 // Ключи, за которые отвечает сервер: их список он и перезаписывает целиком.
-const isServerKey = (k: string) => k.startsWith('trip:') || k.startsWith('sport:');
+// Ключи, правду о которых знает сервер: его ответ их замещает целиком.
+// Всё остальное (избранное, закладки) живёт только на устройстве.
+const isServerKey = (k: string) =>
+  k.startsWith('trip:') || k.startsWith('sport:') || k.startsWith('meetup:');
 
 // На диске раньше лежал string[]. Читаем оба формата, чтобы обновление
 // приложения не стирало локальные закладки и избранное.
@@ -77,7 +80,9 @@ export function EnrollmentProvider({ children }: { children: React.ReactNode }) 
     (async () => {
       try {
         const token = await getToken();
-        const [trips, sport] = await Promise.all([fetchMyTrips(token), fetchMySport(token)]);
+        const [trips, sport, meetups] = await Promise.all([
+          fetchMyTrips(token), fetchMySport(token), fetchMyMeetups(token),
+        ]);
         if (!alive) return;
         setMap((previous) => {
           const next: EnrollMap = {};
@@ -85,6 +90,7 @@ export function EnrollmentProvider({ children }: { children: React.ReactNode }) 
           for (const [k, s] of Object.entries(previous)) if (!isServerKey(k)) next[k] = s;
           for (const t of trips) next[`trip:${t.id}`] = t.status;
           for (const s of sport) next[`sport:${s.id}`] = s.status;
+          for (const m of meetups) next[`meetup:${m.id}`] = m.status;
           saveJSON(KEY, next);
           return next;
         });

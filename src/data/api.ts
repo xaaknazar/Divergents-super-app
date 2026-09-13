@@ -12,6 +12,7 @@ import { arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 // second hardcoded literal.
 import { API_BASE } from '../config';
 import * as pl from './plural';
+import { netFetch, netJson } from './net';
 export { API_BASE };
 
 // A Lesson that also carries an optional offline-audio URL (Mux audio.m4a).
@@ -180,19 +181,10 @@ function mapDetail(c: ApiCourseDetail): Course {
   };
 }
 
+// Чтение — через netJson: он повторяет запрос при обрыве связи. Первый запрос
+// после выхода из фона часто падает мгновенно, хотя Wi-Fi в порядке.
 async function getJson(path: string, timeoutMs = 12000): Promise<any> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      signal: ctrl.signal,
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } finally {
-    clearTimeout(t);
-  }
+  return netJson(`${API_BASE}${path}`, { timeoutMs });
 }
 
 export async function fetchCatalog(): Promise<Course[]> {
@@ -225,31 +217,17 @@ export function formatPrice(price: number | null | undefined): string {
 
 // ─── Authenticated (Clerk) endpoints ──────────────────────────────
 async function getJsonAuthed(path: string, token: string, timeoutMs = 12000): Promise<any> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      signal: ctrl.signal,
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } finally {
-    clearTimeout(t);
-  }
+  return netJson(`${API_BASE}${path}`, {
+    timeoutMs,
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 // fetch() with an abort-timeout. React Native's fetch has NO built-in timeout,
 // so a stalled socket otherwise hangs the caller — and its loading spinner —
 // forever. Every bare network helper below routes through this.
 async function timedFetch(url: string, init?: RequestInit, timeoutMs = 12000): Promise<Response> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: ctrl.signal });
-  } finally {
-    clearTimeout(t);
-  }
+  return netFetch(url, { ...init, timeoutMs });
 }
 
 export async function fetchMyCourses(token: string): Promise<Course[]> {
@@ -274,12 +252,26 @@ export async function fetchOwnedDetail(id: string, token: string): Promise<Cours
   };
 }
 
-// Передаём псевдоним из анкеты (Talentslab) на сайт, чтобы он подставлялся в
-// комментариях, рецензиях, отзывах о местах и в челлендже. Уникальность
-// проверяет Talentslab при сохранении анкеты; здесь 409 означает, что сайт уже
-// знает этот псевдоним за другим аккаунтом — молча выходим, анкета не ломается.
-//   POST /api/mobile/me/nickname  body { nickname }
-export async function syncNicknameToSite(nickname: string, token: string): Promise<boolean> {
+// Передаём псевдоним и фото из анкеты (Talentslab) на сайт, чтобы они
+// подставлялись в комментариях, рецензиях, отзывах о местах и в челлендже.
+// Уникальность псевдонима проверяет Talentslab при сохранении анкеты; здесь 409
+// означает, что сайт уже знает этот псевдоним за другим аккаунтом — молча
+// выходим, анкета не ломается.
+//
+// Фото передаём ссылкой: файл уже лежит на CDN Talentslab или Clerk, и
+// перезаливать его некуда и незачем. Сайт принимает ссылку только со своих
+// доменов — чужую молча проигнорирует.
+//   POST /api/mobile/me/nickname  body { nickname?, photoUrl? }
+export async function syncProfileToSite(
+  patch: { nickname?: string; photoUrl?: string | null },
+  token: string,
+): Promise<boolean> {
+  const body: Record<string, unknown> = {};
+  if (patch.nickname) body.nickname = patch.nickname;
+  // null — осознанный сброс фото, поэтому проверяем именно на undefined.
+  if (patch.photoUrl !== undefined) body.photoUrl = patch.photoUrl;
+  if (Object.keys(body).length === 0) return true;
+
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 12000);
   try {
@@ -287,7 +279,7 @@ export async function syncNicknameToSite(nickname: string, token: string): Promi
       method: 'POST',
       signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ nickname }),
+      body: JSON.stringify(body),
     });
     return res.ok;
   } catch {
@@ -295,6 +287,11 @@ export async function syncNicknameToSite(nickname: string, token: string): Promi
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** @deprecated Осталась для вызовов, которые шлют только псевдоним. */
+export function syncNicknameToSite(nickname: string, token: string): Promise<boolean> {
+  return syncProfileToSite({ nickname }, token);
 }
 
 // Tell the website a lesson/chapter is completed so progress syncs across
@@ -674,6 +671,10 @@ export function joinFailureMessage(r: PostResult): { title: string; body: string
   if (r.reason === 'closed') {
     return { title: 'Набор закрыт', body: 'Организатор больше не принимает заявки.' };
   }
+  // Ссылка из старого уведомления ведёт на событие, которое уже состоялось.
+  if (r.reason === 'past') {
+    return { title: 'Событие уже прошло', body: 'Запись закрыта: дата события позади.' };
+  }
   if (r.status === 401 || r.reason === 'no-token') {
     return { title: 'Нужен вход', body: 'Войдите в аккаунт, чтобы записаться.' };
   }
@@ -699,6 +700,8 @@ async function postAuthed(path: string, token: string | null, body: any): Promis
 
 export const createChallenge = (token: string | null, data: any) => postAuthed('/api/mobile/challenges', token, data);
 export const createTrip = (token: string | null, data: any) => postAuthed('/api/mobile/trips', token, data);
+/** Мероприятие — встреча сообщества (на сервере Meetup). */
+export const createMeetup = (token: string | null, data: any) => postAuthed('/api/mobile/meetups', token, data);
 export const createChannel = (token: string | null, data: any) => postAuthed('/api/mobile/channels', token, data);
 
 export interface LiveTrip { id: string; title: string; region?: string | null; date?: string | null; days: number; price?: string | null; spots: number; difficulty?: string | null; description?: string | null; meetPlace?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
@@ -747,6 +750,19 @@ export async function fetchLiveTrips(): Promise<LiveTrip[]> {
 }
 export const applyToTrip = (token: string | null, tripId: string): Promise<PostResult> =>
   requestAuthed('POST', `/api/mobile/trips/${encodeURIComponent(tripId)}/apply`, token, {});
+
+// ───────── Мероприятия (встречи сообщества) ─────────
+export async function fetchMyMeetups(token: string | null): Promise<MyEnrollment[]> {
+  if (!token) return [];
+  try {
+    const r = await timedFetch(`${API_BASE}/api/mobile/me/meetups`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return normalizeEnrollments(d?.meetups, d?.meetupIds);
+  } catch { return []; }
+}
+export const applyToMeetup = (token: string | null, meetupId: string): Promise<PostResult> =>
+  requestAuthed('POST', `/api/mobile/meetups/${encodeURIComponent(meetupId)}/apply`, token, {});
 
 // ───────── Server channels (Telegram-style): membership, requests, posts ─────────
 export interface ServerChannelPost { id: string; type: 'audio' | 'article'; title: string; body?: string | null; audioUrl?: string | null; createdAt: string; reactions?: Record<string, number>; myReaction?: string | null }

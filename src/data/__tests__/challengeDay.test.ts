@@ -1,5 +1,5 @@
 import { Challenge, DEFAULT_CHALLENGE } from '../community';
-import { expectedChallengeDay, isChallengeDayLocked, pastDeadlineNow } from '../challengeDay';
+import { expectedChallengeDay, isChallengeDayLocked, pastDeadlineNow, challengeDayStartMs } from '../challengeDay';
 
 // Алматы = UTC+5: 23:00 по Алматы — это 18:00 UTC.
 const T = (iso: string) => Date.parse(iso);
@@ -72,5 +72,40 @@ describe('день челленджа на клиенте', () => {
 
   it('демо-челлендж не блокируется', () => {
     expect(isChallengeDayLocked(DEFAULT_CHALLENGE, T('2026-09-05T18:30:00Z'))).toBe(false);
+  });
+});
+
+// Начало дня нужно, чтобы спросить у шагомера шаги «за сегодня». Ошибка здесь
+// не видна на глаз: число просто окажется чужим — либо потеряется вечер
+// накануне, либо в день попадут шаги из позавчера.
+describe('начало дня челленджа', () => {
+  it('днём отсчёт идёт от 23:01 ПРЕДЫДУЩИХ суток', () => {
+    const c = challenge();
+    // Полдень 6 сентября по Алматы = 07:00 UTC.
+    expect(challengeDayStartMs(c, T('2026-09-06T07:00:00Z')))
+      .toBe(T('2026-09-05T18:01:00Z'));
+  });
+
+  it('в 23:01 начинается новый день, а в 23:00 — ещё старый', () => {
+    const c = challenge();
+    expect(challengeDayStartMs(c, T('2026-09-05T18:00:59Z')))
+      .toBe(T('2026-09-04T18:01:00Z'));
+    expect(challengeDayStartMs(c, T('2026-09-05T18:01:00Z')))
+      .toBe(T('2026-09-05T18:01:00Z'));
+  });
+
+  it('после полуночи день не перезапускается', () => {
+    const c = challenge();
+    // 00:30 по Алматы 6 сентября = 19:30 UTC 5 сентября. День начался в 23:01
+    // накануне, календарная полночь его не делит.
+    expect(challengeDayStartMs(c, T('2026-09-05T19:30:00Z')))
+      .toBe(T('2026-09-05T18:01:00Z'));
+  });
+
+  it('учитывает дедлайн из настроек челленджа', () => {
+    const c = challenge({ rules: { flagsToEliminate: 3, reportDeadlineHour: 20 } as any });
+    // Дедлайн 20:00 → день переводится в 20:01 Алматы = 15:01 UTC.
+    expect(challengeDayStartMs(c, T('2026-09-06T07:00:00Z')))
+      .toBe(T('2026-09-05T15:01:00Z'));
   });
 });

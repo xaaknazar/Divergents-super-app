@@ -32,7 +32,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const { getPlace, addReview, isFav, toggleFav, reloadPlaces } = usePlaces();
   const [editingReview, setEditingReview] = useState<string | null>(null);
   const { isBlocked, block } = useModeration();
-  const place = getPlace(route.params.placeId);
+  const place = getPlace(route.params?.placeId ?? '');
   const [stars, setStars] = useState(0);
   const [text, setText] = useState('');
   const [reporting, setReporting] = useState(false);

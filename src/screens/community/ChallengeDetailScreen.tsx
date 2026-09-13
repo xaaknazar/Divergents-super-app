@@ -11,10 +11,13 @@ import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
 import { Aurora } from '../../components/Aurora';
-import { Capsule, ListSection, ListRow, PrimaryButton, IconSquircle } from '../../components/ui';
+import { Capsule, ListSection, ListRow, PrimaryButton, SecondaryButton, IconSquircle } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
+import { MemberAvatar } from '../../components/MemberAvatar';
 import { EmptyState, ErrorState } from '../../components/StateViews';
-import { hSuccess } from '../../lib/haptics';
+import { hSuccess, hTap } from '../../lib/haptics';
+import * as pedometer from '../../state/pedometer';
+import { challengeDayStartMs } from '../../data/challengeDay';
 import { useChallenge, RankedMember } from '../../state/ChallengeContext';
 import { useAuth } from '@clerk/clerk-expo';
 import { useRole } from '../../state/useRole';
@@ -25,9 +28,11 @@ import {
   FlagCounts, totalFlags, flagsToEliminate, ChallengeTask, MetricTask, MemberTaskProgress,
   fetchMyChallengeApplications, MyChallengeApplication,
   setTeamChat, broadcastTeam,
+  leaveChallenge, whiteFlagErrorText, NO_WHITE_FLAG,
 } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
+import { fmtInt } from '../../data/format';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeDetail'>;
 
@@ -94,19 +99,16 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   }
   // Daily tracking is private to accepted participants of the active challenge.
   // Если активный челлендж не загрузился, «нет доступа» — ложный вывод: даём повторить.
-  if (meta?.status === 'active' && !isParticipant) {
+  if (meta?.status === 'active' && !isActive) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} />
         {activeError
           ? <ErrorState onRetry={() => { refreshChallenge(); load(); }} />
-          : <EmptyState icon="lock.fill" title={tr('Доступ только участникам')} subtitle={tr('Активный план и результаты доступны участникам этого челленджа.')} actionLabel={tr('Назад')} onAction={() => backToCommunity(navigation)} />}
+          : <EmptyState icon="lock.fill" title={tr('Челлендж уже начался')} subtitle={tr('Доступ открыт только действующим участникам этого челленджа.')} actionLabel={tr('Назад')} onAction={() => backToCommunity(navigation)} />}
       </View>
     );
   }
-  // A server-side active challenge (matched by id) opens the participant tracker.
-  if (meta) return <ActiveChallenge navigation={navigation} />;
-
   // Unknown id: distinguish a load failure (retry) from a genuinely missing one.
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
@@ -129,7 +131,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   const [rulesOpen, setRulesOpen] = useState(false);
   // Высота нижней панели — чтобы контент не уходил под неё (вместо фиксированных 90).
   const [panelH, setPanelH] = useState(0);
-  const { canCreate } = useRole();
+  const { has } = useRole();
   const shareChallenge = () => {
     Share.share({ message: `${meta.title} — челлендж Divergents · ${tr('Старт')} ${meta.startLabel}` }).catch(() => {});
   };
@@ -137,7 +139,11 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   const { getToken, userId } = useAuth();
   // Reviewers: admins/creators, plus a captain of any team in this challenge.
   const isCaptainHere = teams.some((t) => t.captainId && t.captainId === userId);
-  const canReview = canCreate || isCaptainHere;
+  // Разбирать заявки и смотреть анкеты может человек с правом «челленджи» или
+  // капитан — своей команды. `canCreate` сюда не годится: его даёт и право на
+  // поездки, и на спорт, и на каналы.
+  const isChallengeManager = has('challenges');
+  const canReview = isChallengeManager || isCaptainHere;
 
   // The user's own application to THIS challenge (undefined = loading). Drives the
   // CTA: apply once; can't change while pending/approved; re-apply after rejection.
@@ -193,7 +199,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <NavHeader
           transparent tint="#fff" backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)}
-          trailing={canCreate
+          trailing={isChallengeManager
             ? <Pressable onPress={confirmDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel="Удалить челлендж"><SF name="trash.fill" size={19} color="#fff" /></Pressable>
             : <Pressable onPress={shareChallenge} hitSlop={10} accessibilityRole="button" accessibilityLabel={tr('Поделиться')}><SF name="square.and.arrow.up" size={20} color="#fff" /></Pressable>}
         />
@@ -302,7 +308,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
       {/* CTA */}
       <View onLayout={(e) => setPanelH(e.nativeEvent.layout.height)}
         style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator, gap: 10 }}>
-        {canCreate ? (
+        {isChallengeManager ? (
           <Pressable onPress={() => navigation.navigate('ManageChallenge', { challengeId: meta.id })}
             accessibilityRole="button" accessibilityLabel="Управление челленджем"
             style={{ height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
@@ -312,10 +318,10 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         ) : null}
         {canReview ? (
           <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId: meta.id })}
-            accessibilityRole="button" accessibilityLabel={canCreate ? 'Заявки (все команды)' : 'Заявки моей команды'}
+            accessibilityRole="button" accessibilityLabel={isChallengeManager ? 'Заявки (все команды)' : 'Заявки моей команды'}
             style={{ height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="person.2.fill" size={16} color={T.brand} />
-            <Text style={[ty.headline, { color: T.brand }]}>{canCreate ? 'Заявки (все команды)' : 'Заявки моей команды'}</Text>
+            <Text style={[ty.headline, { color: T.brand }]}>{isChallengeManager ? 'Заявки (все команды)' : 'Заявки моей команды'}</Text>
           </Pressable>
         ) : null}
 
@@ -385,14 +391,36 @@ function Row({ icon, label, value }: { icon: any; label: string; value: string }
 // ─── Active challenge (daily tracker) ──────────────────────────────
 function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const { T, ty } = useTheme();
-  const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints, teamFlags, teamPenalty, syncPending, dayLocked } = useChallenge();
+  const { challenge, setMetric, toggleBinary, pointsToday, bonusToday, leaderboard, myRank, teamPoints, teamFlags, teamPenalty, syncPending, dayLocked, refresh: refreshChallenge } = useChallenge();
   const { userId, getToken } = useAuth();
-  const { canCreate } = useRole();
+  const { has } = useRole();
   const c = challenge;
   const insets = useSafeAreaInsets();
+
+  // Открыли трекер — показываем свежее.
+  //
+  // Фоновое обновление идёт раз в пять минут, и этого хватало, пока смотрели
+  // только на себя. Но на этом же экране видны отметки товарищей по команде, а
+  // отмечаться можно и на сайте: человек отмечался там, а в приложении у всех
+  // остальных отметка появлялась через несколько минут — и выглядело это как
+  // «не сохранилось». Заход на экран — единственный момент, когда точно известно,
+  // что данные смотрят прямо сейчас.
+  //
+  // С защитой от частых заходов: тяжёлую часть сервер и так отдаёт из
+  // двадцатисекундного кэша, но сто шестьдесят человек, листающих туда-сюда,
+  // незачем превращать в поток запросов.
+  const lastFocusRefresh = useRef(0);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (Date.now() - lastFocusRefresh.current < 15_000) return;
+      lastFocusRefresh.current = Date.now();
+      refreshChallenge();
+    }, [refreshChallenge]),
+  );
   // Team chat + captain tools.
   const isCaptain = !!c.captainId && c.captainId === userId;
-  const canSeeMemberAnketa = isCaptain || canCreate;
+  // Анкета участника — только капитану своей команды и управляющему челленджем.
+  const canSeeMemberAnketa = isCaptain || has('challenges');
   const [chatOverride, setChatOverride] = useState<string | null>(null);
   const chat = chatOverride ?? c.teamChat ?? null;
   const [textEditor, setTextEditor] = useState<{ title: string; message: string; kind: 'chat' | 'message' } | null>(null);
@@ -444,10 +472,11 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const [ratingMode, setRatingMode] = useState<'overall' | 'today'>('overall');
   const myFlags = c.flags;
   const myEliminated = c.eliminated === true;
+  const whiteFlag = c.whiteFlag ?? NO_WHITE_FLAG;
   // Порог вылета задаёт админ-панель — раньше он был зашит как 3.
   const maxFlags = flagsToEliminate(c.rules);
-  // Выбывшему отметки уже ничего не меняют: сервер их не зачтёт.
-  const tasksLocked = dayLocked || myEliminated;
+  // Выбывшему и вышедшему отметки уже ничего не меняют: сервер их не зачтёт.
+  const tasksLocked = dayLocked || myEliminated || whiteFlag.left;
   const prevDone = useRef(allDone);
   const cel = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -465,9 +494,30 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const finished = c.currentDay >= c.totalDays && c.totalDays > 0;
   const remainingDays = Math.max(0, c.totalDays - c.currentDay);
 
+  // Шаги за день по данным шагомера телефона. null — посчитать нечем: система
+  // не ведёт историю (Android) или человек не дал доступ к движению.
+  const [phoneSteps, setPhoneSteps] = useState<number | null>(null);
+
   // Manual entry for metric tasks (steps / pages): tap the value → type it.
   const promptSet = (t: ChallengeTask) => {
     if (t.kind !== 'metric') return;
+    // Задача про шаги открывается своим окном на обеих платформах: системный
+    // Alert.prompt не умеет показать строку с подсказкой от шагомера, а без неё
+    // человеку опять пришлось бы переписывать число из «Здоровья» руками.
+    if (isActivityTask(t)) {
+      setMetricDraft(String(t.current));
+      setMetricEditor(t);
+      setPhoneSteps(null);
+      void (async () => {
+        if (!(await pedometer.available())) return;
+        if (!(await pedometer.ensurePermission())) return;
+        // Спрашиваем за ДЕНЬ ЧЕЛЛЕНДЖА, а не с полуночи: день идёт с 23:01, и
+        // вечер накануне относится к нему же.
+        const n = await pedometer.stepsBetween(challengeDayStartMs(c), Date.now());
+        setPhoneSteps(n);
+      })();
+      return;
+    }
     if (Platform.OS === 'ios' && typeof (Alert as any).prompt === 'function') {
       (Alert as any).prompt(t.title, `${tr('Введите значение')} (${t.unit})`, [
         { text: tr('Отмена'), style: 'cancel' },
@@ -486,15 +536,50 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
     setMetricEditor(null);
   };
 
-  // «Об условиях выхода» — справка: выйти можно только ПОСЛЕ завершения или
-  // если капитан поднимет белый флаг 🏳️ (серверная сторона). Само действие
-  // «покинуть» в приложении не выполняется, поэтому пункт информационный.
+  // Выход из идущего челленджа — только по белому флагу 🏳️ капитана.
+  //
+  // Флаг даёт ПРАВО выйти, нажимает участник сам: иначе капитан одним касанием
+  // избавлялся бы от неудобного человека, а тот узнавал бы об этом из таблицы.
+  // Раньше этот пункт был чисто справочным — приложение обещало механизм,
+  // которого не существовало.
+  const [leaving, setLeaving] = useState(false);
+  const confirmLeave = () => {
+    Alert.alert(
+      tr('Покинуть челлендж?'),
+      tr('Ваши баллы замрут на сегодняшнем дне. Вернуться в этот челлендж уже не получится — решение окончательное.'),
+      [
+        { text: tr('Остаться'), style: 'cancel' },
+        {
+          text: tr('Выйти'),
+          style: 'destructive',
+          onPress: async () => {
+            setLeaving(true);
+            try {
+              const token = await getToken();
+              const res = await leaveChallenge(c.id, token);
+              if (res.ok) {
+                await refreshChallenge();
+                Alert.alert(tr('Вы вышли из челленджа'), tr('Баллы зафиксированы. История дней остаётся в приложении.'));
+              } else {
+                Alert.alert(tr('Не удалось выйти'), tr(whiteFlagErrorText(res.reason)));
+              }
+            } finally {
+              setLeaving(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const attemptLeave = () => {
+    if (whiteFlag.left) { Alert.alert(tr('Вы уже вышли'), tr('Баллы зафиксированы на дне выхода.')); return; }
     if (myEliminated) { Alert.alert(tr('Вы уже вне челленджа'), tr('Ваши очки зафиксированы до конца сезона.')); return; }
+    if (whiteFlag.raised) { confirmLeave(); return; }
     if (!finished) {
       Alert.alert(
         tr('Пока нельзя выйти'),
-        tr('Покинуть челлендж можно только после его завершения — или если капитан команды поднимет белый флаг 🏳️ по уважительной причине.'),
+        tr('Покинуть челлендж можно только после его завершения — или если капитан команды поднимет белый флаг 🏳️ по уважительной причине. Напишите капитану, если причина серьёзная.'),
         [{ text: tr('Понятно'), style: 'cancel' }],
       );
       return;
@@ -504,6 +589,7 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
 
   const openRoster = () => navigation.navigate('ChallengeRoster', { challengeId: c.id });
   const openStandings = () => navigation.navigate('TeamStandings', { challengeId: c.id });
+  const openOverall = () => navigation.navigate('OverallStandings', { challengeId: c.id });
   const todayLeaderboard = [...leaderboard].sort((a, b) => {
     if (b.day !== a.day) return b.day - a.day;
     const bDone = b.todayTasks.filter((task) => task.completed).length;
@@ -513,11 +599,18 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   });
   const ratingMembers = ratingMode === 'overall' ? leaderboard : todayLeaderboard;
   const teamPointsToday = leaderboard.reduce((sum, member) => sum + member.day, 0);
-  const completedTeamGoals = leaderboard.reduce(
+  // Считаем цели только по тем, кто СЕГОДНЯ в игре.
+  //
+  // Вышедший по белому флагу 🏳️ и выбывший больше не отмечаются — сервер их
+  // отметки не принимает. Оставлять их в знаменателе значило вешать на команду
+  // три невыполнимые цели за каждого: двадцать человек давали 60/60, из которых
+  // три не мог закрыть никто. Команда видела вечный недобор не по своей вине.
+  const activeMembers = leaderboard.filter((m) => m.left !== true && m.eliminated !== true);
+  const completedTeamGoals = activeMembers.reduce(
     (sum, member) => sum + member.todayTasks.filter((task) => task.completed).length,
     0,
   );
-  const totalTeamGoals = leaderboard.reduce((sum, member) => sum + member.todayTasks.length, 0);
+  const totalTeamGoals = activeMembers.reduce((sum, member) => sum + member.todayTasks.length, 0);
   // Один список действий для обеих платформ: iOS — системный ActionSheet,
   // Android — собственный лист в Modal (Alert там показывает максимум 3 кнопки,
   // и капитанские пункты в него не помещались).
@@ -525,7 +618,10 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
   const openMenu = () => {
     const actions: MenuAction[] = [
       { label: tr('Состав команды'), icon: 'person.2.fill', run: openRoster },
+      { label: tr('Дни челленджа'), icon: 'calendar', run: () => navigation.navigate('ChallengeDays', { challengeId: c.id }) },
       { label: tr('Рейтинг команд'), icon: 'trophy.fill', run: openStandings },
+      { label: tr('Рейтинг всех участников'), icon: 'list.number', run: openOverall },
+      { label: tr('Мои тренировки'), icon: 'figure.run', run: () => navigation.navigate('WorkoutHistory') },
       ...(isCaptain ? [
         { label: chat ? tr('Изменить чат команды') : tr('Добавить чат команды'), icon: 'paperplane.fill', run: editChat },
         { label: tr('Написать всей команде'), icon: 'megaphone.fill', run: broadcast },
@@ -593,13 +689,49 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
       {/* Elimination is critical and therefore stays before the daily plan. */}
       {myEliminated ? (
         <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: 'rgba(255,59,48,0.10)', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 0.5, borderColor: 'rgba(255,59,48,0.25)' }}>
-          <Text style={{ fontSize: 24 }}>🏳️</Text>
+          {/* ⛔, не 🏳️: белый флаг — это разрешение капитана, вылет — наказание.
+              Одним символом их путали. */}
+          <Text style={{ fontSize: 24 }}>⛔</Text>
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.red }]}>{tr('Вы выбыли из челленджа')}</Text>
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>
               {tr('Набрано')} {maxFlags} 🚩 {tr('в одной категории. Очки зафиксированы, отметки больше не принимаются — план на сегодня закрыт.')}
             </Text>
           </View>
+        </View>
+      ) : null}
+
+      {/* Белый флаг 🏳️. Два разных состояния, и путать их нельзя: пока флаг
+          поднят, человек ещё в игре и должен продолжать отмечаться — иначе он
+          решит, что уже вышел, перестанет отмечаться и наберёт красных флагов
+          за дни, которые формально шли. */}
+      {whiteFlag.left ? (
+        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.fillTertiary, borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <Text style={{ fontSize: 24 }}>🏳️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]}>{tr('Вы вышли из челленджа')}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>
+              {whiteFlag.leftDay ? `${tr('Баллы зафиксированы на дне')} ${whiteFlag.leftDay}. ` : ''}
+              {tr('Штрафы за оставшиеся дни не начисляются, история дней остаётся с вами.')}
+            </Text>
+          </View>
+        </View>
+      ) : whiteFlag.raised && !myEliminated ? (
+        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.brandTinted, borderRadius: 14, padding: 14, gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Text style={{ fontSize: 24 }}>🏳️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[ty.headline, { color: T.label }]}>{tr('Капитан поднял белый флаг')}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>
+                {whiteFlag.reason ? `${tr('Причина')}: ${whiteFlag.reason}` : tr('Вы можете выйти из челленджа досрочно.')}
+              </Text>
+            </View>
+          </View>
+          <Text style={[ty.caption2, { color: T.labelSecondary }]}>
+            {tr('Пока вы не вышли, день считается как обычно — отмечайтесь. Решение остаётся за вами.')}
+          </Text>
+          <SecondaryButton label={leaving ? tr('Выходим…') : tr('Покинуть челлендж')} icon="rectangle.portrait.and.arrow.right"
+            disabled={leaving} onPress={confirmLeave} />
         </View>
       ) : null}
 
@@ -624,10 +756,19 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
           {c.tasks.map((t, i) => (
             <ChallengeTaskRow key={t.id} task={t} divider={i < c.tasks.length - 1}
               disabled={tasksLocked}
-              onToggle={() => toggleBinary(t.id)}
-              onAdjust={t.kind === 'metric' && !isActivityTask(t) ? (d) => setMetric(t.id, t.current + d) : undefined}
-              onSet={t.kind === 'metric' ? () => promptSet(t) : undefined}
-              step={1} />
+              // Снятие отметки — с подтверждением: случайное второе нажатие
+              // снимало «Без сахара», а вечером прилетал флаг.
+              onToggle={() => {
+                if (t.kind === 'binary' && t.done) {
+                  Alert.alert(tr('Снять отметку?'), `${t.title}: без неё за сегодня будет красный флаг.`, [
+                    { text: tr('Оставить'), style: 'cancel' },
+                    { text: tr('Снять'), style: 'destructive', onPress: () => toggleBinary(t.id) },
+                  ]);
+                  return;
+                }
+                toggleBinary(t.id);
+              }}
+              onSet={t.kind === 'metric' ? () => promptSet(t) : undefined} />
           ))}
           {c.tasks.some(isActivityTask) ? (
             <Pressable onPress={() => navigation.navigate('WorkoutTrack', { challengeId: c.id })}
@@ -753,6 +894,29 @@ function ActiveChallenge({ navigation }: { navigation: Props['navigation'] }) {
             <Pressable onPress={() => {}} accessible={false} style={{ backgroundColor: T.cardBg, borderRadius: 18, padding: 18 }}>
               <Text style={[ty.title3, { color: T.label }]}>{metricEditor?.title}</Text>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Введите значение')} ({metricEditor?.unit})</Text>
+              {/* Подсказка шагомера. Не подставляем молча: число попадает в
+                  зачёт, и решение о нём должно остаться за человеком — он
+                  мог половину дня нести телефон в сумке или отдать его. */}
+              {phoneSteps !== null && metricEditor && isActivityTask(metricEditor) ? (
+                <Pressable onPress={() => { hTap(); setMetricDraft(String(phoneSteps)); }}
+                  accessibilityRole="button" accessibilityLabel={`${tr('Подставить шаги из телефона')}: ${phoneSteps}`}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12,
+                    minHeight: 48, paddingHorizontal: 12, borderRadius: 12,
+                    backgroundColor: T.brandTinted, opacity: pressed ? 0.6 : 1,
+                  })}>
+                  <SF name="figure.walk" size={17} color={T.brand} />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>
+                      {tr('По шагомеру телефона')}: {fmtInt(phoneSteps)}
+                    </Text>
+                    <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>
+                      {tr('с 23:01, начала дня челленджа')}
+                    </Text>
+                  </View>
+                  <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Подставить')}</Text>
+                </Pressable>
+              ) : null}
               <TextInput value={metricDraft} onChangeText={setMetricDraft} autoFocus keyboardType="number-pad"
                 selectTextOnFocus accessibilityLabel={tr('Значение активности')}
                 style={[ty.title2, { color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, minHeight: 52, paddingHorizontal: 14, marginTop: 14 }]} />
@@ -933,6 +1097,10 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
   const flagDetail = memberFlagDetail(member.flags);
   const rankMark = displayRank === 1 ? '🥇' : displayRank === 2 ? '🥈' : displayRank === 3 ? '🥉' : null;
   const eliminated = member.eliminated === true;
+  // Вышел по белому флагу — не вылетел. Подписывать одинаково нечестно: первое
+  // разрешил капитан по уважительной причине, второе человек заработал сам.
+  const left = member.left === true;
+  const out = eliminated || left;
   const rankChange = member.rankChange ?? 0;
   const rankMovement = member.rankChange == null
     ? tr('Первый день')
@@ -942,17 +1110,18 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
         ? `↓ ${tr('на')} ${Math.abs(rankChange)} ${positionWord(Math.abs(rankChange))}`
         : tr('Без изменений');
   const content = (
-    <View style={{ minHeight: mode === 'today' ? 94 : flagDetail ? 126 : flagCount > 0 ? 108 : 86, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 9, backgroundColor: member.isMe ? T.brandTinted : 'transparent', opacity: eliminated ? 0.62 : 1, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
+    <View style={{ minHeight: mode === 'today' ? 94 : flagDetail ? 126 : flagCount > 0 ? 108 : 86, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 9, backgroundColor: member.isMe ? T.brandTinted : 'transparent', opacity: out ? 0.62 : 1, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
       <View style={{ width: 22, minHeight: 36, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={[ty.footnoteEm, { color: displayRank <= 3 ? T.brand : T.labelSecondary }]}>{displayRank}</Text>
       </View>
-      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: eliminated ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={[ty.subheadEm, { color: eliminated ? T.labelSecondary : '#fff' }]}>{eliminated ? '🏳️' : member.name.charAt(0).toUpperCase()}</Text>
-      </View>
+      <MemberAvatar name={member.name} avatar={member.avatar} size={36} eliminated={eliminated} left={left} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ minHeight: 20, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-          <Text style={[ty.footnoteEm, { color: eliminated ? T.labelSecondary : T.label, flex: 1, flexShrink: 1 }]}>
-            {member.name}{member.isMe ? ` (${tr('вы')})` : ''}{eliminated ? <Text style={{ color: T.red }}> · {tr('выбыл')}</Text> : null}
+          <Text style={[ty.footnoteEm, { color: out ? T.labelSecondary : T.label, flex: 1, flexShrink: 1 }]}>
+            {member.name}{member.isMe ? ` (${tr('вы')})` : ''}
+            {left
+              ? <Text style={{ color: T.labelSecondary }}> · 🏳️ {tr('вышел')}</Text>
+              : eliminated ? <Text style={{ color: T.red }}> · {tr('выбыл')}</Text> : null}
           </Text>
           {mode === 'today' ? <Text style={[ty.footnoteEm, { color: T.brand }]}>{formatTeamNumber(member.day)} pts</Text> : null}
         </View>
@@ -960,7 +1129,14 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
           <>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 6, rowGap: 1, marginTop: 3 }}>
               <Text style={[ty.footnoteEm, { color: T.brand }]}>{formatTeamNumber(member.points)} pts</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>{formatPace(member.averagePoints ?? member.points / Math.max(1, currentDay))} pts/{tr('день')} · {tr('средний темп')}</Text>
+              {/* Средний темп — по закрытым дням. Пока не закрылся ни один,
+                  усреднять нечего: прочерк честнее нуля, который читался бы
+                  как «человек ничего не делает». */}
+              <Text style={[ty.caption1, { color: T.labelSecondary }]}>
+                {member.averagePoints == null
+                  ? `— · ${tr('средний темп')}`
+                  : `${formatPace(member.averagePoints)} pts/${tr('день')} · ${tr('средний темп')}`}
+              </Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               <View accessible accessibilityLabel={rankMovement} style={{ minHeight: 24, paddingHorizontal: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: rankChange > 0 ? 'rgba(52,199,89,0.13)' : rankChange < 0 ? 'rgba(255,149,0,0.13)' : T.fillTertiary }}>
@@ -987,7 +1163,7 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
           </View>
         )}
       </View>
-      {eliminated ? <Text style={{ fontSize: 16 }}>🏳️</Text> : member.isMe && mode === 'overall' ? <Text style={{ fontSize: 16 }}>🔥</Text> : null}
+      {eliminated ? <Text style={{ fontSize: 16 }}>⛔</Text> : left ? <Text style={{ fontSize: 16 }}>🏳️</Text> : member.isMe && mode === 'overall' ? <Text style={{ fontSize: 16 }}>🔥</Text> : null}
     </View>
   );
 

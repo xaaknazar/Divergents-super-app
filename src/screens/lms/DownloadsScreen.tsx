@@ -4,13 +4,12 @@ import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, Alert, ActivityIndicator, GestureResponderEvent, LayoutChangeEvent } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useVideoPlayer } from 'expo-video';
-import { useEvent } from 'expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
 import { ListSection, ProgressBar } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { useDownloads, DownloadRecord } from '../../state/downloads';
+import { useAudioPlayer } from '../../state/AudioPlayerContext';
 import { useAuth } from '@clerk/clerk-expo';
 import { useMyCourses } from '../../state/useMyCourses';
 import { fetchOwnedDetail, lessonAudioUrl } from '../../data/api';
@@ -44,7 +43,6 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
   const { items, pending, removeDownload, cancelDownload, downloadLesson, isDownloaded, isDownloading, progress } = useDownloads();
   const { getToken, isSignedIn } = useAuth();
   const my = useMyCourses();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [avail, setAvail] = useState<{ courseId: string; courseTitle: string; lessons: { id: string; n: number; title: string; audioUrl: string }[] }[]>([]);
   const [loadingAvail, setLoadingAvail] = useState(false);
 
@@ -87,19 +85,14 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
     .map((g) => ({ ...g, lessons: g.lessons.filter((l) => !isDownloaded(l.id) && !isDownloading(l.id)) }))
     .filter((g) => g.lessons.length > 0), [avail, items, pending]);
 
-  // Single audio player reused for whichever lesson is tapped. Audio-only m4a
-  // plays fine through expo-video; background playback keeps it going off-screen.
-  const player = useVideoPlayer(null, (p) => {
-    p.loop = false;
-    p.timeUpdateEventInterval = 0.4;
-    p.staysActiveInBackground = true;
-    p.showNowPlayingNotification = true;
-  });
-  const playingEvent = useEvent(player, 'playingChange', null);
-  const isPlaying = playingEvent ? playingEvent.isPlaying : player.playing;
-  const timeEvent = useEvent(player, 'timeUpdate', null);
-  const currentTime = timeEvent?.currentTime ?? 0;
-  const duration = player.duration || 0;
+  // Плеер общий на всё приложение (AudioPlayerProvider): этот экран — только
+  // пульт к нему. Раньше плеер жил здесь, и при уходе на другую вкладку экран
+  // размонтировался вместе с ним — лекция обрывалась.
+  const { track, isPlaying, currentTime, duration, play, seekTo, clear } = useAudioPlayer();
+  // Только скачанное: тот же плеер играет и видеоуроки с сайта, а у них тот же
+  // lessonId — без этой проверки урок подсвечивался бы здесь как выбранный,
+  // хотя пульт к нему на экране урока.
+  const selectedId = track?.kind === 'download' ? track.lessonId : null;
 
   const [barWidth, setBarWidth] = useState(0);
   const selected = useMemo(() => items.find((i) => i.lessonId === selectedId) ?? null, [items, selectedId]);
@@ -115,24 +108,10 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
     return Array.from(map.values());
   }, [items]);
 
-  const play = (rec: DownloadRecord) => {
-    try {
-      if (selectedId !== rec.lessonId) {
-        setSelectedId(rec.lessonId);
-        player.replace(rec.localUri);
-        player.play();
-      } else if (isPlaying) {
-        player.pause();
-      } else {
-        player.play();
-      }
-    } catch {}
-  };
-
   const seek = (e: GestureResponderEvent) => {
     if (barWidth <= 0 || duration <= 0) return;
     const x = Math.max(0, Math.min(barWidth, e.nativeEvent.locationX));
-    try { player.currentTime = (x / barWidth) * duration; } catch {}
+    seekTo((x / barWidth) * duration);
   };
 
   const confirmDelete = (rec: DownloadRecord) => {
@@ -144,10 +123,9 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
         {
           text: tr('Удалить'), style: 'destructive',
           onPress: () => {
-            if (selectedId === rec.lessonId) {
-              try { player.pause(); player.replace(null); } catch {}
-              setSelectedId(null);
-            }
+            // Файл вот-вот исчезнет — снимаем его с общего плеера, иначе
+            // мини-плеер продолжит показывать удалённый урок.
+            if (selectedId === rec.lessonId) clear();
             removeDownload(rec.lessonId);
           },
         },
@@ -284,7 +262,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
       {selected ? (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Pressable onPress={() => { try { isPlaying ? player.pause() : player.play(); } catch {} }}
+            <Pressable onPress={() => selected && play(selected)}
               accessibilityRole="button" accessibilityLabel={isPlaying ? tr('Пауза') : tr('Воспроизвести')}
               style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={isPlaying ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
@@ -310,7 +288,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
               onAccessibilityAction={(e) => {
                 if (duration <= 0) return;
                 const delta = e.nativeEvent.actionName === 'increment' ? 15 : e.nativeEvent.actionName === 'decrement' ? -15 : 0;
-                if (delta) { try { player.currentTime = Math.max(0, Math.min(duration, currentTime + delta)); } catch {} }
+                if (delta) seekTo(currentTime + delta);
               }}
               accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
               style={{ flex: 1, height: 24, justifyContent: 'center' }}>

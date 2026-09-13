@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { tr } from '../../state/LanguageContext';
 import { View, Text, ScrollView, Share, Alert, ActivityIndicator, Linking, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 import { SF } from '../../components/SFIcon';
 import { NavHeader, NavRoundButton } from '../../components/NavHeader';
 import { Capsule, ListSection, ListRow, IconCircle, PrimaryButton } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
-import { fetchTrip, Trip, spotsLeft, UNLIMITED_SPOTS } from '../../data/community';
+import { fetchTrip, fetchTripDetail, Trip, spotsLeft, UNLIMITED_SPOTS } from '../../data/community';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { imgUrl, applyToTrip, joinFailureMessage } from '../../data/api';
 import { useAuth } from '@clerk/clerk-expo';
@@ -48,8 +49,14 @@ export function TripDetailScreen({ route, navigation }: Props) {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  // Организатор поездки (или админ) видит кнопку «Заявки» со счётчиком новых.
+  const [canManage, setCanManage] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  // Поездка прошла: карточка ещё открывается участнику и организатору (по
+  // ссылке из уведомления), но записаться уже нельзя.
+  const [past, setPast] = useState(false);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let alive = true;
     setLoading(true);
     (async () => {
@@ -57,11 +64,19 @@ export function TripDetailScreen({ route, navigation }: Props) {
       // список отдаёт только открытые.
       let token: string | null = null;
       try { token = isSignedIn ? await getToken() : null; } catch { token = null; }
-      const t = await fetchTrip(route.params.tripId, token);
-      if (alive) { setTrip(t); setLoading(false); }
+      const d = await fetchTripDetail(route.params?.tripId ?? '', token);
+      if (!alive) return;
+      setTrip(d?.trip ?? null);
+      setCanManage(d?.canManage ?? false);
+      setPendingCount(d?.pendingCount ?? 0);
+      setPast(d?.past ?? false);
+      setLoading(false);
     })();
     return () => { alive = false; };
-  }, [route.params.tripId, isSignedIn]);
+    // Перезагружаем на КАЖДЫЙ возврат на экран: организатор уходит разбирать
+    // заявки и возвращается — счётчики «идут» и «ждут решения» должны быть
+    // свежими, иначе он видит цифры до своих же решений.
+  }, [route.params?.tripId, isSignedIn]));
 
   // ── Loading ──
   if (loading) {
@@ -124,7 +139,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
   };
 
   const apply = async () => {
-    if (joined || pending || joining) return;
+    if (joined || pending || joining || past) return;
     // Организатор решает по анкете — без неё заявка для него пустая.
     if (!requireResume('community')) return;
     setJoining(true);
@@ -151,7 +166,18 @@ export function TripDetailScreen({ route, navigation }: Props) {
     }
   };
 
-  const buttonLabel = joined ? 'Вы записаны ✓' : pending ? 'Заявка на рассмотрении' : `Записаться · ${trip.price}`;
+  // Цена — свободный текст, и «Записаться · Каждый платит за себя» в кнопку не
+  // помещалось. Короткую цену («12 000 ₸», «Бесплатно») оставляем в кнопке,
+  // длинную выносим строкой над ней.
+  const shortPrice = trip.price && trip.price.length <= 14 ? trip.price : '';
+  const longPrice = trip.price && !shortPrice ? trip.price : '';
+  const buttonLabel = past
+    ? (joined ? 'Поездка завершена · вы были' : 'Поездка завершена')
+    : joined
+      ? 'Вы записаны ✓'
+      : pending
+        ? 'Заявка на рассмотрении'
+        : shortPrice ? `Записаться · ${shortPrice}` : 'Отправить заявку';
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg }}>
@@ -179,7 +205,15 @@ export function TripDetailScreen({ route, navigation }: Props) {
           />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             {meta ? <Capsule bg="rgba(255,255,255,0.75)" color={T.label}><SF name="calendar" size={11} color={T.brand} />{meta}</Capsule> : null}
-            <Text style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]} numberOfLines={1}>{trip.title}</Text>
+            {/* Две строки: названия поездок редко влезают в одну, и «Поездка
+                выпить предрассветный кофе» обрывалась на «Поездка выпить пре…».
+                adjustsFontSizeToFit ужимает шрифт, если и двух строк мало. */}
+            <Text
+              style={[ty.largeTitle, { color: '#fff', marginTop: 10 }]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >{trip.title}</Text>
             {subtitle ? <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={1}>{subtitle}</Text> : null}
           </View>
         </View>
@@ -187,8 +221,15 @@ export function TripDetailScreen({ route, navigation }: Props) {
         {/* Stats */}
         <View style={{ flexDirection: 'row', paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
           {stats.map((s, i) => (
-            <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < stats.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{s.v}</Text>
+            <View key={i} style={{ flex: 1, minWidth: 0, paddingHorizontal: 6, alignItems: 'center', borderRightWidth: i < stats.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
+              {/* Стоимость — свободный текст («Каждый платит за себя»), и в
+                  треть ширины он не влезал: обрывалось «Каждый плати…». Длинные
+                  значения показываем помельче и в две строки, короткие числа
+                  («4», «0») остаются крупными. */}
+              <Text
+                style={[s.v.length > 6 ? ty.footnoteEm : ty.headline, { color: T.label, textAlign: 'center' }]}
+                numberOfLines={2}
+              >{s.v}</Text>
               {/* «Мест без ограничения» не влезает в одну строку у трети ширины. */}
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1, textAlign: 'center' }]} numberOfLines={2}>{s.l}</Text>
             </View>
@@ -227,6 +268,24 @@ export function TripDetailScreen({ route, navigation }: Props) {
             <ListRow
               leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
               title={trip.organizer} subtitle={trip.organizerType} last />
+          </ListSection>
+        ) : null}
+
+        {/* Инструменты организатора. Раньше их не было вовсе: человек создавал
+            поездку и не мог ни увидеть заявки, ни принять решение. */}
+        {canManage ? (
+          <ListSection header={tr('Организатору')}>
+            <ListRow
+              leading={<SF name="person.2.fill" size={18} color={T.brand} />}
+              title={tr('Заявки')}
+              subtitle={pendingCount > 0 ? `${pl.applications(pendingCount)} ждут решения` : tr('Все заявки рассмотрены')}
+              trailing={pendingCount > 0
+                ? <Capsule bg="rgba(255,149,0,0.16)" color={T.orange}>{String(pendingCount)}</Capsule>
+                : undefined}
+              chevron
+              onPress={() => navigation.navigate('EventApplicants', { kind: 'trip', eventId: trip.id, title: trip.title })}
+              last
+            />
           </ListSection>
         ) : null}
 
@@ -280,7 +339,11 @@ export function TripDetailScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        {pending ? (
+        {past ? (
+          <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginBottom: 8 }]}>
+            {tr('Эта поездка уже состоялась. Из ленты она ушла, запись закрыта.')}
+          </Text>
+        ) : pending ? (
           <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginBottom: 8 }]}>
             {tr('Организатор рассмотрит заявку и подтвердит участие.')}
           </Text>
@@ -288,12 +351,16 @@ export function TripDetailScreen({ route, navigation }: Props) {
           <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginBottom: 8 }]}>
             {tr('Свободных мест нет — можно оставить заявку в лист ожидания у организатора.')}
           </Text>
+        ) : longPrice && !joined ? (
+          <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginBottom: 8 }]} numberOfLines={2}>
+            {tr('Стоимость')}: {longPrice}
+          </Text>
         ) : null}
         <PrimaryButton
           label={buttonLabel}
-          icon={joined ? 'checkmark' : pending ? 'clock.fill' : 'paperplane.fill'}
+          icon={past ? 'checkmark.circle' : joined ? 'checkmark' : pending ? 'clock.fill' : 'paperplane.fill'}
           loading={joining}
-          color={joined ? T.green : pending ? T.orange : T.brand}
+          color={past ? T.labelTertiary : joined ? T.green : pending ? T.orange : T.brand}
           onPress={apply}
         />
       </View>

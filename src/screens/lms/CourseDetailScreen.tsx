@@ -50,7 +50,7 @@ function HeroNav({ course, courseId, navigation, owned }: { course: Course; cour
 export function CourseDetailScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
   useLang();
-  const { courseId } = route.params;
+  const courseId = route.params?.courseId ?? '';
   const { getCourse, loadDetail, loading, error, reload } = useCourses();
   const course = getCourse(courseId);
   const { isSignedIn, getToken } = useAuth();

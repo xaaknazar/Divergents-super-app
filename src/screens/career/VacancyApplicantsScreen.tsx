@@ -22,7 +22,7 @@ const STATUS_META: Record<AppStatus, { label: string; bg: string; color: string 
 };
 
 export function VacancyApplicantsScreen({ route, navigation }: Props) {
-  const { jobId } = route.params;
+  const jobId = route.params?.jobId ?? '';
   const { T, ty } = useTheme();
   const { getToken } = useAuth();
   const [items, setItems] = useState<Applicant[]>([]);

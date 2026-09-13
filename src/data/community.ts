@@ -9,9 +9,11 @@ import { z } from 'zod';
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { API_BASE } from './api';
+import { isEventPast } from './eventLifetime';
 import { fetchJson, arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 import { TalentProfile, normalizeProfile } from './talentslab';
 import * as pl from './plural';
+import { netFetch } from './net';
 
 // ─── Server contracts (GET /api/mobile/{trips,challenges,sport}) ─────────────
 // Zod schemas validate every response at the network boundary and are the single
@@ -69,6 +71,29 @@ const RawTripSchema = z.object({
   meetAt: zStrN,
   status: zStr(''),
   createdBy: zStrN,
+  // Псевдоним организатора. Раньше экран показывал `createdBy` — то есть чужую
+  // ПОЧТУ — всем, кто открыл карточку.
+  organizerName: zStrN,
+  _count: CountSchema,
+}).passthrough();
+
+// Мероприятие — встреча сообщества. На сервере называется Meetup: слово
+// «событие» там уже занято общей логикой поездок и спорта.
+const RawMeetupSchema = z.object({
+  id: zId,
+  title: zStr(''),
+  description: zStrN,
+  date: zStrN,
+  meetAt: zStrN,
+  place: zStrN,
+  meetLat: zNumN,
+  meetLng: zNumN,
+  price: zStrN,
+  spots: zNumN,
+  imageUrl: zStrN,
+  status: zStr(''),
+  createdBy: zStrN,
+  organizerName: zStrN,
   _count: CountSchema,
 }).passthrough();
 
@@ -89,6 +114,7 @@ const RawSportSchema = z.object({
 type RawTeam = z.infer<typeof RawTeamSchema>;
 type RawChallenge = z.infer<typeof RawChallengeSchema>;
 type RawTrip = z.infer<typeof RawTripSchema>;
+type RawMeetup = z.infer<typeof RawMeetupSchema>;
 type RawSport = z.infer<typeof RawSportSchema>;
 
 // The list endpoints return { trips|challenges|sport: [...] } (or, defensively, a
@@ -104,6 +130,7 @@ function pickArr(d: unknown, key: string): unknown[] {
 const TripListSchema = z.preprocess((d) => pickArr(d, 'trips'), arrayOf(RawTripSchema, 'trip'));
 const ChallengeListSchema = z.preprocess((d) => pickArr(d, 'challenges'), arrayOf(RawChallengeSchema, 'challenge'));
 const SportListSchema = z.preprocess((d) => pickArr(d, 'sport'), arrayOf(RawSportSchema, 'sport'));
+const MeetupListSchema = z.preprocess((d) => pickArr(d, 'meetups'), arrayOf(RawMeetupSchema, 'meetup'));
 
 // ─── Deterministic decoration (icon/tint by index) ──────────────────────────
 // Reuse the soft iOS-tinted palette the cards already render against.
@@ -298,6 +325,42 @@ export interface TeamStanding {
   members: number;
   rank: number;
   isMine: boolean;
+  /** Сумма красных флагов всех участников команды по трём категориям. */
+  flags?: number;
+  /** Сколько человек уже выбыло. */
+  eliminated?: number;
+  /** Сколько вышло по белому флагу 🏳️. Это не провал команды — считаем отдельно. */
+  left?: number;
+}
+
+/**
+ * Белый флаг 🏳️ — единственная законная дверь из идущего челленджа.
+ *
+ * По правилам выйти досрочно нельзя: иначе набравший флагов просто уходил бы,
+ * не портя команде статистику. Капитан признаёт причину уважительной и
+ * поднимает флаг — участник получает право выйти. Нажимает при этом он сам.
+ */
+export interface WhiteFlagState {
+  /** Капитан разрешил выйти. */
+  raised: boolean;
+  /** Причина, которую указал капитан. Видна участнику. */
+  reason: string | null;
+  /** Уже вышел: зачёт заморожен на дне выхода. */
+  left: boolean;
+  /** День челленджа, на котором зачёт замер. */
+  leftDay: number | null;
+}
+
+export const NO_WHITE_FLAG: WhiteFlagState = { raised: false, reason: null, left: false, leftDay: null };
+
+function mapWhiteFlag(raw: any): WhiteFlagState {
+  if (!raw || typeof raw !== 'object') return NO_WHITE_FLAG;
+  return {
+    raised: raw.raised === true,
+    reason: typeof raw.reason === 'string' && raw.reason.trim() ? raw.reason.trim() : null,
+    left: raw.left === true,
+    leftDay: typeof raw.leftDay === 'number' && raw.leftDay > 0 ? raw.leftDay : null,
+  };
 }
 
 export interface Challenge {
@@ -319,10 +382,20 @@ export interface Challenge {
   // The signed-in user's own disciplinary state (server-computed).
   flags?: FlagCounts;
   eliminated?: boolean;
+  /**
+   * Свой белый флаг 🏳️: капитан разрешил выйти досрочно.
+   *
+   * `raised` — разрешение выдано, но человек ещё в игре и отмечается как
+   * обычно. `left` — вышел, зачёт заморожен. Разделение не косметическое:
+   * флаг даёт ПРАВО выйти, а решение остаётся за участником.
+   */
+  whiteFlag?: WhiteFlagState;
   teamId?: string | null;
   teamChat?: string | null;   // team's Telegram chat link (members open it)
   captainId?: string | null;  // Clerk id of the team captain (drives captain-only tools)
   teamStandings?: TeamStanding[]; // all teams by points → the «Рейтинг команд» screen
+  overall?: OverallStanding[];    // все участники по очкам → «Рейтинг участников»
+  myDays?: ChallengeDay[];        // разбор по дням → экран «Дни челленджа»
 }
 
 // Neutral scaffold for the daily tracker before the server's active challenge
@@ -369,10 +442,26 @@ export function taskDone(t: ChallengeTask): boolean {
 // этого давало 0 баллов ниже нормы — при 19 страницах экран показывал 0, а
 // сервер хранил 19. basePts — это норма дня (20 стр. = 20 баллов), отдельно
 // она не начисляется. Бинарная задача (No Sugar) баллов не даёт вовсе.
+/**
+ * Шаги округляются до сотен перед начислением. Балл даётся за каждые полные
+ * 400 шагов, и без округления один шаг решал целый балл: 8000 — двадцать
+ * баллов, 7999 — девятнадцать. Норму дня (10 000) округление НЕ затрагивает.
+ *
+ * Правило должно совпадать с серверным (lib/challenge-scoring.ts,
+ * STEPS_ROUND_TO): иначе экран покажет одно, а в зачёт пойдёт другое.
+ */
+const STEPS_ROUND_TO = 100;
+
 export function taskPoints(t: ChallengeTask): number {
   if (t.kind === 'binary') return t.done ? t.basePts : 0;
   const unit = t.unitSize > 0 ? t.unitSize : 1;
-  return Math.floor(Math.max(0, t.current) / unit) * t.ptsPerUnit;
+  const raw = Math.max(0, t.current);
+  // Округляем только шаги: у чтения единица измерения — страница, и округлять
+  // 19 страниц до 20 значило бы дарить норму.
+  const value = unit >= STEPS_ROUND_TO
+    ? Math.round(raw / STEPS_ROUND_TO) * STEPS_ROUND_TO
+    : raw;
+  return Math.floor(value / unit) * t.ptsPerUnit;
 }
 
 // Коэффициент участника (1.5 у беременных/кормящих/с детьми до 3 лет) сервер
@@ -393,6 +482,8 @@ export function challengeBonusToday(tasks: ChallengeTask[]): number {
 export interface Member {
   id: string;
   name: string;
+  /** Фото профиля участника; null — показываем кружок с первой буквой. */
+  avatar?: string | null;
   weekBase: number;
   day: number;
   /** Множитель дневных баллов (1.5 у беременных/кормящих/с детьми до 3 лет). */
@@ -403,11 +494,92 @@ export interface Member {
   // штрафных баллов (−100/−300), отрицательное число; уже учтено в weekBase.
   flags?: FlagCounts;
   eliminated?: boolean;
+  /** Вышел по белому флагу 🏳️ — в отличие от вылета, это не наказание. */
+  left?: boolean;
+  /** Флаг поднят, но человек ещё не вышел: решение за ним. */
+  whiteFlag?: boolean;
   penalty?: number;
   previousRank?: number | null;
   rankChange?: number | null;
-  averagePoints?: number;
+  /** Очки за день по закрытым дням. null — закрытых дней ещё нет. */
+  averagePoints?: number | null;
+  /** День, на котором зачёт заморозился после вылета. */
+  frozenDay?: number | null;
   todayTasks: MemberTaskProgress[];
+  /**
+   * Разбор по дням этого участника — для командной истории.
+   *
+   * Без даты: календарь у всех общий, а дни нумеруются одинаково. Дата берётся
+   * из `challenge.myDays` по номеру дня, а не повторяется в каждой строке.
+   */
+  days?: MemberDay[];
+}
+
+/**
+ * Строка общего рейтинга: все участники челленджа, а не только своя команда.
+ * Считается сервером в том же ответе — отдельного запроса не требует.
+ */
+export interface OverallStanding {
+  id: string;
+  name: string;
+  avatar?: string | null;
+  teamId: string | null;
+  teamName: string;
+  points: number;
+  /** Баллы за сегодня. */
+  day: number;
+  flags: FlagCounts;
+  eliminated: boolean;
+  /** Вышел по белому флагу 🏳️. */
+  left?: boolean;
+  isMe: boolean;
+  rank: number;
+}
+
+/** Итог одного дня челленджа — для экрана истории. */
+export interface ChallengeDay {
+  day: number;
+  /** Календарная дата дня, ISO. */
+  dateISO: string;
+  pages: number;
+  sugarFree: boolean;
+  steps: number;
+  /** Заработано баллов (с коэффициентом). */
+  positive: number;
+  /** Штрафы дня, отрицательное число. У текущего дня 0. */
+  penalty: number;
+  /** Флаги, полученные именно в этот день. */
+  flags: FlagCounts;
+  reported: boolean;
+  /** День закрыт и посчитан. */
+  past: boolean;
+  /**
+   * В этот день человек вышел по белому флагу 🏳️: день закрыт, но не судится.
+   * Без пометки закрытый день без отметок выглядел бы пропуском с −300.
+   */
+  left?: boolean;
+}
+
+/**
+ * День участника команды. То же самое без даты — она общая для всех и лежит в
+ * `challenge.myDays`.
+ */
+export type MemberDay = Omit<ChallengeDay, 'dateISO'>;
+
+/** Разбор дней из ответа сервера. Общий для своей истории и командной. */
+function mapDay(d: any): MemberDay {
+  return {
+    day: numOf(d?.day),
+    pages: numOf(d?.pages),
+    sugarFree: d?.sugarFree === true,
+    steps: numOf(d?.steps),
+    positive: numOf(d?.positive),
+    penalty: numOf(d?.penalty),
+    flags: flagsOf(d?.flags),
+    reported: d?.reported === true,
+    past: d?.past === true,
+    left: d?.left === true,
+  };
 }
 
 export const MEDAL_FOR_RANK = (rank: number): { icon: SFName; color: string } | null => {
@@ -447,9 +619,10 @@ interface RawActiveChallenge {
   rules?: unknown;
 }
 interface RawActiveMember {
-  id?: unknown; name?: unknown; weekBase?: unknown; day?: unknown; coefficient?: unknown; isMe?: unknown;
+  id?: unknown; name?: unknown; avatar?: unknown; weekBase?: unknown; day?: unknown; coefficient?: unknown; isMe?: unknown;
   flags?: unknown; eliminated?: unknown; penalty?: unknown;
   previousRank?: unknown; rankChange?: unknown; averagePoints?: unknown; todayTasks?: unknown;
+  days?: unknown;
 }
 
 const numOf = (v: unknown, d = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
@@ -464,6 +637,35 @@ function flagsOf(v: unknown): FlagCounts {
 
 export function totalFlags(f: FlagCounts | undefined): number {
   return f ? f.R + f.NS + f.A : 0;
+}
+
+/**
+ * Средний темп — очки за ЗАКРЫТЫЕ дни, делённые на их число.
+ *
+ * Текущий день не участвует ни в делимом, ни в делителе. Иначе с 23:01 средний
+ * темп у всех проваливался: день уже входил в делитель целым, а очков по нему
+ * ещё не было, и число подтягивалось обратно только к вечеру. Весь день оно
+ * дёргалось и ничего не сообщало.
+ *
+ * `frozenDay` — день, на котором зачёт остановился после вылета. У выбывшего
+ * прошедшие дни кончились тогда же: иначе его замороженные очки делились бы на
+ * растущее число дней, и темп «падал» бы уже после вылета.
+ *
+ * `null` — закрытых дней ещё нет (идёт первый день). Экран показывает прочерк:
+ * честнее, чем ноль, который читался бы как «человек ничего не делает».
+ *
+ * Повторяет `averagePerPastDay` на сервере (lib/challenge-scoring.ts) — та же
+ * формула считается и для сайта, где приложения нет.
+ */
+export function averagePerPastDay(
+  weekBase: number,
+  currentDay: number,
+  frozenDay: number | null = null,
+): number | null {
+  const elapsed = currentDay - 1;
+  const past = frozenDay != null ? Math.min(frozenDay, elapsed) : elapsed;
+  if (past < 1) return null;
+  return Math.round((weekBase / past) * 10) / 10;
 }
 
 // Coerce a server icon string to the app's SFName type safely: keep any
@@ -526,14 +728,43 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
         members: numOf(r?.members),
         rank: numOf(r?.rank),
         isMine: r?.isMine === true,
+        flags: numOf(r?.flags),
+        eliminated: numOf(r?.eliminated),
+        left: numOf(r?.left),
       }))
       .filter((t: TeamStanding) => t.id),
+    // Разбор по дням считает тот же зачёт, что и баллы: экран истории и
+    // таблица не могут разойтись.
+    myDays: (Array.isArray((raw as any).myDays) ? (raw as any).myDays : [])
+      .map((d: any): ChallengeDay => ({ ...mapDay(d), dateISO: strOf(d?.dateISO) }))
+      .filter((d: ChallengeDay) => d.day > 0),
+    // Общий рейтинг приходит тем же ответом. Старый сервер его не отдаёт —
+    // тогда экран покажет пустое состояние, а не сломается.
+    overall: (Array.isArray((raw as any).overall) ? (raw as any).overall : [])
+      .map((r: any): OverallStanding => ({
+        id: strOf(r?.id),
+        name: strOf(r?.name, 'Участник'),
+        avatar: typeof r?.avatar === 'string' && r.avatar.trim() ? r.avatar.trim() : null,
+        teamId: r?.teamId ?? null,
+        teamName: strOf(r?.teamName),
+        points: numOf(r?.points),
+        day: numOf(r?.day),
+        flags: flagsOf(r?.flags),
+        eliminated: r?.eliminated === true,
+        left: r?.left === true,
+        isMe: r?.isMe === true,
+        rank: numOf(r?.rank),
+      }))
+      .filter((r: OverallStanding) => r.id),
     trainer: strOf(raw.trainer),
     price: strOf(raw.price),
     tasks,
     rules: mapRules(raw.rules),
     flags: flagsOf(raw.flags),
     eliminated: raw.eliminated === true,
+    // Старый сервер поля не отдаёт — тогда белого флага просто нет, и кнопка
+    // выхода не появляется. Это правильное поведение по умолчанию.
+    whiteFlag: mapWhiteFlag((raw as any).whiteFlag),
     teamId: (raw as any).teamId ?? null,
     teamChat: (raw as any).teamChat ?? null,
     captainId: (raw as any).captainId ?? null,
@@ -546,6 +777,8 @@ function mapActiveMember(raw: RawActiveMember): Member | null {
   return {
     id,
     name: strOf(raw.name, 'Участник'),
+    // Старый сервер поля не отдаёт — тогда останется кружок с буквой.
+    avatar: typeof raw.avatar === 'string' && raw.avatar.trim() ? raw.avatar.trim() : null,
     weekBase: numOf(raw.weekBase),
     day: numOf(raw.day),
     // Старый сервер коэффициент не отдаёт — тогда обычный ×1.
@@ -553,10 +786,20 @@ function mapActiveMember(raw: RawActiveMember): Member | null {
     isMe: raw.isMe === true,
     flags: flagsOf(raw.flags),
     eliminated: raw.eliminated === true,
+    left: (raw as any).left === true,
+    whiteFlag: (raw as any).whiteFlag === true,
     penalty: numOf(raw.penalty),
     previousRank: typeof raw.previousRank === 'number' ? numOf(raw.previousRank) : null,
     rankChange: typeof raw.rankChange === 'number' ? numOf(raw.rankChange) : null,
-    averagePoints: numOf(raw.averagePoints),
+    // Средний темп приложение считает само (ChallengeContext): формула зависит
+    // от текущего дня, а он живёт на челлендже, не на участнике.
+    averagePoints: typeof raw.averagePoints === 'number' ? numOf(raw.averagePoints) : null,
+    frozenDay: typeof (raw as any).frozenDay === 'number' ? numOf((raw as any).frozenDay) : null,
+    // Старый сервер разбора по дням не отдаёт — командная история тогда
+    // покажет пустое состояние, а свой календарь продолжит работать.
+    days: (Array.isArray((raw as any).days) ? (raw as any).days : [])
+      .map(mapDay)
+      .filter((d: MemberDay) => d.day > 0),
     todayTasks: (Array.isArray(raw.todayTasks) ? raw.todayTasks : [])
       .map((task: any): MemberTaskProgress | null => {
         const taskId = strOf(task?.id);
@@ -587,12 +830,10 @@ export async function fetchActiveChallenge(
   timeoutMs = 12000,
 ): Promise<ActiveChallengeData> {
   if (!token) return EMPTY_ACTIVE;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const headers: Record<string, string> = { Accept: 'application/json' };
     headers.Authorization = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}/api/mobile/challenges/active`, { signal: ctrl.signal, headers });
+    const res = await netFetch(`${API_BASE}/api/mobile/challenges/active`, { timeoutMs, headers });
     if (!res.ok) return EMPTY_ACTIVE;
     const data = await res.json();
     const challenge = data?.challenge ? mapActiveChallenge(data.challenge) : null;
@@ -605,8 +846,6 @@ export async function fetchActiveChallenge(
     return { challenge, members, ok: true };
   } catch {
     return EMPTY_ACTIVE;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -621,6 +860,20 @@ export interface ProgressResult {
   reason?: string;
   /** Для reason === 'deadline_passed': час дедлайна по Алматы. */
   deadlineHour?: number;
+  /**
+   * Что РЕАЛЬНО записано в базе после этой отправки.
+   *
+   * Раньше ответ сервера не читался вовсе, и экран показывал локальное
+   * значение как подтверждённое. Если отметку обгонял другой запрос (см.
+   * `superseded`), человек до конца дня видел 25 страниц там, где в зачёт
+   * пошло 12.
+   */
+  savedValue?: number;
+  savedDone?: boolean;
+  /** Сервер отбросил запись как опоздавшую — в savedValue актуальное значение. */
+  superseded?: boolean;
+  /** Значение обрезано потолком (защита от опечатки в лишний разряд). */
+  clamped?: boolean;
 }
 
 // POST /api/mobile/challenges/:id/progress (Clerk Bearer) — sync of a single
@@ -640,11 +893,24 @@ export async function postChallengeProgress(
       method: 'POST',
       signal: ctrl.signal,
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(body),
+      // `force` — обещание серверу, что это намеренная запись, а не догнавший
+      // повтор: с этой сборки по одной задаче в воздухе не бывает двух запросов
+      // одновременно, поэтому серверную защиту от гонки можно не применять и
+      // осознанное уменьшение числа проходит сразу.
+      body: JSON.stringify({ ...body, force: true }),
     });
-    if (res.ok) return { ok: true, status: res.status };
     let data: any = null;
     try { data = await res.json(); } catch { /* пустое / не-JSON тело */ }
+    if (res.ok) {
+      return {
+        ok: true,
+        status: res.status,
+        savedValue: typeof data?.value === 'number' ? data.value : undefined,
+        savedDone: typeof data?.done === 'boolean' ? data.done : undefined,
+        superseded: data?.superseded === true,
+        clamped: data?.clamped === true,
+      };
+    }
     return {
       ok: false,
       status: res.status,
@@ -704,7 +970,9 @@ function mapTrip(raw: RawTrip, index: number): Trip {
     price: priceText(raw.price),
     // '—' раньше рендерилось как «сложность: —»; пусто = поля просто нет.
     difficulty: (raw.difficulty ?? '').trim(),
-    organizer: raw.createdBy ?? '',
+    // Только псевдоним. Если сервер его почему-то не прислал — лучше показать
+    // «Divergents», чем чужую почту.
+    organizer: (raw.organizerName ?? '').trim() || 'Divergents',
     organizerType: 'Divergents',
     description: raw.description ?? '',
     meetPlace: (raw.meetPlace ?? '').trim(),
@@ -719,10 +987,27 @@ function mapTrip(raw: RawTrip, index: number): Trip {
 
 export async function fetchTrips(): Promise<Trip[]> {
   const { data } = await fetchJson('/api/mobile/trips', TripListSchema);
-  return (data ?? []).map(mapTrip);
+  // Сервер прошедшие уже не отдаёт; здесь — страховка от кэша (см. eventLifetime).
+  return (data ?? []).map(mapTrip).filter((t) => !isEventPast(t.meetAt, t.days));
 }
 
-const TripDetailSchema = z.object({ trip: RawTripSchema }).passthrough();
+const TripDetailSchema = z.object({
+  trip: RawTripSchema,
+  // Организатор события (или админ) видит кнопку «Заявки» и счётчик новых.
+  canManage: z.boolean().optional(),
+  pendingCount: z.number().optional(),
+  // Поездка уже прошла: из ленты ушла, участнику и организатору ещё открыта.
+  past: z.boolean().optional(),
+}).passthrough();
+
+/** Поездка плюс права текущего пользователя на неё. */
+export interface TripDetail {
+  trip: Trip;
+  canManage: boolean;
+  pendingCount: number;
+  /** Прошла — «завершена» в карточке, записаться уже нельзя. */
+  past: boolean;
+}
 
 // GET /api/mobile/trips/:id — отдельный эндпоинт детали. Список отдаёт только
 // опубликованные поездки, поэтому поиск по нему терял закрытую поездку у
@@ -730,6 +1015,183 @@ const TripDetailSchema = z.object({ trip: RawTripSchema }).passthrough();
 export async function fetchTrip(id: string, token?: string | null): Promise<Trip | null> {
   const { data } = await fetchJson(`/api/mobile/trips/${encodeURIComponent(id)}`, TripDetailSchema, { token });
   return data ? mapTrip(data.trip, 0) : null;
+}
+
+/** То же, но с правами: нужен экрану поездки, чтобы показать кнопку «Заявки». */
+export async function fetchTripDetail(id: string, token?: string | null): Promise<TripDetail | null> {
+  const { data } = await fetchJson(`/api/mobile/trips/${encodeURIComponent(id)}`, TripDetailSchema, { token });
+  if (!data) return null;
+  const trip = mapTrip(data.trip, 0);
+  return {
+    trip,
+    canManage: data.canManage === true,
+    pendingCount: typeof data.pendingCount === 'number' ? data.pendingCount : 0,
+    // Старый сервер флага не шлёт — тогда считаем сами по тем же правилам.
+    past: data.past === true || isEventPast(trip.meetAt, trip.days),
+  };
+}
+
+// ─── Мероприятия ─────────────────────────────────────────────────────────────
+// Встреча сообщества: лекция, мастер-класс, кинопоказ. Логика записи та же, что
+// у поездки: заявка → решение организатора. Полей меньше — нет региона, числа
+// дней и сложности, они про поход.
+export interface Meetup {
+  id: string;
+  title: string;
+  description: string;
+  /** Как показывать дату в списке («12 июля»). */
+  date: string;
+  /** Точная отметка начала, ISO. */
+  meetAt: string;
+  place: string;
+  meetLat: number | null;
+  meetLng: number | null;
+  price: string;
+  spots: number;
+  going: number;
+  organizer: string;
+  imageUrl: string | null;
+  tint: string;
+}
+
+function mapMeetup(raw: RawMeetup, index = 0): Meetup {
+  return {
+    id: raw.id,
+    title: raw.title ?? '',
+    description: (raw.description ?? '').trim(),
+    date: (raw.date ?? '').trim(),
+    meetAt: (raw.meetAt ?? '').trim(),
+    place: (raw.place ?? '').trim(),
+    meetLat: raw.meetLat ?? null,
+    meetLng: raw.meetLng ?? null,
+    price: priceText(raw.price),
+    spots: typeof raw.spots === 'number' ? raw.spots : 0,
+    going: applicationsOf(raw),
+    // Только псевдоним: `createdBy` — это почта, её показывать нельзя.
+    organizer: (raw.organizerName ?? '').trim() || 'Divergents',
+    imageUrl: (raw.imageUrl ?? '').trim() || null,
+    tint: tintAt(index),
+  };
+}
+
+export async function fetchMeetups(): Promise<Meetup[]> {
+  const { data } = await fetchJson('/api/mobile/meetups', MeetupListSchema);
+  // Сервер прошедшие уже не отдаёт; здесь — страховка от кэша (см. eventLifetime).
+  return (data ?? []).map(mapMeetup).filter((m) => !isEventPast(m.meetAt, 1));
+}
+
+const MeetupDetailSchema = z.object({
+  meetup: RawMeetupSchema,
+  canManage: z.boolean().optional(),
+  pendingCount: z.number().optional(),
+  past: z.boolean().optional(),
+}).passthrough();
+
+export interface MeetupDetail {
+  meetup: Meetup;
+  canManage: boolean;
+  pendingCount: number;
+  /** Прошло — «завершено» в карточке, записаться уже нельзя. */
+  past: boolean;
+}
+
+export async function fetchMeetupDetail(id: string, token?: string | null): Promise<MeetupDetail | null> {
+  const { data } = await fetchJson(`/api/mobile/meetups/${encodeURIComponent(id)}`, MeetupDetailSchema, { token });
+  if (!data) return null;
+  const meetup = mapMeetup(data.meetup, 0);
+  return {
+    meetup,
+    canManage: data.canManage === true,
+    pendingCount: typeof data.pendingCount === 'number' ? data.pendingCount : 0,
+    past: data.past === true || isEventPast(meetup.meetAt, 1),
+  };
+}
+
+// ─── Заявки на офлайн-событие: разбор организатором ─────────────────────────
+// Поездки и спорт устроены одинаково, поэтому один набор функций на оба.
+export type EventKind = 'trip' | 'sport' | 'meetup';
+export type EventAppStatus = 'pending' | 'approved' | 'rejected';
+
+export interface EventApplicant {
+  id: string;
+  userId: string;
+  userEmail: string;
+  /** Псевдоним — то, что видят все. */
+  userName: string;
+  /** ФИО — только организатору, он решает, кого берёт. */
+  fullName: string | null;
+  status: EventAppStatus | string;
+  createdAt: string;
+  /** Анкета Talentslab или null, если её нет. */
+  profile: any | null;
+}
+
+export interface EventApplicants {
+  applications: EventApplicant[];
+  counts: { total: number; pending: number; approved: number; rejected: number };
+}
+
+const EVENT_SEGMENT: Record<EventKind, string> = { trip: 'trips', sport: 'sport', meetup: 'meetups' };
+const eventPath = (kind: EventKind, id: string) =>
+  `${API_BASE}/api/mobile/${EVENT_SEGMENT[kind]}/${encodeURIComponent(id)}/applications`;
+
+/** Список заявок для организатора. null — нет прав или связи. */
+export async function fetchEventApplicants(
+  kind: EventKind, id: string, token: string | null | undefined,
+): Promise<EventApplicants | null> {
+  if (!token) return null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(eventPath(kind, id), {
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    return {
+      applications: Array.isArray(d?.applications) ? d.applications : [],
+      counts: d?.counts ?? { total: 0, pending: 0, approved: 0, rejected: 0 },
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Решение по заявке. `reason: 'full'` — состав уже набран. */
+export interface DecideResult {
+  ok: boolean;
+  reason?: 'full' | 'not_found' | 'forbidden' | 'network';
+  spots?: number;
+  taken?: number;
+}
+
+export async function decideEventApplicant(
+  kind: EventKind, id: string, applicantUserId: string, status: EventAppStatus,
+  token: string | null | undefined,
+): Promise<DecideResult> {
+  if (!token) return { ok: false, reason: 'forbidden' };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(eventPath(kind, id), {
+      method: 'PATCH',
+      signal: ctrl.signal,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ userId: applicantUserId, status }),
+    });
+    let data: any = null;
+    try { data = await res.json(); } catch {}
+    if (res.ok) return { ok: true };
+    if (res.status === 403) return { ok: false, reason: 'forbidden' };
+    return { ok: false, reason: data?.reason ?? 'not_found', spots: data?.spots, taken: data?.taken };
+  } catch {
+    return { ok: false, reason: 'network' };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ─── Creator/admin: publish new content (Clerk Bearer) ──────────────────────
@@ -986,7 +1448,8 @@ export async function fetchSport(): Promise<SportActivity[]> {
       meetLng: x.meetLng ?? null,
       meetAt: x.meetAt ?? null,
     };
-  });
+  // Сервер прошедшие уже не отдаёт; здесь — страховка от кэша (см. eventLifetime).
+  }).filter((a) => !isEventPast(a.meetAt, 1));
 }
 
 // ─── Встречи: онлайн-лекции ─────────────────────────────────────────
@@ -1016,19 +1479,24 @@ export interface CommunityHomeData {
   trips: Trip[];
   sport: SportActivity[];
   challenges: ChallengeListItem[];
+  meetups: Meetup[];
   error: boolean;
 }
 
 export async function fetchCommunityHome(): Promise<CommunityHomeData> {
-  const [t, c, sport] = await Promise.all([
+  const [t, c, sport, m] = await Promise.all([
     fetchJson('/api/mobile/trips', TripListSchema),
     fetchJson('/api/mobile/challenges', ChallengeListSchema),
     fetchSport(),
+    fetchJson('/api/mobile/meetups', MeetupListSchema),
   ]);
   return {
     trips: (t.data ?? []).map(mapTrip),
     sport,
     challenges: (c.data ?? []).map(mapChallenge),
+    meetups: (m.data ?? []).map(mapMeetup),
+    // Ошибкой считаем только полный отказ: если не доехали мероприятия, но
+    // приехали поездки, экран должен показать то, что есть.
     error: t.error && c.error,
   };
 }
@@ -1068,26 +1536,133 @@ export interface ChallengeApplicant {
   coefficient: number;
   teamId: string | null;
   teamName: string;
+  /**
+   * Капитан своей команды. Его строка — не заявка, а членство: принимать или
+   * отклонять её некому и незачем, а анкету открыть — можно.
+   */
+  isCaptain: boolean;
   date: string;
   profile: TalentProfile | null;
 }
 
 // Admin sees all applicants; a team captain sees only their team's. `canManage`
 // tells the app whether to show admin-only controls (assign captain, move team).
-export async function fetchChallengeApplicants(
+/**
+ * Список заявок/участников челленджа.
+ *
+ * `applicantUserId` — когда открывают ОДНОГО человека: сервер тогда подтягивает
+ * его анкету из Talentslab живьём, а не из снимка на момент подачи. Для целого
+ * списка живых запросов не делается — сто шестьдесят обращений разом клали
+ * функцию по таймауту.
+ *
+ * `ok: false` — запрос не удался (сеть, таймаут, отказ в доступе). Раньше это
+ * возвращалось как пустой список, и экран показывал «анкета недоступна» — то
+ * же, что при настоящем отсутствии человека. Разобраться, что случилось, по
+ * такому сообщению было нельзя.
+ */
+// ─── Белый флаг 🏳️ ──────────────────────────────────────────────────────────
+
+export type WhiteFlagReason =
+  | 'forbidden'      // не капитан этой команды и не админ
+  | 'self'           // капитан не поднимает флаг сам себе
+  | 'reason_required'
+  | 'already_left'   // выход необратим
+  | 'not_member'
+  | 'no_white_flag'  // выйти без разрешения нельзя
+  | 'network';
+
+export type WhiteFlagResult = { ok: true } | { ok: false; reason: WhiteFlagReason };
+
+/** Понятный текст под каждый отказ сервера — экранам не нужно их разбирать. */
+export function whiteFlagErrorText(reason: WhiteFlagReason): string {
+  switch (reason) {
+    case 'self': return 'Капитан не может поднять белый флаг самому себе — обратитесь к организатору.';
+    case 'reason_required': return 'Укажите причину: участник увидит её как основание.';
+    case 'already_left': return 'Участник уже вышел из челленджа — это решение необратимо.';
+    case 'not_member': return 'Этот человек не состоит в челлендже.';
+    case 'no_white_flag': return 'Выйти можно только после того, как капитан поднимет белый флаг.';
+    case 'network': return 'Нет связи с сервером. Попробуйте ещё раз.';
+    default: return 'Недостаточно прав для этого действия.';
+  }
+}
+
+/** Причина обязательна: участник видит её как основание, а мы — как след в базе. */
+export async function raiseWhiteFlag(
+  challengeId: string, applicantUserId: string, reason: string, token: string | null | undefined,
+): Promise<WhiteFlagResult> {
+  return whiteFlagCall(
+    `${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/white-flag`,
+    'POST', token, { applicantUserId, reason },
+  );
+}
+
+/** Снять флаг можно, только пока человек не вышел: выход необратим. */
+export async function cancelWhiteFlag(
+  challengeId: string, applicantUserId: string, token: string | null | undefined,
+): Promise<WhiteFlagResult> {
+  const q = `?userId=${encodeURIComponent(applicantUserId)}`;
+  return whiteFlagCall(
+    `${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/white-flag${q}`,
+    'DELETE', token, null,
+  );
+}
+
+/** Выход подтверждает сам участник — капитан только дал разрешение. */
+export async function leaveChallenge(
   challengeId: string, token: string | null | undefined,
-): Promise<{ applicants: ChallengeApplicant[]; canManage: boolean }> {
-  if (!token) return { applicants: [], canManage: false };
+): Promise<WhiteFlagResult> {
+  return whiteFlagCall(
+    `${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/leave`,
+    'POST', token, {},
+  );
+}
+
+async function whiteFlagCall(
+  url: string, method: 'POST' | 'DELETE', token: string | null | undefined, body: unknown | null,
+): Promise<WhiteFlagResult> {
+  if (!token) return { ok: false, reason: 'forbidden' };
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(url, {
+      method,
+      signal: ctrl.signal,
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(body != null ? { 'Content-Type': 'application/json' } : {}),
+      },
+      ...(body != null ? { body: JSON.stringify(body) } : {}),
+    });
+    let data: any = null;
+    try { data = await res.json(); } catch {}
+    if (res.ok && data?.ok !== false) return { ok: true };
+    const known: WhiteFlagReason[] = ['forbidden', 'self', 'reason_required', 'already_left', 'not_member', 'no_white_flag', 'network'];
+    const reason = known.find((r) => r === data?.reason) ?? 'forbidden';
+    return { ok: false, reason };
+  } catch {
+    return { ok: false, reason: 'network' };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+export async function fetchChallengeApplicants(
+  challengeId: string, token: string | null | undefined, applicantUserId?: string,
+): Promise<{ applicants: ChallengeApplicant[]; canManage: boolean; ok: boolean }> {
+  if (!token) return { applicants: [], canManage: false, ok: false };
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 12000);
   try {
-    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/applications`, {
+    const q = applicantUserId ? `?userId=${encodeURIComponent(applicantUserId)}` : '';
+    const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/applications${q}`, {
       signal: ctrl.signal, headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) return { applicants: [], canManage: false };
+    if (!res.ok) return { applicants: [], canManage: false, ok: false };
     const d = await res.json();
     const list: any[] = Array.isArray(d?.applications) ? d.applications : [];
     return {
+      ok: true,
       canManage: !!d?.canManage,
       applicants: list.map((a) => ({
         id: String(a.id),
@@ -1102,11 +1677,12 @@ export async function fetchChallengeApplicants(
         coefficient: typeof a.coefficient === 'number' ? a.coefficient : 1,
         teamId: a.teamId ?? null,
         teamName: a.teamName ?? '',
+        isCaptain: a.isCaptain === true,
         date: a.date ?? '',
         profile: a.profile ? normalizeProfile(a.profile) : null,
       })),
     };
-  } catch { return { applicants: [], canManage: false }; }
+  } catch { return { applicants: [], canManage: false, ok: false }; }
   finally { clearTimeout(t); }
 }
 

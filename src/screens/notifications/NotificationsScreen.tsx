@@ -68,9 +68,15 @@ export function NotificationsScreen({ navigation }: Props) {
     // on the next frame raced the dismissal and left the target rendering behind
     // the still-closing modal (looked like a half screen over the main one).
     InteractionManager.runAfterInteractions(() => {
-      if (navigationRef.isReady()) {
-        (navigationRef as any).navigate('Tabs', normalizeTabTarget(target.tab, target.screen, target.params));
-      }
+      // Исключение внутри runAfterInteractions — это не ошибка рендера, его
+      // не ловит AppErrorBoundary. В релизной сборке такое исключение убивает
+      // приложение целиком. Неверная цель у уведомления — не повод для этого:
+      // человек должен остаться в приложении, пусть и без перехода.
+      try {
+        if (navigationRef.isReady()) {
+          (navigationRef as any).navigate('Tabs', normalizeTabTarget(target.tab, target.screen, target.params));
+        }
+      } catch {}
     });
   }, [markRead, navigation]);
 

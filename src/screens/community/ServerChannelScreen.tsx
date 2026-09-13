@@ -47,7 +47,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   // Членство и список каналов берём из ChannelContext: он единственный источник
   // правды, иначе этот экран расходится со списком каналов и вкладкой «Сообщество».
   const { reload: reloadChannels, memberships, join: joinCtx, markSeen } = useChannel();
-  const id = route.params.channelId;
+  const id = route.params?.channelId ?? '';
 
   const [ch, setCh] = useState<ServerChannel | null>(null);
   const state = memberships[id] ?? null; // membership state (server-authoritative)
@@ -68,7 +68,14 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   const soundRef = useRef<Audio.Sound | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   useEffect(() => {
-    Audio.setAudioModeAsync({ playsInSilentModeIOS: true, allowsRecordingIOS: false }).catch(() => {});
+    // staysActiveInBackground — голосовой пост доигрывает после сворачивания
+    // приложения. Запись при этом выключена: с включённым `allowsRecordingIOS`
+    // iOS переводит сессию в режим микрофона и режет громкость динамика.
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      allowsRecordingIOS: false,
+      staysActiveInBackground: true,
+    }).catch(() => {});
     return () => { soundRef.current?.unloadAsync().catch(() => {}); soundRef.current = null; };
   }, []);
 
@@ -151,7 +158,11 @@ export function ServerChannelScreen({ route, navigation }: Props) {
     try {
       if (playingId === p.id) { await soundRef.current?.pauseAsync().catch(() => {}); setPlayingId(null); return; } // toggle off
       if (soundRef.current) { await soundRef.current.unloadAsync().catch(() => {}); soundRef.current = null; }
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, allowsRecordingIOS: false });
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+      });
       const { sound } = await Audio.Sound.createAsync({ uri: p.audioUrl }, { shouldPlay: true });
       soundRef.current = sound;
       setPlayingId(p.id);
@@ -471,7 +482,13 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
     // Reset the iOS audio session OUT of record mode, otherwise playback of the
     // recorded voice (and lesson videos) stays silent. playsInSilentModeIOS lets
     // it sound even with the mute switch on.
-    try { await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }); } catch {}
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+      });
+    } catch {}
   };
   const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
   const submit = async () => {

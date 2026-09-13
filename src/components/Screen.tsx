@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { Aurora } from './Aurora';
+import { ProgressiveBlur } from './ProgressiveBlur';
 
 export function Screen({
   children, bg, scroll = true, tabPadding = true, contentStyle, topInset = true, gradient, aurora = true, largeTitle, onRefresh,
@@ -50,6 +51,12 @@ export function Screen({
       ) : (
         <View style={{ flex: 1, paddingTop: top }}>{children}</View>
       )}
+
+      {/* Прогрессивное размытие над таб-баром: контент уходит под панель
+          «стеклянным» краем, а не обрывается ровной линией. */}
+      {scroll && tabPadding ? (
+        <ProgressiveBlur position="bottom" height={insets.bottom + 74} intensity={60} />
+      ) : null}
 
       {/* Collapsing compact header */}
       {largeTitle && scroll ? (

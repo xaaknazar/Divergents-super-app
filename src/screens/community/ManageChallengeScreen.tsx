@@ -46,7 +46,7 @@ function showSheet(
 }
 
 export function ManageChallengeScreen({ route, navigation }: Props) {
-  const { challengeId } = route.params;
+  const challengeId = route.params?.challengeId ?? '';
   const { T, ty } = useTheme();
   const { getToken } = useAuth();
 

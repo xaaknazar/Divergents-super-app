@@ -3,6 +3,7 @@
 // from the Clerk session token. Falls back to a demo profile until the API is live.
 import { TALENTSLAB_BASE } from '../config';
 import { loadJSON, saveJSON } from '../state/persist';
+import { netJson } from './net';
 
 // ─── Types (mirror the Talentslab data model) ──────────────────────
 export type GallupDomain = 'executing' | 'influencing' | 'relationship' | 'strategic';
@@ -75,14 +76,10 @@ export const EMPTY_TALENT_PROFILE: TalentProfile = {
   resume: null, reportsText: null, gallup: [], gardner: [], reports: [],
 };
 
+// Чтение анкеты — с повтором при обрыве: профиль тянется на нескольких экранах,
+// и одиночный сбой сети превращался в «нет связи с Talentslab».
 async function reqJson(path: string, headers: Record<string, string>, timeoutMs = 12000): Promise<any> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${TALENTSLAB_BASE}${path}`, { signal: ctrl.signal, headers: { Accept: 'application/json', ...headers } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } finally { clearTimeout(t); }
+  return netJson(`${TALENTSLAB_BASE}${path}`, { timeoutMs, headers });
 }
 
 /**

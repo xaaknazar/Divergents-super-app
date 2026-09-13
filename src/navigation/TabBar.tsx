@@ -10,6 +10,7 @@ import { SF, SFName } from '../components/SFIcon';
 import { hSelect } from '../lib/haptics';
 import { useLang } from '../state/LanguageContext';
 import { useRole } from '../state/useRole';
+import { MiniPlayer } from '../components/MiniPlayer';
 
 const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | 'tab_map' | 'tab_career' | 'tab_profile'; on: SFName; off: SFName }> = {
   LMSTab: { label: 'tab_learn', on: 'book.fill', off: 'book' },
@@ -116,6 +117,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   };
 
   const content = (
+    <>
+    {/* «Сейчас играет» — над иконками вкладок. Полоска появляется сама, когда
+        в общем плеере есть трек, и исчезает, когда его нет. */}
+    <MiniPlayer />
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 4 }}>
       {state.routes.map((route, index) => {
         const focused = state.index === index;
@@ -150,6 +155,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         );
       })}
     </View>
+    </>
   );
 
   // Reduce Transparency: swap the frosted blur for an opaque surface.

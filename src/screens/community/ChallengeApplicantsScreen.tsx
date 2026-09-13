@@ -30,7 +30,10 @@ function statusMeta(status: ChallengeAppStatus, T: any): { label: string; bg: st
 }
 
 export function ChallengeApplicantsScreen({ route, navigation }: Props) {
-  const { challengeId, applicantUserId } = route.params;
+  // Разбор с запасом: уведомление могло прийти без параметров, и падение
+  // экрана выглядело как вылет из приложения.
+  const challengeId = route.params?.challengeId ?? '';
+  const applicantUserId = route.params?.applicantUserId;
   const directProfile = !!applicantUserId;
   const { T, ty } = useTheme();
   const { getToken } = useAuth();
@@ -49,7 +52,12 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
     setError(false);
     try {
       const token = await getTokenRef.current();
-      const { applicants, canManage: cm } = await fetchChallengeApplicants(challengeId, token);
+      // Для одного человека передаём его id: сервер тогда подтянет анкету
+      // живьём из Talentslab, а не снимок на момент подачи заявки.
+      const { applicants, canManage: cm, ok } = await fetchChallengeApplicants(challengeId, token, applicantUserId);
+      // Неудачный запрос — это ошибка с кнопкой «повторить», а не «анкета
+      // недоступна»: второе означает, что человека нет, и уводит не туда.
+      if (!ok) { setError(true); return; }
       setItems(applicants); setCanManage(cm);
       if (applicantUserId) {
         const selected = applicants.find((a) => a.applicantUserId === applicantUserId);
@@ -162,7 +170,9 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                     {a.teamName ? `${a.teamName} · ` : ''}{a.profile?.completeness != null ? `анкета ${a.profile.completeness}%` : a.source === 'site' ? 'с сайта' : ''}
                   </Text>
                 </View>
-                <Capsule bg={meta.bg} color={meta.color}>{meta.label}</Capsule>
+                {a.isCaptain
+                  ? <Capsule bg={T.brandTinted} color={T.brand}>капитан</Capsule>
+                  : <Capsule bg={meta.bg} color={meta.color}>{meta.label}</Capsule>}
               </Pressable>
             );
           })}
@@ -251,7 +261,10 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                 </>
               )}
 
-              {!directProfile ? (
+              {/* Капитану решения не выносят: его строка — членство в своей
+                  команде, а не заявка. Принимать нечего, а «отклонить» снесло
+                  бы капитана из его же команды. */}
+              {!directProfile && !sel?.isCaptain ? (
                 <>
                   <ListSection header="Ответ кандидату (причина)">
                     <View style={{ padding: 14, gap: 10 }}>

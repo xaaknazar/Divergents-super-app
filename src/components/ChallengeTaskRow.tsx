@@ -12,14 +12,12 @@ import { groupNum } from '../data/api';
 const fmt = (n: number) => groupNum(n);
 
 export function ChallengeTaskRow({
-  task, divider, onToggle, onAdjust, onSet, step = 1, disabled = false,
+  task, divider, onToggle, onSet, disabled = false,
 }: {
   task: ChallengeTask;
   divider?: boolean;
   onToggle?: () => void;
-  onAdjust?: (delta: number) => void;
   onSet?: () => void;
-  step?: number;
   disabled?: boolean;
 }) {
   const { T, ty } = useTheme();
@@ -67,44 +65,28 @@ export function ChallengeTaskRow({
           style={{ height: 5, backgroundColor: T.fillTertiary, borderRadius: 5, overflow: 'hidden' }}>
           <View style={{ width: `${Math.min(100, pct * 100)}%`, height: '100%', backgroundColor: over ? T.green : T.brand, borderRadius: 6 }} />
         </View>
-        <View style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {/* Значение слева, одна заметная кнопка ввода справа. Кнопок «−1/+1»
+            больше нет: страницы и шаги никто не набирает по единице, а мелкая
+            иконка карандаша рядом с цифрой терялась. */}
+        <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
+          <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>
+            <Text style={{ color: over ? T.green : T.brand, fontFamily: ty.subheadEm.fontFamily }}>{fmt(task.current)}</Text>
+            {` / ${fmt(task.min)} ${task.unit}`}
+            {over ? <Text style={{ color: T.green }}>{`  +${fmt(task.current - task.min)}`}</Text> : null}
+          </Text>
           {onSet ? (
-            <Pressable onPress={onSet} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Изменить значение: ${task.title}`} accessibilityState={{ disabled }}
-              style={({ pressed }) => ({ minHeight: 44, flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1 })}>
-              <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>
-                <Text style={{ color: over ? T.green : T.brand, fontFamily: ty.caption2.fontFamily }}>{fmt(task.current)}</Text>
-                {` / ${fmt(task.min)} ${task.unit}`}
-              </Text>
-              <SF name="square.and.pencil" size={12} color={T.brand} />
+            <Pressable onPress={onSet} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Ввести значение: ${task.title}`} accessibilityState={{ disabled }}
+              style={({ pressed }) => ({
+                minHeight: 40, paddingHorizontal: 16, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 7,
+                backgroundColor: disabled ? T.fillTertiary : T.brand, opacity: pressed ? 0.75 : 1,
+              })}>
+              <SF name="square.and.pencil" size={15} color={disabled ? T.labelTertiary : T.onBrand} />
+              <Text style={[ty.subheadEm, { color: disabled ? T.labelTertiary : T.onBrand }]}>{task.current > 0 ? 'Изменить' : 'Ввести'}</Text>
             </Pressable>
-          ) : (
-            <Text style={[ty.caption2, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>
-              <Text style={{ color: over ? T.green : T.label, fontFamily: ty.caption2.fontFamily }}>{fmt(task.current)}</Text>
-              {` / ${fmt(task.min)} ${task.unit}`}
-            </Text>
-          )}
-          {over && !onAdjust ? <Text style={[ty.caption2, { color: T.green }]} numberOfLines={1}>{`+${fmt(task.current - task.min)} ${task.unit}`}</Text> : null}
-          {onAdjust ? <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Stepper label={`− ${fmt(step)}`} accessibilityLabel={`Уменьшить ${task.title} на ${fmt(step)}`} onPress={() => onAdjust(-step)} disabled={disabled} />
-            <Stepper label={`+ ${fmt(step)}`} accessibilityLabel={`Увеличить ${task.title} на ${fmt(step)}`} onPress={() => onAdjust(step)} primary disabled={disabled} />
-          </View> : null}
+          ) : null}
         </View>
       </View>
     </View>
   );
 }
 
-function Stepper({ label, accessibilityLabel, onPress, primary, disabled }: { label: string; accessibilityLabel: string; onPress: () => void; primary?: boolean; disabled?: boolean }) {
-  const { T, ty } = useTheme();
-  return (
-    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityState={{ disabled }}
-      // Visually compact, but hitSlop keeps the real touch target at ~44pt (HIG).
-      hitSlop={{ top: 7, bottom: 7, left: 5, right: 5 }}
-      style={({ pressed }) => ({
-        minWidth: 38, height: 30, paddingHorizontal: 9, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
-        backgroundColor: primary ? T.brandTinted : T.fillTertiary, opacity: pressed ? 0.6 : 1,
-      })}>
-      <Text style={[ty.subheadEm, { color: primary ? T.brand : T.label }]}>{label}</Text>
-    </Pressable>
-  );
-}

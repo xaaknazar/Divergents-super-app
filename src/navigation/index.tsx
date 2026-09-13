@@ -26,8 +26,16 @@ import { CommunityHomeScreen } from '../screens/community/CommunityHomeScreen';
 import { ChannelsScreen } from '../screens/community/ChannelsScreen';
 import { ChallengeDetailScreen } from '../screens/community/ChallengeDetailScreen';
 import { ChallengeApplicantsScreen } from '../screens/community/ChallengeApplicantsScreen';
+import { EventApplicantsScreen } from '../screens/community/EventApplicantsScreen';
+import { MeetupDetailScreen } from '../screens/community/MeetupDetailScreen';
+import { WorkoutHistoryScreen } from '../screens/community/WorkoutHistoryScreen';
+import { WorkoutDetailScreen } from '../screens/community/WorkoutDetailScreen';
+import { WorkoutShareScreen } from '../screens/community/WorkoutShareScreen';
+import { MyFitnessScreen } from '../screens/profile/MyFitnessScreen';
 import { ChallengeRosterScreen } from '../screens/community/ChallengeRosterScreen';
 import { TeamStandingsScreen } from '../screens/community/TeamStandingsScreen';
+import { OverallStandingsScreen } from '../screens/community/OverallStandingsScreen';
+import { ChallengeDaysScreen } from '../screens/community/ChallengeDaysScreen';
 import { ManageChallengeScreen } from '../screens/community/ManageChallengeScreen';
 import { JoinChallengeScreen } from '../screens/community/JoinChallengeScreen';
 import { TripDetailScreen } from '../screens/community/TripDetailScreen';
@@ -79,8 +87,15 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="Channels" component={ChannelsScreen} />
       <CommunityStack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <CommunityStack.Screen name="ChallengeApplicants" component={ChallengeApplicantsScreen} />
+      <CommunityStack.Screen name="EventApplicants" component={EventApplicantsScreen} />
+      <CommunityStack.Screen name="MeetupDetail" component={MeetupDetailScreen} />
+      <CommunityStack.Screen name="WorkoutHistory" component={WorkoutHistoryScreen} />
+      <CommunityStack.Screen name="WorkoutDetail" component={WorkoutDetailScreen} />
+      <CommunityStack.Screen name="WorkoutShare" component={WorkoutShareScreen} />
       <CommunityStack.Screen name="ChallengeRoster" component={ChallengeRosterScreen} />
       <CommunityStack.Screen name="TeamStandings" component={TeamStandingsScreen} />
+      <CommunityStack.Screen name="OverallStandings" component={OverallStandingsScreen} />
+      <CommunityStack.Screen name="ChallengeDays" component={ChallengeDaysScreen} />
       <CommunityStack.Screen name="ManageChallenge" component={ManageChallengeScreen} />
       <CommunityStack.Screen name="WorkoutTrack" component={WorkoutTrackScreen} />
       <CommunityStack.Screen name="JoinChallenge" component={JoinChallengeScreen} options={{ presentation: 'modal' }} />
@@ -138,6 +153,14 @@ function ProfileNavigator() {
       <ProfileStack.Screen name="Downloads" component={DownloadsScreen} />
       <ProfileStack.Screen name="Resume" component={ResumeFormScreen} options={{ presentation: 'modal' }} />
       <ProfileStack.Screen name="TalentProfile" component={TalentProfileScreen as React.ComponentType<any>} />
+      {/* Физические показатели. Экраны тренировок те же, что в сообществе:
+          из профиля до них иначе не дотянуться, а копировать — плодить
+          расхождения. Типизированы под стек сообщества, отсюда приведение. */}
+      <ProfileStack.Screen name="MyFitness" component={MyFitnessScreen} />
+      <ProfileStack.Screen name="WorkoutTrack" component={WorkoutTrackScreen as React.ComponentType<any>} />
+      <ProfileStack.Screen name="WorkoutHistory" component={WorkoutHistoryScreen as React.ComponentType<any>} />
+      <ProfileStack.Screen name="WorkoutDetail" component={WorkoutDetailScreen as React.ComponentType<any>} />
+      <ProfileStack.Screen name="WorkoutShare" component={WorkoutShareScreen as React.ComponentType<any>} />
     </ProfileStack.Navigator>
   );
 }

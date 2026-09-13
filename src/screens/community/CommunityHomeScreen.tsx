@@ -20,7 +20,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useNotifications } from '../../state/NotificationsContext';
 import {
   daysUntil, fetchCommunityHome, teamsNeed,
-  Trip, SportActivity, ChallengeListItem,
+  Trip, SportActivity, ChallengeListItem, Meetup,
 } from '../../data/community';
 import { imgUrl } from '../../data/api';
 import { Channel } from '../../data/channel';
@@ -42,10 +42,15 @@ function openCreateSheet(navigation: Nav) {
   navigation.navigate('CreateContent');
 }
 
-const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_sport'] as const;
+const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_meetups', 'sec_sport'] as const;
 // Разделы «Сообщества» можно выключать в админ-панели сайта. Лента и челленджи
 // флага не имеют: без них вкладка теряет смысл.
-const SECTION_FEATURE: Record<number, string> = { 1: 'channels', 3: 'trips', 4: 'sport' };
+//
+// Индексы — позиции в SECTION_KEYS. При вставке нового раздела в СЕРЕДИНУ их
+// нужно сдвигать здесь и в разборе `focus` ниже; поэтому мероприятия встали
+// перед спортом, а не в конец: так порядок читается как «поездки, встречи,
+// спорт», а не «поездки, спорт, и ещё встречи».
+const SECTION_FEATURE: Record<number, string> = { 1: 'channels', 3: 'trips', 4: 'meetups', 5: 'sport' };
 
 export function CommunityHomeScreen({ navigation, route }: Props) {
   const { T, ty } = useTheme();
@@ -67,6 +72,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [sport, setSport] = useState<SportActivity[] | null>(null);
   const [challenges, setChallenges] = useState<ChallengeListItem[] | null>(null);
+  const [meetups, setMeetups] = useState<Meetup[] | null>(null);
   const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
@@ -74,6 +80,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
     setTrips(d.trips);
     setSport(d.sport);
     setChallenges(d.challenges);
+    setMeetups(d.meetups);
     setError(d.error);
   }, []);
 
@@ -85,6 +92,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       setTrips(d.trips);
       setSport(d.sport);
       setChallenges(d.challenges);
+      setMeetups(d.meetups);
       setError(d.error);
     })();
     return () => { alive = false; };
@@ -110,7 +118,11 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
   // used to land on the feed with nothing switched.
   useEffect(() => {
     if (!focusParam) return;
-    const idx = focusParam === 'channel' ? 1 : focusParam === 'challenge' ? 2 : focusParam === 'trip' ? 3 : 4;
+    const idx = focusParam === 'channel' ? 1
+      : focusParam === 'challenge' ? 2
+      : focusParam === 'trip' ? 3
+      : focusParam === 'meetup' ? 4
+      : 5;
     if (!sectionOn(idx)) return;
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSeg(idx);
@@ -145,7 +157,8 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       {seg === 1 && sectionOn(1) && <ChannelTab navigation={navigation} />}
       {seg === 2 && <ChallengesTab navigation={navigation} challenges={challenges} error={error} onRetry={load} />}
       {seg === 3 && sectionOn(3) && <TripsTab navigation={navigation} trips={trips} error={error} onRetry={load} />}
-      {seg === 4 && sectionOn(4) && <SportTab sport={sport} error={error} onRetry={load} />}
+      {seg === 4 && sectionOn(4) && <MeetupsTab navigation={navigation} meetups={meetups} error={error} onRetry={load} />}
+      {seg === 5 && sectionOn(5) && <SportTab sport={sport} error={error} onRetry={load} />}
       <View style={{ height: 16 }} />
     </Screen>
   );
@@ -242,19 +255,21 @@ function PersonalActivityCard({ icon, eyebrow, title, subtitle, onPress }: {
   );
 }
 
-// ─── Open-challenge card (full-width) ───────────────────────────────
-// Shared by the home feed and the Челленджи tab so an open challenge always
-// renders as one full-width card — never a narrow, left-floating carousel item.
+// ─── Public challenge card (full-width) ─────────────────────────────
+// Active catalog cards show public information only; the participant's private
+// progress is rendered separately by ActiveChallengeCard.
 function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => void }) {
   const { T, ty } = useTheme();
+  const started = ch.status === 'active';
   const left = daysUntil(ch.startISO);
   // All team spots taken → recruitment done, waiting for the start.
-  const full = ch.teamList.length > 0 && teamsNeed(ch.teamList) === 0;
-  const countdown = left > 0
+  const full = !started && ch.teamList.length > 0 && teamsNeed(ch.teamList) === 0;
+  const countdown = started ? tr('Челлендж идёт') : left > 0
     ? `${tr('Старт через')} ${pl.days(left)}${ch.startLabel ? ` · ${ch.startLabel}` : ''}`
     : tr('Старт скоро');
   return (
-    <Pressable onPress={onPress}
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${ch.title}. ${countdown}`}
+      accessibilityHint={started ? tr('Доступ открыт только действующим участникам этого челленджа.') : undefined}
       style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
         {/* Darkening overlay → guarantees white text contrast across the gradient */}
@@ -266,7 +281,7 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: '#fff' }, HERO_TEXT_SHADOW]} numberOfLines={2}>{ch.title}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
-              <SF name="calendar" size={11} color="#fff" />
+              <SF name={started ? 'flame.fill' : 'calendar'} size={11} color="#fff" />
               <Text style={[ty.caption1, { color: '#fff', flex: 1 }, HERO_TEXT_SHADOW]} numberOfLines={1}>{countdown}</Text>
             </View>
           </View>
@@ -282,8 +297,10 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-            {full ? <SF name="checkmark.seal.fill" size={12} color={T.green} /> : <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: T.green }} />}
-            <Text style={[ty.caption1, { color: full ? T.green : T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{full ? tr('Команды сформированы · ждём старта') : tr('Набор открыт')}</Text>
+            {started
+              ? <SF name="lock.fill" size={12} color={T.labelSecondary} />
+              : full ? <SF name="checkmark.seal.fill" size={12} color={T.green} /> : <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: T.green }} />}
+            <Text style={[ty.caption1, { color: full ? T.green : T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{started ? tr('Только для участников') : full ? tr('Команды сформированы · ждём старта') : tr('Набор открыт')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Подробнее')}</Text>
@@ -377,18 +394,35 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
 
 // ─── Челленджи ──────────────────────────────────────────────────────
 function ChallengesTab({ navigation, challenges, error, onRetry }: { navigation: Nav; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
-  const { isParticipant } = useChallenge();
-  // Only a REAL server-active challenge (currentDay > 0) counts. The offline
-  // DEFAULT_CHALLENGE placeholder always has tasks, so the old `|| tasks.length`
-  // made a phantom "active challenge" (День 0/21) show permanently.
-  const hasActive = isParticipant;
+  const { challenge: myChallenge, isParticipant, loading, error: participationError } = useChallenge();
+  // Everyone can see ongoing challenges in this tab. Replace the participant's
+  // own catalog card with their tracker card, without duplicating it.
+  const otherActive = (challenges ?? []).filter((x) => x.status === 'active' && (!isParticipant || x.id !== myChallenge.id));
+  const hasActive = isParticipant || otherActive.length > 0;
   const upcoming = (challenges ?? []).filter((x) => x.status === 'upcoming');
+  const showParticipantNotice = () => Alert.alert(
+    tr('Челлендж уже начался'),
+    tr('Доступ открыт только действующим участникам этого челленджа.'),
+    [{ text: tr('Понятно') }],
+  );
   return (
     <>
       <SectionHeader title={tr('Активный челлендж')} />
-      {hasActive
-        ? <ActiveChallengeCard navigation={navigation} />
-        : <EmptyState icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />}
+      {loading ? <Loading /> : hasActive ? (
+        <>
+          {isParticipant ? <ActiveChallengeCard navigation={navigation} /> : null}
+          {otherActive.map((ch) => (
+            <ChallengeCard key={ch.id} ch={ch} onPress={() => {
+              // A failed membership check is not a denial: the detail screen
+              // offers retry and keeps the tracker closed until access is known.
+              if (participationError) navigation.navigate('ChallengeDetail', { challengeId: ch.id });
+              else showParticipantNotice();
+            }} />
+          ))}
+        </>
+      ) : challenges === null ? <Loading /> : (
+        <EmptyOrError error={error} onRetry={onRetry} icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />
+      )}
       <SectionHeader title={tr('Открыт набор')} />
       {challenges === null ? <Loading /> : upcoming.length === 0 ? (
         <EmptyOrError error={error} onRetry={onRetry} icon="calendar" title={tr('Пока ничего нет')} subtitle={tr('Новые челленджи появятся здесь.')} />
@@ -467,6 +501,44 @@ function TripsTab({ navigation, trips, error, onRetry }: { navigation: Nav; trip
           </View>
           <SF name="chevron.forward" size={14} color={T.labelTertiary} />
           {i < trips.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 88, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
+        </Pressable>
+      ))}
+    </ListSection>
+  );
+}
+
+// ─── Мероприятия ────────────────────────────────────────────────────
+// Встречи сообщества: лекции, мастер-классы, кинопоказы. Карточка проще, чем у
+// поездки: ни региона, ни сложности — только где, когда и почём.
+function MeetupsTab({ navigation, meetups, error, onRetry }: { navigation: Nav; meetups: Meetup[] | null; error: boolean; onRetry: () => void }) {
+  const { T, ty } = useTheme();
+  if (meetups === null) return <Loading />;
+  if (meetups.length === 0) {
+    return <EmptyOrError error={error} onRetry={onRetry} icon="calendar" title={tr('Пока ничего нет')} subtitle={tr('Встречи сообщества появятся здесь.')} />;
+  }
+  return (
+    <ListSection header={tr('Все мероприятия')}>
+      {meetups.map((m, i) => (
+        <Pressable key={m.id} onPress={() => navigation.navigate('MeetupDetail', { meetupId: m.id })}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
+          {m.imageUrl ? (
+            <Image source={imgUrl(m.imageUrl, 256)} style={{ width: 64, height: 64, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
+          ) : (
+            <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              <SF name="calendar" size={26} color={T.brand} />
+            </View>
+          )}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{m.title}</Text>
+            {m.place ? (
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{m.place}</Text>
+            ) : null}
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
+              {[m.date, m.price].filter(Boolean).join(' · ')}
+            </Text>
+          </View>
+          <SF name="chevron.forward" size={14} color={T.labelTertiary} />
+          {i < meetups.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 88, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
         </Pressable>
       ))}
     </ListSection>

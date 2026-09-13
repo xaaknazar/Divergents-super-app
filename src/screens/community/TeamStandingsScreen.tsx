@@ -8,11 +8,12 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { ListSection } from '../../components/ui';
+import { Capsule, ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { MEDAL_FOR_RANK } from '../../data/community';
+import * as pl from '../../data/plural';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TeamStandings'>;
@@ -49,8 +50,20 @@ export function TeamStandingsScreen({ navigation }: Props) {
                       <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>
                         {tm.name}{tm.isMine ? <Text style={[ty.caption1, { color: T.brand }]}>{`  · ${tr('ваша')}`}</Text> : null}
                       </Text>
-                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{tm.members} {tr('участников')}</Text>
+                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
+                        {pl.people(tm.members)}
+                        {/* Выбывшие важнее числа флагов: команда теряет человека
+                            насовсем, и по составу это видно не сразу. */}
+                        {tm.eliminated ? ` · ${tr('выбыло')} ${tm.eliminated}` : ''}
+                        {tm.left ? ` · 🏳️ ${tm.left}` : ''}
+                      </Text>
                     </View>
+                    {/* Флаги команды — сумма по всем участникам. Показываем
+                        только когда они есть: у чистой команды пустое место
+                        читается лучше, чем «🚩 0». */}
+                    {tm.flags ? (
+                      <Capsule bg="rgba(255,59,48,0.14)" color={T.red}>🚩 {tm.flags}</Capsule>
+                    ) : null}
                     <Text style={[ty.headline, { color: tm.isMine ? T.brand : T.label }]} numberOfLines={1}>{tm.points} pts</Text>
                   </View>
                   {i < standings.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 58, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}

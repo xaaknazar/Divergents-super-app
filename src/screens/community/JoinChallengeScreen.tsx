@@ -48,6 +48,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   // The applicant's own анкета — attached to the application so the captain/admin
   // reliably sees it (independent of the server→Talentslab by-email lookup).
   const { profile, live } = useTalentProfile();
+  const challengeId = route.params?.challengeId ?? '';
   const { require: requireResume } = useResumeAccess();
 
   const load = useCallback(() => {
@@ -55,7 +56,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
     setLoading(true);
     fetchChallengesAndTeams().then(({ challenges, error: err }) => {
       if (!alive) return;
-      const m = getChallengeMeta(challenges, route.params.challengeId);
+      const m = getChallengeMeta(challenges, challengeId);
       setMeta(m);
       // Teams MUST be scoped to the challenge being applied to — not the global
       // "first open challenge" list — so the selected teamId belongs to it.
@@ -64,7 +65,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
       setLoading(false);
     });
     return () => { alive = false; };
-  }, [route.params.challengeId]);
+  }, [challengeId]);
 
   useEffect(() => load(), [load]);
 
@@ -93,7 +94,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
     setSubmitting(true);
     try {
       const token = await getToken();
-      const r = await applyToChallenge(token, route.params.challengeId, teamId, live ? profile : undefined, tgHandle);
+      const r = await applyToChallenge(token, challengeId, teamId, live ? profile : undefined, tgHandle);
       if (r.ok) {
         setSubmitted(true);
       } else {

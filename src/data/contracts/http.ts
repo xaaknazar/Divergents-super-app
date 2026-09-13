@@ -9,6 +9,7 @@
 // full-stack templates, adapted to our client-only app.
 import { z } from 'zod';
 import { API_BASE } from '../../config';
+import { netFetch } from '../net';
 
 // Result envelope every fetch returns. `error` is true when the request failed
 // OR the payload didn't match the contract — screens use it to show a RETRY
@@ -35,12 +36,12 @@ export async function fetchJson<S extends z.ZodTypeAny>(
   opts: FetchOpts = {},
 ): Promise<Fetched<z.output<S>>> {
   const { timeoutMs = 12000, token, method = 'GET', body } = opts;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    // netFetch повторяет запрос при обрыве связи: первый запрос после выхода
+    // приложения из фона часто падает мгновенно, хотя Wi-Fi в порядке.
+    const res = await netFetch(`${API_BASE}${path}`, {
       method,
-      signal: ctrl.signal,
+      timeoutMs,
       headers: {
         Accept: 'application/json',
         ...(body != null ? { 'Content-Type': 'application/json' } : {}),
@@ -59,8 +60,6 @@ export async function fetchJson<S extends z.ZodTypeAny>(
     return { ok: true, data: parsed.data, error: false };
   } catch {
     return { ok: false, data: null, error: true };
-  } finally {
-    clearTimeout(timer);
   }
 }
 

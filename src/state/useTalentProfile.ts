@@ -15,7 +15,7 @@ import {
 } from '../data/talentslab';
 import { loadJSON, saveJSON } from './persist';
 import { onProfileChanged } from './profileBus';
-import { syncNicknameToSite } from '../data/api';
+import { syncProfileToSite } from '../data/api';
 
 const CACHE_KEY = 'dvg.talentProfileCache.v1';
 // Псевдоним живёт в анкете (Talentslab), а комментарии/рецензии/челлендж — на
@@ -152,20 +152,32 @@ export function useTalentProfile() {
   const currentProfile = profileIdentityRef.current === identity ? profile : null;
   const live = source === 'live' && currentProfile?.found === true;
 
-  // Один раз за сессию передаём псевдоним на сайт, чтобы другие пользователи
-  // видели его вместо ФИО в комментариях, рецензиях, отзывах и челлендже.
+  // Один раз за сессию передаём псевдоним и фото на сайт, чтобы другие
+  // пользователи видели их вместо ФИО и безликого кружка — в комментариях,
+  // рецензиях, отзывах и в составе команды челленджа.
   const nickname = typeof (currentProfile?.resume as any)?.nickname === 'string'
     ? ((currentProfile!.resume as any).nickname as string).trim()
     : '';
+  // Ровно то фото, которое человек видит у себя в шапке (ProfileAvatarButton):
+  // сначала анкета, потом аватар аккаунта. Иначе в составе команды у него было
+  // бы одно лицо, а у остальных — другое.
+  const photoUrl = currentProfile?.photoUrl || user?.imageUrl || '';
+  // Ключ синхронизации — пара значений: сменил человек фото, не трогая
+  // псевдоним, — отправим заново.
+  const syncKey = `${nickname}|${photoUrl}`;
   useEffect(() => {
-    if (!isSignedIn || !nickname) return;
-    if (nicknameSyncedFor.get(identity) === nickname) return;
-    nicknameSyncedFor.set(identity, nickname);
+    if (!isSignedIn) return;
+    if (!nickname && !photoUrl) return;
+    if (nicknameSyncedFor.get(identity) === syncKey) return;
+    nicknameSyncedFor.set(identity, syncKey);
     (async () => {
       try {
         const token = await getTokenRef.current();
         if (token) {
-          const ok = await syncNicknameToSite(nickname, token);
+          const ok = await syncProfileToSite(
+            { nickname: nickname || undefined, photoUrl: photoUrl || undefined },
+            token,
+          );
           // Не получилось — пробуем снова при следующем запуске.
           if (!ok) nicknameSyncedFor.delete(identity);
         } else {
@@ -173,7 +185,7 @@ export function useTalentProfile() {
         }
       } catch { nicknameSyncedFor.delete(identity); }
     })();
-  }, [isSignedIn, identity, nickname]);
+  }, [isSignedIn, identity, syncKey, nickname, photoUrl]);
 
   return { profile: currentProfile, loading, live, unavailable, source, reload: run };
 }

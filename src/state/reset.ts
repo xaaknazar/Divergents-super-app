@@ -35,6 +35,9 @@ export const USER_DATA_KEYS: string[] = [
   'dvg.placeLoc',           // PlacesContext/usePush — selected city/country
   'dvg.mapRecent',          // recent map searches
   'dvg.workouts.v1',        // ActivityContext — workout history + GPS routes
+  'dvg.fitness.v1',         // FitnessContext — цели и свои показатели
+  'dvg.workoutSession',     // workoutTracker — незавершённая запись
+  'dvg.shareStyle.v1',      // карточка «поделиться» — оформление
   // Community channels — членство и реакции живут на сервере, локально
   // остаётся только отметка прочитанного. Остальные ключи — от снятых версий.
   'dvg.channelJoined.v2',

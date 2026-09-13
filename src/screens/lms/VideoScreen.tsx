@@ -4,7 +4,7 @@ import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Keyboard, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { VideoView } from 'expo-video';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
@@ -14,6 +14,7 @@ import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
 import { useModeration } from '../../state/ModerationContext';
 import { useDownloads } from '../../state/downloads';
+import { useAudioPlayer } from '../../state/AudioPlayerContext';
 import { stripHtml, fetchComments, postComment, ChapterComment, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 
@@ -38,7 +39,8 @@ export function VideoScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
-  const { courseId, lessonId } = route.params;
+  const courseId = route.params?.courseId ?? '';
+  const lessonId = route.params?.lessonId ?? '';
   const { getCourse, completeLesson, isCompleted, loadDetail, detailLoading, detailError } = useCourses();
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
@@ -78,18 +80,35 @@ export function VideoScreen({ route, navigation }: Props) {
   const resolving = !!isSignedIn && !my.ready && !hls && lesson?.isFree === false;
   const needsPurchase = !owned && course?.source === 'live' && lesson?.isFree === false && !hls && !resolving;
   const unavailable = owned && !hls && !resolving;
-  const player = useVideoPlayer(hls ?? null, (p) => { p.loop = false; });
+  // Плеер общий на всё приложение (AudioPlayerProvider) и живёт НАД навигатором.
+  // Раньше он создавался здесь — и умирал вместе с экраном: стоило свернуть
+  // урок и уйти в челлендж, как лекция обрывалась. Теперь экран — только
+  // картинка и пульт: уходя, человек продолжает слушать, а вернувшись, попадает
+  // на ту же секунду.
+  //
+  // Звук не глохнет и при сворачивании приложения: `staysActiveInBackground` и
+  // `showNowPlayingNotification` выставлены в самом провайдере, нативная часть
+  // включена плагином expo-video в app.config.ts.
+  const { player, openLesson } = useAudioPlayer();
   // Offline-audio store. Called unconditionally (before any early return) so the
   // hook count stays stable across renders — see Rules of Hooks.
   const { isDownloaded, downloadLesson, removeDownload, cancelDownload, isDownloading } = useDownloads();
   const videoRef = useRef<VideoView>(null);
 
-  // Autoplay once a real HLS source is available (also covers the case where the
-  // owned HLS arrives after a late detail fetch). Guarded so an empty source never throws.
+  // Отдать урок общему плееру, как только появилась настоящая ссылка (у
+  // купленного курса она приходит позже, отдельным запросом). Повторный вход в
+  // тот же урок `openLesson` пропускает — иначе возврат на экран перематывал бы
+  // лекцию в начало.
   useEffect(() => {
-    if (!hls) return;
-    try { player.play(); } catch {}
-  }, [hls, player]);
+    if (!hls || !lesson) return;
+    openLesson({
+      courseId,
+      lessonId: lesson.id,
+      title: lesson.title,
+      courseTitle: course?.title ?? 'Divergents',
+      uri: hls,
+    });
+  }, [hls, lesson?.id, lesson?.title, course?.title, courseId, openLesson]);
 
   // Cold start / deep link: the catalog knows the course but not its chapters,
   // so no lessonId can resolve. Fetch the detail once (with a token when signed
@@ -254,7 +273,13 @@ export function VideoScreen({ route, navigation }: Props) {
       {/* Video area */}
       <View style={{ paddingTop: insets.top, height: 240 + insets.top, backgroundColor: '#0E1729' }}>
         <View style={{ position: 'absolute', top: insets.top + 12, left: 12, right: 12, zIndex: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel={tr('Закрыть')} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Не «закрыть», а «свернуть»: урок продолжает звучать, а управление
+              переезжает в полоску над вкладками. Подпись важна для VoiceOver —
+              иначе шеврон вниз читается как выход и человек не ждёт, что звук
+              останется. */}
+          <Pressable onPress={() => navigation.goBack()} accessibilityRole="button"
+            accessibilityLabel={tr('Свернуть урок')} accessibilityHint={tr('Урок продолжит играть, управление появится над вкладками')}
+            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
             <SF name="chevron.down" size={18} color="#fff" />
           </Pressable>
           <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 8 }}>
@@ -270,7 +295,13 @@ export function VideoScreen({ route, navigation }: Props) {
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           {hls ? (
-            <VideoView ref={videoRef} player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls fullscreenOptions={{ enable: true }} />
+            // allowsPictureInPicture — кнопка «картинка в картинке» в родных
+            // элементах управления: видео сжимается в окошко и остаётся поверх
+            // приложения, пока человек листает другие разделы. Свернуть с одним
+            // звуком тоже можно (шеврон вниз), но лекцию со слайдами хочется
+            // видеть. Нативная часть включена плагином expo-video.
+            <VideoView ref={videoRef} player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls
+              allowsPictureInPicture fullscreenOptions={{ enable: true }} />
           ) : resolving ? (
             <ActivityIndicator color="#fff" />
           ) : needsPurchase ? (

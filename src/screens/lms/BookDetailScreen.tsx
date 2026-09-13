@@ -37,7 +37,7 @@ function plurRatings(n: number): string {
 }
 
 export function BookDetailScreen({ route, navigation }: Props) {
-  const { bookId } = route.params;
+  const bookId = route.params?.bookId ?? '';
   const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { getToken, isSignedIn } = useAuth();

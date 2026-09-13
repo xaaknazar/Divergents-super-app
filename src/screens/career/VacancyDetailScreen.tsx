@@ -23,7 +23,7 @@ type Props = NativeStackScreenProps<CareerStackParams, 'VacancyDetail'>;
 export function VacancyDetailScreen({ route, navigation }: Props) {
   const { T, isDark, ty } = useTheme();
   useLang();
-  const { jobId } = route.params;
+  const jobId = route.params?.jobId ?? '';
   const { getJob, jobsLoading, hydrated, isApplied, isSaved, apply, toggleSave } = useCareer();
   const { require: requireResume } = useResumeAccess();
   const { profile, live } = useTalentProfile();

@@ -11,9 +11,10 @@ import { loadJSON, saveJSON } from './persist';
 import {
   DEFAULT_CHALLENGE, Challenge, ChallengeTask, Member, fetchActiveChallenge, fetchChallenges, postChallengeProgress,
   challengePointsToday, challengeBonusToday, taskPoints, taskBonus, taskDone, totalFlags,
-  DEFAULT_REPORT_DEADLINE_HOUR,
+  averagePerPastDay, DEFAULT_REPORT_DEADLINE_HOUR,
 } from '../data/community';
 import { expectedChallengeDay, isChallengeDayLocked } from '../data/challengeDay';
+import { applyPending, type PendingUpdate, type SavedPending } from './challengeMerge';
 
 export interface RankedMember extends Member { rank: number; points: number }
 
@@ -44,24 +45,16 @@ const Ctx = createContext<ChallengeState | null>(null);
 const PROGRESS_KEY = 'dvg.challengeProgress.v1';
 const PENDING_KEY = 'dvg.challengeProgressPending.v1';
 const REMINDER_KEY = 'dvg.challengeReminder.v1';
+/** Пауза перед первым повтором неотправленной отметки. Дальше удваивается. */
+const BASE_RETRY_MS = 20_000;
+/** Потолок паузы: пять минут. Дольше ждать бессмысленно — день не резиновый. */
+const MAX_RETRY_MS = 5 * 60_000;
 const ALMATY_OFFSET_MS = 5 * 60 * 60 * 1000;
 
 interface SavedProgress {
   id: string;
   day: number;
   tasks: { id: string; current?: number; done?: boolean }[];
-}
-
-interface PendingUpdate {
-  taskId: string;
-  value?: number;
-  done?: boolean;
-}
-
-interface SavedPending {
-  id: string;
-  day: number;
-  updates: PendingUpdate[];
 }
 
 interface SavedReminder {
@@ -87,6 +80,9 @@ function nextAlmatyTime(hour: number, minute: number, nowMs = Date.now()): numbe
 
 // Overlay persisted daily inputs onto a challenge's task definitions (only when
 // the saved progress belongs to the same challenge).
+//
+// Применяется ТОЛЬКО к заглушке до первого ответа сервера: там показывать
+// нечего, кроме последнего виденного. К живым данным — никогда, см. applyPending.
 function applyProgress(base: Challenge, saved: SavedProgress | null): Challenge {
   if (!saved || saved.id !== base.id || saved.day !== base.currentDay) return base;
   return {
@@ -170,7 +166,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
           const catalog = await fetchChallenges().catch(() => []);
           live.startISO = catalog.find((item) => item.id === live.id)?.startISO;
         }
-        const next = applyProgress(live, savedRef.current);
+        const next = applyPending(live, pendingRef.current);
         setChallenge(next);
         setMembers(nextMembers);
         // A server-side day rollover invalidates yesterday's local snapshot.
@@ -228,9 +224,143 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     return () => { alive = false; };
   }, [isSignedIn, refreshLive]);
 
-  // Every tap is persisted locally first and queued before the network request.
-  // A failed request remains in the queue and is retried while the app is open,
-  // so there is no separate end-of-day report the participant can forget.
+  // Снимок дня на устройстве: экран должен пережить перезапуск приложения.
+  // Объявлен здесь, а не ниже рядом с setMetric, потому что нужен отправке.
+  const persist = useCallback((c: Challenge) => {
+    const snap = toSaved(c);
+    savedRef.current = snap;
+    saveJSON(PROGRESS_KEY, snap);
+  }, []);
+
+  // Приводим экран к тому, что реально записал сервер. Нужно, когда отметку
+  // обогнал другой запрос: локальный снимок дня иначе так и показывал бы
+  // несохранённое значение до конца дня.
+  const adoptServerValue = useCallback((taskId: string, value?: number, done?: boolean) => {
+    if (value === undefined && done === undefined) return;
+    setChallenge((prev) => {
+      const task = prev.tasks.find((t) => t.id === taskId);
+      if (!task) return prev;
+      const same = task.kind === 'metric'
+        ? value === undefined || task.current === value
+        : done === undefined || task.done === done;
+      if (same) return prev;
+      const next = {
+        ...prev,
+        tasks: prev.tasks.map((t) => {
+          if (t.id !== taskId) return t;
+          if (t.kind === 'metric' && value !== undefined) return { ...t, current: value };
+          if (t.kind === 'binary' && done !== undefined) return { ...t, done };
+          return t;
+        }),
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  // ─── Отправка отметок ───────────────────────────────────────────────────────
+  // Правило: по одной задаче в любой момент времени в воздухе НЕ БОЛЕЕ ОДНОГО
+  // запроса.
+  //
+  // Раньше запрос уходил на каждое изменение: нажал «+1» пять раз — ушло пять
+  // запросов. Записывался пришедший последним, а не нажатый последним, и у
+  // человека, отметившего 25 страниц, в зачёт попадало 12. Повторы из очереди
+  // добавляли к этому ещё и старые значения.
+  //
+  // Теперь очередь — единственный источник правды о том, что надо отправить, а
+  // `inFlightRef` не даёт запустить второй запрос по той же задаче. Пока он
+  // летит, новые нажатия просто обновляют значение в очереди; после ответа
+  // отправляется актуальное, если оно успело измениться.
+  const inFlightRef = useRef<Set<string>>(new Set());
+
+  // ── Пауза между повторами ──────────────────────────────────────────────────
+  //
+  // Очередь повторялась ровно каждые двадцать секунд, чем бы ни закончилась
+  // прошлая попытка. Одиннадцатого сентября это обернулось против нас: сервер
+  // перестал отвечать в 22:00, и сто шестьдесят приложений начали долбить его
+  // втрое чаще обычного — сбой сам себя кормил.
+  //
+  // Теперь после каждой неудачи пауза удваивается, а к ней добавляется случайная
+  // добавка. Разброс здесь важнее самой паузы: упали все одновременно, и без
+  // него все одновременно и вернулись бы — тем же залпом, от которого сервер
+  // лёг.
+  const failStreakRef = useRef(0);
+  const retryAfterRef = useRef(0);
+
+  const noteSendResult = useCallback((ok: boolean) => {
+    if (ok) {
+      failStreakRef.current = 0;
+      retryAfterRef.current = 0;
+      return;
+    }
+    failStreakRef.current = Math.min(failStreakRef.current + 1, 5);
+    const base = Math.min(BASE_RETRY_MS * 2 ** (failStreakRef.current - 1), MAX_RETRY_MS);
+    retryAfterRef.current = Date.now() + base + Math.random() * base;
+  }, []);
+
+  const sendTask = useCallback(async (challengeId: string, day: number, taskId: string, rollback?: () => void) => {
+    if (inFlightRef.current.has(taskId)) return; // уже летит — догонит следующим кругом
+    inFlightRef.current.add(taskId);
+    try {
+      // Цикл: отправили — проверили, не изменилось ли значение за это время.
+      for (;;) {
+        const queue = pendingRef.current;
+        if (!queue || queue.id !== challengeId || queue.day !== day) return;
+        const update = queue.updates.find((item) => item.taskId === taskId);
+        if (!update) return; // уже подтверждено
+
+        const token = await getTokenRef.current();
+        const res = await postChallengeProgress(challengeId, update, token);
+
+        if (!res.ok) {
+          if (res.reason === 'deadline_passed') {
+            // День закрыт — оптимистичную запись откатываем, иначе на экране
+            // «сохранено», а сервер этой отметки не знает.
+            dropPending(challengeId, day, taskId);
+            rollback?.();
+            warnDeadlinePassed(challengeId, day, res.deadlineHour);
+          } else if (res.reason === 'left' || res.reason === 'forbidden' || res.reason === 'challenge_not_active') {
+            // Окончательные отказы: человек вышел по белому флагу 🏳️, не
+            // участник или челлендж закончился. Повторять такой запрос по
+            // таймеру бессмысленно — он будет отклонён ровно так же, а очередь
+            // никогда не опустеет. Снимаем и откатываем без предупреждения:
+            // причину экран уже показывает баннером.
+            dropPending(challengeId, day, taskId);
+            rollback?.();
+          }
+          // Отказ по существу — не повод отступать: сервер жив и ответил.
+          // Откат нужен только при сбое связи или пятисотке.
+          noteSendResult(res.status >= 400 && res.status < 500);
+          return; // сеть/сервер — оставляем в очереди, повторим позже
+        }
+        noteSendResult(true);
+
+        // Сервер мог записать не то, что мы прислали: обрезать по потолку или
+        // отбросить нашу запись как опоздавшую. Приводим экран к его правде.
+        adoptServerValue(taskId, res.savedValue, res.savedDone);
+
+        const after = pendingRef.current;
+        if (!after || after.id !== challengeId || after.day !== day) return;
+        const still = after.updates.find((item) => item.taskId === taskId);
+        // Значение не менялось, пока запрос летел, — снимаем из очереди.
+        if (!still || (still.value === update.value && still.done === update.done)) {
+          const remaining = after.updates.filter((item) => item.taskId !== taskId);
+          savePending(remaining.length ? { ...after, updates: remaining } : null);
+          return;
+        }
+        // Изменилось — идём на второй круг и отправляем актуальное.
+      }
+    } catch {
+      // Оставляем в очереди: повтор произойдёт по таймеру, с паузой.
+      noteSendResult(false);
+    } finally {
+      inFlightRef.current.delete(taskId);
+    }
+  }, [adoptServerValue, dropPending, noteSendResult, savePending, warnDeadlinePassed]);
+
+  // Каждое нажатие сохраняется локально и кладётся в очередь, и только потом
+  // уходит в сеть. Неотправленное остаётся в очереди и повторяется, пока
+  // приложение открыто, — отдельного «отчёта за день» человеку слать не нужно.
   const syncTask = useCallback((challengeId: string, day: number, body: PendingUpdate, rollback?: () => void) => {
     if (!challengeId || challengeId === DEFAULT_CHALLENGE.id) return;
     const previous = pendingRef.current;
@@ -240,28 +370,8 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       day,
       updates: [...updates.filter((item) => item.taskId !== body.taskId), body],
     });
-    Promise.resolve(getTokenRef.current())
-      .then(async (token) => {
-        const res = await postChallengeProgress(challengeId, body, token);
-        if (!res.ok) {
-          // День закрыт — оптимистичную запись откатываем, иначе на экране
-          // «сохранено», а сервер этой отметки не знает.
-          if (res.reason === 'deadline_passed') {
-            dropPending(challengeId, day, body.taskId);
-            rollback?.();
-            warnDeadlinePassed(challengeId, day, res.deadlineHour);
-          }
-          return;
-        }
-        const latest = pendingRef.current;
-        if (!latest || latest.id !== challengeId || latest.day !== day) return;
-        const queued = latest.updates.find((item) => item.taskId === body.taskId);
-        if (!queued || queued.value !== body.value || queued.done !== body.done) return;
-        const remaining = latest.updates.filter((item) => item.taskId !== body.taskId);
-        savePending(remaining.length ? { ...latest, updates: remaining } : null);
-      })
-      .catch(() => {});
-  }, [dropPending, savePending, warnDeadlinePassed]);
+    void sendTask(challengeId, day, body.taskId, rollback);
+  }, [savePending, sendTask]);
 
   const flushPending = useCallback(async () => {
     if (flushingRef.current || !isSignedIn || challenge.id === DEFAULT_CHALLENGE.id) return;
@@ -276,34 +386,25 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       if (stale) warnDeadlinePassed(challenge.id, pending.day);
       return;
     }
+    // Ещё не отстоялись после прошлой неудачи — этот заход пропускаем.
+    // Нажатие человека сюда не попадает: оно уходит своим путём, минуя очередь.
+    if (Date.now() < retryAfterRef.current) return;
     flushingRef.current = true;
     try {
-      const token = await getTokenRef.current();
-      for (const update of [...pending.updates]) {
-        const res = await postChallengeProgress(challenge.id, update, token);
-        if (!res.ok) {
-          if (res.reason !== 'deadline_passed') break;
-          // Отложенная отметка опоздала: выбрасываем её из очереди и сбрасываем
-          // локальный снимок дня, чтобы экран показал то, что реально у сервера.
-          dropPending(challenge.id, challenge.currentDay, update.taskId);
-          warnDeadlinePassed(challenge.id, challenge.currentDay, res.deadlineHour);
-          savedRef.current = null;
-          saveJSON(PROGRESS_KEY, null);
-          refreshLive();
-          continue;
-        }
-        const latest = pendingRef.current;
-        if (!latest || latest.id !== challenge.id || latest.day !== challenge.currentDay) break;
-        const queued = latest.updates.find((item) => item.taskId === update.taskId);
-        if (queued && queued.value === update.value && queued.done === update.done) {
-          const remaining = latest.updates.filter((item) => item.taskId !== update.taskId);
-          savePending(remaining.length ? { ...latest, updates: remaining } : null);
-        }
+      // Берём только СПИСОК ЗАДАЧ, а не их значения: значение `sendTask`
+      // прочитает из очереди в момент отправки. Раньше здесь шёл снимок
+      // очереди, сделанный до начала цикла, — и если человек правил число,
+      // пока повтор летел, на сервер уходило устаревшее.
+      const taskIds = pending.updates.map((u) => u.taskId);
+      // Последовательно, а не Promise.all: параллельные запросы по разным
+      // задачам сервер выдержит, но при слабой связи они мешают друг другу.
+      for (const taskId of taskIds) {
+        await sendTask(challenge.id, challenge.currentDay, taskId);
       }
     } finally {
       flushingRef.current = false;
     }
-  }, [challenge.id, challenge.currentDay, dropPending, isSignedIn, refreshLive, savePending, warnDeadlinePassed]);
+  }, [challenge.id, challenge.currentDay, isSignedIn, sendTask]);
 
   // Retry failed writes while the app is open.
   useEffect(() => {
@@ -360,12 +461,6 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       saveJSON(REMINDER_KEY, null);
     })().catch(() => {});
     return () => { cancelled = true; };
-  }, []);
-
-  const persist = useCallback((c: Challenge) => {
-    const snap = toSaved(c);
-    savedRef.current = snap;
-    saveJSON(PROGRESS_KEY, snap);
   }, []);
 
   // Откат оптимистичной записи, когда сервер отметку не принял.
@@ -477,7 +572,10 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
         ...m,
         rank: i + 1,
         rankChange: m.previousRank == null ? null : m.previousRank - (i + 1),
-        averagePoints: Math.round((m.points / Math.max(1, challenge.currentDay)) * 10) / 10,
+        // Средний темп — по ЗАКРЫТЫМ дням: weekBase уже не включает сегодня, и
+        // делится он на прошедшие дни. Поэтому отметки за сегодня его не
+        // трогают — в отличие от очков, которые обновляются на лету.
+        averagePoints: averagePerPastDay(m.weekBase, challenge.currentDay, m.frozenDay ?? null),
       }));
 
     const myRank = ranked.find((m) => m.isMe)?.rank ?? 0;

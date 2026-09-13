@@ -29,8 +29,25 @@ export function deadlineHourOf(c: Challenge): number {
 }
 
 /** Минута суток, начиная с которой сервер отказывает по дедлайну. */
-function rolloverMinute(c: Challenge): number {
+export function rolloverMinute(c: Challenge): number {
   return deadlineHourOf(c) * 60 + DAY_ROLLOVER_MINUTE;
+}
+
+/**
+ * Когда начался текущий день челленджа, мс.
+ *
+ * Нужно, чтобы спросить у шагомера шаги «за сегодня». «Сегодня» у челленджа
+ * своё: день идёт с 23:01 до 23:00 следующих суток, и календарная полночь его
+ * не делит. Спросить шаги с полуночи значило бы потерять вечер накануне —
+ * а он относится к этому же дню зачёта.
+ */
+export function challengeDayStartMs(c: Challenge, nowMs = Date.now()): number {
+  const rm = rolloverMinute(c);
+  const shifted = new Date(nowMs + ALMATY_OFFSET_MS);
+  const midnight = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+  const startedToday = almatyMinuteOfDay(nowMs) >= rm;
+  const startShifted = midnight + rm * 60_000 - (startedToday ? 0 : 86_400_000);
+  return startShifted - ALMATY_OFFSET_MS;
 }
 
 /**

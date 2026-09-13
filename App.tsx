@@ -17,6 +17,12 @@ import { EnrollmentProvider } from './src/state/EnrollmentContext';
 import { PlacesProvider } from './src/state/PlacesContext';
 import { ChannelProvider } from './src/state/ChannelContext';
 import { ActivityProvider } from './src/state/ActivityContext';
+import { FitnessProvider } from './src/state/FitnessContext';
+import { AudioPlayerProvider } from './src/state/AudioPlayerContext';
+// Импорт ради побочного эффекта: модуль регистрирует фоновую задачу записи
+// маршрута. Система может поднять приложение из фона ради одной координаты —
+// экрана трекера в этот момент ещё нет, а обработчик уже должен существовать.
+import './src/state/workoutTracker';
 import { NotificationsProvider } from './src/state/NotificationsContext';
 import { tokenCache } from './src/state/tokenCache';
 import { CLERK_PUBLISHABLE_KEY } from './src/config';
@@ -120,19 +126,26 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
       <CourseProvider>
         <ChallengeProvider>
           <ActivityProvider>
+          <FitnessProvider>
           <CareerProvider>
             <EnrollmentProvider>
               <PlacesProvider>
                 <ChannelProvider>
                   <NotificationsProvider>
                     <ModerationProvider>
-                      {children}
+                      {/* Проигрыватель скачанных уроков стоит НАД навигатором:
+                          экраны размонтируются при переходах, а лекция должна
+                          продолжать играть. */}
+                      <AudioPlayerProvider>
+                        {children}
+                      </AudioPlayerProvider>
                     </ModerationProvider>
                   </NotificationsProvider>
                 </ChannelProvider>
               </PlacesProvider>
             </EnrollmentProvider>
           </CareerProvider>
+          </FitnessProvider>
           </ActivityProvider>
         </ChallengeProvider>
       </CourseProvider>

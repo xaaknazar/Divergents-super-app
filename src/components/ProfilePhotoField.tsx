@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
 import { hSuccess } from '../lib/haptics';
 import { fetchTalentProfile, uploadProfilePhoto, getTalentslabToken } from '../data/talentslab';
+import { syncProfileToSite } from '../data/api';
 import { emitProfileChanged } from '../state/profileBus';
 
 export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => void }) {
@@ -62,6 +63,14 @@ export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => 
         setUrl(res.url);
         onChanged?.(res.url);
         emitProfileChanged(); // аватар в профиле обновится сразу
+        // Сразу отправляем новое фото на сайт, а не ждём следующего запуска
+        // приложения. Иначе в составе команды челленджа у человека висело бы
+        // старое лицо до тех пор, пока он не перезайдёт: туда фото попадает не
+        // из Talentslab напрямую, а из нашей базы.
+        try {
+          const clerkToken = await getToken();
+          if (clerkToken) void syncProfileToSite({ photoUrl: res.url }, clerkToken);
+        } catch { /* не критично: догонит при следующем запуске */ }
         // Перечитываем профиль с сервера — так видно, что фото действительно
         // сохранилось, а не только отрисовалось на экране.
         load();

@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, TextInput, Modal, Linking, Platform, Share, Alert, Keyboard } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Modal, Linking, Platform, Share, Alert, Keyboard, AppState } from 'react-native';
 import { Image } from 'expo-image';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -100,6 +100,28 @@ export function MapHomeScreen({ navigation }: Props) {
   const [geoBusy, setGeoBusy] = useState(false);
   const [searchPin, setSearchPin] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [zoomDelta, setZoomDelta] = useState(0.12);
+
+  // ── Перезагрузка карты ──────────────────────────────────────────────────────
+  // Apple Maps иногда «зависает»: сетка есть, а тайлов нет, и сами они уже не
+  // подгружаются — обычно после долгого фона или смены сети (Wi‑Fi ↔ 4G).
+  // Единственное, что помогает, — пересоздать карту. Меняем `key`, и MapKit
+  // поднимается заново; регион при этом сохраняем, чтобы карта не прыгала
+  // в центр города.
+  const [mapKey, setMapKey] = useState(0);
+  const lastRegion = useRef<{ latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number } | null>(null);
+  const backgroundedAt = useRef<number | null>(null);
+  const reloadMap = useCallback(() => { setMapKey((k) => k + 1); }, []);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st !== 'active') { if (backgroundedAt.current == null) backgroundedAt.current = Date.now(); return; }
+      const away = backgroundedAt.current == null ? 0 : Date.now() - backgroundedAt.current;
+      backgroundedAt.current = null;
+      // После минуты в фоне тайлы часто уже не оживают — пересоздаём заранее,
+      // не дожидаясь, пока человек увидит пустую сетку.
+      if (away > 60_000) reloadMap();
+    });
+    return () => sub.remove();
+  }, [reloadMap]);
   const [tracks, setTracks] = useState(true);
   const tracksTimer = useRef<any>(null);
   const [path, setPath] = useState<LatLng[]>([]);
@@ -331,16 +353,17 @@ export function MapHomeScreen({ navigation }: Props) {
       <PageIntro page="map" />
       {(
         <MapView
+          key={mapKey}
           ref={mapRef}
           style={{ flex: 1 }}
-          initialRegion={{ latitude: center.lat, longitude: center.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }}
+          initialRegion={lastRegion.current ?? { latitude: center.lat, longitude: center.lng, latitudeDelta: 0.12, longitudeDelta: 0.12 }}
           userInterfaceStyle={isDark ? 'dark' : 'light'}
           showsUserLocation
           showsMyLocationButton={false}
           onPress={() => Keyboard.dismiss()}
           onPanDrag={() => Keyboard.dismiss()}
           onLongPress={(e) => longMenu(e.nativeEvent.coordinate)}
-          onRegionChangeComplete={(r) => { setZoomDelta(r.latitudeDelta); setTracks(true); clearTimeout(tracksTimer.current); tracksTimer.current = setTimeout(() => setTracks(false), 500); }}
+          onRegionChangeComplete={(r) => { lastRegion.current = r; setZoomDelta(r.latitudeDelta); setTracks(true); clearTimeout(tracksTimer.current); tracksTimer.current = setTimeout(() => setTracks(false), 500); }}
         >
           {(() => { const mk = Math.max(28, Math.round(40 - Math.min(1, Math.max(0, (zoomDelta - 0.02) / 0.28)) * 22)); return list.map((p) => {
             const oi = isOpenNow(p.hours); const closed = oi.known && !oi.open;
@@ -550,7 +573,8 @@ export function MapHomeScreen({ navigation }: Props) {
           </Pressable>
         ) : null}
         {OFFLINE_ENABLED ? <Round icon="arrow.down.circle" label={tr('Офлайн-карта')} onPress={() => navigation.navigate('OfflineMap')} T={T} /> : null}
-        <Round icon="location.fill" label={tr('Моё местоположение')} onPress={recenter} T={T} />
+        {/* Долгое нажатие — пересоздать карту: спасение от пустой сетки без тайлов. */}
+        <Round icon="location.fill" label={tr('Моё местоположение')} onPress={recenter} onLongPress={() => { reloadMap(); Alert.alert(tr('Карта перезагружена'), tr('Если тайлы не появились — проверьте интернет.')); }} T={T} />
         <Round icon="plus" label={tr('Добавить место')} brand onPress={() => navigation.navigate('AddPlace')} T={T} />
       </View>
 
@@ -698,10 +722,10 @@ function FChip({ label, icon, active, onPress, T }: { label: string; icon?: any;
   );
 }
 
-function Round({ icon, label, onPress, brand, active, T }: { icon: any; label: string; onPress: () => void; brand?: boolean; active?: boolean; T: any }) {
+function Round({ icon, label, onPress, onLongPress, brand, active, T }: { icon: any; label: string; onPress: () => void; onLongPress?: () => void; brand?: boolean; active?: boolean; T: any }) {
   const bg = brand ? T.brand : active ? T.orange : T.cardBg;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }}
+    <Pressable onPress={onPress} onLongPress={onLongPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }}
       style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 5 })}>
       <SF name={icon} size={20} color={brand ? T.onBrand : active ? '#fff' : T.brandText} />
     </Pressable>

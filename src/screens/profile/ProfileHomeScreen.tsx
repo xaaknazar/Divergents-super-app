@@ -27,6 +27,8 @@ import { useLang, tr } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { deleteAccountAndClear, signOutAndClear } from '../../state/signOut';
 import { useAchievements } from '../../data/achievements';
+import { useFitness } from '../../state/FitnessContext';
+import { formatPace, paceTimeSec } from '../../state/ActivityContext';
 import { GALLUP_DOMAIN_META, mbtiName, fmtList, effectiveResumeCompleteness, applyGallupOrder, loadGallupOrder } from '../../data/talentslab';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
@@ -39,6 +41,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { t } = useLang();
   const { unread } = useNotifications();
   const { challenge, isParticipant } = useChallenge();
+  const { records, goals: fitnessGoals } = useFitness();
   const { has, statusOf } = useEnrollment();
   const { courses, progress, reload: reloadCourses } = useCourses();
   const { applied, jobs } = useCareer();
@@ -381,6 +384,49 @@ export function ProfileHomeScreen({ navigation }: Props) {
           </View>
         </View>
       ) : null}
+
+      {/* Физические показатели: рекорды из тренировок, цели, свои показатели. */}
+      <ListSection header={tr('Физические показатели')} style={{ marginTop: 18 }}>
+        <Pressable onPress={() => navigation.navigate('MyFitness')} accessibilityRole="button" accessibilityLabel={tr('Мои тренировки')}
+          style={({ pressed }) => ({ padding: 14, gap: 12, opacity: pressed ? 0.8 : 1 })}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <IconCircle icon="figure.run" color="#fff" bg={T.brand} size={36} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Мои тренировки')}</Text>
+              <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
+                {records.runs + records.walks > 0
+                  ? `${(records.totalM / 1000).toFixed(1).replace('.', ',')} км всего · ${(records.weekM / 1000).toFixed(1).replace('.', ',')} км за неделю`
+                  : tr('Рекорды, цели и показатели')}
+              </Text>
+            </View>
+            <SF name="chevron.right" size={13} color={T.labelTertiary} />
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {[
+              { v: records.longestRun ? `${(records.longestRun.distanceM / 1000).toFixed(1).replace('.', ',')} км` : '—', l: tr('рекорд бега') },
+              { v: records.fastestRun ? formatPace(records.fastestRun.distanceM, paceTimeSec(records.fastestRun)) : '—', l: tr('лучший темп') },
+              { v: String(fitnessGoals.filter((g) => !g.doneISO).length), l: tr('целей') },
+            ].map((s, i) => (
+              <View key={i} style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 12, paddingVertical: 8, alignItems: 'center' }}>
+                <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{s.v}</Text>
+                <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{s.l}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={() => navigation.navigate('WorkoutTrack')} accessibilityRole="button" accessibilityLabel={tr('Записать тренировку')}
+              style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              <SF name="figure.run" size={15} color={T.onBrand} />
+              <Text style={[ty.subheadEm, { color: T.onBrand }]}>{tr('Записать')}</Text>
+            </Pressable>
+            <Pressable onPress={() => navigation.navigate('MyFitness')} accessibilityRole="button" accessibilityLabel={tr('Открыть мои тренировки')}
+              style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              <SF name="trophy.fill" size={15} color={T.brand} />
+              <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Открыть')}</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </ListSection>
 
       {coursesInProgress > 0 ? (
         <ListSection header={t('continue_')} style={{ marginTop: 18 }}>

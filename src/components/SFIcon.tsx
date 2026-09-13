@@ -7,7 +7,7 @@ export type SFName =
   | 'book.fill' | 'book' | 'sparkles' | 'person.3.fill' | 'person.3'
   | 'briefcase.fill' | 'briefcase' | 'person.crop.circle.fill' | 'person.crop.circle'
   | 'play.fill' | 'play.circle.fill' | 'chevron.forward' | 'chevron.right' | 'chevron.left'
-  | 'chevron.down' | 'magnifyingglass' | 'flame.fill' | 'trophy.fill' | 'crown.fill'
+  | 'chevron.down' | 'magnifyingglass' | 'flame.fill' | 'trophy.fill' | 'crown.fill' | 'list.number'
   | 'medal.fill' | 'star.fill' | 'star' | 'heart.fill' | 'heart' | 'checkmark.circle.fill'
   | 'checkmark' | 'checkmark.seal.fill' | 'plus' | 'plus.circle' | 'plus.circle.fill'
   | 'xmark' | 'gearshape' | 'bell.fill' | 'bell.badge.fill' | 'envelope.fill' | 'phone.fill'
@@ -27,6 +27,7 @@ export type SFName =
   | 'wifi.slash' | 'arrow.clockwise' | 'tray' | 'moon.fill' | 'sun.max.fill'
   | 'rosette' | 'checkmark.circle' | 'gearshape.fill' | 'paintpalette.fill'
   | 'circle.lefthalf.filled' | 'textformat.size' | 'arrow.counterclockwise'
+  | 'arrow.down' | 'minus' | 'slider.horizontal.3'
   | 'square.and.pencil' | 'info.circle' | 'rectangle.portrait.and.arrow.right'
   | 'gift.fill' | 'gift';
 
@@ -43,11 +44,14 @@ const MAP: Record<string, [Lib, string]> = {
   'chevron.left': ['ion', 'chevron-back'], 'chevron.down': ['ion', 'chevron-down'],
   'magnifyingglass': ['ion', 'search'],
   'flame.fill': ['ion', 'flame'], 'trophy.fill': ['ion', 'trophy'],
+  // Нумерованный список — для рейтинга участников. Без явной пары имя
+  // деградировало бы к нейтральному кружку: в меню это выглядит как ошибка.
+  'list.number': ['mci', 'format-list-numbered'],
   'crown.fill': ['mci', 'crown'], 'medal.fill': ['mci', 'medal'],
   'star.fill': ['ion', 'star'], 'star': ['ion', 'star-outline'],
   'quote.bubble.fill': ['ion', 'chatbubble-ellipses'], 'quote.bubble': ['ion', 'chatbubble-ellipses-outline'],
   'bubble.left.fill': ['ion', 'chatbubble'], 'bubble.left': ['ion', 'chatbubble-outline'],
-  'arrow.up': ['ion', 'arrow-up'],
+  'arrow.up': ['ion', 'arrow-up'], 'arrow.down': ['ion', 'arrow-down'], 'minus': ['ion', 'remove'], 'slider.horizontal.3': ['ion', 'options-outline'],
   'heart.fill': ['ion', 'heart'], 'heart': ['ion', 'heart-outline'],
   'checkmark.circle.fill': ['ion', 'checkmark-circle'], 'checkmark': ['ion', 'checkmark'],
   'checkmark.seal.fill': ['mci', 'check-decagram'],

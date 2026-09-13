@@ -7,18 +7,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { PrimaryButton, Segmented } from '../../components/ui';
-import { createChallenge, createTrip, createChannel, createSport, uploadFile } from '../../data/api';
+import { createChallenge, createTrip, createChannel, createSport, createMeetup, uploadFile } from '../../data/api';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import MapView, { Marker } from 'react-native-maps';
 import { CommunityStackParams } from '../../navigation/types';
+import { meetAtAlmatyDate } from '../../data/eventLifetime';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CreateContent'>;
-type Kind = 'challenge' | 'trip' | 'channel' | 'sport';
+type Kind = 'challenge' | 'trip' | 'meetup' | 'channel' | 'sport';
 type Access = 'open' | 'request' | 'paid';
 
 const KINDS: { k: Kind; label: string }[] = [
-  { k: 'challenge', label: 'Челлендж' }, { k: 'trip', label: 'Поездка' }, { k: 'sport', label: 'Спорт' }, { k: 'channel', label: 'Канал' },
+  { k: 'challenge', label: 'Челлендж' }, { k: 'trip', label: 'Поездка' }, { k: 'meetup', label: 'Мероприятие' }, { k: 'sport', label: 'Спорт' }, { k: 'channel', label: 'Канал' },
 ];
 const ACCESS: { k: Access; label: string }[] = [
   { k: 'open', label: 'Открытый' }, { k: 'request', label: 'По запросу' }, { k: 'paid', label: 'Платный' },
@@ -101,6 +102,15 @@ export function CreateContentScreen({ navigation }: Props) {
     let failed = false;
     try {
       const token = await getToken();
+      // Время встречи у офлайн-события обязательно: по нему оно само уходит из
+      // ленты, когда пройдёт. Поле «Дата» — текст («12–14 июля»), по нему
+      // машина срок не поймёт, и без времени встречи событие висело бы вечно.
+      const offline = kind === 'trip' || kind === 'sport' || kind === 'meetup';
+      if (offline && !meetAtAlmatyDate(meetAt)) {
+        setBusy(false);
+        Alert.alert('Укажите время встречи', 'Выберите дату и время в поле «Время встречи» — по нему событие уйдёт из ленты, когда пройдёт.');
+        return;
+      }
       if (kind === 'challenge') {
         const s = chStart.trim();
         const startISO = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(`${s}T09:00:00`).toISOString() : '';
@@ -114,6 +124,8 @@ export function CreateContentScreen({ navigation }: Props) {
         success = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null, meetPlace: meetPlace.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
       } else if (kind === 'sport') {
         success = await createSport(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
+      } else if (kind === 'meetup') {
+        success = await createMeetup(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, price: price.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null, imageUrl: avatar || null });
       } else {
         success = await createChannel(token, { name: title.trim(), access, price: access === 'paid' ? price.trim() || null : null, bio: bio.trim() || null, avatarUrl: avatar || undefined });
       }
@@ -150,7 +162,7 @@ export function CreateContentScreen({ navigation }: Props) {
           <Segmented items={KINDS.map((x) => x.label)} value={kindIndex} onChange={(i) => setKind(KINDS[i]?.k ?? 'challenge')} />
 
           <Field label={kind === 'channel' ? 'Название канала' : 'Название'}>
-            <TextInput value={title} onChangeText={setTitle} placeholder={kind === 'trip' ? 'напр. Кольсай и Каинды' : kind === 'sport' ? 'напр. Футбол по субботам' : kind === 'channel' ? 'напр. Women’s club' : 'напр. Divergents challenge'} placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Название" />
+            <TextInput value={title} onChangeText={setTitle} placeholder={kind === 'trip' ? 'напр. Кольсай и Каинды' : kind === 'meetup' ? 'напр. Кинопоказ и разбор' : kind === 'sport' ? 'напр. Футбол по субботам' : kind === 'channel' ? 'напр. Women’s club' : 'напр. Divergents challenge'} placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Название" />
           </Field>
 
           {kind === 'challenge' ? (
@@ -199,7 +211,7 @@ export function CreateContentScreen({ navigation }: Props) {
               <Field label="Цена"><TextInput value={price} onChangeText={setPrice} placeholder="напр. 45 000 ₸" placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Цена" /></Field>
               <Field label="Сложность"><TextInput value={difficulty} onChangeText={setDifficulty} placeholder="напр. средняя" placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Сложность" /></Field>
               <Field label="Место встречи"><TextInput value={meetPlace} onChangeText={setMeetPlace} placeholder="напр. у входа в парк" placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Место встречи" /></Field>
-              <Field label="Время встречи">
+              <Field label="Время встречи · обязательно">
                 <DateField value={meetAt} onChange={setMeetAt} mode="datetime" placeholder="Выберите дату и время" clearable />
               </Field>
               <Field label="Точка встречи на карте">
@@ -212,11 +224,37 @@ export function CreateContentScreen({ navigation }: Props) {
               </Field>
               <Field label="Описание"><TextInput value={desc} onChangeText={setDesc} multiline placeholder="Кратко о поездке" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 90, textAlignVertical: 'top' }]} accessibilityLabel="Описание" /></Field>
             </>
+          ) : kind === 'meetup' ? (
+            <>
+              {/* Мероприятие — встреча, а не поход: региона, числа дней и
+                  сложности здесь нет. Описание обязательное по смыслу: без него
+                  человек не поймёт, на что записывается. */}
+              <Field label="Место"><TextInput value={place} onChangeText={setPlace} placeholder="напр. Кофейня Sreda, Астана" placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Место" /></Field>
+              <Field label="Дата (текстом)"><TextInput value={date} onChangeText={setDate} placeholder="напр. 12 июля" placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Дата текстом" /></Field>
+              <Field label="Начало">
+                <DateField value={meetAt} onChange={setMeetAt} mode="datetime" placeholder="Выберите дату и время" clearable />
+              </Field>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={{ flex: 1 }}><Field label="Мест"><TextInput value={spots} onChangeText={(t) => setSpots(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" style={inp} accessibilityLabel="Мест" /></Field></View>
+                <View style={{ flex: 1 }}><Field label="Цена"><TextInput value={price} onChangeText={setPrice} placeholder="напр. Бесплатно" placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Цена" /></Field></View>
+              </View>
+              <Field label="Описание">
+                <TextInput value={desc} onChangeText={setDesc} multiline placeholder="О чём встреча, для кого, что взять с собой" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 110, textAlignVertical: 'top' }]} accessibilityLabel="Описание" />
+              </Field>
+              <Field label="Место на карте">
+                <View style={{ borderRadius: 14, overflow: 'hidden', height: 180 }}>
+                  <MapView style={{ flex: 1 }} initialRegion={{ latitude: meetCoord?.latitude ?? 43.238, longitude: meetCoord?.longitude ?? 76.889, latitudeDelta: 0.06, longitudeDelta: 0.06 }} onPress={(e) => setMeetCoord(e.nativeEvent.coordinate)}>
+                    {meetCoord ? <Marker coordinate={meetCoord} pinColor="#2f5bd6" /> : null}
+                  </MapView>
+                </View>
+                <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 6 }]}>{meetCoord ? 'Точка выбрана ✓ — нажмите, чтобы изменить' : 'Нажмите на карту, чтобы поставить точку'}</Text>
+              </Field>
+            </>
           ) : kind === 'sport' ? (
             <>
               <Field label="Место"><TextInput value={place} onChangeText={setPlace} placeholder="напр. Манеж, Алматы" placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Место" /></Field>
               <Field label="Дата (текстом)"><TextInput value={date} onChangeText={setDate} placeholder="напр. сб 10:00" placeholderTextColor={T.labelTertiary} style={inp} accessibilityLabel="Дата текстом" /></Field>
-              <Field label="Время встречи">
+              <Field label="Время встречи · обязательно">
                 <DateField value={meetAt} onChange={setMeetAt} mode="datetime" placeholder="Выберите дату и время" clearable />
               </Field>
               <Field label="Мест"><TextInput value={spots} onChangeText={(t) => setSpots(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" style={inp} accessibilityLabel="Мест" /></Field>

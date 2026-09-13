@@ -93,6 +93,7 @@ export const STR: Record<string, Pair> = {
   sec_channels: { ru: 'Каналы', en: 'Channels' },
   sec_challenges: { ru: 'Челленджи', en: 'Challenges' },
   sec_trips: { ru: 'Поездки', en: 'Trips' },
+  sec_meetups: { ru: 'Мероприятия', en: 'Events' },
   sec_sport: { ru: 'Спорт', en: 'Sport' },
   channels_of_community: { ru: 'Каналы сообщества', en: 'Community channels' },
   subscribers: { ru: 'подписчиков', en: 'subscribers' },
