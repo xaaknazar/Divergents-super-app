@@ -37,10 +37,10 @@ export function ResumeCallout({ area = 'career' }: { area?: ResumeArea }) {
       accessibilityLabel={tr('Заполнить анкету')}
       style={{
         minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 12,
-        backgroundColor: T.brandTinted, borderRadius: 16, padding: 14, marginBottom: 14,
+        backgroundColor: T.brandTinted, borderRadius: 16, borderCurve: 'continuous', padding: 14, marginBottom: 14,
       }}
     >
-      <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 36, height: 36, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
         <SF name="doc.text.fill" size={18} color={T.brand} />
       </View>
       <View style={{ flex: 1 }}>

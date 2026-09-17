@@ -160,8 +160,8 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
             return (
               <Pressable key={a.id} onPress={() => openApplicant(a)}
                 accessibilityRole="button" accessibilityLabel={`${name}${a.teamName ? `, ${a.teamName}` : ''}, ${meta.label}`}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderWidth: 0.5, borderColor: T.cardBorder, minHeight: 48, opacity: pressed ? 0.7 : 1 })}>
-                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, minHeight: 48, opacity: pressed ? 0.7 : 1 })}>
+                <View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.headline, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
@@ -270,10 +270,10 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                     <View style={{ padding: 14, gap: 10 }}>
                       <TextInput value={feedback} onChangeText={setFeedback} multiline placeholder="Напишите причину приёма/отклонения — кандидат увидит её…"
                         placeholderTextColor={T.labelTertiary}
-                        style={{ backgroundColor: T.fillTertiary, borderRadius: 12, padding: 12, minHeight: 90, textAlignVertical: 'top', color: T.label, ...ty.body }} />
+                        style={{ backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', padding: 12, minHeight: 90, textAlignVertical: 'top', color: T.label, ...ty.body }} />
                       <Pressable onPress={saveFeedback} disabled={busy || !feedback.trim()}
                         accessibilityRole="button" accessibilityLabel="Отправить ответ" accessibilityState={{ disabled: busy || !feedback.trim() }}
-                        style={{ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, backgroundColor: feedback.trim() ? T.brandTinted : T.fillTertiary }}>
+                        style={{ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderCurve: 'continuous', backgroundColor: feedback.trim() ? T.brandTinted : T.fillTertiary }}>
                         <Text style={[ty.subheadEm, { color: feedback.trim() ? T.brand : T.labelTertiary }]}>Отправить ответ</Text>
                       </Pressable>
                     </View>
@@ -282,7 +282,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                   {canManage && sel?.teamId ? (
                     <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
                       <Pressable onPress={makeCaptain} disabled={busy} accessibilityRole="button" accessibilityLabel={`Назначить капитаном «${sel.teamName}»`}
-                        style={{ minHeight: 48, paddingVertical: 12, borderRadius: 14, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: T.brandTinted }}>
+                        style={{ minHeight: 48, paddingVertical: 12, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: T.brandTinted }}>
                         <SF name="star.fill" size={15} color={T.brand} />
                         <Text style={[ty.subheadEm, { color: T.brand }]}>Назначить капитаном «{sel.teamName}»</Text>
                       </Pressable>
@@ -291,11 +291,11 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
                   <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 10 }}>
                     <Pressable onPress={confirmReject} disabled={busy} accessibilityRole="button" accessibilityLabel="Отклонить заявку" accessibilityState={{ disabled: busy }}
-                      style={{ flex: 1, minHeight: 48, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
+                      style={{ flex: 1, minHeight: 48, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
                       <Text style={[ty.headline, { color: T.redText }]}>Отклонить</Text>
                     </Pressable>
                     <Pressable onPress={() => decide('approved')} disabled={busy} accessibilityRole="button" accessibilityLabel="Принять заявку" accessibilityState={{ disabled: busy, busy }}
-                      style={{ flex: 1, minHeight: 48, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: T.brand }}>
+                      style={{ flex: 1, minHeight: 48, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', backgroundColor: T.brand }}>
                       {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]}>Принять</Text>}
                     </Pressable>
                   </View>

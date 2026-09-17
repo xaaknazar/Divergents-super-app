@@ -125,7 +125,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
           {job.companyLogo ? (
             <Image source={{ uri: job.companyLogo }} style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: T.cardBg }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
           ) : (
-            <View style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
+            <View style={{ width: 60, height: 60, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
               <Text style={[ty.title1, { color: job.color }]}>{job.logo}</Text>
             </View>
           )}
@@ -144,7 +144,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       {/* Owner: view applicants */}
       {canCreate ? (
         <Pressable onPress={() => navigation.navigate('VacancyApplicants', { jobId: job.id })}
-          style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 4, padding: 14, borderRadius: 14, backgroundColor: T.brandTintedStrong, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 4, padding: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTintedStrong, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <SF name="person.2.fill" size={18} color={T.brand} />
           <Text style={[ty.headline, { color: T.label, flex: 1 }]}>Отклики на вакансию</Text>
           <SF name="chevron.right" size={14} color={T.labelTertiary} />
@@ -153,7 +153,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
 
       {/* My application status + feedback */}
       {myApp ? (
-        <View style={{ marginHorizontal: 16, marginTop: 6, padding: 14, borderRadius: 14, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ marginHorizontal: 16, marginTop: 6, padding: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <SF name={myApp.status === 'approved' ? 'checkmark.circle.fill' : myApp.status === 'rejected' ? 'xmark.circle.fill' : 'clock'} size={16} color={myApp.status === 'approved' ? T.green : myApp.status === 'rejected' ? '#FF3B30' : T.orange} />
             <Text style={[ty.subheadEm, { color: T.label }]}>
@@ -168,7 +168,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
           job.match никто не записывает — это была одна и та же константа для
           всех. Настоящее совпадение считается ниже по талантам Gallup. */}
       {job.reason ? (
-        <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, padding: 16 }}>
+        <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16 }}>
           <Text style={[ty.subhead, { color: T.label }]}>{job.reason}</Text>
         </View>
       ) : null}

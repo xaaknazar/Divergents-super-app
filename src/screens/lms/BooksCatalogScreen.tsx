@@ -80,7 +80,7 @@ export function BooksCatalogScreen({ navigation }: Props) {
   const Cover = ({ url, w = 320 }: { url?: string | null; w?: number }) => (
     url
       ? <Image source={imgUrl(url, w)} style={{ width: '100%', aspectRatio: 0.68, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
-      : <View style={{ width: '100%', aspectRatio: 0.68, borderRadius: 12, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={30} color={T.labelTertiary} /></View>
+      : <View style={{ width: '100%', aspectRatio: 0.68, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={30} color={T.labelTertiary} /></View>
   );
 
   return (
@@ -95,8 +95,8 @@ export function BooksCatalogScreen({ navigation }: Props) {
         </View>
 
         <Pressable onPress={() => navigation.navigate('BookAI')} accessibilityRole="button" accessibilityLabel="Спросить ИИ, что почитать" accessibilityHint="Открывает подбор книг с AI-помощником"
-          style={{ minHeight: 68, marginHorizontal: 16, marginTop: 12, marginBottom: 6, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.brandTintedStrong }}>
-          <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+          style={{ minHeight: 68, marginHorizontal: 16, marginTop: 12, marginBottom: 6, borderRadius: 16, borderCurve: 'continuous', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.brandTintedStrong }}>
+          <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="sparkles" size={20} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
@@ -107,7 +107,7 @@ export function BooksCatalogScreen({ navigation }: Props) {
         </Pressable>
 
         <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4, minHeight: 48 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingHorizontal: 8, paddingVertical: 4, minHeight: 48 }}>
             <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
             <TextInput value={query} onChangeText={setQuery} placeholder="Название или автор" placeholderTextColor={T.labelTertiary} accessibilityLabel="Поиск книги по названию или автору" style={[ty.body, { flex: 1, color: T.label, minHeight: 40, paddingVertical: 6 }]} />
             {query ? <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Очистить поиск" style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><SF name="xmark" size={15} color={T.labelTertiary} /></Pressable> : null}
@@ -135,7 +135,7 @@ export function BooksCatalogScreen({ navigation }: Props) {
                     <Pressable key={s.book.id} onPress={() => navigation.navigate('BookDetail', { bookId: s.book.id })} style={{ width: 120 }}>
                       <Cover url={s.book.imageUrl} />
                       <Text style={[ty.subheadEm, { color: T.label, marginTop: 6 }]} numberOfLines={2}>{s.book.title}</Text>
-                      <View style={{ height: 4, borderRadius: 2, backgroundColor: T.fillTertiary, marginTop: 6, overflow: 'hidden' }}>
+                      <View style={{ height: 4, borderRadius: 2, borderCurve: 'continuous', backgroundColor: T.fillTertiary, marginTop: 6, overflow: 'hidden' }}>
                         <View style={{ height: 4, width: (s.progress + '%') as any, backgroundColor: SHELF_COLOR.reading }} />
                       </View>
                       <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 3 }]}>{s.progress}%</Text>
@@ -166,7 +166,7 @@ export function BooksCatalogScreen({ navigation }: Props) {
                   <View>
                     <Cover url={b.imageUrl} />
                     {b.shelf ? (
-                      <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: SHELF_COLOR[b.shelf.status], paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                      <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: SHELF_COLOR[b.shelf.status], paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderCurve: 'continuous' }}>
                         <Text style={[ty.caption2Em, { color: '#fff' }]}>{SHELF_LABEL[b.shelf.status]}</Text>
                       </View>
                     ) : null}
@@ -200,7 +200,7 @@ export function BooksCatalogScreen({ navigation }: Props) {
             </View>
             {filtered.length > visible ? (
               <Pressable onPress={() => setVisible((v) => v + 30)}
-                style={{ marginHorizontal: 16, marginTop: 2, marginBottom: 10, height: 46, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                style={{ marginHorizontal: 16, marginTop: 2, marginBottom: 10, height: 46, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.subheadEm, { color: T.brand }]}>Показать ещё · {Math.min(30, filtered.length - visible)}</Text>
               </Pressable>
             ) : null}

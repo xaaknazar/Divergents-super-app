@@ -201,7 +201,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
           лежит внутри него, и ничего лишнего. */}
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }} onLayout={(e) => setAreaH(e.nativeEvent.layout.height)}>
         {W > 0 ? (
-          <View ref={canvasRef} collapsable={false} style={{ width: W, height: H, backgroundColor: '#000', borderRadius: 18, overflow: 'hidden' }}>
+          <View ref={canvasRef} collapsable={false} style={{ width: W, height: H, backgroundColor: '#000', borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden' }}>
             {background ? (
               <>
                 <Image source={{ uri: background }} style={{ position: 'absolute', width: W, height: H }} resizeMode="cover" />
@@ -277,9 +277,9 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
               жест прокрутки, и содержимое перестаёт крутиться. */}
           <Pressable onPress={() => setSheet(false)} accessibilityRole="button" accessibilityLabel={tr('Закрыть')}
             style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.35)' }]} />
-          <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, maxHeight: Math.round(screenH * 0.8), paddingBottom: insets.bottom + 8 }}>
+          <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderCurve: 'continuous', maxHeight: Math.round(screenH * 0.8), paddingBottom: insets.bottom + 8 }}>
             <View style={{ alignItems: 'center', paddingTop: 10 }}>
-              <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: T.fillTertiary }} />
+              <View style={{ width: 38, height: 4, borderRadius: 2, borderCurve: 'continuous', backgroundColor: T.fillTertiary }} />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 6 }}>
               <Text style={[ty.title3, { color: T.label, flex: 1 }]}>{tr('Оформление')}</Text>
@@ -290,7 +290,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
 
             <ScrollView style={{ maxHeight: Math.round(screenH * 0.8) - 130 - insets.bottom }} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 14 }} keyboardShouldPersistTaps="handled">
               {/* Блок */}
-              <View style={{ backgroundColor: T.cardBg, borderRadius: 16, padding: 14, gap: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+              <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, gap: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{tr('Размер блока')}</Text>
                   <Stepper T={T} ty={ty} value={Math.round(style.size * 100)} unit="%" onDec={() => patch({ size: Math.max(0.5, +(style.size - 0.1).toFixed(1)) })} onInc={() => patch({ size: Math.min(1.1, +(style.size + 0.1).toFixed(1)) })} />
@@ -302,7 +302,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
               </View>
 
               {/* Цвета */}
-              <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}>
+              <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}>
                 {colorRows.map((row, i) => {
                   const value = style[row.key];
                   const open = editing === row.key;
@@ -313,11 +313,11 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 }}>
                         <Text style={[ty.body, { color: T.label, flex: 1 }]}>{row.label}</Text>
                         {isBrand ? (
-                          <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(128,128,128,0.45)' }}>
+                          <View style={{ width: 28, height: 28, borderRadius: 14, borderCurve: 'continuous', backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(128,128,128,0.45)' }}>
                             <Logo size={16} body="#234088" head="#3D5BDB" />
                           </View>
                         ) : (
-                          <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: value, borderWidth: 1, borderColor: 'rgba(128,128,128,0.45)' }} />
+                          <View style={{ width: 28, height: 28, borderRadius: 14, borderCurve: 'continuous', backgroundColor: value, borderWidth: 1, borderColor: 'rgba(128,128,128,0.45)' }} />
                         )}
                         <Text style={[ty.caption1, { color: T.labelSecondary, minWidth: 72, textAlign: 'right' }]}>{isBrand ? tr('фирменный') : value}</Text>
                         <SF name={open ? 'chevron.down' : 'chevron.right'} size={13} color={T.labelTertiary} />
@@ -329,7 +329,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
                             onChange={(hex) => patch({ [row.key]: hex } as Partial<CardStyle>)}
                             extra={row.key === 'logoColor' ? (
                               <Pressable onPress={() => { hTap(); patch({ logoColor: BRAND }); }} accessibilityRole="button" accessibilityLabel={tr('Фирменный знак')} accessibilityState={{ selected: isBrand }}
-                                style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderWidth: isBrand ? 3 : 1, borderColor: isBrand ? T.brand : 'rgba(128,128,128,0.45)' }}>
+                                style={{ width: 30, height: 30, borderRadius: 15, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderWidth: isBrand ? 3 : 1, borderColor: isBrand ? T.brand : 'rgba(128,128,128,0.45)' }}>
                                 <Logo size={17} body="#234088" head="#3D5BDB" />
                               </Pressable>
                             ) : undefined}
@@ -355,7 +355,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
 function Tool({ icon, label, onPress, T, ty }: { icon: string; label: string; onPress: () => void; T: any; ty: any }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => ({ alignItems: 'center', gap: 5, opacity: pressed ? 0.6 : 1, minWidth: 64 })}>
-      <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 46, height: 46, borderRadius: 23, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
         <SF name={icon} size={19} color={T.brand} />
       </View>
       <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{label}</Text>
@@ -366,7 +366,7 @@ function Tool({ icon, label, onPress, T, ty }: { icon: string; label: string; on
 function Stepper({ T, ty, value, unit, onDec, onInc }: { T: any; ty: any; value: number; unit: string; onDec: () => void; onInc: () => void }) {
   const btn = (icon: string, onPress: () => void, label: string) => (
     <Pressable onPress={() => { hTap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label}
-      style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: T.fillTertiary }}>
+      style={{ width: 36, height: 36, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: T.fillTertiary }}>
       <SF name={icon} size={14} color={T.label} />
     </Pressable>
   );
@@ -386,7 +386,7 @@ function ActionButton({ icon, label, onPress, busy, disabled, primary, T, ty }: 
   return (
     <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled, busy: !!busy }}
       style={({ pressed }) => ({
-        flex: 1, minHeight: 50, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        flex: 1, minHeight: 50, borderRadius: 14, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
         backgroundColor: primary ? T.brand : T.brandTinted, opacity: disabled && !busy ? 0.5 : pressed ? 0.7 : 1,
       })}>
       {busy ? <ActivityIndicator color={fg} /> : <SF name={icon} size={16} color={fg} />}

@@ -17,8 +17,8 @@ export function ProgressBar({
   return (
     <View accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(normalized * 100), text: `${Math.round(normalized * 100)}%` }}
-      style={{ height, backgroundColor: bg, borderRadius: height, overflow: 'hidden' }}>
-      <View style={{ width: `${normalized * 100}%`, height: '100%', backgroundColor: fill, borderRadius: height }} />
+      style={{ height, backgroundColor: bg, borderRadius: height, borderCurve: 'continuous', overflow: 'hidden' }}>
+      <View style={{ width: `${normalized * 100}%`, height: '100%', backgroundColor: fill, borderRadius: height, borderCurve: 'continuous' }} />
     </View>
   );
 }
@@ -32,7 +32,7 @@ export function Capsule({
   return (
     <View style={[{
       flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
-      paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: _bg,
+      paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderCurve: 'continuous', backgroundColor: _bg,
     }, style]}>
       {(typeof children === 'string' || typeof children === 'number')
         ? <Text style={[ty.caption2Em, { color: _color }]} numberOfLines={1}>{children}</Text>
@@ -56,7 +56,7 @@ export function IconCircle({
 }: { icon: SFName | string; color?: string; bg?: string; size?: number; iconSize?: number }) {
   const { T } = useTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg ?? T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: size / 2, borderCurve: 'continuous', backgroundColor: bg ?? T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={iconSize ?? Math.round(size * 0.55)} color={color ?? T.brandText} />
     </View>
   );
@@ -67,7 +67,7 @@ export function IconSquircle({
 }: { icon: SFName | string; color?: string; bg?: string; size?: number; iconSize?: number }) {
   const { T } = useTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: size * 0.22, backgroundColor: bg ?? T.brand, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: size * 0.22, borderCurve: 'continuous', backgroundColor: bg ?? T.brand, alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={iconSize ?? Math.round(size * 0.6)} color={color ?? (bg ? contrastForeground(bg) : T.onBrand)} />
     </View>
   );
@@ -98,7 +98,7 @@ export function ListSection({
       {header ? (
         <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{header}</Text>
       ) : null}
-      <View style={{ backgroundColor: T.cardBg, borderRadius: 10, marginHorizontal: 16, overflow: 'hidden' }}>
+      <View style={{ backgroundColor: T.cardBg, borderRadius: 10, borderCurve: 'continuous', marginHorizontal: 16, overflow: 'hidden' }}>
         {children}
       </View>
       {footer ? (
@@ -159,7 +159,7 @@ export function Segmented({
 }: { items: string[]; value: number; onChange?: (i: number) => void; leadingIcons?: (SFName | string)[] }) {
   const { T, ty } = useTheme();
   return (
-    <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', backgroundColor: T.fillTertiary, borderRadius: radius.md, padding: 2, minHeight: minTouch }}>
+    <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', backgroundColor: T.fillTertiary, borderRadius: radius.md, borderCurve: 'continuous', padding: 2, minHeight: minTouch }}>
       {items.map((s, i) => {
         const on = i === value;
         return (
@@ -167,6 +167,7 @@ export function Segmented({
             accessibilityLabel={s} accessibilityState={{ selected: on, disabled: !onChange }} style={{
             flex: 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center',
             minHeight: 44, paddingHorizontal: space.xs, backgroundColor: on ? T.systemBg : 'transparent', borderRadius: radius.sm,
+            borderCurve: 'continuous',
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
           }}>
             {leadingIcons ? <SF name={leadingIcons[i]} size={12} color={T.label} /> : null}
@@ -187,6 +188,7 @@ export function Chip({
       accessibilityLabel={label} accessibilityState={{ selected: active, disabled: !onPress }} style={({ pressed }) => [{
       flexDirection: 'row', alignItems: 'center', gap: 5,
       minHeight: minTouch, paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.pill,
+      borderCurve: 'continuous',
       backgroundColor: active ? T.brand : T.cardBg,
       borderWidth: 0.5, borderColor: active ? 'transparent' : T.separator,
       transform: [{ scale: pressed ? 0.96 : 1 }],
@@ -211,7 +213,7 @@ export function PrimaryButton({
   return (
     <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading}
       accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }} style={({ pressed }) => [{
-      minHeight: 50, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.xl, backgroundColor: _color, flexDirection: 'row',
+      minHeight: 50, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: _color, flexDirection: 'row',
       alignItems: 'center', justifyContent: 'center', gap: space.sm,
       transform: [{ scale: pressed ? 0.98 : 1 }], opacity: pressed ? 0.92 : disabled ? 0.45 : 1,
     }, shadow, style]}>
@@ -233,7 +235,7 @@ export function Card({
 }: { children: React.ReactNode; onPress?: () => void; padded?: boolean; elevated?: boolean; style?: StyleProp<ViewStyle> }) {
   const { T } = useTheme();
   const base: ViewStyle = {
-    backgroundColor: T.cardBg, borderRadius: radius.lg, overflow: 'hidden',
+    backgroundColor: T.cardBg, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden',
     ...(padded ? { padding: space.lg } : null),
     ...(elevated ? shadows.card : { borderWidth: 0.5, borderColor: T.cardBorder }),
   };
@@ -256,7 +258,7 @@ export function SecondaryButton({
   return (
     <Pressable onPress={onPress ? () => { hTap(); onPress(); } : undefined} disabled={disabled || loading}
       accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }} style={({ pressed }) => [{
-      minHeight: 50, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      minHeight: 50, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.xl, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       backgroundColor: tinted ? T.brandTinted : 'transparent',
       borderWidth: tinted ? 0 : 1, borderColor: accent,
       transform: [{ scale: pressed ? 0.98 : 1 }], opacity: pressed ? 0.9 : disabled ? 0.45 : 1,

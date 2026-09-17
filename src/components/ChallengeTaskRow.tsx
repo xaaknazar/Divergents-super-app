@@ -3,6 +3,7 @@
 // tasks toggle on tap. Mirrors the mechanic refined in the design.
 import React from 'react';
 import { useTheme } from '../theme/ThemeContext';
+import { nums } from '../theme/tokens';
 import { View, Text, Pressable } from 'react-native';
 import { SF } from './SFIcon';
 import { Capsule } from './ui';
@@ -62,14 +63,14 @@ export function ChallengeTaskRow({
       <View style={{ marginTop: 6, marginLeft: 30 }}>
         <View accessibilityRole="progressbar" accessibilityLabel={task.title}
           accessibilityValue={{ min: 0, max: task.min, now: task.current, text: `${fmt(task.current)} из ${fmt(task.min)} ${task.unit}` }}
-          style={{ height: 5, backgroundColor: T.fillTertiary, borderRadius: 5, overflow: 'hidden' }}>
-          <View style={{ width: `${Math.min(100, pct * 100)}%`, height: '100%', backgroundColor: over ? T.green : T.brand, borderRadius: 6 }} />
+          style={{ height: 5, backgroundColor: T.fillTertiary, borderRadius: 5, borderCurve: 'continuous', overflow: 'hidden' }}>
+          <View style={{ width: `${Math.min(100, pct * 100)}%`, height: '100%', backgroundColor: over ? T.green : T.brand, borderRadius: 6, borderCurve: 'continuous' }} />
         </View>
         {/* Значение слева, одна заметная кнопка ввода справа. Кнопок «−1/+1»
             больше нет: страницы и шаги никто не набирает по единице, а мелкая
             иконка карандаша рядом с цифрой терялась. */}
         <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
-          <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>
+          <Text style={[ty.subhead, nums, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>
             <Text style={{ color: over ? T.green : T.brand, fontFamily: ty.subheadEm.fontFamily }}>{fmt(task.current)}</Text>
             {` / ${fmt(task.min)} ${task.unit}`}
             {over ? <Text style={{ color: T.green }}>{`  +${fmt(task.current - task.min)}`}</Text> : null}
@@ -77,7 +78,7 @@ export function ChallengeTaskRow({
           {onSet ? (
             <Pressable onPress={onSet} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Ввести значение: ${task.title}`} accessibilityState={{ disabled }}
               style={({ pressed }) => ({
-                minHeight: 40, paddingHorizontal: 16, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 7,
+                minHeight: 40, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', gap: 7,
                 backgroundColor: disabled ? T.fillTertiary : T.brand, opacity: pressed ? 0.75 : 1,
               })}>
               <SF name="square.and.pencil" size={15} color={disabled ? T.labelTertiary : T.onBrand} />

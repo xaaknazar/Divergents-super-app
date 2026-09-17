@@ -174,11 +174,11 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                 style={({ pressed }) => ({
                   flexDirection: 'row', alignItems: 'center', gap: 12,
                   backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10,
-                  padding: 14, borderRadius: 16, borderWidth: 0.5, borderColor: T.cardBorder,
+                  padding: 14, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder,
                   minHeight: 48, opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.headline, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
@@ -244,7 +244,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                   onPress={() => sel && decide(sel, 'rejected')}
                   accessibilityRole="button"
                   accessibilityLabel="Отклонить заявку"
-                  style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,59,48,0.12)', opacity: pressed || busy ? 0.6 : 1 })}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,59,48,0.12)', opacity: pressed || busy ? 0.6 : 1 })}
                 >
                   <Text style={[ty.headline, { color: T.redText }]}>Отклонить</Text>
                 </Pressable>
@@ -255,7 +255,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                   onPress={() => sel && decide(sel, 'pending')}
                   accessibilityRole="button"
                   accessibilityLabel="Вернуть заявку на рассмотрение"
-                  style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: T.fillSecondary, opacity: pressed || busy ? 0.6 : 1 })}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: T.fillSecondary, opacity: pressed || busy ? 0.6 : 1 })}
                 >
                   <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>На рассмотрение</Text>
                 </Pressable>

@@ -28,10 +28,10 @@ function Group({ icon, title, value, children }: { icon: SFName; title: string; 
   return (
     <View
       accessibilityRole="summary"
-      style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 20, borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}
+      style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 20, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 13, paddingBottom: 12 }}>
-        <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 26, height: 26, borderRadius: 8, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
           <SF name={icon} size={15} color={T.brand} />
         </View>
         <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{title}</Text>
@@ -57,10 +57,10 @@ function BgSwatch({ colors, none, selected }: { colors: string[]; none?: boolean
     <View style={{ height: 60, backgroundColor: T.secondaryBg, alignItems: 'center', justifyContent: 'center' }}>
       {!none ? (
         <>
-          <View style={{ position: 'absolute', top: -18, left: -14, width: 58, height: 58, borderRadius: 29, overflow: 'hidden' }}>
+          <View style={{ position: 'absolute', top: -18, left: -14, width: 58, height: 58, borderRadius: 29, borderCurve: 'continuous', overflow: 'hidden' }}>
             <LinearGradient colors={[hexToRgba(c1, 0.95), hexToRgba(c1, 0)]} start={{ x: 0.35, y: 0.35 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
           </View>
-          <View style={{ position: 'absolute', bottom: -20, right: -16, width: 64, height: 64, borderRadius: 32, overflow: 'hidden' }}>
+          <View style={{ position: 'absolute', bottom: -20, right: -16, width: 64, height: 64, borderRadius: 32, borderCurve: 'continuous', overflow: 'hidden' }}>
             <LinearGradient colors={[hexToRgba(c2, 0.9), hexToRgba(c2, 0)]} start={{ x: 0.6, y: 0.4 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
           </View>
           <LinearGradient colors={[hexToRgba(c3, 0.4), 'transparent']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={StyleSheet.absoluteFill} />
@@ -68,7 +68,7 @@ function BgSwatch({ colors, none, selected }: { colors: string[]; none?: boolean
       ) : null}
       {none && !selected ? <SF name="circle" size={18} color={T.labelTertiary} /> : null}
       {selected ? (
-        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 26, height: 26, borderRadius: 13, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' }}>
           <SF name="checkmark" size={15} color="#111" />
         </View>
       ) : null}
@@ -149,7 +149,7 @@ export function PersonalizeScreen({ navigation }: Props) {
         </View>
 
         {/* Live preview — the user's own card, reflecting accent + appearance + text scale */}
-        <Animated.View style={{ marginHorizontal: 16, marginBottom: 24, borderRadius: 24, overflow: 'hidden', transform: [{ scale: pop }], shadowColor: ac.brand, shadowOpacity: scheme === 'dark' ? 0.4 : 0.28, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 7 }}>
+        <Animated.View style={{ marginHorizontal: 16, marginBottom: 24, borderRadius: 24, borderCurve: 'continuous', overflow: 'hidden', transform: [{ scale: pop }], shadowColor: ac.brand, shadowOpacity: scheme === 'dark' ? 0.4 : 0.28, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 7 }}>
           <LinearGradient colors={[ac.brand, ac.accent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
             {/* Directional legibility scrim — darkens the text side so white copy
                 stays readable even on light accents (amber/teal ~2–3:1 otherwise). */}
@@ -163,7 +163,7 @@ export function PersonalizeScreen({ navigation }: Props) {
               {photoUrl ? (
                 <Image source={{ uri: photoUrl }} style={{ width: 54, height: 54, borderRadius: 16 }} contentFit="cover" cachePolicy="memory-disk" />
               ) : (
-                <View style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 54, height: 54, borderRadius: 16, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.title2, { color: '#fff' }]}>{initial}</Text>
                 </View>
               )}
@@ -181,7 +181,7 @@ export function PersonalizeScreen({ navigation }: Props) {
           {/* Surface block — reflects light/dark + accent tints + text scale */}
           <View style={{ backgroundColor: T.cardBg, padding: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <View style={{ width: 38, height: 38, borderRadius: 11, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 38, height: 38, borderRadius: 11, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                 <SF name="paintpalette.fill" size={18} color={T.brand} />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -194,7 +194,7 @@ export function PersonalizeScreen({ navigation }: Props) {
               <View style={{ flex: 1 }}>
                 <PrimaryButton label={tr('Кнопка')} icon="checkmark" onPress={() => {}} style={{ height: 44 }} />
               </View>
-              <View style={{ paddingVertical: 10, paddingHorizontal: 15, borderRadius: 18, backgroundColor: T.brandTinted }}>
+              <View style={{ paddingVertical: 10, paddingHorizontal: 15, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
                 <Text style={[ty.footnoteEm, { color: T.brand }]}>{tr('Чип')}</Text>
               </View>
             </View>
@@ -228,12 +228,12 @@ export function PersonalizeScreen({ navigation }: Props) {
                   accessibilityLabel={`${tr('Акцент')} ${a.name}`}
                   accessibilityState={{ selected: on }}
                 >
-                  <View style={{ width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', borderWidth: on ? 2.5 : 0, borderColor: T.label }}>
-                    <LinearGradient colors={[sw.brand, sw.accent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: on ? 44 : 50, height: on ? 44 : 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 54, height: 54, borderRadius: 27, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', borderWidth: on ? 2.5 : 0, borderColor: T.label }}>
+                    <LinearGradient colors={[sw.brand, sw.accent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: on ? 44 : 50, height: on ? 44 : 50, borderRadius: 25, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' }}>
                       {/* White disc + dark check: legible on every accent, incl. light
                           amber/teal where a bare white check fails WCAG (~2.2:1). */}
                       {on ? (
-                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center' }}>
+                        <View style={{ width: 24, height: 24, borderRadius: 12, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center' }}>
                           <SF name="checkmark" size={15} color="#111" />
                         </View>
                       ) : null}
@@ -282,7 +282,7 @@ export function PersonalizeScreen({ navigation }: Props) {
                   accessibilityLabel={`${tr('Фон')} ${b.name}`}
                   accessibilityState={{ selected: on }}
                 >
-                  <View style={{ borderRadius: 15, overflow: 'hidden', borderWidth: on ? 2 : 0.5, borderColor: on ? T.brand : T.cardBorder }}>
+                  <View style={{ borderRadius: 15, borderCurve: 'continuous', overflow: 'hidden', borderWidth: on ? 2 : 0.5, borderColor: on ? T.brand : T.cardBorder }}>
                     <BgSwatch colors={cols} none={b.key === 'none'} selected={on} />
                   </View>
                   <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, textAlign: 'center', marginTop: 5 }]} numberOfLines={1}>{b.name}</Text>

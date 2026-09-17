@@ -162,13 +162,13 @@ const NotifRow = React.memo(function NotifRow({ it, T, ru, onPress }: { it: any;
       accessibilityLabel={a11y}
       accessibilityHint={it.target ? (ru ? 'Открывает связанный экран' : 'Opens the related screen') : undefined}
       style={{ flexDirection: 'row', gap: 12, paddingVertical: 14, paddingHorizontal: 16, minHeight: minTouch, backgroundColor: it.read ? 'transparent' : T.brandTintedStrong }}>
-      <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: (it.color || T.brand) + '33', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', backgroundColor: (it.color || T.brand) + '33', alignItems: 'center', justifyContent: 'center' }}>
         <SF name={it.icon || 'bell.fill'} size={20} color={it.color || T.brand} />
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={[ty.headline, { color: T.label, flex: 1 }]} numberOfLines={2}>{it.title}</Text>
-          {!it.read ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: T.brand }} /> : null}
+          {!it.read ? <View style={{ width: 8, height: 8, borderRadius: 4, borderCurve: 'continuous', backgroundColor: T.brand }} /> : null}
         </View>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={3}>{it.body}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>

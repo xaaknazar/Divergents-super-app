@@ -228,6 +228,7 @@ export function AIChatScreen({}: Props) {
                 maxWidth: '90%',
                 backgroundColor: m.role === 'user' ? T.brand : T.fillTertiary,
                 borderRadius: 18,
+                borderCurve: 'continuous',
                 borderBottomRightRadius: m.role === 'user' ? 4 : 18,
                 borderBottomLeftRadius: m.role === 'user' ? 18 : 4,
                 paddingVertical: 12, paddingHorizontal: 14,
@@ -246,7 +247,7 @@ export function AIChatScreen({}: Props) {
           ))}
 
           {busy ? (
-            <View style={{ backgroundColor: T.fillTertiary, alignSelf: 'flex-start', borderRadius: 18, borderBottomLeftRadius: 4, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <View style={{ backgroundColor: T.fillTertiary, alignSelf: 'flex-start', borderRadius: 18, borderCurve: 'continuous', borderBottomLeftRadius: 4, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <ActivityIndicator color={T.labelSecondary} />
               <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{isGeneral ? tr('Думаю…') : tr('Ищу в материалах курса…')}</Text>
             </View>
@@ -257,7 +258,7 @@ export function AIChatScreen({}: Props) {
           {messages.length === 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 10 }}>
               {quick.map((q) => (
-                <Pressable key={q} onPress={() => send(q)} disabled={locked} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.separator, borderRadius: 18, paddingVertical: 7, paddingHorizontal: 14, opacity: locked ? 0.5 : pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+                <Pressable key={q} onPress={() => send(q)} disabled={locked} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.separator, borderRadius: 18, borderCurve: 'continuous', paddingVertical: 7, paddingHorizontal: 14, opacity: locked ? 0.5 : pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
                   <SF name="sparkles" size={11} color={T.brand} />
                   <Text style={[ty.subhead, { color: T.label }]} numberOfLines={1}>{tr(q)}</Text>
                 </Pressable>
@@ -268,7 +269,7 @@ export function AIChatScreen({}: Props) {
             <TextInput
               value={text} onChangeText={setText}
               placeholder={isGeneral ? tr('Спросите ассистента…') : tr('Спросите о курсе…')} placeholderTextColor={T.labelTertiary}
-              style={[ty.body, { flex: 1, backgroundColor: T.cardBg, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.separator, color: T.label }]}
+              style={[ty.body, { flex: 1, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', paddingVertical: 9, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.separator, color: T.label }]}
               onSubmitEditing={() => send(text)} returnKeyType="send" editable={!locked}
             />
             <Pressable onPress={() => send(text)} hitSlop={6} disabled={locked || !text.trim()}>

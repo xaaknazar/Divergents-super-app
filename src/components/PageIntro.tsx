@@ -94,7 +94,7 @@ function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: bool
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <Animated.View style={{
-          width: '100%', maxWidth: 380, maxHeight: '92%', backgroundColor: T.cardBg, borderRadius: 26, overflow: 'hidden',
+          width: '100%', maxWidth: 380, maxHeight: '92%', backgroundColor: T.cardBg, borderRadius: 26, borderCurve: 'continuous', overflow: 'hidden',
           opacity: a, transform: [{ scale: a.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
           shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 26, shadowOffset: { width: 0, height: 14 }, elevation: 10,
         }}>
@@ -111,7 +111,7 @@ function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: bool
               <View pointerEvents="none" style={{ position: 'absolute', right: -12, top: -20, opacity: 0.16 }}>
                 <SF name={info.icon} size={132} color={T.onBrand} />
               </View>
-              <View style={{ width: 74, height: 74, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 74, height: 74, borderRadius: 22, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
                 <SF name={info.icon} size={38} color={T.onBrand} />
               </View>
               <Text accessibilityRole="header" style={[ty.title2, { color: T.onBrand, marginTop: 14, textAlign: 'center' }]}>{info.title}</Text>
@@ -123,7 +123,7 @@ function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: bool
               <View style={{ marginTop: 18, gap: 14 }}>
                 {info.points.map((p, i) => (
                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 34, height: 34, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name={p.icon} size={17} color={T.brand} />
                     </View>
                     <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{p.text}</Text>

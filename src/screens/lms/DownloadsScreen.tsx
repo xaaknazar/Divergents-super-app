@@ -144,7 +144,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
       />
 
       {offlineStandalone ? (
-        <View style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <SF name="wifi.slash" size={18} color={T.brand} />
           <View style={{ flex: 1 }}>
             <Text style={[ty.subheadEm, { color: T.label }]}>{tr('Нет подключения')}</Text>
@@ -174,7 +174,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
               {pending.map((p, i) => (
                 <View key={p.lessonId} style={{ paddingVertical: 12, paddingHorizontal: 16, position: 'relative' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <View style={{ width: 38, height: 38, borderRadius: 9, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 38, height: 38, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <ActivityIndicator size="small" color={T.brand} />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
@@ -205,7 +205,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
                 return (
                   <Pressable key={rec.lessonId} onPress={() => play(rec)} onLongPress={() => confirmDelete(rec)}
                     style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, backgroundColor: active ? T.brandTinted : 'transparent', opacity: pressed ? 0.6 : 1 })}>
-                    <View style={{ width: 38, height: 38, borderRadius: 9, backgroundColor: active ? T.brand : T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 38, height: 38, borderRadius: 9, borderCurve: 'continuous', backgroundColor: active ? T.brand : T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name={active && isPlaying ? 'pause.fill' : 'play.fill'} size={16} color={active ? '#fff' : T.brand} />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
@@ -236,7 +236,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
                 const downloading = isDownloading(l.id);
                 return (
                   <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
-                    <View style={{ width: 38, height: 38, borderRadius: 9, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 38, height: 38, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="headphones" size={16} color={T.labelSecondary} />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
@@ -264,7 +264,7 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable onPress={() => selected && play(selected)}
               accessibilityRole="button" accessibilityLabel={isPlaying ? tr('Пауза') : tr('Воспроизвести')}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+              style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={isPlaying ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
             </Pressable>
             <View style={{ flex: 1, minWidth: 0 }}>

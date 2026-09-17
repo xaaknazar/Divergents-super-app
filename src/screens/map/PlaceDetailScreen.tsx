@@ -160,7 +160,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         {/* Hero */}
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <View style={{ width: 60, height: 60, borderRadius: 16, backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 60, height: 60, borderRadius: 16, borderCurve: 'continuous', backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
               <SF name={meta.icon} size={28} color={meta.color} />
             </View>
             <View style={{ flex: 1 }}>
@@ -201,13 +201,13 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         ) : null}
 
         {/* Highlights */}
-        <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 6 }]} numberOfLines={1}>{tr('Чем хорошо')}</Text>
           <Text style={[ty.body, { color: T.label }]}>{place.highlights}</Text>
         </View>
 
         {/* Map */}
-        <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 16, overflow: 'hidden', height: 150 }}>
+        <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', height: 150 }}>
           <MapView style={{ flex: 1 }} pointerEvents="none"
             initialRegion={{ latitude: place.lat, longitude: place.lng, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
             userInterfaceStyle={isDark ? 'dark' : 'light'}>
@@ -215,7 +215,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </MapView>
         </View>
         <Pressable onPress={() => Linking.openURL(`https://2gis.kz/geo/${place.lng},${place.lat}`)} accessibilityRole="link" accessibilityLabel={tr('Открыть на карте')}
-          style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44, borderRadius: 12, backgroundColor: T.brandTinted }}>
+          style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
           <SF name="map.fill" size={15} color={T.brandText} />
           <Text style={[ty.headline, { color: T.brandText }]} numberOfLines={1}>{tr('Открыть на карте')}</Text>
         </Pressable>
@@ -227,7 +227,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             <>
               <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Отзывы')} · {visibleReviews.length}</Text>
               {visibleReviews.map((rev) => (
-                <View key={rev.id} style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: T.cardBg, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
+                <View key={rev.id} style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -264,7 +264,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
         {/* Add review */}
         {isSignedIn ? (
-          <View style={{ marginHorizontal: 16, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <View style={{ marginHorizontal: 16, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{editingReview ? tr('Изменить отзыв') : tr('Ваш отзыв')}</Text>
               {editingReview ? (
@@ -277,7 +277,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             <Stars value={stars} size={28} onChange={setStars} />
             <TextInput value={text} onChangeText={setText} placeholder={tr('Чем понравилось / что улучшить')} placeholderTextColor={T.labelTertiary} multiline
               accessibilityLabel={tr('Текст отзыва')}
-              style={[ty.body, { backgroundColor: T.fillTertiary, borderRadius: 12, padding: 12, color: T.label, minHeight: 70, textAlignVertical: 'top', marginTop: 12 }]} />
+              style={[ty.body, { backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', padding: 12, color: T.label, minHeight: 70, textAlignVertical: 'top', marginTop: 12 }]} />
             <PrimaryButton label={editingReview ? tr('Сохранить отзыв') : tr('Отправить отзыв')} icon={editingReview ? 'checkmark' : 'paperplane.fill'} style={{ marginTop: 12 }} disabled={!stars} onPress={submit} />
           </View>
         ) : null}
@@ -291,7 +291,7 @@ function ActBtn({ icon, label, active, onPress, T }: { icon: any; label: string;
   const { ty } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }}
-      style={({ pressed }) => ({ flex: 1, minHeight: 62, borderRadius: 14, backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4, opacity: pressed ? 0.7 : 1 })}>
+      style={({ pressed }) => ({ flex: 1, minHeight: 62, borderRadius: 14, borderCurve: 'continuous', backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4, opacity: pressed ? 0.7 : 1 })}>
       <SF name={icon} size={20} color={active ? T.brandText : T.label} />
       <Text style={[ty.caption1, { color: active ? T.brandText : T.labelSecondary }]} numberOfLines={1}>{label}</Text>
     </Pressable>

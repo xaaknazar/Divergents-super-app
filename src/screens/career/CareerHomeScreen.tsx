@@ -28,7 +28,7 @@ export function CareerHomeScreen({ navigation }: Props) {
 
       <View style={{ alignItems: 'center', paddingHorizontal: 36, paddingTop: 48 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={{ width: 100, height: 100, borderRadius: 30, alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
+          style={{ width: 100, height: 100, borderRadius: 30, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', shadowColor: T.brand, shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}>
           <SF name="briefcase.fill" size={46} color="#fff" />
         </LinearGradient>
         <Capsule bg={T.brandTinted} color={T.brand} style={{ marginTop: 18, alignSelf: 'center' }}>

@@ -1,5 +1,5 @@
 import { Challenge, DEFAULT_CHALLENGE } from '../community';
-import { expectedChallengeDay, isChallengeDayLocked, pastDeadlineNow, challengeDayStartMs } from '../challengeDay';
+import { expectedChallengeDay, isChallengeDayLocked, pastDeadlineNow, challengeDayStartMs, marksClosed } from '../challengeDay';
 
 // Алматы = UTC+5: 23:00 по Алматы — это 18:00 UTC.
 const T = (iso: string) => Date.parse(iso);
@@ -107,5 +107,36 @@ describe('начало дня челленджа', () => {
     // Дедлайн 20:00 → день переводится в 20:01 Алматы = 15:01 UTC.
     expect(challengeDayStartMs(c, T('2026-09-06T07:00:00Z')))
       .toBe(T('2026-09-05T15:01:00Z'));
+  });
+});
+
+// ─── Кому отметки уже закрыты ────────────────────────────────────────────────
+// Белый флаг 🏳️ и вылет замораживают зачёт так же надёжно, как закрытый день.
+// Проверяем именно это: экран записи тренировки предлагал вышедшему «добавить
+// шаги в челлендж», сервер отказывал, и отметка откатывалась у него на глазах.
+describe('отметки закрыты', () => {
+  // Полдень 6 сентября по Алматы — день идёт, дедлайн далеко.
+  const noon = T('2026-09-06T07:00:00Z');
+
+  it('днём у обычного участника отметки открыты', () => {
+    expect(marksClosed(challenge({ currentDay: 2 }), noon)).toBe(false);
+  });
+
+  it('после 23:01 закрыты для всех', () => {
+    expect(marksClosed(challenge({ currentDay: 2 }), T('2026-09-06T18:01:00Z'))).toBe(true);
+  });
+
+  it('вышедшему по белому флагу — закрыты, даже в разгар дня', () => {
+    const c = challenge({ currentDay: 2, whiteFlag: { raised: true, reason: null, left: true, leftDay: 2 } } as any);
+    expect(marksClosed(c, noon)).toBe(true);
+  });
+
+  it('поднятый флаг без выхода ничего не закрывает: человек ещё в игре', () => {
+    const c = challenge({ currentDay: 2, whiteFlag: { raised: true, reason: 'травма', left: false, leftDay: null } } as any);
+    expect(marksClosed(c, noon)).toBe(false);
+  });
+
+  it('выбывшему по трём флагам — закрыты', () => {
+    expect(marksClosed(challenge({ currentDay: 2, eliminated: true } as any), noon)).toBe(true);
   });
 });

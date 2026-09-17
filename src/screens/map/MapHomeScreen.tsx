@@ -370,12 +370,12 @@ export function MapHomeScreen({ navigation }: Props) {
             return (
             <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} onPress={() => setSelId(p.id)} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracks}
               accessible accessibilityRole="button" accessibilityLabel={`${p.name}, ${CATEGORY_META[p.category].label}${closed ? `, ${tr('закрыто')}` : ''}`}>
-              <View style={{ width: mk, height: mk, borderRadius: mk / 2, backgroundColor: closed ? '#9CA3AF' : CATEGORY_META[p.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
+              <View style={{ width: mk, height: mk, borderRadius: mk / 2, borderCurve: 'continuous', backgroundColor: closed ? '#9CA3AF' : CATEGORY_META[p.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}>
                 <SF name={CATEGORY_META[p.category].icon} size={Math.round(mk * 0.5)} color="#fff" />
               </View>
             </Marker>
           ); }); })()}
-          {origin ? <Marker coordinate={{ latitude: origin.lat, longitude: origin.lng }} anchor={{ x: 0.5, y: 0.5 }} accessibilityLabel={`${tr('Точка А')}: ${origin.name}`}><View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: T.green, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>A</Text></View></Marker> : null}
+          {origin ? <Marker coordinate={{ latitude: origin.lat, longitude: origin.lng }} anchor={{ x: 0.5, y: 0.5 }} accessibilityLabel={`${tr('Точка А')}: ${origin.name}`}><View style={{ width: 30, height: 30, borderRadius: 15, borderCurve: 'continuous', backgroundColor: T.green, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}><Text style={[ty.footnoteEm, { color: '#fff' }]}>A</Text></View></Marker> : null}
           {target && routes.length > 0
             ? routes.map((rt, i) => (
                 <Polyline key={i} coordinates={rt.coords} strokeColor={i === routeIdx ? T.brand : 'rgba(120,120,140,0.45)'} strokeWidth={i === routeIdx ? 7 : 4} tappable onPress={() => setRouteIdx(i)} zIndex={i === routeIdx ? 3 : 1} />
@@ -388,7 +388,7 @@ export function MapHomeScreen({ navigation }: Props) {
               title={`Встреча · ${m.title}`} description={`${m.meetPlace ?? ''}${m.meetAt ? ` · ${m.meetAt}` : ''}`.trim().replace(/^· /, '')}
               accessibilityLabel={`Встреча · ${m.title}`}>
               <View style={{ alignItems: 'center' }}>
-                <View style={{ backgroundColor: T.brand, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ backgroundColor: T.brand, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderCurve: 'continuous', borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <SF name="flag.fill" size={11} color="#fff" />
                   <Text style={[ty.caption2Em, { color: '#fff' }]} numberOfLines={1}>{m.meetAt ? m.meetAt.split(' ').slice(-1)[0] : 'Встреча'}</Text>
                 </View>
@@ -400,7 +400,7 @@ export function MapHomeScreen({ navigation }: Props) {
               title={`Спорт · ${m.title}`} description={`${m.place ?? ''}${m.meetAt ? ` · ${m.meetAt}` : ''}`.trim().replace(/^· /, '')}
               accessibilityLabel={`Спорт · ${m.title}`}>
               <View style={{ alignItems: 'center' }}>
-                <View style={{ backgroundColor: T.green, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ backgroundColor: T.green, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderCurve: 'continuous', borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <SF name="figure.run" size={11} color="#fff" />
                   <Text style={[ty.caption2Em, { color: '#fff' }]} numberOfLines={1}>{m.meetAt ? m.meetAt.split(' ').slice(-1)[0] : 'Спорт'}</Text>
                 </View>
@@ -413,7 +413,7 @@ export function MapHomeScreen({ navigation }: Props) {
       {/* Top overlay: search + location + filters */}
       <View style={{ position: 'absolute', top: insets.top + 6, left: 0, right: 0 }} pointerEvents="box-none">
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12 }}>
-          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.cardBg, borderRadius: 14, paddingHorizontal: 12, height: 44, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', paddingHorizontal: 12, height: 44, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}>
             <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
             <TextInput value={q} onChangeText={setQ} onFocus={() => setSearchFocused(true)} onBlur={() => setTimeout(() => setSearchFocused(false), 200)} placeholder={t('map_search_ph')} placeholderTextColor={T.labelTertiary} accessibilityLabel={t('map_search_ph')} style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0 }]} />
             {q.length > 0 ? (
@@ -423,14 +423,14 @@ export function MapHomeScreen({ navigation }: Props) {
             ) : null}
           </View>
           <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" accessibilityLabel={`${tr('Город')}: ${cityName}`} accessibilityHint={tr('Выберите город')}
-            style={{ height: 44, paddingHorizontal: 12, borderRadius: 14, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', gap: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}>
+            style={{ height: 44, paddingHorizontal: 12, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', gap: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}>
             <SF name="mappin.circle.fill" size={16} color={T.brand} />
             <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{cityName}</Text>
             <SF name="chevron.down" size={11} color={T.labelSecondary} />
           </Pressable>
         </View>
         {searchFocused && q.trim().length < 3 && recents.length > 0 ? (
-          <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }]} numberOfLines={1}>{t('recent_')}</Text>
             {recents.map((g, i) => (
               <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14 }}>
@@ -441,7 +441,7 @@ export function MapHomeScreen({ navigation }: Props) {
           </View>
         ) : null}
         {q.trim().length >= 3 ? (
-          <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <View style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             {geoBusy && geo.length === 0 ? (
               <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelSecondary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Поиск адресов…')}</Text></View>
             ) : null}
@@ -469,13 +469,13 @@ export function MapHomeScreen({ navigation }: Props) {
         const Pill = ({ label, on, onPress }: { label: string; on?: boolean; onPress: () => void }) => (
           <Pressable onPress={onPress} accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{ selected: !!on }}
             style={{ minHeight: 44, justifyContent: 'center' }}>
-            <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: on ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.14)' }}>
+            <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderCurve: 'continuous', backgroundColor: on ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.14)' }}>
               <Text style={[ty.footnoteEm, { color: T.onBrand }]} numberOfLines={1}>{label}</Text>
             </View>
           </Pressable>
         );
         return (
-          <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 16, padding: 12, gap: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 16, borderCurve: 'continuous', padding: 12, gap: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <SF name="paperplane.fill" size={18} color="#fff" />
               <View style={{ flex: 1 }}>
@@ -510,7 +510,7 @@ export function MapHomeScreen({ navigation }: Props) {
       {/* Error notice only (no "empty city" state) — with retry on load failure */}
       {!placesLoading && !target && list.length === 0 && placesError ? (
         <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 100, alignItems: 'center' }} pointerEvents="box-none">
-          <View style={{ backgroundColor: T.cardBg, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: 360, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <View style={{ backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: 360, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             <SF name="wifi.slash" size={18} color={T.red} />
             <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]}>{tr('Не удалось загрузить места.')}</Text>
             <Pressable onPress={reloadPlaces} accessibilityRole="button" accessibilityLabel={tr('Повторить')} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4, marginVertical: -8 }}><Text style={[ty.subheadEm, { color: T.brandText }]} numberOfLines={1}>{tr('Повторить')}</Text></Pressable>
@@ -523,9 +523,9 @@ export function MapHomeScreen({ navigation }: Props) {
           left of the floating buttons so nothing overlaps. */}
       {!target && locPerm === 'prompt' ? (
         <View style={{ position: 'absolute', left: 12, right: 74, bottom: insets.bottom + 100 }} pointerEvents="box-none">
-          <View accessibilityLiveRegion="polite" style={{ backgroundColor: T.cardBg, borderRadius: 16, padding: 14, gap: 10, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <View accessibilityLiveRegion="polite" style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, gap: 10, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 34, height: 34, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                 <SF name="location.fill" size={17} color={T.brand} />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -535,11 +535,11 @@ export function MapHomeScreen({ navigation }: Props) {
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable onPress={requestLocation} accessibilityRole="button" accessibilityLabel={tr('Разрешить геопозицию')}
-                style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
+                style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
                 <Text style={[ty.footnoteEm, { color: T.onBrand }]} numberOfLines={1}>{tr('Разрешить')}</Text>
               </Pressable>
               <Pressable onPress={() => setLocPerm('skipped')} accessibilityRole="button" accessibilityLabel={tr('Не сейчас')}
-                style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 12, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                 <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{tr('Не сейчас')}</Text>
               </Pressable>
             </View>
@@ -548,7 +548,7 @@ export function MapHomeScreen({ navigation }: Props) {
       ) : null}
       {!target && locPerm === 'denied' ? (
         <View style={{ position: 'absolute', left: 12, right: 74, bottom: insets.bottom + 100 }} pointerEvents="box-none">
-          <View style={{ backgroundColor: T.cardBg, borderRadius: 14, paddingVertical: 8, paddingLeft: 14, paddingRight: 6, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <View style={{ backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', paddingVertical: 8, paddingLeft: 14, paddingRight: 6, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             <SF name="location.fill" size={16} color={T.labelSecondary} />
             <Text style={[ty.caption1, { color: T.labelSecondary, flex: 1 }]} numberOfLines={2}>{tr('Геолокация выключена — места рядом не показываются.')}</Text>
             <Pressable onPress={() => Linking.openSettings().catch(() => {})} accessibilityRole="button" accessibilityLabel={tr('Открыть настройки')}
@@ -563,10 +563,10 @@ export function MapHomeScreen({ navigation }: Props) {
       <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
         {canModerate ? (
           <Pressable onPress={() => navigation.navigate('AdminPlaces')} accessibilityRole="button" accessibilityLabel={tr('Заявки на метки')}
-            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 5 }}>
+            style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 5 }}>
             <SF name="checkmark.seal.fill" size={20} color={T.brand} />
             {pendingCount > 0 ? (
-              <View style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: T.cardBg }}>
+              <View style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: T.cardBg }}>
                 <Text style={[ty.caption2Em, { color: '#fff' }]} numberOfLines={1}>{pendingCount > 99 ? '99+' : pendingCount}</Text>
               </View>
             ) : null}
@@ -582,12 +582,12 @@ export function MapHomeScreen({ navigation }: Props) {
       <Modal visible={!!sel} animationType="slide" transparent onRequestClose={() => setSelId(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.25)' }} onPress={() => setSelId(null)} accessibilityRole="button" accessibilityLabel={tr('Закрыть')} />
         {sel ? (
-          <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: -4 } }}>
-            <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
+          <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderCurve: 'continuous', paddingBottom: insets.bottom + 16, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: -4 } }}>
+            <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, borderCurve: 'continuous', backgroundColor: T.fillSecondary }} /></View>
             {sel.photo ? <Image source={{ uri: sel.photo }} style={{ width: '100%', height: 150, marginBottom: 6 }} contentFit="cover" /> : null}
             <View style={{ paddingHorizontal: 20 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: CATEGORY_META[sel.category].color + '22', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 48, height: 48, borderRadius: 12, borderCurve: 'continuous', backgroundColor: CATEGORY_META[sel.category].color + '22', alignItems: 'center', justifyContent: 'center' }}>
                   <SF name={CATEGORY_META[sel.category].icon} size={24} color={CATEGORY_META[sel.category].color} />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -609,18 +609,18 @@ export function MapHomeScreen({ navigation }: Props) {
                 </View>
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Pressable onPress={() => startNav(sel)} accessibilityRole="button" accessibilityLabel={tr('Вести сюда')} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
+                <Pressable onPress={() => startNav(sel)} accessibilityRole="button" accessibilityLabel={tr('Вести сюда')} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
                   <SF name="paperplane.fill" size={15} color={T.onBrand} /><Text style={[ty.headline, { color: T.onBrand }]} numberOfLines={1}>{tr('Вести сюда')}</Text>
                 </Pressable>
-                <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} accessibilityRole="button" accessibilityLabel={tr('Детали')} style={({ pressed }) => ({ width: 84, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} accessibilityRole="button" accessibilityLabel={tr('Детали')} style={({ pressed }) => ({ width: 84, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <Text style={[ty.headline, { color: T.brandText }]} numberOfLines={1}>{tr('Детали')}</Text>
                 </Pressable>
                 <Pressable onPress={() => toggleFav(sel.id)} accessibilityRole="button" accessibilityLabel={isFav(sel.id) ? tr('Убрать из избранного') : tr('В избранное')} accessibilityState={{ selected: isFav(sel.id) }}
-                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name={isFav(sel.id) ? 'heart.fill' : 'heart'} size={18} color={isFav(sel.id) ? T.brandText : T.label} />
                 </Pressable>
                 <Pressable onPress={() => Share.share({ message: `${sel.name} — ${CATEGORY_META[sel.category].label}\n${sel.highlights}\nhttps://2gis.kz/geo/${sel.lng},${sel.lat}` })} accessibilityRole="button" accessibilityLabel={tr('Поделиться')}
-                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name="square.and.arrow.up" size={18} color={T.label} />
                 </Pressable>
               </View>
@@ -633,11 +633,11 @@ export function MapHomeScreen({ navigation }: Props) {
       <Modal visible={!!searchPin} animationType="slide" transparent onRequestClose={() => setSearchPin(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.25)' }} onPress={() => setSearchPin(null)} accessibilityRole="button" accessibilityLabel={tr('Закрыть')} />
         {searchPin ? (
-          <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: -4 } }}>
-            <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
+          <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderCurve: 'continuous', paddingBottom: insets.bottom + 16, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: -4 } }}>
+            <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, borderCurve: 'continuous', backgroundColor: T.fillSecondary }} /></View>
             <View style={{ paddingHorizontal: 20 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,59,48,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 44, height: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: 'rgba(255,59,48,0.14)', alignItems: 'center', justifyContent: 'center' }}>
                   <SF name="mappin.and.ellipse" size={22} color={T.red} />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -646,10 +646,10 @@ export function MapHomeScreen({ navigation }: Props) {
                 </View>
               </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Pressable onPress={() => navTo(searchPin)} accessibilityRole="button" accessibilityLabel={tr('Вести сюда')} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
+                <Pressable onPress={() => navTo(searchPin)} accessibilityRole="button" accessibilityLabel={tr('Вести сюда')} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
                   <SF name="figure.walk" size={15} color={T.onBrand} /><Text style={[ty.headline, { color: T.onBrand }]} numberOfLines={1}>{tr('Вести сюда')}</Text>
                 </Pressable>
-                <Pressable onPress={() => externalRoute(searchPin)} accessibilityRole="button" accessibilityLabel={tr('Навигатор')} style={({ pressed }) => ({ width: 110, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                <Pressable onPress={() => externalRoute(searchPin)} accessibilityRole="button" accessibilityLabel={tr('Навигатор')} style={({ pressed }) => ({ width: 110, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <Text style={[ty.headline, { color: T.brandText }]} numberOfLines={1}>{tr('Навигатор')}</Text>
                 </Pressable>
               </View>
@@ -661,8 +661,8 @@ export function MapHomeScreen({ navigation }: Props) {
       {/* City picker */}
       <Modal visible={pickerOpen} animationType="slide" transparent onRequestClose={() => setPickerOpen(false)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setPickerOpen(false)} />
-        <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '70%' }}>
-          <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
+        <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderCurve: 'continuous', paddingBottom: insets.bottom + 16, maxHeight: '70%' }}>
+          <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, borderCurve: 'continuous', backgroundColor: T.fillSecondary }} /></View>
           <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 2 }]} numberOfLines={1}>{tr('Выберите город')}</Text>
           {offline ? (
             <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 6 }]} numberOfLines={2}>{tr('Скачайте город, чтобы карта работала без интернета в разделе «Офлайн-карта».')}</Text>
@@ -714,7 +714,7 @@ function FChip({ label, icon, active, onPress, T }: { label: string; icon?: any;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }}
       style={({ pressed }) => ({ minHeight: 44, justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 18, backgroundColor: active ? T.brand : T.cardBg, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, paddingHorizontal: 13, borderRadius: 18, borderCurve: 'continuous', backgroundColor: active ? T.brand : T.cardBg, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
         {icon ? <SF name={icon} size={12} color={active ? T.onBrand : T.brandText} /> : null}
         <Text style={[ty.footnoteEm, { color: active ? T.onBrand : T.label }]} numberOfLines={1}>{label}</Text>
       </View>
@@ -726,7 +726,7 @@ function Round({ icon, label, onPress, onLongPress, brand, active, T }: { icon: 
   const bg = brand ? T.brand : active ? T.orange : T.cardBg;
   return (
     <Pressable onPress={onPress} onLongPress={onLongPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }}
-      style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 5 })}>
+      style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: bg, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 5 })}>
       <SF name={icon} size={20} color={brand ? T.onBrand : active ? '#fff' : T.brandText} />
     </Pressable>
   );

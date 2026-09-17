@@ -80,7 +80,7 @@ export function CountryPickerField({
               onPress={() => toggle(name)}
               accessibilityRole="button"
               accessibilityLabel={`${tr('Убрать')} ${name}`}
-              style={{ minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: T.brandTinted }}
+              style={{ minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted }}
             >
               <Text style={[ty.footnoteEm, { color: T.brandText }]}>
                 {countryFlag(name) ? `${countryFlag(name)} ` : ''}{name}
@@ -106,7 +106,7 @@ export function CountryPickerField({
                 <Text style={[ty.body, { color: T.brand, fontWeight: '600' }]}>{tr('Готово')}</Text>
               </Pressable>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, backgroundColor: T.fillTertiary, borderRadius: 10, paddingHorizontal: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, backgroundColor: T.fillTertiary, borderRadius: 10, borderCurve: 'continuous', paddingHorizontal: 10 }}>
               <SF name="magnifyingglass" size={15} color={T.labelTertiary} />
               <TextInput
                 value={query}

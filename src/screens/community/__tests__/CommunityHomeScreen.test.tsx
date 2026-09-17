@@ -70,7 +70,7 @@ beforeEach(() => {
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   mockUseChallenge.mockReturnValue({
     challenge: { ...DEFAULT_CHALLENGE, id: active.id, title: active.title, currentDay: 5 },
-    loading: false, error: false, isParticipant: false, syncPending: false, dayLocked: false,
+    loading: false, error: false, isParticipant: false, syncPending: false, dayLocked: false, canMark: false,
     setMetric: jest.fn(), toggleBinary: jest.fn(), refresh: jest.fn(),
     pointsToday: 10, bonusToday: 0, leaderboard: [], myRank: 1, teamPoints: 100,
     teamFlags: 0, teamPenalty: 0,

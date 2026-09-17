@@ -47,7 +47,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
 
   // Vacancy is valid only with a title AND a company name (both required by ТЗ).
   const ok = title.trim().length > 1 && company.trim().length > 0;
-  const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, borderWidth: 0.5, borderColor: T.cardBorder, ...ty.body } as any;
+  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 14, color: T.label, borderWidth: 0.5, borderColor: T.cardBorder, ...ty.body } as any;
 
   const pickImage = async (which: 'logo' | 'gallup') => {
     try {
@@ -120,7 +120,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
             <Pressable onPress={() => pickImage('logo')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               {companyLogo
                 ? <Image source={{ uri: companyLogo }} style={{ width: 56, height: 56, borderRadius: 12 }} contentFit="cover" />
-                : <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>{uploading === 'logo' ? <ActivityIndicator color={T.brand} /> : <SF name="photo" size={22} color={T.labelSecondary} />}</View>}
+                : <View style={{ width: 56, height: 56, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>{uploading === 'logo' ? <ActivityIndicator color={T.brand} /> : <SF name="photo" size={22} color={T.labelSecondary} />}</View>}
               <Text style={[ty.subhead, { color: T.brandAccent }]}>{companyLogo ? 'Заменить логотип' : 'Загрузить логотип'}</Text>
             </Pressable>
           </Field>
@@ -138,7 +138,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Field label="Формат">
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {FORMATS.map((f) => (
-                <Pressable key={f} onPress={() => setFormat(f)} style={{ flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: format === f ? T.brand : T.fillTertiary }}>
+                <Pressable key={f} onPress={() => setFormat(f)} style={{ flex: 1, paddingVertical: 10, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', backgroundColor: format === f ? T.brand : T.fillTertiary }}>
                   <Text style={[ty.subheadEm, { color: format === f ? '#fff' : T.labelSecondary }]}>{f}</Text>
                 </Pressable>
               ))}
@@ -158,7 +158,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Field label="Опыт работы" hint="Можно выбрать несколько">
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {EXP_OPTS.map((o) => (
-                <Pressable key={o} onPress={() => toggleExp(o)} style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: experience.includes(o) ? T.brand : T.fillTertiary }}>
+                <Pressable key={o} onPress={() => toggleExp(o)} style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, borderCurve: 'continuous', backgroundColor: experience.includes(o) ? T.brand : T.fillTertiary }}>
                   <Text style={[ty.caption2Em, { color: experience.includes(o) ? '#fff' : T.labelSecondary }]}>{o}</Text>
                 </Pressable>
               ))}
@@ -167,7 +167,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Field label="Обязателен ли диплом по специальности?">
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {([['yes', 'Да'], ['no', 'Нет']] as const).map(([k, l]) => (
-                <Pressable key={k} onPress={() => setDiploma(diploma === k ? '' : k)} style={{ flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: diploma === k ? T.brand : T.fillTertiary }}>
+                <Pressable key={k} onPress={() => setDiploma(diploma === k ? '' : k)} style={{ flex: 1, paddingVertical: 10, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', backgroundColor: diploma === k ? T.brand : T.fillTertiary }}>
                   <Text style={[ty.subheadEm, { color: diploma === k ? '#fff' : T.labelSecondary }]}>{l}</Text>
                 </Pressable>
               ))}
@@ -186,7 +186,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
             <Pressable onPress={() => pickImage('gallup')} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               {gallupFile
                 ? <Image source={{ uri: gallupFile }} style={{ width: 56, height: 56, borderRadius: 12 }} contentFit="cover" />
-                : <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>{uploading === 'gallup' ? <ActivityIndicator color={T.brand} /> : <SF name="doc.text.fill" size={20} color={T.labelSecondary} />}</View>}
+                : <View style={{ width: 56, height: 56, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>{uploading === 'gallup' ? <ActivityIndicator color={T.brand} /> : <SF name="doc.text.fill" size={20} color={T.labelSecondary} />}</View>}
               <Text style={[ty.subhead, { color: T.brandAccent }]}>{gallupFile ? 'Заменить файл' : 'Загрузить файл'}</Text>
             </Pressable>
           </Field>
@@ -195,9 +195,9 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Field label="Описание (необязательно)">
             <TextInput value={about} onChangeText={setAbout} multiline placeholder="Подробное описание роли" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 90, textAlignVertical: 'top' }]} />
           </Field>
-          <Pressable onPress={() => setPublished((p) => !p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, marginBottom: 16 }}>
-            <View style={{ width: 46, height: 28, borderRadius: 14, backgroundColor: published ? T.brand : T.fillTertiary, justifyContent: 'center', paddingHorizontal: 3 }}>
-              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff', alignSelf: published ? 'flex-end' : 'flex-start' }} />
+          <Pressable onPress={() => setPublished((p) => !p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, marginBottom: 16 }}>
+            <View style={{ width: 46, height: 28, borderRadius: 14, borderCurve: 'continuous', backgroundColor: published ? T.brand : T.fillTertiary, justifyContent: 'center', paddingHorizontal: 3 }}>
+              <View style={{ width: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', backgroundColor: '#fff', alignSelf: published ? 'flex-end' : 'flex-start' }} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[ty.subheadEm, { color: T.label }]}>{published ? 'Опубликовано' : 'Черновик'}</Text>

@@ -13,7 +13,7 @@ import {
   challengePointsToday, challengeBonusToday, taskPoints, taskBonus, taskDone, totalFlags,
   averagePerPastDay, DEFAULT_REPORT_DEADLINE_HOUR,
 } from '../data/community';
-import { expectedChallengeDay, isChallengeDayLocked } from '../data/challengeDay';
+import { expectedChallengeDay, isChallengeDayLocked, marksClosed } from '../data/challengeDay';
 import { applyPending, type PendingUpdate, type SavedPending } from './challengeMerge';
 
 export interface RankedMember extends Member { rank: number; points: number }
@@ -26,6 +26,12 @@ interface ChallengeState {
   isParticipant: boolean;
   syncPending: boolean;
   dayLocked: boolean;
+  /**
+   * Отметку сейчас примут. Учитывает и закрытый день, и вылет, и выход по
+   * белому флагу 🏳️ — экранам вне челленджа незачем знать про три причины
+   * отдельно, им нужно решить одно: предлагать человеку отметиться или нет.
+   */
+  canMark: boolean;
   setMetric: (taskId: string, value: number) => void;
   toggleBinary: (taskId: string) => void;
   pointsToday: number;
@@ -483,7 +489,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const setMetric = useCallback((taskId: string, value: number) => {
     const safe = Math.max(0, value);
     setChallenge((prev) => {
-      if (isChallengeDayLocked(prev)) return prev;
+      if (marksClosed(prev)) return prev;
       const before = prev.tasks.find((t) => t.id === taskId);
       const previousValue = before && before.kind === 'metric' ? before.current : 0;
       const next = {
@@ -499,7 +505,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
 
   const toggleBinary = useCallback((taskId: string) => {
     setChallenge((prev) => {
-      if (isChallengeDayLocked(prev)) return prev;
+      if (marksClosed(prev)) return prev;
       const before = prev.tasks.find((t) => t.id === taskId);
       const previousDone = before && before.kind === 'binary' ? before.done : false;
       const next = {
@@ -597,6 +603,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       challenge, loading, error, isParticipant: challenge.id !== DEFAULT_CHALLENGE.id && members.some((m) => m.isMe),
       syncPending: pendingCount > 0,
       dayLocked: isChallengeDayLocked(challenge, timeTick),
+      canMark: challenge.id !== DEFAULT_CHALLENGE.id && !marksClosed(challenge, timeTick),
       setMetric, toggleBinary, pointsToday, bonusToday,
       leaderboard: ranked, myRank, teamPoints, teamFlags, teamPenalty,
       refresh: refreshLive,

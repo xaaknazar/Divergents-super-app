@@ -91,11 +91,11 @@ export function AdminPlacesScreen({ navigation }: Props) {
             const countryName = COUNTRIES.find((c) => c.key === p.country)?.name ?? p.country;
             const busy = busyId === p.id;
             return (
-              <View key={p.id} style={{ backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 12, borderRadius: 16, borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}>
+              <View key={p.id} style={{ backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 12, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}>
                 {p.photo ? <Image source={{ uri: p.photo }} style={{ width: '100%', height: 130 }} contentFit="cover" /> : null}
                 <View style={{ padding: 14, gap: 8 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 10, borderCurve: 'continuous', backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
                       <SF name={meta.icon} size={20} color={meta.color} />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
@@ -117,11 +117,11 @@ export function AdminPlacesScreen({ navigation }: Props) {
 
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
                     <Pressable onPress={() => reject(p)} disabled={busy} accessibilityRole="button" accessibilityLabel={`${tr('Отклонить')} «${p.name}»`} accessibilityState={{ disabled: busy }}
-                      style={{ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
+                      style={{ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
                       <Text style={[ty.headline, { color: T.redText }]} numberOfLines={1}>{tr('Отклонить')}</Text>
                     </Pressable>
                     <Pressable onPress={() => approve(p)} disabled={busy} accessibilityRole="button" accessibilityLabel={`${tr('Одобрить')} «${p.name}»`} accessibilityState={{ disabled: busy, busy }}
-                      style={{ flex: 1, minHeight: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: T.brand }}>
+                      style={{ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: T.brand }}>
                       {busy ? <ActivityIndicator color={T.onBrand} /> : <Text style={[ty.headline, { color: T.onBrand }]} numberOfLines={1}>{tr('Одобрить')}</Text>}
                     </Pressable>
                   </View>

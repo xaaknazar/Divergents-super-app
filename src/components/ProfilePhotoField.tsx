@@ -92,7 +92,7 @@ export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => 
         {url ? (
           <Image source={{ uri: url }} style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: T.fillTertiary }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
         ) : (
-          <View style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 72, height: 72, borderRadius: 20, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             {busy ? <ActivityIndicator color={T.brand} /> : <SF name="person.crop.circle.fill" size={30} color={T.labelSecondary} />}
           </View>
         )}

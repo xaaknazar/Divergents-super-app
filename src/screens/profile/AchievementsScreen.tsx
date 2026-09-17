@@ -28,9 +28,9 @@ export function BadgeTile({ b }: { b: EarnedBadge }) {
   ].filter(Boolean).join('. ');
   return (
     <View accessible accessibilityLabel={a11y}
-      style={{ width: '48%', backgroundColor: T.cardBg, borderRadius: 16, padding: 14, opacity: b.earned ? 1 : 0.92 }}>
+      style={{ width: '48%', backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, opacity: b.earned ? 1 : 0.92 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: circle, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 46, height: 46, borderRadius: 23, borderCurve: 'continuous', backgroundColor: circle, alignItems: 'center', justifyContent: 'center' }}>
           <SF name={b.icon} size={22} color={iconColor} />
         </View>
         {b.earned ? <SF name="checkmark.circle.fill" size={20} color={b.color} />

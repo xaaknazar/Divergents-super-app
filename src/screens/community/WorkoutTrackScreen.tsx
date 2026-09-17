@@ -12,7 +12,9 @@ import MapView, { Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { usePreventRemove } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
+import { nums } from '../../theme/tokens';
 import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { hTap, hSuccess } from '../../lib/haptics';
@@ -45,7 +47,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { addWorkout, markAdded } = useActivities();
-  const { challenge, setMetric, isParticipant, dayLocked } = useChallenge();
+  const { challenge, setMetric, isParticipant, dayLocked, canMark } = useChallenge();
 
   // Маршрут живёт НЕ в этом экране, а в модуле workoutTracker: система
   // доставляет координаты в фоновую задачу, которая работает и при закрытом
@@ -213,7 +215,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
     const act = isParticipant
       ? challenge.tasks.find((t) => t.kind === 'metric' && (t.id === 'steps' || /шаг/i.test(t.unit)))
       : undefined;
-    if (act && act.kind === 'metric' && challengeSteps > 0 && !dayLocked) {
+    if (act && act.kind === 'metric' && challengeSteps > 0 && canMark) {
       // Когда зачёт расходится с измеренным — говорим об этом прямо. Молча
       // добавить другое число значит подставить человека: он сверится с
       // часами, увидит расхождение и решит, что приложение врёт.
@@ -223,6 +225,13 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
       Alert.alert('Активность записана', `${body}${note}\n\nДобавить в челлендж?`, [
         { text: 'Не сейчас', style: 'cancel', onPress: () => navigation.goBack() },
         { text: `+${pl.steps(challengeSteps)}`, onPress: () => { setMetric(act.id, act.current + challengeSteps); markAdded(w.id); navigation.goBack(); } },
+      ]);
+    } else if (act && challengeSteps > 0 && !dayLocked && !canMark) {
+      // Вышел по белому флагу 🏳️ или выбыл: зачёт заморожен, и предлагать
+      // «добавить в челлендж» здесь было бы обещанием, которого сервер не
+      // выполнит. Тренировка при этом записана как обычно.
+      Alert.alert('Активность записана', `${body}\n\nВ челлендж шаги не пойдут — ваш зачёт уже зафиксирован. Тренировка сохранена в статистику.`, [
+        { text: 'Понятно', onPress: () => navigation.goBack() },
       ]);
     } else if (act && challengeSteps > 0 && dayLocked) {
       // День уже закрыт (23:00 по Алматы) — говорим об этом прямо, а не молчим.
@@ -234,13 +243,26 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
     }
   };
 
-  const confirmDiscard = () => {
-    if (status === 'idle' || savedRef.current) { navigation.goBack(); return; }
+  // Уход с экрана во время записи — с подтверждением, КАКИМ БЫ СПОСОБОМ он ни
+  // происходил.
+  //
+  // Раньше диалог висел только на кнопке «назад» в шапке, а свайп от края
+  // проходил мимо него. Запись при этом не прерывалась: трекер живёт отдельно
+  // от экрана и продолжает писать точки в фоне. То есть человек делал жест,
+  // которым хотел прервать пробежку, оказывался на предыдущем экране без
+  // единого признака идущей записи — и уходил в уверенности, что всё
+  // остановлено, пока GPS молча ел батарею.
+  //
+  // usePreventRemove перехватывает любой уход: кнопку, свайп, аппаратную
+  // «назад» на Android. Сам экран после этого ничего не решает.
+  usePreventRemove(status === 'tracking' || status === 'paused', ({ data }) => {
     Alert.alert('Прервать запись?', 'Текущий маршрут не сохранится.', [
       { text: 'Продолжить', style: 'cancel' },
-      { text: 'Прервать', style: 'destructive', onPress: () => { void tracker.discard(); navigation.goBack(); } },
+      { text: 'Прервать', style: 'destructive', onPress: () => { void tracker.discard(); navigation.dispatch(data.action); } },
     ]);
-  };
+  });
+
+  const confirmDiscard = () => navigation.goBack();
 
   const initial = { latitude: (user ?? ALMATY).latitude, longitude: (user ?? ALMATY).longitude, latitudeDelta: 0.008, longitudeDelta: 0.008 };
   const active = status === 'tracking';
@@ -248,10 +270,10 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <BackNav back={route.params?.challengeId ? "Челлендж" : "Назад"} onBack={confirmDiscard} trailing={(
-        <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 10, padding: 2 }}>
+        <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 10, borderCurve: 'continuous', padding: 2 }}>
           {(['run', 'walk'] as const).map((k) => (
             <Pressable key={k} onPress={() => status === 'idle' && setType(k)} disabled={status !== 'idle'}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, backgroundColor: type === k ? T.systemBg : 'transparent', opacity: status !== 'idle' && type !== k ? 0.4 : 1 }}>
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, borderCurve: 'continuous', backgroundColor: type === k ? T.systemBg : 'transparent', opacity: status !== 'idle' && type !== k ? 0.4 : 1 }}>
               <SF name={k === 'run' ? 'figure.run' : 'figure.walk'} size={13} color={type === k ? T.brand : T.labelSecondary} />
               <Text style={[ty.caption2Em, { color: type === k ? T.brand : T.labelSecondary }]}>{k === 'run' ? 'Бег' : 'Ходьба'}</Text>
             </Pressable>
@@ -290,14 +312,14 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
         </MapView>
 
         {denied ? (
-          <View style={{ position: 'absolute', top: 16, left: 16, right: 16, backgroundColor: T.cardBg, borderRadius: 14, padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center', borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <View style={{ position: 'absolute', top: 16, left: 16, right: 16, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center', borderWidth: 0.5, borderColor: T.cardBorder }}>
             <SF name="location.fill" size={18} color={T.red} />
             <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>Разрешите доступ к геолокации, чтобы записывать маршрут.</Text>
           </View>
         ) : null}
 
         {/* Stats + controls */}
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: T.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16, paddingHorizontal: 20, paddingBottom: insets.bottom + 16, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 8 }}>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: T.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderCurve: 'continuous', paddingTop: 16, paddingHorizontal: 20, paddingBottom: insets.bottom + 16, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 14, shadowOffset: { width: 0, height: -4 }, elevation: 8 }}>
           <View style={{ flexDirection: 'row' }}>
             {[
               { v: (distanceM / 1000).toFixed(2), l: 'км' },
@@ -308,7 +330,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
               { v: String(steps), l: 'шагов' },
             ].map((s, i, arr) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < arr.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-                <Text style={[ty.title2, { color: T.label }]} numberOfLines={1}>{s.v}</Text>
+                <Text style={[ty.title2, nums, { color: T.label }]} numberOfLines={1}>{s.v}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{s.l}</Text>
               </View>
             ))}
@@ -316,25 +338,25 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
 
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
             {status === 'idle' ? (
-              <Pressable onPress={start} style={{ flex: 1, height: 54, borderRadius: 16, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+              <Pressable onPress={start} style={{ flex: 1, height: 54, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
                 <SF name="play.fill" size={18} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>Старт</Text>
               </Pressable>
             ) : status === 'done' ? (
-              <Pressable onPress={() => navigation.goBack()} style={{ flex: 1, height: 54, borderRadius: 16, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => navigation.goBack()} style={{ flex: 1, height: 54, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.headline, { color: '#fff' }]}>Готово</Text>
               </Pressable>
             ) : (
               <>
                 {active ? (
-                  <Pressable onPress={pause} style={{ flex: 1, height: 54, borderRadius: 16, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+                  <Pressable onPress={pause} style={{ flex: 1, height: 54, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
                     <SF name="pause.fill" size={18} color={T.label} /><Text style={[ty.headline, { color: T.label }]}>Пауза</Text>
                   </Pressable>
                 ) : (
-                  <Pressable onPress={resume} style={{ flex: 1, height: 54, borderRadius: 16, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+                  <Pressable onPress={resume} style={{ flex: 1, height: 54, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
                     <SF name="play.fill" size={18} color={T.brand} /><Text style={[ty.headline, { color: T.brand }]}>Продолжить</Text>
                   </Pressable>
                 )}
-                <Pressable onPress={finish} style={{ flex: 1, height: 54, borderRadius: 16, backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+                <Pressable onPress={finish} style={{ flex: 1, height: 54, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
                   <SF name="checkmark" size={18} color="#fff" /><Text style={[ty.headline, { color: '#fff' }]}>Финиш</Text>
                 </Pressable>
               </>

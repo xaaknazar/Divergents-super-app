@@ -41,8 +41,8 @@ export function RouteThumb({
   const { T } = useTheme();
   const stroke = color ?? T.brand;
   const tile = transparent
-    ? { backgroundColor: 'transparent', borderRadius: 0 }
-    : { backgroundColor: T.fillTertiary, borderRadius: 12 };
+    ? { backgroundColor: 'transparent', borderRadius: 0, borderCurve: 'continuous' as const }
+    : { backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous' as const };
 
   const points = useMemo(() => {
     if (!coords || coords.length < 2) return null;

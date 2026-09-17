@@ -266,7 +266,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
         {trip.organizer ? (
           <ListSection header={tr('Организатор')}>
             <ListRow
-              leading={<View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
+              leading={<View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{trip.organizer.charAt(0)}</Text></View>}
               title={trip.organizer} subtitle={trip.organizerType} last />
           </ListSection>
         ) : null}
@@ -324,12 +324,12 @@ export function TripDetailScreen({ route, navigation }: Props) {
           ) : (
             <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               {Array.from({ length: Math.min(goingCount, 9) }).map((_, i) => (
-                <View key={i} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                <View key={i} style={{ width: 36, height: 36, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                   <SF name="person.fill" size={18} color={T.brand} />
                 </View>
               ))}
               {goingCount > 9 ? (
-                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.subheadEm, { color: T.labelSecondary }]}>+{goingCount - 9}</Text>
                 </View>
               ) : null}

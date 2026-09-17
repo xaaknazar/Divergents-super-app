@@ -58,7 +58,7 @@ export function MiniPlayer() {
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 12, paddingRight: 4, paddingVertical: 6, gap: 8 }}>
         {/* Иконка отвечает на вопрос «а это что играет»: видеоурок или скачанная
             аудиозапись. Без неё две очень разные вещи выглядят одинаково. */}
-        <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 30, height: 30, borderRadius: 8, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
           <SF name={isLesson ? 'play.circle.fill' : 'headphones'} size={16} color={T.brand} />
         </View>
 

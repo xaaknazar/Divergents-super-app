@@ -200,7 +200,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
         } />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {unavailable || source === 'cache' || source === 'local' ? (
-          <View style={{ marginHorizontal: 16, marginBottom: 14, padding: 12, borderRadius: 12, backgroundColor: 'rgba(255,149,0,0.12)', flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+          <View style={{ marginHorizontal: 16, marginBottom: 14, padding: 12, borderRadius: 12, borderCurve: 'continuous', backgroundColor: 'rgba(255,149,0,0.12)', flexDirection: 'row', alignItems: 'center', gap: 9 }}>
             <SF name="wifi.exclamationmark" size={17} color={T.orange} />
             <Text style={[ty.caption1, { color: T.label, flex: 1 }]}>
               {source === 'local'
@@ -214,7 +214,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
         <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16 }}>
           {profile?.photoUrl
             ? <Image source={{ uri: profile.photoUrl }} style={{ width: 88, height: 88, borderRadius: 24 }} contentFit="cover" cachePolicy="memory-disk" />
-            : <View style={{ width: 88, height: 88, borderRadius: 24, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.largeTitle, { color: '#fff' }]}>{(profile?.fullName ?? 'D').charAt(0)}</Text></View>}
+            : <View style={{ width: 88, height: 88, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.largeTitle, { color: '#fff' }]}>{(profile?.fullName ?? 'D').charAt(0)}</Text></View>}
           <Text style={[ty.title2, { color: T.label, marginTop: 12, textAlign: 'center' }]}>{profile?.fullName ?? '—'}</Text>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
             {profile?.mbtiType ? <Capsule bg={T.brandTinted} color={T.brand}>MBTI · {profile.mbtiType}</Capsule> : null}
@@ -269,7 +269,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
                 return (
                   <ListRow key={gallupId(g)} last={last}
                     leading={
-                      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 26, height: 26, borderRadius: 13, borderCurve: 'continuous', backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
                         <Text style={[ty.caption2Em, { color: meta.color }]}>{i + 1}</Text>
                       </View>
                     }
@@ -289,7 +289,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
                         </Pressable>
                       </View>
                     ) : (
-                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
+                      <View style={{ width: 8, height: 8, borderRadius: 4, borderCurve: 'continuous', backgroundColor: meta.color }} />
                     )} />
                 );
               })}

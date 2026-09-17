@@ -7,6 +7,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
+import { nums } from '../../theme/tokens';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
@@ -50,7 +51,7 @@ export function OverallStandingsScreen({ navigation }: Props) {
 
         {/* Своё место — крупно и сразу, чтобы не искать себя в списке. */}
         {me ? (
-          <View style={{ marginHorizontal: 16, marginBottom: 12, padding: 14, borderRadius: 16, backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ marginHorizontal: 16, marginBottom: 12, padding: 14, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <MemberAvatar name={me.name} avatar={me.avatar} size={40} eliminated={me.eliminated} left={me.left === true} />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Вы')} · {me.name}</Text>
@@ -59,8 +60,8 @@ export function OverallStandingsScreen({ navigation }: Props) {
               </Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[ty.title3, { color: T.brand }]}>{me.rank} {tr('место')}</Text>
-              <Text style={[ty.caption1, { color: T.labelSecondary }]}>{me.points} pts</Text>
+              <Text style={[ty.title3, nums, { color: T.brand }]}>{me.rank} {tr('место')}</Text>
+              <Text style={[ty.caption1, nums, { color: T.labelSecondary }]}>{me.points} pts</Text>
             </View>
           </View>
         ) : null}
@@ -75,6 +76,7 @@ export function OverallStandingsScreen({ navigation }: Props) {
                 accessibilityState={{ selected: mineOnly === only }}
                 style={{
                   paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999,
+                  borderCurve: 'continuous',
                   backgroundColor: mineOnly === only ? T.brand : T.fillSecondary,
                 }}
               >
@@ -125,7 +127,7 @@ function Row({ row, last }: { row: OverallStanding; last: boolean }) {
         <View style={{ width: 28, alignItems: 'center' }}>
           {medal
             ? <SF name={medal.icon} size={18} color={medal.color} />
-            : <Text style={[ty.footnoteEm, { color: T.labelSecondary }]}>{row.rank}</Text>}
+            : <Text style={[ty.footnoteEm, nums, { color: T.labelSecondary }]}>{row.rank}</Text>}
         </View>
 
         <MemberAvatar name={row.name} avatar={row.avatar} size={34} eliminated={row.eliminated} left={row.left === true} />

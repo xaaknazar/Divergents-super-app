@@ -39,15 +39,15 @@ export function OnboardingScreen({ navigation }: Props) {
         style={{ flexDirection: 'row', justifyContent: 'center', gap: 7, paddingVertical: 8, paddingBottom: 30 }}
       >
         {STEPS.map((_, i) => (
-          <View key={i} style={{ width: i === step ? 22 : 6, height: 6, borderRadius: 3, backgroundColor: i === step ? T.brand : T.fillSecondary }} />
+          <View key={i} style={{ width: i === step ? 22 : 6, height: 6, borderRadius: 3, borderCurve: 'continuous', backgroundColor: i === step ? T.brand : T.fillSecondary }} />
         ))}
       </View>
 
       {/* Illustration */}
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ width: 240, height: 240, borderRadius: 60, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ position: 'absolute', top: 20, left: 30, width: 40, height: 40, borderRadius: 20, backgroundColor: T.brandAccent }} />
-          <View style={{ position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 16, backgroundColor: T.orange, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 240, height: 240, borderRadius: 60, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ position: 'absolute', top: 20, left: 30, width: 40, height: 40, borderRadius: 20, borderCurve: 'continuous', backgroundColor: T.brandAccent }} />
+          <View style={{ position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.orange, alignItems: 'center', justifyContent: 'center' }}>
             <SF name={s.accent} size={32} color="#fff" />
           </View>
           <SF name={s.icon} size={110} color={T.brand} />

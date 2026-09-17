@@ -193,7 +193,7 @@ export function VideoScreen({ route, navigation }: Props) {
           <ErrorState message={tr('Не удалось загрузить урок. Проверьте подключение.')} onRetry={retryDetail} />
         ) : (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingBottom: 80, gap: 10 }}>
-          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="play.slash" size={28} color={T.labelTertiary} />
           </View>
           <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]} numberOfLines={1}>{tr('Урок недоступен')}</Text>
@@ -279,7 +279,7 @@ export function VideoScreen({ route, navigation }: Props) {
               останется. */}
           <Pressable onPress={() => navigation.goBack()} accessibilityRole="button"
             accessibilityLabel={tr('Свернуть урок')} accessibilityHint={tr('Урок продолжит играть, управление появится над вкладками')}
-            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+            style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
             <SF name="chevron.down" size={18} color="#fff" />
           </Pressable>
           <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 8 }}>
@@ -288,7 +288,7 @@ export function VideoScreen({ route, navigation }: Props) {
           </View>
           {hls ? (
             <Pressable onPress={() => { try { videoRef.current?.enterFullscreen(); } catch {} }} accessibilityRole="button" accessibilityLabel="Полноэкранный режим"
-              style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+              style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
               <SF name="arrow.up.left.and.arrow.down.right" size={16} color="#fff" />
             </Pressable>
           ) : <View style={{ width: 48 }} />}
@@ -326,15 +326,15 @@ export function VideoScreen({ route, navigation }: Props) {
       </View>
 
       {/* Sheet */}
-      <View style={{ flex: 1, backgroundColor: T.systemBg, borderTopLeftRadius: 14, borderTopRightRadius: 14, marginTop: -2 }}>
+      <View style={{ flex: 1, backgroundColor: T.systemBg, borderTopLeftRadius: 14, borderTopRightRadius: 14, borderCurve: 'continuous', marginTop: -2 }}>
         <View style={{ alignItems: 'center', paddingVertical: 8 }}>
-          <View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} />
+          <View style={{ width: 36, height: 5, borderRadius: 3, borderCurve: 'continuous', backgroundColor: T.fillSecondary }} />
         </View>
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <Text style={[ty.title3, { color: T.label }]} numberOfLines={2}>{lesson.title}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{tr('Урок')} {lesson.n} {tr('из')} {course.lessons.length} · {course.title}</Text>
           {owned && audioUrl ? (
-            <Pressable onPress={onDownloadAudio} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: downloaded ? T.brandTinted : T.fillSecondary, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 }}>
+            <Pressable onPress={onDownloadAudio} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: downloaded ? T.brandTinted : T.fillSecondary, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 9, paddingHorizontal: 14 }}>
               {dlBusy ? <ActivityIndicator color={T.brand} /> : <SF name={downloaded ? 'checkmark.circle.fill' : 'arrow.down.circle'} size={16} color={T.brand} />}
               <Text style={[ty.footnoteEm, { color: T.brand }]}>{dlBusy ? tr('Скачивается… · остановить') : downloaded ? tr('Аудио скачано · удалить') : tr('Скачать аудио (офлайн)')}</Text>
             </Pressable>
@@ -366,7 +366,7 @@ export function VideoScreen({ route, navigation }: Props) {
                 {attachments.map((a, i) => (
                   <Pressable key={a.id} onPress={() => Linking.openURL(a.url)}
                     style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: i < attachments.length - 1 ? 0.5 : 0, borderBottomColor: T.separator, opacity: pressed ? 0.6 : 1 })}>
-                    <View style={{ width: 38, height: 38, borderRadius: 9, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 38, height: 38, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="doc.fill" size={18} color={T.brand} />
                     </View>
                     <Text style={[ty.body, { flex: 1, color: T.label }]} numberOfLines={1}>{a.name}</Text>
@@ -392,7 +392,7 @@ export function VideoScreen({ route, navigation }: Props) {
               ) : (comments ?? []).filter((c) => !isBlocked(fullName(c))).length > 0 ? (
                 (comments ?? []).filter((c) => !isBlocked(fullName(c))).map((c) => (
                   <View key={c.id} style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-                    <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 34, height: 34, borderRadius: 17, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={[ty.caption2Em, { color: '#fff' }]}>{initials(c)}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
@@ -425,7 +425,7 @@ export function VideoScreen({ route, navigation }: Props) {
                       onChangeText={(v) => { setDraft(v); if (sendError) setSendError(false); }}
                       placeholder={tr('Написать комментарий…')}
                       placeholderTextColor={T.labelTertiary}
-                      style={[ty.body, { flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14, color: T.label }]}
+                      style={[ty.body, { flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, borderCurve: 'continuous', paddingVertical: 9, paddingHorizontal: 14, color: T.label }]}
                       onSubmitEditing={send}
                       returnKeyType="send"
                       editable={!sending}

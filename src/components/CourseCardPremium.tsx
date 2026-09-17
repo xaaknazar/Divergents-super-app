@@ -49,7 +49,7 @@ export function CourseCardPremium({
   const done = pct >= 100;
   return (
     <PressableScale onPress={onPress} accessibilityLabel={course.title} style={{
-      width: width as any, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden',
+      width: width as any, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden',
       shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2,
     }}>
       <View style={{ width: '100%', aspectRatio: 16 / 9 }}>
@@ -101,7 +101,7 @@ export function FeaturedCard({
   const pct = Math.round(progress ?? 0);
   return (
     <PressableScale onPress={onPress} accessibilityLabel={course.title} style={{
-      marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden',
+      marginHorizontal: 16, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden',
       shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3,
     }}>
       <View style={{ height: 180 }}>

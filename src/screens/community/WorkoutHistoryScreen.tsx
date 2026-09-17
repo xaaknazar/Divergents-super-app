@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
+import { nums } from '../../theme/tokens';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
@@ -149,13 +150,13 @@ function Row({ w, last, onPress }: { w: Workout; last: boolean; onPress: () => v
           </Text>
 
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 2 }}>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>
+            <Text style={[ty.caption1, nums, { color: T.labelSecondary }]} numberOfLines={1}>
               {formatDuration(w.durationSec)}
             </Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>
+            <Text style={[ty.caption1, nums, { color: T.labelSecondary }]} numberOfLines={1}>
               {formatPace(w.distanceM, paceTimeSec(w))}/{tr('км')}
             </Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>
+            <Text style={[ty.caption1, nums, { color: T.labelSecondary }]} numberOfLines={1}>
               ≈{fmtInt(w.steps)}
             </Text>
           </View>

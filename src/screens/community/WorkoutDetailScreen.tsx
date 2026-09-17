@@ -8,6 +8,7 @@ import MapView, { Polyline, Marker } from 'react-native-maps';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeContext';
+import { nums } from '../../theme/tokens';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
@@ -48,7 +49,7 @@ function DetailRow({ T, ty, label, note, value, last }: {
         <Text style={[ty.subhead, { color: T.label }]} numberOfLines={2}>{label}</Text>
         {note ? <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 1 }]} numberOfLines={2}>{note}</Text> : null}
       </View>
-      <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{value}</Text>
+      <Text style={[ty.subheadEm, nums, { color: T.label }]} numberOfLines={1}>{value}</Text>
     </View>
   );
 }
@@ -176,7 +177,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
 
         {/* Карта с маршрутом */}
         {region ? (
-          <View style={{ height: 300, marginHorizontal: 16, borderRadius: 18, overflow: 'hidden' }}>
+          <View style={{ height: 300, marginHorizontal: 16, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden' }}>
             <MapView ref={mapRef} style={{ flex: 1 }} initialRegion={region} showsCompass={false}>
               <Polyline coordinates={w.coords} strokeColor={T.brand} strokeWidth={5} lineCap="round" lineJoin="round" />
               {/* Старт зелёный, финиш красный — направление читается сразу. */}
@@ -192,6 +193,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
                 position: 'absolute', right: 12, bottom: 12,
                 flexDirection: 'row', alignItems: 'center', gap: 8,
                 paddingVertical: 8, paddingLeft: 10, paddingRight: 14, borderRadius: 999,
+                borderCurve: 'continuous',
                 backgroundColor: 'rgba(255,255,255,0.94)',
               }}
             >
@@ -200,7 +202,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
             </View>
           </View>
         ) : (
-          <View style={{ marginHorizontal: 16, padding: 20, borderRadius: 18, backgroundColor: T.cardBg, alignItems: 'center' }}>
+          <View style={{ marginHorizontal: 16, padding: 20, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center' }}>
             <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>
               {tr('Маршрут не записался — GPS не дал точек.')}
             </Text>
@@ -220,7 +222,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
         {/* Подробности строками «подпись — значение». Раньше это был сплошной
             текст в две строки с обрезанием: iOS рвал «6 795» по неразрывному
             пробелу и прятал хвост за многоточием. */}
-        <View style={{ marginHorizontal: 16, marginTop: 8, borderRadius: 14, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ marginHorizontal: 16, marginTop: 8, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
           {typeof w.movingSec === 'number' && w.durationSec - w.movingSec >= 5 ? (
             <>
               <DetailRow T={T} ty={ty} label={tr('Общее время')} value={formatDuration(w.durationSec)} />

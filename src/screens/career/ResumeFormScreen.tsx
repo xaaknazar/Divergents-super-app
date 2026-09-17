@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useUser } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, LayoutAnimation } from 'react-native';
+import { usePreventRemove } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
@@ -18,7 +19,13 @@ import { useKeyboardShown } from '../../state/useKeyboard';
 // Registered in BOTH the Career stack and the Profile stack, so its props are
 // typed permissively (it only needs navigation.goBack + route.params.step).
 // This lets "Редактировать анкету" opened from Profile close back to Profile.
-type Props = { navigation: { goBack: () => void }; route: { params?: { step?: number } } };
+type Props = {
+  // Экран открывается из двух стеков, поэтому типизирован по месту, а не
+  // через NativeStackScreenProps. `dispatch` нужен перехвату ухода: он
+  // доигрывает то действие навигации, которое человек уже начал.
+  navigation: { goBack: () => void; dispatch: (action: any) => void };
+  route: { params?: { step?: number } };
+};
 
 type Errors = Record<string, string>;
 type Answers = Record<string, any>;
@@ -137,7 +144,10 @@ export function ResumeFormScreen({ navigation, route }: Props) {
 
   const next = () => { if (validateStep(step)) go(step + 1); };
 
-  const finish = async () => {
+  // onDone — куда уходить после успешного сохранения. По умолчанию просто
+  // «назад»; при перехваченном свайпе нужно продолжить именно тот уход, который
+  // человек уже начал, поэтому вызывающий передаёт своё продолжение.
+  const finish = async (onDone?: () => void) => {
     // Полнота 100%: не общий Alert, а переход к первому незаполненному шагу с
     // подсветкой его полей.
     if (firstIncomplete >= 0) {
@@ -154,23 +164,29 @@ export function ResumeFormScreen({ navigation, route }: Props) {
       ok
         ? tr('Данные отправлены в Talentslab.')
         : tr('Нет связи с Talentslab. Анкета сохранена в приложении — откройте её и нажмите «Сохранить» ещё раз, когда появится связь.'),
-      [{ text: tr('Готово'), onPress: () => navigation.goBack() }],
+      [{ text: tr('Готово'), onPress: () => (onDone ? onDone() : navigation.goBack()) }],
     );
   };
 
   // Локально всё уже сохранено; спрашиваем только про то, что не ушло на сервер.
-  const close = () => {
-    if (!dirty) { navigation.goBack(); return; }
+  //
+  // Спрашивает ХУК, а не кнопка. Диалог висел на «Закрыть» в шапке, и свайп
+  // вниз по модалке проходил мимо: анкета уезжала с невыгруженными правками
+  // молча. usePreventRemove перехватывает любой способ уйти — кнопку, свайп,
+  // аппаратную «назад», — и спрашивает один раз.
+  usePreventRemove(dirty, ({ data }) => {
     Alert.alert(
       tr('Изменения не отправлены'),
       tr('Закрыть без сохранения?'),
       [
-        { text: tr('Сохранить'), onPress: () => { finish(); } },
-        { text: tr('Закрыть'), style: 'destructive', onPress: () => navigation.goBack() },
+        { text: tr('Сохранить'), onPress: () => { void finish(() => navigation.dispatch(data.action)); } },
+        { text: tr('Закрыть'), style: 'destructive', onPress: () => navigation.dispatch(data.action) },
         { text: tr('Отмена'), style: 'cancel' },
       ],
     );
-  };
+  });
+
+  const close = () => navigation.goBack();
 
   const onChangeField = (f: ResumeField, v: any) => {
     setField(f.key, v);
@@ -215,7 +231,7 @@ export function ResumeFormScreen({ navigation, route }: Props) {
             accessibilityState={{ selected: i === step }}
             style={{ flex: 1, minHeight: 44, justifyContent: 'center' }}
           >
-            <View style={{ height: i === step ? 6 : 4, borderRadius: 3, backgroundColor: stepColor(i) }} />
+            <View style={{ height: i === step ? 6 : 4, borderRadius: 3, borderCurve: 'continuous', backgroundColor: stepColor(i) }} />
           </Pressable>
         ))}
       </View>
@@ -225,7 +241,7 @@ export function ResumeFormScreen({ navigation, route }: Props) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
         <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={s.icon} size={20} color={T.brand} />
             </View>
             <View>
@@ -276,7 +292,7 @@ export function ResumeFormScreen({ navigation, route }: Props) {
               <PrimaryButton label={tr('Назад')} color="transparent" style={{ flex: 1 }} onPress={() => go(step - 1)} />
             ) : null}
             {last ? (
-              <PrimaryButton label={tr('Сохранить')} icon="checkmark" loading={submitting} style={{ flex: 2 }} onPress={finish} />
+              <PrimaryButton label={tr('Сохранить')} icon="checkmark" loading={submitting} style={{ flex: 2 }} onPress={() => finish()} />
             ) : (
               <PrimaryButton label={tr('Далее')} icon="arrow.right" style={{ flex: 2 }} onPress={next} />
             )}

@@ -135,7 +135,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
         <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 12 }]}>{tr('Город:')} {cityName}, {countryName} · {tr('нажмите на карту, чтобы поставить точку')}</Text>
 
         {/* Map picker */}
-        <View style={{ borderRadius: 16, overflow: 'hidden', height: 220, marginBottom: 16 }}>
+        <View style={{ borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', height: 220, marginBottom: 16 }}>
           <MapView style={{ flex: 1 }}
             initialRegion={{ latitude: initLat, longitude: initLng, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
             userInterfaceStyle={isDark ? 'dark' : 'light'}
@@ -166,15 +166,15 @@ export function AddPlaceScreen({ navigation, route }: Props) {
 
         <FieldLabel>{tr('Фото')}</FieldLabel>
         {photo ? (
-          <View style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
+          <View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', marginBottom: 16 }}>
             <Image source={{ uri: photo }} style={{ width: '100%', height: 180 }} contentFit="cover" />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-              <Pressable accessibilityRole="button" accessibilityLabel={tr('Заменить фото')} onPress={pickPhoto} style={{ flex: 1, minHeight: 48, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brandText }]} numberOfLines={1}>{tr('Заменить')}</Text></Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel={tr('Удалить фото')} onPress={() => setPhoto(null)} style={{ flex: 1, minHeight: 48, borderRadius: 12, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{tr('Удалить')}</Text></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={tr('Заменить фото')} onPress={pickPhoto} style={{ flex: 1, minHeight: 48, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brandText }]} numberOfLines={1}>{tr('Заменить')}</Text></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={tr('Удалить фото')} onPress={() => setPhoto(null)} style={{ flex: 1, minHeight: 48, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{tr('Удалить')}</Text></Pressable>
             </View>
           </View>
         ) : (
-          <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel={tr('Добавить фото')} style={{ minHeight: 90, borderRadius: 14, borderWidth: 1, borderColor: T.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexDirection: 'row' }}>
+          <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel={tr('Добавить фото')} style={{ minHeight: 90, borderRadius: 14, borderCurve: 'continuous', borderWidth: 1, borderColor: T.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexDirection: 'row' }}>
             <SF name="photo" size={18} color={T.brandText} /><Text style={[ty.subhead, { color: T.brandText }]} numberOfLines={1}>{tr('Добавить фото')}</Text>
           </Pressable>
         )}
@@ -210,4 +210,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </View>
   );
 }
-function inp(T: any, ty: Typography) { return { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body }; }
+function inp(T: any, ty: Typography) { return { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous' as const, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body }; }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
+import { nums } from '../../theme/tokens';
 import { View, Text, ScrollView, Linking, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Logo } from '../../components/Logo';
@@ -237,7 +238,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
       {/* Gradient hero card — tap to edit the anketa (single edit entry) */}
       <Pressable onPress={editAnketa} accessibilityRole="button" accessibilityLabel="Редактировать анкету"
-        style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+        style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, borderCurve: 'continuous', overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
           {/* Legibility scrim (same as PersonalizeScreen): white copy must stay
               readable when the user's accent is a pastel, esp. in dark theme. */}
@@ -251,7 +252,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
             {photoUrl ? (
               <Image source={{ uri: photoUrl }} style={{ width: 64, height: 64, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
             ) : (
-              <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 64, height: 64, borderRadius: 18, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.title1, { color: T.onBrand }]}>{initial}</Text>
               </View>
             )}
@@ -279,7 +280,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {challengeActive ? (
         <ListSection header={t('active_challenge')} style={{ marginBottom: 18 }}>
           <Pressable onPress={goChallenge} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
-            <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 30, height: 30, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
               <Logo size={19} body={T.onBrand} head={T.onBrand} />
             </View>
             <View style={{ flex: 1 }}>
@@ -310,7 +311,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
         {tiles.map((t, i) => (
           <Pressable key={i} onPress={t.onPress} accessibilityRole="button" accessibilityLabel={tileA11y(t.l, t.v)}
-            style={({ pressed }) => ({ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.7 : 1 })}>
+            style={({ pressed }) => ({ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.7 : 1 })}>
             <SF name={t.icon} size={18} color={t.c} />
             <Text style={[ty.title2, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{t.v}</Text>
             <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={2}>{t.l}</Text>
@@ -324,7 +325,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
           {ach.badges.map((b) => (
             <View key={b.id} accessible accessibilityRole="image"
               accessibilityLabel={`${b.title} — ${b.earned ? tr('получено') : tr('заблокировано')}`}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+              style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={b.icon} size={20} color={b.earned ? '#fff' : T.labelTertiary} />
             </View>
           ))}
@@ -338,7 +339,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
           <ListRow key={s.book.id} onPress={() => openBook(s.book.id)}
             leading={s.book.imageUrl
               ? <Image source={imgUrl(s.book.imageUrl, 100)} style={{ width: 34, height: 50, borderRadius: 6 }} contentFit="cover" cachePolicy="memory-disk" />
-              : <View style={{ width: 34, height: 50, borderRadius: 6, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={16} color={T.labelTertiary} /></View>}
+              : <View style={{ width: 34, height: 50, borderRadius: 6, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={16} color={T.labelTertiary} /></View>}
             title={s.book.title} subtitle={`${tr('Читаю')} · ${s.progress}%`} chevron />
         ))}
         {readBooks.length > 0 ? (
@@ -351,7 +352,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
 
       {/* Strengths snapshot */}
       {(profile?.gallup ?? []).length > 0 ? (
-        <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{t('strengths')}</Text>
             {!live ? (
@@ -365,7 +366,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
             {applyGallupOrder(profile!.gallup, gallupOrder).slice(0, 10).map((g) => {
               const c = GALLUP_DOMAIN_META[g.domain]?.color ?? T.brand;
               return (
-                <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, backgroundColor: c + '18' }}>
+                <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, borderCurve: 'continuous', backgroundColor: c + '18' }}>
                   <Text style={[ty.caption2Em, { color: c }]}>{g.rank}</Text>
                   <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{g.name}</Text>
                 </View>
@@ -407,20 +408,20 @@ export function ProfileHomeScreen({ navigation }: Props) {
               { v: records.fastestRun ? formatPace(records.fastestRun.distanceM, paceTimeSec(records.fastestRun)) : '—', l: tr('лучший темп') },
               { v: String(fitnessGoals.filter((g) => !g.doneISO).length), l: tr('целей') },
             ].map((s, i) => (
-              <View key={i} style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 12, paddingVertical: 8, alignItems: 'center' }}>
-                <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{s.v}</Text>
+              <View key={i} style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 8, alignItems: 'center' }}>
+                <Text style={[ty.subheadEm, nums, { color: T.label }]} numberOfLines={1}>{s.v}</Text>
                 <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{s.l}</Text>
               </View>
             ))}
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable onPress={() => navigation.navigate('WorkoutTrack')} accessibilityRole="button" accessibilityLabel={tr('Записать тренировку')}
-              style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
               <SF name="figure.run" size={15} color={T.onBrand} />
               <Text style={[ty.subheadEm, { color: T.onBrand }]}>{tr('Записать')}</Text>
             </Pressable>
             <Pressable onPress={() => navigation.navigate('MyFitness')} accessibilityRole="button" accessibilityLabel={tr('Открыть мои тренировки')}
-              style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
               <SF name="trophy.fill" size={15} color={T.brand} />
               <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Открыть')}</Text>
             </Pressable>
@@ -458,7 +459,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
         <ListSection header={`${t('applications_n')} · ${myApps.length}`}>
           {myApps.map((j, i) => (
             <ListRow key={j.id} onPress={goCareer}
-              leading={<View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
+              leading={<View style={{ width: 36, height: 36, borderRadius: 8, borderCurve: 'continuous', backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
               title={j.title} subtitle={`${j.company} · ${j.city}`}
               trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{t('sent_')}</Capsule>} last={i === myApps.length - 1} />
           ))}

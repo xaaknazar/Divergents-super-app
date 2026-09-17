@@ -40,6 +40,7 @@ export function ProfileAvatarButton({ size = 50, onPress }: { size?: number; onP
           onError={() => setBroken(true)}
           style={{
             width: size, height: size, borderRadius: size / 2,
+           
             borderWidth: 1, borderColor: T.separator, backgroundColor: T.fillTertiary,
           }}
           contentFit="cover"

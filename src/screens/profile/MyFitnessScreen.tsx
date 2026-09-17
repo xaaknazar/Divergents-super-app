@@ -179,10 +179,10 @@ export function MyFitnessScreen({ navigation }: Props) {
                 onPress={() => { if (r.workout) navigation.navigate('WorkoutDetail', { workoutId: r.workout.id }); }}
                 onLongPress={() => { hTap(); share(r.card); }}
                 accessibilityRole="button" accessibilityLabel={`${r.label}: ${r.value}`}
-                style={({ pressed }) => ({ backgroundColor: T.cardBg, borderRadius: 18, padding: 14, minHeight: 124, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.8 : 1 })}
+                style={({ pressed }) => ({ backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 14, minHeight: 124, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.8 : 1 })}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: `${r.color}22`, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 16, borderCurve: 'continuous', backgroundColor: `${r.color}22`, alignItems: 'center', justifyContent: 'center' }}>
                     <SF name={r.icon} size={16} color={r.color} />
                   </View>
                   <Pressable onPress={() => share(r.card)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Поделиться')}>
@@ -247,7 +247,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                 <View key={m.id} style={{ borderBottomWidth: i < metrics.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
                   <Pressable onPress={() => setOpenMetric(open ? null : m.id)} onLongPress={() => confirmRemoveMetric(m)} accessibilityRole="button" accessibilityLabel={m.name} accessibilityState={{ expanded: open }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
-                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 36, height: 36, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="dumbbell" size={17} color={T.brand} />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
@@ -261,7 +261,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                       <Text style={[ty.caption2, { color: T.labelTertiary }]}>{tr('рекорд')}</Text>
                     </View>
                     <Pressable onPress={() => { hTap(); setLogFor(m); }} accessibilityRole="button" accessibilityLabel={`${tr('Записать')} ${m.name}`}
-                      style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+                      style={{ width: 36, height: 36, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="plus" size={16} color={T.onBrand} />
                     </Pressable>
                   </Pressable>
@@ -339,9 +339,9 @@ function ProgramCard({ p, s, onOpen, onDone }: { p: FitnessProgram; s: ProgramSt
   const ratio = p.days > 0 ? s.done / p.days : 0;
   return (
     <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={p.title}
-      style={({ pressed }) => ({ backgroundColor: T.cardBg, borderRadius: 18, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.85 : 1, gap: 10 })}>
+      style={({ pressed }) => ({ backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.85 : 1, gap: 10 })}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: s.finished ? 'rgba(52,199,89,0.16)' : T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, borderCurve: 'continuous', backgroundColor: s.finished ? 'rgba(52,199,89,0.16)' : T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
           <SF name={s.finished ? 'checkmark.seal.fill' : 'flame.fill'} size={19} color={s.finished ? T.green : T.brand} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -356,7 +356,7 @@ function ProgramCard({ p, s, onOpen, onDone }: { p: FitnessProgram; s: ProgramSt
             <Capsule bg="rgba(52,199,89,0.16)" color={T.greenText}>{tr('сегодня ✓')}</Capsule>
           ) : (
             <Pressable onPress={onDone} accessibilityRole="button" accessibilityLabel={`${tr('Сделал')}: ${p.title}`}
-              style={({ pressed }) => ({ minHeight: 38, paddingHorizontal: 14, borderRadius: 12, backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              style={({ pressed }) => ({ minHeight: 38, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
               <SF name="checkmark" size={14} color={T.onBrand} />
               <Text style={[ty.subheadEm, { color: T.onBrand }]}>{tr('Сделал')}</Text>
             </Pressable>
@@ -369,6 +369,7 @@ function ProgramCard({ p, s, onOpen, onDone }: { p: FitnessProgram; s: ProgramSt
         {s.grid.map((g) => (
           <View key={g.key} style={{
             flex: 1, height: 8, borderRadius: 3,
+            borderCurve: 'continuous',
             backgroundColor: g.state === 'done' ? T.green : g.state === 'missed' ? T.red : g.state === 'partial' ? T.orange : g.state === 'today' ? T.brand : T.fillTertiary,
             opacity: g.state === 'today' ? 0.55 : 1,
           }} />
@@ -417,12 +418,12 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
       </Text>
 
       {/* Сетка дней */}
-      <View style={{ backgroundColor: T.cardBg, borderRadius: 16, padding: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+      <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {s.grid.map((g) => {
             const c = color(g.state);
             return (
-              <View key={g.key} style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center', borderWidth: g.state === 'today' || g.state === 'partial' ? 1.5 : 0, borderColor: T.brand }}>
+              <View key={g.key} style={{ width: 38, height: 38, borderRadius: 10, borderCurve: 'continuous', backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center', borderWidth: g.state === 'today' || g.state === 'partial' ? 1.5 : 0, borderColor: T.brand }}>
                 <Text style={[ty.caption1, { color: c.fg, fontFamily: ty.subheadEm.fontFamily }]}>{g.index}</Text>
               </View>
             );
@@ -431,7 +432,7 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 10 }}>
           {([['done', tr('сделано')], ['missed', tr('пропуск')], ['partial', tr('частично')], ['today', tr('сегодня')]] as const).map(([st, l]) => (
             <View key={st} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: color(st).bg }} />
+              <View style={{ width: 10, height: 10, borderRadius: 3, borderCurve: 'continuous', backgroundColor: color(st).bg }} />
               <Text style={[ty.caption2, { color: T.labelSecondary }]}>{l}</Text>
             </View>
           ))}
@@ -440,16 +441,16 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
 
       {/* Сегодня */}
       {!s.finished && s.dayIndex >= 1 ? (
-        <View style={{ backgroundColor: T.cardBg, borderRadius: 16, padding: 14, gap: 10, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, gap: 10, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <Text style={[ty.subheadEm, { color: T.label }]}>{tr('Сегодня')}: {s.todayValue} / {p.target} {p.unit}{s.todayDone ? ' ✓' : ''}</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TextInput value={draft} onChangeText={setDraft} placeholder={String(p.target)} placeholderTextColor={T.labelTertiary} keyboardType="decimal-pad" accessibilityLabel={tr('Сколько сделали')}
-              style={[ty.body, { flex: 1, color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, minHeight: 44, paddingHorizontal: 14 }]} />
-            <Pressable onPress={submit} accessibilityRole="button" accessibilityLabel={tr('Записать')} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              style={[ty.body, { flex: 1, color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: 44, paddingHorizontal: 14 }]} />
+            <Pressable onPress={submit} accessibilityRole="button" accessibilityLabel={tr('Записать')} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Записать')}</Text>
             </Pressable>
             {!s.todayDone ? (
-              <Pressable onPress={() => { onLog(p.target); hSuccess(); }} accessibilityRole="button" accessibilityLabel={tr('Сделал норму')} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => { onLog(p.target); hSuccess(); }} accessibilityRole="button" accessibilityLabel={tr('Сделал норму')} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.subheadEm, { color: T.onBrand }]}>{tr('Сделал')}</Text>
               </Pressable>
             ) : null}
@@ -459,7 +460,7 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
 
       {/* Напоминание */}
       {!s.finished ? (
-        <View style={{ backgroundColor: T.cardBg, borderRadius: 16, padding: 14, gap: 10, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, gap: 10, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <SF name="bell.fill" size={15} color={T.brand} />
             <Text style={[ty.subheadEm, { color: T.label, flex: 1 }]}>{tr('Напоминание')}</Text>
@@ -538,7 +539,7 @@ function SectionTitle({ title, action, onAction, first }: { title: string; actio
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: first ? 18 : 24, paddingBottom: 10 }}>
       <Text accessibilityRole="header" style={[ty.title3, { color: T.label, flex: 1 }]}>{title}</Text>
       {action ? (
-        <Pressable onPress={onAction} accessibilityRole="button" accessibilityLabel={action} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, opacity: pressed ? 0.5 : 1, minHeight: 32, paddingHorizontal: 10, borderRadius: 10, backgroundColor: T.brandTinted })}>
+        <Pressable onPress={onAction} accessibilityRole="button" accessibilityLabel={action} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, opacity: pressed ? 0.5 : 1, minHeight: 32, paddingHorizontal: 10, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted })}>
           <SF name="plus" size={13} color={T.brand} />
           <Text style={[ty.subheadEm, { color: T.brand }]}>{action}</Text>
         </Pressable>
@@ -550,16 +551,16 @@ function SectionTitle({ title, action, onAction, first }: { title: string; actio
 function Hint({ icon, title, text, action, onAction }: { icon: string; title: string; text: string; action?: string; onAction?: () => void }) {
   const { T, ty } = useTheme();
   return (
-    <View style={{ marginHorizontal: 16, padding: 16, borderRadius: 18, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, gap: 10 }}>
+    <View style={{ marginHorizontal: 16, padding: 16, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 34, height: 34, borderRadius: 17, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
           <SF name={icon} size={16} color={T.brand} />
         </View>
         <Text style={[ty.headline, { color: T.label, flex: 1 }]}>{title}</Text>
       </View>
       <Text style={[ty.subhead, { color: T.labelSecondary }]}>{text}</Text>
       {action && onAction ? (
-        <Pressable onPress={() => { hTap(); onAction(); }} accessibilityRole="button" accessibilityLabel={action} style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 14, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}>
+        <Pressable onPress={() => { hTap(); onAction(); }} accessibilityRole="button" accessibilityLabel={action} style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}>
           <Text style={[ty.subheadEm, { color: T.onBrand }]}>{action}</Text>
         </Pressable>
       ) : null}
@@ -571,7 +572,7 @@ function HeroButton({ icon, label, onPress, solid }: { icon: string; label: stri
   const { ty } = useTheme();
   return (
     <Pressable onPress={() => { hTap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label}
-      style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: solid ? '#fff' : 'rgba(255,255,255,0.18)', opacity: pressed ? 0.8 : 1 })}>
+      style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 13, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: solid ? '#fff' : 'rgba(255,255,255,0.18)', opacity: pressed ? 0.8 : 1 })}>
       <SF name={icon} size={16} color={solid ? '#234088' : '#fff'} />
       <Text style={[ty.subheadEm, { color: solid ? '#234088' : '#fff' }]}>{label}</Text>
     </Pressable>
@@ -597,8 +598,8 @@ function Sheet({ visible, title, onClose, children, trailing }: { visible: boole
               перестаёт крутиться. */}
           <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={tr('Закрыть')}
             style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
-          <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingBottom: insets.bottom + 12, maxHeight: sheetMax }}>
-            <View style={{ alignItems: 'center', paddingTop: 10 }}><View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: T.fillTertiary }} /></View>
+          <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderCurve: 'continuous', paddingBottom: insets.bottom + 12, maxHeight: sheetMax }}>
+            <View style={{ alignItems: 'center', paddingTop: 10 }}><View style={{ width: 38, height: 4, borderRadius: 2, borderCurve: 'continuous', backgroundColor: T.fillTertiary }} /></View>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, gap: 12 }}>
               <Text style={[ty.title3, { color: T.label, flex: 1 }]} numberOfLines={1}>{title}</Text>
               {trailing}
@@ -617,7 +618,7 @@ function Field({ label, value, onChange, placeholder, keyboard = 'default' }: { 
     <View style={{ gap: 6 }}>
       <Text style={[ty.caption1, { color: T.labelSecondary }]}>{label}</Text>
       <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={T.labelTertiary} keyboardType={keyboard} accessibilityLabel={label}
-        style={[ty.body, { color: T.label, backgroundColor: T.cardBg, borderRadius: 12, minHeight: 46, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.cardBorder }]} />
+        style={[ty.body, { color: T.label, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', minHeight: 46, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.cardBorder }]} />
     </View>
   );
 }

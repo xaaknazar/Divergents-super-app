@@ -274,7 +274,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
         <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
 
           {locked ? (
-            <View style={{ marginHorizontal: 16, marginBottom: 6, backgroundColor: 'rgba(255,149,0,0.12)', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: 'rgba(255,149,0,0.3)' }}>
+            <View style={{ marginHorizontal: 16, marginBottom: 6, backgroundColor: 'rgba(255,149,0,0.12)', borderRadius: 14, borderCurve: 'continuous', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: 'rgba(255,149,0,0.3)' }}>
               <SF name="lock.fill" size={18} color={T.orange} />
               <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>Челлендж уже идёт — изменения недоступны. Редактировать можно только до старта.</Text>
             </View>
@@ -297,7 +297,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
               ) : null}
               {!locked ? (
                 <Pressable onPress={saveChallenge} disabled={!chDirty || savingCh} accessibilityRole="button" accessibilityLabel="Сохранить" accessibilityState={{ disabled: !chDirty || savingCh, busy: savingCh }}
-                  style={{ height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: chDirty ? T.brand : T.fillSecondary }}>
+                  style={{ height: 44, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: chDirty ? T.brand : T.fillSecondary }}>
                   {savingCh ? <ActivityIndicator color="#fff" /> : (
                     <>
                       <SF name="checkmark" size={15} color={chDirty ? '#fff' : T.labelTertiary} />
@@ -316,7 +316,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
               return (
                 <View key={team.id} style={{ padding: 14, gap: 12, borderTopWidth: i > 0 ? 0.5 : 0, borderTopColor: T.separator }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="person.3.fill" size={18} color={T.brand} />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -347,7 +347,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                     {locked ? (
                       <Text style={[ty.headline, { color: T.label }]}>{team.capacity}</Text>
                     ) : (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.fillTertiary, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 4 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingHorizontal: 6, paddingVertical: 4 }}>
                         <StepBtn icon="minus" onPress={() => changeCapacity(team, -1)} T={T} />
                         <Text style={[ty.headline, { color: T.label, minWidth: 28, textAlign: 'center' }]}>{team.capacity}</Text>
                         <StepBtn icon="plus" onPress={() => changeCapacity(team, +1)} T={T} />
@@ -358,7 +358,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                   {/* Captain */}
                   <Pressable onPress={() => pickCaptain(team)} disabled={locked} accessibilityRole="button"
                     accessibilityLabel={`Капитан: ${team.captainName || 'не назначен'}`} accessibilityState={{ disabled: locked }}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: T.fillTertiary }}>
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary }}>
                     <SF name="star.fill" size={15} color={team.captainId ? T.brand : T.labelTertiary} />
                     <View style={{ flex: 1 }}>
                       <Text style={[ty.caption1, { color: T.labelSecondary }]}>Капитан</Text>
@@ -402,7 +402,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
 
           {/* Link to the applications review */}
           <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId })} accessibilityRole="button" accessibilityLabel="Заявки на вступление"
-            style={{ marginHorizontal: 16, marginTop: 4, height: 48, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            style={{ marginHorizontal: 16, marginTop: 4, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="person.2.fill" size={16} color={T.brand} />
             <Text style={[ty.headline, { color: T.brand }]}>Заявки на вступление</Text>
           </Pressable>
@@ -420,7 +420,7 @@ function LabeledInput({ label, value, onChangeText, editable, placeholder, keybo
       <TextInput
         value={value} onChangeText={onChangeText} editable={editable}
         placeholder={placeholder} placeholderTextColor={T.labelTertiary} keyboardType={keyboardType}
-        style={{ backgroundColor: T.fillTertiary, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14, color: editable ? T.label : T.labelSecondary, ...ty.body }}
+        style={{ backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 11, paddingHorizontal: 14, color: editable ? T.label : T.labelSecondary, ...ty.body }}
       />
     </View>
   );
@@ -428,7 +428,7 @@ function LabeledInput({ label, value, onChangeText, editable, placeholder, keybo
 
 function StepBtn({ icon, onPress, T }: { icon: any; onPress: () => void; T: any }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={icon === 'minus' ? 'Уменьшить' : 'Увеличить'} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={icon === 'minus' ? 'Уменьшить' : 'Увеличить'} style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
       <SF name={icon} size={15} color={T.brand} />
     </Pressable>
   );
@@ -442,7 +442,7 @@ function MemberRow({ m, captain, locked, onPress, T }: { m: ManageMember; captai
       accessibilityLabel={`${name}${captain ? ', капитан' : ''}${m.status === 'pending' ? ', заявка' : ''}`}
       accessibilityHint={locked ? undefined : 'Переместить или удалить'} accessibilityState={{ disabled: locked }}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingVertical: 10, paddingHorizontal: 16, opacity: pressed ? 0.7 : 1 })}>
-      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 36, height: 36, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={[ty.subheadEm, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>

@@ -71,7 +71,7 @@ export function MarkdownText({ text, color }: { text: string; color: string }) {
         const q = line.match(/^>\s?(.*)$/);
         if (q) return (
           <View key={i} style={{ flexDirection: 'row', gap: 8, marginVertical: 1 }}>
-            <View style={{ width: 3, borderRadius: 2, backgroundColor: color, opacity: 0.3 }} />
+            <View style={{ width: 3, borderRadius: 2, borderCurve: 'continuous', backgroundColor: color, opacity: 0.3 }} />
             <View style={{ flex: 1 }}><Inline text={q[1]} color={color} /></View>
           </View>
         );

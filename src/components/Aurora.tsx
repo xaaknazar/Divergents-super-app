@@ -17,11 +17,11 @@ export function Aurora({ height = 640 }: { height?: number }) {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height, overflow: 'hidden' }}>
       {/* top-left glow — centre off-screen so only the soft edge shows */}
-      <View style={{ position: 'absolute', top: -220, left: -160, width: 460, height: 460, borderRadius: 230, overflow: 'hidden' }}>
+      <View style={{ position: 'absolute', top: -220, left: -160, width: 460, height: 460, borderRadius: 230, borderCurve: 'continuous', overflow: 'hidden' }}>
         <LinearGradient colors={[hexToRgba(c1, a), hexToRgba(c1, 0)]} start={{ x: 0.35, y: 0.35 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       </View>
       {/* top-right glow */}
-      <View style={{ position: 'absolute', top: -180, right: -180, width: 500, height: 500, borderRadius: 250, overflow: 'hidden' }}>
+      <View style={{ position: 'absolute', top: -180, right: -180, width: 500, height: 500, borderRadius: 250, borderCurve: 'continuous', overflow: 'hidden' }}>
         <LinearGradient colors={[hexToRgba(c2, a), hexToRgba(c2, 0)]} start={{ x: 0.65, y: 0.35 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       </View>
       {/* gentle central accent + vertical fade so it blends into the page */}

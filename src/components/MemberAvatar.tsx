@@ -42,6 +42,7 @@ export function MemberAvatar({
     width: size,
     height: size,
     borderRadius: size / 2,
+    borderCurve: 'continuous' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   };

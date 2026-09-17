@@ -11,6 +11,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Modal, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
+import { nums } from '../../theme/tokens';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
@@ -241,7 +242,7 @@ export function ChallengeDaysScreen({ navigation }: Props) {
         ) : (
           <>
             {/* Календарь: одна плитка — один день. Нажатие открывает разбор. */}
-            <View style={{ marginHorizontal: 16, padding: 14, borderRadius: 18, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
+            <View style={{ marginHorizontal: 16, padding: 14, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {Array.from({ length: total }).map((_, i) => {
                   const n = i + 1;
@@ -260,6 +261,7 @@ export function ChallengeDaysScreen({ navigation }: Props) {
                       accessibilityLabel={`${tr('День')} ${n}`}
                       style={({ pressed }) => ({
                         width: 44, height: 44, borderRadius: 12,
+                        borderCurve: 'continuous',
                         alignItems: 'center', justifyContent: 'center',
                         backgroundColor: c.bg,
                         borderWidth: isToday ? 1.5 : 0,
@@ -287,7 +289,7 @@ export function ChallengeDaysScreen({ navigation }: Props) {
                   ['today', tr('сегодня')],
                 ] as [DayState, string][]).map(([st, label]) => (
                   <View key={st} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                    <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: tile(st).bg }} />
+                    <View style={{ width: 10, height: 10, borderRadius: 3, borderCurve: 'continuous', backgroundColor: tile(st).bg }} />
                     <Text style={[ty.caption2, { color: T.labelSecondary }]}>{label}</Text>
                   </View>
                 ))}
@@ -459,9 +461,9 @@ function Sheet({ title, subtitle, onClose, children }: {
         <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={tr('Закрыть')}
           style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
 
-        <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingBottom: 34, maxHeight: sheetMax }}>
+        <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderCurve: 'continuous', paddingBottom: 34, maxHeight: sheetMax }}>
           <View style={{ alignItems: 'center', paddingTop: 10 }}>
-            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: T.fillTertiary }} />
+            <View style={{ width: 38, height: 4, borderRadius: 2, borderCurve: 'continuous', backgroundColor: T.fillTertiary }} />
           </View>
 
           <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
@@ -496,19 +498,19 @@ function DayDetail({ day: d, onClose }: { day: ChallengeDay | null; onClose: () 
       {d.left ? (
         // День выхода закрыт, но не судится. Без этой ветки он попадал бы под
         // условие ниже и обещал −300 за пропуск, которого не было.
-        <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: T.fillTertiary }}>
+        <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary }}>
           <Text style={[ty.caption1, { color: T.label }]}>
             {tr('В этот день вы вышли из челленджа по белому флагу 🏳️. Заработанное осталось, штрафы за него и за следующие дни не начисляются.')}
           </Text>
         </View>
       ) : !d.past ? (
-        <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: T.brandTinted }}>
+        <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
           <Text style={[ty.caption1, { color: T.label }]}>
             {tr('День не закончился — штрафы за него ещё не начисляются. Успеете добрать норму до 23:00.')}
           </Text>
         </View>
       ) : !d.reported ? (
-        <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: 'rgba(255,59,48,0.12)' }}>
+        <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, borderCurve: 'continuous', backgroundColor: 'rgba(255,59,48,0.12)' }}>
           <Text style={[ty.caption1, { color: T.label }]}>
             {tr('В этот день отметок не было или они пришли после 23:00: −300 баллов и по флагу в каждой категории.')}
           </Text>
@@ -602,10 +604,11 @@ function DayStat({ icon, value, ok, T, ty }: { icon: string; value: string; ok: 
       flexGrow: 1, flexShrink: 1, flexBasis: 'auto',
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
       paddingVertical: 5, paddingHorizontal: 8, borderRadius: 9,
+      borderCurve: 'continuous',
       backgroundColor: ok ? 'rgba(52,199,89,0.14)' : 'rgba(255,59,48,0.12)',
     }}>
       <SF name={icon} size={11} color={ok ? T.greenText : T.redText} />
-      <Text style={[ty.caption1, { color: ok ? T.greenText : T.redText, flexShrink: 1 }]} numberOfLines={1}>
+      <Text style={[ty.caption1, nums, { color: ok ? T.greenText : T.redText, flexShrink: 1 }]} numberOfLines={1}>
         {value}
       </Text>
     </View>

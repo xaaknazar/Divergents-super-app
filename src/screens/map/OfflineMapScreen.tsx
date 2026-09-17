@@ -111,7 +111,7 @@ export function OfflineMapScreen({ navigation }: Props) {
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <NavHeader backLabel={tr('Карта')} onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="arrow.down.circle" size={34} color={T.brand} />
           </View>
           <Text style={[ty.title3, { color: T.label, marginTop: 16, textAlign: 'center' }]} numberOfLines={1}>{tr('Офлайн-карта')}</Text>
@@ -133,7 +133,7 @@ export function OfflineMapScreen({ navigation }: Props) {
           <UserLocation />
           {list.map((p) => (
             <Marker key={p.id} lngLat={[p.lng, p.lat]} anchor="center" onPress={() => setSel(p.id)}>
-              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: CATEGORY_META[p.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}>
+              <View style={{ width: 26, height: 26, borderRadius: 13, borderCurve: 'continuous', backgroundColor: CATEGORY_META[p.category].color, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' }}>
                 <SF name={CATEGORY_META[p.category].icon} size={13} color="#fff" />
               </View>
             </Marker>
@@ -141,13 +141,13 @@ export function OfflineMapScreen({ navigation }: Props) {
         </Map>
 
         {busy ? (
-          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 14, borderCurve: 'continuous', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <ActivityIndicator color="#fff" />
             <Text style={[ty.subheadEm, { color: '#fff', flex: 1 }]} numberOfLines={1}>{tr('Загрузка карты…')}</Text>
             <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{pct}%</Text>
           </View>
         ) : noKey ? (
-          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.cardBg, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
+          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
             <SF name="map.fill" size={18} color={T.orange} />
             <Text style={[ty.caption1, { color: T.labelSecondary, flex: 1 }]}>{tr('Базовая карта без ключа — детализация ограничена.')}</Text>
           </View>
@@ -156,12 +156,12 @@ export function OfflineMapScreen({ navigation }: Props) {
         <View style={{ position: 'absolute', right: 14, bottom: insets.bottom + 96, gap: 12 }}>
           <Pressable onPress={() => cameraRef.current?.flyTo?.({ center: [center.lng, center.lat], zoom: 13, duration: 500 })}
             accessibilityRole="button" accessibilityLabel={`${tr('Центр города')}: ${center.name}`}
-            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
+            style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
             <SF name="location.fill" size={20} color={T.brandText} />
           </Pressable>
           <Pressable onPress={() => setSheet(true)}
             accessibilityRole="button" accessibilityLabel={tr('Скачать офлайн')}
-            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
+            style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
             <SF name="arrow.down.circle" size={22} color={T.onBrand} />
           </Pressable>
         </View>
@@ -170,9 +170,9 @@ export function OfflineMapScreen({ navigation }: Props) {
       <Modal visible={!!selPlace} animationType="slide" transparent onRequestClose={() => setSel(null)}>
         <Pressable style={{ flex: 1 }} onPress={() => setSel(null)} />
         {selPlace ? (
-          <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: insets.bottom + 16 }}>
+          <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderCurve: 'continuous', padding: 20, paddingBottom: insets.bottom + 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: CATEGORY_META[selPlace.category].color + '22', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 48, height: 48, borderRadius: 12, borderCurve: 'continuous', backgroundColor: CATEGORY_META[selPlace.category].color + '22', alignItems: 'center', justifyContent: 'center' }}>
                 <SF name={CATEGORY_META[selPlace.category].icon} size={24} color={CATEGORY_META[selPlace.category].color} />
               </View>
               <View style={{ flex: 1 }}>
@@ -181,7 +181,7 @@ export function OfflineMapScreen({ navigation }: Props) {
               </View>
             </View>
             <Pressable onPress={() => { const id = selPlace.id; setSel(null); navigation.navigate('PlaceDetail', { placeId: id }); }}
-              style={{ marginTop: 16, height: 46, borderRadius: 14, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              style={{ marginTop: 16, height: 46, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1}>{tr('Детали')}</Text>
             </Pressable>
           </View>
@@ -190,15 +190,15 @@ export function OfflineMapScreen({ navigation }: Props) {
 
       <Modal visible={sheet} animationType="slide" transparent onRequestClose={() => setSheet(false)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setSheet(false)} />
-        <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16, maxHeight: '75%' }}>
-          <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: T.fillSecondary }} /></View>
+        <View style={{ backgroundColor: T.systemBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderCurve: 'continuous', paddingBottom: insets.bottom + 16, maxHeight: '75%' }}>
+          <View style={{ alignItems: 'center', paddingVertical: 10 }}><View style={{ width: 36, height: 5, borderRadius: 3, borderCurve: 'continuous', backgroundColor: T.fillSecondary }} /></View>
           <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20 }]} numberOfLines={1}>{tr('Скачать офлайн')}</Text>
           <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 20, paddingTop: 4 }]} numberOfLines={1}>{center.name} · {tr('Размер области')}</Text>
           <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingTop: 14 }}>
             {AREAS.map((a) => (
               <Pressable key={a.key} disabled={busy} onPress={() => download(a.km, tr(a.key))}
                 accessibilityRole="button" accessibilityLabel={`${tr('Скачать')}: ${tr(a.key)}`} accessibilityState={{ disabled: busy }}
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, alignItems: 'center', gap: 6 }}>
+                style={{ flex: 1, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, alignItems: 'center', gap: 6 }}>
                 <SF name="square.and.arrow.down" size={20} color={T.brand} />
                 <Text style={[ty.footnoteEm, { color: T.label, textAlign: 'center' }]} numberOfLines={1}>{tr(a.key)}</Text>
               </Pressable>
@@ -212,7 +212,7 @@ export function OfflineMapScreen({ navigation }: Props) {
             ) : packs.map((p) => {
               const packName = String((p.metadata as any)?.name ?? p.id);
               return (
-                <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 4, paddingLeft: 12, paddingRight: 4, marginBottom: 8 }}>
+                <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 4, paddingLeft: 12, paddingRight: 4, marginBottom: 8 }}>
                   <SF name="map.fill" size={18} color={T.brand} />
                   <Text style={[ty.subhead, { color: T.label, flex: 1 }]} numberOfLines={1}>{packName}</Text>
                   <Pressable onPress={() => removePack(p.id, packName)} accessibilityRole="button" accessibilityLabel={`${tr('Удалить')} ${packName}`}

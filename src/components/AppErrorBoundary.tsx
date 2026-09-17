@@ -53,6 +53,7 @@ const styles = StyleSheet.create({
   card: {
     padding: 24,
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
   },
   title: {
@@ -74,6 +75,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 14,
+    borderCurve: 'continuous',
     backgroundColor: '#234088',
     paddingHorizontal: 20,
     paddingVertical: 12,

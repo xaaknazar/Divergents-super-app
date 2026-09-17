@@ -63,7 +63,7 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
     <Text accessibilityLiveRegion="polite" style={[ty.footnote, { color: T.redText, marginTop: 6, marginLeft: 4 }]}>{error}</Text>
   ) : null;
   const inputStyle = {
-    backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label,
+    backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous' as const, paddingVertical: 12, paddingHorizontal: 14, color: T.label,
     borderWidth: error ? 1 : 0, borderColor: error ? T.red : 'transparent',
   };
 
@@ -80,7 +80,7 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
             const on = value === val;
             return (
               <Pressable key={lbl} onPress={() => onChange(val)} accessibilityRole="radio" accessibilityLabel={lbl} accessibilityState={{ checked: on }}
-                style={{ flex: 1, minHeight: minTouch, paddingVertical: 11, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? T.brand : T.cardBg, borderWidth: error ? 1 : 0.5, borderColor: on ? 'transparent' : error ? T.red : T.separator }}>
+                style={{ flex: 1, minHeight: minTouch, paddingVertical: 11, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: on ? T.brand : T.cardBg, borderWidth: error ? 1 : 0.5, borderColor: on ? 'transparent' : error ? T.red : T.separator }}>
                 <Text style={[ty.footnoteEm, { color: on ? T.onBrand : T.label }]}>{lbl}</Text>
               </Pressable>
             );
@@ -131,7 +131,7 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
       return (
         <View style={{ marginBottom: 14 }}>
           {labelEl}
-          <View accessibilityLabel={accessibilityLabel} style={error ? { borderWidth: 1, borderColor: T.red, borderRadius: 11 } : null}>
+          <View accessibilityLabel={accessibilityLabel} style={error ? { borderWidth: 1, borderColor: T.red, borderRadius: 11, borderCurve: 'continuous' } : null}>
             <Segmented items={options} value={idx} onChange={(i) => onChange(options[i])} />
           </View>
           {errorEl}
@@ -146,7 +146,7 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
             const on = current === opt;
             return (
               <Pressable key={opt} onPress={() => onChange(opt)} accessibilityRole="radio" accessibilityLabel={`${field.label}: ${opt}`} accessibilityState={{ checked: on }}
-                style={{ minHeight: minTouch, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18, backgroundColor: on ? T.brand : T.cardBg, borderWidth: error ? 1 : 0.5, borderColor: on ? 'transparent' : error ? T.red : T.separator }}>
+                style={{ minHeight: minTouch, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18, borderCurve: 'continuous', backgroundColor: on ? T.brand : T.cardBg, borderWidth: error ? 1 : 0.5, borderColor: on ? 'transparent' : error ? T.red : T.separator }}>
                 <Text style={[ty.footnoteEm, { color: on ? T.onBrand : T.label }]}>{opt}</Text>
               </Pressable>
             );
@@ -189,7 +189,7 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             {tags.map((tg, i) => (
               <Pressable key={i} onPress={() => onChange(tags.filter((_, j) => j !== i))} accessibilityRole="button" accessibilityLabel={`Удалить ${tg}`}
-                style={{ minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: T.brandTinted }}>
+                style={{ minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
                 <Text style={[ty.footnoteEm, { color: T.brandText }]}>{tg}</Text>
                 <SF name="xmark" size={11} color={T.brandText} />
               </Pressable>

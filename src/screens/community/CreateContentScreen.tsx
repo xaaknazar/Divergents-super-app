@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { usePreventRemove } from '@react-navigation/native';
 import DateTimePicker, { DateTimePickerAndroid, DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -77,13 +78,16 @@ export function CreateContentScreen({ navigation }: Props) {
   const dirty = !!(title || price || chStart || region || place || meetPlace || meetAt || meetCoord || date || spots || difficulty || desc || bio || avatar
     || days !== '21' || chTeams.length !== 1 || chTeams[0]?.name !== 'Команда А' || chTeams[0]?.capacity !== '30' || chTeams[0]?.captainEmail);
 
-  const cancel = () => {
-    if (!dirty) { navigation.goBack(); return; }
+  // Спрашиваем при любом уходе, а не только по кнопке «Отмена»: свайп от края
+  // раньше уносил заполненную форму без вопроса.
+  usePreventRemove(dirty, ({ data }) => {
     Alert.alert('Отменить создание?', 'Введённые данные не сохранятся.', [
       { text: 'Продолжить редактирование', style: 'cancel' },
-      { text: 'Отменить', style: 'destructive', onPress: () => navigation.goBack() },
+      { text: 'Отменить', style: 'destructive', onPress: () => navigation.dispatch(data.action) },
     ]);
-  };
+  });
+
+  const cancel = () => navigation.goBack();
 
   const pickAvatar = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -143,7 +147,7 @@ export function CreateContentScreen({ navigation }: Props) {
     else Alert.alert('Не удалось создать', 'Сервер отклонил запрос. Проверьте подключение — публиковать могут только кураторы сообщества.');
   };
 
-  const inp = { backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
+  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
   const kindIndex = KINDS.findIndex((x) => x.k === kind);
   const accessIndex = ACCESS.findIndex((x) => x.k === access);
 
@@ -177,7 +181,7 @@ export function CreateContentScreen({ navigation }: Props) {
               <Field label="Команды и капитаны">
                 <Text style={[ty.caption1, { color: T.labelTertiary, marginBottom: 8, marginLeft: 4 }]}>Число справа — размер команды (сколько человек можно набрать). Задайте любой: 20, 30, 35…</Text>
                 {chTeams.map((tm, i) => (
-                  <View key={i} style={{ backgroundColor: T.cardBg, borderRadius: 12, padding: 12, marginBottom: 8, gap: 8 }}>
+                  <View key={i} style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', padding: 12, marginBottom: 8, gap: 8 }}>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
                       <TextInput value={tm.name} onChangeText={(v) => setChTeams((p) => p.map((x, j) => (j === i ? { ...x, name: v } : x)))} placeholder="Название команды" placeholderTextColor={T.labelTertiary} style={[inp, { flex: 1 }]} accessibilityLabel={`Название команды ${i + 1}`} />
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -215,7 +219,7 @@ export function CreateContentScreen({ navigation }: Props) {
                 <DateField value={meetAt} onChange={setMeetAt} mode="datetime" placeholder="Выберите дату и время" clearable />
               </Field>
               <Field label="Точка встречи на карте">
-                <View style={{ borderRadius: 14, overflow: 'hidden', height: 180 }}>
+                <View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', height: 180 }}>
                   <MapView style={{ flex: 1 }} initialRegion={{ latitude: meetCoord?.latitude ?? 43.238, longitude: meetCoord?.longitude ?? 76.889, latitudeDelta: 0.06, longitudeDelta: 0.06 }} onPress={(e) => setMeetCoord(e.nativeEvent.coordinate)}>
                     {meetCoord ? <Marker coordinate={meetCoord} pinColor="#2f5bd6" /> : null}
                   </MapView>
@@ -242,7 +246,7 @@ export function CreateContentScreen({ navigation }: Props) {
                 <TextInput value={desc} onChangeText={setDesc} multiline placeholder="О чём встреча, для кого, что взять с собой" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 110, textAlignVertical: 'top' }]} accessibilityLabel="Описание" />
               </Field>
               <Field label="Место на карте">
-                <View style={{ borderRadius: 14, overflow: 'hidden', height: 180 }}>
+                <View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', height: 180 }}>
                   <MapView style={{ flex: 1 }} initialRegion={{ latitude: meetCoord?.latitude ?? 43.238, longitude: meetCoord?.longitude ?? 76.889, latitudeDelta: 0.06, longitudeDelta: 0.06 }} onPress={(e) => setMeetCoord(e.nativeEvent.coordinate)}>
                     {meetCoord ? <Marker coordinate={meetCoord} pinColor="#2f5bd6" /> : null}
                   </MapView>
@@ -260,7 +264,7 @@ export function CreateContentScreen({ navigation }: Props) {
               <Field label="Мест"><TextInput value={spots} onChangeText={(t) => setSpots(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" style={inp} accessibilityLabel="Мест" /></Field>
               <Field label="Описание"><TextInput value={desc} onChangeText={setDesc} multiline placeholder="Кратко" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 80, textAlignVertical: 'top' }]} accessibilityLabel="Описание" /></Field>
               <Field label="Место на карте">
-                <View style={{ borderRadius: 14, overflow: 'hidden', height: 180 }}>
+                <View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', height: 180 }}>
                   <MapView style={{ flex: 1 }} initialRegion={{ latitude: meetCoord?.latitude ?? 43.238, longitude: meetCoord?.longitude ?? 76.889, latitudeDelta: 0.06, longitudeDelta: 0.06 }} onPress={(e) => setMeetCoord(e.nativeEvent.coordinate)}>
                     {meetCoord ? <Marker coordinate={meetCoord} pinColor="#2f5bd6" /> : null}
                   </MapView>
@@ -273,7 +277,7 @@ export function CreateContentScreen({ navigation }: Props) {
               <View style={{ alignItems: 'center', marginBottom: 6 }}>
                 <Pressable onPress={pickAvatar} accessibilityRole="button" accessibilityLabel={avatar ? 'Изменить фото канала' : 'Добавить фото канала'} accessibilityState={{ busy: avBusy }}>
                   {avatar ? <Image source={{ uri: avatar }} style={{ width: 84, height: 84, borderRadius: 22 }} contentFit="cover" />
-                    : <View style={{ width: 84, height: 84, borderRadius: 22, backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="photo" size={24} color={T.labelSecondary} /></View>}
+                    : <View style={{ width: 84, height: 84, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="photo" size={24} color={T.labelSecondary} /></View>}
                   <Text style={[ty.caption1, { color: T.brandText, textAlign: 'center', marginTop: 6 }]}>{avBusy ? 'Загрузка…' : 'Фото канала'}</Text>
                 </Pressable>
               </View>
@@ -326,7 +330,7 @@ function DateField({ value, onChange, mode, placeholder, clearable }: {
   };
 
   return (
-    <View style={{ backgroundColor: T.cardBg, borderRadius: 12, paddingHorizontal: 14, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingHorizontal: 14, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
       <SF name={withTime ? 'clock.fill' : 'calendar'} size={15} color={T.brandText} />
       {Platform.OS === 'ios' ? (
         <>

@@ -13,7 +13,7 @@ export function Skeleton({
   const { T, ty } = useTheme();
   const opacity = useThemedShimmer();
   return (
-    <Animated.View style={[{ width: w, height: h, borderRadius: radius, backgroundColor: T.fillSecondary, opacity }, style]} />
+    <Animated.View style={[{ width: w, height: h, borderRadius: radius, borderCurve: 'continuous', backgroundColor: T.fillSecondary, opacity }, style]} />
   );
 }
 
@@ -21,7 +21,7 @@ export function Skeleton({
 function CardSkeleton({ width }: { width: number }) {
   const { T, ty } = useTheme();
   return (
-    <View style={{ width, backgroundColor: T.cardBg, borderRadius: 16, overflow: 'hidden' }}>
+    <View style={{ width, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' }}>
       <Skeleton w="100%" h={110} radius={0} />
       <View style={{ padding: 12, gap: 8 }}>
         <Skeleton w="80%" h={13} />
@@ -49,7 +49,7 @@ export function CourseGridSkeleton({ count = 4 }: { count?: number }) {
 export function ListSkeleton({ rows = 4 }: { rows?: number }) {
   const { T, ty } = useTheme();
   return (
-    <View style={{ backgroundColor: T.cardBg, borderRadius: 12, marginHorizontal: 16, overflow: 'hidden' }}>
+    <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', marginHorizontal: 16, overflow: 'hidden' }}>
       {Array.from({ length: rows }).map((_, i) => (
         <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderBottomWidth: i < rows - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
           <Skeleton w={40} h={40} radius={20} />
@@ -79,8 +79,8 @@ function useEntrance() {
 // Layered glyph badge: tinted outer halo + inner disc for quiet depth.
 function GlyphBadge({ icon, tint, fg }: { icon: SFName | string; tint: string; fg: string }) {
   return (
-    <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 76, height: 76, borderRadius: 38, borderCurve: 'continuous', backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 56, height: 56, borderRadius: 28, borderCurve: 'continuous', backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
         <SF name={icon} size={28} color={fg} />
       </View>
     </View>

@@ -114,7 +114,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   if (submitted) {
     return (
       <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-        <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: 'rgba(52,199,89,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 84, height: 84, borderRadius: 42, borderCurve: 'continuous', backgroundColor: 'rgba(52,199,89,0.15)', alignItems: 'center', justifyContent: 'center' }}>
           <SF name="checkmark.circle.fill" size={56} color={T.green} />
         </View>
         <Text style={[ty.title2, { color: T.label, marginTop: 18, textAlign: 'center' }]} numberOfLines={1}>{tr('Заявка отправлена!')}</Text>
@@ -137,8 +137,8 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         {/* Псевдоним — только для сведения: он берётся из анкеты профиля, и
             именно его команда видит в рейтинге. Отдельного поля здесь нет. */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('ПСЕВДОНИМ В РЕЙТИНГЕ')}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, padding: 14 }}>
-          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: nick ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', padding: 14 }}>
+          <View style={{ width: 38, height: 38, borderRadius: 19, borderCurve: 'continuous', backgroundColor: nick ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             {nick
               ? <Text style={[ty.subheadEm, { color: '#fff' }]}>{nick.charAt(0).toUpperCase()}</Text>
               : <SF name="person.fill" size={18} color={T.labelTertiary} />}
@@ -157,7 +157,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
 
         {/* Telegram username — how the captain reaches you */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('USERNAME В TELEGRAM')}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: tg && !tgOk ? T.red : 'transparent' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingHorizontal: 14, borderWidth: 1, borderColor: tg && !tgOk ? T.red : 'transparent' }}>
           <Text style={[ty.body, { color: T.labelSecondary }]}>@</Text>
           <TextInput
             value={tg}
@@ -178,7 +178,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
 
         {/* Team */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('ВЫБЕРИТЕ КОМАНДУ')}</Text>
-        <View style={{ backgroundColor: T.cardBg, borderRadius: 12, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', overflow: 'hidden' }}>
           {loading ? (
             <View style={{ padding: 24, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
           ) : error && teams.length === 0 ? (
@@ -211,8 +211,8 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 8, marginLeft: 4 }]}>{tr('ОТСЛЕЖИВАНИЕ АКТИВНОСТИ')}</Text>
         <Pressable onPress={() => setTrack((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: track }}
           accessibilityLabel={tr('Разрешить запись тренировок по GPS')}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, padding: 14, minHeight: 48 }}>
-          <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', padding: 14, minHeight: 48 }}>
+          <View style={{ width: 38, height: 38, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="figure.walk" size={20} color={T.brand} />
           </View>
           <View style={{ flex: 1 }}>
@@ -232,7 +232,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
           </View>
         </Pressable>
         {showRules ? (
-          <View style={{ backgroundColor: T.cardBg, borderRadius: 12, padding: 14, gap: 9 }}>
+          <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', padding: 14, gap: 9 }}>
             {CHALLENGE_RULES.map((r, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
                 <Text style={[ty.subheadEm, { color: T.brand, width: 16 }]}>{i + 1}</Text>

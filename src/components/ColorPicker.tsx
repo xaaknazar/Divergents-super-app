@@ -35,8 +35,8 @@ function Slider({ value, max, onChange, colors, label, T, ty }: {
         style={{ height: 32, justifyContent: 'center' }}
         accessible accessibilityRole="adjustable" accessibilityLabel={label} accessibilityValue={{ min: 0, max, now: Math.round(value) }}
       >
-        <LinearGradient colors={colors as [string, string, ...string[]]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ height: 14, borderRadius: 7 }} />
-        <View pointerEvents="none" style={{ position: 'absolute', left: left as `${number}%`, marginLeft: -11, width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff', borderWidth: 2, borderColor: 'rgba(0,0,0,0.25)', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }} />
+        <LinearGradient colors={colors as [string, string, ...string[]]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ height: 14, borderRadius: 7, borderCurve: 'continuous' }} />
+        <View pointerEvents="none" style={{ position: 'absolute', left: left as `${number}%`, marginLeft: -11, width: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', backgroundColor: '#fff', borderWidth: 2, borderColor: 'rgba(0,0,0,0.25)', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }} />
       </View>
     </View>
   );
@@ -65,7 +65,7 @@ export function ColorPicker({ value, onChange, presets = COLOR_PRESETS, extra }:
           const on = c.toUpperCase() === value.toUpperCase();
           return (
             <Pressable key={c} onPress={() => { hSelect(); onChange(c); }} accessibilityRole="button" accessibilityLabel={c} accessibilityState={{ selected: on }}
-              style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: c, borderWidth: on ? 3 : 1, borderColor: on ? T.brand : 'rgba(128,128,128,0.45)' }} />
+              style={{ width: 30, height: 30, borderRadius: 15, borderCurve: 'continuous', backgroundColor: c, borderWidth: on ? 3 : 1, borderColor: on ? T.brand : 'rgba(128,128,128,0.45)' }} />
           );
         })}
       </View>
@@ -76,7 +76,7 @@ export function ColorPicker({ value, onChange, presets = COLOR_PRESETS, extra }:
 
       {/* Hex — для тех, кто знает точный цвет бренда. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: value, borderWidth: 1, borderColor: 'rgba(128,128,128,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 44, height: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: value, borderWidth: 1, borderColor: 'rgba(128,128,128,0.45)', alignItems: 'center', justifyContent: 'center' }}>
           <Text style={[ty.caption2Em, { color: isLight(value) ? '#000' : '#fff' }]}>Aa</Text>
         </View>
         <TextInput
@@ -85,7 +85,7 @@ export function ColorPicker({ value, onChange, presets = COLOR_PRESETS, extra }:
           onBlur={() => setHexDraft(null)}
           autoCapitalize="characters" autoCorrect={false} maxLength={7}
           accessibilityLabel="Код цвета"
-          style={[ty.body, { flex: 1, color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, minHeight: 44, paddingHorizontal: 14 }]}
+          style={[ty.body, { flex: 1, color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: 44, paddingHorizontal: 14 }]}
         />
       </View>
     </View>

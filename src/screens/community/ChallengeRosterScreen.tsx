@@ -147,7 +147,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
                       accessibilityRole="button"
                       accessibilityLabel={m.whiteFlag ? `${tr('Снять белый флаг')} — ${m.name}` : `${tr('Поднять белый флаг')} — ${m.name}`}
                       style={({ pressed }) => ({
-                        width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
+                        width: 34, height: 34, borderRadius: 17, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center',
                         backgroundColor: m.whiteFlag ? T.brandTinted : T.fillTertiary, opacity: pressed ? 0.6 : 1,
                       })}
                     >
@@ -181,9 +181,9 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
               содержимого забирает себе жест и ломает ввод. */}
           <Pressable onPress={() => setFlagFor(null)} accessibilityRole="button" accessibilityLabel={tr('Закрыть')}
             style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
-          <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 20, paddingBottom: 34, gap: 12 }}>
+          <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderCurve: 'continuous', padding: 20, paddingBottom: 34, gap: 12 }}>
             <View style={{ alignItems: 'center' }}>
-              <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: T.fillTertiary }} />
+              <View style={{ width: 38, height: 4, borderRadius: 2, borderCurve: 'continuous', backgroundColor: T.fillTertiary }} />
             </View>
             <Text style={[ty.title3, { color: T.label }]}>🏳️ {tr('Белый флаг')}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary }]}>
@@ -197,7 +197,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
               multiline
               maxLength={300}
               style={[ty.body, {
-                minHeight: 88, backgroundColor: T.cardBg, borderRadius: 12, padding: 12,
+                minHeight: 88, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', padding: 12,
                 color: T.label, borderWidth: 0.5, borderColor: T.cardBorder, textAlignVertical: 'top',
               }]}
               accessibilityLabel={tr('Причина белого флага')}

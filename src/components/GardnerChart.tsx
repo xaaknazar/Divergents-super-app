@@ -123,6 +123,7 @@ export function GardnerChart({
                 <Animated.View style={{
                   width: barW, height: h,
                   borderTopLeftRadius: radius.sm, borderTopRightRadius: radius.sm,
+                  borderCurve: 'continuous',
                   borderBottomLeftRadius: 2, borderBottomRightRadius: 2,
                   backgroundColor: it.cfg.color,
                 }} />
@@ -145,7 +146,7 @@ export function GardnerChart({
   );
 
   return (
-    <View style={{ backgroundColor: T.groupedBg, borderRadius: radius.xxl, padding: space.md }}>
+    <View style={{ backgroundColor: T.groupedBg, borderRadius: radius.xxl, borderCurve: 'continuous', padding: space.md }}>
       {n === 0 ? Empty : (
         <View style={{ flexDirection: 'row' }}>
           {/* Y axis labels — fixed while bars scroll */}

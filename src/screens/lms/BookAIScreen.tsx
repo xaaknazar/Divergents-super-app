@@ -80,7 +80,7 @@ export function BookAIScreen({ navigation }: Props) {
         <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
           {msgs.length === 0 ? (
             <View style={{ alignItems: 'center', paddingTop: 28, paddingHorizontal: 12 }}>
-              <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+              <View style={{ width: 64, height: 64, borderRadius: 20, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
                 <SF name="sparkles" size={30} color="#fff" />
               </View>
               <Text style={[ty.title3, { color: T.label, textAlign: 'center' }]}>Книжный советник</Text>
@@ -97,7 +97,7 @@ export function BookAIScreen({ navigation }: Props) {
 
           {msgs.map((m) => (
             <View key={m.id} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%', marginBottom: 12 }}>
-              <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, backgroundColor: m.role === 'user' ? T.brand : T.cardBg }}>
+              <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, borderCurve: 'continuous', backgroundColor: m.role === 'user' ? T.brand : T.cardBg }}>
                 {m.role === 'user'
                   ? <Text style={[ty.body, { color: '#fff' }]}>{m.text}</Text>
                   : <MarkdownText text={m.text} color={T.label} />}
@@ -105,7 +105,7 @@ export function BookAIScreen({ navigation }: Props) {
             </View>
           ))}
           {busy ? (
-            <View style={{ alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, backgroundColor: T.cardBg, marginBottom: 12 }}>
+            <View style={{ alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.cardBg, marginBottom: 12 }}>
               <ActivityIndicator color={T.brand} size="small" />
             </View>
           ) : null}
@@ -118,10 +118,10 @@ export function BookAIScreen({ navigation }: Props) {
         ) : null}
 
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-          <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
+          <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, borderCurve: 'continuous', paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
             <TextInput value={text} onChangeText={setText} multiline placeholder="Спросить про книги…" placeholderTextColor={T.labelTertiary} accessibilityLabel="Спросить про книги" style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Отправить сообщение" accessibilityState={{ disabled: busy || !text.trim() }} onPress={() => send()} disabled={busy || !text.trim()} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: text.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Отправить сообщение" accessibilityState={{ disabled: busy || !text.trim() }} onPress={() => send()} disabled={busy || !text.trim()} style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: text.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="arrow.up" size={18} color={text.trim() ? '#fff' : T.labelTertiary} />
           </Pressable>
         </View>

@@ -62,8 +62,8 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
     const st = statuses[item.status] ?? statuses.pending;
     return (
       <Pressable onPress={() => open(item.challengeId)} accessibilityRole="button" accessibilityLabel={`${item.title}. ${st.label}`}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.75 : 1 })}>
-        <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.75 : 1 })}>
+        <View style={{ width: 42, height: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
           <SF name="flame.fill" size={19} color={T.brand} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>

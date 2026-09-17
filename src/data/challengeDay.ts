@@ -58,6 +58,24 @@ export function pastDeadlineNow(c: Challenge, nowMs = Date.now()): boolean {
   return almatyMinuteOfDay(nowMs) >= rolloverMinute(c);
 }
 
+/**
+ * Отметки больше не принимаются — по любой из трёх причин.
+ *
+ * Причины разные, следствие одно: день закрыт (23:01), человек выбыл по трём
+ * флагам, человек вышел по белому флагу 🏳️. Во всех случаях сервер запись
+ * отклонит, а зачёт заморожен.
+ *
+ * Проверка живёт здесь, рядом с границами дня, а не на экранах — потому что на
+ * экранах её и не было. Экран челленджа блокировал кнопки у вышедшего, но
+ * запись тренировки — отдельный экран, и он предлагал «добавить шаги в
+ * челлендж» тому, кто уже вышел: человек соглашался, число на секунду
+ * появлялось, сервер отвечал отказом, отметка тихо откатывалась. Обещание,
+ * которого нельзя выполнить, хуже честного отказа.
+ */
+export function marksClosed(c: Challenge, nowMs = Date.now()): boolean {
+  return isChallengeDayLocked(c, nowMs) || c.eliminated === true || c.whiteFlag?.left === true;
+}
+
 /** Какой день челленджа сейчас по часам телефона (сервер считает так же). */
 export function expectedChallengeDay(c: Challenge, nowMs = Date.now()): number {
   if (!c.startISO) return c.currentDay;

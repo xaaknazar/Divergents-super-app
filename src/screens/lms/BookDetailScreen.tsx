@@ -172,10 +172,10 @@ export function BookDetailScreen({ route, navigation }: Props) {
           <LinearGradient colors={[T.brandTintedStrong, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 190 }} />
           <View style={{ flexDirection: 'row', gap: 16, padding: 20 }}>
             {b.imageUrl
-              ? <View style={{ shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 6, borderRadius: 12 }}>
+              ? <View style={{ shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 6, borderRadius: 12, borderCurve: 'continuous' }}>
                   <Image source={imgUrl(b.imageUrl, 600)} style={{ width: 120, height: 176, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
                 </View>
-              : <View style={{ width: 120, height: 176, borderRadius: 12, backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={34} color={T.labelTertiary} /></View>}
+              : <View style={{ width: 120, height: 176, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={34} color={T.labelTertiary} /></View>}
             <View style={{ flex: 1 }}>
             <Text style={[ty.title3, { color: T.label }]}>{b.title}</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{b.author}</Text>
@@ -204,7 +204,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
             {b.genres.length ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                 {b.genres.map((g) => (
-                  <View key={g} style={{ backgroundColor: T.fillTertiary, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <View key={g} style={{ backgroundColor: T.fillTertiary, borderRadius: 8, borderCurve: 'continuous', paddingHorizontal: 8, paddingVertical: 3 }}>
                     <Text style={[ty.caption2, { color: T.labelSecondary }]}>{g}</Text>
                   </View>
                 ))}
@@ -215,7 +215,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
         </View>
 
         {/* Shelf controls */}
-        <View style={{ marginHorizontal: 16, padding: 14, borderRadius: 16, backgroundColor: T.cardBg }}>
+        <View style={{ marginHorizontal: 16, padding: 14, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.cardBg }}>
           <Text style={[ty.caption2Em, { color: T.labelTertiary, marginBottom: 10, letterSpacing: 0.4 }]}>МОЙ СТАТУС</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {SHELF.map((s) => {
@@ -223,7 +223,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
               return (
                 <Pressable key={s.key} onPress={() => { if (!active) onShelf(s.key); }} disabled={busyShelf}
                   accessibilityRole="button" accessibilityState={{ selected: active, disabled: busyShelf }} accessibilityLabel={s.label}
-                  style={{ flex: 1, alignItems: 'center', gap: 5, paddingVertical: 10, borderRadius: 12, backgroundColor: active ? T.brand : T.fillTertiary }}>
+                  style={{ flex: 1, alignItems: 'center', gap: 5, paddingVertical: 10, borderRadius: 12, borderCurve: 'continuous', backgroundColor: active ? T.brand : T.fillTertiary }}>
                   <SF name={s.icon as any} size={17} color={active ? '#fff' : T.labelSecondary} />
                   <Text style={[ty.caption2Em, { color: active ? '#fff' : T.labelSecondary }]} numberOfLines={1}>{s.label}</Text>
                 </Pressable>
@@ -239,7 +239,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
               <View style={{ flexDirection: 'row', gap: 6 }}>
                 {[0, 25, 50, 75, 100].map((p) => (
                   <Pressable key={p} onPress={() => onShelf('reading', p)} disabled={busyShelf}
-                    style={{ flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center', backgroundColor: progress >= p && p > 0 ? T.brand : T.fillTertiary }}>
+                    style={{ flex: 1, paddingVertical: 8, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', backgroundColor: progress >= p && p > 0 ? T.brand : T.fillTertiary }}>
                     <Text style={[ty.caption2Em, { color: progress >= p && p > 0 ? '#fff' : T.labelSecondary }]}>{p}%</Text>
                   </Pressable>
                 ))}
@@ -257,7 +257,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
         </View>
 
         {/* My rating */}
-        <View style={{ marginHorizontal: 16, marginTop: 12, padding: 14, borderRadius: 16, backgroundColor: T.cardBg }}>
+        <View style={{ marginHorizontal: 16, marginTop: 12, padding: 14, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.cardBg }}>
           <Text style={[ty.caption2Em, { color: T.labelTertiary, marginBottom: 10, letterSpacing: 0.4 }]}>МОЯ ОЦЕНКА</Text>
           {/* Each star is its own 44×44 target with no hitSlop, so neighbouring
               targets never overlap and VoiceOver reads «3 из 5». */}
@@ -277,7 +277,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
 
         {/* Description */}
         {b.description ? (
-          <View style={{ marginHorizontal: 16, marginTop: 12, padding: 16, borderRadius: 16, backgroundColor: T.cardBg }}>
+          <View style={{ marginHorizontal: 16, marginTop: 12, padding: 16, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.cardBg }}>
             <Text style={[ty.headline, { color: T.label, marginBottom: 8 }]}>Описание</Text>
             <Text style={[ty.body, { color: T.labelSecondary }]}>{b.description}</Text>
           </View>
@@ -285,7 +285,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
 
         {/* Editorial review */}
         {b.review ? (
-          <View style={{ marginHorizontal: 16, marginTop: 12, padding: 16, borderRadius: 16, backgroundColor: T.brandTintedStrong }}>
+          <View style={{ marginHorizontal: 16, marginTop: 12, padding: 16, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTintedStrong }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
               <SF name="quote.bubble.fill" size={15} color={T.brand} />
               <Text style={[ty.headline, { color: T.label }]}>Рецензия Divergents</Text>
@@ -296,7 +296,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
 
         {/* Author bio */}
         {b.authorBio ? (
-          <View style={{ marginHorizontal: 16, marginTop: 12, padding: 16, borderRadius: 16, backgroundColor: T.cardBg }}>
+          <View style={{ marginHorizontal: 16, marginTop: 12, padding: 16, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.cardBg }}>
             <Text style={[ty.headline, { color: T.label, marginBottom: 8 }]}>Об авторе</Text>
             <Text style={[ty.body, { color: T.labelSecondary }]}>{b.authorBio}</Text>
           </View>
@@ -306,7 +306,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
         <View style={{ marginHorizontal: 16, marginTop: 16, marginBottom: 8, flexDirection: 'row', gap: 8 }}>
           {([['review', 'Рецензии', reviewCount], ['comment', 'Комментарии', commentCount]] as const).map(([k, label, count]) => (
             <Pressable key={k} onPress={() => setTab(k)}
-              style={{ flex: 1, paddingVertical: 9, borderRadius: 10, alignItems: 'center', backgroundColor: tab === k ? T.brand : T.fillTertiary }}>
+              style={{ flex: 1, paddingVertical: 9, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', backgroundColor: tab === k ? T.brand : T.fillTertiary }}>
               <Text style={[ty.subheadEm, { color: tab === k ? '#fff' : T.labelSecondary }]}>{label} {count ? '· ' + count : ''}</Text>
             </Pressable>
           ))}
@@ -321,7 +321,7 @@ export function BookDetailScreen({ route, navigation }: Props) {
               </Text>
             </View>
           ) : comments.map((c: BookComment) => (
-            <View key={c.id} style={{ padding: 14, borderRadius: 14, backgroundColor: T.cardBg, marginBottom: 10 }}>
+            <View key={c.id} style={{ padding: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, marginBottom: 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={2}>{c.author}{c.mine ? ' · вы' : ''}</Text>
                 <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtDate(c.date)}</Text>
@@ -355,10 +355,10 @@ export function BookDetailScreen({ route, navigation }: Props) {
 
       {/* Composer */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
+        <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, borderCurve: 'continuous', paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
           <TextInput value={draft} onChangeText={setDraft} multiline placeholder={editingId ? 'Изменить текст…' : tab === 'review' ? 'Написать рецензию…' : 'Написать комментарий…'} placeholderTextColor={T.labelTertiary} accessibilityLabel={editingId ? 'Изменить текст' : tab === 'review' ? 'Написать рецензию' : 'Написать комментарий'} style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Отправить комментарий" accessibilityState={{ disabled: sending || !draft.trim() }} onPress={onSend} disabled={sending || !draft.trim()} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: draft.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Отправить комментарий" accessibilityState={{ disabled: sending || !draft.trim() }} onPress={onSend} disabled={sending || !draft.trim()} style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: draft.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
           {sending ? <ActivityIndicator color="#fff" size="small" /> : <SF name="arrow.up" size={18} color={draft.trim() ? '#fff' : T.labelTertiary} />}
         </Pressable>
       </View>

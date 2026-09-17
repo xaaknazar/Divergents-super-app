@@ -160,7 +160,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
           <HeroNav course={course} courseId={courseId} navigation={navigation} owned />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             {/* Opaque base under the emerald tint: the badge sits on a dark photo. */}
-            <View style={{ alignSelf: 'flex-start', borderRadius: 999, backgroundColor: T.cardBg }}>
+            <View style={{ alignSelf: 'flex-start', borderRadius: 999, borderCurve: 'continuous', backgroundColor: T.cardBg }}>
               <Capsule bg={T.emeraldBadgeBg} color={T.emeraldText}>
                 <SF name="checkmark.seal.fill" size={11} color={T.emeraldText} />{tr('Курс открыт')}
               </Capsule>
@@ -181,7 +181,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
         </View>
 
         {course.lessons.length > 0 ? (
-          <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 16, padding: 16, ...shadows.card }}>
+          <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16, ...shadows.card }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{tr('Ваш прогресс')}</Text>
               <Text style={[ty.title3, { color: T.brand }]} numberOfLines={1}>{Math.round(p * 100)}%</Text>
@@ -211,7 +211,7 @@ function OwnedCourse({ course, courseId, navigation }: { course: Course; courseI
               const indicator = status === 'done'
                 ? <SF name="checkmark.circle.fill" size={26} color={T.green} />
                 : (
-                  <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: status === 'current' ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 26, height: 26, borderRadius: 13, borderCurve: 'continuous', backgroundColor: status === 'current' ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={[ty.footnoteEm, { color: status === 'current' ? '#fff' : T.labelSecondary }]} numberOfLines={1}>{l.n}</Text>
                   </View>
                 );
@@ -314,7 +314,7 @@ function SalesCourse({ course, courseId, navigation, onPurchased }: {
             оплату TipTopPay.
             Подаренный по стартовой акции курс может ещё не подтянуться в «Мои
             курсы» — тогда говорим про подарок, а не про закрытый доступ. */}
-        <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, padding: 18, ...shadows.card }}>
+        <View style={{ margin: 16, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 18, ...shadows.card }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <SF name={gifted ? 'gift.fill' : 'lock.fill'} size={15} color={gifted ? T.brand : T.labelSecondary} />
             <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>

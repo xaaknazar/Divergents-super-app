@@ -114,8 +114,8 @@ export function LMSHomeScreen({ navigation }: Props) {
       {downloads.items.length > 0 ? (
         <Pressable
           onPress={() => navigation.navigate('Downloads')}
-          style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, borderRadius: 16, backgroundColor: T.brandTinted, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1 })}>
-          <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+          style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1 })}>
+          <View style={{ width: 42, height: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="arrow.down.circle" size={21} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
@@ -128,7 +128,7 @@ export function LMSHomeScreen({ navigation }: Props) {
 
       {/* Search (iOS fill style) */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, paddingLeft: 12, paddingRight: query ? 0 : 12, minHeight: minTouch }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingLeft: 12, paddingRight: query ? 0 : 12, minHeight: minTouch }}>
           <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
           <TextInput
             value={query}
@@ -157,9 +157,9 @@ export function LMSHomeScreen({ navigation }: Props) {
       {giftCourseId ? (
       <Pressable onPress={() => navigation.navigate('CourseDetail', { courseId: giftCourseId })}
         accessibilityRole="button" accessibilityLabel={`Подарок новым участникам. ${giftSubtitle}`}
-        style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
+        style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
         <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 46, height: 46, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="gift.fill" size={23} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
@@ -176,9 +176,9 @@ export function LMSHomeScreen({ navigation }: Props) {
       {feature('books') ? (
       <Pressable onPress={() => navigation.navigate('Books')}
         accessibilityRole="button" accessibilityLabel="Библиотека книг" accessibilityHint="Каталог, рецензии и ИИ-советник по книгам"
-        style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
+        style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
         <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 46, height: 46, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
             <SF name="book.fill" size={23} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
@@ -197,7 +197,7 @@ export function LMSHomeScreen({ navigation }: Props) {
       ) : (
         <>
           {source === 'mock' ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 20, marginBottom: 12, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(255,149,0,0.12)' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 20, marginBottom: 12, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, borderCurve: 'continuous', backgroundColor: 'rgba(255,149,0,0.12)' }}>
               <SF name="wifi.slash" size={11} color={T.orangeText} />
               <Text style={[ty.caption2Em, { color: T.orangeText }]} numberOfLines={1}>{t('demo_mode')}</Text>
             </View>

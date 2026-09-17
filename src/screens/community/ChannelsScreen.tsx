@@ -38,18 +38,18 @@ export function ChannelsScreen({ navigation }: Props) {
           return (
             <Pressable key={ch.id} onPress={() => navigation.navigate('ServerChannel', { channelId: ch.id })}
               accessibilityRole="button" accessibilityLabel={`${tr('Канал')} ${ch.name}`}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.cardBg, borderRadius: 18, padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.85 : 1 })}>
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.85 : 1 })}>
               <View>
                 {ch.avatar ? (
                   <Image source={{ uri: ch.avatar }} style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
                 ) : (
-                  <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}>
+                  <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 56, height: 56, borderRadius: 18, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={[ty.title3, { color: '#fff' }]}>{initial}</Text>
                   </LinearGradient>
                 )}
                 {closed ? (
-                  <View style={{ position: 'absolute', right: -3, bottom: -3, width: 22, height: 22, borderRadius: 11, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
-                    <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: T.labelTertiary, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ position: 'absolute', right: -3, bottom: -3, width: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 18, height: 18, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.labelTertiary, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="lock.fill" size={9} color="#fff" />
                     </View>
                   </View>
@@ -64,13 +64,13 @@ export function ChannelsScreen({ navigation }: Props) {
                 </View>
               </View>
               {joined && count > 0 ? (
-                <View style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ minWidth: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', paddingHorizontal: 6, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.caption2Em, { color: '#fff' }]}>{count}</Text>
                 </View>
               ) : joined ? (
                 <SF name="checkmark.circle.fill" size={20} color={T.brand} />
               ) : (
-                <View style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, backgroundColor: T.brandTinted }}>
+                <View style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
                   <Text style={[ty.caption2Em, { color: T.brand }]}>{closed ? tr('Запрос') : tr('Открыть')}</Text>
                 </View>
               )}

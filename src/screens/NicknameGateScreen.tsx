@@ -104,7 +104,7 @@ export function NicknameGateScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ alignItems: 'center', marginBottom: 26 }}>
-            <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <View style={{ width: 64, height: 64, borderRadius: 20, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Logo size={34} body="#FFFFFF" head="#FFFFFF" />
             </View>
             <Text style={[ty.title2, { color: T.label, textAlign: 'center' }]}>Напишите псевдоним</Text>
@@ -127,7 +127,7 @@ export function NicknameGateScreen() {
             onSubmitEditing={save}
             accessibilityLabel="Псевдоним"
             style={[ty.body, {
-              backgroundColor: T.cardBg, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16,
+              backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', paddingVertical: 14, paddingHorizontal: 16,
               color: T.label, borderWidth: 1, borderColor: showError ? T.red : T.cardBorder,
             }]}
           />
@@ -153,7 +153,7 @@ export function NicknameGateScreen() {
             </View>
           ) : null}
           {saveError ? (
-            <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 12, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderColor: T.red }}>
+            <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderColor: T.red }}>
               <SF name="wifi.slash" size={14} color={T.redText} />
               <Text style={[ty.footnote, { color: T.redText, flex: 1 }]}>{saveError}</Text>
               <Pressable onPress={save} accessibilityRole="button" accessibilityLabel="Повторить сохранение" style={{ minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 4 }}>

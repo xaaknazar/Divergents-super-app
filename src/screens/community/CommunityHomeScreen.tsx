@@ -192,7 +192,7 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
     { v: c.teamRank > 0 ? `${c.teamRank} / ${c.teamCount}` : '—', l: tr('Место команды') },
   ];
   return (
-    <Pressable onPress={open} style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, overflow: 'hidden', backgroundColor: T.cardBg, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}>
+    <Pressable onPress={open} style={{ marginHorizontal: 16, marginBottom: 18, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: T.cardBg, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="flame.fill" size={11} color="#fff" />{tr('Активный челлендж')}</Capsule>
@@ -203,8 +203,8 @@ function ActiveChallengeCard({ navigation }: { navigation: Nav }) {
           <Text style={[ty.title2, { color: '#fff', flex: 1 }]} numberOfLines={1}>{c.title}</Text>
         </View>
         <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>{c.teamName ? `${tr('Команда')} «${c.teamName}» · ` : ''}{c.eliminated ? tr('очки зафиксированы') : `${tr('сегодня')} +${pointsToday} pts`}</Text>
-        <View style={{ marginTop: 12, height: 6, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
-          <View style={{ width: `${(c.totalDays > 0 ? c.currentDay / c.totalDays : 0) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6 }} />
+        <View style={{ marginTop: 12, height: 6, borderRadius: 6, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
+          <View style={{ width: `${(c.totalDays > 0 ? c.currentDay / c.totalDays : 0) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6, borderCurve: 'continuous' }} />
         </View>
       </LinearGradient>
       <View style={{ flexDirection: 'row', paddingVertical: 14 }}>
@@ -239,10 +239,11 @@ function PersonalActivityCard({ icon, eyebrow, title, subtitle, onPress }: {
       style={({ pressed }) => ({
         minHeight: 68, marginHorizontal: 16, marginBottom: 10, paddingHorizontal: 14,
         flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16,
+        borderCurve: 'continuous',
         backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder,
         opacity: pressed ? 0.7 : 1,
       })}>
-      <View style={{ width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: T.brandTinted }}>
+      <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: T.brandTinted }}>
         <SF name={icon} size={19} color={T.brand} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
@@ -270,12 +271,12 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${ch.title}. ${countdown}`}
       accessibilityHint={started ? tr('Доступ открыт только действующим участникам этого челленджа.') : undefined}
-      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
+      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
         {/* Darkening overlay → guarantees white text contrast across the gradient */}
         <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 52, height: 52, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 15, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
             <SF name={ch.icon} size={26} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
@@ -299,7 +300,7 @@ function ChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
             {started
               ? <SF name="lock.fill" size={12} color={T.labelSecondary} />
-              : full ? <SF name="checkmark.seal.fill" size={12} color={T.green} /> : <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: T.green }} />}
+              : full ? <SF name="checkmark.seal.fill" size={12} color={T.green} /> : <View style={{ width: 7, height: 7, borderRadius: 4, borderCurve: 'continuous', backgroundColor: T.green }} />}
             <Text style={[ty.caption1, { color: full ? T.green : T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{started ? tr('Только для участников') : full ? tr('Команды сформированы · ждём старта') : tr('Набор открыт')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -375,8 +376,8 @@ function HomeFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry
         ) : (
           sport.map((sp) => (
             <Pressable key={sp.id} onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(4); }}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
-              <View style={{ width: 52, height: 52, borderRadius: 15, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
+              <View style={{ width: 52, height: 52, borderRadius: 15, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                 <SF name={sp.icon} size={24} color={T.brand} />
               </View>
               <View style={{ flex: 1 }}>
@@ -440,7 +441,7 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
   const { T, ty } = useTheme();
   return (
     <Pressable onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
-      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
+      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
       {trip.imageUrl ? (
         <View style={{ height: 150 }}>
           <Image source={imgUrl(trip.imageUrl, 800)} style={{ width: '100%', height: 150 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
@@ -449,7 +450,7 @@ function TripCardH({ trip, navigation }: { trip: Trip; navigation: Nav }) {
       ) : (
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-          <View style={{ width: 52, height: 52, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 15, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
             <SF name="map.fill" size={24} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
@@ -524,7 +525,7 @@ function MeetupsTab({ navigation, meetups, error, onRetry }: { navigation: Nav; 
           {m.imageUrl ? (
             <Image source={imgUrl(m.imageUrl, 256)} style={{ width: 64, height: 64, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
           ) : (
-            <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 64, height: 64, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <SF name="calendar" size={26} color={T.brand} />
             </View>
           )}
@@ -564,7 +565,7 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
         const going = sp.going;
         return (
           <View key={sp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
-            <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: sp.tint, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 48, height: 48, borderRadius: 12, borderCurve: 'continuous', backgroundColor: sp.tint, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={sp.icon} size={22} color={T.brand} />
             </View>
             <View style={{ flex: 1 }}>
@@ -601,7 +602,7 @@ function SportTab({ sport, error, onRetry }: { sport: SportActivity[] | null; er
               } finally {
                 setBusy(null);
               }
-            }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14, opacity: busy === sp.id ? 0.6 : 1 }}>
+            }} style={{ backgroundColor: on ? T.brand : T.brandTinted, borderRadius: 999, borderCurve: 'continuous', paddingVertical: 7, paddingHorizontal: 14, opacity: busy === sp.id ? 0.6 : 1 }}>
               <Text style={[ty.subheadEm, { color: on ? '#fff' : T.brand }]} numberOfLines={1}>{on ? 'Вы идёте' : 'Участвую'}</Text>
             </Pressable>
             {i < sport.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 72, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
@@ -641,18 +642,18 @@ function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav
   return (
     <Pressable onPress={() => navigation.navigate('ServerChannel', { channelId: channel.id })}
       accessibilityRole="button" accessibilityLabel={`${tr('Канал')} ${channel.name}`}
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.cardBg, borderRadius: 18, padding: 14, marginHorizontal: 16, marginBottom: 14, borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2, opacity: pressed ? 0.9 : 1 })}>
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 14, marginHorizontal: 16, marginBottom: 14, borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2, opacity: pressed ? 0.9 : 1 })}>
       <View>
         {channel.avatar ? (
           <Image source={{ uri: channel.avatar }} style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
         ) : (
-          <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}>
+          <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 56, height: 56, borderRadius: 18, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' }}>
             <Text style={[ty.title3, { color: '#fff' }]}>{initial}</Text>
           </LinearGradient>
         )}
         {closed ? (
-          <View style={{ position: 'absolute', right: -3, bottom: -3, width: 22, height: 22, borderRadius: 11, backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: T.labelTertiary, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ position: 'absolute', right: -3, bottom: -3, width: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 18, height: 18, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.labelTertiary, alignItems: 'center', justifyContent: 'center' }}>
               <SF name="lock.fill" size={9} color="#fff" />
             </View>
           </View>
@@ -674,13 +675,13 @@ function ChannelRow({ channel, navigation }: { channel: Channel; navigation: Nav
         </View>
       </View>
       {joined && count > 0 ? (
-        <View style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ minWidth: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', paddingHorizontal: 6, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={[ty.caption2Em, { color: '#fff' }]}>{count}</Text>
         </View>
       ) : joined ? (
         <SF name="checkmark.circle.fill" size={20} color={T.brand} />
       ) : (
-        <View style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, backgroundColor: T.brandTinted }}>
+        <View style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
           <Text style={[ty.caption2Em, { color: T.brand }]}>{closed ? tr('Запрос') : tr('Открыть')}</Text>
         </View>
       )}
