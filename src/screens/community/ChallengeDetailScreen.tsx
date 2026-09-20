@@ -15,6 +15,7 @@ import { Aurora } from '../../components/Aurora';
 import { Capsule, ListSection, ListRow, PrimaryButton, SecondaryButton, IconSquircle } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { MemberAvatar } from '../../components/MemberAvatar';
+import { AwardBadge } from '../../components/AwardBadge';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess, hTap } from '../../lib/haptics';
 import * as pedometer from '../../state/pedometer';
@@ -1120,6 +1121,9 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
       <MemberAvatar name={member.name} avatar={member.avatar} size={36} eliminated={eliminated} left={left} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ minHeight: 20, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+          {/* Награда 🏆 идёт сразу за именем — она часть того, как человека
+              теперь зовут в приложении, а не отдельная колонка. */}
+          {member.award ? <AwardBadge size={15} /> : null}
           <Text style={[ty.footnoteEm, { color: out ? T.labelSecondary : T.label, flex: 1, flexShrink: 1 }]}>
             {member.name}{member.isMe ? ` (${tr('вы')})` : ''}
             {left

@@ -9,6 +9,9 @@ import { SF } from '../../components/SFIcon';
 import { Capsule } from '../../components/ui';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { fetchMyChallengeHistory, ChallengeHistoryItem } from '../../data/community';
+import { fmtInt } from '../../data/format';
+import { nums } from '../../theme/tokens';
+import { AwardBadge } from '../../components/AwardBadge';
 import { tr } from '../../state/LanguageContext';
 import type { Theme } from '../../theme/tokens';
 import * as pl from '../../data/plural';
@@ -20,6 +23,9 @@ const APP_STATUS = (T: Theme): Record<string, { label: string; color: string; bg
   approved: { label: 'Участвую', color: T.greenText, bg: 'rgba(52,199,89,0.16)' },
   rejected: { label: 'Отклонена', color: T.redText, bg: 'rgba(255,59,48,0.14)' },
 });
+
+const GOLD = '#F0B429';
+const GOLD_DEEP = '#B57C0A';
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '';
@@ -52,32 +58,90 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
 
   const onRefresh = async () => { setRefreshing(true); try { await load(); } finally { setRefreshing(false); } };
 
-  const open = (id: string) =>
-    navigation.getParent()?.navigate('CommunityTab', { screen: 'ChallengeDetail', params: { challengeId: id }, initial: false });
+  // Идущий челлендж открывается в трекере, завершённый — в итогах: возвращать
+  // человека на экран отметок, которые уже не принимаются, незачем.
+  const open = (item: ChallengeHistoryItem) =>
+    navigation.getParent()?.navigate('CommunityTab', {
+      screen: item.finished && item.result ? 'ChallengeResults' : 'ChallengeDetail',
+      params: { challengeId: item.challengeId },
+      initial: false,
+    });
 
-  const active = items.filter((i) => i.challengeStatus !== 'archived');
-  const past = items.filter((i) => i.challengeStatus === 'archived');
+  // Делим ПО ДАТАМ, а не по статусу в базе: `archived` ставится руками и
+  // запаздывает — пятнадцатый день прошёл, а челлендж всё ещё «active».
+  const active = items.filter((i) => !i.finished);
+  const past = items.filter((i) => i.finished);
 
   const Row = ({ item }: { item: ChallengeHistoryItem }) => {
     const st = statuses[item.status] ?? statuses.pending;
+    const r = item.result;
+    const won = r?.isWinnerTeam === true;
     return (
-      <Pressable onPress={() => open(item.challengeId)} accessibilityRole="button" accessibilityLabel={`${item.title}. ${st.label}`}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.75 : 1 })}>
-        <View style={{ width: 42, height: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-          <SF name="flame.fill" size={19} color={T.brand} />
+      <Pressable onPress={() => open(item)} accessibilityRole="button"
+        accessibilityLabel={`${item.title}. ${r ? `${r.rank} место, ${fmtInt(r.points)} очков` : st.label}`}
+        style={({ pressed }) => ({
+          backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10,
+          borderRadius: 16, borderCurve: 'continuous',
+          borderWidth: won ? 1 : 0.5, borderColor: won ? GOLD : T.cardBorder,
+          opacity: pressed ? 0.85 : 1, overflow: 'hidden',
+        })}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
+          <View style={{
+            width: 42, height: 42, borderRadius: 12, borderCurve: 'continuous',
+            backgroundColor: won ? 'rgba(240,180,41,0.16)' : T.brandTinted,
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            <SF name={won ? 'trophy.fill' : 'flame.fill'} size={19} color={won ? GOLD_DEEP : T.brand} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{item.title}</Text>
+              {r?.award ? <AwardBadge size={15} /> : null}
+            </View>
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={2}>
+              {[item.teamName ? `Команда «${item.teamName}»` : null,
+                item.durationDays ? pl.days(item.durationDays) : null,
+                fmtDate(item.startISO)].filter(Boolean).join(' · ')}
+            </Text>
+          </View>
+          {/* У завершённого важнее место, чем статус заявки: «Участвую» после
+              финиша ничего не сообщает. */}
+          {item.finished && r ? (
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[ty.subheadEm, nums, { color: won ? GOLD_DEEP : T.brand }]} numberOfLines={1}>
+                {r.rank ? `${r.rank} ${tr('место')}` : '—'}
+              </Text>
+              <Text style={[ty.caption2, nums, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
+                {fmtInt(r.points)} pts
+              </Text>
+            </View>
+          ) : (
+            <Capsule bg={st.bg} color={st.color}>{st.label}</Capsule>
+          )}
         </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{item.title}</Text>
-          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={2}>
-            {[item.teamName ? `Команда «${item.teamName}»` : null,
-              item.durationDays ? pl.days(item.durationDays) : null,
-              fmtDate(item.startISO)].filter(Boolean).join(' · ')}
-          </Text>
-        </View>
-        <Capsule bg={st.bg} color={st.color}>{st.label}</Capsule>
+
+        {/* Три цифры, ради которых всё и было. Показываем только у завершённых:
+            у идущего они меняются каждый день и живут на экране трекера. */}
+        {item.finished && r ? (
+          <>
+            <View style={{ height: 0.5, backgroundColor: T.separator, marginLeft: 14 }} />
+            <View style={{ flexDirection: 'row', paddingVertical: 9 }}>
+              <MiniStat value={fmtInt(r.pages)} label={tr('страниц')} />
+              <MiniStat value={fmtInt(r.steps)} label={tr('шагов')} />
+              <MiniStat value={fmtInt(r.sugarDays)} label={tr('дней без сахара')} last />
+            </View>
+          </>
+        ) : null}
       </Pressable>
     );
   };
+
+  const MiniStat = ({ value, label, last }: { value: string; label: string; last?: boolean }) => (
+    <View style={{ flex: 1, alignItems: 'center', borderRightWidth: last ? 0 : 0.5, borderRightColor: T.separator }}>
+      <Text style={[ty.footnoteEm, nums, { color: T.label }]} numberOfLines={1}>{value}</Text>
+      <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1, textAlign: 'center' }]} numberOfLines={2}>{label}</Text>
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>

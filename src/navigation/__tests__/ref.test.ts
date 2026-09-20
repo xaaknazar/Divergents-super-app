@@ -34,4 +34,15 @@ describe('цель уведомления', () => {
     expect(normalizeTabTarget('LMSTab', 'CourseDetail')).toEqual({ screen: 'LMSTab' });
     expect(normalizeTabTarget('LMSTab', 'BookDetail', { bookId: 'b1' }).params).toBeTruthy();
   });
+
+  it('итоги челленджа открываются из уведомления', () => {
+    // Пуш «челлендж завершён» ведёт именно на итоги. Без challengeId в
+    // SCREEN_REQUIRES_PARAM цель молча схлопывалась бы во вкладку, и
+    // поздравление открывало бы список сообщества.
+    expect(normalizeTabTarget('CommunityTab', 'ChallengeResults', { challengeId: 'ch1' })).toEqual({
+      screen: 'CommunityTab',
+      params: { screen: 'ChallengeResults', params: { challengeId: 'ch1' }, initial: false },
+    });
+    expect(normalizeTabTarget('CommunityTab', 'ChallengeResults', {})).toEqual({ screen: 'CommunityTab' });
+  });
 });

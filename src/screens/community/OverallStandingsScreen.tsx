@@ -14,6 +14,7 @@ import { SF } from '../../components/SFIcon';
 import { Capsule, ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { MemberAvatar } from '../../components/MemberAvatar';
+import { AwardBadge } from '../../components/AwardBadge';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { MEDAL_FOR_RANK, totalFlags, OverallStanding } from '../../data/community';
@@ -133,9 +134,12 @@ function Row({ row, last }: { row: OverallStanding; last: boolean }) {
         <MemberAvatar name={row.name} avatar={row.avatar} size={34} eliminated={row.eliminated} left={row.left === true} />
 
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>
-            {row.name}{row.isMe ? <Text style={[ty.caption1, { color: T.brand }]}>{`  · ${tr('вы')}`}</Text> : null}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Text style={[ty.body, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>
+              {row.name}{row.isMe ? <Text style={[ty.caption1, { color: T.brand }]}>{`  · ${tr('вы')}`}</Text> : null}
+            </Text>
+            {row.award ? <AwardBadge size={15} /> : null}
+          </View>
           <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
             {row.teamName || tr('без команды')}
             {/* Вышел по белому флагу и выбыл — разные вещи: первое разрешил

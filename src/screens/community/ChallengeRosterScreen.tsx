@@ -10,6 +10,7 @@ import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { MemberAvatar } from '../../components/MemberAvatar';
+import { AwardBadge } from '../../components/AwardBadge';
 import { Capsule, ListSection, PrimaryButton } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
@@ -125,9 +126,12 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, backgroundColor: m.isMe ? T.brandTinted : 'transparent', opacity: out ? 0.6 : 1 }}>
                   <MemberAvatar name={m.name} avatar={m.avatar} size={38} eliminated={m.eliminated === true} left={left} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>
-                      {m.name}{m.isMe ? <Text style={[ty.caption1, { color: T.brand }]}>{`  · ${tr('вы')}`}</Text> : null}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Text style={[ty.body, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>
+                        {m.name}{m.isMe ? <Text style={[ty.caption1, { color: T.brand }]}>{`  · ${tr('вы')}`}</Text> : null}
+                      </Text>
+                      {m.award ? <AwardBadge size={15} /> : null}
+                    </View>
                     {/* m.day — это БАЛЛЫ ЗА СЕГОДНЯ, а не номер дня: подпись
                         «День 45» читалась как 45-й день челленджа. */}
                     <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>

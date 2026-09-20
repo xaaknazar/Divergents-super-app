@@ -15,6 +15,7 @@ const SCREEN_REQUIRES_PARAM: Record<string, string> = {
   JoinChallenge: 'challengeId',
   TeamStandings: 'challengeId',
   ChallengeDays: 'challengeId',
+  ChallengeResults: 'challengeId',
   OverallStandings: 'challengeId',
   TripDetail: 'tripId',
   MeetupDetail: 'meetupId',

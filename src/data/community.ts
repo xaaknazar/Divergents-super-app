@@ -498,6 +498,8 @@ export interface Member {
   left?: boolean;
   /** Флаг поднят, но человек ещё не вышел: решение за ним. */
   whiteFlag?: boolean;
+  /** Награда 🏆 за 1 место команды в прошлом челлендже — рядом с псевдонимом. */
+  award?: boolean;
   penalty?: number;
   previousRank?: number | null;
   rankChange?: number | null;
@@ -532,6 +534,8 @@ export interface OverallStanding {
   eliminated: boolean;
   /** Вышел по белому флагу 🏳️. */
   left?: boolean;
+  /** Награда 🏆 за 1 место команды в прошлом челлендже. */
+  award?: boolean;
   isMe: boolean;
   rank: number;
 }
@@ -752,6 +756,7 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
         flags: flagsOf(r?.flags),
         eliminated: r?.eliminated === true,
         left: r?.left === true,
+        award: r?.award === true,
         isMe: r?.isMe === true,
         rank: numOf(r?.rank),
       }))
@@ -788,6 +793,7 @@ function mapActiveMember(raw: RawActiveMember): Member | null {
     eliminated: raw.eliminated === true,
     left: (raw as any).left === true,
     whiteFlag: (raw as any).whiteFlag === true,
+    award: (raw as any).award === true,
     penalty: numOf(raw.penalty),
     previousRank: typeof raw.previousRank === 'number' ? numOf(raw.previousRank) : null,
     rankChange: typeof raw.rankChange === 'number' ? numOf(raw.rankChange) : null,
@@ -1884,15 +1890,49 @@ export async function broadcastTeam(challengeId: string, teamId: string, message
 }
 
 // ─── История моих челленджей (GET /api/mobile/me/challenges) ───────
+/** Мой итог в завершённом (или идущем) челлендже. */
+export interface MyChallengeResult {
+  points: number;
+  rank: number;
+  totalMembers: number;
+  teamRank: number;
+  pages: number;
+  steps: number;
+  sugarDays: number;
+  judgedDays: number;
+  flags: FlagCounts;
+  eliminated: boolean;
+  left: boolean;
+  award: boolean;
+  teamPoints: number;
+  teamPlace: number;
+  teamCount: number;
+  isWinnerTeam: boolean;
+}
+
 export interface ChallengeHistoryItem {
   challengeId: string;
   title: string;
   startISO: string | null;
   durationDays: number;
   challengeStatus: string;   // open | active | archived …
+  teamId: string | null;
   teamName: string | null;
   status: string;            // pending | approved | rejected
   joinedAt: string;
+  /** Какой день идёт сейчас (у завершённого — последний). */
+  currentDay: number;
+  /**
+   * Челлендж закончился ПО ДАТАМ, а не по статусу в базе.
+   *
+   * Статус `archived` ставится руками и запаздывает: пятнадцатый день прошёл,
+   * а челлендж всё ещё «active». Человеку же важно одно — идёт он или уже нет.
+   */
+  finished: boolean;
+  /** Когда объявили итоги. null — ещё не объявляли. */
+  announcedAt: string | null;
+  /** Итоги. null — заявка не одобрена или считать нечего. */
+  result: MyChallengeResult | null;
 }
 
 export async function fetchMyChallengeHistory(token: string | null): Promise<ChallengeHistoryItem[]> {
@@ -1910,9 +1950,148 @@ export async function fetchMyChallengeHistory(token: string | null): Promise<Cha
       startISO: x.startISO ?? null,
       durationDays: Number(x.durationDays) || 0,
       challengeStatus: String(x.challengeStatus ?? ''),
+      teamId: x.teamId ?? null,
       teamName: x.teamName ?? null,
       status: String(x.status ?? 'pending'),
       joinedAt: String(x.joinedAt ?? ''),
+      currentDay: numOf(x.currentDay),
+      finished: x.finished === true,
+      announcedAt: typeof x.announcedAt === 'string' ? x.announcedAt : null,
+      result: mapMyResult(x.result),
     }));
   } catch { return []; }
+}
+
+function mapMyResult(raw: any): MyChallengeResult | null {
+  if (!raw || typeof raw !== 'object') return null;
+  return {
+    points: numOf(raw.points),
+    rank: numOf(raw.rank),
+    totalMembers: numOf(raw.totalMembers),
+    teamRank: numOf(raw.teamRank),
+    pages: numOf(raw.pages),
+    steps: numOf(raw.steps),
+    sugarDays: numOf(raw.sugarDays),
+    judgedDays: numOf(raw.judgedDays),
+    flags: flagsOf(raw.flags),
+    eliminated: raw.eliminated === true,
+    left: raw.left === true,
+    award: raw.award === true,
+    teamPoints: numOf(raw.teamPoints),
+    teamPlace: numOf(raw.teamPlace),
+    teamCount: numOf(raw.teamCount),
+    isWinnerTeam: raw.isWinnerTeam === true,
+  };
+}
+
+// ─── Итоги одного челленджа (GET /api/mobile/challenges/:id/results) ─────────
+
+/** Строка «тройки лучших» в общем зачёте. */
+export interface ResultsPodiumRow {
+  userId: string;
+  name: string;
+  avatar: string | null;
+  teamName: string;
+  points: number;
+  rank: number;
+  isMe: boolean;
+  award: boolean;
+}
+
+export interface ResultsTeamRow {
+  id: string;
+  name: string;
+  points: number;
+  rank: number;
+  members: number;
+  isMine: boolean;
+}
+
+export interface ChallengeResults {
+  challenge: {
+    id: string;
+    title: string;
+    startISO: string | null;
+    durationDays: number;
+    countedThroughDay: number;
+    finished: boolean;
+    announcedAt: string | null;
+    winnerTeamId: string | null;
+    winnerTeamName: string;
+  };
+  totalMembers: number;
+  me: MyChallengeResult | null;
+  team: { id: string; name: string; points: number; rank: number; members: number; pages: number; steps: number; sugarDays: number; isWinner: boolean } | null;
+  teams: ResultsTeamRow[];
+  podium: ResultsPodiumRow[];
+}
+
+/**
+ * Итоги челленджа: мои цифры, команда, тройка лучших.
+ *
+ * Возвращает null при любой неудаче — экран итогов показывает состояние
+ * ошибки, а не пустые нули, которые выглядели бы как «ты ничего не сделал».
+ */
+export async function fetchChallengeResults(
+  challengeId: string,
+  token: string | null,
+): Promise<ChallengeResults | null> {
+  if (!token || !challengeId) return null;
+  try {
+    const r = await fetch(`${API_BASE}/api/mobile/challenges/${challengeId}/results`, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (!d?.ok) return null;
+    const c = d.challenge ?? {};
+    return {
+      challenge: {
+        id: strOf(c.id, challengeId),
+        title: strOf(c.title),
+        startISO: c.startISO ?? null,
+        durationDays: numOf(c.durationDays),
+        countedThroughDay: numOf(c.countedThroughDay),
+        finished: c.finished === true,
+        announcedAt: typeof c.announcedAt === 'string' ? c.announcedAt : null,
+        winnerTeamId: c.winnerTeamId ?? null,
+        winnerTeamName: strOf(c.winnerTeamName),
+      },
+      totalMembers: numOf(d.totalMembers),
+      me: mapMyResult(d.me),
+      team: d.team
+        ? {
+            id: strOf(d.team.id),
+            name: strOf(d.team.name),
+            points: numOf(d.team.points),
+            rank: numOf(d.team.rank),
+            members: numOf(d.team.members),
+            pages: numOf(d.team.pages),
+            steps: numOf(d.team.steps),
+            sugarDays: numOf(d.team.sugarDays),
+            isWinner: d.team.isWinner === true,
+          }
+        : null,
+      teams: (Array.isArray(d.teams) ? d.teams : []).map((t: any) => ({
+        id: strOf(t?.id),
+        name: strOf(t?.name, 'Команда'),
+        points: numOf(t?.points),
+        rank: numOf(t?.rank),
+        members: numOf(t?.members),
+        isMine: t?.isMine === true,
+      })),
+      podium: (Array.isArray(d.podium) ? d.podium : []).map((m: any) => ({
+        userId: strOf(m?.userId),
+        name: strOf(m?.name, 'Участник'),
+        avatar: typeof m?.avatar === 'string' && m.avatar.trim() ? m.avatar.trim() : null,
+        teamName: strOf(m?.teamName),
+        points: numOf(m?.points),
+        rank: numOf(m?.rank),
+        isMe: m?.isMe === true,
+        award: m?.award === true,
+      })),
+    };
+  } catch {
+    return null;
+  }
 }

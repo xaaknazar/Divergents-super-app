@@ -12,6 +12,7 @@ import { PageIntro } from '../../components/PageIntro';
 import { NavBarLarge, HeaderIcon } from '../../components/headers';
 import { useNotifications } from '../../state/NotificationsContext';
 import { SF } from '../../components/SFIcon';
+import { AwardBadge } from '../../components/AwardBadge';
 import { Capsule, IconCircle, ListSection, ListRow, Segmented } from '../../components/ui';
 import { Ring } from '../../components/talentUI';
 import { GardnerChart } from '../../components/GardnerChart';
@@ -33,7 +34,7 @@ import { formatPace, paceTimeSec } from '../../state/ActivityContext';
 import { GALLUP_DOMAIN_META, mbtiName, fmtList, effectiveResumeCompleteness, applyGallupOrder, loadGallupOrder } from '../../data/talentslab';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 import { ProfileStackParams } from '../../navigation/types';
-import { fetchCommunityHome, SportActivity, Trip } from '../../data/community';
+import { fetchCommunityHome, fetchMyChallengeHistory, SportActivity, Trip } from '../../data/community';
 
 type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 
@@ -63,6 +64,10 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const [gallupOrder, setGallupOrder] = React.useState<string[]>([]);
   const [shelf, setShelf] = useState<ShelfEntry[]>([]);
   const [communityActivities, setCommunityActivities] = useState<{ trips: Trip[]; sport: SportActivity[] }>({ trips: [], sport: [] });
+  // Сколько всего челленджей у человека и есть ли награда 🏆. Плитка
+  // «Челленджи» показывает число, а не текущий день: челлендж кончился, а
+  // раздел остался — в нём история.
+  const [challengeStats, setChallengeStats] = useState<{ count: number; award: boolean }>({ count: 0, award: false });
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
   const loadShelf = useCallback(async () => {
@@ -88,6 +93,27 @@ export function ProfileHomeScreen({ navigation }: Props) {
     setCommunityActivities({ trips: data.trips, sport: data.sport });
   };
   useEffect(() => { if (isSignedIn) loadCommunityActivities(); }, [isSignedIn]);
+
+  // История челленджей — для числа на плитке и значка награды.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!isSignedIn) { setChallengeStats({ count: 0, award: false }); return; }
+      try {
+        const token = await getToken();
+        const list = await fetchMyChallengeHistory(token);
+        if (!alive) return;
+        setChallengeStats({
+          count: list.length,
+          award: list.some((h) => h.result?.award === true),
+        });
+      } catch {
+        // Не загрузилось — плитка покажет прочерк, как и раньше.
+      }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn]);
   const reading = shelf.filter((s) => s.status === 'reading');
   const readBooks = shelf.filter((s) => s.status === 'read');
   const openBook = (id: string) => navigation.getParent()?.navigate('LMSTab', { screen: 'BookDetail', params: { bookId: id }, initial: false } as never);
@@ -199,8 +225,10 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const tiles = [
     { v: String(coursesInProgress), l: tr('Курсов'), icon: 'book.fill', c: T.brand, onPress: goLearning },
     { v: `${ach.earned}`, l: tr('Достижений'), icon: 'rosette', c: T.orange, onPress: () => navigation.navigate('Achievements') },
-    // "День челленджа" didn't fit the narrow tile — shortened to «День».
-    { v: challengeActive ? String(challenge.currentDay) : '—', l: tr('День'), icon: 'flame.fill', c: T.red, onPress: () => navigation.navigate('ChallengeHistory') },
+    // Раньше здесь был номер текущего дня — он был пуст у всех, кто не в
+    // идущем челлендже, и обнулялся после финиша. Теперь плитка про раздел:
+    // сколько челленджей за человеком, включая прошедшие.
+    { v: challengeStats.count > 0 ? String(challengeStats.count) : (challengeActive ? '1' : '—'), l: tr('Челленджи'), icon: 'flame.fill', c: T.red, onPress: () => navigation.navigate('ChallengeHistory') },
   ];
   // VoiceOver reads «—» as nothing useful — spell it out.
   const tileA11y = (l: string, v: string) => `${l}: ${v === '—' ? tr('нет данных') : v}`;
@@ -257,7 +285,13 @@ export function ProfileHomeScreen({ navigation }: Props) {
               </View>
             )}
             <View style={{ flex: 1 }}>
-              <Text style={[ty.title2, { color: T.onBrand }]} numberOfLines={1}>{name}</Text>
+              {/* Награда 🏆 за победу в челлендже — рядом со своим именем.
+                  Её видит и сам человек: награда, которую видно только другим,
+                  наградой не ощущается. */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[ty.title2, { color: T.onBrand, flexShrink: 1 }]} numberOfLines={1}>{name}</Text>
+                {challengeStats.award ? <AwardBadge size={18} /> : null}
+              </View>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>
                 {email ?? 'Divergents'}
               </Text>

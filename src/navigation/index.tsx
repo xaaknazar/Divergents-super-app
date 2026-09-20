@@ -36,6 +36,8 @@ import { ChallengeRosterScreen } from '../screens/community/ChallengeRosterScree
 import { TeamStandingsScreen } from '../screens/community/TeamStandingsScreen';
 import { OverallStandingsScreen } from '../screens/community/OverallStandingsScreen';
 import { ChallengeDaysScreen } from '../screens/community/ChallengeDaysScreen';
+import { ChallengeResultsScreen } from '../screens/community/ChallengeResultsScreen';
+import { ChallengeResultsModal } from '../components/ChallengeResultsModal';
 import { ManageChallengeScreen } from '../screens/community/ManageChallengeScreen';
 import { JoinChallengeScreen } from '../screens/community/JoinChallengeScreen';
 import { TripDetailScreen } from '../screens/community/TripDetailScreen';
@@ -96,6 +98,7 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="TeamStandings" component={TeamStandingsScreen} />
       <CommunityStack.Screen name="OverallStandings" component={OverallStandingsScreen} />
       <CommunityStack.Screen name="ChallengeDays" component={ChallengeDaysScreen} />
+      <CommunityStack.Screen name="ChallengeResults" component={ChallengeResultsScreen} />
       <CommunityStack.Screen name="ManageChallenge" component={ManageChallengeScreen} />
       <CommunityStack.Screen name="WorkoutTrack" component={WorkoutTrackScreen} />
       <CommunityStack.Screen name="JoinChallenge" component={JoinChallengeScreen} options={{ presentation: 'modal' }} />
@@ -222,6 +225,7 @@ export function RootNavigator() {
   }
   if (!isLoaded || !ready) return null;
   return (
+    <>
     <Root.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 220, gestureEnabled: true }}>
       {!onboarded ? (
         <Root.Screen name="Onboarding" component={OnboardingScreen} options={{ presentation: 'fullScreenModal' }} />
@@ -236,5 +240,10 @@ export function RootNavigator() {
         </>
       )}
     </Root.Navigator>
+    {/* Итоги завершённого челленджа — один раз, поверх всего.
+        Живёт рядом с навигатором, а не внутри экрана: показать их нужно
+        независимо от того, на какой вкладке человек открыл приложение. */}
+    {isSignedIn && !needsNickname ? <ChallengeResultsModal /> : null}
+    </>
   );
 }

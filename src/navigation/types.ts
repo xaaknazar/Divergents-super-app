@@ -37,6 +37,8 @@ export type CommunityStackParams = {
   OverallStandings: { challengeId: string };
   /** История по дням: результат каждого прошедшего дня. */
   ChallengeDays: { challengeId: string };
+  /** Итоги завершённого челленджа: свои цифры, команда, лучшие. */
+  ChallengeResults: { challengeId: string };
   ManageChallenge: { challengeId: string };
   WorkoutTrack: { challengeId?: string } | undefined;
   /** История тренировок: маршруты, дистанция, время, темп. */
