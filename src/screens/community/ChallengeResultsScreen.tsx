@@ -18,7 +18,7 @@ import { nums } from '../../theme/tokens';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
-import { AwardBadge } from '../../components/AwardBadge';
+import { AwardBadge, AWARD_GOLD, AWARD_GOLD_DEEP } from '../../components/AwardBadge';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { ErrorState } from '../../components/StateViews';
 import { fetchChallengeResults, ChallengeResults } from '../../data/community';
@@ -28,8 +28,6 @@ import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeResults'>;
-
-const GOLD = '#F0B429';
 
 /** Место словами: «1 место из 160». Ноль — значит места нет, и врать не надо. */
 function placeText(rank: number, total: number): string {
@@ -125,7 +123,7 @@ export function ChallengeResultsContent({
           Победа и просто финиш выглядят по-разному намеренно: одинаковая
           шапка обесценила бы первое место. */}
       <LinearGradient
-        colors={won ? [GOLD, '#E08A00'] : [T.brand, T.brandAccent]}
+        colors={won ? [AWARD_GOLD, '#E08A00'] : [T.brand, T.brandAccent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ margin: 16, borderRadius: 20, borderCurve: 'continuous', padding: 18, overflow: 'hidden' }}
@@ -203,7 +201,7 @@ export function ChallengeResultsContent({
           <View style={{
             marginHorizontal: 16, backgroundColor: T.cardBg,
             borderRadius: 16, borderCurve: 'continuous',
-            borderWidth: won ? 1 : 0.5, borderColor: won ? GOLD : T.cardBorder,
+            borderWidth: won ? 1 : 0.5, borderColor: won ? AWARD_GOLD : T.cardBorder,
             overflow: 'hidden',
           }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
@@ -212,7 +210,7 @@ export function ChallengeResultsContent({
                 backgroundColor: won ? 'rgba(240,180,41,0.16)' : T.brandTinted,
                 alignItems: 'center', justifyContent: 'center',
               }}>
-                {won ? <Logo size={24} body="#B57C0A" head={GOLD} /> : <SF name="person.3.fill" size={19} color={T.brand} />}
+                {won ? <AwardBadge size={30} /> : <SF name="person.3.fill" size={19} color={T.brand} />}
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{team.name}</Text>

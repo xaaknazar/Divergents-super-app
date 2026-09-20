@@ -11,7 +11,7 @@ import { EmptyState, ErrorState } from '../../components/StateViews';
 import { fetchMyChallengeHistory, ChallengeHistoryItem } from '../../data/community';
 import { fmtInt } from '../../data/format';
 import { nums } from '../../theme/tokens';
-import { AwardBadge } from '../../components/AwardBadge';
+import { AwardBadge, AWARD_GOLD, AWARD_GOLD_DEEP } from '../../components/AwardBadge';
 import { tr } from '../../state/LanguageContext';
 import type { Theme } from '../../theme/tokens';
 import * as pl from '../../data/plural';
@@ -23,9 +23,6 @@ const APP_STATUS = (T: Theme): Record<string, { label: string; color: string; bg
   approved: { label: 'Участвую', color: T.greenText, bg: 'rgba(52,199,89,0.16)' },
   rejected: { label: 'Отклонена', color: T.redText, bg: 'rgba(255,59,48,0.14)' },
 });
-
-const GOLD = '#F0B429';
-const GOLD_DEEP = '#B57C0A';
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '';
@@ -82,7 +79,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
         style={({ pressed }) => ({
           backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10,
           borderRadius: 16, borderCurve: 'continuous',
-          borderWidth: won ? 1 : 0.5, borderColor: won ? GOLD : T.cardBorder,
+          borderWidth: won ? 1 : 0.5, borderColor: won ? AWARD_GOLD : T.cardBorder,
           opacity: pressed ? 0.85 : 1, overflow: 'hidden',
         })}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
@@ -91,7 +88,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
             backgroundColor: won ? 'rgba(240,180,41,0.16)' : T.brandTinted,
             alignItems: 'center', justifyContent: 'center',
           }}>
-            <SF name={won ? 'trophy.fill' : 'flame.fill'} size={19} color={won ? GOLD_DEEP : T.brand} />
+            {won ? <AwardBadge size={26} /> : <SF name="flame.fill" size={19} color={T.brand} />}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -108,7 +105,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
               финиша ничего не сообщает. */}
           {item.finished && r ? (
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[ty.subheadEm, nums, { color: won ? GOLD_DEEP : T.brand }]} numberOfLines={1}>
+              <Text style={[ty.subheadEm, nums, { color: won ? AWARD_GOLD_DEEP : T.brand }]} numberOfLines={1}>
                 {r.rank ? `${r.rank} ${tr('место')}` : '—'}
               </Text>
               <Text style={[ty.caption2, nums, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
