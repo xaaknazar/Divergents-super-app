@@ -1904,6 +1904,8 @@ export interface MyChallengeResult {
   eliminated: boolean;
   left: boolean;
   award: boolean;
+  /** Награда ещё не забрана — показываем кнопку «Получить». */
+  canClaimAward: boolean;
   teamPoints: number;
   teamPlace: number;
   teamCount: number;
@@ -1977,6 +1979,7 @@ function mapMyResult(raw: any): MyChallengeResult | null {
     eliminated: raw.eliminated === true,
     left: raw.left === true,
     award: raw.award === true,
+    canClaimAward: raw.canClaimAward === true,
     teamPoints: numOf(raw.teamPoints),
     teamPlace: numOf(raw.teamPlace),
     teamCount: numOf(raw.teamCount),
@@ -2032,6 +2035,30 @@ export interface ChallengeResults {
  * Возвращает null при любой неудаче — экран итогов показывает состояние
  * ошибки, а не пустые нули, которые выглядели бы как «ты ничего не сделал».
  */
+/**
+ * Забрать награду за 1 место.
+ *
+ * Право проверяет сервер: экран только просит. Возвращает true, если награда
+ * теперь за человеком, — включая повторное нажатие, оно безопасно.
+ */
+export async function claimChallengeAward(
+  challengeId: string,
+  token: string | null,
+): Promise<boolean> {
+  if (!token || !challengeId) return false;
+  try {
+    const r = await fetch(`${API_BASE}/api/mobile/challenges/${challengeId}/award`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return false;
+    const d = await r.json();
+    return d?.ok === true && d?.state === 'claimed';
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchChallengeResults(
   challengeId: string,
   token: string | null,

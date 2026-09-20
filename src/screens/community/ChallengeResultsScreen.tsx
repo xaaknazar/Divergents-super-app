@@ -8,7 +8,7 @@
 // поздравления при запуске (ChallengeResultsModal): две копии одной вёрстки
 // разошлись бы после первой же правки.
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, Pressable, RefreshControl, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@clerk/clerk-expo';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -21,9 +21,10 @@ import { Logo } from '../../components/Logo';
 import { AwardBadge, AWARD_GOLD, AWARD_GOLD_DEEP } from '../../components/AwardBadge';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { ErrorState } from '../../components/StateViews';
-import { fetchChallengeResults, ChallengeResults } from '../../data/community';
+import { fetchChallengeResults, claimChallengeAward, ChallengeResults } from '../../data/community';
 import { fmtInt } from '../../data/format';
 import { tr } from '../../state/LanguageContext';
+import { hSuccess } from '../../lib/haptics';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
 
@@ -85,6 +86,7 @@ export function ChallengeResultsScreen({ route, navigation }: Props) {
         >
           <ChallengeResultsContent
             data={data}
+            onClaimed={load}
             onOpenDays={() => navigation.navigate('ChallengeDays', { challengeId })}
             onOpenStandings={() => navigation.navigate('OverallStandings', { challengeId })}
           />
@@ -103,19 +105,47 @@ export function ChallengeResultsContent({
   data,
   onOpenDays,
   onOpenStandings,
+  onClaimed,
   compact,
 }: {
   data: ChallengeResults;
   onOpenDays?: () => void;
   onOpenStandings?: () => void;
+  /** Награду забрали — перечитать итоги, чтобы кнопка сменилась значком. */
+  onClaimed?: () => void;
   /** В модальном окне прячем переходы на другие экраны. */
   compact?: boolean;
 }) {
   const { T, ty } = useTheme();
+  const { getToken } = useAuth();
   const c = data.challenge;
   const me = data.me;
   const team = data.team;
   const won = !!team?.isWinner;
+  const [claiming, setClaiming] = useState(false);
+  // Локальная отметка «забрал»: сервер уже знает, но перечитать итоги можно не
+  // мгновенно, а кнопка должна смениться в ту же секунду.
+  const [claimedNow, setClaimedNow] = useState(false);
+  const hasAward = me?.award === true || claimedNow;
+  const canClaim = me?.canClaimAward === true && !claimedNow;
+
+  const claim = async () => {
+    if (claiming) return;
+    setClaiming(true);
+    try {
+      const token = await getToken();
+      const ok = await claimChallengeAward(c.id, token);
+      if (ok) {
+        setClaimedNow(true);
+        hSuccess();
+        onClaimed?.();
+      } else {
+        Alert.alert(tr('Не удалось получить награду'), tr('Попробуйте ещё раз чуть позже.'));
+      }
+    } finally {
+      setClaiming(false);
+    }
+  };
 
   return (
     <View>
@@ -140,9 +170,44 @@ export function ChallengeResultsContent({
         </Text>
 
         {won ? (
-          <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.95)', marginTop: 4 }]}>
-            {tr('Команда')} «{team?.name}» {tr('победила')}. {tr('Вас ждёт подарок')} 🎁
-          </Text>
+          <>
+            <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.95)', marginTop: 4 }]}>
+              {tr('Команда')} «{team?.name}» {tr('победила')}.
+            </Text>
+
+            {/* Награда — это подарок, и его забирают. Значок, появившийся сам,
+                читается как часть интерфейса; нажатая кнопка — как награда. */}
+            {canClaim ? (
+              <Pressable
+                onPress={claim}
+                disabled={claiming}
+                accessibilityRole="button"
+                accessibilityLabel={tr('Получить награду')}
+                style={({ pressed }) => ({
+                  marginTop: 14, minHeight: 48, borderRadius: 14, borderCurve: 'continuous',
+                  backgroundColor: pressed ? 'rgba(255,255,255,0.82)' : '#fff',
+                  alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8,
+                  opacity: claiming ? 0.7 : 1,
+                })}
+              >
+                <SF name="trophy.fill" size={18} color={AWARD_GOLD_DEEP} />
+                <Text style={[ty.headline, { color: AWARD_GOLD_DEEP }]}>
+                  {claiming ? tr('Получаем…') : tr('Получить награду')}
+                </Text>
+              </Pressable>
+            ) : hasAward ? (
+              <View style={{
+                marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 8,
+                alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12,
+                borderRadius: 12, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)',
+              }}>
+                <SF name="trophy.fill" size={16} color="#fff" />
+                <Text style={[ty.footnoteEm, { color: '#fff' }]}>
+                  {tr('Награда у вас — она рядом с вашим ником')}
+                </Text>
+              </View>
+            ) : null}
+          </>
         ) : (
           <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 4 }]}>
             {pl.days(c.durationDays)} {tr('позади')}. {tr('Вот что у вас получилось')}.
