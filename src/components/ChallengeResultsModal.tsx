@@ -32,13 +32,19 @@ export function ChallengeResultsModal() {
   const { getToken, isSignedIn } = useAuth();
   const [data, setData] = useState<ChallengeResults | null>(null);
   const [open, setOpen] = useState(false);
-  // Проверяем один раз за запуск: повторные проверки при каждом возвращении в
-  // приложение ничего не изменят — итоги объявляют раз.
-  const checkedRef = useRef(false);
+  // Показали — и хватит. А вот ПРОВЕРЯТЬ приходится не один раз за запуск:
+  // человек может держать приложение в фоне сутками, и если первая проверка
+  // случилась до объявления итогов, второй бы уже не было — окно не появилось
+  // бы никогда. Поэтому перепроверяем при возвращении, но не чаще чем раз в
+  // пять минут: два лишних запроса на холостом ходу никому не нужны.
+  const shownRef = useRef(false);
+  const lastCheckRef = useRef(0);
+  const RECHECK_MS = 5 * 60_000;
 
   const check = useCallback(async () => {
-    if (checkedRef.current || !isSignedIn) return;
-    checkedRef.current = true;
+    if (shownRef.current || !isSignedIn) return;
+    if (Date.now() - lastCheckRef.current < RECHECK_MS) return;
+    lastCheckRef.current = Date.now();
     try {
       const token = await getToken();
       if (!token) return;
@@ -54,6 +60,7 @@ export function ChallengeResultsModal() {
       if (!res) return;
       setData(res);
       setOpen(true);
+      shownRef.current = true;
       if (res.team?.isWinner) hSuccess();
       saveJSON(SEEN_KEY, [...seen, fresh.challengeId]);
     } catch {
