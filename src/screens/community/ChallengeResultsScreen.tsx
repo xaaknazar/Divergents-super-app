@@ -160,7 +160,11 @@ export function ChallengeResultsContent({
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Logo size={26} body="#fff" head="#fff" />
+          {/* «1-й челлендж» — то, как о нём говорят сами участники. Название
+              оставляем рядом: у следующих челленджей оно будет разным. */}
           <Text style={[ty.footnoteEm, { color: 'rgba(255,255,255,0.9)', flex: 1 }]} numberOfLines={1}>
+            {c.seq ? `${c.seq}-${tr('й челлендж')}` : ''}
+            {c.seq && c.title ? ' · ' : ''}
             {c.title}
           </Text>
         </View>

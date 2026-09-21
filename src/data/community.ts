@@ -1915,6 +1915,8 @@ export interface MyChallengeResult {
 export interface ChallengeHistoryItem {
   challengeId: string;
   title: string;
+  /** Какой челлендж по счёту. 0 — старый сервер номера не отдаёт. */
+  seq: number;
   startISO: string | null;
   durationDays: number;
   challengeStatus: string;   // open | active | archived …
@@ -1949,6 +1951,7 @@ export async function fetchMyChallengeHistory(token: string | null): Promise<Cha
     return list.map((x) => ({
       challengeId: String(x.challengeId),
       title: String(x.title ?? ''),
+      seq: numOf(x.seq),
       startISO: x.startISO ?? null,
       durationDays: Number(x.durationDays) || 0,
       challengeStatus: String(x.challengeStatus ?? ''),
@@ -2025,6 +2028,12 @@ export interface ChallengeResults {
   challenge: {
     id: string;
     title: string;
+    /**
+     * Какой челлендж по счёту. Люди говорят «первый челлендж», а не называют
+     * его датой, — и экраны итогов подписаны так же. 0 — старый сервер номера
+     * не отдаёт, тогда подпись просто не показывается.
+     */
+    seq: number;
     startISO: string | null;
     durationDays: number;
     countedThroughDay: number;
@@ -2094,6 +2103,7 @@ export async function fetchChallengeResults(
       challenge: {
         id: strOf(c.id, challengeId),
         title: strOf(c.title),
+        seq: numOf(c.seq),
         startISO: c.startISO ?? null,
         durationDays: numOf(c.durationDays),
         countedThroughDay: numOf(c.countedThroughDay),

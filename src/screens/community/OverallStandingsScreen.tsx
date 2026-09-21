@@ -18,7 +18,7 @@ import { AwardBadge } from '../../components/AwardBadge';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useAuth } from '@clerk/clerk-expo';
-import { MEDAL_FOR_RANK, totalFlags, fetchChallengeResults, OverallStanding } from '../../data/community';
+import { MEDAL_FOR_RANK, totalFlags, fetchChallengeResults, OverallStanding, ChallengeResults } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
 
@@ -37,7 +37,7 @@ export function OverallStandingsScreen({ route, navigation }: Props) {
   // на пустой экран. Поэтому если в контексте не тот челлендж или список пуст
   // — дочитываем рейтинг из итогов.
   const live = challenge.id === challengeId ? challenge.overall ?? [] : [];
-  const [fromResults, setFromResults] = useState<OverallStanding[] | null>(null);
+  const [results, setResults] = useState<ChallengeResults | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export function OverallStandingsScreen({ route, navigation }: Props) {
       try {
         const token = isSignedIn ? await getToken() : null;
         const res = await fetchChallengeResults(challengeId, token);
-        if (alive) setFromResults(res?.overall ?? []);
+        if (alive) setResults(res);
       } finally {
         if (alive) setLoading(false);
       }
@@ -57,7 +57,10 @@ export function OverallStandingsScreen({ route, navigation }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [challengeId, live.length, isSignedIn]);
 
-  const all = live.length ? live : fromResults ?? [];
+  const all = live.length ? live : results?.overall ?? [];
+  // Название челленджа у живого — в контексте, у завершённого — в итогах.
+  const meta = live.length ? null : results?.challenge ?? null;
+  const titleText = (live.length ? challenge.title : meta?.title) || '';
 
   // Фильтр «только моя команда» — при полутора сотнях участников найти своих
   // в общем списке иначе тяжело.
@@ -77,9 +80,17 @@ export function OverallStandingsScreen({ route, navigation }: Props) {
       <NavHeader backLabel={tr('Челлендж')} onBack={() => navigation.goBack()} />
       <Screen tabPadding={false} topInset={false}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
+          {/* Завершённый челлендж — это уже итоговый рейтинг, а не текущий.
+              Строкой выше об этом сказано прямо: иначе список мест выглядит
+              так, будто он ещё может измениться. */}
+          {meta?.finished ? (
+            <Text style={[ty.footnoteEm, { color: T.brand, marginBottom: 2 }]} numberOfLines={1}>
+              {meta.seq ? `${meta.seq}-${tr('й челлендж')} · ${tr('итоги')}` : tr('Итоги челленджа')}
+            </Text>
+          ) : null}
           <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={2}>{tr('Рейтинг участников')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]} numberOfLines={1}>
-            {pl.people(all.length)}{challenge.title ? ` · ${challenge.title}` : ''}
+            {pl.people(all.length)}{titleText ? ` · ${titleText}` : ''}
           </Text>
         </View>
 

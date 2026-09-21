@@ -96,7 +96,8 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
               {r?.award ? <AwardBadge size={15} /> : null}
             </View>
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={2}>
-              {[item.teamName ? `Команда «${item.teamName}»` : null,
+              {[item.seq ? `${item.seq}-й челлендж` : null,
+                item.teamName ? `Команда «${item.teamName}»` : null,
                 item.durationDays ? pl.days(item.durationDays) : null,
                 fmtDate(item.startISO)].filter(Boolean).join(' · ')}
             </Text>

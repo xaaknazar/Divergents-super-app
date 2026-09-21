@@ -21,9 +21,10 @@ import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useAuth } from '@clerk/clerk-expo';
-import { fetchChallengeResults } from '../../data/community';
+import { fetchChallengeResults, ChallengeResults } from '../../data/community';
 import { ChallengeDay, MemberDay, totalFlags, flagsToEliminate } from '../../data/community';
 import { fmtInt } from '../../data/format';
+import * as pl from '../../data/plural';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeDays'>;
@@ -102,9 +103,9 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
   //
   // История по дням жила в контексте живого челленджа. После финиша контекст
   // пуст, и переход сюда из итогов показывал пустой календарь. Поэтому если в
-  // контексте не тот челлендж — дочитываем дни из итогов.
+  // контексте не тот челлендж — дочитываем всё из итогов.
   const isLive = challenge.id === challengeId;
-  const [past, setPast] = useState<{ myDays: ChallengeDay[]; team: DaysMember[] } | null>(null);
+  const [past, setPast] = useState<ChallengeResults | null>(null);
 
   useEffect(() => {
     if (isLive) return;
@@ -113,7 +114,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
       const token = isSignedIn ? await getToken() : null;
       const res = await fetchChallengeResults(challengeId, token);
       if (!alive || !res) return;
-      setPast({ myDays: res.myDays, team: res.teamDays });
+      setPast(res);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,8 +123,19 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
   const myDays = isLive ? challenge.myDays ?? [] : past?.myDays ?? [];
   // У живого челленджа состав берётся из таблицы, у завершённого — из итогов.
   // Поля совпадают по смыслу, поэтому дальше экран не различает эти два случая.
-  const members: DaysMember[] = isLive ? leaderboard : past?.team ?? [];
+  const members: DaysMember[] = isLive ? leaderboard : past?.teamDays ?? [];
   const maxFlags = flagsToEliminate(challenge.rules);
+
+  // Шапка завершённого челленджа берётся из итогов, а не из живого контекста.
+  //
+  // Раньше она читала контекст всегда — а после финиша там пусто, и экран
+  // писал «день 0 из 21»: ноль вместо дня и длительность по умолчанию вместо
+  // настоящих пятнадцати дней. Заодно календарь рисовал двадцать одну плитку,
+  // из которых шесть последних не существовали.
+  const meta = isLive ? null : past?.challenge ?? null;
+  const finished = meta?.finished ?? false;
+  const titleText = (isLive ? challenge.title : meta?.title) || tr('Челлендж');
+  const teamName = isLive ? challenge.teamName : past?.team?.name ?? '';
 
   // Дата дня — общая для всех, поэтому она приходит один раз, в своей истории,
   // и здесь раздаётся по номеру дня. Команде свои копии той же строки не нужны.
@@ -145,7 +157,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
 
   const [openDay, setOpenDay] = useState<number | null>(null);
 
-  const total = challenge.totalDays || myDays.length;
+  const total = meta?.durationDays || challenge.totalDays || myDays.length;
 
   const teamDays = useMemo<TeamDay[]>(() => {
     if (!teamHasDays) return [];
@@ -259,10 +271,24 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
       <NavHeader backLabel={tr('Челлендж')} onBack={() => navigation.goBack()} />
       <Screen tabPadding={false} topInset={false}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
+          {/* У завершённого челленджа это уже не дневник, а итоги, — и человек
+              должен видеть это первой строкой, до того как начнёт искать
+              сегодняшний день в календаре, которого больше нет. */}
+          {finished ? (
+            <Text style={[ty.footnoteEm, { color: T.brand, marginBottom: 2 }]} numberOfLines={1}>
+              {meta?.seq ? `${meta.seq}-${tr('й челлендж')} · ${tr('итоги')}` : tr('Итоги челленджа')}
+            </Text>
+          ) : null}
           <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={2}>{tr('Дни челленджа')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]} numberOfLines={1}>
-            {team && challenge.teamName ? challenge.teamName : challenge.title || tr('Челлендж')}
-            {' · '}{tr('день')} {challenge.currentDay} {tr('из')} {total}
+            {team && teamName ? teamName : titleText}
+            {' · '}
+            {finished
+              // «День 15 из 15» у законченного челленджа бессмысленно: никакой
+              // день сейчас не идёт. Длительность — то, что здесь осталось
+              // правдой.
+              ? `${total} ${pl.daysWord(total)}`
+              : `${tr('день')} ${challenge.currentDay} ${tr('из')} ${total}`}
           </Text>
         </View>
 
