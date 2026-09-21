@@ -14,7 +14,7 @@ import {
   getInfoAsync,
   makeDirectoryAsync,
 } from 'expo-file-system/legacy';
-import { loadJSON, saveJSON } from './persist';
+import { readJSON, saveJSON } from './persist';
 
 const STORE_KEY = 'downloads.audio.v1';
 const DIR = `${documentDirectory ?? ''}downloads/`;
@@ -56,12 +56,29 @@ const tasks: Record<string, ReturnType<typeof createDownloadResumable>> = {};
 let pendingMeta: Record<string, PendingMeta> = {};
 let ready = false;
 let loadStarted = false;
+/**
+ * Реестр прочитан успешно. false — чтение сорвалось: записывать нельзя, иначе
+ * затрём список скачанного пустотой.
+ */
+let readOk = true;
 
 const subs = new Set<() => void>();
 function notify() { subs.forEach((fn) => fn()); }
 function subscribe(fn: () => void) { subs.add(fn); return () => { subs.delete(fn); }; }
 
-async function persist() { await saveJSON(STORE_KEY, registry); }
+/**
+ * Реестр не записывается, пока он не прочитан.
+ *
+ * `loadJSON` возвращает пустой объект и когда записей нет, и когда чтение
+ * СОРВАЛОСЬ. В первом случае писать пустоту нормально, во втором — значит
+ * стереть человеку всю офлайн-библиотеку: файлы на диске останутся, а
+ * приложение перестанет о них знать. Поэтому теперь различаем и при неудачном
+ * чтении не пишем ничего до следующего запуска.
+ */
+async function persist() {
+  if (!readOk) return;
+  await saveJSON(STORE_KEY, registry);
+}
 
 async function ensureDir() {
   try {
@@ -73,7 +90,9 @@ async function ensureDir() {
 async function load() {
   if (loadStarted) return;
   loadStarted = true;
-  const saved = await loadJSON<Record<string, DownloadRecord>>(STORE_KEY, {});
+  const read = await readJSON<Record<string, DownloadRecord>>(STORE_KEY, {});
+  readOk = read.ok;
+  const saved = read.value;
   // Drop entries whose underlying file vanished (e.g. OS cleared the sandbox).
   const checked: Record<string, DownloadRecord> = {};
   await Promise.all(

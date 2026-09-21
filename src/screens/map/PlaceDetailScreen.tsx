@@ -131,13 +131,11 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
       })();
       return;
     }
-    // Optimistic local review (persists on-device) + best-effort server sync so
-    // other users can see it. A sync failure is silent — the local copy stays.
+    // Отзыв показывается сразу и уходит на сервер ОДИН раз — внутри addReview.
+    // Раньше экран слал второй такой же запрос следом, и отзыв сохранялся
+    // дважды: две строки под местом и двойной вес в средней оценке.
     addReview(place.id, { author, rating, text: body });
     setStars(0); setText('');
-    (async () => {
-      try { const token = await getToken(); await postReview(place.id, { rating, text: body }, token); } catch {}
-    })();
   };
 
   return (

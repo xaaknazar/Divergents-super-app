@@ -62,11 +62,16 @@ export function NicknameGateScreen() {
     setTouched(true);
     setSaveError(null);
     if (error || checking) return;
-    setField('nickname', value.trim());
-    // Persist to Talentslab. The server is the final authority on uniqueness —
-    // if somebody took the handle in the meantime the save is rejected, so we
-    // re-check and say exactly what happened instead of silently staying here.
-    const ok = await submit();
+    const nickname = value.trim();
+    setField('nickname', nickname);
+    // Псевдоним передаём В САМ ВЫЗОВ, а не надеемся, что setField успеет:
+    // состояние обновится только к следующему рендеру, и submit отправил бы
+    // анкету без него — ровно так ник и не доезжал до сервера.
+    //
+    // Уникальность решает сервер: если имя заняли, пока человек печатал,
+    // сохранение отклонят — тогда перепроверяем и говорим, что именно
+    // случилось, вместо молчаливого «ничего не произошло».
+    const ok = await submit({ nickname });
     if (!ok) {
       const token = await getTalentslabToken(getToken);
       const available = await checkNicknameAvailable(token, value.trim());

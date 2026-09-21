@@ -44,7 +44,14 @@ export function useMyCourses() {
         // lost (refund, expired purchase, removed from a team) is deleted here
         // instead of playing forever. Only on a SUCCESSFUL fetch: the throw
         // below is caught and leaves the files alone.
-        void revalidateDownloads(list.map((c) => c.id));
+        //
+        // НО НЕ НА ПУСТОМ СПИСКЕ. Успешный ответ с пустым массивом — это либо
+        // «курсов правда нет», либо осечка на стороне сервера, и отличить их
+        // отсюда нечем. В первом случае удалять нечего (скачать уроки можно
+        // только из своего курса), во втором удаление стирает человеку всю
+        // офлайн-библиотеку без предупреждения. Поэтому пустой список —
+        // единственный случай, когда мы ничего не трогаем.
+        if (list.length > 0) void revalidateDownloads(list.map((c) => c.id));
       } else {
         setCourses([]);
       }

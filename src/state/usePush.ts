@@ -50,12 +50,30 @@ function routeFromResponse(response: Notifications.NotificationResponse | null, 
 
 // Call on sign-out (BEFORE Clerk signOut, while the auth token is still valid)
 // so this device's token is detached from the account. Best-effort.
-export async function unregisterPushToken(getToken: () => Promise<string | null>) {
-  try {
-    const tok = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
-    const authToken = await getToken();
-    if (tok?.data) await unregisterPush(authToken, tok.data);
-  } catch {}
+/**
+ * Отвязать это устройство от аккаунта. Вызывать ДО выхода, пока токен Clerk ещё
+ * действителен.
+ *
+ * С ПОВТОРОМ. Раньше одна неудача — обрыв связи, отозванное разрешение — и
+ * токен оставался привязанным к аккаунту молча. Человек выходил, телефон
+ * отдавал другому, и тот получал пуши предыдущего владельца. Привязка
+ * перезаписывается только при следующем ВХОДЕ, а до него может пройти неделя.
+ *
+ * Возвращает, удалось ли: вызывающий решает, говорить ли об этом человеку.
+ */
+export async function unregisterPushToken(getToken: () => Promise<string | null>): Promise<boolean> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const tok = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
+      if (!tok?.data) return true; // токена нет — отвязывать нечего
+      const authToken = await getToken();
+      if (await unregisterPush(authToken, tok.data)) return true;
+    } catch {
+      // Сеть или разрешения — пробуем ещё раз.
+    }
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+  }
+  return false;
 }
 
 /**

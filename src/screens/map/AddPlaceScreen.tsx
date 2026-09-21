@@ -44,7 +44,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useUser();
   const { getToken } = useAuth();
-  const { country, city, addPlace, updatePlace, getPlace } = usePlaces();
+  const { country, city, addPlace, markPublished, updatePlace, getPlace } = usePlaces();
   const editId = route.params?.editId;
   const editing: Place | undefined = editId ? getPlace(editId) : undefined;
   const center = safeCityCenter(country, city);
@@ -91,14 +91,16 @@ export function AddPlaceScreen({ navigation, route }: Props) {
       Alert.alert('Сохранено', 'Изменения сохранены на этом устройстве.', [{ text: tr('Готово'), onPress: () => navigation.goBack() }]);
       return;
     }
+    if (submitting) return;
     setSubmitting(true);
     const author = user?.firstName || user?.fullName || (user?.primaryEmailAddress?.emailAddress?.split('@')[0]) || 'Вы';
     const draft = {
       name: name.trim(), category: cat, country, city, lat: coord.latitude, lng: coord.longitude,
       tags, highlights: highlights.trim(), hours: hours.trim() || 'Не указано', addedBy: author, photo,
     };
-    // Always keep the place on-device so the author sees it immediately.
-    addPlace({ ...draft, approved: false });
+    // Локальная копия — чтобы автор увидел метку сразу. На сервер она отсюда
+    // не уходит: публикация ровно одна, ниже, уже с загруженным фото.
+    const localId = addPlace({ ...draft, approved: false });
     // Publish to the server. Upload the photo first (a local file:// path is
     // useless to other users) and send the resulting URL. Message is HONEST:
     // only promise "everyone will see it after moderation" when the server
@@ -113,6 +115,9 @@ export function AddPlaceScreen({ navigation, route }: Props) {
       }
       const id = await postPlace({ ...draft, photo: serverPhoto }, token);
       published = !!id;
+      // Привязываем локальную копию к серверной, иначе после обновления карты
+      // место покажется дважды — своё и пришедшее с сервера.
+      if (id) markPublished(localId, id);
     } catch {
       published = false;
     } finally {

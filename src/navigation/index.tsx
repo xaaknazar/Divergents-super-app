@@ -188,7 +188,12 @@ export function RootNavigator() {
   const { ready, onboarded } = useAppFlow();
   // Existing accounts predate nicknames: once the anketa is complete, ask for a
   // public псевдоним before letting them into the app (one short screen).
-  const { answers: resumeAnswers, hydrated: resumeHydrated } = useResume();
+  // Гейт смотрит на ОБЪЕДИНЁННЫЕ ответы: локальные плюс то, что уже лежит на
+  // сервере. По локальным он запирал человека снаружи: на новом телефоне или
+  // после переустановки их нет, гейт требовал псевдоним заново, а сервер
+  // отвечал «занят» — этим же человеком. Выйти из такого можно было только
+  // выйдя из аккаунта.
+  const { mergedAnswers: resumeAnswers, hydrated: resumeHydrated } = useResume();
   const needsNickname = resumeHydrated && !isValidNickname(resumeAnswers.nickname);
   const downloads = useDownloads();
   const [authWaitElapsed, setAuthWaitElapsed] = useState(false);

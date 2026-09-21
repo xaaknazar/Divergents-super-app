@@ -141,9 +141,21 @@ export function useResume() {
     return ok;
   }, [user]);
 
-  const submit = useCallback(async () => {
+  /**
+   * Отправить анкету на Talentslab.
+   *
+   * `patch` — поля, которые ТОЛЬКО ЧТО ввели и которых ещё нет в состоянии.
+   * Это не удобство, а исправление: `setField` обновляет состояние к
+   * следующему рендеру, а `submit` из этого же обработчика читает прежнее
+   * замыкание. Гейт псевдонима именно так и отправлял анкету БЕЗ псевдонима:
+   * человек проходил гейт, у себя видел ник, а остальные — старое ФИО.
+   *
+   * Берём ответы из рефа, а не из замыкания, по той же причине.
+   */
+  const submit = useCallback(async (patch?: ResumeAnswers) => {
     setSubmitting(true);
     try {
+      const answers = patch ? { ...answersRef.current, ...patch } : answersRef.current;
       saveJSON(KEY, answers);
       const ok = await send(answers);
       // The Talentslab profile is cached on-device; drop it so the next read
@@ -165,7 +177,7 @@ export function useResume() {
       return ok;
     } catch { saveJSON(PENDING, true); return false; }
     finally { setSubmitting(false); }
-  }, [answers, send, user]);
+  }, [send, user]);
 
   // #4: if a previous submit failed, re-send once on mount (background, silent).
   const resentRef = useRef(false);

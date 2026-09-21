@@ -174,8 +174,15 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   // прыгать между датчиком и прикидкой.
   const measured = session.active && session.steps !== null;
   const steps = measured ? (session.steps as number) : distanceToSteps(distanceM, type);
+  // Флаг ставится ДО await: `savedRef` заполняется только после сохранения, а
+  // между нажатием и ответом трекера успевает пройти второй тап — и тренировка
+  // сохранялась дважды, причём вторая пустышкой на 0,00 км: сессия к тому
+  // моменту уже очищена.
+  const finishingRef = useRef(false);
+
   const finish = async () => {
-    if (savedRef.current) return;
+    if (savedRef.current || finishingRef.current) return;
+    finishingRef.current = true;
     const result = await tracker.finish();
     setDone(true);
     const trustSensor = result.steps !== null && stepsPlausible(result.steps, result.distanceM);

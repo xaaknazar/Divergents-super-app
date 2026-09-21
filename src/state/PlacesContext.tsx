@@ -21,6 +21,8 @@ interface PlacesState {
   reloadPlaces: () => void;
   getPlace: (id: string) => Place | undefined;
   addPlace: (p: Omit<Place, 'id' | 'reviews' | 'rating'> & { reviews?: Review[] }) => string;
+  /** Место ушло на сервер: привязать локальную копию к серверному id. */
+  markPublished: (localId: string, serverId: string) => void;
   updatePlace: (id: string, patch: Partial<Place>) => void;
   addReview: (placeId: string, r: Omit<Review, 'id' | 'date'>) => void;
   favs: string[];
@@ -87,32 +89,34 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     (async () => { try { const token = await getTokenRef.current(); if (token) await updateMyLocation(token, c, ci); } catch {} })();
   }, []);
 
+  /**
+   * Локальная копия места. НА СЕРВЕР ОТСЮДА НЕ ОТПРАВЛЯЕТСЯ.
+   *
+   * Раньше отправлялось — и экран добавления отправлял ещё раз, уже с
+   * загруженным фото. В итоге каждое место публиковалось ДВАЖДЫ: одна карточка
+   * с нормальной картинкой, вторая с локальным путём `file:///var/mobile/…`,
+   * который не откроется ни у кого. Это видно в боевых данных: все места
+   * задвоены попарно.
+   *
+   * Публикует экран (AddPlaceScreen): только он знает, загрузилось ли фото, и
+   * только он может честно сказать человеку, ушло место на модерацию или нет.
+   */
   const addPlace: PlacesState['addPlace'] = useCallback((p) => {
     const id = `u_${Date.now()}`;
     const place: Place = { ...p, id, reviews: p.reviews ?? [] } as Place;
     setUserPlaces((prev) => { const n = [place, ...prev]; saveJSON('dvg.userPlaces', n); return n; });
-    // Publish to the server so every user sees the marker (not just this device).
-    // Best-effort: the local copy stays as an offline fallback; on success we
-    // reload so the shared server copy replaces it (deduped below by name+coords).
-    (async () => {
-      try {
-        const token = await getToken();
-        const { approved: _a, reviews: _r, id: _id, ...body } = place as any;
-        const serverId = await postPlace(body, token);
-        if (serverId) {
-          // Помечаем локальную копию id с сервера: по нему дубль скрывается
-          // надёжно, даже если место потом переименуют.
-          setUserPlaces((prev) => {
-            const n = prev.map((x) => (x.id === id ? { ...x, serverId } : x));
-            saveJSON('dvg.userPlaces', n);
-            return n;
-          });
-          reloadPlaces();
-        }
-      } catch {}
-    })();
     return id;
-  }, [getToken, reloadPlaces]);
+  }, []);
+
+  /** Пометить локальную копию идентификатором с сервера — чтобы скрыть дубль. */
+  const markPublished = useCallback((localId: string, serverId: string) => {
+    setUserPlaces((prev) => {
+      const n = prev.map((x) => (x.id === localId ? { ...x, serverId } : x));
+      saveJSON('dvg.userPlaces', n);
+      return n;
+    });
+    reloadPlaces();
+  }, [reloadPlaces]);
 
   const updatePlace = useCallback((id: string, patch: Partial<Place>) => {
     let target: Place | undefined;
@@ -156,6 +160,8 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
       saveJSON('dvg.placeReviews', n);
       return n;
     });
+    // Отправляем ОДИН раз — здесь. Экран раньше слал второй запрос следом, и
+    // отзыв уходил дважды: две строки и двойной вес в средней оценке места.
     (async () => {
       let ok = false;
       try { const token = await getToken(); ok = await postReview(placeId, { rating: r.rating, text: r.text }, token); } catch {}
@@ -192,9 +198,9 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<PlacesState>(() => ({
     country, city, locManual, setLocation, places, placesLoading, placesError, reloadPlaces,
     getPlace: (id) => places.find((p) => p.id === id),
-    addPlace, updatePlace, addReview,
+    addPlace, markPublished, updatePlace, addReview,
     favs, isFav: (id) => favs.includes(id), toggleFav,
-  }), [country, city, locManual, setLocation, places, placesLoading, placesError, reloadPlaces, addPlace, updatePlace, addReview, favs, toggleFav]);
+  }), [country, city, locManual, setLocation, places, placesLoading, placesError, reloadPlaces, addPlace, markPublished, updatePlace, addReview, favs, toggleFav]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

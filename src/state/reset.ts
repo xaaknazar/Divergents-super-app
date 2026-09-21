@@ -5,6 +5,7 @@
 //   - dvg.onboarded   (onboarding completed — don't re-onboard)
 //   - dvg.lang        (language preference)
 //   - dvg.themeMode / dvg.accent / dvg.background (appearance)
+import * as Notifications from 'expo-notifications';
 import { deleteAsync, documentDirectory } from 'expo-file-system/legacy';
 import { clearKeys } from './persist';
 import { resetDownloadsState } from './downloads';
@@ -12,7 +13,9 @@ import { resetAiChatState } from './aiChat';
 
 // Every user-scoped persisted key in the app. Grep the codebase for "dvg." to
 // keep this in sync when new persisted state is added.
-export const USER_DATA_KEYS: string[] = [
+export // Окно итогов показывается один раз на устройство — отметка личная.
+const USER_DATA_KEYS: string[] = [
+  'dvg.challengeResultsSeen.v1',
   // LMS
   'dvg.completed',          // CourseContext — chapter completion / progress
   'dvg.enrollments',        // EnrollmentContext — owned/enrolled courses
@@ -71,6 +74,15 @@ const USER_DATA_DIRS: string[] = [
  * Individual key failures are swallowed by clearKeys.
  */
 export async function clearAllAppData(): Promise<void> {
+  // Снимаем ВСЕ запланированные локальные уведомления.
+  //
+  // Напоминания программ тренировок планирует система, а их идентификаторы
+  // лежат в ключе `dvg.fitness.v1`, который мы стираем строкой ниже. То есть
+  // после выхода напоминания продолжали приходить каждый день — с названием
+  // чужой программы в заголовке, — и отменить их из приложения было уже
+  // нечем: id стёрты вместе с данными. Отменяем ДО стирания ключей.
+  try { await Notifications.cancelAllScheduledNotificationsAsync(); } catch {}
+
   // Stop active audio downloads and clear the module-level registry first, so
   // no in-flight task can repopulate state while its files are being removed.
   await resetDownloadsState();
