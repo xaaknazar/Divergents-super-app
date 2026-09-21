@@ -629,6 +629,14 @@ export interface PostResult {
   status: number;
   /** Причина из тела ответа: 'full' | 'closed' | 'no-token' | … */
   reason?: string;
+  /**
+   * Человеческий текст отказа от сервера.
+   *
+   * Без него экран создания показывал одну и ту же фразу на всё подряд —
+   * «сервер отклонил запрос, публиковать могут только кураторы», — и человек
+   * с правами не мог понять, что на самом деле не заполнено поле.
+   */
+  message?: string;
   /** Для reason === 'full': вместимость и сколько уже занято. */
   spots?: number;
   taken?: number;
@@ -652,6 +660,7 @@ async function requestAuthed(method: 'POST' | 'DELETE', path: string, token: str
       return {
         ok: false, status: res.status,
         reason: typeof data?.reason === 'string' ? data.reason : undefined,
+        message: typeof data?.message === 'string' ? data.message : undefined,
         spots: typeof data?.spots === 'number' ? data.spots : undefined,
         taken: typeof data?.taken === 'number' ? data.taken : undefined,
         capacity: typeof data?.capacity === 'number' ? data.capacity : undefined,
@@ -698,11 +707,18 @@ async function postAuthed(path: string, token: string | null, body: any): Promis
   return (await requestAuthed('POST', path, token, body)).ok;
 }
 
-export const createChallenge = (token: string | null, data: any) => postAuthed('/api/mobile/challenges', token, data);
-export const createTrip = (token: string | null, data: any) => postAuthed('/api/mobile/trips', token, data);
+/**
+ * Создание контента сообщества. Возвращает ПОЛНЫЙ результат, а не «да/нет»:
+ * экран показывает причину отказа словами сервера.
+ */
+const createAuthed = (path: string) => (token: string | null, data: any): Promise<PostResult> =>
+  requestAuthed('POST', path, token, data);
+
+export const createChallenge = createAuthed('/api/mobile/challenges');
+export const createTrip = createAuthed('/api/mobile/trips');
 /** Мероприятие — встреча сообщества (на сервере Meetup). */
-export const createMeetup = (token: string | null, data: any) => postAuthed('/api/mobile/meetups', token, data);
-export const createChannel = (token: string | null, data: any) => postAuthed('/api/mobile/channels', token, data);
+export const createMeetup = createAuthed('/api/mobile/meetups');
+export const createChannel = createAuthed('/api/mobile/channels');
 
 export interface LiveTrip { id: string; title: string; region?: string | null; date?: string | null; days: number; price?: string | null; spots: number; difficulty?: string | null; description?: string | null; meetPlace?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
 
@@ -940,7 +956,7 @@ export async function fetchMySport(token: string | null): Promise<MyEnrollment[]
 export async function fetchLiveSport(): Promise<LiveSport[]> {
   try { const r = await timedFetch(`${API_BASE}/api/mobile/sport`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sport) ? d.sport : []; } catch { return []; }
 }
-export const createSport = (token: string | null, data: any) => postAuthed('/api/mobile/sport', token, data);
+export const createSport = createAuthed('/api/mobile/sport');
 export const joinSport = (token: string | null, id: string): Promise<PostResult> =>
   requestAuthed('POST', `/api/mobile/sport/${encodeURIComponent(id)}/join`, token, {});
 // Отмена участия. Без неё «отмена» жила только в телефоне: строка оставалась

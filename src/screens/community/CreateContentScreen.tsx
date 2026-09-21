@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { PrimaryButton, Segmented } from '../../components/ui';
-import { createChallenge, createTrip, createChannel, createSport, createMeetup, uploadFile } from '../../data/api';
+import { createChallenge, createTrip, createChannel, createSport, createMeetup, uploadFile, PostResult } from '../../data/api';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import MapView, { Marker } from 'react-native-maps';
@@ -104,6 +104,10 @@ export function CreateContentScreen({ navigation }: Props) {
     setBusy(true);
     let success = false;
     let failed = false;
+    // Текст отказа от сервера. Пусто — значит сервер не объяснил, и тогда
+    // показываем общую фразу.
+    let denied: string | null = null;
+    let res: PostResult | null = null;
     try {
       const token = await getToken();
       // Время встречи у офлайн-события обязательно: по нему оно само уходит из
@@ -123,15 +127,21 @@ export function CreateContentScreen({ navigation }: Props) {
         if (durationDays < 14) { setBusy(false); Alert.alert('Слишком короткий челлендж', 'Минимальная длительность — 14 дней.'); return; }
         const teamsPayload = chTeams.filter((t) => t.name.trim()).map((t) => ({ name: t.name.trim(), capacity: Number(t.capacity) || 30, captainEmail: t.captainEmail.trim() || undefined }));
         if (teamsPayload.length === 0) { setBusy(false); Alert.alert('Добавьте хотя бы одну команду'); return; }
-        success = await createChallenge(token, { title: title.trim(), startISO, durationDays, price: price.trim() || null, teams: teamsPayload });
+        res = await createChallenge(token, { title: title.trim(), startISO, durationDays, price: price.trim() || null, teams: teamsPayload });
       } else if (kind === 'trip') {
-        success = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null, meetPlace: meetPlace.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
+        res = await createTrip(token, { title: title.trim(), region: region.trim() || null, date: date.trim() || null, days: Number(days) || 1, price: price.trim() || null, spots: Number(spots) || 0, difficulty: difficulty.trim() || null, description: desc.trim() || null, meetPlace: meetPlace.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
       } else if (kind === 'sport') {
-        success = await createSport(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
+        res = await createSport(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null });
       } else if (kind === 'meetup') {
-        success = await createMeetup(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, price: price.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null, imageUrl: avatar || null });
+        res = await createMeetup(token, { title: title.trim(), place: place.trim() || null, date: date.trim() || null, price: price.trim() || null, spots: Number(spots) || 0, description: desc.trim() || null, meetLat: meetCoord?.latitude ?? null, meetLng: meetCoord?.longitude ?? null, meetAt: meetAt.trim() || null, imageUrl: avatar || null });
       } else {
-        success = await createChannel(token, { name: title.trim(), access, price: access === 'paid' ? price.trim() || null : null, bio: bio.trim() || null, avatarUrl: avatar || undefined });
+        res = await createChannel(token, { name: title.trim(), access, price: access === 'paid' ? price.trim() || null : null, bio: bio.trim() || null, avatarUrl: avatar || undefined });
+      }
+      success = res?.ok === true;
+      if (res && !res.ok) {
+        // Сети не было вовсе — это не отказ сервера, и говорить о правах нельзя.
+        if (res.status === 0) failed = true;
+        else denied = res.message ?? null;
       }
     } catch {
       // Сеть/токен упали до ответа сервера — это не «нет прав», говорим прямо.
@@ -144,7 +154,8 @@ export function CreateContentScreen({ navigation }: Props) {
     // like it "didn't appear".
     if (success) Alert.alert('Создано', 'Опубликовано и доступно в приложении.', [{ text: 'Готово', onPress: () => navigation.navigate('CommunityHome', { refresh: Date.now(), focus: kind }) }]);
     else if (failed) Alert.alert('Не удалось создать', 'Нет связи с сервером. Проверьте подключение к интернету и попробуйте снова.');
-    else Alert.alert('Не удалось создать', 'Сервер отклонил запрос. Проверьте подключение — публиковать могут только кураторы сообщества.');
+    else if (denied) Alert.alert('Не удалось создать', denied);
+    else Alert.alert('Не удалось создать', 'Сервер отклонил запрос. Попробуйте ещё раз.');
   };
 
   const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
