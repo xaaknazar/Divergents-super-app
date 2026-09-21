@@ -20,7 +20,7 @@ const config: ExpoConfig = {
     bundleIdentifier: 'kz.divergents.app',
     // Pinned so a LOCAL build (eas build --local) produces an explicit number
     // instead of asking the EAS server. Bump this for every new TestFlight upload.
-    buildNumber: '79',
+    buildNumber: '80',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       // audio    — урок продолжает звучать после сворачивания приложения.

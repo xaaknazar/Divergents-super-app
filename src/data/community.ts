@@ -2010,6 +2010,17 @@ export interface ResultsTeamRow {
   isMine: boolean;
 }
 
+/** Дни одного участника команды в итогах. */
+export interface ResultsMemberDays {
+  id: string;
+  name: string;
+  avatar: string | null;
+  isMe: boolean;
+  eliminated: boolean;
+  left: boolean;
+  days: MemberDay[];
+}
+
 export interface ChallengeResults {
   challenge: {
     id: string;
@@ -2027,6 +2038,13 @@ export interface ChallengeResults {
   team: { id: string; name: string; points: number; rank: number; members: number; pages: number; steps: number; sugarDays: number; isWinner: boolean } | null;
   teams: ResultsTeamRow[];
   podium: ResultsPodiumRow[];
+  /**
+   * Всё то, что после финиша больше неоткуда взять: живого челленджа нет, а
+   * экраны «Общий рейтинг» и «Дни челленджа» читали именно его.
+   */
+  overall: OverallStanding[];
+  myDays: ChallengeDay[];
+  teamDays: ResultsMemberDays[];
 }
 
 /**
@@ -2107,6 +2125,33 @@ export async function fetchChallengeResults(
         members: numOf(t?.members),
         isMine: t?.isMine === true,
       })),
+      overall: (Array.isArray(d.overall) ? d.overall : []).map((r: any): OverallStanding => ({
+        id: strOf(r?.id),
+        name: strOf(r?.name, 'Участник'),
+        avatar: typeof r?.avatar === 'string' && r.avatar.trim() ? r.avatar.trim() : null,
+        teamId: r?.teamId ?? null,
+        teamName: strOf(r?.teamName),
+        points: numOf(r?.points),
+        day: numOf(r?.day),
+        flags: flagsOf(r?.flags),
+        eliminated: r?.eliminated === true,
+        left: r?.left === true,
+        award: r?.award === true,
+        isMe: r?.isMe === true,
+        rank: numOf(r?.rank),
+      })).filter((r: OverallStanding) => r.id),
+      myDays: (Array.isArray(d.myDays) ? d.myDays : [])
+        .map((x: any): ChallengeDay => ({ ...mapDay(x), dateISO: strOf(x?.dateISO) }))
+        .filter((x: ChallengeDay) => x.day > 0),
+      teamDays: (Array.isArray(d.teamDays) ? d.teamDays : []).map((m: any): ResultsMemberDays => ({
+        id: strOf(m?.id),
+        name: strOf(m?.name, 'Участник'),
+        avatar: typeof m?.avatar === 'string' && m.avatar.trim() ? m.avatar.trim() : null,
+        isMe: m?.isMe === true,
+        eliminated: m?.eliminated === true,
+        left: m?.left === true,
+        days: (Array.isArray(m?.days) ? m.days : []).map(mapDay).filter((x: MemberDay) => x.day > 0),
+      })).filter((m: ResultsMemberDays) => m.id),
       podium: (Array.isArray(d.podium) ? d.podium : []).map((m: any) => ({
         userId: strOf(m?.userId),
         name: strOf(m?.name, 'Участник'),

@@ -3,7 +3,7 @@
 // Данные приходят тем же ответом, что и трекер (challenge.overall): очки всех
 // участников сервер уже посчитал ради командного зачёта, и второй запрос ради
 // того же результата был бы напрасным. Поэтому экран открывается мгновенно.
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
@@ -17,21 +17,54 @@ import { MemberAvatar } from '../../components/MemberAvatar';
 import { AwardBadge } from '../../components/AwardBadge';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
-import { MEDAL_FOR_RANK, totalFlags, OverallStanding } from '../../data/community';
+import { useAuth } from '@clerk/clerk-expo';
+import { MEDAL_FOR_RANK, totalFlags, fetchChallengeResults, OverallStanding } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'OverallStandings'>;
 
-export function OverallStandingsScreen({ navigation }: Props) {
+export function OverallStandingsScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
   const { challenge } = useChallenge();
-  const all = challenge.overall ?? [];
+  const { getToken, isSignedIn } = useAuth();
+  const challengeId = route.params?.challengeId ?? challenge.id;
+
+  // Живой челлендж или завершённый — экран один.
+  //
+  // Раньше данные брались только из контекста (challenge.overall). После
+  // финиша живого челленджа нет: контекст пуст, и переход сюда из итогов вёл
+  // на пустой экран. Поэтому если в контексте не тот челлендж или список пуст
+  // — дочитываем рейтинг из итогов.
+  const live = challenge.id === challengeId ? challenge.overall ?? [] : [];
+  const [fromResults, setFromResults] = useState<OverallStanding[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (live.length) return;
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const token = isSignedIn ? await getToken() : null;
+        const res = await fetchChallengeResults(challengeId, token);
+        if (alive) setFromResults(res?.overall ?? []);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challengeId, live.length, isSignedIn]);
+
+  const all = live.length ? live : fromResults ?? [];
 
   // Фильтр «только моя команда» — при полутора сотнях участников найти своих
   // в общем списке иначе тяжело.
   const [mineOnly, setMineOnly] = useState(false);
-  const myTeamId = challenge.teamId ?? null;
+  const myTeamId = challenge.id === challengeId
+    ? challenge.teamId ?? null
+    : all.find((r) => r.isMe)?.teamId ?? null;
   const rows = useMemo(
     () => (mineOnly && myTeamId ? all.filter((r) => r.teamId === myTeamId) : all),
     [all, mineOnly, myTeamId],

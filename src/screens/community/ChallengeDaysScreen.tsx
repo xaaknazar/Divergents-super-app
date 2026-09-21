@@ -7,8 +7,8 @@
 //
 // Разбор считает тот же зачёт, что и баллы (challenge-scoring на сервере), а не
 // отдельная формула: экран истории и таблица разойтись не могут.
-import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, Modal, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, Pressable, Modal, ScrollView, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { nums } from '../../theme/tokens';
@@ -20,6 +20,8 @@ import { MemberAvatar } from '../../components/MemberAvatar';
 import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
+import { useAuth } from '@clerk/clerk-expo';
+import { fetchChallengeResults } from '../../data/community';
 import { ChallengeDay, MemberDay, totalFlags, flagsToEliminate } from '../../data/community';
 import { fmtInt } from '../../data/format';
 import { CommunityStackParams } from '../../navigation/types';
@@ -65,6 +67,20 @@ interface TeamDay {
 }
 
 /** Один участник в разборе командного дня. */
+/**
+ * Участник с историей дней. Живой челлендж отдаёт его в таблице, завершённый —
+ * в итогах; поля совпадают по смыслу, поэтому экран их не различает.
+ */
+interface DaysMember {
+  id: string;
+  name: string;
+  avatar?: string | null;
+  isMe?: boolean;
+  eliminated?: boolean;
+  left?: boolean;
+  days?: MemberDay[];
+}
+
 interface TeamDayRow {
   id: string;
   name: string;
@@ -76,10 +92,37 @@ interface TeamDayRow {
   d: MemberDay | undefined;
 }
 
-export function ChallengeDaysScreen({ navigation }: Props) {
+export function ChallengeDaysScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
   const { challenge, leaderboard } = useChallenge();
-  const myDays = challenge.myDays ?? [];
+  const { getToken, isSignedIn } = useAuth();
+  const challengeId = route.params?.challengeId ?? challenge.id;
+
+  // Живой челлендж или завершённый — экран один.
+  //
+  // История по дням жила в контексте живого челленджа. После финиша контекст
+  // пуст, и переход сюда из итогов показывал пустой календарь. Поэтому если в
+  // контексте не тот челлендж — дочитываем дни из итогов.
+  const isLive = challenge.id === challengeId;
+  const [past, setPast] = useState<{ myDays: ChallengeDay[]; team: DaysMember[] } | null>(null);
+
+  useEffect(() => {
+    if (isLive) return;
+    let alive = true;
+    (async () => {
+      const token = isSignedIn ? await getToken() : null;
+      const res = await fetchChallengeResults(challengeId, token);
+      if (!alive || !res) return;
+      setPast({ myDays: res.myDays, team: res.teamDays });
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challengeId, isLive, isSignedIn]);
+
+  const myDays = isLive ? challenge.myDays ?? [] : past?.myDays ?? [];
+  // У живого челленджа состав берётся из таблицы, у завершённого — из итогов.
+  // Поля совпадают по смыслу, поэтому дальше экран не различает эти два случая.
+  const members: DaysMember[] = isLive ? leaderboard : past?.team ?? [];
   const maxFlags = flagsToEliminate(challenge.rules);
 
   // Дата дня — общая для всех, поэтому она приходит один раз, в своей истории,
@@ -93,8 +136,8 @@ export function ChallengeDaysScreen({ navigation }: Props) {
   // одному участнику: на старом сервере вкладку прятать честнее, чем показывать
   // пустой календарь и оставлять человека гадать, что сломалось.
   const teamHasDays = useMemo(
-    () => leaderboard.some((m) => (m.days?.length ?? 0) > 0),
-    [leaderboard],
+    () => members.some((m) => (m.days?.length ?? 0) > 0),
+    [members],
   );
 
   const [scope, setScope] = useState<0 | 1>(0);
@@ -107,7 +150,7 @@ export function ChallengeDaysScreen({ navigation }: Props) {
   const teamDays = useMemo<TeamDay[]>(() => {
     if (!teamHasDays) return [];
     const acc = new Map<number, TeamDay>();
-    for (const m of leaderboard) {
+    for (const m of members) {
       for (const d of m.days ?? []) {
         const t = acc.get(d.day) ?? {
           day: d.day, dateISO: dateByDay.get(d.day) ?? '', past: d.past,
@@ -134,7 +177,7 @@ export function ChallengeDaysScreen({ navigation }: Props) {
       }
     }
     return [...acc.values()].sort((a, b) => a.day - b.day);
-  }, [leaderboard, teamHasDays, dateByDay]);
+  }, [members, teamHasDays, dateByDay]);
 
   const myByDay = useMemo(() => new Map(myDays.map((d) => [d.day, d])), [myDays]);
   const teamByDay = useMemo(() => new Map(teamDays.map((d) => [d.day, d])), [teamDays]);
@@ -184,7 +227,7 @@ export function ChallengeDaysScreen({ navigation }: Props) {
     return bad / Math.max(1, t.size) >= 0.5 ? tile('missed') : tile('flagged');
   };
 
-  const rowsForDay = (day: number): TeamDayRow[] => leaderboard
+  const rowsForDay = (day: number): TeamDayRow[] => members
     .map((m) => ({
       id: m.id,
       name: m.name,
@@ -233,7 +276,13 @@ export function ChallengeDaysScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        {shownDays.length === 0 ? (
+        {shownDays.length === 0 && !isLive && !past ? (
+          // Итоги завершённого челленджа ещё грузятся. Показать «история пуста»
+          // здесь было бы неправдой: история есть, её просто ещё не принесли.
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            <ActivityIndicator color={T.brand} />
+          </View>
+        ) : shownDays.length === 0 ? (
           <EmptyState
             icon="calendar"
             title={tr('История пока пуста')}
