@@ -25,6 +25,35 @@ export interface ResumeData {
   work_experience?: any[]; total_experience_years?: number | null; job_satisfaction?: number | null;
   desired_position?: string | null; desired_positions?: string[]; activity_sphere?: string | null;
   awards?: any[]; expected_salary?: string | null; employer_requirements?: string | null; family?: string[];
+  /** Вузы/опыт/языки/награды строками — для формы приложения (сервер TalentsLab ≥ 2026-09). */
+  resume_lines?: Partial<Record<ResumeListKey, string[]>>;
+}
+
+/**
+ * Поля анкеты, которые сайт хранит массивами объектов (вузы с городом и годом,
+ * опыт с задачами, языки с уровнем), а приложение редактирует строками.
+ * Сервер отдаёт их строками в `resume.resume_lines` и при сохранении сливает
+ * строки с объектами, не теряя поля сайта. Источник правды — сервер.
+ */
+export const RESUME_LIST_KEYS = ['universities', 'work_experience', 'language_skills', 'awards'] as const;
+export type ResumeListKey = typeof RESUME_LIST_KEYS[number];
+
+/** Значения для формы: `tags` — массив строк, остальное — многострочный текст. */
+export function resumeListValues(
+  resume: ResumeData | null | undefined,
+  typeOf: (key: string) => string | undefined,
+): Partial<Record<ResumeListKey, string | string[]>> {
+  const out: Partial<Record<ResumeListKey, string | string[]>> = {};
+  const lines = resume?.resume_lines;
+  if (!lines || typeof lines !== 'object') return out;
+  for (const k of RESUME_LIST_KEYS) {
+    const v = (lines as any)[k];
+    if (!Array.isArray(v)) continue;
+    const strs = v.filter((x: unknown): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim());
+    if (!strs.length) continue;
+    out[k] = typeOf(k) === 'tags' ? strs : strs.join('\n');
+  }
+  return out;
 }
 
 export interface TalentProfile {

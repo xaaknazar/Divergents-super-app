@@ -10,13 +10,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
 import { emitProfileChanged, onProfileChanged } from './profileBus';
-import { submitResume, getTalentslabToken, ResumeAnswers, effectiveResumeCompleteness } from '../data/talentslab';
+import { submitResume, getTalentslabToken, ResumeAnswers, effectiveResumeCompleteness, resumeListValues } from '../data/talentslab';
 import { REQUIRED_KEYS, RESUME_STEPS } from '../data/resumeSchema';
 import { useTalentProfile } from './useTalentProfile';
 
 const KEY = 'dvg.resume';
 const PENDING = 'dvg.resumePending';
 const ALL_KEYS = RESUME_STEPS.flatMap((s) => s.fields.map((f) => f.key));
+const FIELD_TYPE: Record<string, string> = Object.fromEntries(
+  RESUME_STEPS.flatMap((s) => s.fields.map((f) => [f.key, f.type] as [string, string])),
+);
 
 const isEmpty = (v: any) => v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
 
@@ -75,18 +78,27 @@ export function useResume() {
     if (!live || !profile?.resume) return;
     profileHydrated.current = true;
     const src: any = profile.resume;
-    setAnswers((p) => {
-      const next = { ...p };
-      for (const k of ALL_KEYS) {
-        if (!isEmpty(next[k])) continue;
-        const v = src[k];
-        if (isEmpty(v)) continue;
-        if (Array.isArray(v)) { const strs = v.filter((x) => typeof x === 'string'); if (strs.length) next[k] = strs; continue; }
-        if (typeof v === 'object') continue;
-        next[k] = v;
-      }
-      saveJSON(KEY, next);
-      return next;
+    // Вузы, опыт, языки, награды: берём с СЕРВЕРА, даже если локально что-то
+    // есть. Сайт хранит их структурно и мог обновить их после того, как здесь
+    // сохранили старый текст; отправив устаревший текст, приложение удалило
+    // бы записи, добавленные на сайте. Исключение — неотправленные локальные
+    // правки (dvg.resumePending): их не трогаем, они уйдут на сервер.
+    const lists = resumeListValues(src, (k) => FIELD_TYPE[k]);
+    loadJSON<boolean>(PENDING, false).then((pending) => {
+      setAnswers((p) => {
+        const next = { ...p };
+        if (!pending) Object.assign(next, lists);
+        for (const k of ALL_KEYS) {
+          if (!isEmpty(next[k])) continue;
+          const v = src[k];
+          if (isEmpty(v)) continue;
+          if (Array.isArray(v)) { const strs = v.filter((x) => typeof x === 'string'); if (strs.length) next[k] = strs; continue; }
+          if (typeof v === 'object') continue;
+          next[k] = v;
+        }
+        saveJSON(KEY, next);
+        return next;
+      });
     });
   }, [hydrated, live, profile]);
 
