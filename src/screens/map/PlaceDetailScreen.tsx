@@ -8,6 +8,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
+import { AwardBadge } from '../../components/AwardBadge';
 import { Capsule, PrimaryButton } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { NavHeader } from '../../components/NavHeader';
@@ -227,7 +228,10 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               {visibleReviews.map((rev) => (
                 <View key={rev.id} style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
+                      <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
+                      {rev.award ? <AwardBadge size={14} /> : null}
+                    </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{rev.date}</Text>
                       <Pressable onPress={() => moderateReview(rev)} accessibilityRole="button" accessibilityLabel={tr('Пожаловаться или заблокировать')}

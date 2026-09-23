@@ -15,6 +15,7 @@ import { nums } from '../../theme/tokens';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
+import { AwardBadge } from '../../components/AwardBadge';
 import { Capsule, ListSection, Segmented } from '../../components/ui';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { EmptyState } from '../../components/StateViews';
@@ -79,6 +80,7 @@ interface DaysMember {
   isMe?: boolean;
   eliminated?: boolean;
   left?: boolean;
+  award?: boolean;
   days?: MemberDay[];
 }
 
@@ -90,6 +92,7 @@ interface TeamDayRow {
   /** Вышел по белому флагу 🏳️ — нормы этого дня с него уже не спрашиваются. */
   left?: boolean;
   isMe?: boolean;
+  award?: boolean;
   d: MemberDay | undefined;
 }
 
@@ -247,6 +250,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
       eliminated: m.eliminated,
       left: m.left,
       isMe: m.isMe,
+      award: m.award,
       d: (m.days ?? []).find((x) => x.day === day),
     }))
     // Проблемы сверху: капитан открывает этот список, чтобы найти, кому
@@ -708,9 +712,12 @@ function MemberDayRow({ r, past, last }: { r: TeamDayRow; past: boolean; last: b
           <MemberAvatar name={r.name} avatar={r.avatar} size={34} eliminated={r.eliminated} left={left} />
 
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[ty.subheadEm, { color: r.isMe ? T.brand : T.label }]} numberOfLines={1}>
-              {r.name}{r.isMe ? ` · ${tr('вы')}` : ''}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Text style={[ty.subheadEm, { color: r.isMe ? T.brand : T.label, flexShrink: 1 }]} numberOfLines={1}>
+                {r.name}{r.isMe ? ` · ${tr('вы')}` : ''}
+              </Text>
+              {r.award ? <AwardBadge size={14} /> : null}
+            </View>
             {left || !showStats ? (
               <Text style={[ty.caption1, { color: missed ? T.redText : T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
                 {/* У выбывшего зачёт заморожен — дней после вылета у него просто

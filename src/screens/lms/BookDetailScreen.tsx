@@ -9,6 +9,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
 import { BackNav, HeaderIcon } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
+import { AwardBadge } from '../../components/AwardBadge';
 import { ErrorState, ListSkeleton } from '../../components/StateViews';
 import { imgUrl } from '../../data/api';
 import { fetchBook, postBookComment, updateBookComment, deleteBookComment, rateBook, setBookShelf, BookDetailResponse, BookComment, ShelfStatus } from '../../data/books';
@@ -323,7 +324,10 @@ export function BookDetailScreen({ route, navigation }: Props) {
           ) : comments.map((c: BookComment) => (
             <View key={c.id} style={{ padding: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, marginBottom: 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={2}>{c.author}{c.mine ? ' · вы' : ''}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
+                  <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{c.author}{c.mine ? ' · вы' : ''}</Text>
+                  {c.award ? <AwardBadge size={14} /> : null}
+                </View>
                 <Text style={[ty.caption2, { color: T.labelTertiary }]}>{fmtDate(c.date)}</Text>
               </View>
               <Text style={[ty.body, { color: T.labelSecondary, marginTop: 6 }]}>{c.content}</Text>

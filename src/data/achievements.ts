@@ -1,8 +1,11 @@
 // Achievements / badges — earned from course completion and challenge progress.
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@clerk/clerk-expo';
 import { useCourses } from '../state/CourseContext';
 import { useMyCourses } from '../state/useMyCourses';
 import { useChallenge } from '../state/ChallengeContext';
+import { fetchMyChallengeHistory, ChallengeHistoryItem } from './community';
+import { challengeStats } from './achievementStats';
 
 export type Metric =
   | 'lessonsDone' | 'coursesDone' | 'coursesOwned' | 'challengeDay' | 'challengeJoined' | 'challengeFinished' | 'rankTop3';
@@ -50,11 +53,33 @@ export function computeAchievements(s: AchievementStats): EarnedBadge[] {
   });
 }
 
+/** История моих челленджей — одна загрузка на экран. */
+function useChallengeHistory(): ChallengeHistoryItem[] {
+  const { isSignedIn, getToken } = useAuth();
+  const [history, setHistory] = useState<ChallengeHistoryItem[]>([]);
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
+  useEffect(() => {
+    let alive = true;
+    if (!isSignedIn) { setHistory([]); return; }
+    (async () => {
+      try {
+        const token = await getTokenRef.current();
+        const list = await fetchMyChallengeHistory(token);
+        if (alive) setHistory(list);
+      } catch { /* нет сети — считаем по активному челленджу, как раньше */ }
+    })();
+    return () => { alive = false; };
+  }, [isSignedIn]);
+  return history;
+}
+
 // Live hook: pulls real progress from the app's contexts.
 export function useAchievements() {
   const { courses, completedCount, progress } = useCourses();
   const my = useMyCourses();
   const { challenge, myRank } = useChallenge();
+  const history = useChallengeHistory();
 
   return useMemo(() => {
     const lessonsDone = courses.reduce((sum, c) => sum + completedCount(c.id), 0);
@@ -62,16 +87,16 @@ export function useAchievements() {
     const ownedDone = my.courses.filter((c) => (c.serverProgress ?? 0) >= 100).length;
     const coursesDone = Math.max(localDone, ownedDone);
     const coursesOwned = my.courses.length;
-    const challengeDay = challenge?.currentDay ?? 0;
-    const totalDays = challenge?.totalDays ?? 0;
-    const challengeFinished = totalDays > 0 && challengeDay >= totalDays ? 1 : 0;
-    const challengeJoined = challengeDay > 0 ? 1 : 0;
-    const rankTop3 = myRank > 0 && myRank <= 3 ? 1 : 0;
+    const { challengeDay, challengeFinished, challengeJoined, rankTop3 } = challengeStats(history, {
+      currentDay: challenge?.currentDay ?? 0,
+      totalDays: challenge?.totalDays ?? 0,
+      myRank,
+    });
 
     const badges = computeAchievements({
       lessonsDone, coursesDone, coursesOwned, challengeDay, challengeFinished, challengeJoined, rankTop3,
     });
     const earned = badges.filter((b) => b.earned).length;
     return { badges, earned, total: badges.length };
-  }, [courses, my.courses, challenge, myRank, completedCount, progress]);
+  }, [courses, my.courses, challenge, myRank, history, completedCount, progress]);
 }

@@ -34,7 +34,7 @@ export const TAG_META: Record<PlaceTag, { label: string; icon: SFName }> = {
 };
 export const TAGS = Object.keys(TAG_META) as PlaceTag[];
 
-export interface Review { id: string; author: string; rating: number; text: string; date: string; mine?: boolean }
+export interface Review { id: string; author: string; rating: number; text: string; date: string; mine?: boolean; /** Кубок за 1 место в челлендже. */ award?: boolean }
 
 export interface Place {
   id: string;
@@ -118,7 +118,7 @@ export function citiesOf(country: string): City[] {
 
 // ─── Live places API ──────────────────────────────────────────────────────
 // Real, admin-published places fetched from the website. No local seed data.
-interface ApiReview { id?: string; author?: string; rating?: number; text?: string; date?: string; mine?: boolean }
+interface ApiReview { id?: string; author?: string; rating?: number; text?: string; date?: string; mine?: boolean; award?: boolean }
 interface ApiPlace {
   id?: string; name?: string; category?: string; country?: string; city?: string;
   lat?: number; lng?: number; tags?: string[]; highlights?: string; hours?: string;
@@ -152,6 +152,7 @@ function mapReview(r: ApiReview, i: number): Review {
     text: String(r.text ?? ''),
     date: fmtReviewDate(r.date),
     mine: (r as { mine?: boolean }).mine === true,
+    award: r.award === true,
   };
 }
 

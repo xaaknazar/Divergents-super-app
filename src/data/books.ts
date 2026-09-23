@@ -31,6 +31,8 @@ export interface BookComment {
   pinned: boolean;
   likes: number;
   author: string;
+  /** Кубок за 1 место в челлендже — рядом с ником. */
+  award?: boolean;
   mine: boolean;
   date: string;
 }
