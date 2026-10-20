@@ -1,61 +1,59 @@
-import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
+// «Предстоящие поездки» (в макете — EventCard variant="plain" kind="trip"): мятная
+// карточка с силуэтом гор и солнцем справа, зелёная плашка иконки (горы; палатка —
+// для поездки с ночёвкой), «стеклянные» бейджи, линия над нижней строкой, цена зелёным.
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useTheme } from '../theme/ThemeContext';
-import { useChannel } from '../state/ChannelContext';
-import { tr } from '../state/LanguageContext';
-import { Trip, ChallengeListItem, daysUntil, teamsNeed } from '../data/community';
-import { Channel } from '../data/channel';
-import { imgUrl } from '../data/api';
-import * as pl from '../data/plural';
+import React from 'react';
+import { StyleSheet,Text,View } from 'react-native';
+import { Trip } from '../data/community';
 import { CommunityStackParams } from '../navigation/types';
+import { tr } from '../state/LanguageContext';
+import { useTheme } from '../theme/ThemeContext';
+import { CardMotif } from './CardMotif';
+import { IconTile,iconTileInk } from './IconTile';
 import { SF } from './SFIcon';
 import { StatusBadge } from './StatusBadge';
+import { TappableSurface } from './TappableSurface';
 import { Wrapper } from './Wrapper';
 type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['navigation'];
-const HERO_TEXT_SHADOW = { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 } as const;
 
 export function CommunityTripCard({ trip, navigation }: { trip: Trip; navigation: Nav }) {
-  const { T, ty } = useTheme();
+  const { T, ty, isDark } = useTheme();
   return (
-    <Pressable onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
-      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
-      {trip.imageUrl ? (
-        <View style={{ height: 150 }}>
-          <Image source={imgUrl(trip.imageUrl, 800)} style={{ width: '100%', height: 150 }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-          {trip.date ? <View style={{ position: 'absolute', top: 12, left: 12 }}><StatusBadge label={String((trip.date))} tone="inverse" variant="media" icon="calendar" /></View> : null}
-        </View>
-      ) : (
-        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-          <View style={{ width: 52, height: 52, borderRadius: 15, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="map.fill" size={24} color="#fff" />
+    <Wrapper marginHorizontal={16} marginBottom={14}>
+      <TappableSurface onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
+        accessibilityLabel={[trip.title, trip.date].filter(Boolean).join(', ')}>
+        <CardMotif kind="trip" />
+        <View style={styles.head}>
+          <IconTile icon={trip.days >= 2 ? 'tent.fill' : 'mountain.2.fill'} tone="trip" variant="solid" size="md" />
+          <View style={styles.titles}>
+            <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]} numberOfLines={2}>{trip.title}</Text>
+            {trip.date ? <View style={styles.date}>
+              <SF name="calendar" size={12} color={T.labelSecondary} />
+              <Text style={[ty.footnote, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{trip.date}</Text>
+            </View> : null}
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: '#fff' }, HERO_TEXT_SHADOW]} numberOfLines={2}>{trip.title}</Text>
-            {trip.date ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
-                <SF name="calendar" size={11} color="#fff" />
-                <Text style={[ty.caption1, { color: '#fff' }, HERO_TEXT_SHADOW]} numberOfLines={1}>{trip.date}</Text>
-              </View>
-            ) : null}
+        </View>
+        <View style={styles.body}>
+          <View style={styles.badges}>
+            <StatusBadge label={tr('Офлайн')} tone="warning" icon="person.2.fill" variant="frosted" />
+            {trip.region ? <StatusBadge label={trip.region} tone="neutral" icon="mappin.and.ellipse" variant="frosted" /> : null}
+            {trip.difficulty ? <StatusBadge label={trip.difficulty} tone="neutral" variant="frosted" /> : null}
           </View>
-        </LinearGradient>
-      )}
-      <View style={{ padding: 14 }}>
-        {trip.imageUrl ? <Text style={[ty.headline, { color: T.label, marginBottom: 8 }]} numberOfLines={1}>{trip.title}</Text> : null}
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-          <StatusBadge label={String((tr('Офлайн')))} tone="warning" icon="figure.walk" />
-          {trip.region ? <StatusBadge label={String((trip.region))} tone="neutral" icon="mappin.and.ellipse" /> : null}
-          {trip.difficulty ? <StatusBadge label={String((trip.difficulty))} tone="neutral" /> : null}
+          <View style={[styles.footer, { borderTopColor: isDark ? T.separator : 'rgba(0,0,0,0.07)' }]}>
+            <Text style={[ty.caption1, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{trip.meta}</Text>
+            {trip.price ? <Text style={[ty.subheadEm, { color: iconTileInk('trip', isDark) }]} numberOfLines={1}>{trip.price}</Text> : null}
+          </View>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-          <Text style={[ty.caption1, { color: T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{trip.meta}</Text>
-          <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{trip.price}</Text>
-        </View>
-      </View>
-    </Pressable>
+      </TappableSurface>
+    </Wrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 14, paddingHorizontal: 14 },
+  titles: { flex: 1, minWidth: 0, gap: 3 },
+  date: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  body: { padding: 14 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth },
+});

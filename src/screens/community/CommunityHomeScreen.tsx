@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React,{ useCallback,useEffect,useState } from 'react';
-import { LayoutAnimation,Text,View } from 'react-native';
+import { LayoutAnimation,View } from 'react-native';
 import { CommunityChallenges } from '../../components/CommunityChallenges';
 import { CommunityChannels } from '../../components/CommunityChannels';
 import { CommunityFeed } from '../../components/CommunityFeed';
@@ -10,7 +10,6 @@ import { CommunityMeetups } from '../../components/CommunityMeetups';
 import { CommunitySport } from '../../components/CommunitySport';
 import { CommunityTrips } from '../../components/CommunityTrips';
 import { HeaderIcon,NavBarLarge } from '../../components/headers';
-import { Logo } from '../../components/Logo';
 import { PageIntro } from '../../components/PageIntro';
 import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
 import { ResumeCallout } from '../../components/ResumeCallout';
@@ -57,7 +56,7 @@ const SECTION_FEATURE: Record<number, string> = { 1: 'channels', 3: 'trips', 4: 
 
 export function CommunityHomeScreen({ navigation, route }: Props) {
   const profileButton = useProfileButton();
-  const { T, ty, reduceMotion } = useTheme();
+  const { reduceMotion } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
   const { refresh: refreshEnrollments } = useEnrollment();
@@ -138,22 +137,18 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
   return (
     <Screen largeTitle={tr('Сообщество')} backdrop="community" onRefresh={onRefresh}>
       <PageIntro page="community" />
-      <NavBarLarge title={t('community')} trailing={(
+      <NavBarLarge title={t('community')} subtitle={t('community_tagline')} trailing={(
         <>
           {isSignedIn ? <HeaderIcon name="plus" label="Создать" onPress={() => openCreateSheet(navigation)} /> : null}
           <ProfileAvatarButton {...profileButton} onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
         </>
       )} />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>
-        <Logo size={22} />
-        <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>{t('community_tagline')}</Text>
-      </View>
 
       <View style={{ paddingHorizontal: 16 }}>
         {seg === 2 ? <ResumeCallout area="community" /> : null}
       </View>
 
-      <Wrapper paddingHorizontal={16} paddingBottom={16}>
+      <Wrapper paddingHorizontal={16} paddingTop={6} paddingBottom={16}>
         <SectionTabs items={SECTION_KEYS.map((k, id) => ({ id, label: t(k) })).filter(item => sectionOn(item.id))}
           value={seg} onChange={id => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(id); }} />
       </Wrapper>

@@ -29,7 +29,7 @@ export function CommunityChallenges({ navigation, challenges, error, onRetry }: 
     <>
       <ReadingChallengeShelf items={reading.items} error={reading.error} onRetry={reading.retry} onOpen={challengeId => navigation.navigate('ReadingChallenge', { challengeId })}
         variant={appearance.card} onAppearance={() => navigation.navigate('ReadingAppearance')} />
-      <SectionHeader title={tr('Активные челленджи')} />
+      <SectionHeader title={mine.length + otherActive.length > 1 ? tr('Активные челленджи') : tr('Активный челлендж')} />
       {loading ? <ContentLoading /> : hasActive ? (
         <>
           {mine.map(ch => <ActiveChallengeCard key={ch.id} challengeId={ch.id} navigation={navigation} />)}

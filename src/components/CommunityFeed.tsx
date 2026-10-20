@@ -1,27 +1,26 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React from 'react';
-import { LayoutAnimation,Text,View } from 'react-native';
+import { LayoutAnimation,View } from 'react-native';
 import { ChallengeListItem,SportActivity,Trip } from '../data/community';
 import { CommunityStackParams } from '../navigation/types';
 import { useChannel } from '../state/ChannelContext';
 import { useEnrollment } from '../state/EnrollmentContext';
 import { tr,useLang } from '../state/LanguageContext';
 import { useTheme } from '../theme/ThemeContext';
-import { ActionBlock } from './ActionBlock';
 import { CommunityChallenges } from './CommunityChallenges';
 import { CommunityChannelRow } from './CommunityChannelRow';
+import { CommunitySportCard } from './CommunitySportCard';
 import { CommunityTripCard } from './CommunityTripCard';
 import { ContentEmptyState } from './ContentEmptyState';
 import { ContentLoading } from './ContentLoading';
 import { PersonalActivityCard } from './PersonalActivityCard';
-import { SF } from './SFIcon';
 import { SectionHeader } from './ui';
 import { Wrapper } from './Wrapper';
 
 type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['navigation'];
 export function CommunityFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { t } = useLang();
-  const { T, ty, reduceMotion } = useTheme();
+  const { reduceMotion } = useTheme();
   const { channels, error: channelsError, reload: reloadChannels } = useChannel();
   const { has, ready, statusOf } = useEnrollment();
   // Отклонённых заявок здесь уже нет (сервер их не отдаёт), но заявка на
@@ -49,7 +48,7 @@ export function CommunityFeed({ navigation, setSeg, trips, sport, challenges, er
       <SectionHeader title={t('sec_channels')} action={t('all')} onAction={() => navigation.navigate('Channels')} />
       {channels.length === 0
         ? <ContentEmptyState error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
-        : channels.map((ch) => <CommunityChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
+        : channels.map((ch) => <CommunityChannelRow key={ch.id} channel={ch} navigation={navigation} variant="cover" />)}
 
       <View style={{ marginTop: 18 }}>
         <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
@@ -66,16 +65,9 @@ export function CommunityFeed({ navigation, setSeg, trips, sport, challenges, er
           <ContentEmptyState error={error} onRetry={onRetry} icon="figure.walk" title={tr('Пока ничего нет')} subtitle={tr('Спортивные активности появятся здесь.')} />
         ) : (
           sport.map((sp) => (
-            <Wrapper marginHorizontal={16} marginBottom={14} key={sp.id}><ActionBlock size="compact" accessibilityRole="button" accessibilityLabel={sp.title} onPress={() => navigation.navigate('SportDetail', { sportId: sp.id })}><Wrapper dir={'row'} align={'center'} gap={14}>
-              <View style={{ width: 52, height: 52, borderRadius: 15, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-                <SF name={sp.icon} size={24} color={T.brand} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{sp.title}</Text>
-                <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{sp.place}{sp.date ? ` · ${sp.date}` : ''}</Text>
-              </View>
-              <SF name="chevron.forward" size={14} color={T.labelTertiary} />
-            </Wrapper></ActionBlock></Wrapper>
+            <Wrapper marginHorizontal={16} marginBottom={14} key={sp.id}>
+              <CommunitySportCard activity={sp} onPress={() => navigation.navigate('SportDetail', { sportId: sp.id })} />
+            </Wrapper>
           ))
         )}
       </View>

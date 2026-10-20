@@ -1,57 +1,75 @@
+// Активный челлендж участника на главной «Сообщества» (в макете — CommunityChallengeProgress).
+// Одна синяя карточка-ссылка без полноширинной кнопки: «таблетка» статуса и круглая
+// стрелка сверху, название, участники и команды, полоса дня, три метрики по центру колонок.
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../theme/ThemeContext';
+import { StyleSheet,Text,View } from 'react-native';
+import * as pl from '../data/plural';
 import { tr } from '../state/LanguageContext';
-import { Button } from './Button';
-import { Logo } from './Logo';
-import { StatusBadge } from './StatusBadge';
+import { useTheme } from '../theme/ThemeContext';
+import { FONT,nums } from '../theme/tokens';
+import { CardMotif } from './CardMotif';
+import { SF } from './SFIcon';
+import { TappableSurface } from './TappableSurface';
 
-export function ChallengeProgressSummary({ title, day, totalDays, teamName, teamPoints, pointsToday, rank, teamCount, eliminated, onPress }: {
-  title: string; day: number; totalDays: number; teamName: string; teamPoints: number; pointsToday: number;
+export function ChallengeProgressSummary({ title, day, totalDays, teamName, members, teamPoints, pointsToday, rank, teamCount, eliminated, onPress }: {
+  title: string; day: number; totalDays: number; teamName: string; members: number; teamPoints: number; pointsToday: number;
   rank: number; teamCount: number; eliminated: boolean; onPress: () => void;
 }) {
-
-  const { T, ty } = useTheme();
-  const c = { title, currentDay: day, totalDays, teamName, teamRank: rank, teamCount, eliminated };
-  const open = onPress;
+  const { ty } = useTheme();
+  const progress = totalDays > 0 ? Math.max(0, Math.min(1, day / totalDays)) : 0;
+  const status = eliminated ? tr('Очки зафиксированы') : teamName ? `${tr('Идёт')} · ${tr('команда')} «${teamName}»` : tr('Идёт');
+  const subtitle = [members > 0 ? pl.count(members, 'участник', 'участника', 'участников') : '', teamCount > 0 ? pl.teams(teamCount) : '']
+    .filter(Boolean).join(' · ');
+  // Без разделителя тысяч: в узкой колонке пробел рвал число на две строки.
   const stats = [
-    // «Серия» показывала номер текущего дня: пропустив пять дней, человек всё
-    // равно видел «Серия 12 дн». Настоящей серии в приложении нет — подписываем
-    // честно, номером дня челленджа.
-    { v: `${c.currentDay}/${c.totalDays}`, l: tr('День') },
-    { v: `${teamPoints}`, l: tr('Очки команды') },
-    // Раньше здесь было «место в СВОЕЙ команде / число КОМАНД» — 12 / 6.
-    // Показываем место команды рядом с её же очками.
-    { v: c.teamRank > 0 ? `${c.teamRank} / ${c.teamCount}` : '—', l: tr('Место команды') },
+    { v: String(teamPoints), l: tr('Очки команды') },
+    { v: rank > 0 ? `${rank} ${tr('из')} ${teamCount}` : '—', l: tr('Место команды') },
+    { v: eliminated ? '—' : `+${pointsToday}`, l: tr('Сегодня') },
   ];
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={open} style={{ borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: T.cardBg, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}>
-      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-          <StatusBadge label={String((tr('Активный челлендж')))} tone="inverse" icon="flame.fill" />
-          <StatusBadge label={[(tr('День')), " ", (c.currentDay), "/", (c.totalDays)].join('')} tone="inverse" />
+  return <TappableSurface onPress={onPress} accessibilityLabel={`${title}. ${tr('Открыть челлендж')}`}>
+    <View style={styles.body}>
+      <CardMotif kind="challengeDark" />
+      <View style={styles.top}>
+        <View style={styles.pill}>
+          <SF name="flame.fill" size={12} color="#FFFFFF" />
+          <Text style={[ty.caption2Em, styles.white, styles.shrink]} numberOfLines={1}>{status}</Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
-          <Logo size={22} body="#fff" head="#fff" />
-          <Text style={[ty.title2, { color: '#fff', flex: 1 }]}>{c.title}</Text>
-        </View>
-        <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>{c.teamName ? `${tr('Команда')} «${c.teamName}» · ` : ''}{c.eliminated ? tr('очки зафиксированы') : `${tr('сегодня')} +${pointsToday} pts`}</Text>
-        <View style={{ marginTop: 12, height: 6, borderRadius: 6, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' }}>
-          <View style={{ width: `${(c.totalDays > 0 ? c.currentDay / c.totalDays : 0) * 100}%`, height: '100%', backgroundColor: '#fff', borderRadius: 6, borderCurve: 'continuous' }} />
-        </View>
-      </LinearGradient>
-      <View style={{ flexDirection: 'row', paddingVertical: 14 }}>
-        {stats.map((st, i) => (
-          <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < stats.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>
-            <Text style={[ty.title3, { color: T.label }]}>{st.v}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{st.l}</Text>
-          </View>
-        ))}
+        <View style={styles.arrow}><SF name="arrow.right" size={16} color="#FFFFFF" /></View>
       </View>
-      <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
-        <Button label={tr('Войти в челлендж')} icon="arrow.right" onPress={open} size="compact" />
+      <View style={styles.titles}>
+        <Text accessibilityRole="header" style={[ty.title3, styles.white]} numberOfLines={2}>{title}</Text>
+        {subtitle ? <Text style={[ty.footnote, styles.muted]} numberOfLines={1}>{subtitle}</Text> : null}
       </View>
-    </Pressable>
-  );
+      <View style={styles.progressRow}>
+        <View style={styles.track}><View style={[styles.fill, { width: `${progress * 100}%` }]} /></View>
+        <Text style={[ty.caption1, styles.day, nums]} numberOfLines={1}>{tr('День')} {day}/{totalDays}</Text>
+      </View>
+      <View style={styles.stats}>
+        {stats.map((st, i) => <View key={st.l} style={[styles.stat, i > 0 ? styles.divider : null]}>
+          <Text style={[ty.title3, styles.white, nums]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{st.v}</Text>
+          <Text style={[ty.caption2, styles.label]} numberOfLines={1}>{st.l}</Text>
+        </View>)}
+      </View>
+    </View>
+  </TappableSurface>;
 }
+
+const styles = StyleSheet.create({
+  body: { paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#234088' },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1, paddingVertical: 4, paddingHorizontal: 10,
+    borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.16)' },
+  arrow: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' },
+  titles: { marginTop: 10, gap: 4 },
+  white: { color: '#FFFFFF' },
+  shrink: { flexShrink: 1 },
+  muted: { color: 'rgba(255,255,255,0.78)' },
+  progressRow: { marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  track: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)', overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 2, backgroundColor: '#FFFFFF' },
+  day: { fontFamily: FONT.bold, color: 'rgba(255,255,255,0.85)' },
+  stats: { flexDirection: 'row', marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.14)' },
+  stat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2, paddingHorizontal: 4 },
+  divider: { borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.14)' },
+  label: { color: 'rgba(255,255,255,0.68)', textAlign: 'center' },
+});

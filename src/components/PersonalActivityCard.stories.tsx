@@ -10,3 +10,5 @@ type Story = StoryObj<typeof meta>;
 export const Light: Story = {};
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const YourTrip: Story = { args: { eyebrow: 'Ваша поездка', title: 'Выходные в горах', subtitle: '18 октября · Алматы' } };
+export const SportDark: Story = { args: { icon: 'figure.run', eyebrow: 'Вы записаны', title: 'Утренняя пробежка', subtitle: 'Парк · 13 октября, 07:00' }, parameters: { scheme: 'dark' } };

@@ -1,20 +1,17 @@
-import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Image } from 'expo-image';
+// «Открыт набор» и чужие идущие челленджи: СТАРЫЙ дизайн по решению владельца
+// (handoff 2026-10-20, §5) — синяя шапка и белая часть. От нового: мягкая тень
+// блока-ссылки (TappableSurface) и тонкая линия над нижней строкой.
 import { LinearGradient } from 'expo-linear-gradient';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useTheme } from '../theme/ThemeContext';
-import { useChannel } from '../state/ChannelContext';
-import { tr } from '../state/LanguageContext';
-import { Trip, ChallengeListItem, daysUntil, teamsNeed } from '../data/community';
-import { Channel } from '../data/channel';
-import { imgUrl } from '../data/api';
+import React from 'react';
+import { StyleSheet,Text,View } from 'react-native';
+import { ChallengeListItem,daysUntil,teamsNeed } from '../data/community';
 import * as pl from '../data/plural';
-import { CommunityStackParams } from '../navigation/types';
+import { tr } from '../state/LanguageContext';
+import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
 import { StatusBadge } from './StatusBadge';
+import { TappableSurface } from './TappableSurface';
 import { Wrapper } from './Wrapper';
-type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['navigation'];
 const HERO_TEXT_SHADOW = { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 } as const;
 
 export function CommunityChallengeCard({ ch, onPress }: { ch: ChallengeListItem; onPress: () => void }) {
@@ -27,9 +24,8 @@ export function CommunityChallengeCard({ ch, onPress }: { ch: ChallengeListItem;
     ? `${tr('Старт через')} ${pl.days(left)}${ch.startLabel ? ` · ${ch.startLabel}` : ''}`
     : tr('Старт скоро');
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${ch.title}. ${countdown}`}
-      accessibilityHint={started ? tr('Посмотреть команды, участников и рейтинг челленджа') : undefined}
-      style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.9 : 1, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 })}>
+    <Wrapper marginHorizontal={16} marginBottom={16}><TappableSurface onPress={onPress} accessibilityLabel={`${ch.title}. ${countdown}`}
+      accessibilityHint={started ? tr('Посмотреть команды, участников и рейтинг челленджа') : undefined}>
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
         {/* Darkening overlay → guarantees white text contrast across the gradient */}
         <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
@@ -54,7 +50,7 @@ export function CommunityChallengeCard({ ch, onPress }: { ch: ChallengeListItem;
           <StatusBadge label={String((pl.applications(ch.participants)))} tone="neutral" icon="person.3.fill" />
           <StatusBadge label={[(ch.maxFlags), " 🚩 ", (tr('вылет'))].join('')} tone="danger" />
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+        <View style={[styles.footer, { borderTopColor: T.separator }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
             {started
               ? <SF name="trophy.fill" size={12} color={T.labelSecondary} />
@@ -67,6 +63,10 @@ export function CommunityChallengeCard({ ch, onPress }: { ch: ChallengeListItem;
           </View>
         </View>
       </View>
-    </Pressable>
+    </TappableSurface></Wrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth },
+});

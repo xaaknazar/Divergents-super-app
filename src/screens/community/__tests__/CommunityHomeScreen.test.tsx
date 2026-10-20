@@ -91,7 +91,7 @@ it('opens a running challenge for nonparticipants in the read-only entry flow', 
   expect(view.getByText(active.title)).toBeTruthy();
   expect(view.getByText('Челлендж идёт')).toBeTruthy();
   expect(view.getByText('Рейтинги доступны для просмотра')).toBeTruthy();
-  expect(view.queryByText('Войти в челлендж')).toBeNull();
+  expect(view.queryByRole('button', { name: /Открыть челлендж/ })).toBeNull();
   expect(view.queryByText('Набор открыт')).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: `${active.title}. Челлендж идёт` }));
 
@@ -105,7 +105,7 @@ it('keeps the participant entry once and does not grant access to another runnin
   const view = await render(screen('challenge'));
 
   expect(view.getAllByText(active.title)).toHaveLength(1);
-  await fireEvent.press(view.getByRole('button', { name: 'Войти в челлендж' }));
+  await fireEvent.press(view.getByRole('button', { name: `${active.title}. Открыть челлендж` }));
   expect(navigate).toHaveBeenCalledWith('ChallengeDetail', { challengeId: active.id });
   expect(Alert.alert).not.toHaveBeenCalled();
 
@@ -130,7 +130,7 @@ it('shows both running and upcoming challenges in a nonparticipant’s home feed
   const view = await render(screen());
 
   expect(view.getByText(active.title)).toBeTruthy();
-  expect(view.queryByText('Войти в челлендж')).toBeNull();
+  expect(view.queryByRole('button', { name: /Открыть челлендж/ })).toBeNull();
   expect(view.getByText(upcoming.title)).toBeTruthy();
   await fireEvent.press(view.getByRole('button', { name: `${active.title}. Челлендж идёт` }));
   expect(Alert.alert).not.toHaveBeenCalled();
@@ -147,7 +147,7 @@ it.each([undefined, 'challenge'] as const)('shows both approved active trackers 
   setCatalog([active, otherActive, upcoming]);
   const view = await render(screen(focus));
   for (const challenge of [active, otherActive, upcoming]) expect(view.getAllByText(challenge.title)).toHaveLength(1);
-  const entries = view.getAllByRole('button', { name: 'Войти в челлендж' });
+  const entries = view.getAllByRole('button', { name: /Открыть челлендж$/ });
   expect(entries).toHaveLength(2);
   await fireEvent.press(entries[1]);
   expect(navigate).toHaveBeenLastCalledWith('ChallengeDetail', { challengeId: otherActive.id });
@@ -165,7 +165,7 @@ it('waits for participation to load before showing a running challenge as locked
 
   mockUseChallenge.mockReturnValue({ ...mockUseChallenge(), loading: false, isParticipant: true });
   await view.rerender(screen('challenge'));
-  await fireEvent.press(view.getByRole('button', { name: 'Войти в челлендж' }));
+  await fireEvent.press(view.getByRole('button', { name: `${active.title}. Открыть челлендж` }));
   expect(navigate).toHaveBeenCalledWith('ChallengeDetail', { challengeId: active.id });
   expect(Alert.alert).not.toHaveBeenCalled();
 });
