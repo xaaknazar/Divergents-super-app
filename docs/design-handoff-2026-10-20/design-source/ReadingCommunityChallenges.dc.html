@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Сообщество — Челленджи (Reading)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1130" tab="community" hint-size="390px,1130px">
+  <dc-import name="NavBarLarge" title="Сообщество" subtitle="Челленджи, поездки и встречи" avatar="{{true}}" avatar-href="ProfileHome.dc.html" actions="{{navActions}}" hint-size="100%,81px"></dc-import>
+  <dc-import name="Wrapper" dir="row" scroll="x" gap="8" pad-x="16" pad-top="8" hint-size="100%,56px">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+      <dc-import name="Chip" label="{{t.label}}" active="{{t.active}}" href="{{t.href}}" hint-size="100px,48px"></dc-import>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="20" hint-size="100%,340px">
+    <dc-import name="SectionHeader" title="Reading challenge" action="Оформление" href="#" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,290px">
+      <dc-import name="ReadingChallengeCard" title="&quot;Extreme reading&quot; Challenge" note="Вы участвуете" action="Продолжить чтение" href="ReadingActive.dc.html" hint-size="100%,290px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,260px">
+    <dc-import name="SectionHeader" title="Активный челлендж" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,210px">
+      <dc-import name="CommunityChallengeProgress" title="Divergents challenge: 2 season" subtitle="160 участников · 8 команд" badge="Идёт · команда «KEX group»" day="9" days="15" stats="{{stats}}" cta-label="Открыть челлендж" href="ChallengeDetail.dc.html" hint-size="100%,210px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,260px">
+    <dc-import name="SectionHeader" title="Открыт набор" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,220px">
+      <dc-import name="EventCard" variant="banner" icon="flame" title="Divergents challenge: Teachers version" date="Старт 12 октября" description="Пять команд, 15 дней и общий рейтинг. Заявки открыты." badges="{{openBadges}}" meta="Набор открыт" meta-dot="success" action="Подробнее" action-chevron="{{true}}" href="ChallengeDetail.dc.html" hint-size="100%,220px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1130}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      tabs: [['Главная','CommunityHome.dc.html'],['Каналы','Channels.dc.html'],['Челленджи','ReadingCommunityChallenges.dc.html'],['Поездки','CommunityHome.dc.html'],['Мероприятия','CommunityHome2.dc.html'],['Спорт','CommunityHome.dc.html']].map(function (t) { return { label: t[0], href: t[1], active: t[0] === 'Челленджи' }; }),
+      navActions: [{ icon: 'plus', label: 'Создать', href: 'CreateContent.dc.html' }],
+      stats: [{ value: '860', label: 'Очки команды' }, { value: '2 из 8', label: 'Место команды' }, { value: '+45', label: 'Сегодня' }],
+      openBadges: [{ label: 'Онлайн', icon: 'globe', tone: 'success' }, { label: '15 дней', icon: 'flame', tone: 'brand' }, { label: '12 заявок', icon: 'people', tone: 'neutral' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

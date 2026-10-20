@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Вакансия</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1500" safe-top="{{false}}" hint-size="390px,1500px">
+  <dc-import name="NavHeader" variant="plain" back-label="Карьера" back-href="CareerHome.dc.html" actions="{{headerActions}}" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-y="8" hint-size="100%,116px">
+    <dc-import name="VacancyHero" title="HR бизнес-партнёр" company="Ритейл-группа" city="Алматы" logo-tone="brand" tags="{{heroTags}}" hint-size="100%,100px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="8" gap="6" hint-size="100%,1100px">
+    <dc-import name="Card" size="regular" hint-size="100%,96px">
+      <dc-import name="Text" variant="subhead" text="Ищем человека, который выстроит HR-процессы в растущей сети и станет опорой для руководителей подразделений." hint-size="100%,60px"></dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="Почему вам подходит" hint-size="100%,140px">
+      <dc-import name="Wrapper2" pad="16" gap="10" hint-size="100%,110px">
+        <dc-import name="Text" variant="subhead" tone="secondary" text="Таланты Gallup для роли · совпадений с вашими: 3 из 5" hint-size="100%,40px"></dc-import>
+        <dc-import name="Wrapper3" dir="row" wrap="{{true}}" gap="8" hint-size="100%,52px">
+          <sc-for list="{{matched}}" as="t" hint-placeholder-count="3">
+            <dc-import name="StatusBadge" label="{{t}}" tone="success" icon="check-circle" hint-size="100px,22px"></dc-import>
+          </sc-for>
+          <sc-for list="{{missing}}" as="t" hint-placeholder-count="2">
+            <dc-import name="StatusBadge" label="{{t}}" tone="neutral" hint-size="100px,22px"></dc-import>
+          </sc-for>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="О компании" hint-size="100%,170px">
+      <dc-import name="Wrapper2" pad="16" gap="12" hint-size="100%,140px">
+        <dc-import name="VacancyFact" icon="pin" tone="sky" text="Алматы, [адрес офиса]" hint-size="100%,20px"></dc-import>
+        <dc-import name="VacancyBulletList" label="Ценности" icon="seal-check" tone="warning" items="{{values}}" hint-size="100%,96px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="Условия" hint-size="100%,200px">
+      <dc-import name="Wrapper2" pad="16" gap="12" hint-size="100%,170px">
+        <dc-import name="Text" variant="body" text="График 5/2, оформление по ТК, испытательный срок 3 месяца." hint-size="100%,48px"></dc-import>
+        <dc-import name="VacancyBulletList" label="Преимущества" icon="check-circle" tone="success" items="{{benefits}}" hint-size="100%,96px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="Требования" hint-size="100%,240px">
+      <dc-import name="Wrapper2" pad="16" gap="12" hint-size="100%,210px">
+        <dc-import name="VacancyFact" icon="file-doc" tone="brand" variant="link" text="Примерный Gallup вакансии" hint-size="100%,20px"></dc-import>
+        <dc-import name="Wrapper3" dir="row" wrap="{{true}}" gap="8" hint-size="100%,22px">
+          <dc-import name="StatusBadge" label="Опыт 3-6 лет" tone="neutral" icon="clock-3h" hint-size="100px,22px"></dc-import>
+        </dc-import>
+        <dc-import name="VacancyFact" icon="x-circle" tone="neutral" text="Диплом по специальности: не обязателен" hint-size="100%,20px"></dc-import>
+        <dc-import name="VacancyFact" icon="" text="Смежные сферы: обучение персонала, рекрутинг" caption="Допустимый опыт в смежных сферах, который готов рассматривать работодатель" hint-size="100%,56px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="О вакансии" hint-size="100%,150px">
+      <dc-import name="Wrapper2" pad="16" hint-size="100%,120px">
+        <dc-import name="Text" variant="body" text="Вы будете сопровождать руководителей в вопросах найма, адаптации и развития команды, вести оценку персонала и запускать программы обучения." hint-size="100%,96px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="20" pad-bottom="16" hint-size="100%,86px">
+    <dc-import name="Button" label="Откликнуться" icon="paperplane" variant="solid" tone="brand" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "headerActions": [
+        {
+          "icon": "bookmark",
+          "label": "Сохранить"
+        }
+      ],
+      "heroTags": [
+        {
+          "label": "Гибрид"
+        },
+        {
+          "label": "от 600 000 ₸"
+        },
+        {
+          "label": "3 дня назад"
+        }
+      ],
+      "matched": [
+        "Стратег",
+        "Коммуникация",
+        "Развитие"
+      ],
+      "missing": [
+        "Организатор",
+        "Ответственность"
+      ],
+      "values": [
+        "Забота о клиенте",
+        "Открытость",
+        "Развитие сотрудников"
+      ],
+      "benefits": [
+        "Карьерный рост",
+        "Обучение за счёт компании",
+        "Медицинская страховка"
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

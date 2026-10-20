@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>HistoryChallengeCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<a href="{{href}}" aria-label="{{aria}}" style="{{rootCss}}">
+  <div style="display: flex; align-items: center; gap: 12px; padding: 14px">
+    <span aria-hidden="true" style="{{tileCss}}"><dc-import name="Icon" icon="{{tileIcon}}" variant="solid" size="{{tileIconSize}}" tone="inherit" hint-size="24px,24px"></dc-import></span>
+    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+      <span style="display: flex; align-items: center; gap: 6px; min-width: 0">
+        <dc-import name="Text" variant="headline" text="{{title}}" hint-size="100%,22px"></dc-import>
+        <sc-if value="{{winner}}" hint-placeholder-val="{{false}}"><span role="img" aria-label="Награда за первое место в челлендже" style="display: flex; flex-shrink: 0; color: #8A5D05"><dc-import name="Icon" icon="trophy" variant="solid" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></span></sc-if>
+      </span>
+      <dc-import name="Text" variant="caption1" tone="secondary" text="{{subtitle}}" hint-size="100%,16px"></dc-import>
+    </span>
+    <sc-if value="{{isActive}}" hint-placeholder-val="{{true}}"><dc-import name="StatusBadge" label="{{statusLabel}}" tone="success" hint-size="80px,22px"></dc-import></sc-if>
+    <sc-if value="{{isFinished}}" hint-placeholder-val="{{false}}"><span style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 1px"><span style="{{placeCss}}">{{place}}</span><span style="font-size: 11px; line-height: 14px; font-weight: 500; color: #5C5C60; font-variant-numeric: tabular-nums">{{points}}</span></span></sc-if>
+  </div>
+  <sc-if value="{{hasStats}}" hint-placeholder-val="{{false}}">
+    <span aria-hidden="true" style="display: block; height: 0.5px; background: rgba(60,60,67,0.18); margin-left: 14px"></span>
+    <div style="display: flex; padding: 9px 0">
+      <sc-for list="{{stats}}" as="s" hint-placeholder-count="3"><div style="{{s.css}}"><span style="font-size: 13px; line-height: 18px; font-weight: 700; color: #000000; font-variant-numeric: tabular-nums">{{s.value}}</span><span style="font-size: 11px; line-height: 14px; font-weight: 500; color: #5C5C60; margin-top: 1px; text-align: center">{{s.label}}</span></div></sc-for>
+    </div>
+  </sc-if>
+</a>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Divergents challenge: 1 season"},"subtitle":{"editor":"text","default":"1-й челлендж · Команда «KEX group» · 15 дней · 5 сентября 2026 г."},"status":{"editor":"enum","default":"finished","options":["active","finished"]},"statusLabel":{"editor":"text","default":"Участвую"},"place":{"editor":"text","default":"1 место"},"points":{"editor":"text","default":"650 pts"},"winner":{"editor":"boolean","default":true},"href":{"editor":"text","default":"CommunityHome.dc.html"},"stats":{"editor":null},"$preview":{"width":358,"height":120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var active = p.status === 'active';
+    var winner = !active && !(p.winner === false || p.winner === 'false');
+    var stats = Array.isArray(p.stats) ? p.stats : (active ? [] : [{ value: '420', label: 'страниц' }, { value: '210 000', label: 'шагов' }, { value: '18', label: 'дней без сахара' }]);
+    var title = p.title ?? 'Divergents challenge: 1 season';
+    var place = p.place ?? '1 место';
+    var points = p.points ?? '650 pts';
+    var tile = active ? ['rgba(61,91,219,0.13)', '#234088'] : winner ? ['rgba(240,180,41,0.16)', '#8A5D05'] : ['rgba(118,118,128,0.12)', '#5C5C60'];
+    return {
+      rootCss: ['display: block', 'box-sizing: border-box', 'width: 100%', 'background: #FFFFFF', 'border-radius: 14px', 'overflow: hidden', 'text-decoration: none', 'color: #000000',
+        'border: ' + (winner ? '1px solid #E0A21A' : '0'), F].join('; '),
+      tileCss: 'width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ' + tile[0] + '; color: ' + tile[1],
+      tileIcon: active ? 'flame' : winner ? 'trophy' : 'flag', tileIconSize: winner ? 'xl' : 'md',
+      placeCss: 'font-size: 15px; line-height: 20px; font-weight: 700; font-variant-numeric: tabular-nums; color: ' + (winner ? '#8A5D05' : '#000000'),
+      title: title, subtitle: p.subtitle ?? '1-й челлендж · Команда «KEX group» · 15 дней · 5 сентября 2026 г.',
+      isActive: active, isFinished: !active, winner: winner,
+      statusLabel: p.statusLabel ?? 'Участвую', place: place, points: points,
+      hasStats: stats.length > 0,
+      stats: stats.map(function (s, i) {
+        return { value: s.value, label: s.label, css: 'flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center' + (i < stats.length - 1 ? '; border-right: 0.5px solid rgba(60,60,67,0.18)' : '') };
+      }),
+      href: p.href ?? 'CommunityHome.dc.html',
+      aria: title + '. ' + (active ? (p.statusLabel ?? 'Участвую') : place + ', ' + points)
+    };
+  }
+}
+</script>
+</body>
+</html>

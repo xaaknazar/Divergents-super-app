@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Logo — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="700" safe-top="{{false}}" hint-size="390px,700px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="24" hint-size="100%,640px">
+    <dc-import name="Text" variant="title2" heading="1" text="Logo" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,170px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=color · sm 24 · md 36 · lg 117" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,153px">
+        <dc-import name="Wrapper3" dir="row" gap="32" align="end" hint-size="100%,117px">
+          <dc-import name="Logo" size="sm" hint-size="19px,24px"></dc-import>
+          <dc-import name="Logo" size="md" hint-size="29px,36px"></dc-import>
+          <dc-import name="Logo" size="lg" hint-size="93px,117px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,230px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=white поверх фото (MediaCover overlay=full)" hint-size="100%,18px"></dc-import>
+      <dc-import name="MediaCover" src="/_blob/d2748e25aa43564a123b0f02c16ddc18" aspect="banner" radius="xl" overlay="full" hint-size="100%,180px">
+        <dc-import name="Wrapper3" pad="20" dir="row" gap="24" align="end" hint-size="100%,157px">
+          <dc-import name="Logo" size="sm" variant="white" hint-size="19px,24px"></dc-import>
+          <dc-import name="Logo" size="md" variant="white" hint-size="29px,36px"></dc-import>
+          <dc-import name="Logo" size="lg" variant="white" hint-size="93px,117px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,90px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="в связке с текстом" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="12" fill="last" hint-size="100%,42px">
+        <dc-import name="Logo" size="md" hint-size="29px,36px"></dc-import>
+        <dc-import name="Wrapper4" gap="2" hint-size="100%,42px">
+          <dc-import name="Text" variant="footnote" tone="secondary" text="Привет, Акназар" hint-size="100%,18px"></dc-import>
+          <dc-import name="Text" variant="headline" text="21 курс · non-stop development" hint-size="100%,22px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":700}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

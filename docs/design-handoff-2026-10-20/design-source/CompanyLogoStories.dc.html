@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CompanyLogo — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="560" safe-top="{{false}}" hint-size="390px,560px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,520px">
+    <dc-import name="Text" variant="title2" heading="1" text="CompanyLogo" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=sm · md · lg (muted)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="12" align="center" hint-size="100%,60px">
+        <dc-import name="CompanyLogo" company="IT-компания" tone="indigo" size="sm" hint-size="40px,40px"></dc-import>
+        <dc-import name="CompanyLogo" company="Ритейл-группа" tone="brand" size="md" hint-size="52px,52px"></dc-import>
+        <dc-import name="CompanyLogo" company="Сеть кофеен" tone="success" size="lg" hint-size="60px,60px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=elevated · size=lg" hint-size="100%,18px"></dc-import>
+      <dc-import name="CompanyLogo" company="Ритейл-группа" tone="brand" size="lg" variant="elevated" hint-size="60px,60px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone=brand · success · indigo · purple · orange · teal" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="8" align="center" wrap="{{true}}" hint-size="100%,52px">
+        <dc-import name="CompanyLogo" company="Ритейл" tone="brand" hint-size="52px,52px"></dc-import>
+        <dc-import name="CompanyLogo" company="Сеть кофеен" tone="success" hint-size="52px,52px"></dc-import>
+        <dc-import name="CompanyLogo" company="IT-компания" tone="indigo" hint-size="52px,52px"></dc-import>
+        <dc-import name="CompanyLogo" company="Производство" tone="purple" hint-size="52px,52px"></dc-import>
+        <dc-import name="CompanyLogo" company="Обучение" tone="orange" hint-size="52px,52px"></dc-import>
+        <dc-import name="CompanyLogo" company="Туризм" tone="teal" hint-size="52px,52px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

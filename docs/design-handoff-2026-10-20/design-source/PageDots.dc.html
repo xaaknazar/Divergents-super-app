@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PageDots</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div role="progressbar" aria-label="{{aria}}" aria-valuemin="1" aria-valuemax="{{count}}" aria-valuenow="{{now}}" style="{{rootCss}}"><sc-for list="{{dots}}" as="d" hint-placeholder-count="4"><span style="{{d.css}}"></span></sc-for></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"count":{"editor":"int","default":4,"min":1,"max":10},"index":{"editor":"int","default":1,"min":0,"max":9},"variant":{"editor":"enum","default":"dots","options":["dots","bar"]},"$preview":{"width":120,"height":6}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var count = Math.max(1, Number(p.count || 4));
+    var idx = Math.max(0, Math.min(count - 1, Number(p.index ?? 1)));
+    var bar = p.variant === 'bar';
+    var dots = [];
+    for (var i = 0; i < count; i++) {
+      var css;
+      if (bar) css = 'flex: 1 1 0; height: 4px; border-radius: 2px; background: ' + (i <= idx ? '#234088' : 'rgba(120,120,128,0.16)');
+      else css = 'width: ' + (i === idx ? 22 : 6) + 'px; height: 6px; border-radius: 3px; flex-shrink: 0; background: ' + (i === idx ? '#234088' : 'rgba(120,120,128,0.16)');
+      dots.push({ css: css });
+    }
+    return {
+      dots: dots,
+      count: String(count),
+      now: String(idx + 1),
+      aria: 'Шаг ' + (idx + 1) + ' из ' + count,
+      rootCss: bar ? 'display: flex; align-items: center; gap: 4px; width: 100%' : 'display: flex; align-items: center; justify-content: center; gap: 7px'
+    };
+  }
+}
+</script>
+</body>
+</html>

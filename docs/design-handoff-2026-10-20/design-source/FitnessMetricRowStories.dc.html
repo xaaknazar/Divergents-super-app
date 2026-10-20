@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>FitnessMetricRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="300" safe-top="{{false}}" hint-size="390px,300px">
+<dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,240px">
+  <dc-import name="Text" variant="title2" heading="1" text="FitnessMetricRow" hint-size="100%,28px"></dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="в ListSection" hint-size="100%,18px"></dc-import>
+    <dc-import name="ListSection" header="" hint-size="100%,128px"><dc-import name="FitnessMetricRow" hint-size="100%,64px"></dc-import><dc-import name="FitnessMetricRow" icon="stopwatch" title="Планка" subtitle="последний 150 сек · 4 окт" value="180 сек" separator="{{true}}" hint-size="100%,64px"></dc-import></dc-import>
+  </dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":300}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

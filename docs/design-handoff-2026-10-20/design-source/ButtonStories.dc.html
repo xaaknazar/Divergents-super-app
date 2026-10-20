@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Button — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1620" safe-top="{{false}}" hint-size="390px,1620px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,1586px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">Button</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Кнопка: variant · tone · size · icon · state · href</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,254px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">VARIANT</dc-import>
+<dc-import name="Wrapper3" gap="10"  hint-size="100%,230px">
+<dc-import name="Button" label="Записаться на курс" variant="solid" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+<dc-import name="Button" label="Добавить в избранное" icon="heart" variant="tinted" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+<dc-import name="Button" label="Поделиться" icon="share-network" variant="outline" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+<dc-import name="Button" label="Подробнее" icon="chevron-right" icon-position="end" variant="plain" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,124px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">TONE · SOLID</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,100px">
+<dc-import name="Button" label="Купить" size="compact" tone="brand" hint-size="100px,44px"></dc-import>
+<dc-import name="Button" label="Готово" icon="check" size="compact" tone="success" hint-size="120px,44px"></dc-import>
+<dc-import name="Button" label="Ожидание" icon="clock-3h" size="compact" tone="warning" hint-size="140px,44px"></dc-import>
+<dc-import name="Button" label="Удалить" icon="bin" size="compact" tone="danger" hint-size="130px,44px"></dc-import>
+<dc-import name="Button" label="Отмена" size="compact" tone="neutral" hint-size="110px,44px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,124px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">TONE · TINTED</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,100px">
+<dc-import name="Button" label="Купить" size="compact" variant="tinted" tone="brand" hint-size="100px,44px"></dc-import>
+<dc-import name="Button" label="Готово" icon="check" size="compact" variant="tinted" tone="success" hint-size="120px,44px"></dc-import>
+<dc-import name="Button" label="Ожидание" icon="clock-3h" size="compact" variant="tinted" tone="warning" hint-size="140px,44px"></dc-import>
+<dc-import name="Button" label="Удалить" icon="bin" size="compact" variant="tinted" tone="danger" hint-size="130px,44px"></dc-import>
+<dc-import name="Button" label="Отмена" size="compact" variant="tinted" tone="neutral" hint-size="110px,44px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,124px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">TONE · OUTLINE / PLAIN</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,100px">
+<dc-import name="Button" label="Готово" icon="check" size="compact" variant="outline" tone="success" hint-size="120px,44px"></dc-import>
+<dc-import name="Button" label="Ожидание" size="compact" variant="outline" tone="warning" hint-size="120px,44px"></dc-import>
+<dc-import name="Button" label="Удалить" icon="bin" size="compact" variant="plain" tone="danger" hint-size="130px,44px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,124px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">DANGER · ПОЛНАЯ ШИРИНА · SOLID / TINTED</dc-import>
+<dc-import name="Wrapper3" gap="10" hint-size="100%,110px">
+<dc-import name="Button" label="Удалить аккаунт" icon="bin" tone="danger" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+<dc-import name="Button" label="Покинуть челлендж" tone="danger" variant="tinted" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,194px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">SIZE · COMPACT 44 / REGULAR 50 / LARGE 56</dc-import>
+<dc-import name="Wrapper3" gap="10" align="start" hint-size="100%,170px">
+<dc-import name="Button" label="Компактная" size="compact" hint-size="150px,44px"></dc-import>
+<dc-import name="Button" label="Обычная" size="regular" hint-size="150px,50px"></dc-import>
+<dc-import name="Button" label="Крупная" size="large" hint-size="150px,56px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,74px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">ICON POSITION</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,50px">
+<dc-import name="Button" label="Назад" icon="arrow-left" variant="tinted" hint-size="130px,50px"></dc-import>
+<dc-import name="Button" label="Далее" icon="arrow-right" icon-position="end" hint-size="130px,50px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,134px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">STATE · DISABLED / LOADING</dc-import>
+<dc-import name="Wrapper3" gap="10"  hint-size="100%,110px">
+<dc-import name="Button" label="Отправить анкету" full-width="{{true}}" disabled="{{true}}" hint-size="100%,50px"></dc-import>
+<dc-import name="Button" label="Сохраняем…" full-width="{{true}}" loading="{{true}}" hint-size="100%,50px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,74px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">LINK · href → &lt;a&gt;</dc-import>
+<dc-import name="Button" label="Открыть курс" icon="play-circle" variant="solid" full-width="{{true}}" href="CourseDetail.dc.html" hint-size="100%,50px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1620}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

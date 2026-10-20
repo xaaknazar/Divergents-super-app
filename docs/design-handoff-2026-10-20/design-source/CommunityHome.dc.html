@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Сообщество — главная</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1880" tab="community" hint-size="390px,1880px">
+  <dc-import name="NavBarLarge" title="Сообщество" subtitle="Челленджи, поездки и встречи" avatar="{{true}}" avatar-href="ProfileHome.dc.html" actions="{{navActions}}" hint-size="100%,81px"></dc-import>
+  <dc-import name="Wrapper" dir="row" scroll="x" gap="8" pad-x="16" pad-top="8" hint-size="100%,56px">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+      <dc-import name="Chip" label="{{t.label}}" active="{{t.active}}" href="{{t.href}}" hint-size="100px,48px"></dc-import>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="20" hint-size="100%,260px">
+    <dc-import name="SectionHeader" title="Активный челлендж" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,210px">
+      <dc-import name="CommunityChallengeProgress" title="{{active.title}}" subtitle="{{active.subtitle}}" badge="Идёт · команда «KEX group»" day="{{active.day}}" days="{{active.days}}" stats="{{active.stats}}" cta-label="Открыть челлендж" href="ChallengeDetail.dc.html" hint-size="100%,210px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,260px">
+    <dc-import name="SectionHeader" title="Открыт набор" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,220px">
+      <dc-import name="EventCard" variant="banner" icon="flame" title="{{open.title}}" date="{{open.date}}" description="{{open.description}}" badges="{{open.badges}}" meta="Набор открыт" meta-dot="success" action="Подробнее" action-chevron="{{true}}" href="ChallengeDetail.dc.html" hint-size="100%,220px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,108px">
+    <dc-import name="SectionHeader" title="Мои активности" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,68px">
+      <dc-import name="CommunityActivityCard" icon="map" eyebrow="Ваша поездка" title="Выходные в горах" meta="18 октября · Алматы" href="TripDetail.dc.html" hint-size="100%,68px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,136px">
+    <dc-import name="SectionHeader" title="Каналы" action="Все" href="Channels.dc.html" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,96px">
+      <dc-import name="ChannelCard" variant="cover" title="{{channel.title}}" description="{{channel.description}}" src="{{channel.src}}" posts="{{channel.posts}}" access="{{channel.access}}" verified="{{true}}" href="ServerChannel.dc.html" hint-size="100%,96px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,400px">
+    <dc-import name="SectionHeader" title="Предстоящие поездки" action="Все" href="CommunityHome.dc.html" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" gap="12" hint-size="100%,350px">
+      <sc-for list="{{trips}}" as="t" hint-placeholder-count="2">
+        <dc-import name="EventCard" variant="plain" kind="trip" icon="{{t.icon}}" title="{{t.title}}" date="{{t.date}}" badges="{{t.badges}}" meta="{{t.meta}}" action="{{t.price}}" href="TripDetail.dc.html" hint-size="100%,170px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,220px">
+    <dc-import name="SectionHeader" title="Спорт" action="Все" href="CommunityHome.dc.html" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" gap="12" hint-size="100%,170px">
+      <sc-for list="{{sport}}" as="s" hint-placeholder-count="2">
+        <dc-import name="EventRow" variant="card" kind="sport" icon="{{s.icon}}" title="{{s.title}}" meta="{{s.meta}}" href="SportDetail.dc.html" hint-size="100%,80px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var TABS = [['Главная', 'CommunityHome.dc.html'], ['Каналы', 'Channels.dc.html'], ['Челленджи', 'CommunityHome.dc.html'], ['Поездки', 'CommunityHome.dc.html'], ['Мероприятия', 'CommunityHome2.dc.html'], ['Спорт', 'CommunityHome.dc.html']];
+    var tabs = TABS.map(function (t) { return { label: t[0], href: t[1], active: t[0] === 'Главная' }; });
+    var navActions = [{ icon: 'plus', label: 'Создать', href: 'CreateContent.dc.html' }];
+
+    return {
+      tabs: tabs, navActions: navActions,
+      active: { title: 'Divergents challenge: 2 season', subtitle: '160 участников · 8 команд', day: 9, days: 15,
+        stats: [{ value: '860', label: 'Очки команды' }, { value: '2 из 8', label: 'Место команды' }, { value: '+45', label: 'Сегодня' }] },
+      open: { title: 'Divergents challenge: Teachers version', date: 'Старт 12 октября', description: 'Пять команд, 15 дней и общий рейтинг. Заявки открыты.',
+        badges: [{ label: 'Онлайн', icon: 'globe', tone: 'success' }, { label: '15 дней', icon: 'flame', tone: 'brand' }, { label: '12 заявок', icon: 'people', tone: 'neutral' }, { label: '3 вылет', icon: 'flag', tone: 'danger' }] },
+      channel: { title: 'Danday Amokachi', description: 'Про развитие', src: '/_blob/f528fbb80d712d453cd5785a9e1e06f6', posts: '191', access: 'Открытый' },
+      trips: [
+        { variant: 'cover', icon: 'mountains', title: 'Выходные в горах', date: '18 октября', meta: 'Лёгкий маршрут · 1 день', price: 'Бесплатно',
+          badges: [{ label: 'Офлайн', icon: 'people', tone: 'warning' }, { label: 'Алматы', icon: 'pin', tone: 'neutral' }, { label: 'Начальный', icon: '', tone: 'neutral' }] },
+        { variant: 'banner', icon: 'tent', title: 'Кольсай и Каинды', date: '1 ноября', meta: 'Алматинская область · 2 дня', price: 'Бесплатно',
+          badges: [{ label: 'Офлайн', icon: 'people', tone: 'warning' }, { label: 'Алматинская область', icon: 'pin', tone: 'neutral' }, { label: 'Средняя', icon: '', tone: 'neutral' }] }
+      ],
+      sport: [
+        { icon: 'person-running', title: 'Утренняя пробежка', meta: 'Парк · 13 октября, 07:00' },
+        { icon: 'ball-soccer', title: 'Футбол по субботам', meta: 'Манеж, Алматы · 18 октября, 10:00' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

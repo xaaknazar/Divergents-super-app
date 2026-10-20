@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AuthField</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: column; width: 100%; min-width: 0; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <label for="{{uid}}" style="{{labelCss}}">{{label}}</label>
+  <div style="{{boxCss}}">
+    <sc-if value="{{hasIcon}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></span></sc-if>
+    <input id="{{uid}}" type="{{type}}" value="{{val}}" placeholder="{{placeholder}}" maxlength="{{maxLength}}" onChange="{{onInput}}" aria-invalid="{{invalid}}" aria-describedby="{{msgId}}" style="flex: 1; min-width: 0; min-height: 38px; margin: 0; border: 0; background: transparent; font: inherit; font-size: 17px; letter-spacing: -0.2px; color: #000000; outline: none; padding: 6px 0">
+    <sc-if value="{{showCounter}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="flex-shrink: 0; font-size: 13px; line-height: 18px; color: #6B6B70; font-variant-numeric: tabular-nums">{{counter}}</span></sc-if>
+    <sc-if value="{{showClear}}" hint-placeholder-val="{{true}}"><button type="button" aria-label="{{clearLabel}}" onClick="{{clear}}" style="width: 48px; height: 48px; flex-shrink: 0; border: 0; padding: 0; margin: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><dc-import name="Icon" icon="x-circle" variant="solid" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></button></sc-if>
+  </div>
+  <sc-if value="{{hasMessage}}" hint-placeholder-val="{{false}}">
+    <div style="display: flex; align-items: flex-start; gap: 6px; margin: 8px 0 0 2px">
+      <sc-if value="{{hasStatusIcon}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="display: flex; flex-shrink: 0; margin-top: 2px"><dc-import name="Icon" icon="{{statusIcon}}" variant="solid" size="xs" tone="{{statusTone}}" hint-size="12px,12px"></dc-import></span></sc-if>
+      <p id="{{msgId}}" aria-live="polite" style="{{messageCss}}">{{message}}</p>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Почта"},"value":{"editor":"text","default":"aknazar@example.com"},"placeholder":{"editor":"text","default":"you@example.com"},"type":{"editor":"enum","default":"email","options":["text","email","tel","number"]},"icon":{"editor":"enum","default":"envelope","options":["","envelope","person","phone","lock-locked","magnifying-glass"]},"clearable":{"editor":"boolean","default":true},"variant":{"editor":"enum","default":"filled","options":["filled","white"]},"status":{"editor":"enum","default":"none","options":["none","success","error","info"]},"message":{"editor":"text","default":""},"maxLength":{"editor":"int","default":0,"min":0,"max":200},"counter":{"editor":"boolean","default":false},"$preview":{"width":322,"height":80}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var p = this.props;
+    if (!this._uid) this._uid = 'af-' + Math.random().toString(36).slice(2, 9);
+    var demo = p.label === undefined && p.value === undefined;
+    var variant = p.variant || 'filled';
+    var filled = variant !== 'white';
+    var val = this.state && this.state.v !== undefined ? this.state.v : (p.value ?? (demo ? 'aknazar@example.com' : ''));
+    var status = p.status || 'none';
+    var S = { success: ['check-circle', 'success', '#187A32'], error: ['exclamation-circle', 'danger', '#C5221F'], info: ['text-i-circle', 'secondary', '#5C5C60'] };
+    var st = S[status] || null;
+    var icon = p.icon !== undefined ? p.icon : (filled ? 'envelope' : '');
+    var clearable = p.clearable === undefined ? filled : !!p.clearable;
+    var label = p.label ?? 'Почта';
+    var maxLength = Number(p.maxLength || 0);
+    var types = { text: 1, email: 1, tel: 1, number: 1 };
+    var border = status === 'error' ? '#C5221F' : 'transparent';
+    return {
+      uid: this._uid, msgId: this._uid + '-msg',
+      label: label,
+      labelCss: 'display: block; margin: 0 0 7px 2px; font-size: 11px; line-height: 14px; font-weight: 700; color: #5C5C60; text-transform: uppercase; letter-spacing: 0.5px',
+      // filled = grey field for white surfaces; white = white field for grouped (#F2F2F7) surfaces; no outline unless error
+      boxCss: 'display: flex; align-items: center; gap: 10px; border-radius: 14px; padding: 8px 0 8px ' + (icon ? 12 : 16) + 'px; min-height: 54px; box-sizing: border-box; background: ' + (filled ? 'rgba(118,118,128,0.12)' : '#FFFFFF') + '; border: 1.5px solid ' + border + (clearable && val ? '' : '; padding-right: 16px'),
+      icon: icon, hasIcon: !!icon,
+      type: types[p.type] ? p.type : (filled ? 'email' : 'text'),
+      val: val,
+      placeholder: p.placeholder ?? (demo ? 'you@example.com' : ''),
+      maxLength: maxLength > 0 ? String(maxLength) : '524288',
+      showCounter: !!p.counter && maxLength > 0, counter: String(val).length + '/' + maxLength,
+      onInput: function (e) { self.setState({ v: e.target.value }); },
+      clear: function () { self.setState({ v: '' }); },
+      showClear: clearable && !!val,
+      clearLabel: 'Очистить поле «' + label + '»',
+      invalid: status === 'error' ? 'true' : 'false',
+      message: p.message || '', hasMessage: !!p.message,
+      hasStatusIcon: !!st, statusIcon: st ? st[0] : 'check-circle', statusTone: st ? st[1] : 'secondary',
+      messageCss: 'flex: 1; margin: 0; font-size: 12px; line-height: 16px; color: ' + (st ? st[2] : '#5C5C60')
+    };
+  }
+}
+</script>
+</body>
+</html>

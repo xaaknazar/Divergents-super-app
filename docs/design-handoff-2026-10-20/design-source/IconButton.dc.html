@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>IconButton</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<sc-if value="{{isLink}}" hint-placeholder-val="{{false}}"><a href="{{href}}" aria-label="{{aria}}" style="{{css}}"><dc-import name="Icon" icon="{{icon}}" size="{{iconSize}}" tone="inherit" hint-size="20px,20px"></dc-import><sc-if value="{{hasBadge}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{badgeCss}}">{{badgeText}}</span></sc-if></a></sc-if><sc-if value="{{isButton}}" hint-placeholder-val="{{true}}"><button type="button" aria-label="{{aria}}" style="{{css}}"><dc-import name="Icon" icon="{{icon}}" size="{{iconSize}}" tone="inherit" hint-size="20px,20px"></dc-import><sc-if value="{{hasBadge}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{badgeCss}}">{{badgeText}}</span></sc-if></button></sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"icon":{"editor":"enum","default":"bell","options":["arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"label":{"editor":"text","default":"Уведомления"},"variant":{"editor":"enum","default":"plain","options":["plain","tinted","floating","primary","overlayDark","overlayLight"]},"size":{"editor":"enum","default":"md","options":["md","sm"]},"tone":{"editor":"enum","default":"brand","options":["brand","danger","neutral"]},"badge":{"editor":"int","default":0,"min":0,"max":999},"href":{"editor":"text","default":""},"$preview":{"width":48,"height":48}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var tone = (p.tone === 'danger' || p.tone === 'neutral') ? p.tone : 'brand';
+    // [background, ink, border, shadow] per variant × tone; brand = original look
+    var T = {
+      brand: {
+        plain: ['transparent', '#234088', '0', 'none'],
+        tinted: ['rgba(61,91,219,0.13)', '#234088', '0', 'none'],
+        floating: ['#FFFFFF', '#234088', '0.5px solid rgba(0,0,0,0.08)', '0 2px 8px rgba(0,0,0,0.10)'],
+        primary: ['#234088', '#FFFFFF', '0', '0 4px 9px rgba(35,64,136,0.22)'],
+        overlayDark: ['rgba(0,0,0,0.42)', '#FFFFFF', '0.5px solid rgba(255,255,255,0.18)', '0 1px 4px rgba(0,0,0,0.18)'],
+        overlayLight: ['rgba(255,255,255,0.82)', '#1C1C1E', '0.5px solid rgba(0,0,0,0.10)', '0 1px 4px rgba(0,0,0,0.18)']
+      },
+      danger: {
+        plain: ['transparent', '#C5221F', '0', 'none'],
+        tinted: ['rgba(255,59,48,0.12)', '#C5221F', '0', 'none'],
+        floating: ['#FFFFFF', '#C5221F', '0.5px solid rgba(0,0,0,0.08)', '0 2px 8px rgba(0,0,0,0.10)'],
+        primary: ['#D70015', '#FFFFFF', '0', '0 4px 9px rgba(215,0,21,0.22)'],
+        overlayDark: ['rgba(0,0,0,0.42)', '#FF6961', '0.5px solid rgba(255,255,255,0.18)', '0 1px 4px rgba(0,0,0,0.18)'],
+        overlayLight: ['rgba(255,255,255,0.82)', '#C5221F', '0.5px solid rgba(0,0,0,0.10)', '0 1px 4px rgba(0,0,0,0.18)']
+      },
+      neutral: {
+        plain: ['transparent', '#3C3C43', '0', 'none'],
+        tinted: ['rgba(118,118,128,0.12)', '#1C1C1E', '0', 'none'],
+        floating: ['#FFFFFF', '#1C1C1E', '0.5px solid rgba(0,0,0,0.08)', '0 2px 8px rgba(0,0,0,0.10)'],
+        primary: ['#5C5C60', '#FFFFFF', '0', '0 4px 9px rgba(92,92,96,0.22)'],
+        overlayDark: ['rgba(0,0,0,0.42)', '#FFFFFF', '0.5px solid rgba(255,255,255,0.18)', '0 1px 4px rgba(0,0,0,0.18)'],
+        overlayLight: ['rgba(255,255,255,0.82)', '#1C1C1E', '0.5px solid rgba(0,0,0,0.10)', '0 1px 4px rgba(0,0,0,0.18)']
+      }
+    };
+    var V = T[tone];
+    var variant = V[p.variant] ? p.variant : 'plain';
+    var v = V[variant];
+    var sm = p.size === 'sm';
+    var box = sm ? 36 : 48;
+    var badge = Number(p.badge || 0);
+    var label = p.label || 'Уведомления';
+    var css = [
+      'position: relative', 'display: inline-flex', 'align-items: center', 'justify-content: center', 'flex-shrink: 0',
+      'width: ' + box + 'px', 'height: ' + box + 'px', 'box-sizing: border-box', 'border-radius: 50%', 'padding: 0', 'margin: 0',
+      'background: ' + v[0], 'color: ' + v[1], 'border: ' + v[2], 'box-shadow: ' + v[3], 'text-decoration: none', 'cursor: pointer', F
+    ].join('; ');
+    var pos = variant === 'plain' ? (sm ? 'top: 1px; right: 1px' : 'top: 6px; right: 6px') : 'top: -4px; right: -6px';
+    var badgeCss = [
+      'position: absolute', pos, 'min-width: 16px', 'height: 16px', 'padding: 0 4px', 'box-sizing: border-box', 'border-radius: 8px',
+      'background: #234088', 'color: #FFFFFF', 'box-shadow: 0 0 0 1.5px #FFFFFF', 'font-size: 11px', 'line-height: 16px', 'font-weight: 700',
+      'text-align: center', 'white-space: nowrap'
+    ].join('; ');
+    return {
+      css: css, badgeCss: badgeCss,
+      icon: p.icon || 'bell',
+      iconSize: sm ? 'sm' : 'md',
+      aria: badge > 0 ? label + '. ' + badge : label,
+      hasBadge: badge > 0,
+      badgeText: badge > 99 ? '99+' : String(badge),
+      href: p.href || '',
+      isLink: !!p.href,
+      isButton: !p.href
+    };
+  }
+}
+</script>
+</body>
+</html>

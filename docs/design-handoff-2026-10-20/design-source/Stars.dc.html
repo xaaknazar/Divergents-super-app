@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Stars</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<span role="img" aria-label="{{aria}}" style="{{rootCss}}"><span style="{{starsCss}}"><sc-for list="{{stars}}" as="s" hint-placeholder-count="5"><span style="{{s.css}}"><dc-import name="Icon" icon="star" variant="{{s.variant}}" size="{{iconSize}}" tone="inherit" hint-size="16px,16px"></dc-import><sc-if value="{{s.half}}" hint-placeholder-val="{{false}}"><span style="{{halfCss}}"><dc-import name="Icon" icon="star-half" variant="solid" size="{{iconSize}}" tone="inherit" hint-size="16px,16px"></dc-import></span></sc-if></span></sc-for></span><sc-if value="{{showValue}}" hint-placeholder-val="{{true}}"><span style="{{valueCss}}">{{valueText}}</span></sc-if><sc-if value="{{hasCount}}" hint-placeholder-val="{{false}}"><span style="{{countCss}}">{{countText}}</span></sc-if></span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"value":{"editor":"float","default":4.5,"min":0,"max":5,"step":0.5},"size":{"editor":"enum","default":"md","options":["sm","md","lg"]},"showValue":{"editor":"boolean","default":true},"count":{"editor":"int","default":0,"min":0,"max":100000},"$preview":{"width":140,"height":24}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var GOLD = '#F5A623';
+    var S = { sm: ['xs', 2, 12, 16], md: ['sm', 2, 13, 18], lg: ['lg', 4, 17, 22] };
+    var s = S[p.size] || S.md;
+    var raw = Number(p.value);
+    if (!isFinite(raw)) raw = 4.5;
+    var v = Math.max(0, Math.min(5, Math.round(raw * 2) / 2));
+    var count = Number(p.count || 0);
+    var n = count % 100, n1 = count % 10;
+    var word = (n > 10 && n < 20) ? 'оценок' : n1 === 1 ? 'оценка' : (n1 >= 2 && n1 <= 4) ? 'оценки' : 'оценок';
+    var valueText = v.toFixed(1).replace('.', ',');
+    var stars = [1, 2, 3, 4, 5].map(function (i) {
+      var full = i <= v;
+      var half = !full && i - 0.5 === v;
+      return { variant: full ? 'solid' : 'line', half: half, css: 'position: relative; display: flex; color: ' + (full ? GOLD : '#6B6B70') };
+    });
+    return {
+      stars: stars,
+      iconSize: s[0],
+      aria: 'Рейтинг ' + valueText + ' из 5' + (count ? ', ' + count + ' ' + word : ''),
+      showValue: p.showValue !== false,
+      hasCount: count > 0,
+      valueText: valueText,
+      countText: count + ' ' + word,
+      rootCss: 'display: inline-flex; align-items: center; gap: 6px; ' + F,
+      starsCss: 'display: flex; align-items: center; gap: ' + s[1] + 'px',
+      halfCss: 'position: absolute; top: 0; left: 0; display: flex; color: ' + GOLD,
+      valueCss: 'font-size: ' + s[2] + 'px; line-height: ' + s[3] + 'px; font-weight: 700; color: #000000; font-variant-numeric: tabular-nums',
+      countCss: 'font-size: ' + s[2] + 'px; line-height: ' + s[3] + 'px; font-weight: 400; color: #5C5C60'
+    };
+  }
+}
+</script>
+</body>
+</html>

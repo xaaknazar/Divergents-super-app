@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>SectionHeader</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{isRegular}}" hint-placeholder-val="{{true}}"><div style="flex: 1; min-width: 0"><dc-import name="Text" variant="title3" heading="2" text="{{title}}" hint-size="100%,25px"></dc-import></div></sc-if>
+  <sc-if value="{{isSmall}}" hint-placeholder-val="{{false}}"><h3 style="flex: 1; min-width: 0; margin: 0; font-size: 13px; line-height: 18px; font-weight: 400; color: #5C5C60; text-transform: uppercase; letter-spacing: 0.4px">{{title}}</h3></sc-if>
+  <sc-if value="{{actionLink}}" hint-placeholder-val="{{false}}"><a href="{{href}}" style="{{actionCss}}"><span>{{action}}</span><sc-if value="{{chevron}}" hint-placeholder-val="{{true}}"><dc-import name="Icon" icon="chevron-right" size="xs" tone="brand" hint-size="12px,12px"></dc-import></sc-if></a></sc-if>
+  <sc-if value="{{actionButton}}" hint-placeholder-val="{{false}}"><button type="button" style="{{actionCss}}"><span>{{action}}</span><sc-if value="{{chevron}}" hint-placeholder-val="{{true}}"><dc-import name="Icon" icon="chevron-right" size="xs" tone="brand" hint-size="12px,12px"></dc-import></sc-if></button></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Мои курсы"},"action":{"editor":"text","default":"Все"},"href":{"editor":"text","default":""},"size":{"editor":"enum","default":"regular","options":["regular","small"]},"chevron":{"editor":"boolean","default":true},"$preview":{"width":390,"height":40}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.title === undefined && p.action === undefined;
+    var title = p.title !== undefined && p.title !== null ? p.title : (demo ? 'Мои курсы' : '');
+    var action = p.action !== undefined && p.action !== null ? p.action : (demo ? 'Все' : '');
+    var href = p.href || (demo ? 'LMSHome.dc.html' : '');
+    var small = p.size === 'small';
+    var rootCss = [
+      'display: flex', 'align-items: center', 'justify-content: space-between', 'gap: 8px', 'box-sizing: border-box', 'width: 100%', 'min-width: 0',
+      small ? 'padding: 8px 20px 6px' : 'padding: 4px 20px 8px', small ? 'min-height: 18px' : 'min-height: 28px', 'color: #000000',
+      "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased'
+    ].join('; ');
+    var actionCss = [
+      'display: flex', 'align-items: center', 'gap: 2px', 'flex-shrink: 0', 'min-width: 48px', 'justify-content: flex-end',
+      'padding: 12px 0', 'margin: -12px 0', 'border: 0', 'background: transparent', 'cursor: pointer', 'text-decoration: none',
+      'font-family: inherit', 'color: #234088', 'font-weight: 700',
+      small ? 'font-size: 13px; line-height: 18px' : 'font-size: 15px; line-height: 20px; letter-spacing: -0.1px'
+    ].join('; ');
+    return {
+      rootCss: rootCss, actionCss: actionCss, title: title, action: action, href: href,
+      isRegular: !small, isSmall: small,
+      chevron: !(p.chevron === false || p.chevron === 'false'),
+      actionLink: !!action && !!href, actionButton: !!action && !href
+    };
+  }
+}
+</script>
+</body>
+</html>

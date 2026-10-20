@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Анкета — личные данные</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1960" safe-top="{{false}}" hint-size="390px,1960px">
+  <dc-import name="NavHeader" variant="inline" title="Анкета · 20%" back-label="Закрыть" back-href="CareerHome.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" hint-size="100%,44px">
+    <dc-import name="ResumeStepper" steps="{{steps}}" current="{{0}}" tone="warning" hint-size="100%,44px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" pad-bottom="120" gap="14" hint-size="100%,1700px">
+    <dc-import name="ResumeStepHeader" icon="person" step="{{1}}" total="{{4}}" title="Личные данные" hint-size="100%,40px"></dc-import>
+    <dc-import name="CareerUploadField" label="Фото профиля" action-label="Загрузить фото" hint="JPG, PNG или WebP, до 8 МБ" icon="person-circle" size="lg" hint-size="100%,100px"></dc-import>
+    <dc-import name="TextField" label="Псевдоним" required="{{true}}" value="Aknazar" placeholder="Например: Aknazar" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Фамилия" required="{{true}}" value="" placeholder="Фамилия" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Имя" required="{{true}}" value="Акназар" placeholder="Имя" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Отчество" value="" placeholder="Отчество (если есть)" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Email" required="{{true}}" type="email" value="aknazar@example.com" placeholder="" disabled="{{true}}" helper="Почта подтверждена при входе — изменить её нельзя." hint-size="100%,104px"></dc-import>
+    <dc-import name="TextField" label="Телефон" required="{{true}}" type="tel" value="" placeholder="+7 (777) 123-45-67" hint-size="100%,80px"></dc-import>
+    <dc-import name="CareerChoiceGroup" label="Пол" required="{{true}}" options="{{genders}}" selected="{{genderSel}}" hint-size="100%,76px"></dc-import>
+    <dc-import name="CareerChoiceGroup" label="Семейное положение" required="{{true}}" options="{{marital}}" selected="{{noneSel}}" hint-size="100%,132px"></dc-import>
+    <dc-import name="TextField" label="Дата рождения" required="{{true}}" value="" placeholder="ДД.ММ.ГГГГ" trailing-icon="calendar" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Место рождения" required="{{true}}" value="" placeholder="" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Текущий город" required="{{true}}" value="Алматы" placeholder="" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Гражданство" required="{{true}}" value="Казахстан" placeholder="" hint-size="100%,80px"></dc-import>
+    <dc-import name="CareerChoiceGroup" label="Готов(а) к переезду" options="{{yesno}}" selected="{{noneSel}}" layout="equal" hint-size="100%,76px"></dc-import>
+    <dc-import name="TextField" label="Instagram" value="" placeholder="@username" hint-size="100%,80px"></dc-import>
+  </dc-import>
+  <dc-import name="BottomBar" variant="solid" placement="screen" hint-size="100%,136px">
+    <dc-import name="Wrapper" gap="10" hint-size="100%,78px">
+      <dc-import name="Text" variant="footnote" tone="secondary" align="center" text="Осталось заполнить: 5" hint-size="100%,18px"></dc-import>
+      <dc-import name="Button" label="Далее" icon="arrow-right" variant="solid" tone="brand" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "steps": [
+        "Личные данные",
+        "Дополнительно",
+        "Образование и опыт",
+        "Оценки и тесты"
+      ],
+      "genders": [
+        "Мужской",
+        "Женский"
+      ],
+      "genderSel": [
+        0
+      ],
+      "marital": [
+        "Холост/Не замужем",
+        "Женат/Замужем",
+        "Разведен(а)",
+        "Вдовец/Вдова"
+      ],
+      "yesno": [
+        "Да",
+        "Нет"
+      ],
+      "noneSel": []
+    };
+  }
+}
+</script>
+</body>
+</html>

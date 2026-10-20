@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Рейтинг команд</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="900" safe-top="{{false}}" hint-size="390px,900px">
+<dc-import name="NavHeader" variant="inline" title="Рейтинг команд" large-title="{{true}}" subtitle="8 команд · Divergents challenge: 2 season" back-label="Челлендж" back-href="ChallengeDetail.dc.html" hint-size="100%,200px"></dc-import>
+<dc-import name="Wrapper" pad-x="16" pad-top="8" hint-size="100%,600px">
+<dc-import name="ListSection" header="Все команды" footer="Очки команды — сумма баллов всех её участников за челлендж." hint-size="100%,600px">
+<sc-for list="{{teams}}" as="t" hint-placeholder-count="8">
+<dc-import name="StandingRow" variant="team" rank="{{t.rank}}" medal="{{t.medal}}" title="{{t.title}}" subtitle="{{t.subtitle}}" white-flags="{{t.whiteFlags}}" points="{{t.points}}" flags="{{t.flags}}" me="{{t.me}}" me-label="ваша" separator="{{t.separator}}" hint-size="100%,64px"></dc-import>
+</sc-for>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var MED = { 1: 'crown', 2: 'silver', 3: 'bronze' };
+    var t = function (rank, title, out, flags, pts, extra) {
+      var o = { rank: rank, medal: MED[rank] || 'none', title: title, subtitle: '20 человек' + (out ? ' · выбыло ' + out : ''), whiteFlags: 0, flags: flags, points: pts + ' pts', me: false, separator: rank > 1 };
+      for (var k in (extra || {})) o[k] = extra[k];
+      return o;
+    };
+    return {
+      teams: [
+        t(1, 'Divergents team', 0, 3, 2240), t(2, 'KEX group', 1, 7, 2053, { me: true }), t(3, 'Qarasu', 0, 5, 1980),
+        t(4, 'Monolith', 1, 6, 1615, { whiteFlags: 1 }), t(5, 'BS holding', 0, 4, 1540), t(6, 'Avanguard', 1, 8, 1472),
+        t(7, 'Parentes', 0, 5, 1390), t(8, 'Woman club', 2, 6, 1305)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

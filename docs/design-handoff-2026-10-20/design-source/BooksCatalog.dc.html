@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Библиотека книг</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="2920" safe-top="{{false}}" hint-size="390px,2920px">
+  <dc-import name="NavHeader" variant="plain" title="Книги" large-title="{{true}}" subtitle="Библиотека Divergents · 24" back-label="Обучение" back-href="LMSHome.dc.html" hint-size="100%,195px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="4" gap="24" hint-size="100%,470px">
+    <dc-import name="ListSection" header="Моя полка" hint-size="100%,194px">
+      <sc-for list="{{reading}}" as="b" hint-placeholder-count="1">
+        <dc-import name="ListRow" thumb="{{b.image}}" thumb-shape="book" title="{{b.title}}" subtitle="Читаю · {{b.progress}}%" href="BookDetail.dc.html" hint-size="100%,92px"></dc-import>
+      </sc-for>
+      <sc-for list="{{planned}}" as="b" hint-placeholder-count="1">
+        <dc-import name="ListRow" thumb="{{b.image}}" thumb-shape="book" title="{{b.title}}" subtitle="В планах" separator="{{true}}" href="BookDetail.dc.html" hint-size="100%,70px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="ListSection" hint-size="100%,88px">
+      <dc-import name="ListRow" icon="sparkles" icon-tone="brand" title="Спросить ИИ, что почитать" subtitle="Подберёт книги под ваши таланты, психотип и цели" href="BookAI.dc.html" hint-size="100%,88px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="12" hint-size="100%,108px">
+      <dc-import name="SearchField" placeholder="Название или автор" hint-size="100%,48px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" scroll="x" gap="8" hint-size="100%,48px">
+        <sc-for list="{{genres}}" as="g" hint-placeholder-count="5">
+          <dc-import name="Chip" label="{{g.label}}" active="{{g.active}}" hint-size="120px,48px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="28" hint-size="100%,68px">
+    <dc-import name="SectionHeader" title="Все книги" action="По рейтингу" hint-size="100%,40px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="12" pad-bottom="40" cols="3" gap="16" hint-size="100%,2120px">
+    <sc-for list="{{books}}" as="b" hint-placeholder-count="24">
+      <dc-import name="BookCard" variant="compact" title="{{b.title}}" author="{{b.author}}" src="{{b.image}}" status="{{b.status}}" rating="{{b.rating}}" reader-rating="{{b.readerRating}}" reader-count="{{b.readerCount}}" comments="{{b.comments}}" href="BookDetail.dc.html" hint-size="100%,246px"></dc-import>
+    </sc-for>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "genres": [ { "label": "Все", "active": true }, { "label": "Психология", "active": false }, { "label": "Личная эффективность", "active": false }, { "label": "HR", "active": false }, { "label": "Финансы", "active": false } ],
+      "reading": [
+        {
+          "title": "Код таланта. Гениями не рождаются. Ими становятся",
+          "image": "/_blob/ab29d7c214eb7576b59de35205483cdb",
+          "progress": 35
+        }
+      ],
+      "planned": [
+        {
+          "title": "Искусство войны",
+          "image": "/_blob/9ba6c2a15ce2a77ad63ff934f2cb142c"
+        }
+      ],
+      "books": [
+        {
+          "title": "Код таланта. Гениями не рождаются. Ими становятся",
+          "author": "Дэниел Койл",
+          "image": "/_blob/ab29d7c214eb7576b59de35205483cdb",
+          "status": "Читаю",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 3,
+          "comments": 0
+        },
+        {
+          "title": "Принципы изменения мирового порядка. Почему одни нации побеждают, а другие терпят поражение",
+          "author": "Рэй Далио",
+          "image": "/_blob/607942dc4126b74e3732ee1f3840b336",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 2,
+          "comments": 1,
+          "status": ""
+        },
+        {
+          "title": "Структуры разума. Теория множественного интеллекта",
+          "author": "Говард Гарднер",
+          "image": "/_blob/66bb5b6eedf39af0395cba6889d964c1",
+          "rating": "5.0",
+          "readerRating": "3.0",
+          "readerCount": 2,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Профайлинг в действии. Характеристика собеседника за 10 минут",
+          "author": "Людмила Мартьянова",
+          "image": "/_blob/790441ebd13bbfc16c7f7a2c6a9f1721",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Твои железные яйца. Как решительность и настойчивость помогают достичь самых амбициозных целей",
+          "author": "Моника Бордо",
+          "image": "/_blob/bcc1c75940d50ef712ca16ce23ec0a8e",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Конкурируя за будущее. Создание рынков завтрашнего дня",
+          "author": "Гари Хэмел, Коимбатур Прахалад",
+          "image": "/_blob/7002f8f04aadeeff613fa23a6ad1a5b8",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Как справляться с эмоциями каждый день. Дневник диалектической поведенческой терапии",
+          "author": "Мэтью Маккей, Джеффри Вуд",
+          "image": "/_blob/3d888147b55d582e51c8cec0ca33bbea",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Деньги. Мастер игры",
+          "author": "Тони Роббинс",
+          "image": "/_blob/a209932df7d01eecc4ed0cbca3de093d",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Дневник эмпата, или Как справиться с эмоциональными перегрузками, исследовать свое теневое \"Я\" и обрести баланс в отношениях",
+          "author": "Ора Норт",
+          "image": "/_blob/74c2d48626d5191b1459b039be017d9c",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Искусство мыслить масштабно",
+          "author": "Дэвид Шварц",
+          "image": "/_blob/39e4dd47933a33179d08b1234ee60f3f",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Психология денег. Вечные уроки богатства, жадности и счастья",
+          "author": "Морган Хаузел",
+          "image": "/_blob/676799c1f984549a33ca8ce5eefc1535",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 2,
+          "comments": 1,
+          "status": ""
+        },
+        {
+          "title": "Искусство войны",
+          "author": "Сунь-цзы",
+          "image": "/_blob/9ba6c2a15ce2a77ad63ff934f2cb142c",
+          "status": "В планах",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "comments": 0
+        },
+        {
+          "title": "Сказать жизни «Да!»: психолог в концлагере",
+          "author": "Виктор Франкл",
+          "image": "/_blob/4f717f072924ee0e94dbdc963b7e3c5d",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 5,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Сила влияния. Воздействия явные и скрытые",
+          "author": "Виктор Шейнов",
+          "image": "/_blob/b28c83b9a3d0ed4c826c93cf9e0cb411",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Путь: как ускорить продвижение к финансовой свободе",
+          "author": "Питер Маллук, Тони Роббинс",
+          "image": "/_blob/4b4fc2e786a49024e2ee4aa6b5af63eb",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Комникация. 33 принципа эффективного общения",
+          "author": "Марк Шаманский",
+          "image": "/_blob/09b2769d750771ec4451972c00fc6844",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "MBTI: определение типов. У каждого свой дар",
+          "author": "Изабель Бриггс Майерс, Питер Майерс",
+          "image": "/_blob/0add4640512a4275ec71f0b581181383",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Анти-Карнеги или человек-манипулятор",
+          "author": "Эверетт Шостром",
+          "image": "/_blob/596c5c821f8202cd599cba22721e9550",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 2,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Искусство побеждать в спорах",
+          "author": "Артур Шопенгауэр",
+          "image": "/_blob/dd58041e12de18dbfc89bcb05d8dd4ca",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Анатомия прорыва. Как купировать демотивацию и дойти до цели",
+          "author": "Адам Альтер",
+          "image": "/_blob/f04318a5d0a6bc565f93d122699cdea3",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Путь к процветанию. Новое понимание счастья и благополучия",
+          "author": "Мартин Селигман",
+          "image": "/_blob/07f70ee5bca1bf1c4d351bc3f7ca299a",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Путь к финансовой свободе",
+          "author": "Бодо Шефер",
+          "image": "/_blob/2a07986b22e5a517a938ba1d33522e7b",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Правила инвестирования Уоррена Баффета",
+          "author": "Джереми Миллер",
+          "image": "/_blob/ddd95f3210d87fa05918cba707ead4b2",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        },
+        {
+          "title": "Культура роста. Принципы гибкого сознания для развития компаний",
+          "author": "Мэри Мерфи",
+          "image": "/_blob/8fa7ee268cbc68be88e0e8244300aed5",
+          "rating": "5.0",
+          "readerRating": "5.0",
+          "readerCount": 1,
+          "status": "",
+          "comments": 0
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

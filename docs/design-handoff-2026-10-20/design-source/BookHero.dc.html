@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BookHero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<header style="display: flex; flex-direction: column; align-items: center; box-sizing: border-box; width: 100%; min-width: 0; padding: 4px 8px 0; color: #000000; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <dc-import name="BookCover" src="{{src}}" size="detail" hint-size="120px,176px"></dc-import>
+  <div style="display: flex; flex-direction: column; gap: 4px; width: 100%; padding-top: 16px">
+    <dc-import name="Text" variant="title2" align="center" heading="1" text="{{title}}" hint-size="100%,56px"></dc-import>
+    <dc-import name="Text" variant="body" tone="secondary" align="center" text="{{author}}" hint-size="100%,24px"></dc-import>
+  </div>
+  <sc-if value="{{hasRatings}}" hint-placeholder-val="{{true}}">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; padding-top: 12px">
+      <sc-for list="{{ratings}}" as="r" hint-placeholder-count="2"><span aria-label="{{r.aria}}" style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; line-height: 18px; color: #5C5C60; white-space: nowrap"><dc-import name="Icon" icon="{{r.icon}}" variant="solid" size="xs" tone="{{r.tone}}" hint-size="12px,12px"></dc-import><span style="font-weight: 700; color: #000000; font-variant-numeric: tabular-nums">{{r.value}}</span><span>{{r.label}}</span></span></sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{hasGenres}}" hint-placeholder-val="{{true}}">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding-top: 12px">
+      <sc-for list="{{genres}}" as="g" hint-placeholder-count="3"><dc-import name="StatusBadge" label="{{g}}" tone="neutral" hint-size="90px,22px"></dc-import></sc-for>
+    </div>
+  </sc-if>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Код таланта. Гениями не рождаются. Ими становятся"},"author":{"editor":"text","default":"Дэниел Койл"},"src":{"editor":"text","default":"/_blob/ab29d7c214eb7576b59de35205483cdb"},"rating":{"editor":"text","default":"5.0"},"readerRating":{"editor":"text","default":"5.0"},"readerCount":{"editor":"int","default":3,"min":0,"max":10000},"genres":{"editor":null},"$preview":{"width":358,"height":340}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.title === undefined;
+    var rating = p.rating ?? (demo ? '5.0' : '');
+    var rr = p.readerRating ?? (demo ? '5.0' : '');
+    var rc = Number(p.readerCount ?? (demo ? 3 : 0));
+    var ratings = [];
+    if (rating) ratings.push({ icon: 'star', tone: 'warning', value: rating, label: 'Divergents', aria: 'Оценка Divergents: ' + rating + ' из 5' });
+    if (rr && rc > 0) ratings.push({ icon: 'people', tone: 'secondary', value: rr, label: 'читатели · ' + rc, aria: 'Оценка читателей: ' + rr + ' из 5, оценок: ' + rc });
+    var genres = Array.isArray(p.genres) ? p.genres : (demo ? ['Личная эффективность', 'Психология', 'HR'] : []);
+    return {
+      title: p.title ?? 'Код таланта. Гениями не рождаются. Ими становятся',
+      author: p.author ?? (demo ? 'Дэниел Койл' : ''),
+      src: p.src ?? (demo ? '/_blob/ab29d7c214eb7576b59de35205483cdb' : ''),
+      ratings: ratings, hasRatings: ratings.length > 0,
+      genres: genres, hasGenres: genres.length > 0
+    };
+  }
+}
+</script>
+</body>
+</html>

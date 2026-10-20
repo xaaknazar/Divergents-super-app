@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Callout — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1380" safe-top="{{false}}" hint-size="390px,1380px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,1280px">
+    <dc-import name="Text" variant="title2" heading="1" text="Callout" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone=brand · trailing=chevron · href" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" tone="brand" icon="file-doc" title="Заполните анкету" text="Откроются заявки в сообществе и отклики на вакансии · 1/4 разделов" href="ResumeForm.dc.html" hint-size="100%,78px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone=info · trailing=close" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" tone="info" icon="text-i-circle" title="Новый сезон челленджа" text="Регистрация команд открыта до 12 октября" trailing="close" hint-size="100%,78px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone=success · trailing=none" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" tone="success" icon="check-circle" title="Заявка отправлена" text="Организатор ответит в течение суток" trailing="none" hint-size="100%,78px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone=warning" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" tone="warning" icon="wifi-slash" title="Нет подключения" text="Показаны скачанные уроки и сохранённые карты" trailing="none" hint-size="100%,78px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone=danger · href" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" tone="danger" icon="exclamation-circle" title="Сегодня не отмечены задания" text="День 12 челленджа заканчивается через 3 часа" href="ChallengeDays.dc.html" hint-size="100%,78px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="только title" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" tone="brand" icon="lightbulb" title="Совет: проходите по одному уроку в день" trailing="none" hint-size="100%,64px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="accent=violet (tone=brand)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" accent="violet" icon="sparkles" title="Спросите Divergents AI" text="Подберёт курс и книги под ваш профиль" href="AIChat.dc.html" hint-size="100%,78px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="accent=orange (tone=brand)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" accent="orange" icon="people" title="Найдите своё сообщество" text="Встречи, челленджи и каналы рядом с вами" href="CommunityHome.dc.html" hint-size="100%,78px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="accent=emerald (tone=brand)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" accent="emerald" icon="map" title="Отметьте любимые места" text="Карта мест для тренировок и отдыха" href="MapHome.dc.html" hint-size="100%,78px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="accent=pink (tone=brand)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Callout" accent="pink" icon="briefcase" title="Откликнитесь на вакансию" text="12 новых вакансий под ваш профиль" href="CareerHome.dc.html" hint-size="100%,78px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1380}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BookCard — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1440" safe-top="{{false}}" hint-size="390px,1440px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,1406px">
+    <dc-import name="Text" variant="title2" heading="1" text="BookCard" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,280px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=compact · cols 3 (каталог) · статус на обложке" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" cols="3" gap="16" hint-size="100%,246px"><dc-import name="BookCard" variant="compact" title="Код таланта. Гениями не рождаются. Ими становятся" author="Дэниел Койл" src="/_blob/ab29d7c214eb7576b59de35205483cdb" status="Читаю" rating="5.0" reader-rating="5.0" reader-count="3" hint-size="100%,246px"></dc-import><dc-import name="BookCard" variant="compact" title="Психология денег. Вечные уроки богатства, жадности и счастья" author="Морган Хаузел" src="/_blob/676799c1f984549a33ca8ce5eefc1535" status="" rating="5.0" reader-rating="5.0" reader-count="2" comments="1" hint-size="100%,246px"></dc-import><dc-import name="BookCard" variant="compact" title="Искусство войны" author="Сунь-цзы" src="/_blob/9ba6c2a15ce2a77ad63ff934f2cb142c" status="В планах" rating="5.0" reader-rating="5.0" reader-count="1" hint-size="100%,246px"></dc-import></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,380px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=shelf · с прогрессом / без" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" scroll="x" gap="12" align="start" hint-size="100%,350px"><dc-import name="BookCard" variant="shelf" title="Код таланта. Гениями не рождаются. Ими становятся" src="/_blob/ab29d7c214eb7576b59de35205483cdb" progress="35" hint-size="160px,350px"></dc-import><dc-import name="BookCard" variant="shelf" title="Искусство войны" src="/_blob/9ba6c2a15ce2a77ad63ff934f2cb142c" hint-size="160px,270px"></dc-import></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,560px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=grid · cols 2 · status + meta" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" cols="2" gap="12" hint-size="100%,520px"><dc-import name="BookCard" variant="grid" title="Код таланта. Гениями не рождаются. Ими становятся" author="Дэниел Койл" src="/_blob/ab29d7c214eb7576b59de35205483cdb" status="Читаю" rating="5.0" reader-rating="5.0" reader-count="3" hint-size="100%,440px"></dc-import><dc-import name="BookCard" variant="grid" title="Психология денег. Вечные уроки богатства, жадности и счастья" author="Морган Хаузел" src="/_blob/676799c1f984549a33ca8ce5eefc1535" status="" rating="5.0" reader-rating="5.0" reader-count="2" comments="1" hint-size="100%,440px"></dc-import></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1440}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

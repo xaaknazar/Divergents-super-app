@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ShortcutTile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<a href="{{href}}" aria-label="{{aria}}" style="{{rootCss}}">
+  <span aria-hidden="true" style="display: flex; align-items: center; justify-content: space-between">
+    <dc-import name="IconTile" icon="{{icon}}" tone="{{tileTone}}" variant="solid" size="sm" hint-size="36px,36px"></dc-import>
+    <sc-if value="{{hasCount}}" hint-placeholder-val="{{true}}"><span style="{{countCss}}">{{count}}</span></sc-if>
+  </span>
+  <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+    <dc-import name="Text" variant="headline" text="{{title}}" lines="1" hint-size="100%,22px"></dc-import>
+    <dc-import name="Text" variant="footnote" tone="secondary" text="{{caption}}" lines="1" hint-size="100%,18px"></dc-import>
+  </span>
+</a>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"icon":{"editor":"enum","default":"cloud-arrow-down","options":["cloud-arrow-down","book","books-spines","bookmark","graduation-cap","headphones","trophy","history","sparkles","calendar","people","star"]},"accent":{"editor":"enum","default":"brand","options":["brand","violet","orange","emerald","pink"]},"title":{"editor":"text","default":"Скачанные"},"caption":{"editor":"text","default":"Уроки без интернета"},"count":{"editor":"text","default":"3"},"href":{"editor":"text","default":"Downloads.dc.html"},"$preview":{"width":171,"height":112}}'>
+class Component extends DCLogic {
+  // Square-ish quick-access tile for 2-column shortcut grids (white group, coloured icon tile, optional count).
+  renderVals() {
+    var p = this.props;
+    var demo = p.title === undefined;
+    var INK = { brand: '#234088', violet: '#6D3FD6', orange: '#C2410C', emerald: '#047857', pink: '#BE185D' };
+    var ink = INK[p.accent] || INK.brand;
+    var title = p.title ?? 'Скачанные';
+    var caption = p.caption ?? (demo ? 'Уроки без интернета' : '');
+    var count = p.count ?? (demo ? '3' : '');
+    return {
+      href: p.href || (demo ? 'Downloads.dc.html' : '#'),
+      aria: [title, count, caption].filter(Boolean).join(', '),
+      rootCss: ['display: flex', 'flex-direction: column', 'gap: 14px', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'padding: 14px 14px 13px',
+        'background: #FFFFFF', 'border-radius: 14px', 'box-shadow: 0 1px 3px rgba(16,24,40,0.08), 0 12px 28px -10px rgba(16,24,40,0.28)', 'text-decoration: none', 'color: #000000',
+        "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased'].join('; '),
+      tileTone: { brand: 'brand', violet: 'violet', orange: 'orange', emerald: 'trip', pink: 'pink' }[p.accent] || 'brand',
+      icon: p.icon || 'cloud-arrow-down',
+      hasCount: !!count, count: count,
+      countCss: "font-size: 20px; line-height: 24px; font-weight: 700; color: " + ink + "; font-variant-numeric: tabular-nums",
+      title: title, caption: caption
+    };
+  }
+}
+</script>
+</body>
+</html>

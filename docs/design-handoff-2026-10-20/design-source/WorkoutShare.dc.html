@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Поделиться тренировкой</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="880" safe-top="{{false}}" hint-size="390px,880px">
+  <dc-import name="NavHeader" variant="inline" title="Поделиться" back-label="Назад" back-href="WorkoutDetail.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" align="center" pad-top="12" hint-size="100%,545px">
+    <dc-import name="WorkoutStoryCard" metrics="{{storyMetrics}}" route="{{route}}" hint-size="300px,533px"></dc-import>
+  </dc-import>
+  <dc-import name="BottomBar" placement="screen" hint-size="100%,196px">
+    <dc-import name="Wrapper" gap="12" hint-size="100%,138px">
+      <dc-import name="Wrapper2" dir="row" justify="center" gap="24" hint-size="100%,65px">
+        <dc-import name="WorkoutShareAction" icon="image" label="Фон" hint-size="64px,65px"></dc-import>
+        <dc-import name="WorkoutShareAction" icon="sliders" label="Оформление" hint-size="64px,65px"></dc-import>
+      </dc-import>
+      <dc-import name="Wrapper2" dir="row" fill="equal" gap="10" hint-size="100%,50px">
+        <dc-import name="Button" label="В галерею" icon="arrow-to-bracket-down" variant="tinted" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+        <dc-import name="Button" label="Поделиться" icon="share-network" variant="solid" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+
+    return {
+      storyMetrics: [
+        { label: 'Расстояние', value: '5,02 км' },
+        { label: 'Темп', value: '5:34 /км' },
+        { label: 'Время', value: '27 мин 58 с' }
+      ],
+      route: '12.6,59.4 24,59.4 24,41.1 37.7,41.1 37.7,29.7 51.4,29.7 51.4,17.1 61.7,17.1 61.7,10.3 54.9,5.7 45.7,5.7'
+    };
+  }
+}
+</script>
+</body>
+</html>

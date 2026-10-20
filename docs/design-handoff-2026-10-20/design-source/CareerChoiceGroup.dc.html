@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CareerChoiceGroup</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div role="{{groupRole}}" aria-labelledby="{{labelId}}" style="{{rootCss}}">
+  <sc-if value="{{hasLabel}}" hint-placeholder-val="{{true}}"><span id="{{labelId}}" style="display: block; margin: 0 0 8px; font-size: 15px; line-height: 20px; font-weight: 700; letter-spacing: -0.1px; color: #000000">{{label}}<sc-if value="{{required}}" hint-placeholder-val="{{false}}"><span aria-hidden="true"> *</span></sc-if></span></sc-if>
+  <div style="{{rowCss}}"><sc-for list="{{opts}}" as="o" hint-placeholder-count="2"><button type="button" role="{{o.role}}" aria-checked="{{o.checked}}" onClick="{{o.pick}}" style="{{o.css}}">{{o.label}}</button></sc-for></div>
+  <sc-if value="{{hasHelper}}" hint-placeholder-val="{{false}}"><p style="margin: 6px 0 0; font-size: 13px; line-height: 18px; color: #5C5C60">{{helper}}</p></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Пол"},"required":{"editor":"boolean","default":false},"options":{"editor":null},"selected":{"editor":null},"multiple":{"editor":"boolean","default":false},"layout":{"editor":"enum","default":"wrap","options":["wrap","equal"]},"variant":{"editor":"enum","default":"tinted","options":["tinted","solid"]},"helper":{"editor":"text","default":""},"$preview":{"width":358,"height":84}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    if (!this._uid) this._uid = 'cg-' + Math.random().toString(36).slice(2, 9);
+    var demo = p.options === undefined && p.label === undefined;
+    var options = Array.isArray(p.options) ? p.options : ['Мужской', 'Женский'];
+    var init = p.selected === undefined || p.selected === null ? (demo ? [0] : []) : (Array.isArray(p.selected) ? p.selected : [Number(p.selected)]);
+    var sel = this.state && this.state.sel ? this.state.sel : init;
+    var multiple = p.multiple === true || p.multiple === 'true';
+    var equal = p.layout === 'equal';
+    var solid = p.variant === 'solid';
+    var label = p.label ?? (demo ? 'Пол' : '');
+    var helper = p.helper || '';
+    return {
+      labelId: this._uid,
+      groupRole: multiple ? 'group' : 'radiogroup',
+      rootCss: 'display: flex; flex-direction: column; box-sizing: border-box; width: 100%; min-width: 0; ' + F,
+      label: label, hasLabel: !!label, required: p.required === true || p.required === 'true',
+      helper: helper, hasHelper: !!helper,
+      rowCss: 'display: flex; gap: 8px; ' + (equal ? '' : 'flex-wrap: wrap'),
+      opts: options.map(function (o, i) {
+        var on = sel.indexOf(i) !== -1;
+        var bg, ink, border, pad, radius, size, minH;
+        if (solid) {
+          bg = on ? '#234088' : 'rgba(118,118,128,0.12)'; ink = on ? '#FFFFFF' : '#5C5C60'; border = '0';
+          pad = equal ? '10px 0' : '8px 12px'; radius = equal ? 10 : 999; size = equal ? [15, 20] : [11, 14]; minH = equal ? 44 : 32;
+        } else {
+          bg = on ? 'rgba(61,91,219,0.13)' : '#FFFFFF'; ink = on ? '#234088' : '#000000'; border = '1px solid ' + (on ? '#234088' : 'rgba(0,0,0,0.08)');
+          pad = equal ? '11px 0' : '8px 14px'; radius = equal ? 12 : 18; size = [13, 18]; minH = 48;
+        }
+        return {
+          label: o,
+          role: multiple ? 'checkbox' : 'radio',
+          checked: on ? 'true' : 'false',
+          pick: function () {
+            var next = multiple ? (on ? sel.filter(function (x) { return x !== i; }) : sel.concat([i])) : [i];
+            self.setState({ sel: next });
+          },
+          css: [equal ? 'flex: 1' : 'flex: 0 0 auto', 'min-width: 0', 'min-height: ' + minH + 'px', 'box-sizing: border-box', 'margin: 0', 'padding: ' + pad,
+            'border-radius: ' + radius + 'px', 'border: ' + border, 'background: ' + bg, 'color: ' + ink, 'font-size: ' + size[0] + 'px',
+            'line-height: ' + size[1] + 'px', 'font-weight: 700', 'cursor: pointer', 'text-align: center', F].join('; ')
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

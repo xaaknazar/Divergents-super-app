@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Достижения</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="8600" safe-top="{{false}}" hint-size="390px,8600px">
+<dc-import name="NavHeader" title="Достижения" back-label="Профиль" back-href="ProfileHome.dc.html" hint-size="100%,124px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,330px">
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,72px">
+      <dc-import name="PageHeading" title="Твоя коллекция" description="Получено 15 из 50 достижений" hint-size="100%,60px"></dc-import>
+      <dc-import name="ProgressBar" value="30" size="thin" label="" hint-size="100%,4px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" dir="row" fill="first" gap="12" pad-y="4" hint-size="100%,56px">
+      <dc-import name="Wrapper3" gap="4" hint-size="100%,46px">
+        <dc-import name="Text" variant="headline" text="Ближайшая цель" hint-size="100%,22px"></dc-import>
+        <dc-import name="Text" variant="subhead" tone="secondary" text="Держу ритм · 12 из 14" hint-size="100%,20px"></dc-import>
+      </dc-import>
+      <dc-import name="Button" label="К цели" icon="chevron-right" icon-position="end" variant="tinted" tone="neutral" size="compact" href="MyFitness.dc.html" hint-size="110px,48px"></dc-import>
+    </dc-import>
+    <dc-import name="AchievementFilter" value="0" category="Все направления" shown="Показано 50 из 50" hint-size="100%,124px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="12" cols="2" gap="12" hint-size="100%,7300px">
+    <sc-for list="{{badges}}" as="b" hint-placeholder-count="50">
+      <dc-import name="AchievementTile" variant="grid" title="{{b.title}}" description="{{b.description}}" tier="{{b.tier}}" category="{{b.category}}" icon="{{b.icon}}" earned="{{b.earned}}" value="{{b.value}}" goal="{{b.goal}}" hint-size="100%,280px"></dc-import>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" gap="8" hint-size="100%,80px">
+    <dc-import name="Text" variant="caption1" tone="secondary" text="Хранится на этом устройстве. При выходе из аккаунта коллекция очищается." hint-size="100%,32px"></dc-import>
+    <dc-import name="Button" label="Как сохраняются достижения" icon="question-circle" icon-position="end" variant="tinted" tone="neutral" size="compact" full-width="{{true}}" hint-size="100%,48px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":8600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      badges: [
+        {"title": "Первый шаг", "description": "Отметь первый урок пройденным. Прогресс должен сохраниться на сервере.", "tier": "bronze", "category": "learning", "icon": "play-circle", "earned": true, "value": 1, "goal": 1},
+        {"title": "В потоке знаний", "description": "Заверши 10 разных уроков.", "tier": "silver", "category": "learning", "icon": "play-circle", "earned": true, "value": 1, "goal": 1},
+        {"title": "Любознательность", "description": "Заверши 30 разных уроков.", "tier": "gold", "category": "learning", "icon": "play-circle", "earned": false, "value": 14, "goal": 30},
+        {"title": "Сто открытий", "description": "Заверши 100 разных уроков.", "tier": "gold", "category": "learning", "icon": "play-circle", "earned": false, "value": 14, "goal": 100},
+        {"title": "Первый курс", "description": "Доведи прогресс одного курса до 100%.", "tier": "bronze", "category": "learning", "icon": "graduation-cap", "earned": true, "value": 1, "goal": 1},
+        {"title": "Знаток", "description": "Заверши 5 разных курсов.", "tier": "silver", "category": "learning", "icon": "graduation-cap", "earned": false, "value": 1, "goal": 5},
+        {"title": "Эрудит", "description": "Заверши 10 разных курсов.", "tier": "gold", "category": "learning", "icon": "graduation-cap", "earned": false, "value": 1, "goal": 10},
+        {"title": "В деле", "description": "Добавь курс в «Мои курсы». Подаренные курсы тоже учитываются.", "tier": "bronze", "category": "learning", "icon": "bookmark", "earned": true, "value": 1, "goal": 1},
+        {"title": "За кадром урока", "description": "Открой дополнительный материал к уроку.", "tier": "bronze", "category": "materials", "icon": "file-doc", "earned": true, "value": 1, "goal": 1},
+        {"title": "Внимание к деталям", "description": "Открой 5 разных материалов к урокам.", "tier": "silver", "category": "materials", "icon": "file-doc", "earned": false, "value": 2, "goal": 5},
+        {"title": "Глубокое погружение", "description": "Открой 20 разных материалов к урокам.", "tier": "gold", "category": "materials", "icon": "file-doc", "earned": false, "value": 2, "goal": 20},
+        {"title": "Новая глава", "description": "Сохрани для книги статус «Читаю» или «Прочитал».", "tier": "bronze", "category": "books", "icon": "book-open", "earned": true, "value": 1, "goal": 1},
+        {"title": "Последняя страница", "description": "Отметь одну книгу как прочитанную в библиотеке.", "tier": "bronze", "category": "books", "icon": "book-open", "earned": true, "value": 1, "goal": 1},
+        {"title": "Книжная полка", "description": "Отметь 5 разных книг как прочитанные.", "tier": "silver", "category": "books", "icon": "book-open", "earned": false, "value": 3, "goal": 5},
+        {"title": "Книжный год", "description": "Отметь 12 разных книг как прочитанные — без ограничения по времени.", "tier": "gold", "category": "books", "icon": "book-open", "earned": false, "value": 3, "goal": 12},
+        {"title": "Библиофил", "description": "Отметь 30 разных книг как прочитанные.", "tier": "gold", "category": "books", "icon": "book-open", "earned": false, "value": 3, "goal": 30},
+        {"title": "Мой взгляд", "description": "Опубликуй рецензию на книгу. Обычный комментарий не считается.", "tier": "bronze", "category": "books", "icon": "quote-left", "earned": false, "value": 0, "goal": 1},
+        {"title": "Литературный голос", "description": "Опубликуй рецензии на 5 разных книг.", "tier": "silver", "category": "books", "icon": "quote-left", "earned": false, "value": 0, "goal": 5},
+        {"title": "Челленджер", "description": "Получи одобрение заявки в челлендж.", "tier": "bronze", "category": "challenge", "icon": "flame", "earned": true, "value": 1, "goal": 1},
+        {"title": "Снова в игре", "description": "Получи одобрение в 3 разных челленджах.", "tier": "silver", "category": "challenge", "icon": "flame", "earned": false, "value": 1, "goal": 3},
+        {"title": "Действие важнее слов", "description": "Сохрани ненулевой результат задания челленджа.", "tier": "bronze", "category": "challenge", "icon": "seal-check", "earned": true, "value": 1, "goal": 1},
+        {"title": "Неделя силы", "description": "Сохрани результаты в 7 разных днях челленджей. Дни не обязаны идти подряд.", "tier": "silver", "category": "challenge", "icon": "seal-check", "earned": true, "value": 1, "goal": 1},
+        {"title": "Шаг за шагом", "description": "Сохрани результаты в 21 разном дне челленджей.", "tier": "gold", "category": "challenge", "icon": "seal-check", "earned": false, "value": 12, "goal": 21},
+        {"title": "Финишер", "description": "Заверши челлендж без выхода и дисквалификации. Учитываются итоги сервера.", "tier": "bronze", "category": "challenge", "icon": "trophy", "earned": true, "value": 1, "goal": 1},
+        {"title": "Опыт побед", "description": "Заверши 3 челленджа без выхода и дисквалификации.", "tier": "silver", "category": "challenge", "icon": "trophy", "earned": false, "value": 1, "goal": 3},
+        {"title": "Топ-3", "description": "Займи место в тройке своей команды по итогам завершённого челленджа.", "tier": "bronze", "category": "challenge", "icon": "medal-sport", "earned": false, "value": 0, "goal": 1},
+        {"title": "Давай соберёмся", "description": "Создай бесплатную встречу, спортивное событие или поездку.", "tier": "bronze", "category": "events", "icon": "people", "earned": false, "value": 0, "goal": 1},
+        {"title": "Объединяю людей", "description": "Создай 5 разных офлайн-событий.", "tier": "silver", "category": "events", "icon": "people", "earned": false, "value": 0, "goal": 5},
+        {"title": "Планы с сообществом", "description": "Получи одобрение на встречу, спортивное событие или поездку.", "tier": "bronze", "category": "events", "icon": "calendar", "earned": false, "value": 0, "goal": 1},
+        {"title": "В кругу своих", "description": "Получи одобрение на 5 разных офлайн-событий.", "tier": "silver", "category": "events", "icon": "calendar", "earned": false, "value": 0, "goal": 5},
+        {"title": "Душа сообщества", "description": "Получи одобрение на 15 разных офлайн-событий.", "tier": "gold", "category": "events", "icon": "calendar", "earned": false, "value": 0, "goal": 15},
+        {"title": "Навстречу приключениям", "description": "Получи одобрение заявки на поездку.", "tier": "bronze", "category": "events", "icon": "plane", "earned": false, "value": 0, "goal": 1},
+        {"title": "В одной команде", "description": "Получи одобрение заявки на спортивное событие.", "tier": "bronze", "category": "events", "icon": "ball-soccer", "earned": false, "value": 0, "goal": 1},
+        {"title": "Место на заметку", "description": "Добавь место на карте в избранное.", "tier": "bronze", "category": "map", "icon": "bookmark", "earned": false, "value": 0, "goal": 1},
+        {"title": "Мой путеводитель", "description": "Сохрани в избранное 10 разных мест.", "tier": "silver", "category": "map", "icon": "bookmark", "earned": false, "value": 0, "goal": 10},
+        {"title": "Знаю отличное место", "description": "Успешно отправь новое место на модерацию.", "tier": "bronze", "category": "map", "icon": "pin", "earned": false, "value": 0, "goal": 1},
+        {"title": "Открываю город", "description": "Успешно отправь 5 разных мест на модерацию.", "tier": "silver", "category": "map", "icon": "pin", "earned": false, "value": 0, "goal": 5},
+        {"title": "Полезный совет", "description": "Опубликуй отзыв о месте.", "tier": "bronze", "category": "map", "icon": "star", "earned": false, "value": 0, "goal": 1},
+        {"title": "Голос города", "description": "Опубликуй отзывы о 5 разных местах.", "tier": "silver", "category": "map", "icon": "star", "earned": false, "value": 0, "goal": 5},
+        {"title": "Мой личный старт", "description": "Создай свою программу ежедневных тренировок.", "tier": "bronze", "category": "fitness", "icon": "weight", "earned": true, "value": 1, "goal": 1},
+        {"title": "Обещание себе", "description": "Выполни дневную норму личной программы.", "tier": "bronze", "category": "fitness", "icon": "check-circle", "earned": true, "value": 1, "goal": 1},
+        {"title": "Сила привычки", "description": "Выполни нормы личных программ в 50 разных днях.", "tier": "silver", "category": "fitness", "icon": "check-circle", "earned": false, "value": 23, "goal": 50},
+        {"title": "Неделя для себя", "description": "Выполняй норму хотя бы одной личной программы 7 дней подряд.", "tier": "bronze", "category": "fitness", "icon": "bolt-vertical", "earned": true, "value": 1, "goal": 1},
+        {"title": "Держу ритм", "description": "Выполняй норму хотя бы одной личной программы 14 дней подряд.", "tier": "silver", "category": "fitness", "icon": "bolt-vertical", "earned": false, "value": 12, "goal": 14},
+        {"title": "30 дней характера", "description": "Выполняй норму хотя бы одной личной программы 30 дней подряд. Пропуск прерывает серию.", "tier": "gold", "category": "fitness", "icon": "bolt-vertical", "earned": false, "value": 12, "goal": 30},
+        {"title": "От старта до финиша", "description": "Выполни дневную норму во все дни одной личной программы.", "tier": "bronze", "category": "fitness", "icon": "flag", "earned": false, "value": 0, "goal": 1},
+        {"title": "В движении", "description": "Сохрани пробежку или прогулку длительностью не менее 5 минут.", "tier": "bronze", "category": "fitness", "icon": "body-standing", "earned": true, "value": 1, "goal": 1},
+        {"title": "Активный ритм", "description": "Сохрани 10 пробежек или прогулок от 5 минут каждая.", "tier": "silver", "category": "fitness", "icon": "body-standing", "earned": false, "value": 6, "goal": 10},
+        {"title": "Движение — мой стиль", "description": "Сохрани 30 пробежек или прогулок от 5 минут каждая.", "tier": "gold", "category": "fitness", "icon": "body-standing", "earned": false, "value": 6, "goal": 30},
+        {"title": "Цель достигнута", "description": "Достигни личной спортивной цели в разделе тренировок.", "tier": "bronze", "category": "fitness", "icon": "bullseye", "earned": false, "value": 0, "goal": 1}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

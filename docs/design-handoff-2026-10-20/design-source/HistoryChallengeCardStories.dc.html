@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>HistoryChallengeCard — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="540" safe-top="{{false}}" hint-size="390px,540px">
+<dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,500px">
+  <dc-import name="Text" variant="title2" heading="1" text="HistoryChallengeCard" hint-size="100%,28px"></dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="status=active" hint-size="100%,18px"></dc-import>
+    <dc-import name="HistoryChallengeCard" status="active" title="Divergents challenge: 2 season" subtitle="2-й челлендж · Команда «KEX group» · 15 дней · 4 октября 2026 г." hint-size="100%,72px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="status=finished · winner · stats" hint-size="100%,18px"></dc-import>
+    <dc-import name="HistoryChallengeCard" status="finished" hint-size="100%,124px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="status=finished · не призёр · без статистики" hint-size="100%,18px"></dc-import>
+    <dc-import name="HistoryChallengeCard" status="finished" winner="{{false}}" place="7 место" points="410 pts" stats="{{noStats}}" hint-size="100%,72px"></dc-import>
+  </dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":540}}'>
+class Component extends DCLogic { renderVals() { return { noStats: [] }; } }
+</script>
+</body>
+</html>

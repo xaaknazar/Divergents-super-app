@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>OnboardingIllustration</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div aria-hidden="true" style="position: relative; box-sizing: border-box; width: 100%; height: 360px; overflow: hidden; border-radius: 28px; background: #F2F4FB; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <span style="position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px 0 0 -150px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(35,64,136,0.10)"></span>
+  <span style="position: absolute; left: 50%; top: 50%; width: 204px; height: 204px; margin: -102px 0 0 -102px; border-radius: 50%; background: rgba(61,91,219,0.07)"></span>
+  <span style="position: absolute; left: 50%; top: 50%; width: 104px; height: 104px; margin: -52px 0 0 -52px; border-radius: 32px; background: #FFFFFF; display: flex; align-items: center; justify-content: center"><span style="display: flex; transform: scale(1.55)"><dc-import name="Icon" icon="{{glyph}}" variant="solid" size="xxl" tone="brand" hint-size="36px,36px"></dc-import></span></span>
+  <sc-for list="{{chips}}" as="c" hint-placeholder-count="3"><span style="{{c.css}}"><dc-import name="Icon" icon="{{c.icon}}" variant="solid" size="sm" tone="brand" hint-size="16px,16px"></dc-import><span style="font-size: 13px; line-height: 18px; font-weight: 700; color: #1C2B52; white-space: nowrap">{{c.label}}</span></span></sc-for>
+  <sc-for list="{{avatars}}" as="a" hint-placeholder-count="0"><span style="{{a.css}}">{{a.initial}}</span></sc-for>
+  <span style="{{accentCss}}"><dc-import name="Icon" icon="{{accent}}" variant="solid" size="md" tone="white" hint-size="20px,20px"></dc-import></span>
+  <span style="{{dotCss}}"></span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","default":"profile","options":["profile","mentor","community","career"]},"$preview":{"width":358,"height":360}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var K = {
+      profile: {
+        glyph: 'person-circle', accent: 'bullseye', accentAt: [104, 98], dotAt: [-132, 8],
+        chips: [['chart-bar', 'Gallup', -88, -100], ['layers', 'MBTI', 104, -44], ['lightbulb', 'Gardner', -84, 98]]
+      },
+      mentor: {
+        glyph: 'sparkles', accent: 'lightbulb', accentAt: [-106, 92], dotAt: [128, 30],
+        chips: [['graduation-cap', 'Курсы', -92, -98], ['book-open', 'Книги', 100, -52], ['briefcase', 'Карьера', 82, 100]]
+      },
+      community: {
+        glyph: 'people', accent: 'flame', accentAt: [106, 94], dotAt: [-18, -136],
+        chips: [['mountains', 'Поездки', -74, 104], ['calendar', 'Встречи', 92, -98]],
+        avatars: [['А', '#3D5BDB', -108, -70], ['М', '#30B0C7', 124, 6], ['Д', '#234088', -128, 28]]
+      },
+      career: {
+        glyph: 'briefcase', accent: 'bullseye', accentAt: [104, 98], dotAt: [-130, 14],
+        chips: [['seal-check', 'Таланты', -86, -100], ['hand-heart', 'Ценности', 96, -44], ['file-doc', 'Резюме', -78, 100]]
+      }
+    };
+    var k = K[this.props.kind] || K.profile;
+    var at = function (dx, dy) { return 'position: absolute; left: calc(50% + ' + dx + 'px); top: calc(50% + ' + dy + 'px); transform: translate(-50%, -50%)'; };
+    return {
+      glyph: k.glyph,
+      accent: k.accent,
+      chips: k.chips.map(function (c) {
+        return { icon: c[0], label: c[1], css: at(c[2], c[3]) + '; display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px 0 12px; box-sizing: border-box; border-radius: 18px; background: #FFFFFF' };
+      }),
+      avatars: (k.avatars || []).map(function (a) {
+        return { initial: a[0], css: at(a[2], a[3]) + '; width: 44px; height: 44px; box-sizing: border-box; border-radius: 50%; border: 3px solid #F2F4FB; background: ' + a[1] + '; color: #FFFFFF; font-size: 16px; line-height: 38px; font-weight: 700; text-align: center' };
+      }),
+      accentCss: at(k.accentAt[0], k.accentAt[1]) + '; width: 44px; height: 44px; border-radius: 14px; background: #FF9500; display: flex; align-items: center; justify-content: center',
+      dotCss: at(k.dotAt[0], k.dotAt[1]) + '; width: 12px; height: 12px; border-radius: 50%; background: #3D5BDB'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>RouteThumb</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<span style="{{css}}"><svg width="{{px}}" height="{{px}}" viewBox="0 0 72 72" aria-hidden="true" style="display: block"><polyline points="{{points}}" fill="none" stroke="#234088" stroke-width="{{stroke}}" stroke-linecap="round" stroke-linejoin="round"></polyline></svg></span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","default":"thumb","options":["thumb","share"]},"variant":{"editor":"enum","default":"tile","options":["tile","bare"]},"points":{"editor":null},"$preview":{"width":72,"height":72}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var share = p.size === 'share';
+    var px = share ? 126 : 72;
+    var tile = (p.variant || 'tile') === 'tile';
+    return {
+      px: px,
+      points: p.points || '12,58 24,58 24,40 38,40 38,28 50,28 50,16 60,16 60,10 52,6 44,6',
+      stroke: share ? 2.75 : 3,
+      css: ['display: block', 'flex-shrink: 0', 'overflow: hidden', 'width: ' + px + 'px', 'height: ' + px + 'px',
+        'border-radius: ' + (tile ? 12 : 0) + 'px', 'background: ' + (tile ? 'rgba(118,118,128,0.12)' : 'transparent')].join('; ')
+    };
+  }
+}
+</script>
+</body>
+</html>

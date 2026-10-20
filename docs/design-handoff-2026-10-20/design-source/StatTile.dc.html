@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>StatTile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{hasIcon}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="{{iconCss}}"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="md" tone="inherit" hint-size="20px,20px"></dc-import></span></sc-if>
+  <div style="{{valueWrapCss}}"><dc-import name="Text" variant="{{valueVariant}}" align="{{align}}" numeric="{{true}}" text="{{value}}" hint-size="100%,28px"></dc-import></div>
+  <dc-import name="Text" variant="{{labelVariant}}" tone="secondary" align="{{align}}" text="{{label}}" hint-size="100%,16px"></dc-import>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{false}}"><a href="{{href}}" aria-label="{{ariaLabel}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; border-radius: 14px"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"icon":{"editor":"enum","default":"book","options":["","book","trophy","flame","star","medal-sport","pulse","stopwatch","people","calendar-check","chart-bar","weight","clock-3h","heart","bolt-vertical","check-circle"]},"value":{"editor":"text","default":"2"},"label":{"editor":"text","default":"Курсов"},"tone":{"editor":"enum","default":"brand","options":["brand","success","warning","danger","neutral"]},"variant":{"editor":"enum","default":"boxed","options":["boxed","plain","compact"]},"href":{"editor":"text","default":""},"$preview":{"width":112,"height":104}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.value === undefined && p.label === undefined && p.icon === undefined;
+    var variant = p.variant || 'boxed';
+    var INK = { brand: '#234088', success: '#34C759', warning: '#FF9500', danger: '#FF3B30', neutral: '#6B6B70' };
+    var ink = INK[p.tone] || INK.brand;
+    var value = p.value !== undefined && p.value !== null ? String(p.value) : (demo ? '2' : '');
+    var label = p.label !== undefined && p.label !== null ? p.label : (demo ? 'Курсов' : '');
+    var icon = p.icon !== undefined && p.icon !== null ? p.icon : (demo ? 'book' : '');
+    var centered = variant !== 'boxed';
+    var box = variant !== 'plain';
+    var css = ['position: relative', 'display: flex', 'flex-direction: column', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'color: #000000',
+      "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased',
+      'align-items: ' + (centered ? 'center' : 'flex-start')];
+    if (box) css.push('background: #FFFFFF', 'border-radius: 14px', 'padding: 14px');
+    else css.push('padding: 0 6px');
+    if (variant === 'compact') css.push('gap: 8px');
+    if (variant === 'plain') css.push('gap: 1px');
+    return {
+      rootCss: css.join('; '),
+      iconCss: 'display: flex; color: ' + ink + (variant === 'plain' ? '; margin-bottom: 6px' : ''),
+      valueWrapCss: 'width: 100%' + (variant === 'boxed' ? '; margin-top: 8px' : ''),
+      hasIcon: !!icon, icon: icon,
+      value: value, label: label,
+      valueVariant: variant === 'boxed' ? 'title2' : variant === 'compact' ? 'title3' : 'headline',
+      labelVariant: variant === 'compact' ? 'footnote' : 'caption1',
+      align: centered ? 'center' : 'start',
+      hasHref: !!p.href, href: p.href || '', ariaLabel: label + ': ' + value
+    };
+  }
+}
+</script>
+</body>
+</html>

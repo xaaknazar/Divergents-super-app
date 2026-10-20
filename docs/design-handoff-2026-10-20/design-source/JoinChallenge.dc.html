@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Заявка в челлендж</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1340" safe-top="{{false}}" hint-size="390px,1340px">
+<dc-import name="NavHeader" variant="inline" title="Заявка" back-label="Отмена" back-href="ChallengeDetail.dc.html" hint-size="100%,118px"></dc-import>
+<dc-import name="Wrapper" pad="16" gap="20" pad-bottom="120" hint-size="100%,1200px">
+<dc-import name="Wrapper2" gap="2" hint-size="100%,47px">
+<dc-import name="Text" variant="title3" heading="1" text="Divergents challenge: Teachers version" hint-size="100%,25px"></dc-import>
+<dc-import name="Text" variant="subhead" tone="secondary" text="Старт 12 октября · 15 дней" hint-size="100%,20px"></dc-import>
+</dc-import>
+<dc-import name="ListSection" header="Псевдоним в рейтинге" hint-size="100%,100px">
+<dc-import name="ListRow" person="Aknazar" title="Aknazar" subtitle="Так вас увидят в составе и рейтинге команды." trailing="none" hint-size="100%,68px"></dc-import>
+</dc-import>
+<dc-import name="TextField" label="Username в Telegram" prefix="@" value="aknazar" helper="Капитан свяжется с вами в Telegram и добавит в чат команды." hint-size="100%,100px"></dc-import>
+<dc-import name="ListSection" header="Выберите команду" hint-size="100%,400px">
+<sc-for list="{{teams}}" as="t" hint-placeholder-count="5">
+<dc-import name="TeamPickRow" title="{{t.title}}" subtitle="{{t.subtitle}}" need="{{t.need}}" selected="{{t.selected}}" separator="{{t.separator}}" hint-size="100%,72px"></dc-import>
+</sc-for>
+</dc-import>
+<dc-import name="ListSection" header="Отслеживание активности" hint-size="100%,150px">
+<dc-import name="ChallengeConsentCard" icon="body-standing" title="Разрешить запись тренировок по GPS" description="Бег и ходьбу можно записывать в приложении по геолокации — дистанция пересчитывается в шаги. Остальную активность вы вносите вручную; часы и шагомер не подключаются." checked="{{true}}" hint-size="100%,120px"></dc-import>
+</dc-import>
+<dc-import name="SectionHeader" size="small" title="Правила челленджа" action="Открыть" hint-size="100%,32px"></dc-import>
+<dc-import name="Checkbox" label="Я прочитал(а) и ознакомился с правилами челленджа выше и согласен(на) их соблюдать." checked="{{true}}" hint-size="100%,64px"></dc-import>
+</dc-import>
+<dc-import name="BottomBar" placement="screen" variant="solid" hint-size="100%,108px">
+<dc-import name="Button" label="Отправить заявку" icon="paperplane" variant="solid" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1340}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var t = function (title, n, cap, need, sel, i) { return { title: title, subtitle: n + '/22 · капитан ' + cap, need: 'нужно ' + need, selected: sel, separator: i > 0 }; };
+    return {
+      teams: [t('Vertex', 19, 'AbzalAbdr', 3, false, 0), t('Ray', 17, 'Dilyara', 5, true, 1), t('Catalyst', 20, 'Sunny', 2, false, 2), t('Legacy', 14, 'Mereyski', 8, false, 3), t('Unity', 21, 'Janoor', 1, false, 4)]
+    };
+  }
+}
+</script>
+</body>
+</html>

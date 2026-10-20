@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AuthHero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{brand}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #27478F 0%, #234088 55%, #1E3878 100%)"></span></sc-if>
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center">
+    <span aria-hidden="true" style="{{markCss}}"><span style="{{logoWrapCss}}"><dc-import name="Logo" size="md" variant="{{logoVariant}}" hint-size="29px,36px"></dc-import></span></span>
+    <p role="heading" aria-level="1" style="{{titleCss}}">{{title}}</p>
+    <sc-if value="{{hasSubtitle}}" hint-placeholder-val="{{true}}"><p style="{{subtitleCss}}">{{subtitle}}</p></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Добро пожаловать"},"subtitle":{"editor":"text","default":"Один аккаунт для обучения, сообщества и карьеры"},"variant":{"editor":"enum","default":"brand","options":["brand","compact"]},"$preview":{"width":390,"height":258}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var v = p.variant === 'compact' ? 'compact' : 'brand';
+    var brand = v === 'brand';
+    var compact = v === 'compact';
+    var title = p.title ?? 'Добро пожаловать';
+    var subtitle = p.subtitle ?? (p.title === undefined ? 'Один аккаунт для обучения, сообщества и карьеры' : '');
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    // brand: full-bleed navy block incl. 54px safe area; continue with AuthSheet (same navy at its corners)
+    var pad = brand ? '74px 28px 24px' : '0 8px';
+    return {
+      brand: brand,
+      rootCss: ['position: relative', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'overflow: hidden', 'padding: ' + pad, 'color: ' + (brand ? '#FFFFFF' : '#000000'), FF].join('; '),
+      markCss: compact
+        ? 'width: 60px; height: 60px; border-radius: 18px; background: #234088; display: flex; align-items: center; justify-content: center; margin-bottom: 18px'
+        : 'display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; margin-bottom: 18px',
+      logoWrapCss: 'display: flex; transform: scale(' + (compact ? 0.9 : 1.5) + ')',
+      logoVariant: 'white',
+      title: title,
+      titleCss: 'margin: 0; text-align: center; font-weight: 700; ' + (compact ? 'font-size: 22px; line-height: 28px' : 'font-size: 28px; line-height: 34px; letter-spacing: 0.1px'),
+      subtitle: subtitle, hasSubtitle: !!subtitle,
+      subtitleCss: 'margin: 8px 0 0; max-width: 300px; font-size: 15px; line-height: 20px; text-align: center; color: ' + (brand ? 'rgba(255,255,255,0.74)' : '#5C5C60')
+    };
+  }
+}
+</script>
+</body>
+</html>

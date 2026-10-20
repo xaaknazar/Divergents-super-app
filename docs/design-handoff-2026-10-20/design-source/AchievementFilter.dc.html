@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AchievementFilter</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <div role="group" aria-label="Фильтр достижений" style="display: flex; gap: 8px">
+    <sc-for list="{{segs}}" as="s" hint-placeholder-count="3"><button type="button" aria-pressed="{{s.pressed}}" onClick="{{s.pick}}" style="{{s.css}}">{{s.label}}</button></sc-for>
+  </div>
+  <div style="position: relative; display: flex; align-items: center; gap: 12px; min-height: 48px">
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+      <dc-import name="Text" variant="headline" text="{{category}}" hint-size="100%,22px"></dc-import>
+      <dc-import name="Text" variant="caption1" tone="secondary" text="{{shown}}" hint-size="100%,16px"></dc-import>
+    </div>
+    <dc-import name="Icon" icon="sliders" size="md" tone="secondary" hint-size="20px,20px"></dc-import>
+    <button type="button" aria-expanded="false" aria-label="{{pickerAria}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer"></button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"items":{"editor":null},"value":{"editor":"int","default":0,"min":0,"max":4},"category":{"editor":"text","default":"Все направления"},"shown":{"editor":"text","default":"Показано 50 из 50"},"$preview":{"width":358,"height":124}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var items = Array.isArray(p.items) && p.items.length ? p.items : ['Все', 'Полученные', 'Впереди'];
+    var picked = this.state && this.state.picked !== undefined ? this.state.picked : Number(p.value || 0);
+    return {
+      rootCss: ['display: flex', 'flex-direction: column', 'gap: 20px', 'width: 100%', 'box-sizing: border-box', 'color: #000000', F].join('; '),
+      category: p.category ?? 'Все направления',
+      shown: p.shown ?? 'Показано 50 из 50',
+      pickerAria: 'Выбрать направление: ' + (p.category ?? 'Все направления'),
+      segs: items.map(function (label, i) {
+        var on = i === picked;
+        return {
+          label: label, pressed: on ? 'true' : 'false',
+          pick: function () { self.setState({ picked: i }); },
+          css: ['flex: 1 1 0', 'min-width: 0', 'min-height: 48px', 'padding: 12px', 'margin: 0', 'border: 0', 'border-radius: 12px', 'cursor: pointer', F,
+            'font-size: 15px', 'line-height: 20px', 'font-weight: 400',
+            'background: ' + (on ? 'rgba(61,91,219,0.13)' : 'rgba(116,116,128,0.08)'), 'color: ' + (on ? '#234088' : '#000000')].join('; ')
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

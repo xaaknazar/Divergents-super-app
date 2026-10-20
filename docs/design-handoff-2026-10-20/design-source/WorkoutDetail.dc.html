@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Тренировка</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1040" safe-top="{{false}}" hint-size="390px,1040px">
+  <dc-import name="NavHeader" variant="inline" back-label="Тренировки" back-href="WorkoutHistory.dc.html" actions="{{headerActions}}" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-bottom="12" gap="2" hint-size="100%,62px">
+    <dc-import name="Wrapper2" dir="row" gap="8" align="center" hint-size="100%,28px">
+      <dc-import name="Icon" icon="bolt-vertical" variant="solid" size="md" tone="brand" hint-size="20px,20px"></dc-import>
+      <dc-import name="Text" variant="title2" heading="1" text="Пробежка" hint-size="200px,28px"></dc-import>
+    </dc-import>
+    <dc-import name="Text" variant="subhead" tone="secondary" text="11 октября 2026, 07:12" hint-size="100%,20px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" gap="8" hint-size="100%,600px">
+    <dc-import name="MapCanvas" size="card" route="{{route}}" route-ends="{{true}}" watermark="{{true}}" hint-size="100%,300px"></dc-import>
+    <dc-import name="Wrapper2" cols="2" pad-top="8" hint-size="100%,104px">
+      <sc-for list="{{metrics}}" as="m" hint-placeholder-count="4">
+        <dc-import name="MetricValue" variant="grid" value="{{m.value}}" label="{{m.label}}" hint-size="100%,52px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="Card" size="flush" variant="outlined" hint-size="100%,176px">
+      <sc-for list="{{details}}" as="d" hint-placeholder-count="4">
+        <dc-import name="MetricRow" label="{{d.label}}" hint="{{d.hint}}" value="{{d.value}}" separator="{{d.separator}}" hint-size="100%,40px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+  <dc-import name="BottomBar" placement="screen" hint-size="100%,160px">
+    <dc-import name="Button" label="Добавить в челлендж · +10 040 шагов" icon="plus" variant="solid" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+    <dc-import name="Button" label="Поделиться" icon="share-network" variant="plain" size="compact" full-width="{{true}}" href="WorkoutShare.dc.html" hint-size="100%,44px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+
+    return {
+      headerActions: [{ icon: 'bin', label: 'Удалить тренировку', tone: 'danger' }],
+      route: '60,250 116,250 116,170 180,170 180,120 246,120 246,70 300,70 300,44 270,30 236,30',
+      metrics: [
+        { value: '5,02 км', label: 'Дистанция' },
+        { value: '5′34″', label: 'Средний темп' },
+        { value: '27:58', label: 'Время в движении' },
+        { value: '38 м', label: 'Набор высоты' }
+      ],
+      details: [
+        { label: 'Общее время', hint: '', value: '28:34', separator: false },
+        { label: 'Остановки', hint: '', value: '0:36', separator: true },
+        { label: 'Шаги по датчику телефона', hint: '', value: '4 620', separator: true },
+        { label: 'В зачёт челленджа', hint: 'по правилу: 1 км бега = 2000 шагов', value: '10 040', separator: true }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

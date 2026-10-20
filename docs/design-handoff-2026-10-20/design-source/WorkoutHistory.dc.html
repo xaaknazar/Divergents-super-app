@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>История тренировок</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1080" safe-top="{{false}}" hint-size="390px,1080px">
+  <dc-import name="NavHeader" variant="inline" back-label="Назад" back-href="CommunityHome.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-top="8" pad-bottom="12" gap="4" hint-size="100%,85px">
+    <dc-import name="Text" variant="largeTitle" heading="1" text="Тренировки" hint-size="100%,41px"></dc-import>
+    <dc-import name="Text" variant="subhead" tone="secondary" text="{{summary}}" hint-size="100%,20px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="4" gap="6" hint-size="100%,820px">
+    <sc-for list="{{months}}" as="m" hint-placeholder-count="2">
+      <dc-import name="ListSection" header="{{m.title}}" hint-size="100%,420px">
+        <sc-for list="{{m.rows}}" as="w" hint-placeholder-count="4">
+          <dc-import name="WorkoutRow" mode="{{w.mode}}" date="{{w.date}}" distance="{{w.distance}}" stats="{{w.stats}}" route="{{w.route}}" counted="{{w.counted}}" separator="{{w.separator}}" href="WorkoutDetail.dc.html" hint-size="100%,96px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </sc-for>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+
+    var row = function (mode, date, distance, stats, route, counted, separator) {
+      return { mode: mode, date: date, distance: distance, stats: stats, route: route, counted: counted, separator: separator };
+    };
+    return {
+      summary: '7 тренировок · 26,83 км · 3:36:28',
+      months: [
+        { title: 'октябрь', rows: [
+          row('run', 'Сегодня, 07:12', '5,02 км', ['28:34', '5′34″/км', '≈4 620'], '12,58 24,58 24,40 38,40 38,28 50,28 50,16 60,16 60,10 52,6 44,6', false, false),
+          row('walk', 'Вчера, 19:40', '3,20 км', ['41:05', '12′50″/км', '≈4 444'], '16,50 16,24 30,14 48,14 58,26 56,46 40,58 22,56 16,50', true, true),
+          row('run', '8 октября, 07:05', '4,01 км', ['23:12', '5′47″/км', '≈3 780'], '10,36 22,30 30,36 40,24 50,30 62,18 62,36 50,44 40,40 30,52 20,46 10,36', true, true),
+          row('walk', '5 октября, 18:22', '2,45 км', ['31:40', '12′56″/км', '≈3 403'], '14,14 14,40 34,40 34,58 58,58 58,30', true, true)
+        ] },
+        { title: 'сентябрь', rows: [
+          row('run', '28 сентября, 07:30', '6,12 км', ['36:02', '5′53″/км', '≈5 610'], '10,60 18,48 22,34 30,24 44,18 56,12 62,18 54,30 46,44 40,56 30,62 18,64 10,60', true, false),
+          row('walk', '24 сентября, 20:10', '2,88 км', ['37:15', '12′56″/км', '≈4 000'], '12,20 30,20 30,12 46,12 46,30 60,30 60,52 38,52 38,60 16,60 16,38 12,20', false, true),
+          row('run', '20 сентября, 07:15', '3,15 км', ['18:40', '5′56″/км', '≈2 950'], '10,52 26,52 26,36 44,36 44,22 62,22', false, true)
+        ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

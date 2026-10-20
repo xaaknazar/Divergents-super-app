@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ListSection — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1040" safe-top="{{false}}" hint-size="390px,1040px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,980px">
+    <dc-import name="Text" variant="title2" heading="1" text="ListSection" hint-size="100%,28px"></dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,250px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="header + rows (separator на 2-й и далее)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" header="Мои активности" hint-size="100%,170px">
+        <dc-import name="ListRow" icon="mountains" title="Выходные в горах" subtitle="Ваша поездка · 12 октября" href="TripDetail.dc.html" hint-size="100%,66px"></dc-import>
+        <dc-import name="ListRow" icon="pulse" icon-tone="success" title="Утренняя пробежка" subtitle="Вы записаны · 13 октября, 07:00" separator="{{true}}" href="SportDetail.dc.html" hint-size="100%,66px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,260px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="header + footer" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" header="Офлайн" footer="Скачанные уроки и карты доступны без интернета" hint-size="100%,190px">
+        <dc-import name="ListRow" icon="cloud-arrow-down" title="Скачанные уроки" detail="3" href="Downloads.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="map" icon-tone="teal" title="Офлайн-карты" detail="Алматы" separator="{{true}}" href="OfflineMap.dc.html" hint-size="100%,48px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,170px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="без заголовка" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" hint-size="100%,96px">
+        <dc-import name="ListRow" icon="question-circle" icon-tone="neutral" title="Написать в поддержку" href="AIChat.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="shield-check" icon-tone="neutral" title="Политика конфиденциальности" separator="{{true}}" hint-size="100%,48px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,220px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="по умолчанию (демо)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" hint-size="100%,200px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1040}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

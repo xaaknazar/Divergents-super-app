@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingHeader — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1190" safe-top="{{false}}" hint-size="390px,1190px">
+  <dc-import name="Wrapper" pad="16" gap="20" hint-size="100%,1060px">
+    <dc-import name="Wrapper2" pad-x="4" gap="4" hint-size="100%,56px">
+      <dc-import name="Text" variant="title1" heading="1" text="ReadingHeader" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Шапка челленджа: editorial — до вступления, compact — у участника (таймер остаётся на первом экране)" hint-size="100%,36px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="EDITORIAL" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingHeader" title="&quot;Extreme reading&quot; Challenge" hint-size="100%,330px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="COMPACT" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingHeader" variant="compact" title="&quot;Extreme reading&quot; Challenge" hint-size="100%,104px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="EDITORIAL · ТЁМНАЯ" hint-size="100%,14px"></dc-import>
+      <dc-import name="StoryBackdrop" tone="dark" hint-size="100%,200px"><dc-import name="ReadingHeader" scheme="dark" title="&quot;Extreme reading&quot; Challenge" hint-size="100%,330px"></dc-import></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1190}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

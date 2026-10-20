@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>IconTile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<span aria-hidden="true" style="{{css}}"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="{{iconSize}}" tone="inherit" hint-size="22px,22px"></dc-import></span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"icon":{"editor":"enum","default":"flame","options":["arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"tone":{"editor":"enum","default":"brand","options":["brand","challenge","trip","sport","violet","orange","pink","neutral"]},"variant":{"editor":"enum","default":"solid","options":["solid","soft"]},"size":{"editor":"enum","default":"md","options":["sm","md","lg"]},"$preview":{"width":48,"height":48}}'>
+class Component extends DCLogic {
+  // Coloured square icon badge used by cards and rows. solid = glossy gradient tile with white glyph; soft = tinted tile with coloured glyph.
+  static TONES = {
+    brand: ['#5672E6', '#234088', '35,64,136'],
+    challenge: ['#FF9A4D', '#E8590C', '232,89,12'],
+    trip: ['#3CCB82', '#15803D', '21,128,61'],
+    sport: ['#7B90FF', '#3D5BDB', '61,91,219'],
+    violet: ['#A587FF', '#6D3FD6', '109,63,214'],
+    orange: ['#FFAE5C', '#C2410C', '194,65,12'],
+    pink: ['#FF7AB6', '#BE185D', '190,24,93'],
+    neutral: ['#9A9AA2', '#5C5C60', '92,92,96']
+  };
+  renderVals() {
+    var p = this.props;
+    var t = Component.TONES[p.tone] || Component.TONES.brand;
+    var d = { sm: 36, md: 44, lg: 52 }[p.size] || 44;
+    var soft = p.variant === 'soft';
+    var css = ['display: flex', 'align-items: center', 'justify-content: center', 'flex-shrink: 0', 'box-sizing: border-box',
+      'width: ' + d + 'px', 'height: ' + d + 'px', 'border-radius: ' + Math.round(d * 0.3) + 'px'];
+    if (soft) css.push('background: rgba(' + t[2] + ',0.11)', 'color: ' + t[1]);
+    else css.push('background: linear-gradient(155deg, ' + t[0] + ' 0%, ' + t[1] + ' 100%)', 'color: #FFFFFF',
+      'box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), inset 0 -1px 0 rgba(0,0,0,0.08), 0 6px 14px -6px rgba(' + t[2] + ',0.6)');
+    return { css: css.join('; '), icon: p.icon || 'flame', iconSize: { sm: 'md', md: 'lg', lg: 'xl' }[p.size] || 'lg' };
+  }
+}
+</script>
+</body>
+</html>

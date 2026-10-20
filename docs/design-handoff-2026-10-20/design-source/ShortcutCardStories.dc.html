@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ShortcutCard — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1160" safe-top="{{false}}" hint-size="390px,1160px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,1040px">
+    <dc-import name="Text" variant="title2" heading="1" text="ShortcutCard" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=tinted (скачанные уроки)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ShortcutCard" variant="tinted" icon="cloud-arrow-down" title="Скачанные уроки" subtitle="3 · доступны без интернета" href="Downloads.dc.html" hint-size="100%,70px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=gradient (библиотека)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ShortcutCard" variant="gradient" icon="book" title="Библиотека книг" subtitle="Каталог, рецензии и ИИ-советник по книгам под ваш профиль" href="BooksCatalog.dc.html" hint-size="100%,92px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=gradient (подарок)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ShortcutCard" variant="gradient" icon="gift" title="Подарок новым участникам" subtitle="Курс «Важность знания себя» — бесплатно" href="CourseDetail.dc.html" hint-size="100%,92px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=outlined" hint-size="100%,18px"></dc-import>
+      <dc-import name="ShortcutCard" variant="outlined" icon="sparkles" title="Спросить Divergents AI" subtitle="Подберёт курс под ваш профиль" href="AIChat.dc.html" hint-size="100%,70px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,118px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="accent=violet · variant=gradient" hint-size="100%,18px"></dc-import>
+      <dc-import name="ShortcutCard" accent="violet" variant="gradient" icon="sparkles" title="Divergents AI" subtitle="Ответы, разборы тестов и подбор курсов" href="AIChat.dc.html" hint-size="100%,92px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,96px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="accent=orange · variant=tinted" hint-size="100%,18px"></dc-import>
+      <dc-import name="ShortcutCard" accent="orange" variant="tinted" icon="people" title="Мои сообщества" subtitle="4 канала · 2 встречи на неделе" href="CommunityHome.dc.html" hint-size="100%,70px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,96px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="accent=emerald · variant=outlined" hint-size="100%,18px"></dc-import>
+      <dc-import name="ShortcutCard" accent="emerald" variant="outlined" icon="map" title="Места рядом" subtitle="Парки, площадки и маршруты" href="MapHome.dc.html" hint-size="100%,70px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,118px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="accent=pink · variant=gradient" hint-size="100%,18px"></dc-import>
+      <dc-import name="ShortcutCard" accent="pink" variant="gradient" icon="briefcase" title="Карьера" subtitle="Вакансии и отклики под ваш профиль" href="CareerHome.dc.html" hint-size="100%,92px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1160}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

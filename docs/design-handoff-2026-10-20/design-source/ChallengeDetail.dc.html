@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Челлендж — трекер дня</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="2300" safe-top="{{false}}" hint-size="390px,2300px">
+<dc-import name="NavHeader" variant="plain" title="" back-label="Сообщество" back-href="CommunityHome.dc.html" actions="{{navActions}}" hint-size="100%,118px"></dc-import>
+<dc-import name="Wrapper" gap="12" hint-size="100%,2200px">
+<dc-import name="Wrapper2" pad-x="16" pad-top="4" gap="12" hint-size="100%,1000px">
+<dc-import name="ChallengeHero" variant="active" title="Divergents challenge: 2 season" subtitle="Команда «KEX group»" badge="День 9 из 15" meta="+40 pts сегодня" progress="{{60}}" progress-label="Прогресс челленджа" progress-meta="Осталось 6 дн" hint-size="100%,170px"></dc-import>
+<dc-import name="Card" size="compact" hint-size="100%,610px">
+<dc-import name="DayPlanHeader" title="План на сегодня" done="{{2}}" total="{{3}}" caption="2 из 3 выполнено · +2 бонус" hint-size="100%,70px"></dc-import>
+<dc-import name="TaskRow" variant="metric" state="done" title="20 страниц книги" value="22" goal="20 стр." extra="+2" progress="{{100}}" badge="+22 pts" action-label="Изменить" hint-size="100%,100px"></dc-import>
+<dc-import name="TaskRow" variant="check" state="done" title="День без сахара" badge="Готово" separator="{{true}}" hint-size="100%,48px"></dc-import>
+<dc-import name="TaskRow" variant="metric" state="progress" title="10 000 шагов" value="7 400" goal="10 000 шагов" extra="" progress="{{74}}" badge="+18" action-label="Изменить" separator="{{true}}" hint-size="100%,100px"></dc-import>
+<dc-import name="TaskLink" variant="primary" icon="navigation" label="Записать бег или ходьбу" href="WorkoutTrack.dc.html" separator="{{true}}" hint-size="100%,48px"></dc-import>
+<dc-import name="TaskLink" variant="help" icon="question-circle" label="Как учитываются шаги?" hint-size="100%,44px"></dc-import>
+<dc-import name="ScoreFlagSummary" title="Мои флаги" items="{{flagItems}}" separator="{{true}}" hint-size="100%,120px"></dc-import>
+<dc-import name="DaySyncStatus" state="synced" text="Синхронизировано с сервером · итог дня в 23:01" separator="{{true}}" hint-size="100%,38px"></dc-import>
+</dc-import>
+<dc-import name="Card" size="flush" hint-size="100%,190px">
+<dc-import name="DayCalendar" variant="week" title="Календарь челленджа" badge="9/15" caption="Сегодня: 12 октября · 9/15 день" days="{{calendarDays}}" hint-size="100%,190px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="SectionHeader" size="small" title="Команда «KEX group» · вы 2-е место" action="Все" href="TeamStandings.dc.html" hint-size="100%,32px"></dc-import>
+<dc-import name="Wrapper2" pad-x="16" hint-size="100%,1020px">
+<dc-import name="Card" size="flush" hint-size="100%,1020px">
+<dc-import name="TeamScoreHeader" points="2053 pts" flags="7 флагов" hint-size="100%,92px"></dc-import>
+<dc-import name="Wrapper3" pad-x="12" pad-bottom="8" hint-size="100%,56px">
+<dc-import name="Segmented" items="{{ratingModes}}" value="{{0}}" hint-size="100%,48px"></dc-import>
+</dc-import>
+<sc-for list="{{members}}" as="m" hint-placeholder-count="7">
+<dc-import name="StandingRow" variant="detailed" rank="{{m.rank}}" medal="{{m.medal}}" person="{{m.name}}" title="{{m.title}}" points="{{m.points}}" pace="{{m.pace}}" trend="{{m.trend}}" trend-label="{{m.trendLabel}}" flags="{{m.flags}}" flag-codes="{{m.codes}}" me="{{m.me}}" me-label="" status="{{m.status}}" streak="{{m.streak}}" separator="{{m.separator}}" hint-size="100%,100px"></dc-import>
+</sc-for>
+<dc-import name="ListRow" icon="people" icon-tone="brand" title="Состав команды" detail="20" href="ChallengeRoster.dc.html" separator="{{true}}" hint-size="100%,52px"></dc-import>
+<dc-import name="ListRow" icon="paperplane" icon-tone="teal" title="Чат команды" detail="Telegram" separator="{{true}}" hint-size="100%,52px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var days = [];
+    for (var i = 1; i <= 15; i++) days.push({ label: String(i + 3), sub: 'Д' + i, state: i < 9 ? 'past' : i === 9 ? 'current' : 'upcoming' });
+    function m(rank, name, title, pts, pace, trend, trendLabel, flags, codes, extra) {
+      var o = { rank: rank, name: name, title: title, points: pts + ' pts', pace: pace + ' pts/день · средний темп', trend: trend, trendLabel: trendLabel,
+        flags: flags, codes: codes, medal: 'none', me: false, status: 'active', streak: false, separator: rank !== 1 };
+      for (var k in (extra || {})) o[k] = extra[k];
+      return o;
+    }
+    return {
+      navActions: [{ icon: 'list', label: 'Меню челленджа' }],
+      calendarDays: days,
+      flagItems: [
+        { icon: 'book-open', tone: 'brand', label: 'Чтение', count: 0 },
+        { icon: 'utensils', tone: 'danger', label: 'No Sugar', count: 0 },
+        { icon: 'body-standing', tone: 'success', label: 'Активность', count: 1 }
+      ],
+      ratingModes: ['Общий рейтинг', 'Сегодня'],
+      members: [
+        m(1, 'Арман', 'Арман', 388, '45,4', 'up', 'на 1 позицию', 0, '', { medal: 'gold' }),
+        m(2, 'Dana_fit', 'Dana_fit', 349, '37,1', 'down', 'на 1 позицию', 0, '', { medal: 'silver' }),
+        m(3, 'Акназар', 'Акназар (вы)', 336, '37', 'same', '', 1, 'A-1', { medal: 'bronze', me: true, streak: true }),
+        m(4, 'Мадина', 'Мадина', 310, '33,1', 'up', 'на 2 позиции', 1, 'NS-1'),
+        m(5, 'Ерлан', 'Ерлан', 296, '33,9', 'same', '', 0, ''),
+        m(6, 'Sabi', 'Sabi', 254, '29,3', 'down', 'на 2 позиции', 2, 'A-1 · R-1'),
+        m(20, 'Тимур', 'Тимур', 120, '24', 'same', '', 3, 'A-3', { status: 'eliminated' })
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

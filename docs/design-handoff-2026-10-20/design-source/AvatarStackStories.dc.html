@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AvatarStack — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="480" safe-top="{{false}}" hint-size="390px,480px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,446px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">AvatarStack</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Группа аватаров: people · max · size · more («+N»)</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,52px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">SIZE · SM (24) · MAX 3</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,28px">
+<dc-import name="AvatarStack" people="{{team}}" max="3" size="sm" hint-size="110px,28px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,60px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">SIZE · MD (32) · MAX 4</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,36px">
+<dc-import name="AvatarStack" people="{{team}}" max="4" size="md" hint-size="150px,36px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,60px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">MORE · ВСЕГО 110 УЧАСТНИКОВ</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,36px">
+<dc-import name="AvatarStack" people="{{captains}}" max="4" size="md" more="106" hint-size="170px,36px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,60px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">FEW · БЕЗ «+N»</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,36px">
+<dc-import name="AvatarStack" people="{{pair}}" max="4" size="md" hint-size="70px,36px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":480}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { team: [{ person: 'Danday Amokachi', src: '/_blob/f528fbb80d712d453cd5785a9e1e06f6' }, { person: 'Дильяра Сейтова' }, { person: 'Нурдаулет Касымов' }, { person: 'Асия Нурланова' }, { person: 'Серик Ахметов' }, { person: 'Акжан Темирова' }], captains: [{ person: 'Абзал Абдрахманов' }, { person: 'Дильяра Сейтова' }, { person: 'Мерей Жумабек' }, { person: 'Айдын Сарсенов' }], pair: [{ person: 'Danday Amokachi', src: '/_blob/f528fbb80d712d453cd5785a9e1e06f6' }, { person: 'Асия Нурланова' }] };
+  }
+}
+</script>
+</body>
+</html>

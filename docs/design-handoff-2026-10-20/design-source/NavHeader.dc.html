@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>NavHeader</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<header style="{{rootCss}}">
+  <sc-if value="{{isOverlay}}" hint-placeholder-val="{{false}}">
+    <div style="{{overlayBarCss}}">
+      <sc-if value="{{hasBack}}" hint-placeholder-val="{{true}}"><dc-import name="IconButton" icon="chevron-left" label="{{backLabel}}" href="{{backHref}}" variant="{{overlayVariant}}" hint-size="48px,48px"></dc-import></sc-if>
+      <sc-if value="{{noBack}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 48px"></span></sc-if>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <sc-if value="{{slotBefore}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; flex-shrink: 0">{{children}}</div></sc-if>
+        <sc-for list="{{actions}}" as="a" hint-placeholder-count="0">
+          <dc-import name="IconButton" icon="{{a.icon}}" label="{{a.label}}" href="{{a.href}}" badge="{{a.badge}}" tone="{{a.tone}}" variant="{{overlayVariant}}" hint-size="48px,48px"></dc-import>
+        </sc-for>
+        <sc-if value="{{slotAfter}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; flex-shrink: 0">{{children}}</div></sc-if>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{isBar}}" hint-placeholder-val="{{true}}">
+    <div style="{{barCss}}">
+      <sc-if value="{{backLink}}" hint-placeholder-val="{{true}}"><a href="{{backHref}}" aria-label="{{backLabel}}" style="{{backCss}}"><dc-import name="Icon" icon="chevron-left" size="md" tone="brand" hint-size="20px,20px"></dc-import><sc-if value="{{showBackLabel}}" hint-placeholder-val="{{false}}"><dc-import name="Text" variant="body" tone="brand" lines="1" text="{{backLabel}}" hint-size="60px,24px"></dc-import></sc-if></a></sc-if>
+      <sc-if value="{{backButton}}" hint-placeholder-val="{{false}}"><button type="button" aria-label="{{backLabel}}" style="{{backCss}}"><dc-import name="Icon" icon="chevron-left" size="md" tone="brand" hint-size="20px,20px"></dc-import><sc-if value="{{showBackLabel}}" hint-placeholder-val="{{false}}"><dc-import name="Text" variant="body" tone="brand" lines="1" text="{{backLabel}}" hint-size="60px,24px"></dc-import></sc-if></button></sc-if>
+      <sc-if value="{{modalCancelLink}}" hint-placeholder-val="{{false}}"><a href="{{backHref}}" style="{{textActionCss}}">{{backLabel}}</a></sc-if>
+      <sc-if value="{{modalCancelButton}}" hint-placeholder-val="{{false}}"><button type="button" style="{{textActionCss}}">{{backLabel}}</button></sc-if>
+      <sc-if value="{{noBack}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{spacerCss}}"></span></sc-if>
+      <sc-if value="{{showInlineTitle}}" hint-placeholder-val="{{true}}"><div style="flex: 1; min-width: 0; margin: 0 8px"><dc-import name="Text" variant="headline" align="center" heading="1" lines="1" text="{{title}}" hint-size="100%,22px"></dc-import></div></sc-if>
+      <sc-if value="{{noInlineTitle}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="flex: 1"></span></sc-if>
+      <div style="min-width: 48px; display: flex; gap: 8px; padding-right: 6px; align-items: center; justify-content: flex-end; flex-shrink: 0">
+        <sc-if value="{{slotBefore}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; flex-shrink: 0">{{children}}</div></sc-if>
+        <sc-for list="{{actions}}" as="a" hint-placeholder-count="0">
+          <dc-import name="IconButton" icon="{{a.icon}}" label="{{a.label}}" href="{{a.href}}" badge="{{a.badge}}" tone="{{a.tone}}" variant="plain" hint-size="48px,48px"></dc-import>
+        </sc-for>
+        <sc-if value="{{textActionLink}}" hint-placeholder-val="{{false}}"><a href="{{actionHref}}" style="{{textActionCss}}">{{actionLabel}}</a></sc-if>
+        <sc-if value="{{textActionButton}}" hint-placeholder-val="{{false}}"><button type="button" style="{{textActionCss}}">{{actionLabel}}</button></sc-if>
+        <sc-if value="{{slotAfter}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; flex-shrink: 0">{{children}}</div></sc-if>
+        <sc-if value="{{modalClose}}" hint-placeholder-val="{{false}}"><dc-import name="IconButton" icon="x" label="Закрыть" variant="tinted" size="sm" hint-size="36px,36px"></dc-import></sc-if>
+      </div>
+    </div>
+    <sc-if value="{{showLargeTitle}}" hint-placeholder-val="{{false}}">
+      <div style="{{largeCss}}">
+        <dc-import name="Text" variant="largeTitle" heading="1" text="{{title}}" hint-size="100%,41px"></dc-import>
+        <sc-if value="{{hasSubtitle}}" hint-placeholder-val="{{false}}"><dc-import name="Text" variant="subhead" tone="secondary" text="{{subtitle}}" hint-size="100%,20px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{hairline}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 0.5px; background: rgba(60,60,67,0.18)"></span></sc-if>
+  </sc-if>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Уведомления"},"backLabel":{"editor":"text","default":"Назад"},"backHref":{"editor":"text","default":""},"variant":{"editor":"enum","default":"inline","options":["inline","plain","frosted","overlay","modal"]},"largeTitle":{"editor":"boolean","default":false},"subtitle":{"editor":"text","default":""},"actionLabel":{"editor":"text","default":""},"actionHref":{"editor":"text","default":""},"safeArea":{"editor":"boolean","default":true},"closeButton":{"editor":"boolean","default":true},"overlayScheme":{"editor":"enum","default":"dark","options":["dark","light"]},"childrenPosition":{"editor":"enum","default":"beforeActions","options":["beforeActions","afterActions"]},"actions":{"editor":null},"children":{"editor":null},"$preview":{"width":390,"height":124}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = ['title', 'backLabel', 'backHref', 'actionLabel', 'actions', 'subtitle', 'children'].every(function (k) { return p[k] === undefined || p[k] === null; });
+    var D = demo ? { title: 'Уведомления', backHref: 'ProfileHome.dc.html', actionLabel: 'Прочитать все' } : {};
+    var get = function (k) { return (p[k] !== undefined && p[k] !== null) ? p[k] : D[k]; };
+    var on = function (v) { return v === true || v === 'true'; };
+    var off = function (v) { return v === false || v === 'false'; };
+    var variant = p.variant || 'inline';
+    var modal = variant === 'modal';
+    var overlay = variant === 'overlay';
+    // modal: no safe area unless safeArea is explicitly true; other variants: on unless explicitly false
+    var safe = modal ? on(p.safeArea) : !off(p.safeArea);
+    var top = safe ? 54 : 0;
+    var title = get('title') || '';
+    var large = on(p.largeTitle) && !!title && !modal;
+    var backHref = get('backHref') || '';
+    var rawLabel = get('backLabel');
+    var hasBack = !!backHref || (rawLabel !== undefined && rawLabel !== null && rawLabel !== '');
+    var backLabel = rawLabel || (modal ? 'Отмена' : 'Назад');
+    var actionLabel = get('actionLabel') || '';
+    var actionHref = get('actionHref') || '';
+    var TONES = { brand: 1, danger: 1, neutral: 1 };
+    var actions = (get('actions') || []).map(function (a) {
+      return { icon: a.icon || 'share-network', label: a.label || '', href: a.href || '', badge: Number(a.badge || 0), tone: TONES[a.tone] ? a.tone : 'brand' };
+    });
+    var ch = p.children;
+    var hasChildren = ch !== undefined && ch !== null && ch !== '' && ch !== false && !(Array.isArray(ch) && ch.length === 0);
+    var after = p.childrenPosition === 'afterActions';
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif";
+    var bg = 'background: transparent';
+    // inline sits directly on the page (no bar background) — back button floats over the screen surface; only the full-screen modal keeps a white bar
+    if (modal && safe) bg = 'background: #FFFFFF';
+    if (variant === 'frosted') bg = 'background: rgba(255,255,255,0.78); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%)';
+    var rootCss = ['position: relative', 'display: block', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'color: #000000', FF, '-webkit-font-smoothing: antialiased', bg].join('; ');
+    var modalCompact = modal && !safe;
+    var barCss = ['position: relative', 'display: flex', 'align-items: center', 'justify-content: space-between', 'box-sizing: border-box', 'min-height: ' + (48 + (modalCompact ? 24 : 16) + top) + 'px',
+      'padding: ' + (modalCompact ? 14 : top + 6) + 'px 8px 10px 12px'].join('; ');
+    var overlayBarCss = ['display: flex', 'align-items: center', 'justify-content: space-between', 'box-sizing: border-box', 'padding: ' + (top + 6) + 'px 12px 0'].join('; ');
+    var backCss = 'min-width: 48px; min-height: 48px; flex-shrink: 1; display: flex; align-items: center; gap: 2px; padding: 0 6px; border: 0; background: transparent; cursor: pointer; text-decoration: none; color: #234088';
+    var textActionCss = ['min-height: 48px', 'min-width: 48px', 'display: flex', 'align-items: center', 'justify-content: center', 'padding: 0 6px', 'border: 0', 'background: transparent', 'cursor: pointer', 'text-decoration: none', 'white-space: nowrap', FF, 'color: #234088',
+      modal ? 'font-size: 17px; line-height: 22px; font-weight: 700; letter-spacing: -0.2px' : 'font-size: 15px; line-height: 20px; font-weight: 400; letter-spacing: -0.1px'].join('; ');
+    var showBack = hasBack && !modal;
+    return {
+      rootCss: rootCss, barCss: barCss, overlayBarCss: overlayBarCss, backCss: backCss,
+      textActionCss: textActionCss,
+      spacerCss: 'width: 48px; flex-shrink: 0',
+      largeCss: 'display: flex; flex-direction: column; gap: 4px; padding: 4px 20px ' + (p.subtitle ? 8 : 16) + 'px',
+      isOverlay: overlay, isBar: !overlay,
+      overlayVariant: p.overlayScheme === 'light' ? 'overlayLight' : 'overlayDark',
+      backHref: backHref, backLabel: backLabel,
+      backLink: showBack && !!backHref, backButton: showBack && !backHref,
+      modalCancelLink: modal && hasBack && !!backHref, modalCancelButton: modal && hasBack && !backHref,
+      hasBack: hasBack, noBack: !hasBack,
+      showBackLabel: !title || large,
+      title: title, showInlineTitle: !!title && !large, noInlineTitle: !title || large,
+      showLargeTitle: large, subtitle: p.subtitle || '', hasSubtitle: !!p.subtitle,
+      actions: actions,
+      children: ch, slotBefore: hasChildren && !after, slotAfter: hasChildren && after,
+      actionLabel: actionLabel, actionHref: actionHref,
+      textActionLink: !!actionLabel && !!actionHref, textActionButton: !!actionLabel && !actionHref,
+      modalClose: modal && !actionLabel && !off(p.closeButton),
+      hairline: modal && safe
+    };
+  }
+}
+</script>
+</body>
+</html>

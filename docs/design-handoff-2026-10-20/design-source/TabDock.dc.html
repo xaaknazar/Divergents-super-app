@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TabDock</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<nav aria-label="Разделы" style="{{navCss}}">
+  <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+    <a href="{{t.href}}" aria-current="{{t.current}}" style="{{t.css}}">
+      <dc-import name="Icon" icon="{{t.icon}}" variant="{{t.variant}}" size="lg" tone="{{t.tone}}" hint-size="24px,24px"></dc-import>
+      <span style="{{t.labelCss}}">{{t.label}}</span>
+    </a>
+  </sc-for>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","default":"learn","options":["learn","ai","community","map","career","none"]},"placement":{"editor":"enum","default":"screen","options":["screen","inline"]},"palette":{"editor":"enum","default":"navy","options":["navy","navyPill","color"]},"$preview":{"width":390,"height":120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var active = this.props.active || 'none';
+    var items = [
+      { id: 'learn', label: 'Обучение', icon: 'book', href: 'LMSHome.dc.html', c: '#3D5BDB', ink: '#234088', tint: 'rgba(61,91,219,0.14)' },
+      { id: 'ai', label: 'AI', icon: 'sparkles', href: 'AIChat.dc.html', c: '#8B5CF6', ink: '#5B21B6', tint: 'rgba(139,92,246,0.15)' },
+      { id: 'community', label: 'Сообщество', icon: 'people', href: 'CommunityHome.dc.html', c: '#F97316', ink: '#9A3412', tint: 'rgba(249,115,22,0.15)' },
+      { id: 'map', label: 'Карта', icon: 'map', href: 'MapHome.dc.html', c: '#10B981', ink: '#047857', tint: 'rgba(16,185,129,0.16)' },
+      { id: 'career', label: 'Карьера', icon: 'briefcase', href: 'CareerHome.dc.html', c: '#EC4899', ink: '#9D174D', tint: 'rgba(236,72,153,0.14)' }
+    ];
+    var inline = this.props.placement === 'inline';
+    var pal = this.props.palette || 'navy';
+    var navCss = [
+      inline ? 'position: relative; margin: 24px 14px' : 'position: absolute; left: 14px; right: 14px; bottom: 24px; z-index: 5',
+      'padding: 4px', 'border-radius: 24px', 'background: linear-gradient(180deg, rgba(255,255,255,0.58) 0%, rgba(244,246,251,0.42) 100%)',
+      'backdrop-filter: blur(28px) saturate(190%)', '-webkit-backdrop-filter: blur(28px) saturate(190%)',
+      'border: 0.5px solid rgba(255,255,255,0.75)',
+      'box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 0 0 0.5px rgba(35,64,136,0.10), 0 10px 30px rgba(35,64,136,0.14), 0 2px 6px rgba(16,29,44,0.05)',
+      'display: flex', 'gap: 0', "font-family: 'Gotham Rounded', system-ui, sans-serif"
+    ].join('; ');
+    return {
+      navCss: navCss,
+      tabs: items.map(function (it) {
+        var on = it.id === active;
+        var navy = '#234088', grey = '#8A8F98';
+        var iconC, labelC, bg;
+        if (pal === 'color') { iconC = it.c; labelC = on ? it.ink : '#5C5C60'; bg = on ? it.tint : 'transparent'; }
+        else if (pal === 'navyPill') { iconC = on ? '#FFFFFF' : grey; labelC = on ? '#FFFFFF' : grey; bg = on ? 'linear-gradient(140deg, #3D5BDB 0%, #234088 100%); box-shadow: 0 4px 12px rgba(35,64,136,0.30)' : 'transparent'; }
+        else { iconC = on ? navy : grey; labelC = on ? navy : grey; bg = on ? 'rgba(35,64,136,0.10); box-shadow: inset 0 0 0 0.5px rgba(35,64,136,0.12)' : 'transparent'; }
+        return {
+          href: it.href, icon: it.icon, label: it.label,
+          current: on ? 'page' : 'false',
+          tone: 'inherit',
+          variant: (on || pal === 'color') ? 'solid' : 'line',
+          css: 'flex: 1; min-width: 0; min-height: 60px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: ' + iconC + '; background: ' + bg,
+          labelCss: 'font-size: 11px; line-height: 14px; white-space: nowrap; color: ' + labelC + '; font-weight: ' + (on ? 700 : 500)
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

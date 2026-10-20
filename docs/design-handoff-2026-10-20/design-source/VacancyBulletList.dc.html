@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>VacancyBulletList</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{hasLabel}}" hint-placeholder-val="{{true}}"><span style="font-size: 11px; line-height: 14px; font-weight: 700; color: #6B6B70; text-transform: uppercase; letter-spacing: 0.4px">{{label}}</span></sc-if>
+  <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="3"><li style="display: flex; gap: 8px; align-items: flex-start"><span aria-hidden="true" style="{{r.iconCss}}"><dc-import name="Icon" icon="{{r.icon}}" variant="solid" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></span><div style="flex: 1; min-width: 0"><dc-import name="Text" variant="subhead" text="{{r.text}}" hint-size="100%,20px"></dc-import></div></li></sc-for>
+  </ul>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Ценности"},"icon":{"editor":"enum","default":"seal-check","options":["arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"tone":{"editor":"enum","default":"warning","options":["warning","success","brand","sky"]},"items":{"editor":null},"$preview":{"width":330,"height":100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var demo = p.items === undefined && p.label === undefined;
+    var INK = { warning: '#FF9500', success: '#187A32', brand: '#234088', sky: '#0369A1' };
+    var items = Array.isArray(p.items) ? p.items : (demo ? ['Забота о клиенте', 'Открытость', 'Развитие сотрудников'] : []);
+    var icon = p.icon || 'seal-check';
+    var iconCss = 'display: flex; flex-shrink: 0; margin-top: 2px; color: ' + (INK[p.tone] || INK.warning);
+    var label = p.label ?? (demo ? 'Ценности' : '');
+    return {
+      rootCss: 'display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; width: 100%; min-width: 0; color: #000000; ' + F,
+      label: label, hasLabel: !!label,
+      rows: items.map(function (t) { return { text: typeof t === 'string' ? t : (t.text || ''), icon: icon, iconCss: iconCss }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

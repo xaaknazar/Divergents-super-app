@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ShortcutTile — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="410" safe-top="{{false}}" hint-size="390px,410px">
+  <dc-import name="Wrapper" pad="16" gap="16" hint-size="100%,420px">
+    <dc-import name="Wrapper2" pad-x="4" gap="4" hint-size="100%,56px">
+      <dc-import name="Text" variant="title1" heading="1" text="ShortcutTile" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Плитка быстрого доступа для сетки в 2 колонки: icon · accent · title · caption · count" hint-size="100%,18px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" cols="2" gap="12" hint-size="100%,236px">
+      <dc-import name="ShortcutTile" icon="cloud-arrow-down" accent="brand" title="Скачанные" caption="Уроки без интернета" count="3" href="Downloads.dc.html" hint-size="100%,112px"></dc-import>
+      <dc-import name="ShortcutTile" icon="book" accent="violet" title="Библиотека" caption="Книги и ИИ-советник" count="24" href="BooksCatalog.dc.html" hint-size="100%,112px"></dc-import>
+      <dc-import name="ShortcutTile" icon="trophy" accent="orange" title="Достижения" caption="15 из 50" count="" href="Achievements.dc.html" hint-size="100%,112px"></dc-import>
+      <dc-import name="ShortcutTile" icon="calendar" accent="emerald" title="События" caption="Без счётчика" count="" href="#" hint-size="100%,112px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":410}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

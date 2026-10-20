@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>VacancyCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{hasEyebrow}}" hint-placeholder-val="{{true}}"><span style="{{eyebrowCss}}"><dc-import name="Icon" icon="bolt-vertical" variant="solid" size="xs" tone="inherit" hint-size="12px,12px"></dc-import><span>{{eyebrow}}</span></span></sc-if>
+  <div style="display: flex; gap: 14px; align-items: center">
+    <dc-import name="CompanyLogo" company="{{company}}" tone="{{logoTone}}" size="md" src="{{logoSrc}}" hint-size="52px,52px"></dc-import>
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+      <dc-import name="Text" variant="headline" heading="3" text="{{title}}" hint-size="100%,22px"></dc-import>
+      <dc-import name="Text" variant="subhead" tone="secondary" lines="1" text="{{subtitle}}" hint-size="100%,20px"></dc-import>
+    </div>
+  </div>
+  <sc-if value="{{hasTags}}" hint-placeholder-val="{{true}}"><div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{tags}}" as="t" hint-placeholder-count="3"><dc-import name="StatusBadge" label="{{t.label}}" tone="{{t.tone}}" icon="{{t.icon}}" hint-size="90px,22px"></dc-import></sc-for></div></sc-if>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{false}}"><a href="{{href}}" aria-label="{{ariaLabel}}" style="{{overlayCss}}"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"regular","options":["featured","regular"]},"eyebrow":{"editor":"text","default":""},"title":{"editor":"text","default":"HR бизнес-партнёр"},"company":{"editor":"text","default":"Ритейл-группа"},"city":{"editor":"text","default":"Алматы"},"logoTone":{"editor":"enum","default":"brand","options":["brand","success","indigo","purple","orange","teal"]},"logoSrc":{"editor":"text","default":""},"tags":{"editor":null},"href":{"editor":"text","default":""},"$preview":{"width":358,"height":168}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var demo = ['title', 'company', 'city', 'tags', 'eyebrow', 'variant'].every(function (k) { return p[k] === undefined || p[k] === null; });
+    var featured = demo ? true : p.variant === 'featured';
+    var title = p.title ?? (demo ? 'HR бизнес-партнёр' : '');
+    var company = p.company ?? (demo ? 'Ритейл-группа' : '');
+    var city = p.city ?? (demo ? 'Алматы' : '');
+    var eyebrow = p.eyebrow || (featured ? 'Лучшее совпадение' : '');
+    var raw = Array.isArray(p.tags) ? p.tags : (demo ? [{ label: 'Гибрид' }, { label: 'от 600 000 ₸' }, { label: '3 ваших таланта', tone: 'success', icon: 'seal-check' }] : []);
+    var tags = raw.map(function (t) { return { label: t.label || '', tone: t.tone || 'neutral', icon: t.icon || '' }; });
+    var subtitle = [company, city].filter(Boolean).join(' · ');
+    var href = p.href || (demo ? 'VacancyDetail.dc.html' : '');
+    var R = 14;
+    return {
+      rootCss: ['position: relative', 'display: flex', 'flex-direction: column', 'gap: 12px', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'padding: 16px',
+        'border-radius: 14px', 'background: #FFFFFF', 'color: #000000', F].join('; '),
+      eyebrowCss: 'display: flex; align-items: center; gap: 5px; font-size: 11px; line-height: 14px; font-weight: 700; letter-spacing: 0.2px; text-transform: uppercase; color: #FF9500',
+      hasEyebrow: featured && !!eyebrow, eyebrow: eyebrow,
+      title: title, subtitle: subtitle, company: company, logoTone: p.logoTone || 'brand', logoSrc: p.logoSrc || '',
+      tags: tags, hasTags: tags.length > 0,
+      href: href, hasHref: !!href, ariaLabel: [title, subtitle].filter(Boolean).join(', '),
+      overlayCss: 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; border-radius: ' + R + 'px'
+    };
+  }
+}
+</script>
+</body>
+</html>

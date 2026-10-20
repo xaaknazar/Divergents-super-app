@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BottomBar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <div style="width: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px">
+    <sc-if value="{{hasChildren}}" hint-placeholder-val="{{false}}">{{children}}</sc-if>
+    <sc-if value="{{isDemo}}" hint-placeholder-val="{{true}}"><dc-import name="Button" label="Записаться" icon="calendar-check" variant="solid" full-width="{{true}}" href="MeetupDetail.dc.html" hint-size="100%,50px"></dc-import></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"solid","options":["solid","blur"]},"placement":{"editor":"enum","default":"inline","options":["screen","inline"]},"children":{"editor":null},"$preview":{"width":390,"height":108}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var hasChildren = p.children !== undefined && p.children !== null && p.children !== '';
+    var blur = p.variant === 'blur';
+    var screen = p.placement === 'screen';
+    var css = ['box-sizing: border-box', 'width: 100%', 'min-width: 0', 'padding: 12px 16px 46px', 'border-top: 0.5px solid rgba(60,60,67,0.18)',
+      "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased', 'color: #000000',
+      blur ? 'background: rgba(255,255,255,0.78); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%)' : 'background: #FFFFFF',
+      screen ? 'position: absolute; left: 0; right: 0; bottom: 0; z-index: 4' : 'position: relative'];
+    return { rootCss: css.join('; '), hasChildren: hasChildren, isDemo: !hasChildren, children: p.children };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Wrapper2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div ref="{{setEl}}" style="{{layout}}">{{children}}</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dir":{"editor":"enum","default":"column","options":["column","row"],"section":"Layout"},"gap":{"editor":"enum","default":"0","options":["0","2","4","6","8","10","12","14","16","18","20","22","24","28","32","40"],"section":"Layout"},"pad":{"editor":"enum","default":"0","options":["0","4","6","8","10","12","14","16","18","20","22","24","28","32"],"section":"Padding"},"padX":{"editor":"enum","default":"","options":["","0","4","6","8","10","12","14","16","18","20","22","24","28","32"],"section":"Padding"},"padY":{"editor":"enum","default":"","options":["","0","4","6","8","10","12","14","16","18","20","22","24","28","32"],"section":"Padding"},"padTop":{"editor":"enum","default":"","options":["","0","4","6","8","10","12","14","16","18","20","22","24","28","32","40","48","54","64","80"],"section":"Padding"},"padBottom":{"editor":"enum","default":"","options":["","0","4","6","8","10","12","14","16","18","20","22","24","28","32","40","48","64","80","120"],"section":"Padding"},"align":{"editor":"enum","default":"stretch","options":["stretch","start","center","end","baseline"],"section":"Layout"},"justify":{"editor":"enum","default":"start","options":["start","center","end","between"],"section":"Layout"},"fill":{"editor":"enum","default":"none","options":["none","equal","first","last","middle"],"section":"Layout"},"cols":{"editor":"enum","default":"0","options":["0","2","3","4","5","6","7"],"section":"Layout"},"wrap":{"editor":"boolean","default":false,"section":"Layout"},"scroll":{"editor":"enum","default":"none","options":["none","x"],"section":"Layout"},"layer":{"editor":"enum","default":"flow","options":["flow","anchor","overlay-top","overlay-bottom","overlay-fill"],"section":"Position"},"clip":{"editor":"boolean","default":false,"section":"Position"},"$preview":{"width":390,"height":120}}'>
+// Wrapper2 — копия Wrapper для 2-го уровня вложенности (платформа запрещает Wrapper внутри Wrapper). Генерируется из Wrapper.dc.html, не редактировать вручную.
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var px = function (v) { return (v === undefined || v === null || v === '') ? null : (Number(v) + 'px'); };
+    var pad = px(p.pad) || '0px';
+    var top = px(p.padTop) || px(p.padY) || pad;
+    var bottom = px(p.padBottom) || px(p.padY) || pad;
+    var x = px(p.padX) || pad;
+    var gap = px(p.gap) || '0px';
+    var alignMap = { stretch: 'stretch', start: 'flex-start', center: 'center', end: 'flex-end', baseline: 'baseline' };
+    var justifyMap = { start: 'flex-start', center: 'center', end: 'flex-end', between: 'space-between' };
+    var align = alignMap[p.align] || 'stretch';
+    var justify = justifyMap[p.justify] || 'flex-start';
+    var s = ['box-sizing: border-box', 'min-width: 0', 'padding: ' + top + ' ' + x + ' ' + bottom + ' ' + x, 'gap: ' + gap];
+    var cols = Number(p.cols || 0);
+    var fill = p.fill || 'none';
+    if (cols > 0) {
+      s.push('display: grid', 'grid-template-columns: repeat(' + cols + ', minmax(0, 1fr))', 'align-items: ' + (align === 'flex-start' ? 'start' : align === 'flex-end' ? 'end' : align));
+    } else if (p.dir === 'row' && fill !== 'none') {
+      var tpl = { first: 'minmax(0, 1fr) auto', last: 'auto minmax(0, 1fr)', middle: 'auto minmax(0, 1fr) auto' }[fill];
+      s.push('display: grid', 'align-items: ' + (align === 'flex-start' ? 'start' : align === 'flex-end' ? 'end' : align === 'stretch' ? 'center' : align));
+      if (fill === 'equal') s.push('grid-auto-flow: column', 'grid-auto-columns: minmax(0, 1fr)');
+      else if (fill === 'first') s.push('grid-template-columns: minmax(0, 1fr)', 'grid-auto-flow: column', 'grid-auto-columns: auto');
+      else s.push('grid-template-columns: ' + tpl);
+    } else {
+      s.push('display: flex', 'flex-direction: ' + (p.dir === 'row' ? 'row' : 'column'), 'align-items: ' + (p.dir === 'row' && align === 'stretch' ? 'center' : align), 'justify-content: ' + justify);
+      if (p.wrap) s.push('flex-wrap: wrap');
+    }
+    if (p.scroll === 'x') s.push('overflow-x: auto', 'flex-wrap: nowrap', 'scrollbar-width: none');
+    if (p.scroll === 'x' && (p.layer || 'flow') === 'flow') s.push('position: relative');
+    var layer = p.layer || 'flow';
+    if (layer === 'anchor') s.push('position: relative');
+    if (layer === 'overlay-top') s.push('position: absolute', 'left: 0', 'right: 0', 'top: 0', 'z-index: 2');
+    if (layer === 'overlay-bottom') s.push('position: absolute', 'left: 0', 'right: 0', 'bottom: 0', 'z-index: 2');
+    if (p.clip === true || p.clip === 'true') s.push('overflow: hidden');
+    if (layer === 'overlay-fill') s.push('position: absolute', 'left: 0', 'right: 0', 'top: 0', 'bottom: 0', 'z-index: 1');
+    var self = this;
+    return { layout: s.join('; '), children: this.props.children, setEl: function (el) { self.el = el; } };
+  }
+  // horizontal scroll rows open scrolled to the current item (active chip / tab), like a native tab strip
+  componentDidMount() {
+    if (this.props.scroll !== 'x') return;
+    var self = this, tries = 0;
+    var reveal = function () {
+      var el = self.el;
+      if (!el) return;
+      var cur = el.querySelector('[aria-current="page"], [aria-pressed="true"]');
+      if (!cur) { if (tries++ < 20) setTimeout(reveal, 100); return; }
+      if (cur.offsetLeft + cur.offsetWidth > el.clientWidth) el.scrollLeft = Math.max(0, cur.offsetLeft + cur.offsetWidth / 2 - el.clientWidth / 2);
+    };
+    reveal();
+  }
+}
+</script>
+</body>
+</html>

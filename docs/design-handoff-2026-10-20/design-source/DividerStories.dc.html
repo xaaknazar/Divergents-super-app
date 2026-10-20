@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Divider — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="560" safe-top="{{false}}" hint-size="390px,560px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,500px">
+    <dc-import name="Text" variant="title2" heading="1" text="Divider" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,90px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="inset=none · spacing=none / sm / md" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,130px">
+        <dc-import name="Text" variant="body" text="Описание" hint-size="100%,24px"></dc-import>
+        <dc-import name="Divider" hint-size="100%,1px"></dc-import>
+        <dc-import name="Text" variant="body" text="Программа" hint-size="100%,24px"></dc-import>
+        <dc-import name="Divider" spacing="sm" hint-size="100%,17px"></dc-import>
+        <dc-import name="Text" variant="body" text="Отзывы" hint-size="100%,24px"></dc-import>
+        <dc-import name="Divider" spacing="md" hint-size="100%,33px"></dc-import>
+        <dc-import name="Text" variant="body" text="Автор курса" hint-size="100%,24px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,150px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="inset=leading (16px) внутри Card size=flush" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" size="flush" hint-size="100%,120px">
+        <dc-import name="Wrapper3" pad="16" hint-size="100%,56px"><dc-import name="Text" variant="body" text="Сильные стороны" hint-size="100%,24px"></dc-import></dc-import>
+        <dc-import name="Divider" inset="leading" hint-size="100%,1px"></dc-import>
+        <dc-import name="Wrapper3" pad="16" hint-size="100%,56px"><dc-import name="Text" variant="body" text="Множественный интеллект" hint-size="100%,24px"></dc-import></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":560}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

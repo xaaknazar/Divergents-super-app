@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>DayPlanHeader — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="380" safe-top="{{false}}" hint-size="390px,380px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,340px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">DayPlanHeader</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Шапка плана дня: title · done/total · caption</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">В ПРОЦЕССЕ</dc-import>
+<dc-import name="Card" size="compact" hint-size="100%,90px"><dc-import name="DayPlanHeader" hint-size="100%,70px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">ВСЁ ВЫПОЛНЕНО</dc-import>
+<dc-import name="Card" size="compact" hint-size="100%,90px"><dc-import name="DayPlanHeader" done="{{3}}" total="{{3}}" caption="3 из 3 выполнено · норма закрыта" hint-size="100%,70px"></dc-import></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":380}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

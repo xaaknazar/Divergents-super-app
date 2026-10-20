@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Text — типографика</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="2100" safe-top="{{false}}" hint-size="390px,2100px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="24" hint-size="100%,2040px">
+    <dc-import name="Text" variant="title2" heading="1" text="Text" hint-size="100%,28px"></dc-import>
+
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,820px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant — шкала (размер/интерлиньяж, начертание)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,780px">
+        <dc-import name="Wrapper3" gap="14" hint-size="100%,744px">
+          <sc-for list="{{variants}}" as="v" hint-placeholder-count="15">
+            <dc-import name="Wrapper4" gap="2" hint-size="100%,44px">
+              <dc-import name="Text" variant="caption2" tone="tertiary" text="{{v.caption}}" hint-size="100%,14px"></dc-import>
+              <dc-import name="Text" variant="{{v.id}}" lines="1" text="{{v.sample}}" hint-size="100%,28px"></dc-import>
+            </dc-import>
+          </sc-for>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,380px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone — на светлом фоне" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,350px">
+        <dc-import name="Wrapper3" gap="12" hint-size="100%,314px">
+          <sc-for list="{{tones}}" as="t" hint-placeholder-count="7">
+            <dc-import name="Wrapper4" gap="2" hint-size="100%,38px">
+              <dc-import name="Text" variant="caption2" tone="tertiary" text="{{t.id}}" hint-size="100%,14px"></dc-import>
+              <dc-import name="Text" variant="headline" tone="{{t.id}}" text="{{t.sample}}" hint-size="100%,22px"></dc-import>
+            </dc-import>
+          </sc-for>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,210px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone — на фото / бренде: onBrand · white · whiteMuted" hint-size="100%,18px"></dc-import>
+      <dc-import name="MediaCover" src="/_blob/9e5284d71df027d123bd542f6e04e1c7" aspect="banner" radius="xl" overlay="full" hint-size="100%,180px">
+        <dc-import name="Wrapper3" pad="16" gap="4" hint-size="100%,100px">
+          <dc-import name="Text" variant="caption2Em" tone="onBrand" text="ONBRAND · КУРС" hint-size="100%,14px"></dc-import>
+          <dc-import name="Text" variant="title2" tone="white" text="Divergents Career Counseling" hint-size="100%,28px"></dc-import>
+          <dc-import name="Text" variant="subhead" tone="whiteMuted" text="whiteMuted · Мышление · 31 урок" hint-size="100%,20px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,150px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="align — start · center · end" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,120px">
+        <dc-import name="Wrapper3" gap="8" hint-size="100%,84px">
+          <dc-import name="Text" variant="body" align="start" text="Привет, Акназар" hint-size="100%,24px"></dc-import>
+          <dc-import name="Text" variant="body" align="center" text="Привет, Акназар" hint-size="100%,24px"></dc-import>
+          <dc-import name="Text" variant="body" align="end" text="Привет, Акназар" hint-size="100%,24px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,230px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="lines — обрезка 1 · 2 · без ограничения (0)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,200px">
+        <dc-import name="Wrapper3" gap="12" hint-size="100%,164px">
+          <dc-import name="Text" variant="subhead" lines="1" text="{{longText}}" hint-size="100%,20px"></dc-import>
+          <dc-import name="Text" variant="subhead" lines="2" text="{{longText}}" hint-size="100%,40px"></dc-import>
+          <dc-import name="Text" variant="subhead" tone="secondary" text="{{longText}}" hint-size="100%,80px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="numeric — табличные цифры (в столбик)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,80px">
+        <dc-import name="Wrapper3" gap="2" align="end" hint-size="100%,44px">
+          <dc-import name="Text" variant="headline" numeric="{{true}}" text="111 000 ₸" hint-size="120px,22px"></dc-import>
+          <dc-import name="Text" variant="headline" numeric="{{true}}" text="40 000 ₸" hint-size="120px,22px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      variants: [
+        { id: 'display', caption: 'display · 44/50 Bold', sample: '1 место' },
+        { id: 'largeTitle', caption: 'largeTitle · 34/41 Bold', sample: 'Обучение' },
+        { id: 'title1', caption: 'title1 · 28/34 Bold', sample: 'Итоги челленджа' },
+        { id: 'title2', caption: 'title2 · 22/28 Bold', sample: 'Анкета участника' },
+        { id: 'title3', caption: 'title3 · 20/25 Bold', sample: 'Мои курсы' },
+        { id: 'headline', caption: 'headline · 17/22 Bold', sample: 'Библиотека книг' },
+        { id: 'body', caption: 'body · 17/24 Book', sample: 'Знает каталог курсов и ваш профиль' },
+        { id: 'callout', caption: 'callout · 16/22 Book', sample: 'Проходите по одному уроку в день' },
+        { id: 'subhead', caption: 'subhead · 15/20 Book', sample: 'Саморазвитие · 34 урока' },
+        { id: 'subheadEm', caption: 'subheadEm · 15/20 Bold', sample: 'Заполнено 1 из 4 разделов' },
+        { id: 'footnote', caption: 'footnote · 13/18 Book', sample: 'Привет, Акназар' },
+        { id: 'footnoteEm', caption: 'footnoteEm · 13/18 Bold', sample: 'Заполните анкету' },
+        { id: 'caption1', caption: 'caption1 · 12/16 Book', sample: '3 · доступны без интернета' },
+        { id: 'caption2', caption: 'caption2 · 11/14 Medium', sample: '15 мин назад' },
+        { id: 'caption2Em', caption: 'caption2Em · 11/14 Bold', sample: '42% пройдено' }
+      ],
+      tones: [
+        { id: 'primary', sample: 'Максимизация талантов' },
+        { id: 'secondary', sample: 'Саморазвитие' },
+        { id: 'tertiary', sample: '5 ч назад' },
+        { id: 'brand', sample: 'Продолжить · 42%' },
+        { id: 'success', sample: 'Оплачено' },
+        { id: 'warning', sample: 'Ждёт подтверждения' },
+        { id: 'danger', sample: 'Выйти из аккаунта' }
+      ],
+      longText: 'Исследование механизмов, превращающих естественные задатки в выдающиеся способности. Автор объясняет неврологическую природу мастерства через процесс миелинизации.'
+    };
+  }
+}
+</script>
+</body>
+</html>

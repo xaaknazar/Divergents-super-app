@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Reading — капитан</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="2000" safe-top="{{false}}" hint-size="390px,2000px">
+  <dc-import name="NavHeader" variant="plain" title="" back-label="Сообщество" back-href="ReadingCommunityChallenges.dc.html" actions="{{navActions}}" hint-size="100%,96px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" gap="12" hint-size="100%,900px">
+    <dc-import name="ReadingHeader" variant="compact" title="&quot;Extreme reading&quot; Challenge" meta="60 минут в день · команда «Vertex»" hint-size="100%,104px"></dc-import>
+    <dc-import name="ReadingBookRow" hint-size="100%,72px"></dc-import>
+    <dc-import name="Wrapper2" pad-top="8" pad-bottom="4" hint-size="100%,420px">
+      <dc-import name="ReadingTimer" state="ready" time="42:00" progress="30" hint-size="100%,420px"></dc-import>
+    </dc-import>
+    <dc-import name="ReadingSaveStatus" state="saved" detail="Сегодня 1 подход: 18 мин · 12 страниц" hint-size="100%,64px"></dc-import>
+    <dc-import name="ReadingProgressSummary" today="18" pace="54" streak="6" pages="312" hint-size="100%,170px"></dc-import>
+    <dc-import name="ListSection" header="" hint-size="100%,64px">
+      <dc-import name="ListRow" icon="books-spines" icon-tone="purple" title="Мои книги и история" subtitle="2 книги · сейчас «Атомные привычки»" chevron="{{true}}" href="#" hint-size="100%,64px"></dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="" hint-size="100%,64px">
+      <dc-import name="ListRow" icon="people" icon-tone="brand" title="Заявки команды" subtitle="Вы капитан «Vertex»" detail="3" detail-tone="brand" chevron="{{true}}" href="#" hint-size="100%,64px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,400px">
+    <dc-import name="SectionHeader" title="Рейтинг" action="Весь рейтинг" href="#" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" gap="12" hint-size="100%,340px">
+      <dc-import name="Segmented" items="{{rankTabs}}" value="1" hint-size="100%,44px"></dc-import>
+      <dc-import name="ListSection" header="" footer="Место — среднее время чтения в день, включая дополнительное" hint-size="100%,280px">
+        <sc-for list="{{ranks}}" as="r" hint-placeholder-count="4">
+          <dc-import name="ReadingRankRow" place="{{r.place}}" label="{{r.name}}" meta="{{r.meta}}" value="{{r.value}}" state="{{r.state}}" mine="{{r.mine}}" separator="{{r.sep}}" hint-size="100%,60px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,300px">
+    <dc-import name="SectionHeader" title="Правила" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,260px">
+      <dc-import name="ReadingRules" items="{{rules}}" hint-size="100%,260px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      navActions: [{ icon: 'palette', label: 'Оформление', href: '#' }],
+      rankTabs: ['Команды', 'Участники'],
+      ranks: [
+        { place: '1', name: 'Аружан', meta: 'Vertex · 14 дней', value: '72', state: 'ranked', mine: false, sep: false },
+        { place: '2', name: 'Нурлан', meta: 'Qarasu · 14 дней', value: '66', state: 'ranked', mine: false, sep: true },
+        { place: '7', name: 'Акназар', meta: 'Vertex · 12 дней', value: '54', state: 'ranked', mine: true, sep: true },
+        { place: '', name: 'Дана', meta: '', value: '', state: 'observing', mine: false, sep: true }
+      ],
+      rules: ['Час чтения в день — можно частями', 'Паузы и страницы за каждый подход', 'День заканчивается в 00:00 по Алматы', 'Все правила (8)']
+    };
+  }
+}
+</script>
+</body>
+</html>

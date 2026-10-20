@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Рейтинг участников</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="2360" safe-top="{{false}}" hint-size="390px,2360px">
+<dc-import name="NavHeader" variant="inline" title="Рейтинг участников" large-title="{{true}}" subtitle="160 человек · Divergents challenge: 2 season" back-label="Челлендж" back-href="ChallengeDetail.dc.html" hint-size="100%,200px"></dc-import>
+<dc-import name="Wrapper" pad-x="16" pad-top="8" gap="12" hint-size="100%,2100px">
+<dc-import name="StandingMyPlace" person="Акназар" title="Вы · Акназар" subtitle="KEX group" place="7 место" points="336 pts" hint-size="100%,70px"></dc-import>
+<dc-import name="Wrapper2" dir="row" gap="8" hint-size="100%,48px">
+<dc-import name="Chip" label="Все" size="small" active="{{true}}" hint-size="70px,48px"></dc-import>
+<dc-import name="Chip" label="Моя команда" size="small" hint-size="130px,48px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" hint-size="100%,1900px">
+<dc-import name="ListSection" header="Все участники" hint-size="100%,1830px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="29">
+<dc-import name="StandingRow" variant="regular" rank="{{r.rank}}" medal="{{r.medal}}" person="{{r.name}}" title="{{r.name}}" subtitle="{{r.team}}" points="{{r.points}}" flags="{{r.flags}}" me="{{r.me}}" me-label="вы" status="{{r.status}}" separator="{{r.separator}}" hint-size="100%,62px"></dc-import>
+</sc-for>
+</dc-import>
+<dc-import name="ScoreLegend" items="{{legend}}" hint-size="100%,60px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2360}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var MED = { 1: 'crown', 2: 'silver', 3: 'bronze' };
+    var r = function (rank, name, team, pts, extra) {
+      var o = { rank: rank, medal: MED[rank] || 'none', name: name, team: team, points: pts + ' pts', flags: 0, me: false, status: 'active', separator: rank > 1 };
+      for (var k in (extra || {})) o[k] = extra[k];
+      return o;
+    };
+    return {
+      rows: [
+        r(1, 'Айгерим', 'Divergents team', 412), r(2, 'Nurik', 'Qarasu', 401), r(3, 'Арман', 'KEX group', 388),
+        r(4, 'Жанна', 'Divergents team', 371), r(5, 'Dana_fit', 'KEX group', 349), r(6, 'Rustem', 'Qarasu', 342),
+        r(7, 'Акназар', 'KEX group', 336, { me: true, flags: 1 }),
+        r(8, 'Асель', 'Divergents team', 331), r(9, 'Bekzat', 'Qarasu', 327), r(10, 'Камила', 'Monolith', 318), r(11, 'Олжас', 'Divergents team', 314), r(12, 'Aru', 'Qarasu', 312),
+        r(13, 'Мадина', 'KEX group', 310, { flags: 1 }),
+        r(14, 'Санжар', 'Monolith', 305), r(15, 'Томирис', 'Divergents team', 301), r(16, 'Ерлан', 'KEX group', 296), r(17, 'Dias', 'Qarasu', 290),
+        r(18, 'Айдана', 'Monolith', 284), r(19, 'Max_run', 'Divergents team', 279), r(20, 'Алина', 'Qarasu', 271), r(21, 'Нурлан', 'Monolith', 266),
+        r(22, 'Sabi', 'KEX group', 254, { flags: 2 }),
+        r(23, 'Гульнар', 'Divergents team', 248), r(24, 'Тимофей', 'Qarasu', 240),
+        r(25, 'Ainur', 'Monolith · выбыл', 231, { flags: 3, status: 'eliminated' }),
+        r(26, 'Дамир', 'Qarasu', 226), r(27, 'Лаура', 'Divergents team', 221),
+        r(28, 'Ербол', 'Monolith · вышел', 190, { status: 'left' }),
+        r(29, 'Тимур', 'KEX group · выбыл', 120, { flags: 3, status: 'eliminated' })
+      ],
+      legend: [
+        { mark: 'flag', text: '— флаги за пропуск дневной нормы.' },
+        { mark: 'eliminated', text: '— участник выбыл, очки заморожены.' },
+        { mark: 'left', text: '— вышел по белому флагу капитана.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

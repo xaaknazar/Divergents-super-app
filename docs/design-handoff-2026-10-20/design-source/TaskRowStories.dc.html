@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TaskRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="680" safe-top="{{false}}" hint-size="390px,680px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,640px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">TaskRow</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Задача дня: variant metric|check · state · value/goal · badge · separator</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">METRIC · DONE (СВЕРХ НОРМЫ)</dc-import>
+<dc-import name="Card" size="compact" hint-size="100%,110px"><dc-import name="TaskRow" hint-size="100%,100px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">METRIC · PROGRESS</dc-import>
+<dc-import name="Card" size="compact" hint-size="100%,110px"><dc-import name="TaskRow" variant="metric" state="progress" title="10 000 шагов" value="7 400" goal="10 000 шагов" extra="" progress="{{74}}" badge="+18" hint-size="100%,100px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">CHECK · DONE / PROGRESS</dc-import>
+<dc-import name="Card" size="compact" hint-size="100%,110px">
+<dc-import name="TaskRow" variant="check" state="done" title="День без сахара" badge="Готово" hint-size="100%,48px"></dc-import>
+<dc-import name="TaskRow" variant="check" state="progress" title="День без сахара" badge="" separator="{{true}}" hint-size="100%,48px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":680}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

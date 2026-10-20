@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingTimer — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="3530" safe-top="{{false}}" hint-size="390px,3530px">
+  <dc-import name="Wrapper" pad="16" gap="20" hint-size="100%,3500px">
+    <dc-import name="Wrapper2" pad-x="4" gap="4" hint-size="100%,56px">
+      <dc-import name="Text" variant="title1" heading="1" text="ReadingTimer" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Таймер: ready · running · paused · recording · saving · overtime · done. Цифры фиксированной ширины" hint-size="100%,36px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="READY · 60:00" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTimer" state="ready" hint-size="100%,420px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="RUNNING · ИДЁТ ОБЯЗАТЕЛЬНЫЙ ЧАС" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTimer" state="running" time="42:18" progress="30" hint-size="100%,420px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="PAUSED · НЕ «ДЕНЬ ВЫПОЛНЕН»" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTimer" state="paused" time="42:18" progress="30" hint-size="100%,420px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="RECORDING · ПАУЗА, ВВОД СТРАНИЦ НИЖЕ" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTimer" state="recording" time="42:18" progress="30" hint-size="100%,420px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="SAVING · ЖДЁМ СЕРВЕР" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTimer" state="saving" time="42:18" progress="30" hint-size="100%,420px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="OVERTIME · +12:34" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTimer" state="overtime" extra="+12:34" hint-size="100%,420px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="DONE · ПОДТВЕРЖДЕНО" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTimer" state="done" extra="+12:34" hint-size="100%,420px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="RUNNING · ТЁМНАЯ" hint-size="100%,14px"></dc-import>
+      <dc-import name="StoryBackdrop" tone="dark" hint-size="100%,200px"><dc-import name="ReadingTimer" state="running" time="42:18" progress="30" scheme="dark" hint-size="100%,420px"></dc-import></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":3530}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

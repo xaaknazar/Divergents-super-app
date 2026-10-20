@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Карьера — вакансии</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1500" tab="career" hint-size="390px,1500px">
+  <dc-import name="NavBarLarge" title="Карьера" avatar="{{false}}" actions="{{headerActions}}" hint-size="100%,68px"></dc-import>
+  <dc-import name="SectionHeader" title="Вакансии" action="Создать" href="CreateVacancy.dc.html" hint-size="100%,37px"></dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-bottom="12" hint-size="100%,32px">
+    <dc-import name="Text" variant="subhead" tone="secondary" text="Подобраны по вашему психотипу и талантам" hint-size="100%,20px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" dir="row" scroll="x" gap="8" pad-x="16" pad-bottom="16" hint-size="100%,64px">
+    <dc-import name="Chip" label="Под профиль" icon="sparkles" active="{{true}}" hint-size="130px,48px"></dc-import>
+    <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+      <dc-import name="Chip" label="{{f}}" hint-size="90px,48px"></dc-import>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-bottom="12" hint-size="100%,170px">
+    <dc-import name="VacancyCard" variant="featured" eyebrow="Лучшее совпадение" title="{{best.title}}" company="{{best.company}}" city="{{best.city}}" logo-tone="{{best.tone}}" tags="{{best.tags}}" href="VacancyDetail.dc.html" hint-size="100%,170px"></dc-import>
+  </dc-import>
+  <dc-import name="SectionHeader" title="Ещё подходящие" action="" hint-size="100%,37px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" gap="12" hint-size="100%,480px">
+    <sc-for list="{{vacancies}}" as="v" hint-placeholder-count="3">
+      <dc-import name="VacancyCard" variant="regular" title="{{v.title}}" company="{{v.company}}" city="{{v.city}}" logo-tone="{{v.tone}}" tags="{{v.tags}}" href="VacancyDetail.dc.html" hint-size="100%,150px"></dc-import>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="16" hint-size="100%,240px">
+    <dc-import name="ListSection" header="Сохранённые · 1" hint-size="100%,94px">
+      <dc-import name="VacancyRow" title="Продуктовый аналитик" company="IT-компания" city="Астана" logo-tone="indigo" trailing="bookmark" href="VacancyDetail.dc.html" hint-size="100%,64px"></dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="История откликов · 1" hint-size="100%,94px">
+      <dc-import name="VacancyRow" title="Менеджер по обучению персонала" company="Сеть кофеен" city="Алматы" logo-tone="success" status="Отправлен" status-tone="success" href="VacancyDetail.dc.html" hint-size="100%,64px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="20" hint-size="100%,57px">
+    <dc-import name="SectionHeader" title="Офферы" action="" hint-size="100%,37px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-bottom="16" hint-size="100%,116px">
+    <dc-import name="CareerOffersCard" title="Пока нет офферов" text="Здесь появятся приглашения и офферы от компаний, которым вы подойдёте по талантам." hint-size="100%,100px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "headerActions": [
+        {
+          "icon": "bell",
+          "label": "Уведомления",
+          "href": "Notifications.dc.html",
+          "badge": 2
+        }
+      ],
+      "filters": [
+        "Алматы",
+        "Удалёнка",
+        "HR",
+        "Senior+"
+      ],
+      "best": {
+        "title": "HR бизнес-партнёр",
+        "company": "Ритейл-группа",
+        "city": "Алматы",
+        "tone": "brand",
+        "tags": [
+          {
+            "label": "Гибрид"
+          },
+          {
+            "label": "от 600 000 ₸"
+          },
+          {
+            "label": "3 ваших таланта",
+            "tone": "success",
+            "icon": "seal-check"
+          }
+        ]
+      },
+      "vacancies": [
+        {
+          "title": "Менеджер по обучению персонала",
+          "company": "Сеть кофеен",
+          "city": "Алматы",
+          "tone": "success",
+          "tags": [
+            {
+              "label": "Офис"
+            },
+            {
+              "label": "450 000 ₸"
+            },
+            {
+              "label": "Отклик отправлен",
+              "tone": "success"
+            }
+          ]
+        },
+        {
+          "title": "Продуктовый аналитик",
+          "company": "IT-компания",
+          "city": "Астана",
+          "tone": "indigo",
+          "tags": [
+            {
+              "label": "Удалёнка"
+            },
+            {
+              "label": "Договорная"
+            },
+            {
+              "label": "2 ваших таланта",
+              "tone": "success"
+            }
+          ]
+        },
+        {
+          "title": "Руководитель отдела продаж",
+          "company": "Производственная компания",
+          "city": "Усть-Каменогорск",
+          "tone": "purple",
+          "tags": [
+            {
+              "label": "Офис"
+            },
+            {
+              "label": "от 700 000 ₸"
+            },
+            {
+              "label": "1 ваших таланта",
+              "tone": "success"
+            }
+          ]
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

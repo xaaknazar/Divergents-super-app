@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BookComposer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <textarea aria-label="{{placeholder}}" placeholder="{{placeholderText}}" rows="{{rows}}" value="{{val}}" onChange="{{onInput}}" style="{{fieldCss}}"></textarea>
+  <sc-if value="{{isReview}}" hint-placeholder-val="{{true}}"><div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px"><dc-import name="Button" label="{{actionLabel}}" icon="arrow-up" size="compact" disabled="{{empty}}" hint-size="140px,44px"></dc-import></div></sc-if>
+  <sc-if value="{{isAsk}}" hint-placeholder-val="{{false}}"><button type="button" aria-label="Отправить сообщение" disabled="{{empty}}" style="{{sendCss}}"><dc-import name="Icon" icon="arrow-up" size="md" tone="{{sendTone}}" hint-size="20px,20px"></dc-import></button></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"review","options":["review","ask"]},"placeholder":{"editor":"text","default":"Написать рецензию"},"value":{"editor":"text","default":""},"actionLabel":{"editor":"text","default":"Отправить"},"$preview":{"width":358,"height":104}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var p = this.props;
+    var ask = p.variant === 'ask';
+    var val = this.state && this.state.v !== undefined ? this.state.v : (p.value || '');
+    var empty = !String(val).trim();
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var placeholder = p.placeholder || (ask ? 'Спросить про книги' : 'Написать рецензию');
+    return {
+      isReview: !ask, isAsk: ask,
+      rootCss: ask ? 'display: flex; gap: 10px; align-items: center; width: 100%; ' + FF : 'display: flex; flex-direction: column; gap: 8px; width: 100%; ' + FF,
+      placeholder: placeholder, placeholderText: placeholder + '…',
+      rows: '1',
+      val: val,
+      onInput: function (e) { self.setState({ v: e.target.value }); },
+      empty: empty,
+      actionLabel: p.actionLabel || 'Отправить',
+      fieldCss: ['box-sizing: border-box', ask ? 'flex: 1; min-width: 0; min-height: 48px; padding: 11px 14px; border-radius: 18px; border: 0.5px solid rgba(60,60,67,0.18)'
+        : 'width: 100%; min-height: 52px; padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(60,60,67,0.18)',
+        'margin: 0', 'resize: none', 'background: #FFFFFF', 'font: inherit', 'font-size: 17px', 'line-height: 24px', 'letter-spacing: -0.2px', 'color: #000000', 'outline: none', 'display: block'].join('; '),
+      sendCss: 'width: 48px; height: 48px; flex-shrink: 0; border: 0; padding: 0; margin: 0; border-radius: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: ' + (empty ? 'rgba(118,118,128,0.12)' : '#234088'),
+      sendTone: empty ? 'secondary' : 'white'
+    };
+  }
+}
+</script>
+</body>
+</html>

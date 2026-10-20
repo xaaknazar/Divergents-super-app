@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Callout</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div role="{{role}}" style="{{rootCss}}">
+  <span aria-hidden="true" style="{{tileCss}}"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="md" tone="inherit" hint-size="20px,20px"></dc-import></span>
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+    <sc-if value="{{hasTitle}}" hint-placeholder-val="{{true}}"><dc-import name="Text" variant="footnoteEm" text="{{title}}" hint-size="100%,18px"></dc-import></sc-if>
+    <sc-if value="{{hasText}}" hint-placeholder-val="{{true}}"><dc-import name="Text" variant="caption1" tone="secondary" text="{{text}}" hint-size="100%,32px"></dc-import></sc-if>
+  </div>
+  <sc-if value="{{isChevron}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="chevron-right" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></span></sc-if>
+  <sc-if value="{{isClose}}" hint-placeholder-val="{{false}}"><div style="position: relative; z-index: 2; flex-shrink: 0; margin: -8px -6px -8px 0"><dc-import name="IconButton" icon="x" label="Скрыть" variant="plain" size="sm" hint-size="36px,36px"></dc-import></div></sc-if>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{false}}"><a href="{{href}}" aria-label="{{ariaLabel}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; border-radius: 14px"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tone":{"editor":"enum","default":"brand","options":["brand","info","success","warning","danger"]},"accent":{"editor":"enum","default":"brand","options":["brand","violet","orange","emerald","pink"]},"icon":{"editor":"enum","default":"file-doc","options":["arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"title":{"editor":"text","default":"Заполните анкету"},"text":{"editor":"text","default":""},"href":{"editor":"text","default":""},"trailing":{"editor":"enum","default":"chevron","options":["none","chevron","close"]},"$preview":{"width":358,"height":76}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.title === undefined && p.text === undefined && p.icon === undefined;
+    var tone = p.tone || 'brand';
+    var ACCENTS = {
+      brand: { c: '61,91,219', ink: '#234088' },
+      violet: { c: '139,92,246', ink: '#5B21B6' },
+      orange: { c: '249,115,22', ink: '#9A3412' },
+      emerald: { c: '16,185,129', ink: '#047857' },
+      pink: { c: '236,72,153', ink: '#9D174D' }
+    };
+    var A = ACCENTS[p.accent] || ACCENTS.brand;
+    var T = {
+      brand: { bg: 'rgba(61,91,219,0.13)', ink: '#234088', icon: 'file-doc' },
+      info: { bg: 'rgba(14,165,233,0.10)', ink: '#0369A1', icon: 'text-i-circle' },
+      success: { bg: 'rgba(16,185,129,0.10)', ink: '#187A32', icon: 'check-circle' },
+      warning: { bg: 'rgba(255,149,0,0.14)', ink: '#934900', icon: 'exclamation-triangle' },
+      danger: { bg: 'rgba(255,59,48,0.12)', ink: '#C5221F', icon: 'exclamation-circle' }
+    }[tone] || null;
+    if (!T) { tone = 'brand'; T = { bg: 'rgba(61,91,219,0.13)', ink: '#234088', icon: 'file-doc' }; }
+    // accent recolours the brand tone (section colours of the TabDock); semantic tones keep their colour
+    if (tone === 'brand') T = { bg: 'rgba(' + A.c + ',0.13)', ink: A.ink, icon: T.icon };
+    var title = p.title !== undefined && p.title !== null ? p.title : (demo ? 'Заполните анкету' : '');
+    var text = p.text || (demo ? 'Откроются заявки в сообществе и отклики на вакансии · 1/4 разделов' : '');
+    var href = p.href || (demo ? 'ResumeForm.dc.html' : '');
+    var trailing = p.trailing || 'chevron';
+    var rootCss = ['position: relative', 'display: flex', 'align-items: center', 'gap: 12px', 'min-height: 48px', 'padding: 14px', 'border-radius: 14px',
+      'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'color: #000000', 'background: ' + T.bg,
+      "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased'].join('; ');
+    var tileCss = 'width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #FFFFFF; color: ' + T.ink;
+    return {
+      rootCss: rootCss, tileCss: tileCss, icon: p.icon || T.icon,
+      role: (tone === 'danger' || tone === 'warning') ? 'alert' : 'note',
+      title: title, hasTitle: !!title, text: text, hasText: !!text,
+      isChevron: trailing === 'chevron', isClose: trailing === 'close',
+      hasHref: !!href, href: href, ariaLabel: [title, text].filter(Boolean).join('. ')
+    };
+  }
+}
+</script>
+</body>
+</html>

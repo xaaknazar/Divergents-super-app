@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingTeamCard — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1240" safe-top="{{false}}" hint-size="390px,1240px">
+  <dc-import name="Wrapper" pad="16" gap="20" hint-size="100%,1040px">
+    <dc-import name="Wrapper2" pad-x="4" gap="4" hint-size="100%,56px">
+      <dc-import name="Text" variant="title1" heading="1" text="ReadingTeamCard" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Команда в наборе: занято/вместимость (капитан входит), состав, одно действие" hint-size="100%,36px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="OPEN" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTeamCard" team="Vertex" filled="18" capacity="22" captain="Аружан" state="open" hint-size="100%,150px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="PENDING (ЗАЯВКА ОТПРАВЛЕНА)" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTeamCard" team="Qarasu" filled="15" capacity="20" captain="Нурлан" state="pending" hint-size="100%,150px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="MINE" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTeamCard" team="Qarasu" filled="16" capacity="20" captain="Нурлан" state="mine" hint-size="100%,150px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="FULL" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingTeamCard" team="Avanguard" filled="20" capacity="20" captain="Данияр" state="full" hint-size="100%,150px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="ТЁМНАЯ" hint-size="100%,14px"></dc-import>
+      <dc-import name="StoryBackdrop" tone="dark" hint-size="100%,200px"><dc-import name="ReadingTeamCard" team="Vertex" filled="18" capacity="22" captain="Аружан" state="open" scheme="dark" hint-size="100%,150px"></dc-import></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1240}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

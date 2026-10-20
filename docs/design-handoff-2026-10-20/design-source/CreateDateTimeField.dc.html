@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CreateDateTimeField</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: column; width: 100%; box-sizing: border-box; {{ff}}">
+  <span id="{{uid}}" style="display: block; margin: 0 0 8px; font-size: 15px; line-height: 20px; font-weight: 700; letter-spacing: -0.1px; color: #000000">{{label}}</span>
+  <button type="button" aria-labelledby="{{uid}}" aria-describedby="{{uid}}-v" style="display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; min-height: 52px; margin: 0; padding: 0 14px; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; background: #FFFFFF; cursor: pointer; text-align: left; {{ff}}">
+    <span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="clock-3h" variant="solid" size="sm" tone="brand" hint-size="16px,16px"></dc-import></span>
+    <span id="{{uid}}-v" style="{{valueCss}}">{{summary}}</span>
+    <span style="display: flex; gap: 6px; flex-shrink: 0"><span style="padding: 6px 10px; border-radius: 8px; background: rgba(118,118,128,0.12); font-size: 15px; line-height: 20px; color: #234088">{{date}}</span><span style="padding: 6px 10px; border-radius: 8px; background: rgba(118,118,128,0.12); font-size: 15px; line-height: 20px; color: #234088">{{time}}</span></span>
+  </button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Начало"},"placeholder":{"editor":"text","default":"Выберите дату и время"},"date":{"editor":"text","default":"12 окт."},"time":{"editor":"text","default":"14:30"},"selected":{"editor":"boolean","default":false},"$preview":{"width":358,"height":80}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    if (!this._uid) this._uid = 'dt-' + Math.random().toString(36).slice(2, 9);
+    var selected = p.selected === true || p.selected === 'true';
+    var date = p.date || '12 окт.', time = p.time || '14:30';
+    return {
+      ff: "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased",
+      uid: this._uid, label: p.label || 'Начало', date: date, time: time,
+      summary: selected ? date + ', ' + time : (p.placeholder || 'Выберите дату и время'),
+      valueCss: 'flex: 1; min-width: 0; font-size: 17px; line-height: 24px; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ' + (selected ? '#000000' : '#6B6B70')
+    };
+  }
+}
+</script>
+</body>
+</html>

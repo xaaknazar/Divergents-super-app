@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Запись тренировки</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="844" safe-top="{{false}}" hint-size="390px,844px">
+  <dc-import name="Wrapper" layer="overlay-fill" hint-size="390px,844px">
+    <dc-import name="MapCanvas" size="screen" route="{{route}}" route-head="{{true}}" hint-size="390px,844px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" layer="overlay-top" hint-size="100%,118px">
+    <dc-import name="NavHeader" variant="inline" back-label="Назад" back-href="CommunityHome.dc.html" hint-size="100%,118px">
+      <dc-import name="WorkoutModeSwitch" value="run" locked="{{true}}" hint-size="160px,28px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" layer="overlay-bottom" hint-size="100%,182px">
+    <dc-import name="MapSheet" hint-size="100%,182px">
+      <dc-import name="Wrapper2" dir="row" fill="equal" hint-size="100%,46px">
+        <sc-for list="{{metrics}}" as="m" hint-placeholder-count="4">
+          <dc-import name="MetricValue" variant="strip" value="{{m.value}}" label="{{m.label}}" separator="{{m.separator}}" hint-size="100%,46px"></dc-import>
+        </sc-for>
+      </dc-import>
+      <dc-import name="Wrapper2" dir="row" fill="equal" gap="12" pad-top="16" hint-size="100%,72px">
+        <dc-import name="Button" label="Пауза" icon="pause" variant="tinted" tone="neutral" size="large" full-width="{{true}}" hint-size="100%,56px"></dc-import>
+        <dc-import name="Button" label="Финиш" icon="check" variant="solid" tone="danger" size="large" full-width="{{true}}" href="WorkoutDetail.dc.html" hint-size="100%,56px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+
+    return {
+      route: '70,588 130,588 130,448 200,448 200,368 270,368 270,288 330,288 330,228 300,200 250,200',
+      metrics: [
+        { value: '2.47', label: 'км', separator: true },
+        { value: '14:32', label: 'время', separator: true },
+        { value: '5′44″', label: 'мин/км', separator: true },
+        { value: '2318', label: 'шагов', separator: false }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

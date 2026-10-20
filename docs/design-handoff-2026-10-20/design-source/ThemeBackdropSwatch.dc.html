@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ThemeBackdropSwatch</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<button type="button" aria-label="{{aria}}" aria-pressed="{{pressed}}" style="{{rootCss}}">
+  <span aria-hidden="true" style="{{frameCss}}">
+    <span style="position: relative; height: 60px; background: #F2F2F7; display: flex; align-items: center; justify-content: center; overflow: hidden">
+      <sc-if value="{{hasBlobs}}" hint-placeholder-val="{{true}}">
+        <span style="{{blobACss}}"></span><span style="{{blobBCss}}"></span><span style="{{washCss}}"></span>
+      </sc-if>
+      <sc-if value="{{isNone}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="x-circle" size="md" tone="tertiary" hint-size="20px,20px"></dc-import></sc-if>
+      <sc-if value="{{selected}}" hint-placeholder-val="{{false}}"><span style="position: relative; width: 26px; height: 26px; border-radius: 13px; background: rgba(255,255,255,0.92); display: flex; align-items: center; justify-content: center"><dc-import name="Icon" icon="check" size="xs" tone="brand" hint-size="12px,12px"></dc-import></span></sc-if>
+    </span>
+  </span>
+  <span style="{{labelCss}}">{{label}}</span>
+</button>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"backdrop":{"editor":"enum","default":"aurora","options":["accent","aurora","dawn","ocean","nebula","forest","caramel","golden","mono","none"]},"label":{"editor":"text","default":""},"selected":{"editor":"boolean","default":false},"$preview":{"width":116,"height":96}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var B = {
+      accent: ['По акценту', '61,91,219', '35,64,136', '61,91,219'], aurora: ['Аврора', '99,102,241', '61,91,219', '56,189,248'],
+      dawn: ['Рассвет', '249,115,22', '244,63,94', '251,191,36'], ocean: ['Океан', '6,182,212', '59,130,246', '34,211,238'],
+      nebula: ['Небула', '139,92,246', '217,70,239', '99,102,241'], forest: ['Лес', '16,185,129', '101,163,13', '52,211,153'],
+      caramel: ['Карамель', '244,114,182', '167,139,250', '56,189,248'], golden: ['Золотой час', '245,158,11', '251,113,133', '244,114,182'],
+      mono: ['Моно', '148,163,184', '100,116,139', '51,65,85'], none: ['Без фона']
+    };
+    var key = B[p.backdrop] ? p.backdrop : 'aurora';
+    var b = B[key];
+    var sel = p.selected === true || p.selected === 'true';
+    var none = key === 'none';
+    var label = p.label || b[0];
+    return {
+      rootCss: ['width: 100%', 'padding: 5px', 'margin: 0', 'border: 0', 'background: transparent', 'cursor: pointer', 'display: flex', 'flex-direction: column', 'box-sizing: border-box', F].join('; '),
+      frameCss: 'display: block; width: 100%; border-radius: 15px; overflow: hidden; box-sizing: border-box; border: ' + (sel ? '2px solid #234088' : '0.5px solid rgba(0,0,0,0.08)'),
+      blobACss: none ? '' : 'position: absolute; top: -18px; left: -14px; width: 58px; height: 58px; border-radius: 29px; background: linear-gradient(135deg, rgba(' + b[1] + ',0.95) 25%, rgba(' + b[1] + ',0) 100%)',
+      blobBCss: none ? '' : 'position: absolute; bottom: -20px; right: -16px; width: 64px; height: 64px; border-radius: 32px; background: linear-gradient(220deg, rgba(' + b[2] + ',0.9) 20%, rgba(' + b[2] + ',0) 100%)',
+      washCss: none ? '' : 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(' + b[3] + ',0.4), rgba(' + b[3] + ',0))',
+      hasBlobs: !none, isNone: none && !sel, selected: sel,
+      labelCss: 'font-size: 11px; line-height: 14px; font-weight: 500; text-align: center; margin-top: 5px; color: ' + (sel ? '#000000' : '#5C5C60'),
+      label: label, pressed: sel ? 'true' : 'false', aria: 'Фон ' + label
+    };
+  }
+}
+</script>
+</body>
+</html>

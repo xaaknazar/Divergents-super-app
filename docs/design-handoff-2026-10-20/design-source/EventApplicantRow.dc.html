@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>EventApplicantRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}">
+  <dc-import name="Avatar" person="{{person}}" size="md" tone="tinted" hint-size="40px,40px"></dc-import>
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="Text" variant="headline" lines="1" text="{{person}}" hint-size="100%,22px"></dc-import>
+    <dc-import name="Text" variant="caption1" tone="secondary" lines="1" text="{{subtitle}}" hint-size="100%,16px"></dc-import>
+  </div>
+  <dc-import name="StatusBadge" label="{{statusLabel}}" tone="{{statusTone}}" icon="{{statusIcon}}" hint-size="70px,22px"></dc-import>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{false}}"><a href="{{href}}" aria-label="{{aria}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; border-radius: inherit"></a></sc-if>
+  <sc-if value="{{noHref}}" hint-placeholder-val="{{true}}"><button type="button" aria-label="{{aria}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; margin: 0; padding: 0; border: 0; background: transparent; border-radius: inherit; cursor: pointer"></button></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"person":{"editor":"text","default":"aru_runner"},"subtitle":{"editor":"text","default":"Публичное имя участника"},"status":{"editor":"enum","default":"new","options":["new","accepted","rejected","withdrawn","captain"]},"statusLabel":{"editor":"text","default":""},"href":{"editor":"text","default":""},"$preview":{"width":358,"height":72}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var S = { 'new': ['Новая', 'neutral', ''], accepted: ['Принят', 'success', ''], rejected: ['Отклонён', 'danger', ''], withdrawn: ['Снялся', 'danger', ''], captain: ['Капитан', 'brand', 'crown'] };
+    var s = S[p.status] || S['new'];
+    var label = p.statusLabel ? String(p.statusLabel) : s[0];
+    var person = p.person || 'aru_runner';
+    var subtitle = p.subtitle !== undefined ? (p.subtitle || '') : 'Публичное имя участника';
+    return {
+      css: ['position: relative', 'display: flex', 'align-items: center', 'gap: 12px', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'min-height: 48px', 'padding: 14px',
+        'background: #FFFFFF', 'border-radius: 14px', 'color: #000000', FF].join('; '),
+      person: person, subtitle: subtitle, statusLabel: label, statusTone: s[1], statusIcon: s[2],
+      href: p.href || '', hasHref: !!p.href, noHref: !p.href,
+      aria: person + ', ' + label
+    };
+  }
+}
+</script>
+</body>
+</html>

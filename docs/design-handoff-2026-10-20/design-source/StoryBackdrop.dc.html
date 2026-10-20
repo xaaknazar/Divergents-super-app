@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>StoryBackdrop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}"><sc-if value="{{isPhoto}}" hint-placeholder-val="{{false}}"><img src="/_blob/7e5c1a50c59adac07cafd1f825ab3982" alt="" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block"></sc-if><div style="position: relative">{{children}}</div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tone":{"editor":"enum","default":"brand","options":["brand","dark","photo"]},"$preview":{"width":358,"height":120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var tone = this.props.tone || 'brand';
+    var BG = { dark: '#0B0E16', brand: 'linear-gradient(135deg, #234088 0%, #3D5BDB 100%)', photo: '#1C1C1E' };
+    return {
+      isPhoto: tone === 'photo',
+      children: this.props.children,
+      css: 'position: relative; overflow: hidden; box-sizing: border-box; min-height: 120px; padding: 16px; border-radius: 16px; background: ' + (BG[tone] || BG.brand)
+    };
+  }
+}
+</script>
+</body>
+</html>

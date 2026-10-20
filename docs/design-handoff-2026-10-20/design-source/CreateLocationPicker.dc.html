@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CreateLocationPicker</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: column; width: 100%; box-sizing: border-box; {{ff}}">
+  <span style="display: block; margin: 0 0 8px; font-size: 15px; line-height: 20px; font-weight: 700; letter-spacing: -0.1px; color: #000000">{{label}}</span>
+  <button type="button" aria-label="{{aria}}" style="position: relative; display: block; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 16px; overflow: hidden; cursor: pointer; background: transparent">
+    <dc-import name="MapCanvas" size="preview" route="" drop="{{drop}}" hint-size="100%,220px"></dc-import>
+  </button>
+  <span style="margin-top: 6px; font-size: 11px; line-height: 14px; font-weight: 500; color: #6B6B70">{{hint}}</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Место на карте"},"hint":{"editor":"text","default":"Нажмите на карту, чтобы поставить точку"},"pinned":{"editor":"boolean","default":false},"$preview":{"width":358,"height":274}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var pinned = p.pinned === true || p.pinned === 'true';
+    return {
+      ff: "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased",
+      label: p.label || 'Место на карте',
+      hint: p.hint !== undefined ? (p.hint || '') : 'Нажмите на карту, чтобы поставить точку',
+      // picked point = teardrop drop pin at the map centre (MapCanvas preview is 358x220)
+      drop: pinned ? { x: 179, y: 110, category: 'tourism', large: true } : null,
+      aria: pinned ? 'Точка выбрана. Нажмите, чтобы изменить место встречи' : 'Нажмите на карту для выбора места встречи'
+    };
+  }
+}
+</script>
+</body>
+</html>

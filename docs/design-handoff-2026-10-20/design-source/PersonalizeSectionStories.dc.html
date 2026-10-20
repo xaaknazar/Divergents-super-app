@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PersonalizeSection — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="420" safe-top="{{false}}" hint-size="390px,420px">
+<dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,380px">
+  <dc-import name="Text" variant="title2" heading="1" text="PersonalizeSection" hint-size="100%,28px"></dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="default (демо-контент Segmented)" hint-size="100%,18px"></dc-import>
+    <dc-import name="PersonalizeSection" hint-size="100%,110px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="с children: пример текста" hint-size="100%,18px"></dc-import>
+    <dc-import name="PersonalizeSection" icon="text-t" title="Размер текста" value="Обычный" hint-size="100%,100px"><dc-import name="Text" variant="body" text="Дизайн, который подстраивается под вас." hint-size="100%,24px"></dc-import></dc-import>
+  </dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":420}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

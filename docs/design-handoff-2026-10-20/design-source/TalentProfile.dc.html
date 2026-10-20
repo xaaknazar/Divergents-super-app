@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Моя анкета</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="3120" safe-top="{{false}}" hint-size="390px,3120px">
+  <dc-import name="NavHeader" variant="inline" title="Моя анкета" back-label="Карьера" back-href="CareerHome.dc.html" actions="{{headerActions}}" action-label="Править" action-href="ResumeForm.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-top="16" pad-bottom="16" hint-size="100%,192px">
+    <dc-import name="TalentHero" person="Акназар [Фамилия]" badges="{{heroBadges}}" hint-size="100%,160px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-bottom="40" gap="6" hint-size="100%,2700px">
+    <dc-import name="SectionHeader" size="small" title="Личные данные" action="Изменить" chevron="{{false}}" href="ResumeForm.dc.html" hint-size="100%,32px"></dc-import>
+    <dc-import name="ListSection" hint-size="100%,384px">
+      <sc-for list="{{personal}}" as="r" hint-placeholder-count="8">
+        <dc-import name="ListRow" title="{{r.title}}" detail="{{r.detail}}" trailing="none" separator="{{r.sep}}" hint-size="100%,48px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="SectionHeader" size="small" title="Карьера и образование" action="Изменить" chevron="{{false}}" href="ResumeForm.dc.html" hint-size="100%,32px"></dc-import>
+    <dc-import name="ListSection" hint-size="100%,424px">
+      <sc-for list="{{career}}" as="r" hint-placeholder-count="7">
+        <dc-import name="ListRow" title="{{r.title}}" subtitle="{{r.subtitle}}" detail="{{r.detail}}" trailing="none" separator="{{r.sep}}" hint-size="100%,48px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="SectionHeader" size="small" title="О себе" action="Изменить" chevron="{{false}}" href="ResumeForm.dc.html" hint-size="100%,32px"></dc-import>
+    <dc-import name="ListSection" hint-size="100%,288px">
+      <sc-for list="{{about}}" as="r" hint-placeholder-count="6">
+        <dc-import name="ListRow" title="{{r.title}}" detail="{{r.detail}}" trailing="none" separator="{{r.sep}}" hint-size="100%,48px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="ListSection" header="Опыт работы" hint-size="100%,166px">
+      <sc-for list="{{jobs}}" as="r" hint-placeholder-count="2">
+        <dc-import name="ListRow" icon="briefcase" icon-style="plain" icon-tone="brand" title="{{r.title}}" subtitle="{{r.subtitle}}" trailing="none" separator="{{r.sep}}" hint-size="100%,68px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="ListSection" header="Тип личности (MBTI)" hint-size="100%,86px">
+      <dc-import name="Wrapper2" pad="16" hint-size="100%,56px">
+        <dc-import name="Text" variant="body" text="ENTJ · Командир" hint-size="100%,24px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="SectionHeader" size="small" title="Таланты Gallup · 10" action="Изменить" chevron="{{false}}" hint-size="100%,32px"></dc-import>
+    <dc-import name="ListSection" footer="Порядок талантов сохраняется только на этом устройстве. Официальный отчёт Talentslab формируется на сайте и не меняется." hint-size="100%,740px">
+      <sc-for list="{{talents}}" as="t" hint-placeholder-count="10">
+        <dc-import name="TalentRankRow" rank="{{t.rank}}" title="{{t.title}}" domain="{{t.domain}}" separator="{{t.sep}}" hint-size="100%,68px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="SectionHeader" size="small" title="Множественный интеллект (Гарднер)" action="" hint-size="100%,32px"></dc-import>
+    <dc-import name="GardnerChart" items="{{gardner}}" hint-size="100%,200px"></dc-import>
+    <dc-import name="ListSection" header="Отчёты" hint-size="100%,126px">
+      <sc-for list="{{reports}}" as="r" hint-placeholder-count="2">
+        <dc-import name="ListRow" icon="file" icon-style="plain" title="{{r.title}}" trailing="text" action-label="Поделиться" separator="{{r.sep}}" hint-size="100%,48px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":3120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "headerActions": [
+        {
+          "icon": "share-network",
+          "label": "Поделиться PDF"
+        }
+      ],
+      "heroBadges": [
+        {
+          "label": "MBTI · ENTJ",
+          "tone": "brand"
+        },
+        {
+          "label": "Анкета 85%",
+          "tone": "neutral"
+        }
+      ],
+      "personal": [
+        {
+          "title": "Город",
+          "detail": "Алматы",
+          "sep": false
+        },
+        {
+          "title": "Телефон",
+          "detail": "+7 (777) 123-45-67",
+          "sep": true
+        },
+        {
+          "title": "Дата рождения",
+          "detail": "[ДД.ММ.ГГГГ]",
+          "sep": true
+        },
+        {
+          "title": "Пол",
+          "detail": "Мужской",
+          "sep": true
+        },
+        {
+          "title": "Семейное положение",
+          "detail": "[Не указано]",
+          "sep": true
+        },
+        {
+          "title": "Гражданство",
+          "detail": "Казахстан",
+          "sep": true
+        },
+        {
+          "title": "Готовность к переезду",
+          "detail": "Да",
+          "sep": true
+        },
+        {
+          "title": "Instagram",
+          "detail": "@username",
+          "sep": true
+        }
+      ],
+      "career": [
+        {
+          "title": "Желаемая должность",
+          "detail": "Руководитель проектов",
+          "subtitle": "",
+          "sep": false
+        },
+        {
+          "title": "Сфера",
+          "detail": "IT и аналитика",
+          "subtitle": "",
+          "sep": true
+        },
+        {
+          "title": "Опыт (лет)",
+          "detail": "8",
+          "subtitle": "",
+          "sep": true
+        },
+        {
+          "title": "Ожидания по зарплате",
+          "detail": "от 800 000 ₸",
+          "subtitle": "",
+          "sep": true
+        },
+        {
+          "title": "Языки",
+          "detail": "",
+          "subtitle": "Казахский, Русский, Английский B2",
+          "sep": true
+        },
+        {
+          "title": "Компьютерные навыки",
+          "detail": "",
+          "subtitle": "Excel, Python, Power BI, Notion",
+          "sep": true
+        },
+        {
+          "title": "Образование",
+          "detail": "[Школа, город, год]",
+          "subtitle": "",
+          "sep": true
+        }
+      ],
+      "about": [
+        {
+          "title": "Хобби",
+          "detail": "Чтение, шахматы",
+          "sep": false
+        },
+        {
+          "title": "Интересы",
+          "detail": "Технологии, психология",
+          "sep": true
+        },
+        {
+          "title": "Спорт",
+          "detail": "Плавание, футбол",
+          "sep": true
+        },
+        {
+          "title": "Страны",
+          "detail": "Турция, ОАЭ, Грузия",
+          "sep": true
+        },
+        {
+          "title": "Книг в год",
+          "detail": "24",
+          "sep": true
+        },
+        {
+          "title": "Права",
+          "detail": "Есть",
+          "sep": true
+        }
+      ],
+      "jobs": [
+        {
+          "title": "Руководитель проектов · [Компания]",
+          "subtitle": "2021 — н. в.",
+          "sep": false
+        },
+        {
+          "title": "Аналитик · [Компания]",
+          "subtitle": "2017 — 2021",
+          "sep": true
+        }
+      ],
+      "talents": [
+        {
+          "rank": 1,
+          "title": "Стратег",
+          "domain": "strategic",
+          "sep": false
+        },
+        {
+          "rank": 2,
+          "title": "Активатор",
+          "domain": "influencing",
+          "sep": true
+        },
+        {
+          "rank": 3,
+          "title": "Достижение",
+          "domain": "executing",
+          "sep": true
+        },
+        {
+          "rank": 4,
+          "title": "Генератор идей",
+          "domain": "strategic",
+          "sep": true
+        },
+        {
+          "rank": 5,
+          "title": "Максимизатор",
+          "domain": "influencing",
+          "sep": true
+        },
+        {
+          "rank": 6,
+          "title": "Ответственность",
+          "domain": "executing",
+          "sep": true
+        },
+        {
+          "rank": 7,
+          "title": "Коммуникация",
+          "domain": "influencing",
+          "sep": true
+        },
+        {
+          "rank": 8,
+          "title": "Развитие",
+          "domain": "relationship",
+          "sep": true
+        },
+        {
+          "rank": 9,
+          "title": "Аналитик",
+          "domain": "strategic",
+          "sep": true
+        },
+        {
+          "rank": 10,
+          "title": "Индивидуализация",
+          "domain": "relationship",
+          "sep": true
+        }
+      ],
+      "reports": [
+        {
+          "title": "Отчёт Gallup",
+          "sep": false
+        },
+        {
+          "title": "Отчёт Talentslab",
+          "sep": true
+        }
+      ],
+      "gardner": [
+        {
+          "label": "Лингвистический",
+          "value": 72
+        },
+        {
+          "label": "Логико-математический",
+          "value": 85
+        },
+        {
+          "label": "Музыкальный",
+          "value": 40
+        },
+        {
+          "label": "Телесно-кинестетический",
+          "value": 55
+        },
+        {
+          "label": "Пространственный",
+          "value": 63
+        },
+        {
+          "label": "Межличностный",
+          "value": 88
+        },
+        {
+          "label": "Внутриличностный",
+          "value": 80
+        },
+        {
+          "label": "Натуралистический",
+          "value": 45
+        },
+        {
+          "label": "Экзистенциальный",
+          "value": 60
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

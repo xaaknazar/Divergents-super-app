@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Итоги программы</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1440" safe-top="{{false}}" hint-size="390px,1440px">
+<dc-import name="NavHeader" title="Итоги программы" back-label="Назад" back-href="ProfileHome.dc.html" hint-size="100%,124px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" gap="24" hint-size="100%,1250px">
+    <dc-import name="ProgramResultHero" status="Программа завершена" title="Отжимания" dates="12 сент. 2026 г. — 2 окт. 2026 г." total-label="Всего за программу" total="612" unit="раз" goal="Цель — 30 раз каждый день, 21 день" hint-size="100%,350px"></dc-import>
+    <dc-import name="Wrapper2" cols="2" gap="12" hint-size="100%,240px">
+      <sc-for list="{{metrics}}" as="m" hint-placeholder-count="4">
+        <dc-import name="ProgramMetricTile" label="{{m.label}}" value="{{m.value}}" caption="{{m.caption}}" hint-size="100%,114px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="12" hint-size="100%,200px">
+      <dc-import name="Text" variant="title3" heading="2" text="Достижения программы" hint-size="100%,25px"></dc-import>
+      <sc-for list="{{highlights}}" as="h" hint-placeholder-count="2">
+        <dc-import name="ProgramHighlight" icon="{{h.icon}}" title="{{h.title}}" text="{{h.text}}" hint-size="100%,80px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="ProgramDisclosure" title="Результаты по дням" subtitle="19 с нормой · 1 частично · 1 без записи" hint-size="100%,76px"></dc-import>
+    <dc-import name="Text" variant="footnote" tone="secondary" text="Итог — сумма ваших записей за дни программы. Частичные результаты и выполнение сверх нормы учтены. Отсутствие записи не означает, что вы не занимались." hint-size="100%,72px"></dc-import>
+    <dc-import name="Button" label="Поделиться результатом" icon="share-network" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1440}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      metrics: [
+        { label: 'Норма выполнена', value: '19 из 21', caption: 'дней программы' },
+        { label: 'Лучшая серия', value: '12 дней', caption: 'подряд с выполненной нормой' },
+        { label: 'Дни с активностью', value: '20', caption: 'включая частичное выполнение' },
+        { label: 'Лучший день', value: '45 раз', caption: 'максимум за один день' }
+      ],
+      highlights: [
+        { icon: 'flame', title: '7 дней подряд', text: 'Лучшая серия — 12 дней с выполненной нормой.' },
+        { icon: 'bolt-vertical', title: 'Больше цели', text: 'Вы превысили дневную норму: 6 дней.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

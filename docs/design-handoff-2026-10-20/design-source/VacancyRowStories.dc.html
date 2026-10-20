@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>VacancyRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="520" safe-top="{{false}}" hint-size="390px,520px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,480px">
+    <dc-import name="Text" variant="title2" heading="1" text="VacancyRow" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="trailing=bookmark (сохранённые)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" header="Сохранённые · 1" hint-size="100%,90px">
+        <dc-import name="VacancyRow" title="Продуктовый аналитик" company="IT-компания" city="Астана" logo-tone="indigo" trailing="bookmark" href="VacancyDetail.dc.html" hint-size="100%,64px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,180px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="status · separator (история откликов)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" header="История откликов · 2" hint-size="100%,150px">
+        <dc-import name="VacancyRow" title="Менеджер по обучению персонала" company="Сеть кофеен" city="Алматы" logo-tone="success" status="Отправлен" status-tone="success" href="VacancyDetail.dc.html" hint-size="100%,64px"></dc-import>
+        <dc-import name="VacancyRow" title="HR бизнес-партнёр" company="Ритейл-группа" city="Алматы" logo-tone="brand" status="Отклонён" status-tone="danger" separator="{{true}}" hint-size="100%,64px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,90px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="trailing=chevron" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" hint-size="100%,64px">
+        <dc-import name="VacancyRow" title="Руководитель отдела продаж" company="Производственная компания" city="Усть-Каменогорск" logo-tone="purple" trailing="chevron" href="VacancyDetail.dc.html" hint-size="100%,64px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

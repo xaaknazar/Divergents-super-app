@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>WorkoutModeSwitch — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="280" safe-top="{{false}}" hint-size="390px,280px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,246px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" text="WorkoutModeSwitch" hint-size="100%,34px"></dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" text="Переключатель типа тренировки: value · locked" hint-size="100%,18px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="VALUE=RUN / WALK" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" align="center" wrap="{{true}}" hint-size="100%,60px"><dc-import name="WorkoutModeSwitch" value="run" hint-size="160px,28px"></dc-import><dc-import name="WorkoutModeSwitch" value="walk" hint-size="160px,28px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="LOCKED (ИДЁТ ЗАПИСЬ)" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" gap="8" align="center" wrap="{{true}}" hint-size="100%,60px"><dc-import name="WorkoutModeSwitch" value="run" locked="{{true}}" hint-size="160px,28px"></dc-import></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

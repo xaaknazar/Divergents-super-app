@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AuthDivider</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div role="separator" style="display: flex; align-items: center; gap: 10px; width: 100%; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <span aria-hidden="true" style="flex: 1; height: 1px; background: rgba(60,60,67,0.18)"></span>
+  <span style="font-size: 12px; line-height: 16px; color: #6B6B70">{{label}}</span>
+  <span aria-hidden="true" style="flex: 1; height: 1px; background: rgba(60,60,67,0.18)"></span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"или"},"$preview":{"width":322,"height":16}}'>
+class Component extends DCLogic { renderVals() { return { label: this.props.label || 'или' }; } }
+</script>
+</body>
+</html>

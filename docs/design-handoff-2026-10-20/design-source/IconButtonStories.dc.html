@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>IconButton — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1120" safe-top="{{false}}" hint-size="390px,1120px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,1086px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">IconButton</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Кнопка-иконка: variant · tone · size · badge · href</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,72px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">VARIANT · PLAIN / TINTED / FLOATING / PRIMARY</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" align="center" wrap="{{true}}" hint-size="100%,48px">
+<dc-import name="IconButton" icon="bell" label="Уведомления" variant="plain" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="heart" label="В избранное" variant="tinted" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="share-network" label="Поделиться" variant="floating" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="plus" label="Создать" variant="primary" hint-size="48px,48px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,72px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">TONE=DANGER · PLAIN / TINTED / FLOATING / PRIMARY</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" align="center" wrap="{{true}}" hint-size="100%,48px">
+<dc-import name="IconButton" icon="bin" label="Удалить" variant="plain" tone="danger" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="bin" label="Удалить" variant="tinted" tone="danger" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="heart" label="В избранном" variant="floating" tone="danger" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="x" label="Отменить" variant="primary" tone="danger" hint-size="48px,48px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,72px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">TONE=NEUTRAL · PLAIN / TINTED / FLOATING / PRIMARY</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" align="center" wrap="{{true}}" hint-size="100%,48px">
+<dc-import name="IconButton" icon="dots-three-horizontal" label="Ещё" variant="plain" tone="neutral" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="gear" label="Настройки" variant="tinted" tone="neutral" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="share-network" label="Поделиться" variant="floating" tone="neutral" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="pencil" label="Изменить" variant="primary" tone="neutral" hint-size="48px,48px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,144px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">TONE=DANGER · OVERLAY DARK / LIGHT</dc-import>
+<dc-import name="StoryBackdrop" tone="photo" hint-size="100%,120px"><dc-import name="Wrapper3" dir="row" gap="12" align="center" hint-size="100%,48px">
+<dc-import name="IconButton" icon="heart" label="В избранном" variant="overlayDark" tone="danger" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="heart" label="В избранном" variant="overlayLight" tone="danger" hint-size="48px,48px"></dc-import>
+</dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,144px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">OVERLAY · ПОВЕРХ ФОТО</dc-import>
+<dc-import name="StoryBackdrop" tone="photo" hint-size="100%,120px"><dc-import name="Wrapper3" dir="row" justify="between" align="center" hint-size="100%,48px">
+<dc-import name="IconButton" icon="arrow-left" label="Назад" variant="overlayDark" hint-size="48px,48px"></dc-import>
+<dc-import name="Wrapper4" dir="row" gap="8" hint-size="100%,48px">
+<dc-import name="IconButton" icon="heart" label="В избранное" variant="overlayLight" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="share-network" label="Поделиться" variant="overlayLight" hint-size="48px,48px"></dc-import>
+</dc-import>
+</dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,72px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">SIZE · MD 48 / SM 36</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" align="center" wrap="{{true}}" hint-size="100%,48px">
+<dc-import name="IconButton" icon="gear" label="Настройки" variant="tinted" size="md" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="gear" label="Настройки" variant="tinted" size="sm" hint-size="36px,36px"></dc-import>
+<dc-import name="IconButton" icon="x" label="Закрыть" variant="floating" size="md" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="x" label="Закрыть" variant="floating" size="sm" hint-size="36px,36px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,72px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">BADGE</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="20" align="center" wrap="{{true}}" hint-size="100%,48px">
+<dc-import name="IconButton" icon="bell" label="Уведомления" variant="plain" badge="3" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="chat-bubble" label="Сообщения" variant="floating" badge="12" hint-size="48px,48px"></dc-import>
+<dc-import name="IconButton" icon="inbox" label="Входящие" variant="primary" badge="128" hint-size="48px,48px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,72px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">LINK · href → &lt;a&gt;</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,48px">
+<dc-import name="IconButton" icon="person" label="Профиль" variant="floating" href="ProfileHome.dc.html" hint-size="48px,48px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

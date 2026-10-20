@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>IconTile — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="510" safe-top="{{false}}" hint-size="390px,510px">
+  <dc-import name="Wrapper" pad="16" gap="18" hint-size="100%,380px">
+    <dc-import name="Wrapper2" pad-x="4" gap="4" hint-size="100%,56px">
+      <dc-import name="Text" variant="title1" heading="1" text="IconTile" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Цветная плашка с иконкой для карточек и строк: tone · variant solid|soft · size" hint-size="100%,36px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,70px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="VARIANT=SOLID · SIZE=MD" hint-size="100%,14px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="10" wrap="{{true}}" hint-size="100%,48px">
+        <dc-import name="IconTile" icon="graduation-cap" tone="brand" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="flame" tone="challenge" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="mountains" tone="trip" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="pulse" tone="sport" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="book" tone="violet" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="trophy" tone="orange" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="heart" tone="pink" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="gear" tone="neutral" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,70px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="VARIANT=SOFT · SIZE=MD" hint-size="100%,14px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="10" wrap="{{true}}" hint-size="100%,48px">
+        <dc-import name="IconTile" icon="graduation-cap" tone="brand" variant="soft" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="flame" tone="challenge" variant="soft" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="mountains" tone="trip" variant="soft" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="pulse" tone="sport" variant="soft" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="book" tone="violet" variant="soft" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="trophy" tone="orange" variant="soft" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="heart" tone="pink" variant="soft" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="gear" tone="neutral" variant="soft" size="md" hint-size="44px,44px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,70px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="SIZE SM · MD · LG" hint-size="100%,14px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="10" align="center" hint-size="100%,52px">
+        <dc-import name="IconTile" icon="map" tone="brand" size="sm" hint-size="36px,36px"></dc-import>
+        <dc-import name="IconTile" icon="map" tone="brand" size="md" hint-size="44px,44px"></dc-import>
+        <dc-import name="IconTile" icon="map" tone="brand" size="lg" hint-size="52px,52px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":510}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

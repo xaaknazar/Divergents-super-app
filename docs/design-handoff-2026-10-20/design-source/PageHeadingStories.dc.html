@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PageHeading — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="760" safe-top="{{false}}" hint-size="390px,760px">
+  <dc-import name="Wrapper" pad-x="20" pad-top="24" gap="28" hint-size="100%,700px">
+    <dc-import name="Text" variant="title2" heading="1" text="PageHeading" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,150px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="align=start · title + description + summary" hint-size="100%,18px"></dc-import>
+      <dc-import name="PageHeading" title="Анкета участника" description="Заполните четыре раздела — это откроет заявки в сообществе и отклики на вакансии." summary="Заполнено 1 из 4 разделов" hint-size="100%,124px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="align=start · title + description" hint-size="100%,18px"></dc-import>
+      <dc-import name="PageHeading" title="Новая вакансия" description="Опишите роль и требования — отклики придут в раздел «Карьера»." hint-size="100%,90px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,150px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="align=center" hint-size="100%,18px"></dc-import>
+      <dc-import name="PageHeading" align="center" title="Добро пожаловать в Divergents" description="Курсы, сообщество и карьера в одном приложении" summary="Шаг 1 из 3" hint-size="100%,124px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,60px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="только title" hint-size="100%,18px"></dc-import>
+      <dc-import name="PageHeading" title="Придумайте никнейм" hint-size="100%,28px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

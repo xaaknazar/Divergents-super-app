@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingChallengeCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<a href="{{href}}" aria-label="{{aria}}" style="{{rootCss}}">
+  <sc-if value="{{isFeature}}" hint-placeholder-val="{{true}}">
+    <div style="display: flex; gap: 12px; align-items: center; padding: 16px 16px 0">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+        <span style="{{eyebrowCss}}">{{goal}}</span>
+        <span style="{{titleCss}}">{{title}}</span>
+        <span style="{{statusCss}}"><span style="{{dotCss}}"></span><span>{{status}}<sc-if value="{{hasNote}}" hint-placeholder-val="{{true}}"><span style="{{noteCss}}"> · {{note}}</span></sc-if></span></span>
+      </div>
+      <img src="{{book}}" alt="" aria-hidden="true" style="width: 96px; height: 64px; object-fit: contain; flex-shrink: 0">
+    </div>
+    <div style="{{footerCss}}">
+      <span style="{{actionCss}}">{{action}}</span>
+      <span aria-hidden="true" style="{{arrowCss}}"><dc-import name="Icon" icon="arrow-right" size="md" tone="inherit" hint-size="20px,20px"></dc-import></span>
+    </div>
+  </sc-if>
+  <sc-if value="{{isCompact}}" hint-placeholder-val="{{false}}">
+    <div style="display: flex; gap: 14px; align-items: center; padding: 14px 14px 14px 16px">
+      <img src="{{book}}" alt="" aria-hidden="true" style="width: 78px; height: 52px; object-fit: contain; flex-shrink: 0">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+        <span style="{{eyebrowSmCss}}">Reading challenge · {{goal}}</span>
+        <span style="{{titleSmCss}}">{{title}}</span>
+        <span style="{{actionSmCss}}">{{action}}</span>
+      </div>
+      <span aria-hidden="true" style="{{arrowCss}}"><dc-import name="Icon" icon="chevron-right" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></span>
+    </div>
+  </sc-if>
+</a>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant": {"editor": "enum", "default": "feature", "options": ["feature", "compact"]}, "scheme": {"editor": "enum", "default": "light", "options": ["light", "dark"]}, "title": {"editor": "text", "default": "\"Extreme reading\" Challenge"}, "goal": {"editor": "text", "default": "60 минут в день"}, "status": {"editor": "text", "default": "Идёт"}, "statusTone": {"editor": "enum", "default": "live", "options": ["live", "upcoming", "finished", "pending"]}, "note": {"editor": "text", "default": "Вы участвуете"}, "action": {"editor": "text", "default": "Продолжить чтение"}, "href": {"editor": "text", "default": "ReadingActive.dc.html"}, "$preview": {"width": 358, "height": 175}}'>
+class Component extends DCLogic {
+  static PAL = {
+    light: { card: '#FFFFFF', border: '#E4E7EF', sep: 'rgba(60,60,67,0.12)', ink: '#0B0E16', ink2: '#5C5C60', ink3: '#6B6B70', brand: '#234088', accent: '#3D5BDB', tint: 'rgba(35,64,136,0.07)', track: '#E9ECF5', ok: '#187A32', okTint: 'rgba(24,122,50,0.09)', warn: '#934900', warnTint: 'rgba(255,149,0,0.12)', shadow: '0 1px 2px rgba(16,24,40,0.05), 0 10px 24px -14px rgba(16,24,40,0.22)', book: '/_blob/534c3a5937de37a34afa6a6ebd91be4b' },
+    dark: { card: '#161B26', border: 'rgba(255,255,255,0.08)', sep: 'rgba(255,255,255,0.10)', ink: '#F5F6FA', ink2: 'rgba(235,235,245,0.64)', ink3: 'rgba(235,235,245,0.5)', brand: '#8AA0FF', accent: '#8AA0FF', tint: 'rgba(138,160,255,0.12)', track: 'rgba(255,255,255,0.10)', ok: '#6FD39A', okTint: 'rgba(111,211,154,0.12)', warn: '#FFB35C', warnTint: 'rgba(255,179,92,0.14)', shadow: 'none', book: '/_blob/402f38a271f02261a3be20e630746183' }
+  };
+  static FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+
+  // «Тишина и бумага»: quiet paper card, engraved book, one tappable zone (whole card) with an action footer
+  renderVals() {
+    var p = this.props;
+    var C = Component.PAL[p.scheme === 'dark' ? 'dark' : 'light'];
+    var FF = Component.FF;
+    var feature = p.variant !== 'compact';
+    var title = p.title ?? '"Extreme reading" Challenge';
+    var goal = p.goal ?? '60 минут в день';
+    var status = p.status ?? 'Идёт';
+    var note = p.note ?? (p.title === undefined ? 'Вы участвуете' : '');
+    var action = p.action ?? 'Продолжить чтение';
+    var DOT = { live: C.ok, upcoming: C.accent, finished: C.ink3, pending: C.warn };
+    return {
+      isFeature: feature, isCompact: !feature,
+      href: p.href ?? 'ReadingActive.dc.html', book: C.book,
+      aria: [title, goal, status, note, action].filter(Boolean).join('. '),
+      title: title, goal: goal, status: status, note: note, hasNote: !!note, action: action,
+      rootCss: ['display: block', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'text-decoration: none', 'border-radius: 16px', 'overflow: hidden',
+        'background: ' + C.card, 'border: 1px solid ' + C.border, 'box-shadow: ' + C.shadow, 'color: ' + C.ink, FF].join('; '),
+      eyebrowCss: 'font-size: 13px; line-height: 18px; color: ' + C.ink2,
+      titleCss: 'font-size: 20px; line-height: 25px; font-weight: 700; letter-spacing: -0.2px; color: ' + C.ink + '; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden',
+      statusCss: 'display: flex; align-items: center; gap: 7px; margin-top: 2px; font-size: 13px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ' + C.ink2,
+      dotCss: 'width: 7px; height: 7px; border-radius: 4px; flex-shrink: 0; background: ' + (DOT[p.statusTone] || DOT.live),
+      noteCss: 'font-weight: 700; color: ' + C.brand,
+      footerCss: 'display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; margin: 12px 16px 0; border-top: 0.5px solid ' + C.sep,
+      actionCss: 'font-size: 15px; line-height: 20px; font-weight: 700; color: ' + C.brand,
+      arrowCss: 'display: flex; flex-shrink: 0; color: ' + C.brand,
+      eyebrowSmCss: 'font-size: 12px; line-height: 16px; color: ' + C.ink2 + '; white-space: nowrap; overflow: hidden; text-overflow: ellipsis',
+      titleSmCss: 'font-size: 17px; line-height: 22px; font-weight: 700; color: ' + C.ink + '; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden',
+      actionSmCss: 'font-size: 14px; line-height: 19px; font-weight: 700; color: ' + C.brand
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Профиль — главная</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="3300" tab="profile" hint-size="390px,3300px">
+<dc-import name="NavBarLarge" title="Профиль" avatar="{{false}}" actions="{{navActions}}" hint-size="100%,68px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" gap="18" hint-size="100%,3000px">
+    <dc-import name="ProfileSummaryCard" person="Акназар" email="aknazar@example.com" badge="MBTI · Тренер" completion="100" verified="{{true}}" action-label="Редактировать анкету" href="ResumeForm.dc.html" hint-size="100%,160px"></dc-import>
+
+    <dc-import name="ListSection" header="Активный челлендж" hint-size="100%,96px">
+      <dc-import name="ListRow" icon="flame" title="Divergents challenge: 2 season" subtitle="День 9/15" href="CommunityHome.dc.html" hint-size="100%,64px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Мои активности" hint-size="100%,170px">
+      <sc-for list="{{activities}}" as="r" hint-placeholder-count="2">
+        <dc-import name="ListRow" icon="{{r.icon}}" icon-tone="{{r.tone}}" title="{{r.title}}" subtitle="{{r.subtitle}}" href="CommunityHome.dc.html" separator="{{r.separator}}" hint-size="100%,68px"></dc-import>
+      </sc-for>
+    </dc-import>
+
+    <dc-import name="Wrapper2" dir="row" fill="equal" gap="10" align="stretch" hint-size="100%,104px">
+      <sc-for list="{{stats}}" as="s" hint-placeholder-count="3">
+        <dc-import name="StatTile" icon="{{s.icon}}" value="{{s.value}}" label="{{s.label}}" tone="{{s.tone}}" href="{{s.href}}" hint-size="100%,104px"></dc-import>
+      </sc-for>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Достижения · 15/50" hint-size="100%,220px">
+      <dc-import name="Wrapper2" dir="row" gap="10" pad-x="16" pad-top="14" pad-bottom="8" scroll="x" hint-size="100%,140px">
+        <sc-for list="{{shelf}}" as="b" hint-placeholder-count="4">
+          <dc-import name="AchievementTile" variant="shelf" title="{{b.title}}" tier="{{b.tier}}" category="{{b.category}}" icon="{{b.icon}}" earned="{{true}}" href="Achievements.dc.html" hint-size="104px,106px"></dc-import>
+        </sc-for>
+      </dc-import>
+      <dc-import name="ListRow" title="Смотреть все достижения" href="Achievements.dc.html" hint-size="100%,48px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Мои книги" hint-size="100%,200px">
+      <dc-import name="ListRow" thumb="/_blob/ab29d7c214eb7576b59de35205483cdb" thumb-shape="book" title="Код таланта. Гениями не рождаются. Ими становятся" subtitle="Читаю · 46%" href="LMSHome.dc.html" hint-size="100%,96px"></dc-import>
+      <dc-import name="ListRow" icon="check" icon-tone="success" title="Прочитано" detail="3" href="LMSHome.dc.html" separator="{{true}}" hint-size="100%,48px"></dc-import>
+      <dc-import name="ListRow" icon="books-spines" title="Библиотека книг" href="LMSHome.dc.html" separator="{{true}}" hint-size="100%,48px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Card" size="regular" hint-size="100%,220px">
+      <dc-import name="Wrapper2" gap="14" hint-size="100%,180px">
+        <dc-import name="Text" variant="title3" heading="2" text="Сильные стороны · CliftonStrengths" hint-size="100%,50px"></dc-import>
+        <dc-import name="Wrapper3" dir="row" wrap="{{true}}" gap="8" hint-size="100%,140px">
+          <sc-for list="{{strengths}}" as="t" hint-placeholder-count="10">
+            <dc-import name="ProfileStrengthChip" rank="{{t.rank}}" label="{{t.label}}" domain="{{t.domain}}" hint-size="140px,32px"></dc-import>
+          </sc-for>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" hint-size="100%,190px">
+      <dc-import name="SectionHeader" title="Множественный интеллект" action="" size="small" hint-size="100%,32px"></dc-import>
+      <dc-import name="ProfileIntelligenceChart" items="{{intelligence}}" hint-size="100%,170px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Физические показатели" hint-size="100%,210px">
+      <dc-import name="FitnessSummary" title="Мои тренировки" subtitle="64,8 км всего · 12,6 км за неделю" stats="{{fitnessStats}}" href="MyFitness.dc.html" record-href="WorkoutTrack.dc.html" hint-size="100%,176px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Продолжить" hint-size="100%,100px">
+      <dc-import name="ListRow" icon="graduation-cap" title="Продолжить обучение" subtitle="1 курс в работе" href="LMSHome.dc.html" hint-size="100%,68px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Анкета" hint-size="100%,100px">
+      <dc-import name="ListRow" icon="person-square" title="Открыть свою анкету" subtitle="Полный отчёт: таланты, MBTI, Гарднер" href="TalentProfile.dc.html" hint-size="100%,68px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Отчёты" hint-size="100%,250px">
+      <sc-for list="{{reports}}" as="r" hint-placeholder-count="3">
+        <dc-import name="ListRow" icon="file-doc" icon-style="plain" title="{{r.title}}" trailing="text" action-label="Скачать" separator="{{r.separator}}" hint-size="100%,72px"></dc-import>
+      </sc-for>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Офлайн" hint-size="100%,100px">
+      <dc-import name="ListRow" icon="cloud-arrow-down" title="Загрузки" subtitle="Скачанные аудио-уроки и доступные к скачиванию" href="Downloads.dc.html" hint-size="100%,88px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Внешний вид" hint-size="100%,100px">
+      <dc-import name="ListRow" icon="palette" title="Персонализация" subtitle="Тема, акцентный цвет, фон" href="Personalize.dc.html" hint-size="100%,68px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Поддержка" footer="Вопросы, ошибки или предложения — напишите нам в Telegram." hint-size="100%,124px">
+      <dc-import name="ListRow" icon="paperplane" title="Написать в поддержку" subtitle="@haaknazar" hint-size="100%,68px"></dc-import>
+    </dc-import>
+
+    <dc-import name="ListSection" header="Аккаунт" hint-size="100%,210px">
+      <dc-import name="ListRow" icon="person-circle" title="aknazar@example.com" subtitle="Divergents LMS · Talentslab" trailing="none" hint-size="100%,68px"></dc-import>
+      <dc-import name="ListRow" icon="arrow-from-square-up-right" icon-style="plain" title="Выйти" trailing="none" separator="{{true}}" hint-size="100%,48px"></dc-import>
+      <dc-import name="ListRow" icon="bin" icon-style="plain" icon-tone="danger" title="Удалить аккаунт" subtitle="Без возможности восстановления" trailing="none" separator="{{true}}" hint-size="100%,68px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":3300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      navActions: [{ icon: 'bell', label: 'Уведомления', href: 'Notifications.dc.html', badge: 2 }],
+      activities: [
+        { icon: 'mountains', tone: 'brand', title: 'Выходные в горах', subtitle: 'Ваша поездка · 12 октября', separator: false },
+        { icon: 'person-running', tone: 'success', title: 'Утренняя пробежка', subtitle: 'Вы записаны · 13 октября, 07:00', separator: true }
+      ],
+      stats: [
+        { icon: 'book', value: '2', label: 'Курсов', tone: 'brand', href: 'LMSHome.dc.html' },
+        { icon: 'trophy', value: '15', label: 'Достижений', tone: 'brand', href: 'Achievements.dc.html' },
+        { icon: 'flame', value: '2', label: 'Челленджи', tone: 'brand', href: 'ChallengeHistory.dc.html' }
+      ],
+      shelf: [
+        { title: 'Первый шаг', tier: 'bronze', category: 'learning', icon: 'play-circle' },
+        { title: 'В потоке знаний', tier: 'silver', category: 'learning', icon: 'play-circle' },
+        { title: 'Первый курс', tier: 'bronze', category: 'learning', icon: 'graduation-cap' },
+        { title: 'В деле', tier: 'bronze', category: 'learning', icon: 'bookmark' }
+      ],
+      strengths: [
+        { rank: 1, label: 'Achiever', domain: 'executing' },
+        { rank: 2, label: 'Command', domain: 'influencing' },
+        { rank: 3, label: 'Strategic', domain: 'strategic' },
+        { rank: 4, label: 'Activator', domain: 'influencing' },
+        { rank: 5, label: 'Individualization', domain: 'relationship' },
+        { rank: 6, label: 'Responsibility', domain: 'executing' },
+        { rank: 7, label: 'Ideation', domain: 'strategic' },
+        { rank: 8, label: 'Communication', domain: 'influencing' },
+        { rank: 9, label: 'Belief', domain: 'executing' },
+        { rank: 10, label: 'Empathy', domain: 'relationship' }
+      ],
+      intelligence: [
+        { kind: 'interpersonal', value: 92 }, { kind: 'linguistic', value: 84 }, { kind: 'logical', value: 78 }, { kind: 'intrapersonal', value: 88 },
+        { kind: 'spatial', value: 64 }, { kind: 'bodily', value: 58 }, { kind: 'musical', value: 47 }, { kind: 'naturalistic', value: 52 }
+      ],
+      fitnessStats: [
+        { value: '8,4 км', label: 'рекорд бега' },
+        { value: '5′12″', label: 'лучший темп' },
+        { value: '2', label: 'целей' }
+      ],
+      reports: [
+        { title: 'Gallup — полный отчёт (34 таланта)', separator: false },
+        { title: 'Gallup — краткая зона роста', separator: true },
+        { title: 'Гарднер — множественный интеллект', separator: true }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

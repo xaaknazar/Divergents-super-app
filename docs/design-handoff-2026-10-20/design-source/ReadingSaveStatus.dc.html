@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingSaveStatus</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div role="status" style="{{rootCss}}">
+  <span aria-hidden="true" style="{{iconCss}}"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></span>
+  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+    <span style="{{titleCss}}">{{title}}</span>
+    <sc-if value="{{hasText}}" hint-placeholder-val="{{true}}"><span style="{{textCss}}">{{text}}</span></sc-if>
+  </span>
+  <sc-if value="{{hasAction}}" hint-placeholder-val="{{false}}"><span style="{{actionCss}}">{{action}}</span></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state": {"editor": "enum", "default": "saved", "options": ["saved", "pending", "retry", "review"]}, "scheme": {"editor": "enum", "default": "light", "options": ["light", "dark"]}, "detail": {"editor": "text", "default": ""}, "$preview": {"width": 358, "height": 64}}'>
+class Component extends DCLogic {
+  static PAL = {
+    light: { card: '#FFFFFF', border: '#E4E7EF', sep: 'rgba(60,60,67,0.12)', ink: '#0B0E16', ink2: '#5C5C60', ink3: '#6B6B70', brand: '#234088', accent: '#3D5BDB', tint: 'rgba(35,64,136,0.07)', track: '#E9ECF5', ok: '#187A32', okTint: 'rgba(24,122,50,0.09)', warn: '#934900', warnTint: 'rgba(255,149,0,0.12)', shadow: '0 1px 2px rgba(16,24,40,0.05), 0 10px 24px -14px rgba(16,24,40,0.22)', book: '/_blob/534c3a5937de37a34afa6a6ebd91be4b' },
+    dark: { card: '#161B26', border: 'rgba(255,255,255,0.08)', sep: 'rgba(255,255,255,0.10)', ink: '#F5F6FA', ink2: 'rgba(235,235,245,0.64)', ink3: 'rgba(235,235,245,0.5)', brand: '#8AA0FF', accent: '#8AA0FF', tint: 'rgba(138,160,255,0.12)', track: 'rgba(255,255,255,0.10)', ok: '#6FD39A', okTint: 'rgba(111,211,154,0.12)', warn: '#FFB35C', warnTint: 'rgba(255,179,92,0.14)', shadow: 'none', book: '/_blob/402f38a271f02261a3be20e630746183' }
+  };
+  static FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+
+  // Honest save state: confirmed by server vs only on the phone vs no answer vs under review
+  renderVals() {
+    var p = this.props;
+    var C = Component.PAL[p.scheme === 'dark' ? 'dark' : 'light'];
+    var S = {
+      saved: ['check-circle', 'Подход сохранён', p.detail || '24 мин · 15 страниц · подтверждено в 12:41', '', C.ok, C.okTint],
+      pending: ['clock-3h', 'Записано на телефоне', p.detail || 'Ещё не в статистике — отправим автоматически', '', C.ink2, C.tint],
+      retry: ['exclamation-circle', 'Сервер не ответил', p.detail || 'Подход не потерян. Можно повторить безопасно', 'Повторить', C.warn, C.warnTint],
+      review: ['eye', 'Результат на проверке', p.detail || 'Это не пропуск и не штраф — ответим после проверки', '', C.brand, C.tint]
+    }[p.state] || [];
+    return {
+      icon: S[0], title: S[1], text: S[2], hasText: !!S[2], action: S[3], hasAction: !!S[3],
+      rootCss: ['display: flex', 'align-items: center', 'gap: 12px', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'padding: 12px 14px', 'border-radius: 14px', 'background: ' + S[5], Component.FF].join('; '),
+      iconCss: 'display: flex; flex-shrink: 0; color: ' + S[4],
+      titleCss: 'font-size: 15px; line-height: 20px; font-weight: 700; color: ' + C.ink,
+      textCss: 'font-size: 13px; line-height: 18px; color: ' + C.ink2,
+      actionCss: 'flex-shrink: 0; min-height: 44px; display: flex; align-items: center; font-size: 15px; font-weight: 700; color: ' + C.brand
+    };
+  }
+}
+</script>
+</body>
+</html>

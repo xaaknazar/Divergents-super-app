@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Карьера — главная</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="844" tab="career" hint-size="390px,844px">
+  <dc-import name="NavBarLarge" title="Карьера" avatar="{{true}}" avatar-href="ProfileHome.dc.html" hint-size="100%,68px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" hint-size="100%,300px">
+    <dc-import name="CareerComingSoon" icon="briefcase" badge="Скоро" title="Раздел в разработке" text="Мы дорабатываем «Карьеру»: вакансии и подбор по вашим талантам. Раздел появится в одном из следующих обновлений приложения." hint-size="100%,300px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

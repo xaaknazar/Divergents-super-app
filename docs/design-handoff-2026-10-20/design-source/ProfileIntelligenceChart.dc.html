@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ProfileIntelligenceChart</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<figure role="img" aria-label="{{aria}}" style="{{rootCss}}">
+  <div aria-hidden="true" style="width: 22px; height: 96px; position: relative; flex-shrink: 0">
+    <sc-for list="{{ticks}}" as="t" hint-placeholder-count="5"><span style="{{t.labelCss}}">{{t.label}}</span></sc-for>
+  </div>
+  <div aria-hidden="true" style="flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none">
+    <div style="{{plotCss}}">
+      <div style="position: relative; height: 96px">
+        <sc-for list="{{ticks}}" as="t" hint-placeholder-count="5"><span style="{{t.lineCss}}"></span></sc-for>
+        <div style="position: relative; display: flex; height: 96px; align-items: flex-end">
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="8"><div style="width: 62px; height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end"><span style="font-size: 11px; line-height: 14px; font-weight: 700; color: #5C5C60; margin-bottom: 3px; font-variant-numeric: tabular-nums">{{b.value}}</span><span style="{{b.barCss}}"></span></div></sc-for>
+        </div>
+      </div>
+      <div style="display: flex; margin-top: 8px">
+        <sc-for list="{{bars}}" as="b" hint-placeholder-count="8"><div style="width: 62px; display: flex; flex-direction: column; align-items: center; padding: 0 2px; box-sizing: border-box"><span aria-hidden="true" style="font-size: 20px; line-height: 24px; margin: 2px 0 4px; font-family: 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif">{{b.emoji}}</span><span style="font-size: 10px; line-height: 12px; font-weight: 500; color: #5C5C60; text-align: center; min-height: 12px; white-space: nowrap">{{b.short}}</span></div></sc-for>
+      </div>
+    </div>
+  </div>
+</figure>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"items":{"editor":null},"$preview":{"width":358,"height":170}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var K = {
+      // name, colour, emoji, short label — same set as the app's GardnerChart
+      interpersonal: ['Межличностный', '#073763', '👥', 'Межлич.'], linguistic: ['Лингвистический', '#e06666', '㊗️', 'Лингвист.'], logical: ['Логико-математический', '#ea9999', '🧠', 'Логико-мат.'],
+      intrapersonal: ['Внутриличностный', '#a6bee7', '💭', 'Внутрилич.'], spatial: ['Пространственный', '#38761d', '👁', 'Простр.'], bodily: ['Телесно-кинестетический', '#f6b26b', '✋', 'Кинестет.'],
+      musical: ['Музыкальный', '#3c78d8', '🎶', 'Музык.'], naturalistic: ['Натуралистический', '#f1c232', '🌻', 'Натурал.'], existential: ['Экзистенциальный', '#6d9eeb', '🙏', 'Экзистенц.']
+    };
+    var DEMO = [{ kind: 'interpersonal', value: 92 }, { kind: 'linguistic', value: 84 }, { kind: 'logical', value: 78 }, { kind: 'intrapersonal', value: 88 },
+      { kind: 'spatial', value: 64 }, { kind: 'bodily', value: 58 }, { kind: 'musical', value: 47 }, { kind: 'naturalistic', value: 52 }];
+    var items = Array.isArray(p.items) && p.items.length ? p.items : DEMO;
+    var bars = items.map(function (it) {
+      var k = K[it.kind] || ['—', '#8E8E93', '', '—'];
+      var v = Math.max(0, Math.min(100, Number(it.value || 0)));
+      return {
+        label: k[0], short: k[3], emoji: k[2], value: String(v),
+        barCss: 'display: block; width: 24px; height: ' + Math.round(8 + v * 0.72) + 'px; border-radius: 8px 8px 2px 2px; background: ' + k[1]
+      };
+    });
+    var ticks = [0, 25, 50, 75, 100].map(function (t, i) {
+      return {
+        label: String(t),
+        labelCss: 'position: absolute; right: 4px; top: ' + (89 - i * 20) + 'px; font-size: 10px; line-height: 14px; font-weight: 500; color: #6B6B70',
+        lineCss: 'position: absolute; left: 0; right: 0; top: ' + (96 - i * 20) + 'px; height: 0.5px; background: rgba(60,60,67,0.18)'
+      };
+    });
+    return {
+      rootCss: ['margin: 0', 'display: flex', 'box-sizing: border-box', 'width: 100%', 'padding: 12px', 'border-radius: 16px', 'background: #F2F2F7', F].join('; '),
+      plotCss: 'width: ' + (bars.length * 62) + 'px',
+      bars: bars, ticks: ticks,
+      aria: 'Множественный интеллект: ' + bars.map(function (b) { return b.label + ' ' + b.value; }).join(', ')
+    };
+  }
+}
+</script>
+</body>
+</html>

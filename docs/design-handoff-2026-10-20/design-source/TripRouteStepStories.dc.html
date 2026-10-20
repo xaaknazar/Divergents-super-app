@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TripRouteStep — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="400" safe-top="{{false}}" hint-size="390px,400px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,366px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">TripRouteStep</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Шаг маршрута поездки: icon · day · last</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">МАРШРУТ</dc-import>
+<dc-import name="ListSection" header="Маршрут · 2 дн." hint-size="100%,300px">
+<dc-import name="TripRouteStep" icon="car" day="День 1" title="Переезд к озеру Кольсай" note="Выезд в 06:00, в пути около 4 часов" hint-size="100%,82px"></dc-import>
+<dc-import name="TripRouteStep" icon="crescent" day="День 1" title="Ночёвка в гостевом доме" note="Ужин и вечер у костра" hint-size="100%,82px"></dc-import>
+<dc-import name="TripRouteStep" icon="home" day="День 2" title="Возвращение в Алматы" note="Прибытие к 20:00" last="{{true}}" hint-size="100%,70px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

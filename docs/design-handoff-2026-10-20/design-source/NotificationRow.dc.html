@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>NotificationRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <span aria-hidden="true" style="{{tileCss}}"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="md" tone="inherit" hint-size="20px,20px"></dc-import></span>
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+    <div style="display: flex; align-items: center; gap: 6px">
+      <div style="flex: 1; min-width: 0"><dc-import name="Text" variant="headline" text="{{title}}" hint-size="100%,22px"></dc-import></div>
+      <sc-if value="{{unread}}" hint-placeholder-val="{{false}}"><span role="img" aria-label="Не прочитано" style="width: 8px; height: 8px; border-radius: 4px; background: #234088; flex-shrink: 0"></span></sc-if>
+    </div>
+    <dc-import name="Text" variant="subhead" tone="secondary" text="{{text}}" hint-size="100%,40px"></dc-import>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 2px">
+      <dc-import name="Text" variant="caption2" tone="tertiary" text="{{time}}" hint-size="80px,14px"></dc-import>
+      <sc-if value="{{hasHref}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="display: flex"><dc-import name="Icon" icon="chevron-right" size="xs" tone="tertiary" hint-size="12px,12px"></dc-import></span></sc-if>
+    </div>
+  </div>
+  <sc-if value="{{separator}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="position: absolute; bottom: 0; left: 68px; right: 0; height: 0.5px; background: rgba(60,60,67,0.18)"></span></sc-if>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{false}}"><a href="{{href}}" aria-label="{{ariaLabel}}" style="{{overlayCss}}"></a></sc-if>
+  <sc-if value="{{isButton}}" hint-placeholder-val="{{false}}"><button type="button" aria-label="{{ariaLabel}}" style="{{overlayCss}}"></button></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","default":"career","options":["career","challenge","course","community","map","system"]},"title":{"editor":"text","default":"Ответ по вашему отклику"},"text":{"editor":"text","default":"Работодатель ответил на ваш отклик на вакансию «HR бизнес-партнёр». Откройте, чтобы прочитать обратную связь."},"time":{"editor":"text","default":"15 мин назад"},"unread":{"editor":"boolean","default":true},"separator":{"editor":"boolean","default":true},"href":{"editor":"text","default":""},"$preview":{"width":390,"height":132}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var demo = p.title === undefined && p.text === undefined;
+    var K = {
+      career: ['briefcase', '#16A34A', 'rgba(22,163,74,0.20)'],
+      challenge: ['flame', '#FF3B30', 'rgba(255,59,48,0.20)'],
+      course: ['book-open', '#234088', 'rgba(35,64,136,0.20)'],
+      community: ['people', '#3D5BDB', 'rgba(61,91,219,0.20)'],
+      map: ['pin', '#0EA5E9', 'rgba(14,165,233,0.20)'],
+      system: ['sparkles', '#AF52DE', 'rgba(175,82,222,0.20)']
+    };
+    var k = K[p.kind] || K.career;
+    var on = function (v, d) { return v === undefined || v === null ? d : (v === true || v === 'true'); };
+    var unread = on(p.unread, demo);
+    var title = p.title ?? 'Ответ по вашему отклику';
+    var text = p.text ?? (demo ? 'Работодатель ответил на ваш отклик на вакансию «HR бизнес-партнёр». Откройте, чтобы прочитать обратную связь.' : '');
+    var href = p.href || (demo ? 'VacancyDetail.dc.html' : '');
+    var R = 0;
+    return {
+      rootCss: ['position: relative', 'display: flex', 'gap: 12px', 'padding: 14px 16px', 'min-height: 48px', 'box-sizing: border-box', 'width: 100%', 'min-width: 0',
+        'color: #000000', 'background: ' + (unread ? 'rgba(61,91,219,0.20)' : 'transparent'), F].join('; '),
+      tileCss: 'width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ' + k[2] + '; color: ' + k[1],
+      icon: k[0], title: title, text: text, time: p.time ?? '15 мин назад', unread: unread,
+      separator: on(p.separator, true),
+      href: href, hasHref: !!href, isButton: !href, ariaLabel: [title, text, unread ? 'не прочитано' : ''].filter(Boolean).join('. '),
+      overlayCss: 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; border-radius: ' + R + 'px'
+    };
+  }
+}
+</script>
+</body>
+</html>

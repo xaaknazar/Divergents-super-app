@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CareerUploadField</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{hasLabel}}" hint-placeholder-val="{{true}}"><span style="display: block; margin: 0 0 8px; font-size: 15px; line-height: 20px; font-weight: 700; letter-spacing: -0.1px; color: #000000">{{label}}</span></sc-if>
+  <button type="button" aria-label="{{aria}}" style="display: flex; align-items: center; gap: {{gap}}px; width: 100%; margin: 0; border: 0; background: transparent; padding: 0; text-align: left; cursor: pointer; color: #000000; font-family: inherit">
+    <span aria-hidden="true" style="{{tileCss}}"><sc-if value="{{hasSrc}}" hint-placeholder-val="{{false}}"><img src="{{src}}" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block"></sc-if><sc-if value="{{noSrc}}" hint-placeholder-val="{{true}}"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="{{iconSize}}" tone="secondary" hint-size="24px,24px"></dc-import></sc-if></span>
+    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 15px; line-height: 20px; color: #3D5BDB">{{actionLabel}}</span>
+      <sc-if value="{{hasHint}}" hint-placeholder-val="{{true}}"><span style="font-size: 11px; line-height: 14px; font-weight: 500; color: #6B6B70">{{hint}}</span></sc-if>
+    </span>
+  </button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Фото профиля"},"actionLabel":{"editor":"text","default":"Загрузить фото"},"hint":{"editor":"text","default":"JPG, PNG или WebP, до 8 МБ"},"icon":{"editor":"enum","default":"person-circle","options":["arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"size":{"editor":"enum","default":"lg","options":["md","lg"]},"src":{"editor":"text","default":""},"$preview":{"width":358,"height":100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var demo = p.label === undefined && p.actionLabel === undefined;
+    var lg = (p.size || 'lg') === 'lg';
+    var d = lg ? 72 : 56;
+    var label = p.label ?? (demo ? 'Фото профиля' : '');
+    var action = p.actionLabel ?? 'Загрузить фото';
+    var hint = p.hint ?? (demo ? 'JPG, PNG или WebP, до 8 МБ' : '');
+    var src = p.src || '';
+    return {
+      rootCss: 'display: flex; flex-direction: column; box-sizing: border-box; width: 100%; min-width: 0; ' + F,
+      label: label, hasLabel: !!label, actionLabel: action, hint: hint, hasHint: !!hint,
+      aria: [action, label].filter(Boolean).join(' · '),
+      gap: lg ? 14 : 12, icon: p.icon || "person-circle", iconSize: lg ? 'xl' : 'lg',
+      src: src, hasSrc: !!src, noSrc: !src,
+      tileCss: 'width: ' + d + 'px; height: ' + d + 'px; border-radius: ' + (lg ? 20 : 12) + 'px; background: rgba(118,118,128,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden'
+    };
+  }
+}
+</script>
+</body>
+</html>

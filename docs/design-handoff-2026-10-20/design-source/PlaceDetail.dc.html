@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Место на карте</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1380" safe-top="{{false}}" hint-size="390px,1380px">
+  <dc-import name="NavHeader" variant="inline" back-label="Места" back-href="MapHome.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="MediaCover" src="/_blob/6c45288e0ebfca9ea993102d60703d42" aspect="hero" radius="none" hint-size="100%,220px"></dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-top="12" pad-bottom="12" gap="12" hint-size="100%,240px">
+    <dc-import name="PlaceHero" title="Origo Coffee Shop" subtitle="Кафе · Не указано" category="cafe" verified="{{true}}" hint-size="100%,60px"></dc-import>
+    <dc-import name="Wrapper2" gap="2" hint-size="100%,36px">
+      <dc-import name="Stars" value="{{0}}" size="md" show-value="{{false}}" hint-size="90px,18px"></dc-import>
+      <dc-import name="Text" variant="caption1" tone="secondary" text="0 отзывов · добавил Danday" hint-size="100%,16px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" dir="row" hint-size="100%,22px">
+      <dc-import name="StatusBadge" label="Одобрено Divergents" icon="seal-check" tone="sky" hint-size="160px,22px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" dir="row" fill="equal" gap="10" hint-size="100%,62px">
+      <dc-import name="PlaceActionButton" icon="heart" label="В избранное" hint-size="100%,62px"></dc-import>
+      <dc-import name="PlaceActionButton" icon="share-network" label="Поделиться" hint-size="100%,62px"></dc-import>
+      <dc-import name="PlaceActionButton" icon="exclamation-circle" label="Сообщить" hint-size="100%,62px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" dir="row" wrap="{{true}}" gap="8" pad-x="20" pad-bottom="12" hint-size="100%,34px">
+    <sc-for list="{{features}}" as="f" hint-placeholder-count="4">
+      <dc-import name="StatusBadge" label="{{f.label}}" icon="{{f.icon}}" tone="brand" hint-size="100px,22px"></dc-import>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" gap="14" hint-size="100%,330px">
+    <dc-import name="PlaceHighlight" title="Чем хорошо" text="{{highlight}}" hint-size="100%,108px"></dc-import>
+    <dc-import name="MapCanvas" size="mini" drop="{{drop}}" hint-size="100%,150px"></dc-import>
+    <dc-import name="Button" label="Открыть на карте" icon="map" variant="tinted" size="compact" full-width="{{true}}" href="MapHome.dc.html" hint-size="100%,44px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-top="16" gap="8" hint-size="100%,62px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" heading="2" text="ОТЗЫВЫ · 0" hint-size="100%,18px"></dc-import>
+    <dc-import name="Text" variant="subhead" tone="secondary" text="Пока нет отзывов — оставьте первый." hint-size="100%,20px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" hint-size="100%,260px">
+    <dc-import name="PlaceReviewForm" title="Ваш отзыв" rating="{{0}}" placeholder="Чем понравилось / что улучшить" hint-size="100%,244px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1380}}'>
+class Component extends DCLogic {
+  renderVals() {
+
+    return {
+      features: [
+        { label: 'Чисто', icon: 'sparkles' },
+        { label: 'Детская зона', icon: 'people' },
+        { label: 'Без алкоголя', icon: 'x' },
+        { label: 'Халяль', icon: 'seal-check' }
+      ],
+      highlight: 'Дерзкий кофе. Спешлти и т.д.\nРаботают с 2013 года.',
+      drop: { x: 179, y: 75, category: 'cafe' }
+    };
+  }
+}
+</script>
+</body>
+</html>

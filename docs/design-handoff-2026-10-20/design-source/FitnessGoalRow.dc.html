@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>FitnessGoalRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{separator}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="position: absolute; top: 0; left: 16px; right: 0; height: 0.5px; background: rgba(60,60,67,0.18)"></span></sc-if>
+  <div style="display: flex; align-items: center; gap: 12px">
+    <dc-import name="IconTile" icon="bullseye" tone="brand" variant="soft" size="sm" hint-size="36px,36px"></dc-import>
+    <span style="flex: 1; min-width: 0"><dc-import name="Text" variant="body" text="{{title}}" hint-size="100%,24px"></dc-import></span>
+    <button type="button" aria-label="{{shareLabel}}" style="min-width: 32px; min-height: 32px; margin: -6px -6px -6px 0; border: 0; padding: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><dc-import name="Icon" icon="share-network" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></button>
+  </div>
+  <dc-import name="ProgressBar" value="{{value}}" size="regular" label="" hint-size="100%,6px"></dc-import>
+  <div style="display: flex; justify-content: space-between; gap: 8px">
+    <dc-import name="Text" variant="caption1" tone="secondary" text="{{current}}" hint-size="120px,16px"></dc-import>
+    <dc-import name="Text" variant="caption1" tone="secondary" align="end" text="{{target}}" hint-size="120px,16px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Пробежать 10 км"},"current":{"editor":"text","default":"сейчас 8,4 км"},"target":{"editor":"text","default":"цель 10 км"},"value":{"editor":"int","default":84,"min":0,"max":100},"separator":{"editor":"boolean","default":false},"$preview":{"width":358,"height":86}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var title = p.title ?? 'Пробежать 10 км';
+    return {
+      rootCss: ['position: relative', 'display: flex', 'flex-direction: column', 'gap: 8px', 'padding: 12px 16px', 'box-sizing: border-box', 'width: 100%', 'color: #000000', F].join('; '),
+      title: title, current: p.current ?? 'сейчас 8,4 км', target: p.target ?? 'цель 10 км', value: Number(p.value ?? 84),
+      shareLabel: 'Поделиться: ' + title,
+      separator: p.separator === true || p.separator === 'true'
+    };
+  }
+}
+</script>
+</body>
+</html>

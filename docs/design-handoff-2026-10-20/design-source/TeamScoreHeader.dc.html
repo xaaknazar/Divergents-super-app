@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TeamScoreHeader</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}">
+<div style="flex: 1; min-width: 0">
+<dc-import name="Text" variant="footnoteEm" tone="secondary" text="{{pointsLabel}}" hint-size="100%,18px"></dc-import>
+<div style="margin-top: 4px"><dc-import name="Text" variant="title2" tone="brand" numeric="{{true}}" text="{{points}}" hint-size="100%,28px"></dc-import></div>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-end">
+<dc-import name="Text" variant="footnoteEm" tone="secondary" align="end" text="{{flagsLabel}}" hint-size="100%,18px"></dc-import>
+<div style="display: flex; align-items: center; gap: 5px; margin-top: 7px"><dc-import name="Icon" icon="flag" variant="solid" size="sm" tone="danger" hint-size="16px,16px"></dc-import><dc-import name="Text" variant="footnoteEm" tone="danger" text="{{flags}}" hint-size="70px,18px"></dc-import></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"points":{"editor":"text","default":"2053 pts"},"flags":{"editor":"text","default":"7 флагов"},"pointsLabel":{"editor":"text","default":"Очки команды"},"flagsLabel":{"editor":"text","default":"Штрафы команды"},"$preview":{"width":358,"height":92}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    return {
+      points: p.points ?? '2053 pts', flags: p.flags ?? '7 флагов',
+      pointsLabel: p.pointsLabel ?? 'Очки команды', flagsLabel: p.flagsLabel ?? 'Штрафы команды',
+      css: "min-height: 92px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 14px; box-sizing: border-box; width: 100%; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif"
+    };
+  }
+}
+</script>
+</body>
+</html>

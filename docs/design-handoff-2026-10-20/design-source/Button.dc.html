@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Button</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<sc-if value="{{isLink}}" hint-placeholder-val="{{false}}"><a href="{{href}}" style="{{css}}"><sc-if value="{{loading}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{spinnerCss}}"></span></sc-if><sc-if value="{{iconStart}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="{{icon}}" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></sc-if><span style="{{labelCss}}">{{label}}</span><sc-if value="{{iconEnd}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="{{icon}}" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></sc-if></a></sc-if><sc-if value="{{isButton}}" hint-placeholder-val="{{true}}"><button type="button" disabled="{{blocked}}" aria-busy="{{busy}}" style="{{css}}"><sc-if value="{{loading}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{spinnerCss}}"></span></sc-if><sc-if value="{{iconStart}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="{{icon}}" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></sc-if><span style="{{labelCss}}">{{label}}</span><sc-if value="{{iconEnd}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="{{icon}}" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></sc-if></button></sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Продолжить"},"icon":{"editor":"enum","default":"","options":["","arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"iconPosition":{"editor":"enum","default":"start","options":["start","end"]},"variant":{"editor":"enum","default":"solid","options":["solid","tinted","outline","plain"]},"tone":{"editor":"enum","default":"brand","options":["brand","success","warning","danger","neutral"]},"size":{"editor":"enum","default":"regular","options":["compact","regular","large"]},"fullWidth":{"editor":"boolean","default":false},"disabled":{"editor":"boolean","default":false},"loading":{"editor":"boolean","default":false},"href":{"editor":"text","default":""},"$preview":{"width":240,"height":50}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var TONES = {
+      brand: { fill: '#234088', ink: '#234088', on: '#FFFFFF', tint: 'rgba(61,91,219,0.13)', glow: 'rgba(35,64,136,0.22)' },
+      success: { fill: '#34C759', ink: '#187A32', on: '#000000', tint: 'rgba(52,199,89,0.14)', glow: 'rgba(52,199,89,0.22)' },
+      warning: { fill: '#FF9500', ink: '#934900', on: '#000000', tint: 'rgba(255,149,0,0.14)', glow: 'rgba(255,149,0,0.22)' },
+      danger: { fill: '#FF3B30', ink: '#C5221F', on: '#FFFFFF', tint: 'rgba(255,59,48,0.12)', glow: 'rgba(255,59,48,0.22)' },
+      neutral: { fill: '#6B6B70', ink: '#5C5C60', on: '#FFFFFF', tint: 'rgba(118,118,128,0.12)', glow: 'rgba(107,107,112,0.22)' }
+    };
+    var SIZES = { compact: [44, '8px 16px'], regular: [50, '12px 16px'], large: [56, '12px 20px'] };
+    var t = TONES[p.tone] || TONES.brand;
+    var sz = SIZES[p.size] || SIZES.regular;
+    var variant = p.variant || 'solid';
+    var solid = variant === 'solid';
+    var ink = solid ? t.on : t.ink;
+    var bg = solid ? t.fill : variant === 'tinted' ? t.tint : 'transparent';
+    var loading = !!p.loading;
+    var disabled = !!p.disabled;
+    var blocked = disabled || loading;
+    var icon = p.icon || '';
+    var end = p.iconPosition === 'end';
+    var css = [
+      p.fullWidth ? 'display: flex; width: 100%' : 'display: inline-flex', 'box-sizing: border-box', 'max-width: 100%', 'margin: 0',
+      'min-height: ' + sz[0] + 'px', 'padding: ' + sz[1], 'border-radius: 14px', 'align-items: center', 'justify-content: center', 'gap: 8px',
+      'background: ' + bg, 'color: ' + ink, 'border: ' + (variant === 'outline' ? '1px solid ' + t.ink : '0'),
+      'box-shadow: none', 'opacity: ' + (disabled ? '0.45' : '1'),
+      'text-decoration: none', 'cursor: ' + (blocked ? 'default' : 'pointer'), F
+    ].join('; ');
+    return {
+      css: css,
+      labelCss: 'font-size: 17px; line-height: 22px; font-weight: 700; letter-spacing: -0.2px; text-align: center; min-width: 0; overflow-wrap: anywhere',
+      spinnerCss: 'width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; flex-shrink: 0',
+      label: p.label ?? 'Продолжить',
+      icon: icon,
+      href: p.href || '',
+      loading: loading,
+      blocked: blocked,
+      busy: loading ? 'true' : 'false',
+      iconStart: !!icon && !loading && !end,
+      iconEnd: !!icon && !loading && end,
+      isLink: !!p.href && !blocked,
+      isButton: !p.href || blocked
+    };
+  }
+}
+</script>
+</body>
+</html>

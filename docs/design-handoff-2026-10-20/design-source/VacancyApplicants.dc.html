@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Отклики на вакансию</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="844" safe-top="{{false}}" hint-size="390px,844px">
+  <dc-import name="NavHeader" variant="inline" title="Отклики" back-label="Назад" back-href="CareerHome.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="SectionHeader" size="small" title="Откликнулось · 4" action="" hint-size="100%,32px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-bottom="24" gap="10" hint-size="100%,360px">
+    <sc-for list="{{applicants}}" as="a" hint-placeholder-count="4">
+      <dc-import name="EventApplicantRow" person="{{a.person}}" subtitle="{{a.meta}}" status="{{a.status}}" status-label="{{a.statusLabel}}" hint-size="100%,72px"></dc-import>
+    </sc-for>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "applicants": [
+        {
+          "person": "Айгерим Н.",
+          "meta": "INFJ · анкета 92%",
+          "status": "new",
+          "statusLabel": "Новый"
+        },
+        {
+          "person": "Данияр С.",
+          "meta": "ENTJ · анкета 78%",
+          "status": "new",
+          "statusLabel": "Новый"
+        },
+        {
+          "person": "Мадина К.",
+          "meta": "ESTJ · анкета 100%",
+          "status": "accepted",
+          "statusLabel": ""
+        },
+        {
+          "person": "Ерлан Т.",
+          "meta": "анкета 64%",
+          "status": "rejected",
+          "statusLabel": ""
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

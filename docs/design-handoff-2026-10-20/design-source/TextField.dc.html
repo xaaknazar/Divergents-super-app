@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TextField</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+<label for="{{uid}}" style="{{labelCss}}">{{label}}<sc-if value="{{required}}" hint-placeholder-val="{{false}}"><span aria-hidden="true"> *</span></sc-if></label>
+<div style="position: relative">
+<sc-if value="{{multiline}}" hint-placeholder-val="{{false}}"><textarea id="{{uid}}" rows="{{rows}}" placeholder="{{placeholder}}" value="{{val}}" onChange="{{onInput}}" disabled="{{disabled}}" aria-invalid="{{invalid}}" aria-required="{{ariaRequired}}" aria-describedby="{{msgId}}" style="{{fieldCss}}"></textarea></sc-if>
+<sc-if value="{{plainInput}}" hint-placeholder-val="{{true}}"><input id="{{uid}}" type="{{type}}" placeholder="{{placeholder}}" value="{{val}}" onChange="{{onInput}}" disabled="{{disabled}}" aria-invalid="{{invalid}}" aria-required="{{ariaRequired}}" aria-describedby="{{msgId}}" style="{{fieldCss}}"></sc-if>
+<sc-if value="{{affixInput}}" hint-placeholder-val="{{false}}"><div style="{{boxCss}}"><sc-if value="{{hasPrefix}}" hint-placeholder-val="{{false}}"><span id="{{prefixId}}" style="{{prefixCss}}">{{prefix}}</span></sc-if><input id="{{uid}}" type="{{type}}" placeholder="{{placeholder}}" value="{{val}}" onChange="{{onInput}}" disabled="{{disabled}}" aria-invalid="{{invalid}}" aria-required="{{ariaRequired}}" aria-describedby="{{affixDescribedBy}}" style="{{innerCss}}"><sc-if value="{{hasSuffix}}" hint-placeholder-val="{{false}}"><span id="{{suffixId}}" style="{{suffixCss}}">{{suffix}}</span></sc-if><sc-if value="{{hasTrailing}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="display: flex; flex-shrink: 0; margin-left: 10px; pointer-events: none"><dc-import name="Icon" icon="{{trailingIcon}}" size="md" tone="secondary" hint-size="20px,20px"></dc-import></span></sc-if></div></sc-if>
+<sc-if value="{{floatTrailing}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{trailCss}}"><dc-import name="Icon" icon="{{trailingIcon}}" size="md" tone="secondary" hint-size="20px,20px"></dc-import></span></sc-if>
+</div>
+<sc-if value="{{hasError}}" hint-placeholder-val="{{false}}"><p id="{{msgId}}" aria-live="polite" style="{{errCss}}">{{error}}</p></sc-if>
+<sc-if value="{{hasHelper}}" hint-placeholder-val="{{false}}"><p id="{{msgId}}" style="{{helpCss}}">{{helper}}</p></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Фамилия"},"placeholder":{"editor":"text","default":"Фамилия"},"value":{"editor":"text","default":""},"type":{"editor":"enum","default":"text","options":["text","email","tel","number","date"]},"required":{"editor":"boolean","default":false},"multiline":{"editor":"boolean","default":false},"rows":{"editor":"int","default":4,"min":2,"max":10},"error":{"editor":"text","default":""},"helper":{"editor":"text","default":""},"disabled":{"editor":"boolean","default":false},"prefix":{"editor":"text","default":""},"suffix":{"editor":"text","default":""},"trailingIcon":{"editor":"enum","default":"","options":["","arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"$preview":{"width":390,"height":80}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    if (!this._uid) this._uid = 'tf-' + Math.random().toString(36).slice(2, 9);
+    var on = function (v) { return v === true || v === 'true'; };
+    var val = this.state && this.state.v !== undefined ? this.state.v : (p.value || '');
+    var err = p.error || '';
+    var disabled = on(p.disabled);
+    var multiline = !!p.multiline;
+    // disabled shows a lock glyph unless a trailing icon is given
+    var trailing = p.trailingIcon || (disabled ? 'lock-locked' : '');
+    var prefix = p.prefix === undefined || p.prefix === null ? '' : String(p.prefix);
+    var suffix = p.suffix === undefined || p.suffix === null ? '' : String(p.suffix);
+    var affix = !multiline && (!!prefix || !!suffix);
+    var types = { text: 1, email: 1, tel: 1, number: 1, date: 1 };
+    var border = '1px solid ' + (err ? '#C5221F' : disabled ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.08)');
+    var surface = disabled ? '#F2F2F7' : '#FFFFFF';
+    var ink = disabled ? '#5C5C60' : '#000000';
+    var typo = ['font-size: 17px', 'line-height: 24px', 'font-weight: 400', 'letter-spacing: -0.2px'];
+    var fieldCss = [
+      'display: block', 'width: 100%', 'box-sizing: border-box', 'margin: 0', 'min-height: 52px',
+      'padding: 12px ' + (trailing ? 44 : 14) + 'px 12px 14px', 'border: ' + border,
+      'border-radius: 16px', 'background: ' + surface].concat(typo, [
+      'color: ' + ink, 'outline: none', '-webkit-appearance: none', 'appearance: none', 'resize: none', 'cursor: ' + (disabled ? 'not-allowed' : 'text'), F
+    ]).join('; ');
+    var boxCss = ['display: flex', 'align-items: center', 'width: 100%', 'box-sizing: border-box', 'min-height: 52px', 'padding: 0 14px',
+      'border: ' + border, 'border-radius: 16px', 'background: ' + surface, F].join('; ');
+    var innerCss = ['flex: 1', 'min-width: 0', 'display: block', 'box-sizing: border-box', 'margin: 0', 'padding: 13px 0', 'border: 0', 'background: transparent'].concat(typo, [
+      'color: ' + ink, 'outline: none', '-webkit-appearance: none', 'appearance: none', 'cursor: ' + (disabled ? 'not-allowed' : 'text'), F]).join('; ');
+    var prefixId = this._uid + '-pre';
+    var suffixId = this._uid + '-suf';
+    return {
+      uid: this._uid,
+      msgId: this._uid + '-msg',
+      prefixId: prefixId, suffixId: suffixId,
+      affixDescribedBy: [prefix ? prefixId : '', suffix ? suffixId : '', this._uid + '-msg'].filter(Boolean).join(' '),
+      label: p.label ?? 'Фамилия',
+      placeholder: p.placeholder ?? 'Фамилия',
+      val: val,
+      onInput: function (e) { self.setState({ v: e.target.value }); },
+      type: types[p.type] ? p.type : 'text',
+      rows: Number(p.rows || 4),
+      multiline: multiline,
+      singleline: !multiline,
+      plainInput: !multiline && !affix,
+      affixInput: affix,
+      disabled: disabled,
+      prefix: prefix, suffix: suffix, hasPrefix: !!prefix, hasSuffix: !!suffix,
+      required: !!p.required,
+      ariaRequired: p.required ? 'true' : 'false',
+      invalid: err ? 'true' : 'false',
+      error: err,
+      helper: p.helper || '',
+      hasError: !!err,
+      hasHelper: !err && !!p.helper,
+      trailingIcon: trailing,
+      hasTrailing: !!trailing,
+      floatTrailing: !!trailing && !affix,
+      rootCss: 'display: flex; flex-direction: column; width: 100%; ' + F,
+      labelCss: 'display: block; margin: 0 0 8px; font-size: 15px; line-height: 20px; font-weight: 700; letter-spacing: -0.1px; color: ' + (err ? '#C5221F' : disabled ? '#5C5C60' : '#000000'),
+      fieldCss: fieldCss, boxCss: boxCss, innerCss: innerCss,
+      prefixCss: 'flex-shrink: 0; white-space: nowrap; font-size: 17px; line-height: 24px; letter-spacing: -0.2px; color: #5C5C60; margin-right: 4px',
+      suffixCss: 'flex-shrink: 0; white-space: nowrap; font-size: 17px; line-height: 24px; letter-spacing: -0.2px; color: #5C5C60; margin-left: 6px',
+      trailCss: 'position: absolute; right: 14px; top: 16px; display: flex; pointer-events: none',
+      errCss: 'margin: 6px 0 0; font-size: 13px; line-height: 18px; color: #C5221F',
+      helpCss: 'margin: 6px 0 0; font-size: 13px; line-height: 18px; color: #5C5C60'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TextField — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1560" safe-top="{{false}}" hint-size="390px,1560px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,1526px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">TextField</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Поле ввода: label · required · helper · error · trailingIcon · disabled · prefix/suffix · multiline</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,104px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">DEFAULT · REQUIRED</dc-import>
+<dc-import name="TextField" label="Имя" placeholder="Имя" required="{{true}}" hint-size="100%,80px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,128px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">FILLED · HELPER</dc-import>
+<dc-import name="TextField" label="Электронная почта" type="email" value="aknazar@mail.kz" helper="Подтверждена при входе" hint-size="100%,104px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,128px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">ERROR</dc-import>
+<dc-import name="TextField" label="Телефон" type="tel" value="+7 701" required="{{true}}" error="Введите номер полностью: +7 XXX XXX XX XX" hint-size="100%,104px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,104px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">TRAILING ICON</dc-import>
+<dc-import name="TextField" label="Дата рождения" value="14.03.1994" trailing-icon="calendar" hint-size="100%,80px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,128px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">DISABLED · ЗАБЛОКИРОВАНО</dc-import>
+<dc-import name="TextField" label="Электронная почта" type="email" value="aknazar@mail.kz" disabled="{{true}}" helper="Почту можно сменить в настройках аккаунта" hint-size="100%,104px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,104px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">PREFIX</dc-import>
+<dc-import name="TextField" label="Никнейм" placeholder="nickname" value="aknazar" prefix="@" hint-size="100%,80px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,128px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">SUFFIX · TYPE=NUMBER</dc-import>
+<dc-import name="TextField" label="Цель на день" type="number" value="8000" suffix="шагов" helper="Рекомендуем от 6 000" hint-size="100%,104px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,104px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">PREFIX + SUFFIX · DISABLED</dc-import>
+<dc-import name="TextField" label="Стоимость участия" value="15 000" prefix="от" suffix="₸ / мес" disabled="{{true}}" hint-size="100%,80px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,200px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">MULTILINE</dc-import>
+<dc-import name="TextField" label="О себе" multiline="{{true}}" rows="4" placeholder="Расскажите о своём опыте и целях" helper="До 500 символов" hint-size="100%,176px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

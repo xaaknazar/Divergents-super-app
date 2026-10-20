@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AI — пустой чат</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="844" tab="ai" hint-size="390px,844px">
+  <dc-import name="NavBarLarge" title="Divergents AI" subtitle="Знает каталог курсов и ваш профиль" avatar="{{true}}" avatar-href="ProfileHome.dc.html" hint-size="100%,81px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" hint-size="100%,160px">
+    <dc-import name="Wrapper2" pad-x="20" pad-top="24" gap="14" align="center" hint-size="100%,140px">
+      <dc-import name="StatusBadge" label="Спросите что угодно" icon="sparkles" tone="brand" hint-size="150px,22px"></dc-import>
+      <dc-import name="Text" variant="subhead" tone="secondary" align="center" text="Ассистент Divergents поможет с курсами, психотипами, талантами, карьерой и развитием." hint-size="100%,60px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" layer="overlay-bottom" pad-bottom="120" hint-size="100%,240px">
+    <dc-import name="Wrapper2" dir="row" gap="8" pad-x="16" pad-y="8" scroll="x" hint-size="100%,60px">
+      <sc-for list="{{suggestions}}" as="s" hint-placeholder-count="3">
+        <dc-import name="AISuggestionChip" label="{{s}}" hint-size="240px,44px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="Wrapper2" pad-x="16" pad-top="8" hint-size="100%,56px">
+      <dc-import name="ChatComposer" placeholder="Спросите ассистента…" hint-size="100%,48px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      suggestions: ['Какой курс мне подойдёт?', 'Объясни мой психотип', 'С чего начать развитие?']
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Logo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<svg width="{{w}}" height="{{h}}" viewBox="280 300 1260 1590" aria-hidden="true" style="display: block; flex-shrink: 0"><path fill="{{body}}" d="M 1472.5 584.662 C 1457.532 588.821 329.489 963.695 326.277 965.578 C 319.832 969.355 314.476 975.287 310.838 982.678 C 304.591 995.367 306.217 1012.279 314.763 1023.5 C 317.725 1027.39 343.874 1047.227 432.535 1112.848 C 500.885 1163.435 549.102 1198.457 553 1200.348 C 558.967 1203.241 560.279 1203.492 569 1203.402 L 578.5 1203.304 893.5 1096.281 L 1208.5 989.258 1208.756 1025.379 C 1208.896 1045.245 1208.155 1197.762 1207.108 1364.304 C 1205.596 1604.903 1205.458 1668.176 1206.434 1672.304 C 1208.233 1679.909 1212.186 1686.881 1217.668 1692.112 C 1226.107 1700.168 1452.439 1866.844 1459.238 1870.011 C 1467.805 1874.001 1478.197 1875.515 1486.828 1874.031 C 1494.211 1872.761 1502.642 1869.274 1507.756 1865.373 C 1512.534 1861.728 1517.67 1853.464 1519.46 1846.54 C 1520.839 1841.204 1520.997 1776.68 1520.976 1230.04 C 1520.959 822.229 1520.615 618.044 1519.94 615.115 C 1517.238 603.395 1508.212 592.276 1497.372 587.313 C 1493.009 585.315 1489.797 584.663 1483.12 584.42 C 1478.379 584.247 1473.6 584.356 1472.5 584.662"></path><path fill="{{head}}" d="M 739 314.105 C 681 320.647 627.78 354.331 596.909 404.039 C 554.781 471.871 558.177 559.664 605.393 623.385 C 619.243 642.076 633.868 656.017 653.394 669.139 C 730.646 721.056 833.682 710.014 898.515 642.872 C 928.635 611.68 946.741 573.75 952.047 530.733 C 954.012 514.796 952.779 483.31 949.602 468.341 C 931.782 384.366 864.92 323.259 780.789 314.062 C 769.669 312.846 749.985 312.866 739 314.105"></path></svg>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","default":"md","options":["sm","md","lg"]},"variant":{"editor":"enum","default":"color","options":["color","white"]},"$preview":{"width":40,"height":40}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var H = { sm: 24, md: 36, lg: 117 };
+    var h = H[this.props.size] || 36;
+    var white = this.props.variant === 'white';
+    return {
+      h: h, w: Math.round(h * 1260 / 1590),
+      body: white ? '#FFFFFF' : '#234088',
+      head: white ? '#FFFFFF' : '#3D5BDB'
+    };
+  }
+}
+</script>
+</body>
+</html>

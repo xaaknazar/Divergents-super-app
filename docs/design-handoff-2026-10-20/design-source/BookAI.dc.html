@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Книжный советник</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="844" surface="media" safe-top="{{false}}" hint-size="390px,844px">
+  <dc-import name="LearningModalSheet" label="Книжный советник" hint-size="390px,844px">
+    <dc-import name="NavHeader" variant="modal" title="Книжный советник" back-label="Книги" back-href="BooksCatalog.dc.html" close-button="{{false}}" hint-size="100%,72px"></dc-import>
+    <dc-import name="Wrapper" pad-x="16" gap="8" hint-size="100%,470px">
+      <dc-import name="Wrapper2" pad-top="16" pad-x="24" pad-bottom="20" gap="10" align="center" hint-size="100%,210px">
+        <dc-import name="Illustration" kind="orb" size="compact" hint-size="64px,64px"></dc-import>
+        <dc-import name="Text" variant="title3" align="center" heading="2" text="Спросите, что почитать" hint-size="100%,25px"></dc-import>
+        <dc-import name="Text" variant="subhead" tone="secondary" align="center" text="Знаю всю библиотеку Divergents и ваш профиль — подберу книги под ваши таланты, психотип и цели." hint-size="100%,60px"></dc-import>
+      </dc-import>
+      <dc-import name="ListSection" header="Например" hint-size="100%,232px">
+        <sc-for list="{{suggestions}}" as="s" hint-placeholder-count="4">
+          <dc-import name="BookPromptRow" label="{{s.label}}" separator="{{s.sep}}" hint-size="100%,48px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+    <dc-import name="BottomBar" variant="solid" placement="screen" hint-size="100%,106px">
+      <dc-import name="BookComposer" variant="ask" placeholder="Спросить про книги" hint-size="100%,48px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      suggestions: [
+        { label: "Что почитать под мои таланты?", sep: false },
+        { label: "Книги по лидерству для меня", sep: true },
+        { label: "Посоветуй книгу под мой психотип", sep: true },
+        { label: "С чего начать развитие?", sep: true }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

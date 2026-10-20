@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AI — чат</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="980" tab="ai" hint-size="390px,980px">
+  <dc-import name="NavBarLarge" title="Divergents AI" subtitle="Знает каталог курсов и ваш профиль" avatar="{{true}}" avatar-href="ProfileHome.dc.html" actions="{{navActions}}" hint-size="100%,81px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" gap="16" hint-size="100%,620px">
+    <sc-for list="{{thread}}" as="m" hint-placeholder-count="4">
+      <sc-if value="{{m.isUser}}" hint-placeholder-val="{{true}}"><dc-import name="ChatBubble" role="user" text="{{m.text}}" hint-size="100%,48px"></dc-import></sc-if>
+      <sc-if value="{{m.isAssistant}}" hint-placeholder-val="{{false}}"><dc-import name="AIAnswer" text="{{m.text}}" copyable="{{true}}" hint-size="100%,146px"></dc-import></sc-if>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Wrapper" layer="overlay-bottom" pad-x="16" pad-top="8" pad-bottom="120" hint-size="100%,176px">
+    <dc-import name="ChatComposer" placeholder="Спросите ассистента…" hint-size="100%,48px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var thread = [
+      { role: 'user', text: 'С чего начать развитие?' },
+      { role: 'assistant', text: 'Хороший старт — понять свои сильные стороны. Предлагаю три шага:\n\n1. **Пройдите анкету** талантов в профиле\n2. Начните курс **«Первые шаги к своей цели»**\n3. Присоединитесь к челленджу в сообществе' },
+      { role: 'user', text: 'А сколько длится первый курс?' },
+      { role: 'assistant', text: 'В курсе **8 уроков** — их удобно проходить по одному в день.' }
+    ];
+    return {
+      navActions: [{ icon: 'pencil-square', label: 'Новый чат' }],
+      thread: thread.map(function (m) { return { text: m.text, isUser: m.role === 'user', isAssistant: m.role === 'assistant' }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

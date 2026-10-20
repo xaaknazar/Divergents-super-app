@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Avatar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<span role="img" aria-label="{{aria}}" style="{{rootCss}}">
+<span style="{{circleCss}}">
+<sc-if value="{{hasSrc}}" hint-placeholder-val="{{false}}"><img src="{{src}}" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block"></sc-if>
+<sc-if value="{{showInitials}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="{{initCss}}">{{initials}}</span></sc-if>
+<sc-if value="{{showGlyph}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="person" variant="solid" size="{{glyphSize}}" tone="{{glyphTone}}" hint-size="20px,20px"></dc-import></sc-if>
+</span>
+<sc-if value="{{hasBadge}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{badgeCss}}"><sc-if value="{{badgeIcon}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="{{badgeGlyph}}" variant="solid" size="xs" tone="inherit" hint-size="12px,12px"></dc-import></sc-if></span></sc-if>
+</span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"person":{"editor":"text","default":"Акназар"},"src":{"editor":"text","default":""},"size":{"editor":"enum","default":"md","options":["xs","sm","md","lg","xl"]},"ring":{"editor":"boolean","default":false},"badge":{"editor":"enum","default":"none","options":["none","online","crown","check"]},"stacked":{"editor":"boolean","default":false},"tone":{"editor":"enum","default":"solid","options":["solid","tinted"]},"$preview":{"width":40,"height":40}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var SZ = { xs: [24, 10, 'xs', 8, 12], sm: [32, 13, 'sm', 10, 14], md: [40, 15, 'md', 12, 18], lg: [56, 20, 'xl', 16, 22], xl: [88, 32, 'xxl', 22, 30] };
+    var key = SZ[p.size] ? p.size : 'md';
+    var s = SZ[key];
+    var d = s[0];
+    var person = (p.person ?? 'Акназар').trim();
+    var words = person.split(/\s+/).filter(Boolean);
+    var initials = words.slice(0, 2).map(function (w) { return w.charAt(0).toUpperCase(); }).join('');
+    if (d <= 24) initials = initials.charAt(0);
+    var src = p.src || '';
+    var tinted = p.tone === 'tinted';
+    var badge = p.badge || 'none';
+    var BADGE = { online: ['#34C759', ''], crown: ['#FFCC00', 'crown', '#5A3E00'], check: ['#234088', 'check', '#FFFFFF'] };
+    var b = BADGE[badge];
+    var bd = badge === 'online' ? s[3] : s[4];
+    var withGlyph = !!b && badge !== 'online' && bd >= 18;
+    var ring = p.ring ? '0 0 0 2px #FFFFFF, 0 0 0 4px #3D5BDB' : p.stacked ? '0 0 0 2px #FFFFFF' : 'none';
+    return {
+      aria: person || 'Пользователь',
+      src: src,
+      hasSrc: !!src,
+      showInitials: !src && !!initials,
+      showGlyph: !src && !initials,
+      initials: initials,
+      glyphSize: s[2],
+      glyphTone: tinted ? 'brand' : 'onBrand',
+      hasBadge: !!b,
+      badgeIcon: withGlyph,
+      badgeGlyph: b ? b[1] : '',
+      rootCss: 'position: relative; display: inline-flex; flex-shrink: 0; width: ' + d + 'px; height: ' + d + 'px; vertical-align: middle; ' + F,
+      circleCss: 'width: ' + d + 'px; height: ' + d + 'px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; box-sizing: border-box; background: ' + (src ? 'rgba(118,118,128,0.12)' : tinted ? 'rgba(61,91,219,0.13)' : '#234088') + '; box-shadow: ' + ring,
+      initCss: 'font-size: ' + s[1] + 'px; line-height: 1; font-weight: 700; color: ' + (tinted ? '#234088' : '#FFFFFF') + '; letter-spacing: 0',
+      badgeCss: b ? ['position: absolute', badge === 'crown' ? 'top: ' + (-Math.round(bd / 5)) + 'px' : 'bottom: 0', badge === 'crown' ? 'right: ' + (-Math.round(bd / 5)) + 'px' : 'right: 0',
+        'width: ' + bd + 'px', 'height: ' + bd + 'px', 'border-radius: 50%', 'box-shadow: 0 0 0 2px #FFFFFF', 'display: flex', 'align-items: center', 'justify-content: center',
+        'background: ' + b[0], 'color: ' + (b[2] || '#FFFFFF')].join('; ') : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

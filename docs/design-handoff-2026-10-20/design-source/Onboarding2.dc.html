@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Онбординг — AI-наставник</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="844" surface="plain" hint-size="390px,844px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="8" hint-size="100%,368px">
+    <dc-import name="OnboardingIllustration" kind="mentor" hint-size="100%,360px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="32" pad-top="32" gap="20" align="center" hint-size="100%,174px">
+    <dc-import name="PageDots" count="4" index="1" variant="dots" hint-size="60px,6px"></dc-import>
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,116px">
+      <dc-import name="Text" variant="title1" align="center" heading="1" text="AI-наставник рядом" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="body" tone="secondary" align="center" text="Персональный ассистент знает ваш психотип и даёт точечные советы по курсам, книгам и карьере." hint-size="100%,72px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" layer="overlay-bottom" pad-x="24" pad-bottom="32" gap="8" hint-size="100%,140px">
+    <dc-import name="Button" label="Далее" variant="solid" size="large" full-width="{{true}}" href="OnboardingStep3.dc.html" hint-size="100%,56px"></dc-import>
+    <dc-import name="Button" label="Пропустить" variant="plain" tone="neutral" size="compact" full-width="{{true}}" href="Auth.dc.html" hint-size="100%,44px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Управление челленджем</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="2900" safe-top="{{false}}" hint-size="390px,2900px">
+<dc-import name="NavHeader" variant="inline" title="Управление" back-label="Назад" back-href="ChallengeDetail.dc.html" hint-size="100%,118px"></dc-import>
+<dc-import name="Wrapper" pad-x="16" pad-top="12" pad-bottom="32" gap="16" hint-size="100%,2800px">
+<dc-import name="ListSection" header="Челлендж" hint-size="100%,300px">
+<dc-import name="Wrapper2" pad="12" gap="12" hint-size="100%,270px">
+<dc-import name="TextField" label="Название" value="Divergents challenge: Teachers version" hint-size="100%,80px"></dc-import>
+<dc-import name="Wrapper3" dir="row" fill="equal" gap="12" align="start" hint-size="100%,80px">
+<dc-import name="TextField" label="Длительность (дней)" type="number" value="15" hint-size="100%,80px"></dc-import>
+<dc-import name="TextField" label="Цена (опц.)" placeholder="напр. 12 000 ₸" value="12 000 ₸" hint-size="100%,80px"></dc-import>
+</dc-import>
+<dc-import name="Button" label="Сохранить" icon="check" variant="solid" size="compact" full-width="{{true}}" disabled="{{true}}" hint-size="100%,44px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="ListSection" header="Команды" footer="Размер — сколько человек можно набрать. Меньше числа уже принятых поставить нельзя." hint-size="100%,1200px">
+<sc-for list="{{teams}}" as="t" hint-placeholder-count="5">
+<dc-import name="TeamEditorRow" title="{{t.name}}" counts="{{t.counts}}" capacity="{{t.capacity}}" captain="{{t.captain}}" separator="{{t.separator}}" hint-size="100%,240px"></dc-import>
+</sc-for>
+</dc-import>
+<dc-import name="ListSection" header="Участники" footer="Нажмите на участника, чтобы переместить его в другую команду или удалить." hint-size="100%,1100px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+<dc-import name="RosterGroupHeader" title="{{g.title}}" hint-size="100%,34px"></dc-import>
+<sc-for list="{{g.members}}" as="m" hint-placeholder-count="3">
+<dc-import name="RosterMemberRow" person="{{m.name}}" title="{{m.name}}" subtitle="{{m.email}}" captain="{{m.captain}}" badge="{{m.badge}}" hint-size="100%,60px"></dc-import>
+</sc-for>
+</sc-for>
+</dc-import>
+<dc-import name="Button" label="Заявки на вступление" icon="people" variant="tinted" full-width="{{true}}" href="ChallengeApplicants.dc.html" hint-size="100%,50px"></dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var team = function (name, accepted, captain, i) { return { name: name, counts: accepted + ' принято · ' + (22 - accepted) + ' свободно', capacity: 22, captain: captain, separator: i > 0 }; };
+    var mem = function (name, email, captain, badge) { return { name: name, email: email + '@example.com', captain: !!captain, badge: badge || '' }; };
+    return {
+      teams: [team('Vertex', 19, 'AbzalAbdr', 0), team('Ray', 17, 'Dilyara', 1), team('Catalyst', 20, 'Sunny', 2), team('Legacy', 14, 'Mereyski', 3), team('Unity', 21, 'Janoor', 4)],
+      groups: [
+        { title: 'Vertex · 19/22', members: [mem('AbzalAbdr', 'abzalabdr', true), mem('Тимур', 'timur'), mem('Sabi', 'sabi'), mem('Max_run', 'maxrun', false, 'заявка')] },
+        { title: 'Ray · 17/22', members: [mem('Dilyara', 'dilyara', true), mem('Айгерим', 'aigerim'), mem('Aknazar', 'aknazar', false, 'заявка')] },
+        { title: 'Catalyst · 20/22', members: [mem('Sunny', 'sunny', true), mem('Bekzat', 'bekzat'), mem('Nurik', 'nurik')] },
+        { title: 'Legacy · 14/22', members: [mem('Mereyski', 'mereyski', true), mem('Камила', 'kamila', false, 'заявка')] },
+        { title: 'Unity · 21/22', members: [mem('Janoor', 'janoor', true), mem('Мадина', 'madina')] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

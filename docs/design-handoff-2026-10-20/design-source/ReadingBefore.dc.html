@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Reading — до вступления</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="2320" safe-top="{{false}}" hint-size="390px,2320px">
+  <dc-import name="NavHeader" variant="plain" title="" back-label="Сообщество" back-href="ReadingCommunityChallenges.dc.html" actions="{{navActions}}" hint-size="100%,96px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" gap="12" hint-size="100%,640px">
+    <dc-import name="ReadingHeader" title="&quot;Extreme reading&quot; Challenge" hint-size="100%,330px"></dc-import>
+    <dc-import name="ReadingJoinGuide" state="choose" hint-size="100%,300px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,560px">
+    <dc-import name="SectionHeader" title="Команды · набор открыт" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" gap="12" hint-size="100%,500px">
+      <sc-for list="{{teams}}" as="t" hint-placeholder-count="3">
+        <dc-import name="ReadingTeamCard" team="{{t.name}}" filled="{{t.filled}}" capacity="{{t.capacity}}" captain="{{t.captain}}" state="{{t.state}}" hint-size="100%,150px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,330px">
+    <dc-import name="SectionHeader" title="Рейтинг" action="Весь рейтинг" href="#" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" gap="12" hint-size="100%,280px">
+      <dc-import name="Segmented" items="{{rankTabs}}" value="0" hint-size="100%,44px"></dc-import>
+      <dc-import name="ListSection" header="" footer="Место команды — средний темп её участников, минут в день" hint-size="100%,220px">
+        <sc-for list="{{teamRanks}}" as="r" hint-placeholder-count="3">
+          <dc-import name="ReadingRankRow" place="{{r.place}}" label="{{r.name}}" meta="{{r.meta}}" value="{{r.value}}" separator="{{r.sep}}" hint-size="100%,60px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="24" hint-size="100%,520px">
+    <dc-import name="SectionHeader" title="Правила" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,470px">
+      <dc-import name="ReadingRules" hint-size="100%,470px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      navActions: [{ icon: 'palette', label: 'Оформление', href: '#' }],
+      teams: [
+        { name: 'Vertex', filled: 18, capacity: 22, captain: 'Аружан', state: 'open' },
+        { name: 'Qarasu', filled: 15, capacity: 20, captain: 'Нурлан', state: 'open' },
+        { name: 'Avanguard', filled: 20, capacity: 20, captain: 'Данияр', state: 'full' }
+      ],
+      rankTabs: ['Команды', 'Участники'],
+      teamRanks: [
+        { place: '1', name: 'Vertex', meta: '18 участников', value: '64', sep: false },
+        { place: '2', name: 'Avanguard', meta: '20 участников', value: '58', sep: true },
+        { place: '3', name: 'Qarasu', meta: '15 участников', value: '51', sep: true }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

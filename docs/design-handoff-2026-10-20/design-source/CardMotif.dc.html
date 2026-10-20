@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CardMotif</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div aria-hidden="true" style="{{css}}"></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","default":"challenge","options":["challenge","challengeDark","trip","sport"]},"$preview":{"width":358,"height":170}}'>
+class Component extends DCLogic {
+  // Decorative fill for themed cards: tinted gradient + one faint illustration on the right.
+  // Mounted inside a card (position: relative; overflow: hidden) as its first child; never used in pages.
+  static FLAME = 'M13.258 15.172a4 4 0 0 1 0 5.657L12 22.086l-1.258-1.257a4 4 0 0 1 0-5.657L12 13.915zm-2.4-14.162c2.197-.314 4.75.926 6.685 2.994C19.518 6.115 21 9.231 21 13.001c0 4.331-2.708 7.686-6.06 8.952a6 6 0 0 0-.268-8.195l-1.965-1.964a1 1 0 0 0-1.414 0l-1.965 1.965a6 6 0 0 0-.19 8.285C5.8 20.964 3 18.047 3 14c0-2.39.826-4.004 2.046-5.14C6.206 7.784 7.68 7.189 8.79 6.709c.585-.253 1.063-.47 1.445-.707.38-.234.585-.443.692-.638.17-.312.304-1.032-.785-2.848a1 1 0 0 1 .715-1.505';
+  static art(kind) {
+    var svg = '';
+    if (kind === 'challenge' || kind === 'challengeDark') {
+      var fill = kind === 'challengeDark' ? 'rgba(255,255,255,0.08)' : 'rgba(234,88,12,0.10)';
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" width="220" height="240" viewBox="0 0 220 240"><g transform="translate(40 18) rotate(-10 84 96) scale(7.2)"><path d="' + Component.FLAME + '" fill="' + fill + '"/></g></svg>';
+    } else if (kind === 'trip') {
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="170" viewBox="0 0 240 170">'
+        + '<circle cx="168" cy="44" r="22" fill="rgba(245,158,11,0.20)"/>'
+        + '<path d="M0 170 L70 92 L104 128 L150 64 L240 170 Z" fill="rgba(21,128,61,0.10)"/>'
+        + '<path d="M60 170 L132 104 L170 140 L204 108 L240 136 L240 170 Z" fill="rgba(21,128,61,0.12)"/>'
+        + '<path d="M150 64 L138 81 L146 79 L152 86 L160 77 L166 80 Z" fill="rgba(255,255,255,0.55)"/></svg>';
+    } else if (kind === 'sport') {
+      var r = '';
+      for (var i = 0; i < 4; i++) {
+        var x = 40 + i * 14, y = 18 + i * 14, w = 260 - i * 28, h = 140 - i * 28;
+        r += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (h / 2) + '" fill="none" stroke="rgba(61,91,219,' + (0.16 - i * 0.03).toFixed(2) + ')" stroke-width="1.5"' + (i === 1 ? ' stroke-dasharray="6 6"' : '') + '/>';
+      }
+      svg = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180">' + r + '</svg>';
+    }
+    return 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) + '")';
+  }
+  renderVals() {
+    var k = { challenge: 1, challengeDark: 1, trip: 1, sport: 1 }[this.props.kind] ? this.props.kind : 'challenge';
+    var BG = {
+      challenge: 'linear-gradient(135deg, #FFF6EE 0%, #FFE8D6 100%)',
+      challengeDark: 'radial-gradient(120% 90% at 100% 100%, rgba(255,138,61,0.28) 0%, rgba(255,138,61,0) 55%), linear-gradient(140deg, #234088 0%, #2F4FB8 100%)',
+      trip: 'linear-gradient(160deg, #F1F8F3 0%, #E1F1E7 100%)',
+      sport: 'linear-gradient(135deg, #F1F4FF 0%, #E3E9FF 100%)'
+    };
+    var POS = { challenge: 'right -36px center', challengeDark: 'right -30px top -10px', trip: 'right bottom', sport: 'right -60px center' };
+    return {
+      css: ['position: absolute', 'top: 0', 'left: 0', 'right: 0', 'bottom: 0', 'pointer-events: none', 'border-radius: inherit',
+        'background-image: ' + Component.art(k) + ', ' + BG[k], 'background-repeat: no-repeat',
+        'background-position: ' + POS[k] + ', 0 0, 0 0', 'background-size: auto, 100% 100%, 100% 100%'].join('; ')
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ProfileSummaryCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<a href="{{href}}" aria-label="{{aria}}" style="{{cardCss}}">
+  <span aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(0,0,0,0.28), rgba(0,0,0,0.06))"></span>
+  <div style="position: relative; padding: 18px">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <span aria-hidden="true" style="width: 64px; height: 64px; border-radius: 18px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><dc-import name="Text" variant="title1" tone="white" text="{{initial}}" hint-size="24px,34px"></dc-import></span>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <div style="display: flex; align-items: center; gap: 6px">
+          <dc-import name="Text" variant="title2" tone="white" lines="1" text="{{person}}" hint-size="120px,28px"></dc-import>
+          <sc-if value="{{verified}}" hint-placeholder-val="{{true}}"><span role="img" aria-label="Анкета подтверждена" style="display: flex"><dc-import name="Icon" icon="seal-check" variant="solid" size="md" tone="white" hint-size="20px,20px"></dc-import></span></sc-if>
+        </div>
+        <dc-import name="Text" variant="subhead" tone="whiteMuted" lines="1" text="{{email}}" hint-size="100%,20px"></dc-import>
+        <sc-if value="{{hasBadge}}" hint-placeholder-val="{{true}}"><span style="margin-top: 6px; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.20); color: #FFFFFF; font-size: 11px; line-height: 14px; font-weight: 700"><dc-import name="Icon" icon="sparkles" variant="solid" size="xs" tone="white" hint-size="12px,12px"></dc-import>{{badge}}</span></sc-if>
+      </div>
+      <dc-import name="ProgressRing" value="{{completion}}" label="{{completionLabel}}" size="compact" tone="inverse" hint-size="64px,64px"></dc-import>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid rgba(255,255,255,0.22)">
+      <dc-import name="Text" variant="footnoteEm" tone="white" text="{{actionLabel}}" hint-size="160px,18px"></dc-import>
+      <dc-import name="Icon" icon="chevron-right" size="xs" tone="white" hint-size="12px,12px"></dc-import>
+    </div>
+  </div>
+</a>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"person":{"editor":"text","default":"Акназар"},"email":{"editor":"text","default":"aknazar@example.com"},"badge":{"editor":"text","default":"MBTI · Тренер"},"completion":{"editor":"int","default":100,"min":0,"max":100},"verified":{"editor":"boolean","default":true},"actionLabel":{"editor":"text","default":"Редактировать анкету"},"href":{"editor":"text","default":"ResumeForm.dc.html"},"$preview":{"width":358,"height":160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var person = p.person ?? 'Акназар';
+    var completion = Math.max(0, Math.min(100, Number(p.completion ?? 100)));
+    var badge = p.badge ?? 'MBTI · Тренер';
+    var actionLabel = p.actionLabel ?? 'Редактировать анкету';
+    return {
+      cardCss: ['position: relative', 'display: block', 'box-sizing: border-box', 'width: 100%', 'border-radius: 22px', 'overflow: hidden', 'text-decoration: none', 'color: #FFFFFF',
+        'background: linear-gradient(135deg, #234088, #3D5BDB)', F].join('; '),
+      href: p.href ?? 'ResumeForm.dc.html',
+      person: person, initial: (person || '?').charAt(0).toUpperCase(),
+      email: p.email ?? 'aknazar@example.com',
+      badge: badge, hasBadge: !!badge,
+      verified: !(p.verified === false || p.verified === 'false'),
+      completion: completion, completionLabel: completion + '%',
+      actionLabel: actionLabel,
+      aria: actionLabel + '. ' + person + ', анкета заполнена на ' + completion + '%'
+    };
+  }
+}
+</script>
+</body>
+</html>

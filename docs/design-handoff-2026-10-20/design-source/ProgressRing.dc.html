@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ProgressRing</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}"><div role="progressbar" aria-label="{{aria}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pct}}" aria-valuetext="{{label}}" style="{{boxCss}}"><svg width="{{d}}" height="{{d}}" viewBox="{{vb}}" aria-hidden="true" style="position: absolute; top: 0; left: 0"><circle cx="{{c}}" cy="{{c}}" r="{{r}}" fill="none" stroke="{{track}}" stroke-width="{{sw}}"></circle><circle cx="{{c}}" cy="{{c}}" r="{{r}}" fill="none" stroke="{{ink}}" stroke-width="{{sw}}" stroke-linecap="round" stroke-dasharray="{{dash}}" stroke-dashoffset="{{offset}}" transform="{{rot}}"></circle></svg><span style="{{labelCss}}">{{label}}</span></div><sc-if value="{{hasCaption}}" hint-placeholder-val="{{false}}"><p style="{{captionCss}}">{{caption}}</p></sc-if></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"value":{"editor":"int","default":68,"min":0,"max":100},"label":{"editor":"text","default":"68%"},"caption":{"editor":"text","default":""},"size":{"editor":"enum","default":"regular","options":["compact","regular","large"]},"tone":{"editor":"enum","default":"brand","options":["brand","success","inverse"]},"$preview":{"width":80,"height":80}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var S = { compact: [64, 5, 13, 18], regular: [80, 5, 17, 22], large: [120, 8, 22, 28] };
+    var s = S[p.size] || S.regular;
+    var TONES = { brand: ['#234088', 'rgba(118,118,128,0.12)', '#000000', '#5C5C60'], success: ['#187A32', 'rgba(118,118,128,0.12)', '#000000', '#5C5C60'], inverse: ['#FFFFFF', 'rgba(255,255,255,0.25)', '#FFFFFF', 'rgba(255,255,255,0.82)'] };
+    var t = TONES[p.tone] || TONES.brand;
+    var raw = Number(p.value ?? 68);
+    var pct = isFinite(raw) ? Math.max(0, Math.min(100, raw)) : 0;
+    var d = s[0], c = d / 2, r = c - Math.ceil(s[1] / 2) - 1;
+    var circ = 2 * Math.PI * r;
+    var label = p.label ?? (Math.round(pct) + '%');
+    return {
+      d: String(d), c: String(c), r: String(r), sw: String(s[1]), vb: '0 0 ' + d + ' ' + d,
+      dash: circ.toFixed(2) + ' ' + circ.toFixed(2), offset: (circ * (1 - pct / 100)).toFixed(2), rot: 'rotate(-90 ' + c + ' ' + c + ')',
+      ink: t[0], track: t[1],
+      pct: String(Math.round(pct)),
+      label: label,
+      aria: p.caption ? p.caption + ': ' + label : 'Прогресс: ' + label,
+      caption: p.caption || '',
+      hasCaption: !!p.caption,
+      rootCss: 'display: inline-flex; flex-direction: column; align-items: center; gap: 8px; ' + F,
+      boxCss: 'position: relative; width: ' + d + 'px; height: ' + d + 'px; display: flex; align-items: center; justify-content: center; flex-shrink: 0',
+      labelCss: 'position: relative; font-size: ' + s[2] + 'px; line-height: ' + s[3] + 'px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; color: ' + t[2],
+      captionCss: 'margin: 0; max-width: ' + Math.max(d + 40, 120) + 'px; font-size: 13px; line-height: 18px; text-align: center; color: ' + t[3]
+    };
+  }
+}
+</script>
+</body>
+</html>

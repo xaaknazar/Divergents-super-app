@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ResumeStepper</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div role="tablist" aria-label="Шаги анкеты" style="display: flex; gap: 6px; width: 100%; box-sizing: border-box"><sc-for list="{{segs}}" as="s" hint-placeholder-count="4"><button type="button" role="tab" aria-label="{{s.aria}}" aria-selected="{{s.selected}}" onClick="{{s.pick}}" style="{{s.btnCss}}"><span style="{{s.barCss}}"></span></button></sc-for></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"steps":{"editor":null},"current":{"editor":"int","default":0,"min":0,"max":9},"tone":{"editor":"enum","default":"warning","options":["warning","brand","success"]},"$preview":{"width":358,"height":44}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var p = this.props;
+    var steps = Array.isArray(p.steps) && p.steps.length ? p.steps : ['Личные данные', 'Дополнительно', 'Образование и опыт', 'Оценки и тесты'];
+    var cur = this.state && this.state.cur !== undefined ? this.state.cur : Number(p.current || 0);
+    var C = { warning: '#FF9500', brand: '#234088', success: '#34C759' }[p.tone] || '#FF9500';
+    return {
+      segs: steps.map(function (label, i) {
+        var on = i === cur, done = i < cur;
+        return {
+          aria: 'Шаг ' + (i + 1) + ': ' + label,
+          selected: on ? 'true' : 'false',
+          pick: function () { self.setState({ cur: i }); },
+          btnCss: 'flex: 1; min-width: 0; min-height: 44px; border: 0; background: transparent; padding: 0; margin: 0; display: flex; align-items: center; cursor: pointer',
+          barCss: 'display: block; width: 100%; height: ' + (on ? 6 : 4) + 'px; border-radius: 3px; background: ' + (on || done ? C : 'rgba(120,120,128,0.16)')
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

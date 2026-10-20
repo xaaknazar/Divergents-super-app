@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ProgressBar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}"><div role="progressbar" aria-label="{{aria}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pct}}" style="{{trackCss}}"><div style="{{fillCss}}"></div></div><sc-if value="{{hasLabel}}" hint-placeholder-val="{{true}}"><p style="{{labelCss}}">{{label}}</p></sc-if></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"value":{"editor":"int","default":42,"min":0,"max":100},"tone":{"editor":"enum","default":"brand","options":["brand","success","sky","warning"]},"size":{"editor":"enum","default":"regular","options":["thin","regular","thick"]},"label":{"editor":"text","default":"42% · 5 из 12 уроков"},"$preview":{"width":390,"height":30}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var TONES = { brand: ['#234088', 'rgba(118,118,128,0.12)'], success: ['#187A32', 'rgba(118,118,128,0.12)'], sky: ['#0284C7', '#E0F2FE'], warning: ['#FF9500', 'rgba(118,118,128,0.12)'] };
+    var t = TONES[p.tone] || TONES.brand;
+    var h = { thin: 4, regular: 6, thick: 10 }[p.size] || 6;
+    var raw = Number(p.value ?? 42);
+    var pct = isFinite(raw) ? Math.max(0, Math.min(100, Math.round(raw))) : 0;
+    var label = p.label ?? '42% · 5 из 12 уроков';
+    return {
+      pct: String(pct),
+      aria: label || 'Прогресс',
+      label: label,
+      hasLabel: !!label,
+      rootCss: 'display: flex; flex-direction: column; gap: 6px; width: 100%; ' + F,
+      trackCss: 'height: ' + h + 'px; border-radius: ' + h + 'px; background: ' + t[1] + '; overflow: hidden',
+      fillCss: 'width: ' + pct + '%; height: 100%; border-radius: ' + h + 'px; background: ' + t[0],
+      labelCss: 'margin: 0; font-size: 13px; line-height: 18px; color: #5C5C60; font-variant-numeric: tabular-nums'
+    };
+  }
+}
+</script>
+</body>
+</html>
