@@ -1,6 +1,7 @@
 /** Shared layout contract: scroll content must clear the entire floating dock. */
-export const TAB_DOCK_HEIGHT = 80;
-export const TAB_DOCK_GUTTER = 12;
+// Ячейка вкладки 60 + внутренний отступ панели 4 сверху и снизу (handoff 2026-10-20, §2.1).
+export const TAB_DOCK_HEIGHT = 68;
+export const TAB_DOCK_GUTTER = 14;
 export const TAB_DOCK_MAX_WIDTH = 720;
 export const TAB_DOCK_PLAYER_GAP = 8;
 

@@ -14,6 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { ChipRail } from '../../components/ChipRail';
+import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
+import { useProfileButton } from '../../state/useProfileButton';
 import { HeaderIcon } from '../../components/HeaderIcon';
 import { RouteModeOption } from '../../components/RouteModeOption';
 import { PageIntro } from '../../components/PageIntro';
@@ -89,6 +91,7 @@ async function geocode(q: string, bias?: { lat: number; lng: number }): Promise<
 }
 
 export function MapHomeScreen({ navigation }: Props) {
+  const profileButton = useProfileButton();
   const { T, isDark, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
@@ -427,13 +430,14 @@ export function MapHomeScreen({ navigation }: Props) {
       <View style={{ position: 'absolute', top: insets.top + 6, left: 0, right: 0 }} pointerEvents="box-none">
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12 }}>
           <Wrapper flex={1}>
-            <SearchField value={q} onChangeText={setQ} onFocus={() => setSearchFocused(true)}
+            <SearchField surface="raised" value={q} onChangeText={setQ} onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)} placeholder={t('map_search_ph')} />
           </Wrapper>
           <Wrapper maxWidth="42%">
             <Button label={cityName} icon="mappin.circle.fill" variant="tinted" size="compact"
               accessibilityHint={tr('Выберите город')} onPress={() => setPickerOpen(true)} />
           </Wrapper>
+          <ProfileAvatarButton {...profileButton} variant="floating" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
         </View>
         {searchFocused && q.trim().length < 3 && recents.length > 0 ? (
           <Wrapper marginHorizontal={12} marginTop={8}><ContentBlock size="flush" elevated>

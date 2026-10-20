@@ -10,6 +10,8 @@ import { ChatMessage } from '../../components/ChatMessage';
 import { ChatSuggestions } from '../../components/ChatSuggestions';
 import { HeaderIcon } from '../../components/HeaderIcon';
 import { NavBarLarge } from '../../components/NavBarLarge';
+import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
+import { useProfileButton } from '../../state/useProfileButton';
 import { PageIntro } from '../../components/PageIntro';
 import { Screen } from '../../components/Screen';
 import { ScreenDescription } from '../../components/ScreenDescription';
@@ -42,7 +44,8 @@ const QUICK_COURSE = ['О чём этот курс?', 'Краткое содер
 let counter = 0;
 const uid = () => `${Date.now()}_${counter++}`;
 
-export function AIChatScreen({}: Props) {
+export function AIChatScreen({ navigation }: Props) {
+  const profileButton = useProfileButton();
   const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
@@ -171,13 +174,16 @@ export function AIChatScreen({}: Props) {
   };
 
   return (
-    <Screen scroll={false} tabPadding={false} aurora={false}>
+    <Screen scroll={false} tabPadding={false} aurora={false} backdrop="ai">
       <PageIntro page="ai" />
-      <NavBarLarge title="Divergents AI" trailing={messages.length > 0 ? <HeaderIcon name="square.and.pencil" label={tr('Новый чат')}
-        onPress={() => Alert.alert(tr('Начать новый чат?'), tr('Переписка будет удалена с этого устройства.'), [
-          { text: tr('Отмена'), style: 'cancel' },
-          { text: tr('Начать заново'), style: 'destructive', onPress: () => { clearThread(); setUnavailable(false); } },
-        ])} /> : undefined} />
+      <NavBarLarge title="Divergents AI" trailing={<>
+        {messages.length > 0 ? <HeaderIcon name="square.and.pencil" label={tr('Новый чат')}
+          onPress={() => Alert.alert(tr('Начать новый чат?'), tr('Переписка будет удалена с этого устройства.'), [
+            { text: tr('Отмена'), style: 'cancel' },
+            { text: tr('Начать заново'), style: 'destructive', onPress: () => { clearThread(); setUnavailable(false); } },
+          ])} /> : null}
+        <ProfileAvatarButton {...profileButton} onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
+      </>} />
       <Wrapper paddingHorizontal={20} paddingBottom={16}>
         <ScreenDescription text={isGeneral
           ? (isSignedIn && profile?.found ? tr('Знает каталог курсов и ваш профиль') : tr('Знает каталог курсов Divergents'))

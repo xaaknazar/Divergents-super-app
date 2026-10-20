@@ -31,7 +31,7 @@ import { useChallenge } from '../../state/ChallengeContext';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { tr,useLang } from '../../state/LanguageContext';
 import { useNotifications } from '../../state/NotificationsContext';
-import { useProfilePhoto } from '../../state/useProfilePhoto';
+import { useProfileButton } from '../../state/useProfileButton';
 import { useRole } from '../../state/useRole';
 import { useTheme } from '../../theme/ThemeContext';
 
@@ -56,7 +56,7 @@ const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips',
 const SECTION_FEATURE: Record<number, string> = { 1: 'channels', 3: 'trips', 4: 'meetups', 5: 'sport' };
 
 export function CommunityHomeScreen({ navigation, route }: Props) {
-  const photoUrl = useProfilePhoto();
+  const profileButton = useProfileButton();
   const { T, ty, reduceMotion } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
@@ -136,12 +136,12 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
   }, [focusParam, refreshToken, feature]);
 
   return (
-    <Screen largeTitle={tr('Сообщество')} onRefresh={onRefresh}>
+    <Screen largeTitle={tr('Сообщество')} backdrop="community" onRefresh={onRefresh}>
       <PageIntro page="community" />
       <NavBarLarge title={t('community')} trailing={(
         <>
           {isSignedIn ? <HeaderIcon name="plus" label="Создать" onPress={() => openCreateSheet(navigation)} /> : null}
-          <ProfileAvatarButton photoUrl={photoUrl} onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
+          <ProfileAvatarButton {...profileButton} onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
         </>
       )} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 12 }}>

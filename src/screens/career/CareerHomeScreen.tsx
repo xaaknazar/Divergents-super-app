@@ -8,18 +8,18 @@ import { Wrapper } from '../../components/Wrapper';
 import { CareerStackParams } from '../../navigation/types';
 import { navigationRef } from '../../navigation/ref';
 import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
-import { useProfilePhoto } from '../../state/useProfilePhoto';
+import { useProfileButton } from '../../state/useProfileButton';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'CareerHome'>;
 
 export function CareerHomeScreen(_props: Props) {
   const { t } = useLang();
-  const photoUrl = useProfilePhoto();
+  const profileButton = useProfileButton();
 
   return (
     <Screen largeTitle={t('tab_career')}>
       <NavBarLarge title={t('tab_career')} trailing={(
-        <ProfileAvatarButton photoUrl={photoUrl} onPress={() => (navigationRef as any).navigate('Tabs', { screen: 'ProfileTab' })} />
+        <ProfileAvatarButton {...profileButton} onPress={() => (navigationRef as any).navigate('Tabs', { screen: 'ProfileTab' })} />
       )} />
 
       <Wrapper paddingHorizontal={16} paddingTop={24}>

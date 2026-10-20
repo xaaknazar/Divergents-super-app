@@ -144,6 +144,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
+/** Без провайдера (Storybook, изолированные тесты) — null вместо исключения. */
+export function useOptionalNotifications() {
+  return useContext(Ctx);
+}
+
 export function useNotifications() {
   const c = useContext(Ctx);
   if (!c) throw new Error('useNotifications must be used within NotificationsProvider');

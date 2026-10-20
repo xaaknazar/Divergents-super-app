@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import { Platform, StyleSheet, Text } from 'react-native';
+import { Platform, processColor, StyleSheet, Text } from 'react-native';
 import { resolveThemePalette } from '../../theme/ThemeContext';
 import { hexToRgba } from '../../theme/personalization';
 import { TAB_DOCK_HEIGHT, tabDockBottomInset, tabDockContentInset, tabDockMiniPlayerHeight } from '../../lib/tabDockLayout';
@@ -35,10 +35,13 @@ it.each(['light', 'dark'] as const)('uses the system material and themed translu
   Object.defineProperty(Platform, 'OS', { value: 'ios' });
   const view = await render(theme(<TabDock items={items} onSelect={jest.fn()} />, scheme));
   expect(view.getByTestId('tab-dock-blur', hidden).props.tint).toBe(scheme);
-  expect(flattened(view.getByTestId('tab-dock-tint', hidden)).backgroundColor).toBe(hexToRgba(resolveThemePalette(scheme).cardBg, scheme === 'dark' ? 0.84 : 0.78));
+  const tint = view.getByTestId('tab-dock-tint', hidden);
+  if (scheme === 'dark') expect(flattened(tint).backgroundColor).toBe(hexToRgba(resolveThemePalette(scheme).cardBg, 0.84));
+  else expect(tint.props.colors).toEqual(['rgba(255,255,255,0.58)', 'rgba(244,246,251,0.42)'].map(c => processColor(c)));
   const selected = view.getByRole('tab', { name: 'Обучение' });
-  expect(flattened(selected).backgroundColor).toBe(resolveThemePalette(scheme).brandTintedStrong);
-  expect(flattened(view.getByTestId('tab-dock-surface'))).toMatchObject({ height: TAB_DOCK_HEIGHT, borderRadius: 999, overflow: 'hidden' });
+  expect(flattened(selected).backgroundColor).toBe(resolveThemePalette(scheme).brandTinted);
+  expect(flattened(selected).borderRadius).toBe(18);
+  expect(flattened(view.getByTestId('tab-dock-surface'))).toMatchObject({ height: TAB_DOCK_HEIGHT, borderRadius: 24, overflow: 'hidden' });
   expect(flattened(selected).minHeight).toBeGreaterThanOrEqual(48);
 });
 
@@ -57,7 +60,7 @@ it('uses the inexpensive tinted fallback on Android', async () => {
 
 it('fits the actual parent width without shortening accessible names', async () => {
   const view = await render(theme(<TabDock items={items} onSelect={jest.fn()} />));
-  await fireEvent(view.getByTestId('tab-dock-surface'), 'layout', { nativeEvent: { layout: { width: 296 } } });
+  await fireEvent(view.getByTestId('tab-dock-surface'), 'layout', { nativeEvent: { layout: { width: 270 } } });
   expect(view.getByText('Курсы')).toBeTruthy();
   expect(view.getByText('Клуб')).toBeTruthy();
   expect(view.getByText('Работа')).toBeTruthy();
@@ -72,7 +75,7 @@ it('raises the capsule above the system gesture area and respects landscape notc
   const view = await render(theme(<TabDock items={items} onSelect={jest.fn()} />));
   const position = view.getByTestId('tab-dock-position');
   expect(position.props.pointerEvents).toBe('box-none');
-  expect(flattened(position)).toMatchObject({ bottom: 20, left: 71, right: 71 });
+  expect(flattened(position)).toMatchObject({ bottom: 20, left: 73, right: 73 });
   expect(flattened(position).backgroundColor).toBeUndefined();
   expect(flattened(view.getByTestId('tab-dock-surface')).paddingBottom).toBeUndefined();
 });
@@ -96,11 +99,11 @@ it('keeps selection, long press, focus and the mini-player slot independent of d
 
 it('reserves content space for the capsule, safe area and a scalable mini-player', () => {
   expect(tabDockBottomInset(34)).toBe(42);
-  expect(tabDockContentInset(34)).toBe(134);
+  expect(tabDockContentInset(34)).toBe(122);
   expect(tabDockMiniPlayerHeight(18, 14, 1)).toBe(63);
-  expect(tabDockContentInset(34, tabDockMiniPlayerHeight(18, 14, 1))).toBe(205);
+  expect(tabDockContentInset(34, tabDockMiniPlayerHeight(18, 14, 1))).toBe(193);
   expect(tabDockMiniPlayerHeight(22, 17, 2)).toBe(94);
-  expect(tabDockContentInset(0)).toBe(112);
+  expect(tabDockContentInset(0)).toBe(100);
 });
 
 it('never clips oversized labels vertically and retains the native large-content title', async () => {

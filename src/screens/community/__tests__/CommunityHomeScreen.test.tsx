@@ -38,7 +38,7 @@ jest.mock('../../../components/Screen', () => ({ Screen: require('react-native')
 jest.mock('../../../components/PageIntro', () => ({ PageIntro: () => null }));
 jest.mock('../../../components/ResumeCallout', () => ({ ResumeCallout: () => null }));
 jest.mock('../../../components/ProfileAvatarButton', () => ({ ProfileAvatarButton: () => null }));
-jest.mock('../../../state/useProfilePhoto', () => ({ useProfilePhoto: () => null }));
+jest.mock('../../../state/useProfileButton', () => ({ useProfileButton: () => ({}) }));
 jest.mock('../../../components/SFIcon', () => ({ SF: () => null }));
 jest.mock('../../../components/Logo', () => ({ Logo: () => null }));
 

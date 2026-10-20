@@ -25,6 +25,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { coursesWord, formatGiftDate } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
+import { useProfileButton } from '../../state/useProfileButton';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
 
@@ -36,6 +37,7 @@ export function LMSHomeScreen({ navigation }: Props) {
   const { user } = useUser();
   const { profile, live } = useTalentProfile();
   const downloads = useDownloads();
+  const profileButton = useProfileButton();
   // Prefer a real name (Clerk → anketa full_name); email prefix only as a last resort.
   const displayName = user?.firstName || user?.fullName
     || (live && profile?.fullName ? profile.fullName.split(' ')[0] : null)
@@ -88,9 +90,9 @@ export function LMSHomeScreen({ navigation }: Props) {
   }, [gift.courseIds.length, gift.until]);
 
 return (
-    <Screen largeTitle={t('tab_learn')} onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
+    <Screen largeTitle={t('tab_learn')} backdrop="learn" onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
       <PageIntro page="lms" />
-      <NavBarLarge title={t('tab_learn')} trailing={<ProfileAvatarButton photoUrl={profile?.photoUrl || user?.imageUrl} onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
+      <NavBarLarge title={t('tab_learn')} trailing={<ProfileAvatarButton {...profileButton} onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
       <Wrapper paddingHorizontal={16}><ResumeCallout /></Wrapper>
       <Wrapper paddingHorizontal={20} paddingBottom={16}>
         <LearningWelcome displayName={displayName} courseCount={courses.length} />

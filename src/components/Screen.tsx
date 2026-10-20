@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { Aurora } from './Aurora';
+import { HeaderBackdrop, HeaderBackdropMotif } from './HeaderBackdrop';
 import { tabDockContentInset, tabDockMiniPlayerHeight } from '../lib/tabDockLayout';
 import { useOptionalAudioTrack } from '../state/audioPlayerValue';
 
@@ -17,14 +18,17 @@ export interface ScreenProps {
   topInset?: boolean;
   bottomInset?: boolean;
   aurora?: boolean;
+  /** Фон шапки корневого экрана вкладки. Заменяет «аврору», пока фон в персонализации —
+   * «По акценту» (по умолчанию); выбранный человеком другой фон остаётся его выбором. */
+  backdrop?: HeaderBackdropMotif;
   largeTitle?: string;
   onRefresh?: () => void | Promise<void>;
   keyboardAware?: boolean;
 }
 
 export function Screen({ children, surface = 'grouped', scroll = true, tabPadding = true,
-  topInset = true, bottomInset = true, aurora = true, largeTitle, onRefresh, keyboardAware = false }: ScreenProps) {
-  const { T, isDark, reduceTransparency, ty } = useTheme();
+  topInset = true, bottomInset = true, aurora = true, backdrop, largeTitle, onRefresh, keyboardAware = false }: ScreenProps) {
+  const { T, isDark, reduceTransparency, ty, background: backgroundPreset } = useTheme();
   const background = surface === 'transparent' ? 'transparent' : T.groupedBg;
   const insets = useSafeAreaInsets();
   const top = topInset ? insets.top : 0;
@@ -40,7 +44,8 @@ export function Screen({ children, surface = 'grouped', scroll = true, tabPaddin
 
   return (
     <KeyboardAvoidingView enabled={keyboardAware} behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: background }}>
-      {aurora ? <Aurora /> : null}
+      {backdrop && (backgroundPreset ?? 'accent') === 'accent' ? <HeaderBackdrop motif={backdrop} />
+        : aurora ? <Aurora /> : null}
 
       {scroll ? (
         <Animated.ScrollView
