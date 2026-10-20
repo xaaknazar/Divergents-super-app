@@ -81,22 +81,42 @@ test('rules disclosure exposes all rules unchanged', async () => {
 });
 test('mandatory hour only offers pause; overtime also offers finish', async () => {
   const p = props(); const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.queryByRole('button', { name: 'Завершить чтение и записать страницы' })).toBeNull();
+  expect(view.queryByRole('button', { name: 'Завершить чтение' })).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: 'Пауза и запись страниц' }));
   expect(p.onPause).toHaveBeenCalledTimes(1);
   await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} remainingMs={-120000} /></ThemePreviewProvider>);
-  await fireEvent.press(view.getByRole('button', { name: 'Завершить чтение и записать страницы' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Завершить чтение' }));
   expect(p.onPause).toHaveBeenCalledTimes(2);
 });
 test('overtime counts up and shows a completed ring instead of resetting the hour', async () => {
   const view = await render(<ThemePreviewProvider><ReadingTimer remainingMs={-925000} state="running" /></ThemePreviewProvider>);
-  expect(view.getByText('+15:25')).toBeTruthy(); expect(view.getByText('Дополнительное чтение')).toBeTruthy();
+  expect(view.getByText('+15:25')).toBeTruthy(); expect(view.getByText('Час выполнен')).toBeTruthy();
 });
 test('paused report requires an explicit page number and submits only that number', async () => {
   const p = { ...props(), timerState: 'paused' as const, awaitingPages: true };
   const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.getByRole('button', { name: 'Сохранить страницы' })).toBeDisabled();
+  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeDisabled();
   await fireEvent.changeText(view.getByLabelText('Страниц за этот подход'), '22');
-  await fireEvent.press(view.getByRole('button', { name: 'Сохранить страницы' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
   expect(p.onReport).toHaveBeenCalledWith(22);
+});
+test('pages stepper starts from an explicit zero and never goes negative', async () => {
+  const p = { ...props(), timerState: 'paused' as const, awaitingPages: true };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeDisabled();
+  expect(view.getByRole('button', { name: 'Меньше страниц' })).toBeDisabled();
+  await fireEvent.press(view.getByRole('button', { name: 'Больше страниц' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Меньше страниц' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
+  expect(p.onReport).toHaveBeenCalledWith(0);
+});
+test('team card shows the captain only when the name is known from the challenge data', async () => {
+  const p = props();
+  p.data = { ...readingFixture, phase: 'upcoming', membership: null, me: null,
+    ranking: [...readingFixture.ranking, { ...readingFixture.ranking[0], userId: 'demo-captain', name: 'Аружан' }] };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByText(/Капитан Аружан · 8 мест свободно/)).toBeTruthy();
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={{ ...p.data, ranking: readingFixture.ranking }} /></ThemePreviewProvider>);
+  expect(view.queryByText(/Капитан \S+ · /)).toBeNull();
+  expect(view.getByText("8 мест свободно")).toBeTruthy();
 });

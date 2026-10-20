@@ -45,7 +45,7 @@ test('page report preserves its calculated continuation point', async () => {
     elapsedMs: 600000, status: 'awaiting_pages', startedAt: '2026-10-19T00:00:00Z', fromPage: 21 } };
   const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
   await fireEvent.changeText(v.getByLabelText('Страниц за этот подход'), '22');
-  await fireEvent.press(v.getByRole('button', { name: 'Сохранить страницы' }));
+  await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
   expect(p.onReport).toHaveBeenCalledWith(22, 43);
 });
 test('new reader is visible without a misleading rank number', async () => {

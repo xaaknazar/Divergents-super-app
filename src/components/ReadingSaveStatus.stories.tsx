@@ -1,0 +1,11 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingSaveStatus } from './ReadingSaveStatus';
+const meta = { title: 'Reading/Save status', component: ReadingSaveStatus, args: { state: 'saved' } } satisfies Meta<typeof ReadingSaveStatus>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Saved: Story = { args: { detail: '24 мин · 15 страниц · подтверждено сервером' } };
+export const Pending: Story = { args: { state: 'pending' } };
+export const Retry: Story = { args: { state: 'retry', onRetry: () => {} } };
+export const Review: Story = { args: { state: 'review' } };
+export const Dark: Story = { args: { state: 'retry', onRetry: () => {} }, parameters: { scheme: 'dark' } };
+export const LargeText: Story = { args: { state: 'review' }, parameters: { viewport: 'compact', textSize: 'xl' } };

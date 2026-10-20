@@ -23,3 +23,7 @@ export const Compact: Story = { args: { variant: 'compact' } };
 export const Paper: Story = { args: { title: '"Extreme reading" Challenge', mode: 'continuous' } };
 export const PaperDark: Story = { ...Paper, parameters: { scheme: 'dark' } };
 export const PaperLargeText: Story = { ...Paper, parameters: { scheme: 'dark', viewport: 'compact', textSize: 'xl' } };
+export const CompactParticipant: Story = { args: { variant: 'compact', mode: 'continuous', title: '"Extreme reading" Challenge', teamName: 'Vertex' } };
+export const CompactParticipantDark: Story = { ...CompactParticipant, parameters: { scheme: 'dark' } };
+export const CompactParticipantLargeText: Story = { ...CompactParticipant, parameters: { viewport: 'compact', textSize: 'xl' } };
+export const CompactScheduled: Story = { args: { variant: 'compact', teamName: 'Книжный клуб' } };

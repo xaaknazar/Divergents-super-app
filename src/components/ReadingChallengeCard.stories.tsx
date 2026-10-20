@@ -19,3 +19,5 @@ export const Paper: Story = { args: { challenge: { ...readingFixture, title: '"E
 export const PaperDark: Story = { ...Paper, parameters: { scheme: 'dark' } };
 export const PaperLargeText: Story = { ...Paper, parameters: { scheme: 'dark', viewport: 'compact', textSize: 'xl' } };
 export const LongTitle: Story = { args: { challenge: { ...readingFixture, title: 'Вместе читаем книги и делимся открытиями каждый день', mode: 'continuous' } } };
+export const CompactDark: Story = { args: { variant: 'compact', challenge: { ...readingFixture, title: '"Extreme reading" Challenge', mode: 'continuous' } }, parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { args: { variant: 'compact' }, parameters: { viewport: 'compact', textSize: 'xl' } };

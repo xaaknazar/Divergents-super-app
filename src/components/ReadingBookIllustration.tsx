@@ -9,7 +9,8 @@ const artwork = {
 };
 
 export interface ReadingBookIllustrationProps {
-  placement?: 'card' | 'header';
+  /** card — 96×64 в карточке; thumb — 78×52 в компактной строке; header — 236 в шапке; headerCompact — 108×72. */
+  placement?: 'card' | 'thumb' | 'header' | 'headerCompact';
 }
 
 /** Original decorative engraving. Titles, dates and actions remain native text. */
@@ -25,7 +26,9 @@ export function ReadingBookIllustration({ placement = 'card' }: ReadingBookIllus
 
 const styles = StyleSheet.create({
   frame: { maxWidth: '100%', aspectRatio: 1.5, flexShrink: 0 },
-  card: { width: 144 },
-  header: { width: 252 },
+  card: { width: 96 },
+  thumb: { width: 78 },
+  header: { width: 236 },
+  headerCompact: { width: 108 },
   artwork: { width: '100%', height: '100%' },
 });

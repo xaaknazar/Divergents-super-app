@@ -8,3 +8,4 @@ export const Continuous: Story = { args: { mode: 'continuous', initiallyExpanded
 export const Expanded: Story = { args: { initiallyExpanded: true } };
 export const Dark: Story = { args: { initiallyExpanded: true }, parameters: { scheme: 'dark' } };
 export const LargeText: Story = { args: { initiallyExpanded: true }, parameters: { viewport: 'compact', textSize: 'xl' } };
+export const ContinuousDark: Story = { args: { mode: 'continuous', initiallyExpanded: true }, parameters: { scheme: 'dark' } };
