@@ -4,6 +4,7 @@ import type { ReadingDetail } from '../data/reading';
 import { useTheme } from '../theme/ThemeContext';
 import { StatusBadge } from './StatusBadge';
 import { Button } from './Button';
+import { fmtDecimal, fmtInt } from '../data/format';
 
 export function ReadingMemberRow({ member, rank, day, isMe, phase, last, onHistory }: {
   member: ReadingDetail['ranking'][number]; rank: number; day: number; isMe: boolean; phase: ReadingDetail['phase']; last: boolean;
@@ -20,10 +21,10 @@ export function ReadingMemberRow({ member, rank, day, isMe, phase, last, onHisto
     <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
       <Text style={[ty.headline, { color: T.label }]}>{member.name}{isMe ? ' · вы' : ''}</Text>
       {member.averageMinutes !== undefined ? <>
-        <Text style={[ty.title3, { color: member.pace === 'on_target' ? T.greenText : T.redText }]}>{member.averageMinutes.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} мин/день</Text>
+        <Text style={[ty.title3, { color: member.pace === 'on_target' ? T.greenText : T.redText }]}>{fmtDecimal(member.averageMinutes)} мин/день</Text>
         {member.rankingEligible === false ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>{member.rankingPending ? 'Результат на проверке' : `До рейтинга: ${member.qualificationDaysLeft} дн.`}</Text> : null}
       </> : null}
-      <Text style={[ty.subhead, { color: T.labelSecondary }]}>{member.completedDays} дн. · {member.pages.toLocaleString('ru-RU')} стр. · {Math.floor(member.elapsedMs / 60000)} мин.</Text>
+      <Text style={[ty.subhead, { color: T.labelSecondary }]}>{member.completedDays} дн. · {fmtInt(member.pages)} стр. · {Math.floor(member.elapsedMs / 60000)} мин.</Text>
       <StatusBadge label={label} tone={phase !== 'active' || member.eliminatedOn ? 'neutral'
         : state === 'complete' ? 'success' : state === 'missed' ? 'danger' : state === 'review' ? 'warning' : 'neutral'} />
       {onHistory ? <Button label="Книги и история" variant="plain" onPress={onHistory} /> : null}

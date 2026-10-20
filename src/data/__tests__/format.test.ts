@@ -26,3 +26,46 @@ describe('fmtInt', () => {
     expect(fmtInt(Infinity)).toBe('0');
   });
 });
+
+import { fmtDate, fmtDateTime, fmtDecimal, safeSpaces } from '../format';
+
+// Gotham Rounded рисует U+00A0 шириной ~325 px: ни один форматтер не должен его отдавать.
+const NBSP = /[  ]/;
+
+describe('safeSpaces', () => {
+  it('заменяет U+00A0 и U+202F обычным пробелом', () => {
+    expect(safeSpaces('4 000 ₸')).toBe('4 000 ₸');
+  });
+});
+
+describe('fmtDecimal', () => {
+  it('запятая и не больше заданного числа знаков', () => {
+    expect(fmtDecimal(42.25)).toBe('42,3');
+    expect(fmtDecimal(1.005, 2)).not.toMatch(NBSP);
+  });
+  it('тысячи — обычным пробелом, без группировки — слитно', () => {
+    expect(fmtDecimal(12345.6)).toBe('12 345,6');
+    expect(fmtDecimal(10000, 3, false)).toBe('10000');
+  });
+  it('мусор превращается в ноль', () => {
+    expect(fmtDecimal(NaN)).toBe('0');
+  });
+});
+
+describe('fmtDate / fmtDateTime', () => {
+  const ms = Date.UTC(2026, 9, 20, 9, 30);
+  it('в датах с годом нет неразрывных пробелов', () => {
+    const s = fmtDate(ms, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    expect(s).toContain('2026');
+    expect(s).not.toMatch(NBSP);
+  });
+  it('дата со временем тоже чистая', () => {
+    const s = fmtDateTime(ms, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+    expect(s).toContain('30');
+    expect(s).not.toMatch(NBSP);
+  });
+  it('неверная дата → пустая строка', () => {
+    expect(fmtDate('не дата')).toBe('');
+    expect(fmtDateTime(NaN)).toBe('');
+  });
+});

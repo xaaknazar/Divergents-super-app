@@ -1,3 +1,4 @@
+import { fmtDateTime } from './format';
 export type OfflineKind = "trip" | "meetup" | "sport";
 
 /** Render old ISO and new wall-clock timestamps in the event's timezone. */
@@ -5,7 +6,7 @@ export function formatEventDateTime(value: string): string {
   const localMs = eventStartMs(value);
   const ms = Number.isFinite(localMs) ? localMs : Date.parse(value);
   if (!Number.isFinite(ms)) return value;
-  return new Date(ms).toLocaleString('ru-RU', {
+  return fmtDateTime(ms, {
     timeZone: 'Asia/Almaty', day: 'numeric', month: 'long',
     hour: '2-digit', minute: '2-digit',
   }) + ' · UTC+5';

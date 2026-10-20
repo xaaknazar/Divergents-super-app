@@ -19,13 +19,14 @@ import { useDownloads } from '../../state/downloads';
 import { useAudioPlayer } from '../../state/AudioPlayerContext';
 import { stripHtml, fetchComments, postComment, ChapterComment, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
+import { fmtDate as formatDate } from '../../data/format';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Video'>;
 
 function fmtDate(iso: string) {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    return formatDate(d, { day: 'numeric', month: 'short' });
   } catch { return ''; }
 }
 const initials = (c: ChapterComment) =>

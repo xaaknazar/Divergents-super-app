@@ -110,7 +110,7 @@ it('sizes owned cards to the available horizontal shelf width', async () => {
   expect(view.container.queryAll(node => StyleSheet.flatten(node.props.style)?.width === 248)).toHaveLength(3);
 });
 
-it.each(['inline', 'plain', 'frosted', 'hero', 'overlay'] as const)('preserves back actions for %s', async variant => {
+it.each(['plain', 'frosted', 'hero', 'overlay'] as const)('preserves back actions for %s', async variant => {
   const onBack = jest.fn();
   const view = await render(<NavHeader title="Курс" variant={variant} onBack={onBack} />);
   await fireEvent.press(view.getByRole('button', { name: 'Назад' }));

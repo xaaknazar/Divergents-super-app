@@ -1,14 +1,15 @@
 import { FitnessProgram, programStats, ProgramStats, shiftKey } from './fitness';
 import type { ShareCard } from '../navigation/types';
 import { days } from './plural';
+import { fmtDate, fmtDecimal } from './format';
 
 // Gotham Rounded has an oversized non-breaking-space glyph on iOS. Intl's
 // grouping separator must be normalized before rendering this brand font.
-export const programNumber = (n: number) => n.toLocaleString('ru-RU', { maximumFractionDigits: 2 }).replace(/[\u00a0\u202f]/g, ' ');
+export const programNumber = (n: number) => fmtDecimal(n, 2);
 export const programEndKey = (p: FitnessProgram) => shiftKey(p.startKey, p.days - 1);
 export function programDate(key: string): string {
   const [y, m, d] = key.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+  return fmtDate(new Date(y, m - 1, d), { day: 'numeric', month: 'short', year: 'numeric' });
 }
 export const programPeriod = (p: FitnessProgram) => `${programDate(p.startKey)} — ${programDate(programEndKey(p))}`;
 

@@ -24,6 +24,7 @@ import { COUNTRIES } from '../../data/places';
 import { useRole } from '../../state/useRole';
 import { CreationSuccess, CreationKind } from '../../components/CreationSuccess';
 import { hSuccess } from '../../lib/haptics';
+import { fmtDateTime as formatDateTime } from '../../data/format';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CreateContent'>;
 type Kind = CreationKind;
@@ -49,7 +50,7 @@ function parseDateString(s: string): Date | null {
 const humanDate = (s: string, withTime: boolean) => {
   const d = parseDateString(s);
   if (!d) return '';
-  return d.toLocaleString('ru-RU', withTime
+  return formatDateTime(d, withTime
     ? { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }
     : { day: 'numeric', month: 'long', year: 'numeric' });
 };

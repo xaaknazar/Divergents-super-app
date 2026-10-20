@@ -13,7 +13,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { Chip } from '../../components/Chip';
+import { ChipRail } from '../../components/ChipRail';
 import { HeaderIcon } from '../../components/HeaderIcon';
 import { RouteModeOption } from '../../components/RouteModeOption';
 import { PageIntro } from '../../components/PageIntro';
@@ -462,11 +462,11 @@ export function MapHomeScreen({ navigation }: Props) {
             ))}
           </ContentBlock></Wrapper>
         ) : null}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingTop: 8 }}>
-          <Chip label={t('all')} active={!cat} onPress={() => setCat(null)} />
-          {CATEGORIES.map((c) => <Chip key={c} label={CATEGORY_META[c].label} icon={CATEGORY_META[c].icon} active={cat === c} onPress={() => setCat(cat === c ? null : c)} />)}
-          {TAGS.map((t) => <Chip key={t} label={TAG_META[t].label} icon={TAG_META[t].icon} active={tags.includes(t)} onPress={() => setTags((p) => p.includes(t) ? p.filter((x) => x !== t) : [...p, t])} />)}
-        </ScrollView>
+        <Wrapper paddingTop={8}><ChipRail inset="compact" items={[
+          { key: 'all', label: t('all'), active: !cat, onPress: () => setCat(null) },
+          ...CATEGORIES.map((c) => ({ key: `cat-${c}`, label: CATEGORY_META[c].label, icon: CATEGORY_META[c].icon, active: cat === c, onPress: () => setCat(cat === c ? null : c) })),
+          ...TAGS.map((tag) => ({ key: `tag-${tag}`, label: TAG_META[tag].label, icon: TAG_META[tag].icon, active: tags.includes(tag), onPress: () => setTags((p) => p.includes(tag) ? p.filter((x) => x !== tag) : [...p, tag]) })),
+        ]} /></Wrapper>
       </View>
 
       {/* Navigation banner */}

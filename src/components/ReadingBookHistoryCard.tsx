@@ -6,6 +6,7 @@ import { ContentBlock } from './ContentBlock';
 import { Wrapper } from './Wrapper';
 import { StatusBadge } from './StatusBadge';
 import { Button } from './Button';
+import { fmtDate, fmtInt } from '../data/format';
 export function ReadingBookHistoryCard({ book, busy, onStatus }: {
   book: ReadingHistory['books'][number]; busy: boolean; onStatus?: (finished: boolean) => void;
 }) {
@@ -20,9 +21,9 @@ export function ReadingBookHistoryCard({ book, busy, onStatus }: {
         <StatusBadge label={book.finished ? 'Прочитана' : 'В процессе'} tone={book.finished ? 'success' : 'brand'} />
       </Wrapper>
     </Wrapper>
-    <Text style={[ty.subheadEm, { color: T.label }]}>{book.pages.toLocaleString('ru-RU')} стр. · {Math.floor(book.elapsedMs / 60000)} мин чтения</Text>
+    <Text style={[ty.subheadEm, { color: T.label }]}>{fmtInt(book.pages)} стр. · {Math.floor(book.elapsedMs / 60000)} мин чтения</Text>
     {book.nextPage != null ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>Продолжить со страницы {book.nextPage}</Text> : null}
-    <Text style={[ty.footnote, { color: T.labelSecondary }]}>Последнее чтение: {new Date(book.lastReadAt).toLocaleDateString('ru-RU', { timeZone: 'Asia/Almaty' })}</Text>
+    <Text style={[ty.footnote, { color: T.labelSecondary }]}>Последнее чтение: {fmtDate(book.lastReadAt, { timeZone: 'Asia/Almaty' })}</Text>
     {onStatus && book.editable ? <Button label={book.finished ? 'Вернуть в чтение' : 'Отметить книгу прочитанной'} variant="tinted" disabled={busy} onPress={() => onStatus(!book.finished)} /> : null}
   </Wrapper></ContentBlock>;
 }

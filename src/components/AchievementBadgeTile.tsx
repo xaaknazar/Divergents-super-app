@@ -8,6 +8,7 @@ import { SF } from './SFIcon';
 import { Wrapper } from './Wrapper';
 import { ProgressBar } from './ProgressBar';
 import { Button } from './Button';
+import { fmtDate } from '../data/format';
 const TIERS = { 1: 'Бронза', 2: 'Серебро', 3: 'Золото' } as const;
 
 export function AchievementBadgeTile({ b, expanded = false, onPress, onNavigate }: {
@@ -33,7 +34,7 @@ export function AchievementBadgeTile({ b, expanded = false, onPress, onNavigate 
     </Pressable>
     {expanded ? <View style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
       {b.earned ? <Text style={[ty.subhead, { color: T.label }]}>Достижение получено</Text> : null}
-      {b.earnedAt ? <Text style={[ty.caption1, { color: T.labelSecondary }]}>В коллекции с {new Date(b.earnedAt).toLocaleDateString('ru-RU')}</Text> : null}
+      {b.earnedAt ? <Text style={[ty.caption1, { color: T.labelSecondary }]}>В коллекции с {fmtDate(b.earnedAt)}</Text> : null}
       <Button size="compact" variant="solid" label="Перейти в раздел" onPress={onNavigate} />
       <Button size="compact" variant="outline" label="Скрыть условия" onPress={onPress} />
     </View> : null}

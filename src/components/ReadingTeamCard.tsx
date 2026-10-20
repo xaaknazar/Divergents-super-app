@@ -9,6 +9,7 @@ import { SF } from './SFIcon';
 import { StatusBadge } from './StatusBadge';
 import { ProgressBar } from './ProgressBar';
 import { Button } from './Button';
+import { fmtDecimal, fmtInt } from '../data/format';
 
 export function ReadingTeamCard({ team, rank, recruiting, isMine, canJoin, busy, onJoin, onRoster }: {
   team: ReadingDetail['teams'][number]; rank: number; recruiting: boolean; isMine: boolean;
@@ -28,8 +29,8 @@ export function ReadingTeamCard({ team, rank, recruiting, isMine, canJoin, busy,
     {isMine ? <StatusBadge label="Ваша команда" icon="checkmark.circle.fill" tone="brand" /> : null}
     <ProgressBar value={recruiting ? team.occupied / team.capacity : team.completionRate}
       accessibilityLabel={recruiting ? `Заполненность команды ${team.name}` : `Выполненные дни команды ${team.name}`} size="prominent" />
-    {!recruiting ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>{Math.round(team.completionRate * 100)}% выполненных дней · {team.pages.toLocaleString('ru-RU')} стр.</Text> : null}
-    {team.averageMinutes !== undefined ? <Text style={[ty.headline, { color: T.brandText }]}>{team.averageMinutes.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} мин/день в среднем</Text> : null}
+    {!recruiting ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>{Math.round(team.completionRate * 100)}% выполненных дней · {fmtInt(team.pages)} стр.</Text> : null}
+    {team.averageMinutes !== undefined ? <Text style={[ty.headline, { color: T.brandText }]}>{fmtDecimal(team.averageMinutes)} мин/день в среднем</Text> : null}
     {canJoin ? <Button label={team.occupied >= team.capacity ? 'Мест нет' : 'Подать заявку'} disabled={busy || team.occupied >= team.capacity} onPress={onJoin} /> : null}
     <Button label="Состав команды" variant="tinted" onPress={onRoster} />
   </Wrapper></ContentBlock>;

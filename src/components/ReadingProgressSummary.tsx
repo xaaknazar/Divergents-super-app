@@ -10,6 +10,7 @@ import { PageHeading } from './PageHeading';
 import { StatusBadge } from './StatusBadge';
 import { Button } from './Button';
 import { ReadingPaceSummary } from './ReadingPaceSummary';
+import { fmtInt } from '../data/format';
 
 export function ReadingProgressSummary({ member }: { member: NonNullable<ReadingDetail['me']> }) {
   const { T, ty, textScale } = useTheme();
@@ -24,7 +25,7 @@ export function ReadingProgressSummary({ member }: { member: NonNullable<Reading
     {member.averageMinutes !== undefined ? <ReadingPaceSummary member={member} /> : null}
     <Wrapper dir={stacked ? 'column' : 'row'} gap={8}>
       <Wrapper flex={1}><ResultMetric kind="completed" value={String(member.completedDays)} label={word(member.completedDays, 'день выполнен', 'дня выполнено', 'дней выполнено')} /></Wrapper>
-      <Wrapper flex={1}><ResultMetric kind="reading" value={member.pages.toLocaleString('ru-RU')} label={word(member.pages, 'страница прочитана', 'страницы прочитано', 'страниц прочитано')} /></Wrapper>
+      <Wrapper flex={1}><ResultMetric kind="reading" value={fmtInt(member.pages)} label={word(member.pages, 'страница прочитана', 'страницы прочитано', 'страниц прочитано')} /></Wrapper>
       <Wrapper flex={1}><ResultMetric kind="focus" value={String(Math.floor(member.extraMs / 60000))} label={`${word(Math.floor(member.extraMs / 60000), 'минута', 'минуты', 'минут')} сверх цели`} /></Wrapper>
     </Wrapper>
     <ContentBlock><Wrapper gap={16}>

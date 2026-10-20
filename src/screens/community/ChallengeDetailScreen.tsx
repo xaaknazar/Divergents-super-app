@@ -40,7 +40,7 @@ import {
 import { CommunityStackParams } from '../../navigation/types';
 import { ChallengeSpectatorScreen } from './ChallengeSpectatorScreen';
 import * as pl from '../../data/plural';
-import { fmtInt } from '../../data/format';
+import { fmtDate, fmtDecimal, fmtInt } from '../../data/format';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeDetail'>;
 
@@ -1008,13 +1008,11 @@ function openChatLink(raw: string) {
   Linking.openURL(url).catch(() => Alert.alert(tr('Ссылка на чат некорректна')));
 }
 
-const teamNumberFormatter = new Intl.NumberFormat('ru-RU', { useGrouping: false });
-const paceNumberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 // Без разделителя тысяч: «1567 pts», «10000 шагов». Разделитель-пробел рвал
 // число на две строки («1» / «567 pts») в узких колонках карточки и в строке
 // участника — числа здесь короткие, читаемость не страдает.
-const formatTeamNumber = (value: number) => teamNumberFormatter.format(value);
-const formatPace = (value: number) => paceNumberFormatter.format(value);
+const formatTeamNumber = (value: number) => fmtDecimal(value, 3, false);
+const formatPace = (value: number) => fmtDecimal(value);
 const formatSignedPenalty = (value: number) => value < 0 ? `−${formatTeamNumber(Math.abs(value))}` : formatTeamNumber(value);
 // «↓ 1 место» читалось как «1-е место» — движение в рейтинге было непонятно.
 // Говорим о позициях: «↑ на 2 позиции» / «↓ на 1 позицию».
@@ -1242,7 +1240,7 @@ function ChallengeCalendar({ totalDays, currentDay, startISO, T }: { totalDays: 
   const todayUtc = Date.UTC(almatyNow.getUTCFullYear(), almatyNow.getUTCMonth(), almatyNow.getUTCDate());
   const safeTotal = Math.max(0, totalDays);
   const safeCurrent = Math.min(Math.max(currentDay, 1), Math.max(safeTotal, 1));
-  const todayLabel = new Date(todayUtc).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const todayLabel = fmtDate(todayUtc, { day: 'numeric', month: 'long', timeZone: 'UTC' });
   // Сетку строим от даты старта, а не от «сегодня»: между 23:01 и полуночью
   // сервер уже перевёл currentDay, а календарная дата в Алматы — ещё нет, и
   // весь этот час каждая ячейка была подписана чужим числом. Без startISO
@@ -1266,7 +1264,7 @@ function ChallengeCalendar({ totalDays, currentDay, startISO, T }: { totalDays: 
           const isToday = challengeDay === safeCurrent;
           const isPast = challengeDay < safeCurrent;
           const date = new Date(dayOneUtc + (challengeDay - 1) * 86_400_000);
-          const dateLabel = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+          const dateLabel = fmtDate(date, { day: 'numeric', month: 'long', timeZone: 'UTC' });
           return (
             <View key={challengeDay} accessible accessibilityRole="text"
               accessibilityLabel={`${tr('День')} ${challengeDay}, ${dateLabel}${isToday ? `, ${tr('сегодня')}` : isPast ? `, ${tr('прошёл')}` : ''}`}

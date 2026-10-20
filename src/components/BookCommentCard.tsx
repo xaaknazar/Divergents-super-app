@@ -6,11 +6,12 @@ import { AwardBadge } from './AwardBadge';
 import { Button } from './Button';
 import { ContentBlock } from './ContentBlock';
 import { Wrapper } from './Wrapper';
+import { fmtDate } from '../data/format';
 
 export function BookCommentCard({ comment, onEdit, onDelete }: { comment: BookComment; onEdit: () => void; onDelete: () => void }) {
   const { T, ty } = useTheme();
   const date = new Date(comment.date);
-  const label = Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+  const label = fmtDate(date, { day: 'numeric', month: 'short', year: 'numeric' });
   return <ContentBlock size="compact"><View style={{ gap: 10 }}>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
       <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]}>{comment.author}{comment.mine ? ' · вы' : ''}</Text>

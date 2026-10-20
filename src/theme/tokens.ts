@@ -243,6 +243,9 @@ export const shadows = {
   card: shadow({ opacity: 0.06, radius: 10, y: 3, elevation: 2 }),
   // Lifted surface — sticky bars, modals, FABs.
   floating: shadow({ opacity: 0.14, radius: 18, y: 8, elevation: 6 }),
+  // Блок, который открывает экран (карточка-ссылка). Статичные группы — плоские.
+  // В горизонтальных лентах таким блокам нужен запас снизу 24, иначе тень обрежется.
+  tappable: shadow({ color: '#101828', opacity: 0.16, radius: 14, y: 10, elevation: 5 }),
 } as const;
 
 export type ColorKey = keyof typeof light;

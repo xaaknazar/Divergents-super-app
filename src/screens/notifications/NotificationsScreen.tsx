@@ -13,6 +13,7 @@ import { useNotifications } from '../../state/NotificationsContext';
 import { NotifTarget } from '../../data/notifications';
 import { RootStackParams } from '../../navigation/types';
 import { navigationRef, normalizeTabTarget } from '../../navigation/ref';
+import { fmtDate as formatDate } from '../../data/format';
 
 function fmtDate(iso: string, ru: boolean): string {
   if (!iso) return '';
@@ -24,7 +25,7 @@ function fmtDate(iso: string, ru: boolean): string {
   if (m < 60) return ru ? `${m} мин назад` : `${m} min ago`;
   if (h < 24) return ru ? `${h} ч назад` : `${h}h ago`;
   if (days < 7) return ru ? `${days} дн назад` : `${days}d ago`;
-  return d.toLocaleDateString(ru ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short' });
+  return formatDate(d, { day: 'numeric', month: 'short' }, ru ? 'ru-RU' : 'en-US');
 }
 
 type Props = NativeStackScreenProps<RootStackParams, 'Notifications'>;

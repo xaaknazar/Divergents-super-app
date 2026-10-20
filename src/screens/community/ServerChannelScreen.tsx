@@ -23,6 +23,7 @@ import {
   deleteChannelPost, fetchChannelMembers, removeChannelMember, createChannelInvite, ServerChannel, ServerChannelPost, ChannelRequest, ChannelMemberRow,
 } from '../../data/api';
 import { CommunityStackParams } from '../../navigation/types';
+import { fmtDateTime } from '../../data/format';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'ServerChannel'>;
 
@@ -31,7 +32,7 @@ function fmtTime(iso?: string) {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return fmtDateTime(d, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 // Deterministic bar heights for a voice-message waveform (stable per post).
 function waveHeights(seed: string, n = 22): number[] {

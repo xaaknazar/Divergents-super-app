@@ -9,18 +9,18 @@ import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { fetchMyChallengeHistory, ChallengeHistoryItem } from '../../data/community';
-import { fmtInt } from '../../data/format';
 import { nums } from '../../theme/tokens';
 import { AwardBadge, AWARD_GOLD, AWARD_GOLD_DEEP } from '../../components/AwardBadge';
 import { tr } from '../../state/LanguageContext';
 
 import * as pl from '../../data/plural';
+import { fmtDate as formatDate, fmtInt } from '../../data/format';
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  return formatDate(d, { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: () => void; getParent: () => any } }) {

@@ -1,7 +1,7 @@
 // NavHeader — one reusable iOS-style navigation header for DETAIL / pushed screens.
 // Unifies the bespoke back/header treatments scattered across the app:
-//   • inline back chevron + label (was `BackNav`)            → variant="inline"
-//   • inline + large title below (was BackNav + a <Text>)     → largeTitle
+//   • back chevron + label straight on the page background   → variant="plain" (default)
+//   • plain + large title below (was BackNav + a <Text>)      → largeTitle
 //   • floating round buttons over a hero image / gradient     → variant="overlay"
 // Safe-area aware. Surface, separator and contrast belong to semantic variants.
 import React from 'react';
@@ -28,8 +28,9 @@ export type NavHeaderProps = {
   onBack?: () => void;
   /** Right-hand slot (icons / buttons). In `overlay` use round buttons. */
   trailing?: React.ReactNode;
-  /** Default plain shares the page background; other surfaces require an explicit variant. */
-  variant?: 'inline' | 'plain' | 'frosted' | 'hero' | 'overlay';
+  /** Default plain lies on the page background (no fill, no hairline — handoff 2026-10-20);
+   * other surfaces require an explicit variant. */
+  variant?: 'plain' | 'frosted' | 'hero' | 'overlay';
   /** Overlay button colour scheme. 'dark' = dark scrim + white icon (default). */
   overlayScheme?: 'light' | 'dark';
   /** Apply the top safe-area inset. Default true. */
@@ -71,7 +72,7 @@ export function NavHeader({
   const fg = variant === 'hero' ? '#FFFFFF' : T.brandText;
   const titleColor = variant === 'hero' ? '#FFFFFF' : T.label;
   const subtitleColor = variant === 'hero' ? 'rgba(255,255,255,0.85)' : T.labelSecondary;
-  const showHairline = variant === 'inline' || (variant === 'frosted' && reduceTransparency);
+  const showHairline = variant === 'frosted' && reduceTransparency;
 
   const bar = (
     <View style={{
@@ -96,7 +97,7 @@ export function NavHeader({
     <View style={{ position: 'relative' }}>
       {useBlur ? (
         <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-      ) : (variant === 'inline' || variant === 'frosted') ? (
+      ) : variant === 'frosted' ? (
         // Opaque fill when not blurring — incl. Reduce Transparency fallback for a blur header.
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: T.cardBg }} />
       ) : null}

@@ -7,7 +7,8 @@ export interface StatusBadgeProps {
   label: string;
   icon?: SFName | string;
   tone?: 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'inverse' | 'info';
-  variant?: 'tinted' | 'solid' | 'surface' | 'media' | 'accentOverlay';
+  /** frosted — белая «таблетка» с текстом цвета тона, для цветных и иллюстрированных фонов. */
+  variant?: 'tinted' | 'solid' | 'surface' | 'media' | 'accentOverlay' | 'frosted';
   size?: 'regular' | 'compact';
 }
 export function StatusBadge({ label, icon, tone = 'neutral', variant = 'tinted', size = 'regular' }: StatusBadgeProps) {
@@ -24,6 +25,8 @@ export function StatusBadge({ label, icon, tone = 'neutral', variant = 'tinted',
   }[tone];
   const [background, ink] = variant === 'solid' ? solid
     : variant === 'surface' ? [T.cardBg, colors[1]]
+    // На иллюстрированной подложке стекло остаётся светлым и в тёмной теме, поэтому цвета фиксированы.
+    : variant === 'frosted' ? ['rgba(255,255,255,0.78)', FROSTED_INK[tone]]
     : variant === 'media' ? ['rgba(0,0,0,0.55)', '#FFFFFF']
     : variant === 'accentOverlay' ? ['rgba(255,255,255,0.20)', T.onBrand] : colors;
   return <View style={[styles.container, size === 'compact' && styles.compact, { backgroundColor: background }]}>
@@ -31,6 +34,10 @@ export function StatusBadge({ label, icon, tone = 'neutral', variant = 'tinted',
     <Text style={[ty.caption2Em, styles.label, { color: ink }]}>{label}</Text>
   </View>;
 }
+const FROSTED_INK: Record<NonNullable<StatusBadgeProps['tone']>, string> = {
+  neutral: '#1C1C1E', brand: '#234088', success: '#187A32', warning: '#934900',
+  danger: '#C5221F', inverse: '#1C1C1E', info: '#0369A1',
+};
 const styles = StyleSheet.create({
   container: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4,
     maxWidth: '100%', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderCurve: 'continuous' },

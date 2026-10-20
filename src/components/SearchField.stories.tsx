@@ -15,3 +15,5 @@ export const Empty: Story = {};
 export const Filled: Story = { args: { value: 'Привычки' } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Raised: Story = { args: { surface: 'raised' } };
+export const RaisedDark: Story = { args: { surface: 'raised', value: 'Привычки' }, parameters: { scheme: 'dark' } };

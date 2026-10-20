@@ -12,3 +12,5 @@ export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const CompactSolid: Story = { args: { variant: 'solid', size: 'compact', label: '65%', icon: undefined } };
 export const OnImage: Story = { args: { variant: 'media', label: '21 октября', icon: 'calendar' } };
 export const Surface: Story = { args: { variant: 'surface', label: 'Лидерство', icon: undefined } };
+export const Frosted: Story = { args: { variant: 'frosted', tone: 'success', label: 'Бесплатно', icon: undefined } };
+export const FrostedNeutralDark: Story = { args: { variant: 'frosted', tone: 'neutral', label: '2 дня', icon: 'calendar' }, parameters: { scheme: 'dark' } };

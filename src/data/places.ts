@@ -7,6 +7,7 @@
 import { SFName } from '../components/SFIcon';
 import { API_BASE } from '../config';
 import { captureAchievementRecorder } from './achievementEvents';
+import { fmtDate } from './format';
 
 export type PlaceCategory =
   | 'cafe' | 'restaurant' | 'hotel' | 'guesthouse' | 'resort' | 'park' | 'gym' | 'picnic' | 'tourism';
@@ -142,7 +143,7 @@ function fmtReviewDate(raw: unknown): string {
   if (mins < 60) return `${mins} мин назад`;
   const hours = Math.floor(diff / 3600000);
   if (hours < 24) return `${hours} ч назад`;
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+  return fmtDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function mapReview(r: ApiReview, i: number): Review {

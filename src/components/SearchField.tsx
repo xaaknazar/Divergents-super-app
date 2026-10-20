@@ -4,15 +4,16 @@ import { useTheme } from '../theme/ThemeContext';
 import { minTouch } from '../theme/tokens';
 import { SF } from './SFIcon';
 
-/** Shared catalog search: a stable name, native search keyboard and clear target. */
-export function SearchField({ value, onChangeText, placeholder, label = placeholder, onFocus, onBlur }: {
+/** Shared catalog search: a stable name, native search keyboard and clear target.
+ * surface="raised" — белое поле поверх фона шапки вкладки (HeaderBackdrop). */
+export function SearchField({ value, onChangeText, placeholder, label = placeholder, onFocus, onBlur, surface = 'grouped' }: {
   value: string; onChangeText: (value: string) => void; placeholder: string; label?: string;
-  onFocus?: () => void; onBlur?: () => void;
+  onFocus?: () => void; onBlur?: () => void; surface?: 'grouped' | 'raised';
 }) {
   const { T, ty } = useTheme();
   const input = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
-  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary,
+  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: surface === 'raised' ? T.cardBg : T.fillTertiary,
     borderRadius: 12, borderCurve: 'continuous', borderWidth: focused ? 1 : 0, borderColor: T.brandText,
     paddingLeft: 12, paddingRight: value ? 0 : 12, minHeight: minTouch }}>
     <SF name="magnifyingglass" size={18} color={T.labelSecondary} />

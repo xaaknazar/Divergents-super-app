@@ -1,7 +1,9 @@
 // Icon component backed by @expo/vector-icons (Ionicons + MaterialCommunityIcons).
 // Keeps the SF-Symbols-style names used across the app, mapped to real icons.
+// Глифы, которых нет в шрифтах, нарисованы вручную как SVG (viewBox 24) — ветка `svg`.
 import { Ionicons,MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
+import Svg,{ Path } from 'react-native-svg';
 
 export type SFName =
   | 'book.fill' | 'book' | 'sparkles' | 'sparkles.outline' | 'person.3.fill' | 'person.3'
@@ -29,9 +31,17 @@ export type SFName =
   | 'circle.lefthalf.filled' | 'textformat.size' | 'arrow.counterclockwise'
   | 'arrow.down' | 'minus' | 'slider.horizontal.3'
   | 'square.and.pencil' | 'info.circle' | 'rectangle.portrait.and.arrow.right'
-  | 'gift.fill' | 'gift';
+  | 'gift.fill' | 'gift'
+  | 'stopwatch' | 'mountain.2.fill' | 'tent.fill' | 'chart.line.uptrend.xyaxis' | 'kettlebell'
+  | 'waveform.path.ecg' | 'arrow.down.circle.fill' | 'books.vertical.fill';
 
-type Lib = 'ion' | 'mci';
+type Lib = 'ion' | 'mci' | 'svg';
+
+// «Бегущий человек» (person-running): в Layero Round его нет, глиф нарисован в том же
+// стиле. Источник — handoff 2026-10-20, design-source/Icon.dc.html, вариант solid.
+const SVG_PATHS: Record<string, string> = {
+  'person.running': 'M17.89 4.01L17.76 3.59L17.55 3.20L17.27 2.86L16.93 2.58L16.54 2.37L16.12 2.24L15.68 2.20L15.24 2.24L14.82 2.37L14.43 2.58L14.09 2.86L13.81 3.20L13.60 3.59L13.47 4.01L13.43 4.45L13.47 4.89L13.60 5.31L13.81 5.70L14.09 6.04L14.43 6.32L14.82 6.53L15.24 6.66L15.68 6.70L16.12 6.66L16.54 6.53L16.93 6.32L17.27 6.04L17.55 5.70L17.76 5.31L17.89 4.89L17.93 4.45L17.89 4.01Z M8.94 8.55L8.63 8.46L8.42 8.45L8.10 8.52L7.82 8.67L7.59 8.90L7.44 9.19L7.38 9.51L7.39 9.72L7.49 10.03L7.60 10.21L7.75 10.37L10.03 12.04L10.35 12.20L10.01 12.86L9.94 13.16L9.93 13.46L8.14 16.33L4.63 17.68L4.41 17.79L4.22 17.94L3.99 18.23L3.86 18.57L3.83 18.82L3.85 19.06L3.96 19.41L4.17 19.71L4.46 19.94L4.69 20.04L4.93 20.09L5.29 20.08L5.53 20.02L9.43 18.52L9.63 18.41L9.90 18.20L10.04 18.01L11.97 14.92L14.23 15.89L13.26 20.28L13.23 20.52L13.25 20.77L13.36 21.11L13.50 21.32L13.67 21.50L13.87 21.64L14.09 21.74L14.45 21.80L14.70 21.78L15.04 21.67L15.25 21.53L15.43 21.36L15.57 21.16L15.67 20.94L16.90 15.42L16.93 15.18L16.91 14.93L16.84 14.69L16.73 14.47L16.49 14.20L16.28 14.06L13.54 12.87L14.55 11.09L16.62 12.55L16.82 12.62L17.14 12.65L17.45 12.58L17.65 12.49L17.89 12.29L19.96 10.01L20.07 9.82L20.17 9.51L20.17 9.19L20.08 8.88L19.96 8.70L19.82 8.54L19.65 8.41L19.45 8.31L19.24 8.26L19.03 8.25L18.71 8.31L18.52 8.41L18.34 8.53L16.93 10.08L15.64 9.16L15.85 8.74L15.93 8.29L15.91 7.99L15.83 7.69L15.60 7.30L15.39 7.08L15.15 6.90L14.87 6.78L14.42 6.70L13.97 6.76L13.69 6.86L13.43 7.03L13.11 7.36L12.18 8.98L10.74 9.83L8.94 8.55Z',
+};
 // name -> [library, icon]
 const MAP: Record<string, [Lib, string]> = {
   'book.fill': ['ion', 'book'], 'book': ['ion', 'book-outline'],
@@ -68,7 +78,7 @@ const MAP: Record<string, [Lib, string]> = {
 
   'clock': ['ion', 'time-outline'], 'airplane': ['ion', 'airplane'], 'arrow.down.circle': ['ion', 'arrow-down-circle-outline'], 'square.and.arrow.down': ['ion', 'download'], 'trash.fill': ['ion', 'trash'], 'creditcard.fill': ['ion', 'card'], 'clock.arrow.circlepath': ['ion', 'time-outline'], 'lock.open.fill': ['ion', 'lock-open'], 'photo': ['ion', 'image'], 'smallcircle.filled.circle': ['ion', 'ellipse'], 'xmark.circle.fill': ['ion', 'close-circle'],
  'bolt.fill': ['ion', 'flash'],
-  'figure.run': ['mci', 'run'], 'brain.head.profile': ['mci', 'brain'],
+  'figure.run': ['svg', 'person.running'], 'brain.head.profile': ['mci', 'brain'],
   'heart.text.square.fill': ['mci', 'heart-box'], 'leaf.fill': ['ion', 'leaf'],
   'arrow.up.circle.fill': ['ion', 'arrow-up-circle'],
   'bookmark': ['ion', 'bookmark-outline'], 'bookmark.fill': ['ion', 'bookmark'],
@@ -106,6 +116,10 @@ const MAP: Record<string, [Lib, string]> = {
   'square.and.pencil': ['ion', 'create-outline'], 'info.circle': ['ion', 'information-circle-outline'],
   'rectangle.portrait.and.arrow.right': ['ion', 'exit-outline'],
   'gift.fill': ['ion', 'gift'], 'gift': ['ion', 'gift-outline'],
+  'stopwatch': ['ion', 'stopwatch'], 'mountain.2.fill': ['mci', 'image-filter-hdr'], 'tent.fill': ['mci', 'tent'],
+  'chart.line.uptrend.xyaxis': ['ion', 'trending-up'], 'kettlebell': ['mci', 'kettlebell'],
+  'waveform.path.ecg': ['ion', 'pulse'], 'arrow.down.circle.fill': ['ion', 'arrow-down-circle'],
+  'books.vertical.fill': ['ion', 'library'],
 };
 
 export interface SFProps {
@@ -116,6 +130,9 @@ export interface SFProps {
 
 export function SF({ name, size = 20, color = '#000' }: SFProps) {
   const [lib, icon] = MAP[name] ?? ['ion', 'ellipse-outline'];
+  if (lib === 'svg') {
+    return <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={SVG_PATHS[icon]} fill={color} /></Svg>;
+  }
   if (lib === 'mci') {
     return <MaterialCommunityIcons name={icon as any} size={size} color={color} />;
   }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { fmtDate } from './format';
 
 export const ReadingChallengeDraftSchema = z.object({
   mode: z.enum(['scheduled', 'continuous']).optional(),
@@ -20,7 +21,7 @@ export function nextReadingDate(now = Date.now()) { return new Date(now + OFFSET
 export function todayReadingDate(now = Date.now()) { return new Date(now + OFFSET).toISOString().slice(0, 10); }
 export function readingDateLabel(value: string) {
   const ms = readingDateStart(value);
-  return Number.isFinite(ms) ? new Date(ms).toLocaleDateString('ru-RU', { timeZone: 'Asia/Almaty', day: 'numeric', month: 'long', year: 'numeric' }) : 'Дата не выбрана';
+  return Number.isFinite(ms) ? fmtDate(ms, { timeZone: 'Asia/Almaty', day: 'numeric', month: 'long', year: 'numeric' }) : 'Дата не выбрана';
 }
 export function readingDateError(value: string, now = Date.now(), mode: 'scheduled' | 'continuous' = 'scheduled') {
   const ms = readingDateStart(value);
