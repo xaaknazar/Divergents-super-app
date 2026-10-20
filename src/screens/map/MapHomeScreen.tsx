@@ -1,5 +1,4 @@
-import { SearchField } from '../../components/SearchField';
-import { Button } from '../../components/Button';
+import { MapSearchHeader } from '../../components/MapSearchHeader';
 import { Wrapper } from '../../components/Wrapper';
 import { ContentBlock } from '../../components/ContentBlock';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -14,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { ChipRail } from '../../components/ChipRail';
-import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
 import { useProfileButton } from '../../state/useProfileButton';
 import { HeaderIcon } from '../../components/HeaderIcon';
 import { RouteModeOption } from '../../components/RouteModeOption';
@@ -106,6 +104,7 @@ export function MapHomeScreen({ navigation }: Props) {
   const [tags, setTags] = useState<PlaceTag[]>([]);
   const [q, setQ] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [packs, setPacks] = useState<any[]>([]);
   const [dlCity, setDlCity] = useState<string | null>(null);
   const [dlPct, setDlPct] = useState(0);
@@ -426,19 +425,15 @@ export function MapHomeScreen({ navigation }: Props) {
         </MapView>
       )}
 
-      {/* Top overlay: search + location + filters */}
-      <View style={{ position: 'absolute', top: insets.top + 6, left: 0, right: 0 }} pointerEvents="box-none">
-        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12 }}>
-          <Wrapper flex={1}>
-            <SearchField surface="raised" value={q} onChangeText={setQ} onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 200)} placeholder={t('map_search_ph')} />
-          </Wrapper>
-          <Wrapper maxWidth="42%">
-            <Button label={cityName} icon="mappin.circle.fill" variant="tinted" size="compact"
-              accessibilityHint={tr('Выберите город')} onPress={() => setPickerOpen(true)} />
-          </Wrapper>
-          <ProfileAvatarButton {...profileButton} variant="floating" onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
-        </View>
+      {/* Top overlay: readable location, full-width search, then filters. */}
+      <View style={{ position: 'absolute', top: insets.top + 6, left: 0, right: 0 }} pointerEvents="box-none"
+        onLayout={event => setHeaderHeight(event.nativeEvent.layout.height)}>
+        <Wrapper paddingHorizontal={12}>
+          <MapSearchHeader city={cityName} country={countryName} cityPickerOpen={pickerOpen} onChooseCity={() => setPickerOpen(true)}
+            searchValue={q} onSearchChange={setQ} onSearchFocus={() => setSearchFocused(true)}
+            onSearchBlur={() => setTimeout(() => setSearchFocused(false), 200)} searchPlaceholder={t('map_search_ph')}
+            profile={profileButton} onOpenProfile={() => navigation.getParent()?.navigate('ProfileTab' as never)} />
+        </Wrapper>
         {searchFocused && q.trim().length < 3 && recents.length > 0 ? (
           <Wrapper marginHorizontal={12} marginTop={8}><ContentBlock size="flush" elevated>
             <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }]} numberOfLines={1}>{t('recent_')}</Text>
@@ -466,18 +461,18 @@ export function MapHomeScreen({ navigation }: Props) {
             ))}
           </ContentBlock></Wrapper>
         ) : null}
-        <Wrapper paddingTop={8}><ChipRail inset="compact" items={[
+        <Wrapper paddingTop={8}><ChipRail inset="compact" overflowHint items={[
           { key: 'all', label: t('all'), active: !cat, onPress: () => setCat(null) },
-          ...CATEGORIES.map((c) => ({ key: `cat-${c}`, label: CATEGORY_META[c].label, icon: CATEGORY_META[c].icon, active: cat === c, onPress: () => setCat(cat === c ? null : c) })),
-          ...TAGS.map((tag) => ({ key: `tag-${tag}`, label: TAG_META[tag].label, icon: TAG_META[tag].icon, active: tags.includes(tag), onPress: () => setTags((p) => p.includes(tag) ? p.filter((x) => x !== tag) : [...p, tag]) })),
+          ...CATEGORIES.map((c) => ({ key: `cat-${c}`, label: CATEGORY_META[c].label, active: cat === c, onPress: () => setCat(cat === c ? null : c) })),
+          ...TAGS.map((tag) => ({ key: `tag-${tag}`, label: TAG_META[tag].label, active: tags.includes(tag), onPress: () => setTags((p) => p.includes(tag) ? p.filter((x) => x !== tag) : [...p, tag]) })),
         ]} /></Wrapper>
       </View>
 
       {/* Navigation banner */}
-      {target ? (() => {
+      {target && headerHeight !== null ? (() => {
         const rt = routes[routeIdx];
         return (
-          <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 16, borderCurve: 'continuous', padding: 12, gap: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <View style={{ position: 'absolute', top: insets.top + 6 + headerHeight + 10, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 16, borderCurve: 'continuous', padding: 12, gap: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <SF name="paperplane.fill" size={18} color="#fff" />
               <View style={{ flex: 1 }}>

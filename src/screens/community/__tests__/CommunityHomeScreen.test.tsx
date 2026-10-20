@@ -85,6 +85,26 @@ beforeEach(() => {
 
 afterEach(() => { jest.restoreAllMocks(); });
 
+it('uses the shared text-only filter rail and keeps community navigation controlled', async () => {
+  const view = await render(screen());
+  const labels = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_meetups', 'sec_sport'];
+  expect(view.getByTestId('chip-rail')).toBeTruthy();
+  expect(view.queryByTestId('section-tabs-surface')).toBeNull();
+  for (const label of labels) expect(view.getByRole('tab', { name: label })).toBeTruthy();
+  expect(view.getByRole('tab', { name: 'sec_home' }).props.accessibilityState.selected).toBe(true);
+
+  const rail = view.getByTestId('chip-rail-scroll');
+  await fireEvent(rail, 'layout', { nativeEvent: { layout: { width: 300, height: 48, x: 0, y: 0 } } });
+  await fireEvent(rail, 'contentSizeChange', 800, 48);
+  await fireEvent.press(view.getByRole('button', { name: 'Следующие фильтры' }));
+  expect(view.getByRole('tab', { name: 'sec_home' }).props.accessibilityState.selected).toBe(true);
+
+  await fireEvent.press(view.getByRole('tab', { name: 'sec_challenges' }));
+  expect(view.getByRole('tab', { name: 'sec_challenges' }).props.accessibilityState.selected).toBe(true);
+  expect(view.getByRole('tab', { name: 'sec_home' }).props.accessibilityState.selected).toBe(false);
+  expect(view.getByText(active.title)).toBeTruthy();
+});
+
 it('opens a running challenge for nonparticipants in the read-only entry flow', async () => {
   const view = await render(screen('challenge'));
 

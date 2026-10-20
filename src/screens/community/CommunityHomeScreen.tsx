@@ -14,7 +14,7 @@ import { PageIntro } from '../../components/PageIntro';
 import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
 import { ResumeCallout } from '../../components/ResumeCallout';
 import { Screen } from '../../components/Screen';
-import { SectionTabs } from '../../components/SectionTabs';
+import { ChipRail } from '../../components/ChipRail';
 import { Wrapper } from '../../components/Wrapper';
 import {
 ChallengeListItem,
@@ -147,8 +147,11 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       {/* Макет: строка разделов pad-top 8, первый раздел ленты — через 20. */}
       <Wrapper paddingHorizontal={16} paddingTop={8} paddingBottom={20} gap={14}>
         {seg === 2 ? <ResumeCallout area="community" /> : null}
-        <SectionTabs items={SECTION_KEYS.map((k, id) => ({ id, label: t(k) })).filter(item => sectionOn(item.id))}
-          value={seg} onChange={id => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(id); }} />
+        <ChipRail inset="none" itemRole="tab" overflowHint
+          items={SECTION_KEYS.flatMap((key, id) => sectionOn(id) ? [{
+            key: String(id), label: t(key), active: seg === id,
+            onPress: () => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(id); },
+          }] : [])} />
       </Wrapper>
 
       {seg === 0 && <CommunityFeed navigation={navigation} setSeg={setSeg} trips={trips} sport={sport} challenges={challenges} error={error} onRetry={onRefresh} />}

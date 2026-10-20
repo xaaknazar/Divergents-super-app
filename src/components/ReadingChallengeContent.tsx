@@ -43,8 +43,8 @@ export type ReadingChallengeContentProps = {
 };
 
 /** Reading challenge, индивидуальный зачёт. Не участник — вступление: компактный блок, правила, галочка,
- * «Присоединиться». Участник — сверху вниз: «Мой рейтинг», «Что читаете», таймер и статус подхода,
- * «Сегодня», «Мои книги и история», свёрнутые правила. */
+ * «Присоединиться». Участник — сверху вниз: таймер и действия/статус подхода, «Что читаете»,
+ * «Сегодня», «Мой рейтинг», «Мои книги и история», свёрнутые правила. */
 export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const d = p.data;
   const [agreed, setAgreed] = useState(false);
@@ -95,16 +95,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   return <Wrapper padding={16} gap={18}>
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
     {p.sessionNotice ? <InlineNotice message={p.sessionNotice.message} onRetry={p.onRetry} /> : null}
-    <ReadingRankLink place={standing?.place ?? null} participants={participants} onPress={p.onRanking}
-      waitReason={standing && standing.place == null ? readingWaitReason(standing.member) : undefined} review={!!standing?.member.rankingPending} />
     {member.eliminatedOn ? <InlineNotice message={`Участие завершено на ${member.eliminatedOn}-й день.`} /> : null}
     {d.phase === 'upcoming' ? <ScreenDescription text={`Челлендж начнётся ${readingDateLabel(d.startDate)}. В этот день здесь появится таймер.`} /> : null}
     {reader && !p.sessionNotice ? <Wrapper gap={16}>
-      {d.session ? <ReadingBookField status="verified" locked title={d.session.book} author={d.session.author ?? ''}
-        onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />
-        : <ReadingBookField status={book.status} title={book.title} author={book.author} error={book.error} locked={p.busy}
-          suggestions={book.suggestions} onPick={book.pick} onReject={book.reject} onManual={book.manual} manual={!!book.verified?.manual}
-          onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />}
       <ReadingTimer remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)} />
       {running ? <ReadingTimerControls action="pause" onPress={p.onPause} />
         : p.protection === 'unavailable' ? <InlineNotice message="Системная блокировка недоступна в этой сборке. Запустить защищённый сеанс пока нельзя." />
@@ -130,10 +123,17 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
           </> : null}
           <ReadingTimerControls action={idleAction} onPress={start} loading={p.busy}
             disabled={p.startBlocked || p.protection !== 'ready' || !bookReady} />
-          {!bookReady ? <ScreenDescription text={READING_REQUIRE_VERIFIED_BOOK ? book.status === 'suggested' ? 'Чтобы начать, подтвердите книгу выше.' : 'Чтобы начать, найдите и подтвердите книгу выше.' : 'Чтобы начать, напишите название книги выше.'} /> : null}
+          {!bookReady ? <ScreenDescription text={READING_REQUIRE_VERIFIED_BOOK ? 'Чтобы начать, выберите и подтвердите книгу.' : 'Чтобы начать, напишите название книги.'} /> : null}
         </>}
+      {d.session ? <ReadingBookField status="verified" locked title={d.session.book} author={d.session.author ?? ''}
+        onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />
+        : <ReadingBookField status={book.status} title={book.title} author={book.author} error={book.error} locked={p.busy}
+          suggestions={book.suggestions} onPick={book.pick} onReject={book.reject} onManual={book.manual} manual={!!book.verified?.manual}
+          onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />}
     </Wrapper> : null}
     {d.phase !== 'upcoming' ? <ReadingProgressSummary member={member} todayMs={d.phase === 'active' ? todayMs : undefined} /> : null}
+    <ReadingRankLink place={standing?.place ?? null} participants={participants} onPress={p.onRanking}
+      waitReason={standing && standing.place == null ? readingWaitReason(standing.member) : undefined} review={!!standing?.member.rankingPending} />
     {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
     <ReadingRules variant="collapsed" blockingMode={p.blockingMode} />
   </Wrapper>;

@@ -10,7 +10,8 @@ const meta = { title: 'Reading/Challenge', component: ReadingChallengeContent,
   args: { data: individualReadingFixture, remainingMs: 42 * 60000, timerState: 'ready', protection: 'ready', busy: false,
     awaitingPages: false, needsRecovery: false, book, onPrepare: noop, onStart: noop, onPause: noop, onReport: noop, onSaveApproach: noop,
     onJoin: noop, onRetry: noop, onRecover: noop, onRanking: noop, onHistory: noop },
-  parameters: { canvasLayout: 'content' },
+  parameters: { canvasLayout: 'content', docs: { description: { component:
+    'Экран участника: таймер → действия или статус подхода → «Что читаете» → «Сегодня» → «Мой рейтинг» → «Мои книги и история» → правила. Кнопка паузы остаётся непосредственно под таймером. Порядок одинаковый в светлой и тёмной теме и при крупном шрифте.' } } },
 } satisfies Meta<typeof ReadingChallengeContent>;
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -25,11 +26,13 @@ export const StartBookSuggested: Story = { args: { data: fresh, remainingMs: 3_6
 export const StartBookManual: Story = { args: { data: fresh, remainingMs: 3_600_000, book: { ...book, title: 'Моя редкая книга', author: 'Местный автор', status: 'verified',
   verified: { title: 'Моя редкая книга', author: 'Местный автор', manual: true } } } };
 export const StartBookNotFound: Story = { args: { data: fresh, remainingMs: 3_600_000, book: { ...book, title: 'Моя редкая книга', author: 'Местный автор', status: 'notFound', verified: null } } };
+/** Готов к чтению: «Старт» под таймером, книга ниже; рейтинг непосредственно перед историей. */
 export const StartReady: Story = { args: { data: fresh, remainingMs: 3_600_000 } };
+/** Идёт чтение: «Пауза» сразу под таймером, затем заблокированная карточка текущей книги. */
 export const Running: Story = { args: { timerState: 'running', data: { ...individualReadingFixture, session } }, parameters: { reduceMotion: false } };
 export const Overtime: Story = { args: { timerState: 'running', remainingMs: -754000, data: { ...individualReadingFixture, session,
   me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'complete', pages: 30, elapsedMs: 61 * 60000 }] } } }, parameters: { scheme: 'dark' } };
-/** Пауза: страницы за подход и «Возобновить». */
+/** Пауза: «Возобновить» и страницы за подход остаются под таймером, перед текущей книгой. */
 export const PausedPages: Story = { args: { timerState: 'paused', resumableSession: true, canResume: true, onResume: noop,
   data: { ...individualReadingFixture, session } } };
 export const Saving: Story = { args: { timerState: 'paused', awaitingPages: true, busy: true, data: { ...individualReadingFixture, session: { ...session, status: 'awaiting_pages' as const } } } };
@@ -37,6 +40,7 @@ export const Saving: Story = { args: { timerState: 'paused', awaitingPages: true
 export const ResumeAfterApproach: Story = {};
 export const GoalDone: Story = { args: { timerState: 'complete', remainingMs: 0, data: { ...individualReadingFixture,
   me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'complete', pages: 40, elapsedMs: 72 * 60000 }] } } } };
+/** Проверка результата: статус под таймером, книга ниже; рейтинг остаётся перед историей. */
 export const Review: Story = { args: { data: { ...individualReadingFixture,
   me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'review', pages: 10, elapsedMs: 20 * 60000 }] } } } };
 export const Qualifying: Story = { args: { data: { ...individualReadingFixture, me: { ...individualReadingFixture.ranking[3], userId: 'demo-reader' }, ranking: individualReadingFixture.ranking.map(m => m.userId === 'r4' ? { ...m, userId: 'demo-reader' } : m.userId === 'demo-reader' ? { ...m, userId: 'other' } : m) } } };
