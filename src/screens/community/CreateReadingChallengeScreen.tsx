@@ -22,7 +22,7 @@ export function CreateReadingChallengeScreen({ navigation }: NativeStackScreenPr
   if (state.phase === 'success' && state.publication && state.challengeId) {
     const draft = state.publication.draft, challengeId = state.challengeId;
     return <CreationSuccess kind="challenge" celebrate title={draft.title} dateLabel={`${readingDateLabel(draft.startDate)} · 00:00, Казахстан`}
-      summary={`${draft.mode === 'continuous' ? 'Без даты окончания' : `${draft.durationDays} дн.`} · Команд: ${draft.teams.length} · 60 минут чтения в день`} destination="detail"
+      summary={`${draft.mode === 'continuous' ? 'Без даты окончания' : `${draft.durationDays} дн.`} · ${draft.teams.length ? `Команд: ${draft.teams.length}` : 'Индивидуальный зачёт'} · 60 минут чтения в день`} destination="detail"
       onOpen={() => navigation.replace('ReadingChallenge', { challengeId })}
       onClose={() => navigation.popTo('CommunityHome', { refresh: Date.now(), focus: 'challenge' })} />;
   }

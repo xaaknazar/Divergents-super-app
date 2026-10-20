@@ -415,14 +415,14 @@ export function ProfileHomeScreen({ navigation }: Props) {
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable onPress={() => navigation.navigate('WorkoutTrack')} accessibilityRole="button" accessibilityLabel={tr('Записать тренировку')}
-              style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
               <SF name="figure.run" size={15} color={T.onBrand} />
               <Text style={[ty.subheadEm, { color: T.onBrand }]}>{tr('Записать')}</Text>
             </Pressable>
             <Pressable onPress={() => navigation.navigate('MyFitness')} accessibilityRole="button" accessibilityLabel={tr('Открыть мои тренировки')}
-              style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
-              <SF name="arrow.right" size={15} color={T.brand} />
-              <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Открыть')}</Text>
+              style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              <SF name="arrow.right" size={15} color={T.brandText} />
+              <Text style={[ty.subheadEm, { color: T.brandText }]}>{tr('Открыть')}</Text>
             </Pressable>
           </View>
         </Pressable>

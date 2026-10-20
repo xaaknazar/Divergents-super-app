@@ -1,15 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-native';
 import { ReadingProgressSummary } from './ReadingProgressSummary';
-import { continuousReadingFixture, readingFixture } from '../storybook/readingFixtures';
-const member = { ...readingFixture.me!, completedDays: 4, pages: 152, extraMs: 1500000,
-  history: Array.from({ length: 5 }, (_, i) => ({ day: i + 1, state: i === 4 ? 'open' as const : 'complete' as const, pages: 30, elapsedMs: 3900000 })) };
-const meta = { title: 'Reading/Progress', component: ReadingProgressSummary, args: { member },
-} satisfies Meta<typeof ReadingProgressSummary>;
+import type { ReadingDetail } from '../data/reading';
+const member: NonNullable<ReadingDetail['me']> = { userId: 'me', name: 'Акназар', teamId: null, flags: 1, completedDays: 8, pages: 312,
+  elapsedMs: 600 * 60000, extraMs: 0, eliminatedOn: null, history: [], averagePages: 41, readingDays: 9, daysParticipated: 10 };
+const meta = { title: 'Reading/ReadingProgressSummary', component: ReadingProgressSummary, args: { member, todayMs: 18 * 60000 } } satisfies Meta<typeof ReadingProgressSummary>;
 export default meta;
 type Story = StoryObj<typeof meta>;
-export const Light: Story = {};
+export const BelowGoal: Story = {};
+export const NotStarted: Story = { args: { todayMs: 0, member: { ...member, flags: 0 } } };
+export const GoalDone: Story = { args: { todayMs: 72 * 60000, member: { ...member, flags: 0 } } };
+export const HistoryOnly: Story = { args: { todayMs: undefined } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
-export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
-export const Today: Story = { args: { day: 5 } };
-export const ContinuousToday: Story = { args: { member: continuousReadingFixture.me!, day: 12 } };
-export const ContinuousDark: Story = { args: { member: continuousReadingFixture.me!, day: 12 }, parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };

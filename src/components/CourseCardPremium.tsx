@@ -7,7 +7,7 @@ import type { Course } from '../data/courses';
 import { lessons as lessonsWord } from '../data/plural';
 import { courseAccessBadge } from '../lib/coursePresentation';
 import { useTheme } from '../theme/ThemeContext';
-import { nums,shadows } from '../theme/tokens';
+import { FONT,nums,shadows } from '../theme/tokens';
 import { CourseCover } from './CourseCover';
 import { PressableScale } from './PressableScale';
 import { ProgressBar } from './ProgressBar';
@@ -37,7 +37,7 @@ export function CourseCardPremium({
             <View style={styles.footer}>
               {owned ? <View style={styles.progress}>
                 <ProgressBar value={pct / 100} tone={done ? 'success' : 'brand'} accessibilityLabel={`Пройдено: ${course.title}`} />
-                <Text style={[ty.caption2Em, nums, { color: done ? T.greenText : T.brandText }]}>{done ? 'Пройден' : `${pct}% пройдено`}</Text>
+                <Text style={[ty.caption1, nums, styles.progressText, { color: done ? T.greenText : T.brandText }]}>{done ? 'Пройден' : `${pct}% пройдено`}</Text>
               </View> : <View style={styles.price}>
                 <Text style={[ty.subheadEm, { color: badge.accent ? T.brandText : T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{badge.label}</Text>
                 <SF name="chevron.right" size={16} color={T.labelTertiary} />
@@ -58,5 +58,6 @@ const styles = StyleSheet.create({
   title: { minHeight: 40 },
   footer: { marginTop: 'auto', paddingTop: 10 },
   progress: { gap: 6, paddingTop: 2 },
+  progressText: { fontFamily: FONT.bold },
   price: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
 });

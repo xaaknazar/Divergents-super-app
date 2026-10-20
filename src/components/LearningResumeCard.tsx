@@ -6,7 +6,7 @@ import React from 'react';
 import { StyleSheet,Text,View } from 'react-native';
 import { imgUrl } from '../data/api';
 import { useTheme } from '../theme/ThemeContext';
-import { nums,shadows } from '../theme/tokens';
+import { FONT,nums,shadows } from '../theme/tokens';
 import { PressableScale } from './PressableScale';
 import { ProgressBar } from './ProgressBar';
 import { SF,SFName } from './SFIcon';
@@ -43,7 +43,7 @@ export function LearningResumeCard({ title, caption, progress, imageUrl, icon = 
       </View>
       <View style={styles.progress}>
         <View style={styles.bar}><ProgressBar value={pct / 100} accessibilityLabel={`Пройдено: ${title}`} /></View>
-        <Text style={[ty.caption1, nums, { color: T.labelSecondary }]}>{pct}% пройдено</Text>
+        <Text style={[ty.caption1, nums, styles.progressText, { color: T.labelSecondary }]}>{pct}% пройдено</Text>
       </View>
     </View>
   </PressableScale>;
@@ -58,4 +58,5 @@ const styles = StyleSheet.create({
   playGlyph: { marginLeft: 2 },
   progress: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   bar: { flex: 1 },
+  progressText: { fontFamily: FONT.semibold },
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { Platform, ScrollView, StyleSheet } from 'react-native';
-import { darkTheme } from '../../theme/tokens';
+import { darkTheme, lightTheme } from '../../theme/tokens';
 import { SectionTabs, SectionTabsProps } from '../SectionTabs';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
 
@@ -12,8 +12,8 @@ const items = [
 ];
 const originalOS = Platform.OS;
 afterEach(() => { Object.defineProperty(Platform, 'OS', { value: originalOS }); });
-const theme = (content: React.ReactNode, reduceTransparency = false) => (
-  <ThemePreviewProvider reduceTransparency={reduceTransparency}>{content}</ThemePreviewProvider>
+const theme = (content: React.ReactNode, reduceTransparency = false, scheme: 'light' | 'dark' = 'light') => (
+  <ThemePreviewProvider reduceTransparency={reduceTransparency} scheme={scheme}>{content}</ThemePreviewProvider>
 );
 const flattened = (node: { props: { style?: unknown } }) => StyleSheet.flatten(node.props.style as any);
 const hidden = { includeHiddenElements: true };
@@ -44,17 +44,22 @@ it('preserves the controlled value and gives a visible keyboard focus outline', 
   const sport = view.getByRole('tab', { name: 'Спорт' });
   expect(sport.props.accessibilityState.selected).toBe(true);
   await fireEvent(sport, 'focus');
-  expect(flattened(view.getByRole('tab', { name: 'Спорт' })).borderColor).toBe(darkTheme.label);
+  expect(flattened(view.getByRole('tab', { name: 'Спорт' })).borderColor).toBe(lightTheme.label);
 });
 
-it('uses a dark material confined to the rail, and honors Reduce Transparency', async () => {
+it('follows the light and dark theme, confined to the rail, and honors Reduce Transparency', async () => {
   Object.defineProperty(Platform, 'OS', { value: 'ios' });
   const view = await render(theme(<SectionTabs items={items} value={0} onChange={jest.fn()} />));
-  expect(view.getByTestId('section-tabs-blur', hidden).props.tint).toBe('dark');
+  expect(view.getByTestId('section-tabs-blur', hidden).props.tint).toBe('light');
   expect(flattened(view.getByTestId('section-tabs-surface'))).toMatchObject({ borderRadius: 999, overflow: 'hidden' });
-  await view.rerender(theme(<SectionTabs items={items} value={0} onChange={jest.fn()} />, true));
+  expect(view.getByText('Каналы').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ color: lightTheme.labelSecondary })]));
+  await view.rerender(theme(<SectionTabs items={items} value={0} onChange={jest.fn()} />, false, 'dark'));
+  expect(view.getByTestId('section-tabs-blur', hidden).props.tint).toBe('dark');
+  await view.rerender(theme(<SectionTabs items={items} value={0} onChange={jest.fn()} />, true, 'dark'));
   expect(view.queryByTestId('section-tabs-blur', hidden)).toBeNull();
   expect(flattened(view.getByTestId('section-tabs-tint', hidden)).backgroundColor).toBe(darkTheme.cardBg);
+  await view.rerender(theme(<SectionTabs items={items} value={0} onChange={jest.fn()} />, true, 'light'));
+  expect(flattened(view.getByTestId('section-tabs-tint', hidden)).backgroundColor).toBe(lightTheme.cardBg);
 });
 
 it('avoids the experimental Android blur renderer and leaves no empty rail', async () => {

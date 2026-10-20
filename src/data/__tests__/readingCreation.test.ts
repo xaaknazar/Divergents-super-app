@@ -14,7 +14,8 @@ test('invalid dates and a date that just started are rejected', () => {
 test('draft limits match the server contract', () => {
   const valid = { title: 'Читаем', startDate: '2099-01-01', durationDays: 90, teams: [{ name: 'Клуб', captainNickname: 'Reader', capacity: 100 }] };
   expect(ReadingChallengeDraftSchema.safeParse(valid).success).toBe(true);
-  for (const patch of [{ title: 'x'.repeat(121) }, { durationDays: 91 }, { teams: [] }, { teams: [{ ...valid.teams[0], capacity: 101 }] }]) {
+  expect(ReadingChallengeDraftSchema.safeParse({ ...valid, teams: [] }).success).toBe(true); // индивидуальный зачёт
+  for (const patch of [{ title: 'x'.repeat(121) }, { durationDays: 91 }, { teams: [{ ...valid.teams[0], capacity: 101 }] }]) {
     expect(ReadingChallengeDraftSchema.safeParse({ ...valid, ...patch }).success).toBe(false);
   }
 });

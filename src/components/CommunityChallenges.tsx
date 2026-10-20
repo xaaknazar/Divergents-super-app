@@ -28,7 +28,7 @@ export function CommunityChallenges({ navigation, challenges, error, onRetry }: 
   return (
     <>
       <ReadingChallengeShelf items={reading.items} error={reading.error} onRetry={reading.retry} onOpen={challengeId => navigation.navigate('ReadingChallenge', { challengeId })}
-        variant={appearance.card} onAppearance={() => navigation.navigate('ReadingAppearance')} />
+        variant={appearance.card} />
       <SectionHeader title={mine.length + otherActive.length > 1 ? tr('Активные челленджи') : tr('Активный челлендж')} />
       {loading ? <ContentLoading /> : hasActive ? (
         <>

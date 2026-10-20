@@ -1,36 +1,64 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
-import type { ReadingDetail } from '../data/reading';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ReadingDetail, readingDaysOf, readingPaceOf } from '../data/reading';
+import { word } from '../data/plural';
+import { fmtDecimal, fmtInt } from '../data/format';
 import { useTheme } from '../theme/ThemeContext';
-import { Wrapper } from './Wrapper';
-import { ContentBlock } from './ContentBlock';
-import { StatusBadge } from './StatusBadge';
-import { Button } from './Button';
-import { ReadingPaceSummary } from './ReadingPaceSummary';
+import { nums, radius } from '../theme/tokens';
 
-/** «Сегодня / цель» и накопительные показатели (ReadingPaceSummary) + дневник чтения по дням. */
-export function ReadingProgressSummary({ member, day }: { member: NonNullable<ReadingDetail['me']>; day?: number }) {
-  const { T, ty } = useTheme();
-  const [expanded, setExpanded] = useState(false);
-  const days = member.history.filter(h => h.state !== 'future');
-  const visible = expanded ? days : days.slice(-3);
-  return <View style={{ gap: 12 }}>
-    <Text accessibilityRole="header" style={[ty.title3, { color: T.label }]}>Ваш прогресс</Text>
-    <ReadingPaceSummary member={member} day={day} />
-    <ContentBlock><Wrapper gap={16}>
-      <Wrapper dir="row" justify="space-between" align="center" wrap gap={8}>
-        <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>Дневник чтения</Text>
-        <StatusBadge label={member.averageMinutes !== undefined ? `Пропуски: ${member.flags}` : `Флаги: ${member.flags} из 3`} icon="flag.fill" tone={member.flags ? 'danger' : 'neutral'} />
-      </Wrapper>
-      {visible.map(h => <View key={h.day} style={{ gap: 8, borderTopWidth: 0.5, borderTopColor: T.separator, paddingTop: 12 }}>
-        <Wrapper dir="row" justify="space-between" align="center" wrap gap={8}>
-          <Text style={[ty.subheadEm, { color: T.label }]}>День {h.day - (member.firstDay ?? 1) + 1}</Text>
-          <StatusBadge label={{ complete: 'Выполнен', missed: 'Красный флаг', review: 'На проверке', open: 'Идёт', future: 'Впереди', excluded: 'Участие завершено' }[h.state]}
-            tone={h.state === 'complete' ? 'success' : h.state === 'missed' ? 'danger' : h.state === 'review' ? 'warning' : 'neutral'} size="compact" />
-        </Wrapper>
-        <Text style={[ty.subhead, { color: T.labelSecondary }]}>{Math.floor(h.elapsedMs / 60000)} мин · {h.pages} стр.{h.elapsedMs > 3600000 ? ` · +${Math.floor((h.elapsedMs - 3600000) / 60000)} мин сверх часа` : ''}</Text>
+const GOAL_MINUTES = 60;
+
+/** «Сегодня»: «18 / 60 мин» с полосой и строкой про красный флаг, ниже сетка 2×2 — средний темп
+ * в страницах (по нему рейтинг), дни чтения, красные флаги, страницы всего. Без `todayMs` — только сетка (история). */
+export function ReadingProgressSummary({ member, todayMs }: { member: NonNullable<ReadingDetail['me']>; todayMs?: number }) {
+  const { T, ty, textScale } = useTheme();
+  const { fontScale, width } = useWindowDimensions();
+  const [cardWidth, setCardWidth] = useState(width - 32);
+  const single = fontScale * textScale > 1.3 || cardWidth < 300;
+  const minutes = todayMs !== undefined ? Math.floor(todayMs / 60000) : 0;
+  const left = Math.max(0, GOAL_MINUTES - minutes);
+  const readingDays = readingDaysOf(member);
+  const cells = [
+    { value: `${fmtDecimal(readingPaceOf(member))} стр/день`, label: 'средний темп · по нему рейтинг', tone: T.label },
+    { value: String(readingDays), label: `${word(readingDays, 'день', 'дня', 'дней')} чтения`, tone: T.label },
+    { value: String(member.flags), label: word(member.flags, 'красный флаг', 'красных флага', 'красных флагов'), tone: member.flags ? T.redText : T.label },
+    { value: fmtInt(member.pages), label: `${word(member.pages, 'страница', 'страницы', 'страниц')} всего`, tone: T.label },
+  ];
+  return <View onLayout={event => setCardWidth(event.nativeEvent.layout.width)}
+    style={[styles.card, { backgroundColor: T.cardBg, borderColor: T.cardBorder }]}>
+    {todayMs !== undefined ? <>
+      <View style={styles.todayRow}>
+        <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>Сегодня</Text>
+        <Text accessibilityLabel={`Сегодня ${minutes} из ${GOAL_MINUTES} минут`} style={[ty.title2, nums, { color: T.label }]}>
+          {minutes}<Text style={[ty.callout, nums, { color: T.labelSecondary }]}> / {GOAL_MINUTES} мин</Text>
+        </Text>
+      </View>
+      <View accessible={false} style={[styles.track, { backgroundColor: T.fillTertiary }]}>
+        <View style={[styles.fill, { width: `${Math.min(1, minutes / GOAL_MINUTES) * 100}%`, backgroundColor: left ? T.brandText : T.greenText }]} />
+      </View>
+      <Text accessibilityLiveRegion="polite" style={[ty.footnoteEm, nums, { color: left ? T.redText : T.greenText }]}>
+        {left ? `Ещё ${left} мин до 00:00, иначе красный флаг` : 'Час выполнен — сегодня без флага'}
+      </Text>
+      <View style={[styles.rule, { backgroundColor: T.separator }]} />
+    </> : null}
+    <View style={styles.grid}>
+      {cells.map((c, i) => <View key={c.label} style={[styles.cell, single ? styles.full : styles.half,
+        !single && i % 2 === 1 && [styles.divided, { borderLeftColor: T.separator }]]}>
+        <Text style={[ty.title3, nums, { color: c.tone }]}>{c.value}</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary }]}>{c.label}</Text>
       </View>)}
-      {days.length > 3 ? <Button label={expanded ? 'Свернуть историю' : `Все дни (${days.length})`} variant="plain" onPress={() => setExpanded(v => !v)} /> : null}
-    </Wrapper></ContentBlock>
+    </View>
   </View>;
 }
+const styles = StyleSheet.create({
+  card: { borderRadius: radius.block, borderCurve: 'continuous', borderWidth: 1, padding: 16, gap: 10 },
+  todayRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' },
+  track: { height: 6, borderRadius: 3, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 3 },
+  rule: { height: 0.5, marginVertical: 4 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
+  cell: { gap: 2, paddingRight: 8 },
+  half: { width: '50%' },
+  full: { width: '100%' },
+  divided: { borderLeftWidth: 0.5, paddingLeft: 12 },
+});

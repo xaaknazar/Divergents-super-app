@@ -1,122 +1,224 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { Alert } from 'react-native';
-import { ReadingChallengeContent, ReadingChallengeContentProps } from '../ReadingChallengeContent';
+import { ReadingChallengeContent, ReadingChallengeContentProps, ReadingBookInput } from '../ReadingChallengeContent';
 import { ReadingTimer } from '../ReadingTimer';
 import { ReadingChallengeCard } from '../ReadingChallengeCard';
-import { ReadingProgressSummary } from '../ReadingProgressSummary';
 import { ReadingRules } from '../ReadingRules';
-import { READING_RULES } from '../../data/reading';
+import { READING_CHALLENGE_RULES } from '../../data/reading';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
-import { readingFixture } from '../../storybook/readingFixtures';
+import { individualReadingFixture, readingFixture } from '../../storybook/readingFixtures';
 jest.mock('../../data/api', () => ({ API_BASE: 'https://example.test' }));
 jest.mock('../SFIcon', () => ({ SF: () => null }));
 jest.mock('../../lib/haptics', () => ({ hTap: jest.fn(), hSelect: jest.fn() }));
-const props = (): ReadingChallengeContentProps => ({ data: readingFixture, remainingMs: 2400000, timerState: 'running', protection: 'ready', busy: false,
-  awaitingPages: false, needsRecovery: false, onPrepare: jest.fn(), onStart: jest.fn(), onPause: jest.fn(), onReport: jest.fn(),
-  onJoin: jest.fn(), onApplications: jest.fn(), onRetry: jest.fn(), onRecover: jest.fn(), onResolve: jest.fn() });
-test('catalog card opens the same challenge and distinguishes spectators', async () => {
+const book = (over: Partial<ReadingBookInput> = {}): ReadingBookInput => ({ title: 'Атомные привычки', author: 'Джеймс Клир', status: 'verified',
+  verified: { title: 'Атомные привычки', author: 'Джеймс Клир', key: 'ol:OL1W' }, suggestions: [], pick: jest.fn(), reject: jest.fn(), manual: jest.fn(), setTitle: jest.fn(), setAuthor: jest.fn(), check: jest.fn(), edit: jest.fn(), ...over });
+const session = { id: 's1', deviceId: 'd1', day: 14, book: 'Атомные привычки', author: 'Джеймс Клир', budgetMs: 36_000_000,
+  startedAt: '2026-10-20T08:00:00Z', elapsedMs: 18 * 60000, status: 'running' as const };
+const withToday = (elapsedMs: number, state: 'open' | 'complete' | 'review' = 'open') =>
+  ({ ...individualReadingFixture, me: { ...individualReadingFixture.me!, history: [{ day: 14, state, pages: 12, elapsedMs }] } });
+const props = (): ReadingChallengeContentProps => ({ data: { ...individualReadingFixture, session }, remainingMs: 2400000, timerState: 'running', protection: 'ready', busy: false,
+  awaitingPages: false, needsRecovery: false, book: book(), onPrepare: jest.fn(), onStart: jest.fn(), onPause: jest.fn(), onReport: jest.fn(),
+  onSaveApproach: jest.fn(), onJoin: jest.fn(), onRetry: jest.fn(), onRecover: jest.fn(), onRanking: jest.fn(), onHistory: jest.fn() });
+const show = (p: ReadingChallengeContentProps) => render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+
+test('catalog card: an open challenge invites to join, a dated running one only shows the ranking', async () => {
   const onPress = jest.fn();
-  const view = await render(<ThemePreviewProvider><ReadingChallengeCard challenge={{ ...readingFixture, membership: null }} onPress={onPress} /></ThemePreviewProvider>);
-  await fireEvent.press(view.getByRole('button', { name: /Смотреть рейтинг/ }));
+  const view = await render(<ThemePreviewProvider><ReadingChallengeCard challenge={{ ...readingFixture, mode: 'continuous', membership: null }} onPress={onPress} /></ThemePreviewProvider>);
+  await fireEvent.press(view.getByRole('button', { name: /Присоединиться/ }));
   expect(onPress).toHaveBeenCalledTimes(1);
-  expect(view.queryByText('Вы участвуете')).toBeNull();
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeCard challenge={{ ...readingFixture, membership: null }} onPress={onPress} /></ThemePreviewProvider>);
+  expect(view.getByRole('button', { name: /Смотреть рейтинг/ })).toBeTruthy();
+  expect(view.queryByText(/команд/i)).toBeNull();
 });
-test('recruitment still submits selected team and roster stays filtered', async () => {
-  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  const p = props();
-  p.data = { ...readingFixture, phase: 'upcoming', membership: null, me: null,
-    ranking: [...readingFixture.ranking, { ...readingFixture.ranking[0], userId: 'other', teamId: 'other-team', name: 'Другой участник' }] };
-  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  await fireEvent.press(view.getByRole('button', { name: 'Подать заявку' }));
+test('joining needs the rules checkbox and joins immediately, without teams or applications', async () => {
+  const p = { ...props(), data: { ...individualReadingFixture, membership: null, me: null } };
+  const view = await show(p);
+  expect(view.getByText(/60 минут в день · 5 участников/)).toBeTruthy();
+  for (const rule of READING_CHALLENGE_RULES) expect(view.getByText(rule.title)).toBeTruthy();
+  const join = view.getByRole('button', { name: 'Присоединиться' });
+  expect(join).toBeDisabled();
+  await fireEvent.press(join);
   expect(p.onJoin).not.toHaveBeenCalled();
-  expect(alert.mock.calls[0][1]).toContain('Капитан другой команды не увидит');
-  alert.mock.calls[0][2]?.find(button => button.text === 'Отправить заявку')?.onPress?.();
-  expect(p.onJoin).toHaveBeenCalledWith('demo-team');
-  alert.mockRestore();
-  await fireEvent.press(view.getByRole('button', { name: 'Состав команды' }));
-  expect(view.getByText('Читатель')).toBeTruthy();
-  expect(view.queryByText('Другой участник')).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Показать всех участников' }));
-  expect(view.getByText('Другой участник')).toBeTruthy();
+  await fireEvent.press(view.getByRole('checkbox', { name: 'Я ознакомился(-ась) с правилами челленджа' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Присоединиться' }));
+  expect(p.onJoin).toHaveBeenCalledWith();
+  expect(view.queryByText(/Команд|капитан|Заявк/)).toBeNull();
+  expect(view.queryByRole('button', { name: 'Пауза' })).toBeNull();
 });
-test('before start only recruitment is shown, without timer, private history or inline applications', async () => {
-  const p = { ...props(), data: { ...readingFixture, phase: 'upcoming' as const, applications: [{ id: 'applicant', teamId: 'demo-team', name: 'Тестовая заявка' }] }, onHistory: jest.fn() };
-  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.queryByText('Ваш прогресс')).toBeNull();
-  expect(view.queryByRole('button', { name: 'Мои книги и история' })).toBeNull();
-  expect(view.queryByRole('button', { name: 'Пауза и запись страниц' })).toBeNull();
-  expect(view.queryByRole('button', { name: 'Принять' })).toBeNull();
-  expect(view.queryByText('Тестовая заявка')).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Заявки команды · 1' }));
-  expect(p.onApplications).toHaveBeenCalledTimes(1);
+test('a finished challenge cannot be joined', async () => {
+  const view = await show({ ...props(), data: { ...individualReadingFixture, phase: 'finished', membership: null, me: null } });
+  expect(view.queryByRole('button', { name: 'Присоединиться' })).toBeNull();
+  expect(view.getByText(/вступить уже нельзя/)).toBeTruthy();
 });
-test('a foreign session permits team navigation but cannot show or pause someone else’s timer', async () => {
+test('participant page: rank link opens the ranking; no challenge block, teams or tabs', async () => {
+  const p = props();
+  const view = await show(p);
+  await fireEvent.press(view.getByRole('button', { name: 'Мой рейтинг. 3 место из 5 участников' }));
+  expect(p.onRanking).toHaveBeenCalledTimes(1);
+  expect(view.queryByText(individualReadingFixture.title)).toBeNull();
+  expect(view.queryByText(/Команды|Участники/)).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: 'Мои книги и история' }));
+  expect(p.onHistory).toHaveBeenCalledWith('demo-reader');
+});
+test('a participant without a place sees why', async () => {
+  const p = props();
+  p.data = { ...p.data, ranking: p.data.ranking.map(m => m.userId === 'demo-reader' ? { ...m, rankingEligible: false, qualificationDaysLeft: 4 } : m) };
+  const view = await show(p);
+  expect(view.getByText('До участия в рейтинге — 4 дня')).toBeTruthy();
+});
+test('today shows the red-flag warning until the hour is done', async () => {
+  const p = { ...props(), timerState: 'ready' as const, data: withToday(18 * 60000) };
+  const view = await show(p);
+  expect(view.getByText('Ещё 42 мин до 00:00, иначе красный флаг')).toBeTruthy();
+  expect(view.getByText('22,3 стр/день')).toBeTruthy();
+  expect(view.getByText('средний темп · по нему рейтинг')).toBeTruthy();
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={withToday(61 * 60000, 'complete')} timerState="complete" /></ThemePreviewProvider>);
+  expect(view.getByText('Час выполнен — сегодня без флага')).toBeTruthy();
+});
+test('a foreign session cannot show or pause someone else’s timer', async () => {
   const p = { ...props(), sessionNotice: { kind: 'other-account' as const, message: 'Сеанс другого аккаунта сохранён отдельно.' }, startBlocked: true };
-  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.queryByRole('button', { name: 'Пауза и запись страниц' })).toBeNull();
-  expect(view.getByRole('button', { name: 'Состав команды' })).toBeTruthy();
+  const view = await show(p);
+  expect(view.queryByRole('button', { name: 'Пауза' })).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: 'Повторить' }));
   expect(p.onRetry).toHaveBeenCalledTimes(1);
 });
-test('a finished continuous challenge does not accept new applications', async () => {
-  const p = { ...props(), data: { ...readingFixture, phase: 'finished' as const, mode: 'continuous' as const, membership: null, me: null }, timerState: 'ready' as const };
-  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.queryByRole('button', { name: 'Подать заявку' })).toBeNull();
-});
-test('history disclosure keeps every recorded day available', async () => {
-  const member = { ...readingFixture.me!, history: Array.from({ length: 5 }, (_, i) => ({ day: i + 1, state: 'complete' as const, elapsedMs: 3600000, pages: 20 })) };
-  const view = await render(<ThemePreviewProvider><ReadingProgressSummary member={member} /></ThemePreviewProvider>);
-  expect(view.queryByText('День 1')).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Все дни (5)' }));
-  expect(view.getByText('День 1')).toBeTruthy();
-  await fireEvent.press(view.getByRole('button', { name: 'Свернуть историю' }));
-  expect(view.queryByText('День 1')).toBeNull();
-});
-test('rules disclosure exposes all rules unchanged', async () => {
+test('collapsed rules expand in place: 9 items, each opens its text', async () => {
   const view = await render(<ThemePreviewProvider><ReadingRules /></ThemePreviewProvider>);
-  expect(view.queryByText(READING_RULES[0])).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Правила и защита' }));
-  for (const rule of READING_RULES) expect(view.getByText(rule)).toBeTruthy();
+  expect(view.queryByText(READING_CHALLENGE_RULES[0].title)).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: 'Правила челленджа, 9 пунктов' }));
+  for (const rule of READING_CHALLENGE_RULES) expect(view.getByText(rule.title)).toBeTruthy();
+  expect(view.queryByText(READING_CHALLENGE_RULES[6].text)).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: `Пункт 7. ${READING_CHALLENGE_RULES[6].title}` }));
+  expect(view.getByText(READING_CHALLENGE_RULES[6].text)).toBeTruthy();
 });
-test('mandatory hour only offers pause; overtime also offers finish', async () => {
-  const p = props(); const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.queryByRole('button', { name: 'Завершить чтение' })).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Пауза и запись страниц' }));
+test('while the timer runs there is only «Пауза», also in overtime', async () => {
+  const p = props(); const view = await show(p);
+  expect(view.queryByRole('button', { name: /Завершить/ })).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: 'Пауза' }));
   expect(p.onPause).toHaveBeenCalledTimes(1);
   await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} remainingMs={-120000} /></ThemePreviewProvider>);
-  await fireEvent.press(view.getByRole('button', { name: 'Завершить чтение' }));
+  expect(view.getByText('+02:00')).toBeTruthy();
+  expect(view.queryByRole('button', { name: /Завершить/ })).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: 'Пауза' }));
   expect(p.onPause).toHaveBeenCalledTimes(2);
 });
-test('overtime counts up and shows a completed ring instead of resetting the hour', async () => {
-  const view = await render(<ThemePreviewProvider><ReadingTimer remainingMs={-925000} state="running" /></ThemePreviewProvider>);
-  expect(view.getByText('+15:25')).toBeTruthy(); expect(view.getByText('Час выполнен')).toBeTruthy();
+test('pause stays available during a pending request; the book of the running approach is locked', async () => {
+  const p = { ...props(), blockingMode: 'all-apps' as const, busy: true, error: 'Ждём сервер' };
+  const view = await show(p);
+  const pause = view.getByRole('button', { name: 'Пауза' });
+  expect(pause).toBeEnabled();
+  await fireEvent.press(pause);
+  expect(p.onPause).toHaveBeenCalledTimes(1);
+  expect(view.queryByRole('button', { name: /Сменить книгу/ })).toBeNull();
+  expect(view.getByText('Строгий режим · ограничения iOS')).toBeTruthy();
 });
-test('paused report requires an explicit page number and submits only that number', async () => {
-  const p = { ...props(), timerState: 'paused' as const, awaitingPages: true };
-  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeDisabled();
+test('after a pause: pages for this approach and «Возобновить»', async () => {
+  const p = { ...props(), resumableSession: true, canResume: true, timerState: 'paused' as const, onResume: jest.fn() };
+  const view = await show(p);
+  await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
+  expect(p.onResume).toHaveBeenCalledTimes(1);
+  expect(view.getByText('Страницы за этот подход')).toBeTruthy();
   await fireEvent.changeText(view.getByLabelText('Страниц за этот подход'), '22');
   await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
-  expect(p.onReport).toHaveBeenCalledWith(22);
+  expect(p.onSaveApproach).toHaveBeenCalledWith(22, undefined);
+  expect(p.onReport).not.toHaveBeenCalled();
+  expect(p.onStart).not.toHaveBeenCalled();
 });
-test('pages stepper starts from an explicit zero and never goes negative', async () => {
+test('an already closed approach reports its pages', async () => {
   const p = { ...props(), timerState: 'paused' as const, awaitingPages: true };
-  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  const view = await show(p);
   expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeDisabled();
   expect(view.getByRole('button', { name: 'Меньше страниц' })).toBeDisabled();
   await fireEvent.press(view.getByRole('button', { name: 'Больше страниц' }));
   await fireEvent.press(view.getByRole('button', { name: 'Меньше страниц' }));
   await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
-  expect(p.onReport).toHaveBeenCalledWith(0);
+  expect(p.onReport).toHaveBeenCalledWith(0, undefined);
 });
-test('team card shows the captain only when the name is known from the challenge data', async () => {
-  const p = props();
-  p.data = { ...readingFixture, phase: 'upcoming', membership: null, me: null,
-    ranking: [...readingFixture.ranking, { ...readingFixture.ranking[0], userId: 'demo-captain', name: 'Аружан' }] };
-  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.getByText(/Капитан Аружан · 8 мест свободно/)).toBeTruthy();
-  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={{ ...p.data, ranking: readingFixture.ranking }} /></ThemePreviewProvider>);
-  expect(view.queryByText(/Капитан \S+ · /)).toBeNull();
-  expect(view.getByText("8 мест свободно")).toBeTruthy();
+test('«Старт» at 60:00 and «Возобновить» after the first approach start a new approach with the checked book', async () => {
+  const p = { ...props(), timerState: 'ready' as const, remainingMs: 3_600_000, data: withToday(0) };
+  const view = await show(p);
+  await fireEvent.press(view.getByRole('button', { name: 'Старт' }));
+  expect(p.onStart).toHaveBeenCalledWith('Атомные привычки', { author: 'Джеймс Клир', bookKey: 'ol:OL1W', coverId: undefined });
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={withToday(18 * 60000)} remainingMs={42 * 60000} /></ThemePreviewProvider>);
+  expect(view.queryByRole('button', { name: 'Старт' })).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
+  expect(p.onStart).toHaveBeenCalledTimes(2);
+});
+test('«Старт» needs a confirmed book: AI proposes «Эта книга?», the reader picks or rejects', async () => {
+  const b = book({ title: '', author: '', status: 'empty', verified: null });
+  const p = { ...props(), timerState: 'ready' as const, remainingMs: 3_600_000, data: withToday(0), book: b };
+  const view = await show(p);
+  expect(view.getByRole('button', { name: 'Старт' })).toBeDisabled();
+  expect(view.getByRole('button', { name: 'Найти книгу' })).toBeDisabled();
+  const typed = { ...b, title: 'атомные привычки' };
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} book={typed} /></ThemePreviewProvider>);
+  expect(view.getByRole('button', { name: 'Старт' })).toBeDisabled();
+  await fireEvent.press(view.getByRole('button', { name: 'Найти книгу' }));
+  expect(b.check).toHaveBeenCalledTimes(1);
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} book={{ ...typed, status: 'suggested',
+    suggestions: [{ title: 'Атомные привычки', author: 'Джеймс Клир' }, { title: 'Атомные привычки. Рабочая тетрадь', author: 'Джеймс Клир' }] }} /></ThemePreviewProvider>);
+  expect(view.getByText('Какая из этих книг?')).toBeTruthy();
+  expect(view.getByText('Атомные привычки. Рабочая тетрадь')).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Старт' })).toBeDisabled();
+  await fireEvent.press(view.getAllByRole('button', { name: 'Да, эта' })[1]);
+  expect(b.pick).toHaveBeenCalledWith(1);
+  await fireEvent.press(view.getByRole('button', { name: 'Нет, другая книга' }));
+  expect(b.reject).toHaveBeenCalledTimes(1);
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} book={{ ...typed, status: 'notFound' }} /></ThemePreviewProvider>);
+  expect(view.getByText(/Не нашли подходящую книгу/)).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: 'Найти снова' }));
+  expect(b.check).toHaveBeenCalledTimes(2);
+});
+test('if AI finds nothing, the reader writes title and author manually and can start', async () => {
+  const b = book({ title: 'Моя редкая книга', author: '', status: 'notFound', verified: null });
+  const p = { ...props(), timerState: 'ready' as const, remainingMs: 3_600_000, data: withToday(0), book: b };
+  const view = await show(p);
+  expect(view.getByRole('button', { name: 'Записать вручную' })).toBeDisabled();
+  expect(view.getByText('Для записи вручную укажите название и автора.')).toBeTruthy();
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} book={{ ...b, author: 'Местный автор' }} /></ThemePreviewProvider>);
+  await fireEvent.press(view.getByRole('button', { name: 'Записать вручную' }));
+  expect(b.manual).toHaveBeenCalledTimes(1);
+  const manual = { title: 'Моя редкая книга', author: 'Местный автор', manual: true };
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} book={{ ...b, author: 'Местный автор', status: 'verified', verified: manual }} /></ThemePreviewProvider>);
+  expect(view.getByText('Указана вручную')).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: 'Старт' }));
+  expect(p.onStart).toHaveBeenCalledWith('Моя редкая книга', { author: 'Местный автор', bookKey: undefined, coverId: undefined });
+});
+test('strict start explains full scope and requires explicit confirmation', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  try {
+    const p = { ...props(), blockingMode: 'all-apps' as const, timerState: 'ready' as const, data: withToday(0) };
+    const view = await show(p);
+    await fireEvent.press(view.getByRole('button', { name: 'Старт' }));
+    expect(p.onStart).not.toHaveBeenCalled();
+    expect(alert.mock.calls[0][1]).toContain('банки, карты и читалки');
+    expect(alert.mock.calls[0][1]).toContain('даже без интернета');
+    alert.mock.calls[0][2]?.find(button => button.text === 'Начать чтение')?.onPress?.();
+    expect(p.onStart).toHaveBeenCalledWith('Атомные привычки', expect.any(Object));
+  } finally { alert.mockRestore(); }
+});
+test('strict mode requests authorization without an application picker', async () => {
+  const p = { ...props(), blockingMode: 'all-apps' as const, timerState: 'ready' as const, protection: 'permission' as const, data: withToday(0) };
+  const view = await show(p);
+  expect(view.queryByRole('button', { name: 'Выбрать приложения' })).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: 'Разрешить блокировку' }));
+  expect(p.onPrepare).toHaveBeenCalledTimes(1);
+  expect(view.getByRole('button', { name: 'Старт' })).toBeDisabled();
+});
+test('overtime counts up and shows a completed ring instead of resetting the hour', async () => {
+  const view = await render(<ThemePreviewProvider><ReadingTimer remainingMs={-925000} state="running" /></ThemePreviewProvider>);
+  expect(view.getByText('+15:25')).toBeTruthy(); expect(view.getByText('Час выполнен')).toBeTruthy();
+});
+test.each(['paused', 'recording', 'saving'] as const)('%s keeps the frozen overtime value visible', async state => {
+  const view = await render(<ThemePreviewProvider><ReadingTimer remainingMs={-925000} state={state} /></ThemePreviewProvider>);
+  expect(view.getByText('+15:25')).toBeTruthy();
+  expect(view.queryByText('00:00')).toBeNull();
+});
+test('a day under review keeps the timer visible and explains why a new approach cannot start', async () => {
+  const p = { ...props(), timerState: 'paused' as const, remainingMs: 1800000, data: { ...withToday(1800000, 'review'), session: null } };
+  const view = await show(p);
+  expect(view.getByText('Осталось сегодня')).toBeTruthy();
+  expect(view.getByText(/Чтение снова откроется завтра/)).toBeTruthy();
+  expect(view.queryByRole('button', { name: /Старт|Возобновить/ })).toBeNull();
 });

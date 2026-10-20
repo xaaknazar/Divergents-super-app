@@ -96,6 +96,13 @@ export function LMSHomeScreen({ navigation }: Props) {
   );
 
   const showSearch = !query && cat === 'Все';
+  // Отступы разделов по макету: «Мои курсы» — 28 под верхним блоком, у ленты свой запас 24 под тень,
+  // «Все курсы» — ещё 8 после ленты. Верхний блок даёт 12, раздел добавляет остальное.
+  const myLoadingShown = showSearch && my.isSignedIn && my.loading && !my.ready;
+  const shelfShown = showSearch && my.isSignedIn && my.courses.length > 0;
+  const myErrorShown = !shelfShown && showSearch && my.isSignedIn && !!my.error && my.courses.length === 0;
+  const featuredShown = showSearch && !!featured;
+  const allCoursesTop = featuredShown || myLoadingShown || myErrorShown ? 0 : shelfShown ? 8 : 16;
 
   // Стартовая акция: показываем, только если она идёт и этот аккаунт под неё
   // подходит. Нажатие ведёт в первый подаренный курс.
@@ -111,7 +118,7 @@ return (
     <Screen largeTitle={t('tab_learn')} backdrop="learn" onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
       <PageIntro page="lms" />
       <NavBarLarge title={t('tab_learn')} subtitle={greeting} trailing={<ProfileAvatarButton {...profileButton} onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
-      <Wrapper paddingHorizontal={16} paddingTop={8} gap={16}>
+      <Wrapper paddingHorizontal={16} paddingTop={8} paddingBottom={12} gap={16}>
         {/* Поиск один на странице: каталог ниже фильтруется этим же полем. */}
         <SearchField surface="raised" value={query} onChangeText={setQuery} placeholder={t('search_course')} />
         {!loading && !(error && courses.length === 0) && showSearch && continueCourse ? (
@@ -144,26 +151,26 @@ return (
               <StatusBadge label={t('demo_mode')} icon="wifi.slash" tone="warning" size="compact" />
             </Wrapper>
           ) : null}
-          {showSearch && my.isSignedIn && my.loading && !my.ready ? (
-            <Wrapper marginBottom={18}>
+          {myLoadingShown ? (
+            <Wrapper paddingTop={16} marginBottom={18}>
               <SectionHeader title={t('my_courses')} />
               <Wrapper marginHorizontal={16}><ListSkeleton rows={2} /></Wrapper>
             </Wrapper>
           ) : null}
-          {showSearch && my.isSignedIn && my.courses.length > 0 ? (
-            <Wrapper paddingTop={12}>
+          {shelfShown ? (
+            <Wrapper paddingTop={16}>
               <SectionHeader title={t('my_courses')} />
               <OwnedCourseShelf courses={my.courses} progress={ownedProgress}
                 onCoursePress={courseId => navigation.navigate('CourseDetail', { courseId })} />
             </Wrapper>
-          ) : showSearch && my.isSignedIn && my.error && my.courses.length === 0 ? (
-            <Wrapper marginBottom={18}>
+          ) : myErrorShown ? (
+            <Wrapper paddingTop={16} marginBottom={18}>
               <SectionHeader title={t('my_courses')} />
               <ErrorState message="Не удалось загрузить ваши курсы. Проверьте подключение." onRetry={my.reload} />
             </Wrapper>
           ) : null}
-          {showSearch && featured ? (
-            <Wrapper marginBottom={18}>
+          {featuredShown && featured ? (
+            <Wrapper paddingTop={shelfShown ? 8 : myLoadingShown || myErrorShown ? 0 : 16} marginBottom={18}>
               <SectionHeader title={t('recommended')} />
               <Wrapper marginHorizontal={16}>
                 <FeaturedCard course={featured} showPrice={feature('purchases')}
@@ -171,7 +178,9 @@ return (
               </Wrapper>
             </Wrapper>
           ) : null}
-          <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} />
+          <Wrapper paddingTop={allCoursesTop}>
+            <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} />
+          </Wrapper>
           {categories.length > 1 ? (
             <ChipRail items={categories.map((c) => ({ key: c, label: c, active: c === cat, onPress: () => setCat(c) }))} />
           ) : null}

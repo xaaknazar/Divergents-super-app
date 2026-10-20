@@ -30,19 +30,14 @@ test('calendar commits a date explicitly and cancel preserves the existing date'
   await fireEvent.press(v.getByRole('button', { name: /Дата старта:/ }));
   await fireEvent.press(v.getByRole('button', { name: 'Отмена' })); expect(onChange).toHaveBeenCalledTimes(1);
 });
-test('form validates limits and duplicate captains before publication, preserves inputs', async () => {
+test('form validates the title before publication and preserves inputs', async () => {
   const submit = jest.fn();
-  const v = await render(<ThemePreviewProvider><ReadingChallengeForm initialDraft={draft} busy={false} onSubmit={submit} /></ThemePreviewProvider>);
-  await fireEvent.changeText(v.getByLabelText('Длительность в днях'), '91');
+  const v = await render(<ThemePreviewProvider><ReadingChallengeForm busy={false} onSubmit={submit} /></ThemePreviewProvider>);
   await fireEvent.press(v.getByRole('button', { name: 'Опубликовать' }));
-  expect(submit).not.toHaveBeenCalled(); expect(v.getByText('Укажите от 1 до 90 дней')).toBeTruthy();
-  expect(v.getByText('Проверьте поля выше: Укажите от 1 до 90 дней')).toBeTruthy();
-  await fireEvent.changeText(v.getByLabelText('Длительность в днях'), '21');
-  await fireEvent.press(v.getByRole('button', { name: 'Добавить команду' }));
-  await fireEvent.changeText(v.getByLabelText('Псевдоним капитана команды 2'), 'reader');
-  await fireEvent.press(v.getByRole('button', { name: 'Опубликовать' })); expect(submit).not.toHaveBeenCalled();
-  await fireEvent.press(v.getByRole('button', { name: 'Убрать команду 2' }));
-  await fireEvent.press(v.getByRole('button', { name: 'Опубликовать' })); expect(submit).toHaveBeenCalledWith(draft);
+  expect(submit).not.toHaveBeenCalled(); expect(v.getByText('Проверьте поля выше: Название — от 2 до 120 символов')).toBeTruthy();
+  await fireEvent.changeText(v.getByLabelText('Название челленджа'), 'Читаем каждый день');
+  await fireEvent.press(v.getByRole('button', { name: 'Опубликовать' }));
+  expect(submit).toHaveBeenCalledWith(expect.objectContaining({ title: 'Читаем каждый день', mode: 'continuous', teams: [] }));
 });
 test('reading creation uses the shared creation shell and disables actions while publishing', async () => {
   const onCancel = jest.fn(), onSubmit = jest.fn();
@@ -55,27 +50,11 @@ test('reading creation uses the shared creation shell and disables actions while
   expect(v.getByRole('button', { name: 'Опубликовать' })).toBeDisabled();
   await fireEvent.press(v.getByRole('button', { name: 'Опубликовать' })); expect(onSubmit).not.toHaveBeenCalled();
 });
-test('new reading clubs default to ongoing without a duration field and keep captain approval', async () => {
-  const onSubmit = jest.fn();
-  const v = await render(<ThemePreviewProvider><ReadingChallengeForm busy={false} onSubmit={onSubmit} /></ThemePreviewProvider>);
+test('new reading clubs are individual and ongoing: no duration, teams or captains', async () => {
+  const v = await render(<ThemePreviewProvider><ReadingChallengeForm busy={false} onSubmit={jest.fn()} /></ThemePreviewProvider>);
   expect(v.queryByLabelText('Длительность в днях')).toBeNull();
-  expect(v.getByText('Без даты окончания и выбывания. Вступление через капитана. Рейтинг по среднему времени чтения в день.')).toBeTruthy();
-  await fireEvent.changeText(v.getByLabelText('Название челленджа'), 'Читаем каждый день');
-  await fireEvent.changeText(v.getByLabelText('Псевдоним капитана команды 1'), 'Reader');
-  await fireEvent.press(v.getByRole('button', { name: 'Опубликовать' }));
-  expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ mode: 'continuous', durationDays: 1,
-    teams: [{ name: 'Команда 1', captainNickname: 'Reader', capacity: 20 }] }));
-});
-test('new club can explicitly select scheduled mode while saved legacy drafts retain it', async () => {
-  const onSubmit = jest.fn();
-  const v = await render(<ThemePreviewProvider><ReadingChallengeForm busy={false} onSubmit={onSubmit} /></ThemePreviewProvider>);
-  await fireEvent.press(v.getByLabelText('На срок'));
-  expect(v.getByLabelText('Длительность в днях')).toBeTruthy();
-  await v.unmount();
-  const saved = await render(<ThemePreviewProvider><ReadingChallengeForm initialDraft={draft} busy={false} onSubmit={onSubmit} /></ThemePreviewProvider>);
-  expect(saved.getByLabelText('Длительность в днях')).toBeTruthy();
-  await fireEvent.press(saved.getByRole('button', { name: 'Опубликовать' }));
-  expect(onSubmit).toHaveBeenCalledWith(draft);
+  expect(v.queryByText(/Псевдоним капитана|Добавить команду/)).toBeNull();
+  expect(v.getByText(/Индивидуальный зачёт: без команд и капитанов/)).toBeTruthy();
 });
 test('pending publication is read-only, exposes all sent data and blocks retry while sending', async () => {
   const retry = jest.fn();

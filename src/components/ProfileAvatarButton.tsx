@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   face: { width: FACE, height: FACE, borderRadius: FACE / 2, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   faceRim: { ...StyleSheet.absoluteFillObject, borderRadius: FACE / 2, borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)' },
   initials: { fontFamily: FONT.bold, fontSize: 17, lineHeight: 20, color: '#FFFFFF', letterSpacing: 0.3 },
-  badge: { position: 'absolute', top: 1, right: 0, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9,
+  badge: { position: 'absolute', top: 1, right: 0, minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: 9,
     borderWidth: 2, backgroundColor: '#FF3B30', alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontFamily: FONT.bold, fontSize: 10, lineHeight: 12, color: '#FFFFFF' },
 });

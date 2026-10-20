@@ -71,5 +71,5 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.14)' },
   stat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2, paddingHorizontal: 4 },
   divider: { borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.14)' },
-  label: { color: 'rgba(255,255,255,0.68)', textAlign: 'center' },
+  label: { fontFamily: FONT.regular, color: 'rgba(255,255,255,0.68)', textAlign: 'center' },
 });

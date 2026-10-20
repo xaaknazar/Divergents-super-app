@@ -6,6 +6,11 @@ type AccountCommands = { accountId: string; commands: ReadingCommand[] };
 // Keep the v1 owner and commands at the top level, while retaining pending work
 // for signed-out accounts. Switching accounts must not erase or replay it.
 export type ReadingQueue = AccountCommands & { otherAccounts?: AccountCommands[] };
+/** A queued close is immutable, even when its server receipt is not known yet. */
+export function hasPendingReadingClose(queue: ReadingQueue | null, accountId: string, sessionId: string) {
+  const own = queue && [queue, ...(queue.otherAccounts ?? [])].find(part => part.accountId === accountId);
+  return !!own?.commands.some(command => command.sessionId === sessionId && ['stop', 'report'].includes(command.action));
+}
 export type ReadingOutboxDependencies = {
   read(): Promise<ReadingQueue | null>;
   write(value: ReadingQueue): Promise<void>;

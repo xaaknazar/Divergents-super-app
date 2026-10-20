@@ -66,9 +66,10 @@ export function HeaderBackdrop({ motif }: { motif: HeaderBackdropMotif }) {
     style={[styles.root, { height }]}>
     <Svg width={width} height={height} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMin slice">
       <Defs>
+        {/* Тон акцента поверх фона страницы: 0.11 даёт #DDE5F6 макета на #F2F2F7, 0.06 — #E7ECF8 на 45 %. */}
         <LinearGradient id="hb-wash" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={accent} stopOpacity={0.13 * strength} />
-          <Stop offset="0.45" stopColor={accent} stopOpacity={0.07 * strength} />
+          <Stop offset="0" stopColor={accent} stopOpacity={0.11 * strength} />
+          <Stop offset="0.45" stopColor={accent} stopOpacity={0.06 * strength} />
           <Stop offset="1" stopColor={accent} stopOpacity={0} />
         </LinearGradient>
         <RadialGradient id="hb-right" cx={W} cy={0} rx={W * 0.9} ry={H * 0.8} fx={W} fy={0} gradientUnits="userSpaceOnUse">

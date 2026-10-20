@@ -19,7 +19,7 @@ type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['naviga
 export function CommunityTripCard({ trip, navigation }: { trip: Trip; navigation: Nav }) {
   const { T, ty, isDark } = useTheme();
   return (
-    <Wrapper marginHorizontal={16} marginBottom={14}>
+    <Wrapper marginHorizontal={16} marginBottom={12}>
       <TappableSurface onPress={() => navigation.navigate('TripDetail', { tripId: trip.id })}
         accessibilityLabel={[trip.title, trip.date].filter(Boolean).join(', ')}>
         <CardMotif kind="trip" />

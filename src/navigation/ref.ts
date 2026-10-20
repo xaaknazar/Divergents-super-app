@@ -10,7 +10,7 @@ export const navigationRef = createNavigationContainerRef<any>();
 const SCREEN_REQUIRES_PARAM: Record<string, string> = {
   ChallengeDetail: 'challengeId',
   ReadingChallenge: 'challengeId',
-  ReadingApplicants: 'challengeId',
+  ReadingRanking: 'challengeId',
   ChallengeApplicants: 'challengeId',
   ChallengeRoster: 'challengeId',
   ManageChallenge: 'challengeId',

@@ -1,0 +1,13 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingTimerControls } from './ReadingTimerControls';
+const meta = { title: 'Reading/TimerControls', component: ReadingTimerControls, args: { action: 'start', onPress: () => {} } } satisfies Meta<typeof ReadingTimerControls>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Start: Story = {};
+export const StartDisabled: Story = { args: { disabled: true } };
+export const Pause: Story = { args: { action: 'pause' } };
+export const Resume: Story = { args: { action: 'resume' } };
+export const ResumeWithPagesForm: Story = { args: { action: 'resume', secondary: true } };
+export const Loading: Story = { args: { action: 'resume', loading: true } };
+export const Dark: Story = { args: { action: 'pause' }, parameters: { scheme: 'dark' } };
+export const LargeText: Story = { args: { action: 'resume' }, parameters: { textSize: 'xl', viewport: 'compact' } };

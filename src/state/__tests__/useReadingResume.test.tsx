@@ -1,0 +1,511 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { AppState, type AppStateStatus } from 'react-native';
+import { useReadingChallenge } from '../useReadingChallenge';
+import { readingNative, type NativeReadingSession } from '../readingNative';
+import { READING_OUTBOX_KEY, type ReadingQueue } from '../readingOutbox';
+import { readJSON } from '../persist';
+import { fetchReadingDetail, sendReadingCommand, type ReadingDetail } from '../../data/reading';
+import { readingFixture } from '../../storybook/readingFixtures';
+
+let mockAccount = 'demo-reader';
+let mockDisk: Record<string, unknown> = {};
+jest.mock('@clerk/clerk-expo', () => ({
+  useAuth: () => ({ userId: mockAccount, getToken: async () => 'current-account-token' }),
+}));
+jest.mock('../../data/api', () => ({ API_BASE: 'https://example.test' }));
+jest.mock('../../data/reading', () => ({
+  ...jest.requireActual('../../data/reading'),
+  fetchReadingDetail: jest.fn(),
+  sendReadingCommand: jest.fn(),
+}));
+jest.mock('../persist', () => ({
+  loadJSON: jest.fn(async (key, fallback) => mockDisk[key] ?? fallback),
+  readJSON: jest.fn(async (key, fallback) => ({ ok: true, value: mockDisk[key] ?? fallback })),
+  saveJSON: jest.fn(async (key, value) => { mockDisk[key] = JSON.parse(JSON.stringify(value)); }),
+}));
+jest.mock('../readingNative', () => ({
+  ...jest.requireActual('../readingNative'),
+  readingNative: {
+    capabilities: jest.fn(), snapshot: jest.fn(), remainingMs: jest.fn(),
+    pause: jest.fn(), resume: jest.fn(), finish: jest.fn(),
+    start: jest.fn(), acknowledge: jest.fn(), authorize: jest.fn(), selectApps: jest.fn(),
+    reconcileLiveActivity: jest.fn(), restoreLiveActivity: jest.fn(), endLiveActivities: jest.fn(),
+  },
+}));
+jest.mock('expo-crypto', () => ({
+  CryptoDigestAlgorithm: { SHA256: 'SHA256' },
+  digestStringAsync: async (_algorithm: string, value: string) =>
+    (value.endsWith(':report') ? 'b' : value.endsWith(':stop') ? 'a' : 'c').repeat(64),
+  randomUUID: () => 'new-session-id',
+}));
+
+const fetchDetail = jest.mocked(fetchReadingDetail);
+const send = jest.mocked(sendReadingCommand);
+const pause = jest.mocked(readingNative.pause);
+const resume = jest.mocked(readingNative.resume);
+const finish = jest.mocked(readingNative.finish);
+const cacheKey = 'dvg.readingDetail.demo-reader.reading-demo';
+const softPaused: NativeReadingSession = {
+  accountId: 'demo-reader', sessionId: 'session-a', deviceId: 'phone', book: 'Книга',
+  budgetMs: 28_800_000, targetMs: 3_600_000, anchorMs: 1_000, bootId: 'boot',
+  elapsedMs: 900_000, accumulatedMs: 900_000, deadlineMs: 28_801_000, generation: 'generation-2',
+  status: 'paused', integrity: 'ok', blockingMode: 'all-apps',
+  resumeVersion: 1, terminal: false, canResume: true,
+};
+let journal: NativeReadingSession | null;
+let server: ReadingDetail;
+let foreground: ((state: AppStateStatus) => void) | undefined;
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => { resolve = done; });
+  return { promise, resolve };
+}
+
+function queued() {
+  return (mockDisk[READING_OUTBOX_KEY] as ReadingQueue | undefined)?.commands ?? [];
+}
+
+async function ready() {
+  const hook = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+  return hook;
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockAccount = 'demo-reader';
+  journal = { ...softPaused };
+  server = {
+    ...readingFixture,
+    me: { ...readingFixture.me!, elapsedMs: 0, pages: 0,
+      history: [{ day: 1, state: 'open', elapsedMs: 0, pages: 0 }] },
+    session: {
+      id: 'session-a', deviceId: 'phone', day: 1, book: 'Книга',
+      budgetMs: softPaused.budgetMs, startedAt: '2026-11-01T00:00:00Z',
+      elapsedMs: null, status: 'running',
+    },
+  };
+  mockDisk = { [cacheKey]: JSON.parse(JSON.stringify(server)) };
+  jest.mocked(readJSON).mockReset().mockImplementation(async (key, fallback) => ({
+    ok: true, value: (mockDisk[key] ?? fallback) as typeof fallback,
+  }));
+  foreground = undefined;
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, callback) => {
+    foreground = callback;
+    return { remove: jest.fn() };
+  });
+  fetchDetail.mockReset().mockImplementation(async () => server);
+  send.mockReset().mockImplementation(async (_token, command) => {
+    if (command.action === 'stop' && server.session) {
+      server = { ...server, session: { ...server.session, status: 'awaiting_pages', elapsedMs: command.elapsedMs as number } };
+    } else if (command.action === 'report') {
+      server = { ...server, session: null, reportedSessionIds: [String(command.sessionId)] };
+    }
+    return { ok: true };
+  });
+  jest.mocked(readingNative.capabilities).mockReset().mockResolvedValue({
+    available: true, authorized: true, platform: 'ios',
+    blockingMode: 'all-apps', selectedCount: 0, supportsResume: true,
+  });
+  jest.mocked(readingNative.snapshot).mockReset().mockImplementation(async () => journal);
+  jest.mocked(readingNative.remainingMs).mockReset().mockImplementation(async () =>
+    journal ? journal.budgetMs - (journal.elapsedMs ?? journal.accumulatedMs ?? 0) : 0);
+  pause.mockReset().mockImplementation(async () => {
+    if (journal) journal = { ...journal, status: 'paused',
+      elapsedMs: journal.elapsedMs ?? journal.accumulatedMs ?? 0, canResume: !journal.terminal };
+    return journal;
+  });
+  resume.mockReset().mockImplementation(async (accountId, sessionId, expectedGeneration) => {
+    if (!journal) throw new Error('Нет сохранённого сеанса');
+    if (journal.accountId !== accountId || journal.sessionId !== sessionId
+      || !expectedGeneration || journal.generation !== expectedGeneration) throw new Error('Сеанс изменился');
+    journal = { ...journal, status: 'running', elapsedMs: null,
+      accumulatedMs: journal.elapsedMs ?? journal.accumulatedMs ?? 0,
+      canResume: false, generation: 'generation-resumed' };
+    return journal;
+  });
+  finish.mockReset().mockImplementation(async (accountId, sessionId, expectedGeneration) => {
+    if (!journal) throw new Error('Нет сохранённого сеанса');
+    if (journal.accountId !== accountId || journal.sessionId !== sessionId
+      || !expectedGeneration || journal.generation !== expectedGeneration) throw new Error('Сеанс изменился');
+    journal = { ...journal, status: 'paused', terminal: true, canResume: false,
+      elapsedMs: journal.elapsedMs ?? journal.accumulatedMs ?? 0 };
+    return journal;
+  });
+  jest.mocked(readingNative.acknowledge).mockReset().mockImplementation(async () => { journal = null; });
+  jest.mocked(readingNative.reconcileLiveActivity).mockReset().mockResolvedValue({ state: 'unsupported', canRestore: false });
+  jest.mocked(readingNative.restoreLiveActivity).mockReset().mockResolvedValue({ state: 'unsupported', canRestore: false });
+});
+
+afterEach(() => { jest.restoreAllMocks(); });
+
+test('a soft pause stays local through offline retry, foreground and relaunch without creating a stop', async () => {
+  journal = { ...softPaused, status: 'running', elapsedMs: null, canResume: false };
+  const hook = await ready();
+  expect(hook.result.current.resumableSession).toBe(true);
+  expect(hook.result.current.canResume).toBe(false);
+  fetchDetail.mockRejectedValue(new Error('offline'));
+
+  await act(async () => { await hook.result.current.pause(); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+  expect(hook.result.current.timerState).toBe('paused');
+  expect(hook.result.current.canResume).toBe(true);
+  expect(hook.result.current.awaitingPages).toBe(false);
+  expect(hook.result.current.remainingMs).toBe(2_700_000);
+  await act(async () => { await hook.result.current.retry(); foreground?.('active'); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+  await hook.unmount();
+  const relaunched = await ready();
+
+  expect(relaunched.result.current.timerState).toBe('paused');
+  expect(relaunched.result.current.resumableSession).toBe(true);
+  expect(relaunched.result.current.canResume).toBe(true);
+  expect(relaunched.result.current.awaitingPages).toBe(false);
+  expect(send).not.toHaveBeenCalled();
+  expect(queued()).toEqual([]);
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+});
+
+test('resume uses the same owned native session offline without a start or network command', async () => {
+  fetchDetail.mockRejectedValue(new Error('offline'));
+  const hook = await ready();
+  const reads = fetchDetail.mock.calls.length;
+
+  await act(async () => { await hook.result.current.resume(); });
+
+  expect(resume).toHaveBeenCalledWith('demo-reader', 'session-a', 'generation-2');
+  expect(resume).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.timerState).toBe('running');
+  expect(hook.result.current.resumableSession).toBe(true);
+  expect(hook.result.current.canResume).toBe(false);
+  expect(journal).toMatchObject({ sessionId: 'session-a', accumulatedMs: 900_000, deadlineMs: softPaused.deadlineMs });
+  expect(fetchDetail).toHaveBeenCalledTimes(reads);
+  expect(readingNative.start).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(queued()).toEqual([]);
+});
+
+test('soft-paused time is never reported without closing the approach first', async () => {
+  const hook = await ready();
+
+  await act(async () => { await hook.result.current.report(12); });
+
+  expect(finish).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(queued()).toEqual([]);
+  expect(journal).toEqual(softPaused);
+  expect(hook.result.current.awaitingPages).toBe(false);
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+});
+
+test('pages after a pause close the approach before the hour: exact time, then pages', async () => {
+  const hook = await ready();
+
+  await act(async () => { await hook.result.current.saveApproach(12); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+
+  expect(finish).toHaveBeenCalledWith('demo-reader', 'session-a', 'generation-2');
+  expect(send.mock.calls.map(call => call[1])).toEqual([
+    expect.objectContaining({ action: 'stop', sessionId: 'session-a', elapsedMs: 900_000, integrity: 'ok' }),
+    expect.objectContaining({ action: 'report', sessionId: 'session-a', pages: 12 }),
+  ]);
+  expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 'session-a');
+  expect(queued()).toEqual([]);
+});
+
+test('finish retains exact cumulative time and sends one final stop before pages are acknowledged', async () => {
+  journal = { ...softPaused, elapsedMs: 3_700_123, accumulatedMs: 3_700_123 };
+  const hook = await ready();
+  expect(send).not.toHaveBeenCalled();
+  expect(hook.result.current.awaitingPages).toBe(false);
+
+  await act(async () => { await hook.result.current.finish(); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+  expect(finish).toHaveBeenCalledWith('demo-reader', 'session-a', 'generation-2');
+  expect(finish).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.awaitingPages).toBe(true);
+  expect(hook.result.current.canResume).toBe(false);
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+  expect(send.mock.calls.map(call => call[1])).toEqual([expect.objectContaining({
+    action: 'stop', challengeId: 'reading-demo', sessionId: 'session-a',
+    deviceId: 'phone', elapsedMs: 3_700_123, integrity: 'ok',
+  })]);
+  await act(async () => { await hook.result.current.retry(); await hook.result.current.report(18); });
+
+  expect(send.mock.calls.map(call => call[1].action)).toEqual(['stop', 'report']);
+  expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 'session-a');
+  expect(journal).toBeNull();
+  expect(queued()).toEqual([]);
+});
+
+test('offline finalization durably queues the exact total and pages with one immutable closing operation', async () => {
+  journal = { ...softPaused, elapsedMs: 3_600_217, accumulatedMs: 3_600_217 };
+  const hook = await ready();
+  send.mockRejectedValue(new Error('offline'));
+  fetchDetail.mockRejectedValue(new Error('offline'));
+
+  await act(async () => { await hook.result.current.finish(); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+  await act(async () => { await hook.result.current.report(15); });
+
+  expect(queued()).toEqual([
+    expect.objectContaining({ action: 'stop', sessionId: 'session-a', elapsedMs: 3_600_217 }),
+    expect.objectContaining({ action: 'report', sessionId: 'session-a', pages: 15 }),
+  ]);
+  const stopAttempts = send.mock.calls.map(call => call[1]).filter(command => command.action === 'stop');
+  expect(stopAttempts.length).toBeGreaterThan(0);
+  expect(new Set(stopAttempts.map(command => JSON.stringify(command))).size).toBe(1);
+  expect(journal).toMatchObject({ terminal: true, elapsedMs: 3_600_217 });
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+});
+
+test.each(['stop', 'report'] as const)('a locally queued %s forbids resuming even before the server state changes', async action => {
+  const hook = await ready();
+  mockDisk[READING_OUTBOX_KEY] = { accountId: 'demo-reader', commands: [{
+    action, operationId: `pending-${action}`, challengeId: 'reading-demo', sessionId: 'session-a',
+    ...(action === 'stop' ? { deviceId: 'phone', elapsedMs: 900_000, integrity: 'ok' } : { pages: 5 }),
+  }] };
+
+  await act(async () => { await hook.result.current.resume(); });
+
+  expect(resume).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(queued()).toHaveLength(1);
+  expect(journal).toEqual(softPaused);
+});
+
+test('server awaiting_pages cannot be reopened by an otherwise resumable native journal', async () => {
+  server = { ...server, session: { ...server.session!, status: 'awaiting_pages', elapsedMs: 900_000 } };
+  mockDisk[cacheKey] = server;
+  const hook = await ready();
+
+  expect(hook.result.current.canResume).toBe(false);
+  await act(async () => { await hook.result.current.resume(); });
+  expect(resume).not.toHaveBeenCalled();
+  expect(readingNative.start).not.toHaveBeenCalled();
+});
+
+test('a terminal day-end pause cannot resume and still offers pages for its shorter exact result', async () => {
+  journal = { ...softPaused, terminal: true, canResume: false, elapsedMs: 321_987, accumulatedMs: 321_987 };
+  const hook = await ready();
+
+  expect(hook.result.current.canResume).toBe(false);
+  expect(hook.result.current.awaitingPages).toBe(true);
+  await act(async () => { await hook.result.current.resume(); });
+  expect(resume).not.toHaveBeenCalled();
+  expect(send.mock.calls.map(call => call[1])).toEqual([expect.objectContaining({ action: 'stop', elapsedMs: 321_987 })]);
+});
+
+test('legacy paused sessions still close and require pages instead of becoming resumable', async () => {
+  const { resumeVersion: _version, terminal: _terminal, canResume: _canResume, ...legacy } = softPaused;
+  journal = legacy;
+  const hook = await ready();
+
+  expect(hook.result.current.resumableSession).toBe(false);
+  expect(hook.result.current.canResume).toBe(false);
+  expect(hook.result.current.awaitingPages).toBe(true);
+  await act(async () => { await hook.result.current.resume(); });
+  expect(resume).not.toHaveBeenCalled();
+  expect(send.mock.calls.map(call => call[1])).toEqual([expect.objectContaining({ action: 'stop', elapsedMs: 900_000 })]);
+});
+
+test('an actual paused approach takes precedence over a previously completed daily goal', async () => {
+  server = { ...server, me: { ...server.me!, completedDays: 1,
+    history: [{ day: 1, state: 'complete', elapsedMs: 3_600_000, pages: 30 }] } };
+  mockDisk[cacheKey] = server;
+  const hook = await ready();
+
+  expect(hook.result.current.timerState).toBe('paused');
+  expect(hook.result.current.canResume).toBe(true);
+  expect(hook.result.current.awaitingPages).toBe(false);
+});
+
+test('account switching rejects old resume and finish handlers without consuming prior-account evidence', async () => {
+  const hook = await ready();
+  const oldResume = hook.result.current.resume;
+  const oldFinish = hook.result.current.finish;
+  mockAccount = 'another-reader';
+  await hook.rerender({});
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+
+  await act(async () => {
+    await oldResume(); await oldFinish();
+    await hook.result.current.resume(); await hook.result.current.finish();
+  });
+
+  expect(hook.result.current.canResume).toBe(false);
+  expect(hook.result.current.resumableSession).toBe(false);
+  expect(resume).not.toHaveBeenCalled();
+  expect(finish).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+  expect(journal).toEqual(softPaused);
+});
+
+test.each([
+  { accountId: 'another-reader' },
+  { sessionId: 'another-session' },
+])('resume rechecks native ownership after render: %s', async replacement => {
+  const hook = await ready();
+  journal = { ...softPaused, ...replacement };
+
+  await act(async () => { await hook.result.current.resume(); });
+
+  expect(resume).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+});
+
+test('a late native resume result cannot attach the previous account session after an account switch', async () => {
+  const hook = await ready();
+  const resumed = deferred<NativeReadingSession>();
+  resume.mockImplementationOnce(() => resumed.promise);
+  let action!: Promise<void>;
+  await act(async () => { action = hook.result.current.resume(); });
+  await waitFor(() => expect(resume).toHaveBeenCalledTimes(1));
+  mockAccount = 'another-reader';
+  await hook.rerender({});
+
+  await act(async () => {
+    resumed.resolve({ ...softPaused, status: 'running', canResume: false, elapsedMs: null });
+    await action;
+  });
+
+  expect(hook.result.current.resumableSession).toBe(false);
+  expect(hook.result.current.canResume).toBe(false);
+  expect(hook.result.current.timerState).not.toBe('running');
+  expect(send).not.toHaveBeenCalled();
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+});
+
+test('a newer pause wins over a delayed native resume response and repeated resume taps', async () => {
+  const hook = await ready();
+  const resumed = deferred<NativeReadingSession>();
+  resume.mockImplementationOnce(() => resumed.promise);
+  let action!: Promise<void>;
+  await act(async () => { action = hook.result.current.resume(); });
+  await waitFor(() => expect(resume).toHaveBeenCalledTimes(1));
+
+  await act(async () => {
+    await hook.result.current.resume();
+    await hook.result.current.pause();
+  });
+  expect(pause).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.timerState).toBe('paused');
+  await act(async () => {
+    resumed.resolve({ ...softPaused, status: 'running', canResume: false, elapsedMs: null });
+    await action;
+  });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+
+  expect(resume).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.timerState).toBe('paused');
+  expect(hook.result.current.canResume).toBe(true);
+  expect(hook.result.current.awaitingPages).toBe(false);
+  expect(send).not.toHaveBeenCalled();
+  expect(queued()).toEqual([]);
+});
+
+test('an account switch while checking pending commands prevents the native resume from starting', async () => {
+  const hook = await ready();
+  const checking = deferred<void>();
+  const checked = deferred<{ ok: boolean; value: ReadingQueue | null }>();
+  jest.mocked(readJSON).mockImplementationOnce(() => {
+    checking.resolve();
+    return checked.promise;
+  });
+  let action!: Promise<void>;
+  await act(async () => { action = hook.result.current.resume(); });
+  await checking.promise;
+  mockAccount = 'another-reader';
+  await hook.rerender({});
+
+  await act(async () => {
+    checked.resolve({ ok: true, value: null });
+    await action;
+  });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+
+  expect(resume).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(hook.result.current.resumableSession).toBe(false);
+  expect(journal).toEqual(softPaused);
+});
+
+test('unreadable pending-command storage prevents resume without altering the frozen journal', async () => {
+  const hook = await ready();
+  jest.mocked(readJSON).mockResolvedValueOnce({ ok: false, value: null });
+
+  await act(async () => { await hook.result.current.resume(); });
+
+  expect(resume).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(journal).toEqual(softPaused);
+  expect(hook.result.current.timerState).toBe('paused');
+});
+
+test('a lock-screen generation change during the queue read rejects stale resume without relocking', async () => {
+  const hook = await ready();
+  const checking = deferred<void>();
+  const checked = deferred<{ ok: boolean; value: ReadingQueue | null }>();
+  jest.mocked(readJSON).mockImplementationOnce(() => {
+    checking.resolve();
+    return checked.promise;
+  });
+  let action!: Promise<void>;
+  await act(async () => { action = hook.result.current.resume(); });
+  await checking.promise;
+  const newerPause: NativeReadingSession = {
+    ...softPaused, generation: 'new-lock-screen-generation', accumulatedMs: 901_234, elapsedMs: 901_234,
+  };
+  journal = newerPause;
+
+  await act(async () => {
+    checked.resolve({ ok: true, value: null });
+    await action;
+  });
+
+  expect(resume).toHaveBeenCalledWith('demo-reader', 'session-a', 'generation-2');
+  expect(journal).toEqual(newerPause);
+  expect(hook.result.current.timerState).toBe('paused');
+  expect(hook.result.current.error).toBeDefined();
+  expect(send).not.toHaveBeenCalled();
+  expect(readingNative.start).not.toHaveBeenCalled();
+});
+
+test('a protocol-v1 journal without a generation cannot resume or finish', async () => {
+  journal = { ...softPaused, generation: undefined, elapsedMs: 3_700_000, accumulatedMs: 3_700_000 };
+  const hook = await ready();
+
+  expect(hook.result.current.canResume).toBe(false);
+  await act(async () => { await hook.result.current.resume(); await hook.result.current.finish(); });
+
+  expect(resume).not.toHaveBeenCalled();
+  expect(finish).not.toHaveBeenCalled();
+  expect(journal).toMatchObject({ status: 'paused', terminal: false, elapsedMs: 3_700_000 });
+  expect(send).not.toHaveBeenCalled();
+  expect(queued()).toEqual([]);
+});
+
+test('pause remains immediate while refresh is stalled and its late response never submits a stop', async () => {
+  journal = { ...softPaused, status: 'running', elapsedMs: null, canResume: false };
+  const response = deferred<ReadingDetail>();
+  fetchDetail.mockImplementation(() => response.promise);
+  const hook = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(fetchDetail).toHaveBeenCalledTimes(1));
+  expect(hook.result.current.busy).toBe(true);
+
+  await act(async () => { await hook.result.current.pause(); });
+  expect(pause).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.timerState).toBe('paused');
+  expect(hook.result.current.canResume).toBe(true);
+  expect(hook.result.current.awaitingPages).toBe(false);
+  expect(send).not.toHaveBeenCalled();
+  await act(async () => { response.resolve(server); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+
+  expect(hook.result.current.timerState).toBe('paused');
+  expect(send).not.toHaveBeenCalled();
+  expect(queued()).toEqual([]);
+});

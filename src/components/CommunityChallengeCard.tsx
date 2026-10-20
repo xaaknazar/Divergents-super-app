@@ -48,7 +48,7 @@ export function CommunityChallengeCard({ ch, onPress }: { ch: ChallengeListItem;
           <StatusBadge label={String((tr('Онлайн')))} tone="success" icon="globe" />
           <StatusBadge label={String((pl.days(ch.durationDays)))} tone="brand" icon="flame.fill" />
           <StatusBadge label={String((pl.applications(ch.participants)))} tone="neutral" icon="person.3.fill" />
-          <StatusBadge label={[(ch.maxFlags), " 🚩 ", (tr('вылет'))].join('')} tone="danger" />
+          <StatusBadge label={`${ch.maxFlags} ${tr('вылет')}`} tone="danger" icon="flag.fill" />
         </View>
         <View style={[styles.footer, { borderTopColor: T.separator }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
@@ -58,8 +58,8 @@ export function CommunityChallengeCard({ ch, onPress }: { ch: ChallengeListItem;
             <Text style={[ty.caption1, { color: full ? T.green : T.labelSecondary, flexShrink: 1 }]} numberOfLines={1}>{started ? tr('Рейтинги доступны для просмотра') : full ? tr('Команды сформированы · ждём старта') : tr('Набор открыт')}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Text style={[ty.subheadEm, { color: T.brand }]} numberOfLines={1}>{tr('Подробнее')}</Text>
-            <SF name="chevron.forward" size={12} color={T.brand} />
+            <Text style={[ty.subheadEm, { color: T.brandText }]} numberOfLines={1}>{tr('Подробнее')}</Text>
+            <SF name="chevron.forward" size={12} color={T.brandText} />
           </View>
         </View>
       </View>

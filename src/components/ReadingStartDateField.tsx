@@ -21,7 +21,7 @@ export function ReadingStartDateField({ value, onChange, disabled = false, error
   const chosen = Number.isFinite(readingDateStart(value)) && value >= minimum ? value : minimum;
   const close = () => setOpen(false);
   const commit = (date: string) => { if (date >= (mode === 'continuous' ? todayReadingDate() : nextReadingDate())) { onChange(date); close(); } };
-  return <CreationField label="Дата старта" error={error} hint={mode === 'continuous' ? 'Можно начать сегодня. Капитаны принимают новых участников и после старта. Дни считаются по Казахстану.' : 'Набор идёт до даты старта. Начало автоматически в 00:00 по Казахстану.'}>
+  return <CreationField label="Дата старта" error={error} hint={mode === 'continuous' ? 'Можно начать сегодня. Участники вступают сами в любой день, у каждого свой день 1. Дни считаются по Казахстану.' : 'Набор идёт до даты старта. Начало автоматически в 00:00 по Казахстану.'}>
     <Pressable accessibilityRole="button" accessibilityLabel={`Дата старта: ${readingDateLabel(value)}`}
       accessibilityState={{ disabled, expanded: open }} disabled={disabled}
       onPress={() => { setDraft(chosen); setOpen(true); }}

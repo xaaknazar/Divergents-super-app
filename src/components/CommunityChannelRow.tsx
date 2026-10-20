@@ -31,7 +31,7 @@ export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: 
   // Second line: latest post for subscribers, otherwise the channel bio.
   const secondary = joined && last ? last.title : (channel.bio?.trim() || '');
   return (
-    <Wrapper marginHorizontal={16} marginBottom={14}>
+    <Wrapper marginHorizontal={16} marginBottom={12}>
       <TappableSurface onPress={() => navigation.navigate('ServerChannel', { channelId: channel.id })}
         accessibilityLabel={`${tr('Канал')} ${channel.name}`}>
         {cover ? <View style={styles.banner}>
@@ -60,7 +60,7 @@ export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: 
           <View style={[styles.text, cover ? styles.textCover : null]}>
             <View style={styles.titleRow}>
               <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{channel.name}</Text>
-              {channel.verified ? <SF name="checkmark.seal.fill" size={14} color={T.sky} /> : null}
+              {channel.verified ? <SF name="checkmark.seal.fill" size={16} color={T.sky} /> : null}
             </View>
             {secondary ? (
               <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{secondary}</Text>
@@ -77,7 +77,7 @@ export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: 
               <Text style={[ty.caption2Em, { color: '#fff' }]}>{count}</Text>
             </View>
           ) : joined ? (
-            <SF name="checkmark.circle.fill" size={20} color={T.brand} />
+            <SF name="checkmark.circle.fill" size={20} color={T.brandText} />
           ) : (
             <View style={[styles.open, { backgroundColor: T.brandTinted }]}>
               <Text style={[ty.caption2Em, { color: T.brandText }]}>{closed ? tr('Запрос') : tr('Открыть')}</Text>

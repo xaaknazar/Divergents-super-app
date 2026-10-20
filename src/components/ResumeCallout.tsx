@@ -15,8 +15,8 @@ import { ResumeArea } from '../data/resumeAccess';
 import { tr } from '../state/LanguageContext';
 
 const WHAT_OPENS: Record<ResumeArea, string> = {
-  community: 'Откроются заявки в челленджи, поездки и спорт',
-  career: 'Откроются заявки в сообществе и отклики на вакансии',
+  community: 'Откроет заявки в челленджи, поездки и спорт',
+  career: 'Откроет заявки в сообществе и отклики на вакансии',
 };
 
 export function ResumeCallout({ area = 'career' }: { area?: ResumeArea }) {
@@ -39,13 +39,13 @@ export function ResumeCalloutCard({ area, done, needed, onPress }: { area: Resum
       accessibilityLabel={tr('Заполнить анкету')}
       style={({ pressed }) => ({
         minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1,
-        backgroundColor: isDark ? T.brandTinted : 'rgba(61,91,219,0.13)', borderRadius: 14, borderCurve: 'continuous', padding: 14, marginBottom: 14,
+        backgroundColor: isDark ? T.brandTinted : 'rgba(61,91,219,0.13)', borderRadius: 14, borderCurve: 'continuous', padding: 14,
       })}
     >
       <View style={{ width: 36, height: 36, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
         <SF name="doc.text.fill" size={20} color={T.brandText} />
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[ty.footnoteEm, { color: T.label }]}>{tr('Заполните анкету')} · {done} {tr('из')} {needed}</Text>
         <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{tr(WHAT_OPENS[area])}</Text>
       </View>

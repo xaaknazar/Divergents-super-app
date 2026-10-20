@@ -6,7 +6,7 @@ export const ReadingChallengeDraftSchema = z.object({
   title: z.string().trim().min(2, 'Введите название: от 2 до 120 символов').max(120, 'Название — не больше 120 символов'),
   startDate: z.string(), durationDays: z.number().int().min(1).max(90),
   teams: z.array(z.object({ name: z.string().trim().min(1).max(80), capacity: z.number().int().min(1).max(100),
-    captainNickname: z.string().trim().min(1).max(80) })).min(1).max(30),
+    captainNickname: z.string().trim().min(1).max(80) })).max(30).default([]),
 });
 export type ReadingChallengeDraft = z.infer<typeof ReadingChallengeDraftSchema>;
 export const ReadingPublicationSchema = z.object({ operationId: z.string().uuid(), draft: ReadingChallengeDraftSchema });

@@ -5,23 +5,18 @@ import { CommunityStackParams } from '../../navigation/types';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { ReadingChallengeContent } from '../../components/ReadingChallengeContent';
+import { ReadingLocalPause } from '../../components/ReadingLocalPause';
 import { InlineNotice } from '../../components/InlineNotice';
 import { ContentLoading } from '../../components/ContentLoading';
 import { Wrapper } from '../../components/Wrapper';
 import { useReadingChallenge } from '../../state/useReadingChallenge';
-import { useReadingBookSearch } from '../../state/useReadingBookSearch';
-import { useReadingAppearance } from '../../state/useReadingAppearance';
-import { HeaderIcon } from '../../components/HeaderIcon';
-import { useAuth } from '@clerk/clerk-expo';
-import { useRole } from '../../state/useRole';
+import { useReadingBookCheck } from '../../state/useReadingBookCheck';
 
+/** Reading challenge: навбар — только «‹ Сообщество», без фона и кнопок справа. */
 export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenProps<CommunityStackParams, 'ReadingChallenge'>) {
-  const reading = useReadingChallenge(route.params.challengeId);
-  const bookSearch = useReadingBookSearch();
-  const { appearance } = useReadingAppearance();
-  const { userId } = useAuth();
-  const { has } = useRole();
-  const canReview = has('challenges') || !!reading.data?.teams.some(t => t.captainId === userId);
+  const { challengeId } = route.params;
+  const reading = useReadingChallenge(challengeId);
+  const book = useReadingBookCheck(challengeId);
   const retry = useRef(reading.retry);
   retry.current = reading.retry;
   const visited = useRef(false);
@@ -30,17 +25,19 @@ export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenP
     visited.current = true;
   }, []));
   return <Screen topInset={false} tabPadding={false} onRefresh={reading.retry}>
-    <NavHeader title="Reading challenge" backLabel="Сообщество" onBack={() => navigation.goBack()}
-      trailing={<HeaderIcon name="slider.horizontal.3" label="Оформление Reading" onPress={() => navigation.navigate('ReadingAppearance')} />} />
+    <NavHeader backLabel="Сообщество" onBack={() => navigation.goBack()} />
+    {reading.canPauseLocally && (!reading.data || reading.sessionNotice || reading.data.phase === 'upcoming' || reading.timerState !== 'running')
+      ? <Wrapper padding={16} gap={12}>
+        <ReadingLocalPause onPause={reading.pauseLocally} />
+      </Wrapper> : null}
     {reading.data ? <ReadingChallengeContent data={reading.data} remainingMs={reading.remainingMs} timerState={reading.timerState}
-      protection={reading.protection} busy={reading.busy} error={reading.error} awaitingPages={reading.awaitingPages}
-      headerVariant={appearance.header} sessionNotice={reading.sessionNotice} startBlocked={reading.startBlocked}
-      canReviewApplications={canReview} onApplications={() => navigation.navigate('ReadingApplicants', { challengeId: route.params.challengeId })}
-      needsRecovery={reading.needsRecovery} onRecover={reading.recover}
-      onResolve={reading.resolve}
-      bookSearch={bookSearch}
-      onHistory={readerId => navigation.navigate('ReadingHistory', { challengeId: route.params.challengeId, readerId })}
-      onPrepare={reading.prepare} onStart={reading.start} onPause={reading.pause} onReport={reading.report}
+      protection={reading.protection} blockingMode={reading.blockingMode} busy={reading.busy} error={reading.error} awaitingPages={reading.awaitingPages}
+      resumableSession={reading.resumableSession} canResume={reading.canResume} onResume={reading.resume}
+      sessionNotice={reading.sessionNotice} startBlocked={reading.startBlocked}
+      needsRecovery={reading.needsRecovery} onRecover={reading.recover} book={book}
+      onRanking={() => navigation.navigate('ReadingRanking', { challengeId })}
+      onHistory={readerId => navigation.navigate('ReadingHistory', { challengeId, readerId })}
+      onPrepare={reading.prepare} onStart={reading.start} onPause={reading.pause} onReport={reading.report} onSaveApproach={reading.saveApproach}
       onJoin={reading.join} onRetry={reading.retry} />
       : reading.error ? <Wrapper padding={16}><InlineNotice message={reading.error} onRetry={reading.retry} /></Wrapper> : <ContentLoading />}
   </Screen>;

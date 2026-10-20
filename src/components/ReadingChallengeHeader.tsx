@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
 import { readingDateLabel } from '../data/readingCreation';
-import { days } from '../data/plural';
+import { days, word } from '../data/plural';
 import { radius } from '../theme/tokens';
 import { ReadingHeaderStyle } from '../data/readingAppearance';
 import { hexToRgba } from '../theme/personalization';
@@ -13,9 +13,11 @@ import { Wrapper } from './Wrapper';
 
 /** editorial — до вступления: книга сверху справа, title1. compact — у участника: одна строка
  * с книгой 108×72, чтобы таймер оставался на первом экране (handoff 2026-10-20 §6). */
-export function ReadingChallengeHeader({ title, phase, day, durationDays, startDate, mode = 'scheduled', variant = 'editorial', teamName }: {
+export function ReadingChallengeHeader({ title, phase, day, durationDays, startDate, mode = 'scheduled', variant = 'editorial', teamName, participants }: {
   title: string; phase: 'upcoming' | 'active' | 'finished'; day: number; durationDays: number; startDate: string; mode?: 'scheduled' | 'continuous';
   variant?: ReadingHeaderStyle; teamName?: string;
+  /** Число участников — для компактного блока на экране вступления: «60 минут в день · N участников». */
+  participants?: number;
 }) {
   const { T, ty, isDark, reduceTransparency } = useTheme();
   const progress = phase === 'finished' ? 1 : phase === 'upcoming' ? 0 : Math.max(0, Math.min(1, (day - 1) / Math.max(1, durationDays)));
@@ -30,7 +32,8 @@ export function ReadingChallengeHeader({ title, phase, day, durationDays, startD
       : mode === 'continuous' ? 'Читаем каждый день.' : `День ${day} из ${durationDays} · 60 минут для себя`;
   // Строка «60 минут в день» с часами — если подзаголовок её ещё не сказал.
   const meta = [subtitle.includes('60 минут') ? null : '60 минут в день', teamName ? `команда «${teamName}»` : null].filter(Boolean).join(' · ');
-  const compactMeta = phase === 'active'
+  const compactMeta = participants !== undefined && phase !== 'finished' ? `60 минут в день · ${participants} ${word(participants, 'участник', 'участника', 'участников')}`
+    : phase === 'active'
     ? [mode === 'scheduled' ? `День ${day} из ${durationDays}` : null, '60 минут в день', teamName ? `команда «${teamName}»` : null].filter(Boolean).join(' · ')
     : subtitle;
   const glass = variant === 'glass' && !reduceTransparency && Platform.OS === 'ios';

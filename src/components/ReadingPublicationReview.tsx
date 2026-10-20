@@ -16,9 +16,9 @@ export function ReadingPublicationReview({ draft, busy, error, onRetry }: {
     {error ? <InlineNotice message={error} /> : null}
     <ContentBlock><Wrapper gap={12}>
       <PageHeading title={draft.title} description={`${readingDateLabel(draft.startDate)} · ${draft.mode === 'continuous' ? 'без даты окончания' : `${draft.durationDays} дн.`}`} />
-      <ScreenDescription text={draft.mode === 'continuous' ? 'Начало в 00:00 по Казахстану. Капитаны принимают заявки и после старта.' : 'Начало в 00:00 по Казахстану. Набор — до даты старта.'} />
+      <ScreenDescription text={draft.mode === 'continuous' ? draft.teams.length ? 'Начало в 00:00 по Казахстану. Капитаны принимают заявки и после старта.' : 'Начало в 00:00 по Казахстану. Участники вступают сами, в любой день.' : 'Начало в 00:00 по Казахстану. Набор — до даты старта.'} />
     </Wrapper></ContentBlock>
-    <PageHeading title={`Команды · ${draft.teams.length}`} />
+    {draft.teams.length ? <PageHeading title={`Команды · ${draft.teams.length}`} /> : null}
     {draft.teams.map((t, i) => <ContentBlock key={i}><PageHeading title={t.name}
       description={`Капитан: ${t.captainNickname}`} summary={`Мест, включая капитана: ${t.capacity}`} /></ContentBlock>)}
     <Button label="Проверить публикацию" loading={busy} onPress={onRetry} size="large" />

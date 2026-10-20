@@ -27,7 +27,7 @@ import { ChannelsScreen } from '../screens/community/ChannelsScreen';
 import { ChallengeDetailScreen } from '../screens/community/ChallengeDetailScreen';
 import { ReadingChallengeScreen } from '../screens/community/ReadingChallengeScreen';
 import { ReadingAppearanceScreen } from '../screens/community/ReadingAppearanceScreen';
-import { ReadingApplicantsScreen } from '../screens/community/ReadingApplicantsScreen';
+import { ReadingRankingScreen } from '../screens/community/ReadingRankingScreen';
 import { ReadingHistoryScreen } from '../screens/community/ReadingHistoryScreen';
 import { CreateReadingChallengeScreen } from '../screens/community/CreateReadingChallengeScreen';
 import { ChallengeApplicantsScreen } from '../screens/community/ChallengeApplicantsScreen';
@@ -98,7 +98,7 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
       <CommunityStack.Screen name="ReadingChallenge" component={ReadingChallengeScreen} />
       <CommunityStack.Screen name="ReadingAppearance" component={ReadingAppearanceScreen} />
-      <CommunityStack.Screen name="ReadingApplicants" component={ReadingApplicantsScreen} />
+      <CommunityStack.Screen name="ReadingRanking" component={ReadingRankingScreen} />
       <CommunityStack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
       <CommunityStack.Screen name="CreateReadingChallenge" component={CreateReadingChallengeScreen} />
       <CommunityStack.Screen name="ChallengeApplicants" component={ChallengeApplicantsScreen} />

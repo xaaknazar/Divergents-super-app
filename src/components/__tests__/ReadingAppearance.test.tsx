@@ -6,7 +6,8 @@ import { ReadingAppearanceGallery } from '../ReadingAppearanceGallery';
 import { ReadingChallengeHeader } from '../ReadingChallengeHeader';
 import { ReadingChallengeCard } from '../ReadingChallengeCard';
 import { ReadingBookIllustration, ReadingBookIllustrationProps } from '../ReadingBookIllustration';
-import { ReadingJoinGuide } from '../ReadingJoinGuide';
+import { ReadingRules } from '../ReadingRules';
+import { READING_CHALLENGE_RULES } from '../../data/reading';
 import { DEFAULT_READING_APPEARANCE, parseReadingAppearance, READING_HEADER_STYLES } from '../../data/readingAppearance';
 import { readingFixture } from '../../storybook/readingFixtures';
 import { lightTheme } from '../../theme/tokens';
@@ -43,10 +44,12 @@ test('scheduled challenges still show their real duration', async () => {
   const v = await render(<ThemePreviewProvider><ReadingChallengeHeader title="По сроку" phase="upcoming" day={0} startDate="2026-10-20" durationDays={21} /></ThemePreviewProvider>);
   expect(v.getByText(/21 день/)).toBeTruthy();
 });
-test('pending state explains captain review without another application action', async () => {
-  const v = await render(<ThemePreviewProvider><ReadingJoinGuide state="pending" teamName="Книжный клуб" /></ThemePreviewProvider>);
-  expect(v.getByText(/Повторно отправлять её не нужно/)).toBeTruthy();
-  expect(v.queryAllByRole('button')).toHaveLength(0);
+test('reading rules expose their full text to screen readers before and after expanding', async () => {
+  const v = await render(<ThemePreviewProvider><ReadingRules initiallyExpanded /></ThemePreviewProvider>);
+  const name = `Пункт 1. ${READING_CHALLENGE_RULES[0].title}`;
+  expect(v.getByRole('button', { name, expanded: false })).toBeTruthy();
+  await fireEvent.press(v.getByRole('button', { name }));
+  expect(v.getByRole('button', { name, expanded: true })).toBeTruthy();
 });
 
 type Assert<T extends true> = T;
@@ -57,11 +60,11 @@ type HeaderApi = Assert<Extract<keyof React.ComponentProps<typeof ReadingChallen
 test.each(['feature', 'compact'] as const)('%s card preserves the live title, daily goal and original press action', async variant => {
   const onPress = jest.fn();
   const v = await render(<ThemePreviewProvider><ReadingChallengeCard variant={variant} onPress={onPress}
-    challenge={{ ...readingFixture, title: 'Другая настоящая книга', mode: 'continuous', membership: 'pending' }} /></ThemePreviewProvider>);
+    challenge={{ ...readingFixture, title: 'Другая настоящая книга', mode: 'continuous', membership: null }} /></ThemePreviewProvider>);
   expect(v.getByText('Другая настоящая книга')).toBeTruthy();
   expect(v.queryByText(/Extreme reading/)).toBeNull();
   expect(v.queryByText(/без даты окончания|без срока|21 день/i)).toBeNull();
-  await fireEvent.press(v.getByRole('button', { name: /Другая настоящая книга.*60 минут в день.*Заявка на рассмотрении/ }));
+  await fireEvent.press(v.getByRole('button', { name: /Другая настоящая книга.*60 минут в день.*Присоединиться/ }));
   expect(onPress).toHaveBeenCalledTimes(1);
 });
 

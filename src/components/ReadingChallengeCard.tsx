@@ -22,10 +22,11 @@ export function ReadingChallengeCard({ challenge: c, onPress, variant = 'feature
   // Узкая карточка или крупный шрифт: книга уходит наверх, название не обрезается.
   const stacked = (cardWidth ?? width - 32) < 300 || fontScale * textScale > 1.15;
   const status = c.phase === 'finished' ? 'Завершён' : c.phase === 'upcoming' ? `Старт ${readingDateLabel(c.startDate)}` : 'Идёт';
-  const dot = c.phase === 'finished' ? T.labelTertiary : c.membership === 'pending' ? T.orangeText : c.phase === 'upcoming' ? T.brandAccent : T.greenText;
+  const dot = c.phase === 'finished' ? T.labelTertiary : c.phase === 'upcoming' ? T.brandAccent : T.greenText;
   const note = c.membership === 'approved' ? 'Вы участвуете' : null;
-  const action = c.phase === 'finished' ? 'Смотреть итоги' : c.membership === 'pending' ? 'Заявка на рассмотрении'
-    : c.phase === 'active' ? c.membership === 'approved' ? 'Продолжить чтение' : c.mode === 'continuous' ? 'Выбрать команду' : 'Смотреть рейтинг' : 'Выбрать команду';
+  // Индивидуальный зачёт: без команд и заявок — вступление сразу, после согласия с правилами.
+  const action = c.phase === 'finished' ? 'Смотреть итоги' : c.membership === 'approved' ? c.phase === 'active' ? 'Продолжить чтение' : 'Вы участвуете'
+    : c.phase === 'active' && c.mode !== 'continuous' ? 'Смотреть рейтинг' : 'Присоединиться';
   const period = c.mode === 'continuous' ? null : days(c.durationDays);
   const goal = `60 минут в день${period ? ` · ${period}` : ''}`;
   return <View style={[styles.lift, isDark ? null : shadows.tappable]}>

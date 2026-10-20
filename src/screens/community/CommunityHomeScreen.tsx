@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React,{ useCallback,useEffect,useState } from 'react';
-import { LayoutAnimation,View } from 'react-native';
+import { LayoutAnimation } from 'react-native';
 import { CommunityChallenges } from '../../components/CommunityChallenges';
 import { CommunityChannels } from '../../components/CommunityChannels';
 import { CommunityFeed } from '../../components/CommunityFeed';
@@ -144,11 +144,9 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
         </>
       )} />
 
-      <View style={{ paddingHorizontal: 16 }}>
+      {/* Макет: строка разделов pad-top 8, первый раздел ленты — через 20. */}
+      <Wrapper paddingHorizontal={16} paddingTop={8} paddingBottom={20} gap={14}>
         {seg === 2 ? <ResumeCallout area="community" /> : null}
-      </View>
-
-      <Wrapper paddingHorizontal={16} paddingTop={6} paddingBottom={16}>
         <SectionTabs items={SECTION_KEYS.map((k, id) => ({ id, label: t(k) })).filter(item => sectionOn(item.id))}
           value={seg} onChange={id => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(id); }} />
       </Wrapper>
@@ -159,7 +157,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       {seg === 3 && sectionOn(3) && <CommunityTrips navigation={navigation} trips={trips} error={error} onRetry={load} />}
       {seg === 4 && sectionOn(4) && <CommunityMeetups navigation={navigation} meetups={meetups} error={error} onRetry={load} />}
       {seg === 5 && sectionOn(5) && <CommunitySport navigation={navigation} sport={sport} error={error} onRetry={load} />}
-      <View style={{ height: 16 }} />
+      <Wrapper paddingTop={16} />
     </Screen>
   );
 }

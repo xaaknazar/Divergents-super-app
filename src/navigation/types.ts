@@ -32,7 +32,7 @@ export type CommunityStackParams = {
   ChallengeDetail: { challengeId: string };
   ReadingChallenge: { challengeId: string };
   ReadingAppearance: undefined;
-  ReadingApplicants: { challengeId: string };
+  ReadingRanking: { challengeId: string };
   ReadingHistory: { challengeId: string; readerId: string };
   CreateReadingChallenge: undefined;
   ChallengeApplicants: { challengeId: string; applicantUserId?: string };

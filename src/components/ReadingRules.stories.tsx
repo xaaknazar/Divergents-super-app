@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-native';
 import { ReadingRules } from './ReadingRules';
-const meta = { title: 'Reading/Rules', component: ReadingRules } satisfies Meta<typeof ReadingRules>;
+const meta = { title: 'Reading/ReadingRules', component: ReadingRules, args: { variant: 'collapsed' } } satisfies Meta<typeof ReadingRules>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Collapsed: Story = {};
-export const Continuous: Story = { args: { mode: 'continuous', initiallyExpanded: true } };
-export const Expanded: Story = { args: { initiallyExpanded: true } };
-export const Dark: Story = { args: { initiallyExpanded: true }, parameters: { scheme: 'dark' } };
-export const LargeText: Story = { args: { initiallyExpanded: true }, parameters: { viewport: 'compact', textSize: 'xl' } };
-export const ContinuousDark: Story = { args: { mode: 'continuous', initiallyExpanded: true }, parameters: { scheme: 'dark' } };
+export const CollapsedOpen: Story = { args: { initiallyExpanded: true } };
+export const JoinList: Story = { args: { variant: 'list' } };
+export const StrictMode: Story = { args: { variant: 'list', blockingMode: 'all-apps' } };
+export const Dark: Story = { args: { variant: 'list' }, parameters: { scheme: 'dark' } };
+export const LargeText: Story = { args: { initiallyExpanded: true }, parameters: { textSize: 'xl', viewport: 'compact' } };

@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { hexToRgba } from '../theme/personalization';
-import { darkTheme, minTouch, radius } from '../theme/tokens';
+import { minTouch, radius } from '../theme/tokens';
 
 export interface SectionTabsProps {
   items: ReadonlyArray<{ id: number; label: string }>;
@@ -11,9 +11,9 @@ export interface SectionTabsProps {
   onChange: (id: number) => void;
 }
 
-/** One scrollable navy-glass rail; full labels remain available at any text size. */
+/** One scrollable glass rail that follows the light/dark theme; full labels remain available at any text size. */
 export function SectionTabs({ items, value, onChange }: SectionTabsProps) {
-  const { T, ty, reduceTransparency, reduceMotion } = useTheme();
+  const { T, ty, isDark, reduceTransparency, reduceMotion } = useTheme();
   const scroll = useRef<ScrollView>(null);
   const positions = useRef(new Map<number, { x: number; width: number }>());
   const viewport = useRef(0);
@@ -36,11 +36,11 @@ export function SectionTabs({ items, value, onChange }: SectionTabsProps) {
   if (!items.length) return null;
 
   return <View testID="section-tabs-container">
-    <View testID="section-tabs-surface" style={[styles.surface, { borderColor: darkTheme.separator }]}>
+    <View testID="section-tabs-surface" style={[styles.surface, { borderColor: T.cardBorder }]}>
       <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
-        {Platform.OS === 'ios' && !reduceTransparency ? <BlurView testID="section-tabs-blur" intensity={56} tint="dark" style={StyleSheet.absoluteFill} /> : null}
+        {Platform.OS === 'ios' && !reduceTransparency ? <BlurView testID="section-tabs-blur" intensity={40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
         <View testID="section-tabs-tint" style={[StyleSheet.absoluteFill, {
-          backgroundColor: reduceTransparency ? darkTheme.cardBg : hexToRgba(darkTheme.cardBg, Platform.OS === 'ios' ? 0.90 : 0.97),
+          backgroundColor: reduceTransparency ? T.cardBg : hexToRgba(T.cardBg, Platform.OS === 'ios' ? 0.82 : 0.97),
         }]} />
       </View>
       <ScrollView ref={scroll} testID="section-tabs-scroll" horizontal showsHorizontalScrollIndicator={false}
@@ -53,11 +53,11 @@ export function SectionTabs({ items, value, onChange }: SectionTabsProps) {
           onFocus={() => { setFocusedId(item.id); reveal(item.id); }} onBlur={() => setFocusedId(undefined)}
           onPress={() => { reveal(item.id); onChange(item.id); }}
           style={({ pressed }) => [styles.tab, {
-            backgroundColor: value === item.id ? T.brand : pressed ? darkTheme.fillPrimary : 'transparent',
-            borderColor: focusedId === item.id ? darkTheme.label : value === item.id ? hexToRgba(darkTheme.label, 0.25) : 'transparent',
+            backgroundColor: value === item.id ? T.brand : pressed ? T.fillPrimary : 'transparent',
+            borderColor: focusedId === item.id ? T.label : 'transparent',
             opacity: pressed ? 0.75 : 1,
-          }]}>
-          <Text style={[ty.footnoteEm, { color: value === item.id ? T.onBrand : darkTheme.labelSecondary }]}>{item.label}</Text>
+          }, value === item.id ? styles.selected : null]}>
+          <Text style={[ty.footnoteEm, { color: value === item.id ? T.onBrand : T.labelSecondary }]}>{item.label}</Text>
         </Pressable>)}
       </ScrollView>
     </View>
@@ -67,6 +67,8 @@ export function SectionTabs({ items, value, onChange }: SectionTabsProps) {
 const styles = StyleSheet.create({
   surface: { borderRadius: radius.pill, borderWidth: 1, overflow: 'hidden' },
   row: { flexDirection: 'row', flexWrap: 'nowrap', gap: 4, padding: 4 },
-  tab: { minHeight: minTouch, minWidth: minTouch, flexShrink: 0, paddingHorizontal: 16, paddingVertical: 10,
+  tab: { minHeight: minTouch, minWidth: minTouch, flexShrink: 0, paddingHorizontal: 18, paddingVertical: 10,
     borderWidth: 2, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  // Soft lift for the selected segment, like the iOS segmented control.
+  selected: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
 });

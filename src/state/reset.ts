@@ -83,6 +83,10 @@ const USER_DATA_DIRS: string[] = [
 export async function clearAllAppData(): Promise<void> {
   // Release shields offline. The account-bound native journal remains until its server receipt is confirmed.
   await readingNative.pause().catch(() => {});
+  // A normal pause keeps its frozen card; account exit must not leave the
+  // previous user's book on the Lock Screen, even after a partial receipt
+  // removed the journal or a storage failure prevented reading it.
+  await readingNative.endLiveActivities().catch(() => {});
   await challengeReadCache.reset();
   await stopResumeSync();
   // Invalidate late responses before the first await; erase only this account.
