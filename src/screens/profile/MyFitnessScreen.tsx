@@ -10,11 +10,12 @@ import { Wrapper } from '../../components/Wrapper';
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Modal, TextInput, Alert, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeContext';
-import { NavHeader } from '../../components/NavHeader';
-import { SF } from '../../components/SFIcon';
+import { SF, SFName } from '../../components/SFIcon';
+import { FitnessHero } from '../../components/FitnessHero';
+import { FitnessRecordTile } from '../../components/FitnessRecordTile';
+import { IconTile, IconTileTone } from '../../components/IconTile';
 import { ListSection, ProgressBar, Chip, Button } from '../../components/ui';
 import { RouteThumb } from '../../components/RouteThumb';
 import { hTap, hSuccess, hSelect } from '../../lib/haptics';
@@ -76,30 +77,30 @@ export function MyFitnessScreen({ navigation }: Props) {
   const finishedPrograms = useMemo(() => programHistory(programs), [programs, today]);
   const todayLeft = activePrograms.filter((r) => r.s.dayIndex >= 1 && !r.s.todayDone).length;
 
-  const recordCards: { key: string; icon: string; label: string; value: string; sub?: string; color: string; workout?: Workout | null; card: ShareCard }[] = [
+  const recordCards: { key: string; icon: SFName; tone: IconTileTone; label: string; value: string; sub?: string; workout?: Workout | null; card: ShareCard }[] = [
     {
-      key: 'longestRun', icon: 'figure.run', label: tr('Самая длинная пробежка'), color: T.brand,
+      key: 'longestRun', icon: 'figure.run', tone: 'brand', label: tr('Самая длинная пробежка'),
       value: records.longestRun ? `${km(records.longestRun.distanceM)} км` : '—',
       sub: records.longestRun ? `${shortDate(records.longestRun.dateISO)} · ${formatPace(records.longestRun.distanceM, paceTimeSec(records.longestRun))}/км` : tr('пока нет'),
       workout: records.longestRun,
       card: { title: 'Рекорд', stats: [{ l: 'Самая длинная пробежка', v: records.longestRun ? `${km(records.longestRun.distanceM)} км` : '—' }] },
     },
     {
-      key: 'fastestRun', icon: 'bolt.fill', label: tr('Лучший темп'), color: T.orange,
+      key: 'fastestRun', icon: 'stopwatch', tone: 'orange', label: tr('Лучший темп'),
       value: records.fastestRun ? formatPace(records.fastestRun.distanceM, paceTimeSec(records.fastestRun)) : '—',
       sub: records.fastestRun ? `${km(records.fastestRun.distanceM)} км · ${shortDate(records.fastestRun.dateISO)}` : tr('от 1 км'),
       workout: records.fastestRun,
       card: { title: 'Рекорд', stats: [{ l: 'Лучший темп', v: records.fastestRun ? `${formatPace(records.fastestRun.distanceM, paceTimeSec(records.fastestRun)).replace('′', ':').replace('″', '')} /км` : '—' }] },
     },
     {
-      key: 'longestWalk', icon: 'figure.walk', label: tr('Самая длинная прогулка'), color: T.green,
+      key: 'longestWalk', icon: 'mountain.2.fill', tone: 'trip', label: tr('Самая длинная прогулка'),
       value: records.longestWalk ? `${km(records.longestWalk.distanceM)} км` : '—',
       sub: records.longestWalk ? `${shortDate(records.longestWalk.dateISO)} · ${formatDuration(paceTimeSec(records.longestWalk))}` : tr('пока нет'),
       workout: records.longestWalk,
       card: { title: 'Рекорд', stats: [{ l: 'Самая длинная прогулка', v: records.longestWalk ? `${km(records.longestWalk.distanceM)} км` : '—' }] },
     },
     {
-      key: 'total', icon: 'flame.fill', label: tr('Всего пройдено'), color: T.red,
+      key: 'total', icon: 'chart.line.uptrend.xyaxis', tone: 'violet', label: tr('Всего пройдено'),
       value: `${km(records.totalM)} км`,
       sub: `${pl.count(records.runs, 'пробежка', 'пробежки', 'пробежек')} · ${pl.count(records.walks, 'прогулка', 'прогулки', 'прогулок')}`,
       card: { title: 'Всего', stats: [{ l: 'Пройдено', v: `${km(records.totalM)} км` }, { l: 'Тренировок', v: String(records.runs + records.walks) }] },
@@ -130,32 +131,14 @@ export function MyFitnessScreen({ navigation }: Props) {
         {/* Шапка: градиент от самого верха, навбар поверх него прозрачный —
             как на странице челленджа. Сплошной цветной блок под белым навбаром
             выглядел приклеенным. */}
-        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <NavHeader backLabel={tr('Профиль')} onBack={() => navigation.goBack()} variant="hero" />
-          <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 22, position: 'relative' }}>
-            <View style={{ position: 'absolute', right: 6, top: -10, opacity: 0.16 }}>
-              <SF name="figure.run" size={130} color="#fff" />
-            </View>
-            <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: 0.6 }]}>{tr('Физические показатели')}</Text>
-            <Text style={[ty.largeTitle, { color: '#fff', marginTop: 2 }]} numberOfLines={1}>{tr('Мои тренировки')}</Text>
-            <View style={{ flexDirection: 'row', marginTop: 16 }}>
-              {[
-                { v: km(records.weekM), l: tr('км за неделю') },
-                { v: String(records.runs + records.walks), l: tr('тренировок') },
-                { v: todayLeft > 0 ? String(todayLeft) : '✓', l: todayLeft > 0 ? tr('на сегодня') : tr('всё сделано') },
-              ].map((s, i) => (
-                <View key={i} style={{ flex: 1 }}>
-                  <Text style={[ty.title2, { color: '#fff' }]} numberOfLines={1}>{s.v}</Text>
-                  <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.8)' }]} numberOfLines={1}>{s.l}</Text>
-                </View>
-              ))}
-            </View>
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-              <HeroButton icon="figure.run" label={tr('Записать бег')} onPress={() => navigation.navigate('WorkoutTrack')} solid />
-              <HeroButton icon="clock.arrow.circlepath" label={tr('История')} onPress={() => navigation.navigate('WorkoutHistory')} />
-            </View>
-          </View>
-        </LinearGradient>
+        <FitnessHero backLabel={tr('Профиль')} eyebrow={tr('Физические показатели')} title={tr('Мои тренировки')}
+          stats={[
+            { value: km(records.weekM), label: tr('км за неделю') },
+            { value: String(records.runs + records.walks), label: tr('тренировок') },
+            { value: todayLeft > 0 ? String(todayLeft) : '✓', label: todayLeft > 0 ? tr('на сегодня') : tr('всё сделано') },
+          ]}
+          recordLabel={tr('Записать бег')} historyLabel={tr('История')} onBack={() => navigation.goBack()}
+          onRecord={() => navigation.navigate('WorkoutTrack')} onHistory={() => navigation.navigate('WorkoutHistory')} />
 
         {/* Программы */}
         <SectionTitle title={tr('Программы')} action={tr('Новая')} onAction={() => { hTap(); setProgramSheet(true); }} first />
@@ -186,7 +169,7 @@ export function MyFitnessScreen({ navigation }: Props) {
         <Pressable accessibilityRole="button" accessibilityLabel={`История программ: ${finishedPrograms.length}`}
           onPress={() => navigation.navigate('ProgramHistory')}
           style={({ pressed }) => ({ marginHorizontal: 16, marginTop: 12, padding: 16, minHeight: 64, borderRadius: 20, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.75 : 1 })}>
-          <SF name="clock.arrow.circlepath" size={24} color={T.brandText} />
+          <IconTile icon="clock.arrow.circlepath" tone="brand" variant="soft" size="sm" />
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]}>История программ</Text>
             <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{finishedPrograms.length ? `${pl.count(finishedPrograms.length, 'завершённая программа', 'завершённые программы', 'завершённых программ')} · ваши итоги` : 'Здесь сохранятся результаты и достижения'}</Text>
@@ -205,24 +188,9 @@ export function MyFitnessScreen({ navigation }: Props) {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: 11 }}>
           {recordCards.map((r) => (
             <View key={r.key} style={{ width: '50%', padding: 5 }}>
-              <Pressable
-                onPress={() => { if (r.workout) navigation.navigate('WorkoutDetail', { workoutId: r.workout.id }); }}
-                onLongPress={() => { hTap(); share(r.card); }}
-                accessibilityRole="button" accessibilityLabel={`${r.label}: ${r.value}`}
-                style={({ pressed }) => ({ backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 14, minHeight: 124, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.8 : 1 })}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <View style={{ width: 32, height: 32, borderRadius: 16, borderCurve: 'continuous', backgroundColor: `${r.color}22`, alignItems: 'center', justifyContent: 'center' }}>
-                    <SF name={r.icon} size={16} color={r.color} />
-                  </View>
-                  <Pressable onPress={() => share(r.card)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Поделиться')}>
-                    <SF name="square.and.arrow.up" size={15} color={T.labelTertiary} />
-                  </Pressable>
-                </View>
-                <Text style={[ty.title2, { color: T.label, marginTop: 10 }]} numberOfLines={1} adjustsFontSizeToFit>{r.value}</Text>
-                <Text style={[ty.caption1, { color: T.label, marginTop: 2 }]} numberOfLines={1}>{r.label}</Text>
-                {r.sub ? <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{r.sub}</Text> : null}
-              </Pressable>
+              <FitnessRecordTile icon={r.icon} tone={r.tone} value={r.value} label={r.label} caption={r.sub}
+                onPress={r.workout ? () => navigation.navigate('WorkoutDetail', { workoutId: r.workout!.id }) : undefined}
+                onShare={() => { hTap(); share(r.card); }} />
             </View>
           ))}
         </View>
@@ -242,7 +210,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                 <Pressable key={g.id} onLongPress={() => confirmRemoveGoal(g)} accessibilityRole="button" accessibilityLabel={g.title}
                   style={{ paddingVertical: 12, paddingHorizontal: 16, gap: 8, borderBottomWidth: i < arr.length - 1 ? 0.5 : 0, borderBottomColor: T.separator, opacity: done ? 0.85 : 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <SF name={done ? 'checkmark.seal.fill' : 'target'} size={18} color={done ? T.green : T.brand} />
+                    <IconTile icon={done ? 'checkmark.seal.fill' : 'target'} tone={done ? 'trip' : 'brand'} variant="soft" size="sm" />
                     <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{g.title}</Text>
                     {done ? <StatusBadge label={String((tr('достигнута')))} tone="success" /> : null}
                     <Pressable onPress={() => share({
@@ -277,9 +245,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                 <View key={m.id} style={{ borderBottomWidth: i < metrics.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
                   <Pressable onPress={() => setOpenMetric(open ? null : m.id)} onLongPress={() => confirmRemoveMetric(m)} accessibilityRole="button" accessibilityLabel={m.name} accessibilityState={{ expanded: open }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
-                    <View style={{ width: 36, height: 36, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-                      <SF name="dumbbell" size={17} color={T.brand} />
-                    </View>
+                    <IconTile {...metricTile(m.unit)} size="sm" />
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{m.name}</Text>
                       <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
@@ -368,9 +334,7 @@ function ProgramCard({ p, s, onOpen, onDone }: { p: FitnessProgram; s: ProgramSt
   return (
     <ActionBlock size="compact" onPress={onOpen} accessibilityRole="button" accessibilityLabel={p.title}><Wrapper gap={10}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ width: 40, height: 40, borderRadius: 20, borderCurve: 'continuous', backgroundColor: s.finished ? 'rgba(52,199,89,0.16)' : T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-          <SF name={s.finished ? 'checkmark.seal.fill' : 'flame.fill'} size={19} color={s.finished ? T.green : T.brand} />
-        </View>
+        <IconTile icon={s.finished ? 'checkmark.seal.fill' : 'person.fill'} tone={s.finished ? 'trip' : 'brand'} size="sm" />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{p.title} · {p.target} {p.unit}</Text>
           <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
@@ -567,6 +531,11 @@ function ProgramSheet({ visible, onClose, onAdd }: { visible: boolean; onClose: 
 
 // ─── Мелкие части ─────────────────────────────────────────────────────────────
 
+/** Плашка показателя: время (сек/мин) — секундомер, остальное — гиря. */
+function metricTile(unit: string): { icon: SFName; tone: IconTileTone } {
+  return /^(с|сек|секунд|мин|минут|ч|час)/i.test(unit.trim()) ? { icon: 'stopwatch', tone: 'orange' } : { icon: 'kettlebell', tone: 'violet' };
+}
+
 function SectionTitle({ title, action, onAction, first }: { title: string; action?: string; onAction?: () => void; first?: boolean }) {
   const { T, ty } = useTheme();
   return (
@@ -587,9 +556,7 @@ function Hint({ icon, title, text, action, onAction }: { icon: string; title: st
   return (
     <Wrapper marginHorizontal={16}><ContentBlock size="regular"><Wrapper gap={10}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 34, height: 34, borderRadius: 17, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-          <SF name={icon} size={16} color={T.brand} />
-        </View>
+        <IconTile icon={icon} tone="brand" variant="soft" size="sm" />
         <Text style={[ty.headline, { color: T.label, flex: 1 }]}>{title}</Text>
       </View>
       <Text style={[ty.subhead, { color: T.labelSecondary }]}>{text}</Text>
@@ -599,17 +566,6 @@ function Hint({ icon, title, text, action, onAction }: { icon: string; title: st
         </Pressable>
       ) : null}
     </Wrapper></ContentBlock></Wrapper>
-  );
-}
-
-function HeroButton({ icon, label, onPress, solid }: { icon: string; label: string; onPress: () => void; solid?: boolean }) {
-  const { ty } = useTheme();
-  return (
-    <Pressable onPress={() => { hTap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label}
-      style={({ pressed }) => ({ flex: 1, minHeight: 46, borderRadius: 13, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: solid ? '#fff' : 'rgba(255,255,255,0.18)', opacity: pressed ? 0.8 : 1 })}>
-      <SF name={icon} size={16} color={solid ? '#234088' : '#fff'} />
-      <Text style={[ty.subheadEm, { color: solid ? '#234088' : '#fff' }]}>{label}</Text>
-    </Pressable>
   );
 }
 

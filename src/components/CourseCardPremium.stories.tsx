@@ -16,3 +16,6 @@ export const Paid: Story = { args: { course: { ...sampleCourse, price: 15000 }, 
 export const Locked: Story = { args: { course: { ...sampleCourse, price: 15000 }, showPrice: false } };
 export const Gift: Story = { args: { course: { ...sampleCourse, price: 15000, gifted: true } } };
 export const Disabled: Story = { args: { onPress: undefined } };
+export const Shelf: Story = { args: { variant: 'shelf', owned: true, progress: 42 } };
+export const ShelfCompleted: Story = { args: { variant: 'shelf', owned: true, progress: 100 } };
+export const ShelfDark: Story = { args: { variant: 'shelf', owned: true, progress: 42 }, parameters: { scheme: 'dark' } };

@@ -370,6 +370,13 @@ for (const [en, ru] of _themes) {
   for (const r of ru) GALLUP_CANON[r] = en;
 }
 
+/** Оригинальное английское название темы Gallup («Достижение» → «Achiever»); неизвестное — как есть. */
+export function gallupEnglishName(name: string): string {
+  const canon = GALLUP_CANON[name.trim().toLowerCase()];
+  if (!canon) return name.trim();
+  return canon.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
+}
+
 export function gallupCanon(name: string): string {
   return GALLUP_CANON[name.trim().toLowerCase()] ?? name.trim().toLowerCase();
 }

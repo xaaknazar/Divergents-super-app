@@ -53,13 +53,13 @@ beforeEach(() => {
 
 it('keeps search, category selection, reset and course navigation', async () => {
   const view = await render(screen());
-  await fireEvent.press(view.getByRole('button', { name: 'Категория: Все' }));
   await fireEvent.press(view.getByRole('button', { name: 'Продуктивность' }));
+  expect(view.getByRole('button', { name: 'Продуктивность' }).props.accessibilityState.selected).toBe(true);
   await fireEvent.changeText(view.getByLabelText('Поиск курса'), 'Несуществующий курс');
   expect(view.getByText('Ничего не найдено')).toBeTruthy();
   await fireEvent.press(view.getByRole('button', { name: 'Сбросить поиск и фильтр' }));
   expect(view.getByLabelText('Поиск курса').props.value).toBe('');
-  expect(view.getByRole('button', { name: 'Категория: Все' })).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Все' }).props.accessibilityState.selected).toBe(true);
   await fireEvent.press(view.getAllByRole('button', { name: /Управление вниманием\. 12 уроков/ })[0]);
   expect(navigate).toHaveBeenCalledWith('CourseDetail', { courseId: 'storybook-focus' });
 });
@@ -67,7 +67,7 @@ it('keeps search, category selection, reset and course navigation', async () => 
 it('keeps local/server maximum progress and continuation ownership', async () => {
   mockOwned.courses = [{ ...sampleCourses[0], serverProgress: 20 }];
   const view = await render(screen());
-  expect(view.getByText('Продолжить · 60%')).toBeTruthy();
+  expect(view.getByRole('button', { name: /^Продолжить: .*60% пройдено$/ })).toBeTruthy();
   expect(view.queryByText('Рекомендуем')).toBeNull();
   const cards = view.getAllByRole('button', { name: /60% пройдено/ });
   expect(cards).toHaveLength(3); // continue, shelf and catalog
@@ -80,8 +80,8 @@ it('keeps gift eligibility, downloads, library and profile routes', async () => 
   mockDownloads = [{ id: 'download-example' }];
   const view = await render(screen());
   await fireEvent.press(view.getByRole('button', { name: /Подарок новым участникам/ }));
-  await fireEvent.press(view.getByRole('button', { name: /Скачанные уроки/ }));
-  await fireEvent.press(view.getByRole('button', { name: 'Библиотека книг' }));
+  await fireEvent.press(view.getByRole('button', { name: /^Скачанные, 1/ }));
+  await fireEvent.press(view.getByRole('button', { name: /^Библиотека/ }));
   await fireEvent.press(view.getByRole('button', { name: 'Профиль' }));
   expect(navigate.mock.calls).toEqual([
     ['CourseDetail', { courseId: 'storybook-gift' }], ['Downloads'], ['Books'],
@@ -93,7 +93,7 @@ it('does not expose a disabled library or an ineligible gift', async () => {
   mockFeatures.books = false;
   mockGift = { active: true, eligible: false, until: null, courseIds: ['storybook-gift'] };
   const view = await render(screen());
-  expect(view.queryByRole('button', { name: 'Библиотека книг' })).toBeNull();
+  expect(view.queryByRole('button', { name: /^Библиотека/ })).toBeNull();
   expect(view.queryByRole('button', { name: /Подарок новым участникам/ })).toBeNull();
 });
 

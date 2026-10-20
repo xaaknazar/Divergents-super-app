@@ -9,6 +9,7 @@ import { CourseCoverProps } from '../CourseCover';
 import { FeaturedCard } from '../FeaturedCard';
 import { HeaderIcon } from '../HeaderIcon';
 import { LearningShortcut } from '../LearningShortcut';
+import { ShortcutTile } from '../ShortcutTile';
 import { ListSkeleton } from '../ListSkeleton';
 import { NavBarLarge } from '../NavBarLarge';
 import { NavHeader,NavHeaderProps } from '../NavHeader';
@@ -96,9 +97,10 @@ it('keeps pull-to-refresh busy until its promise settles', async () => {
 it('adapts the catalog to its container, including compact Storybook canvases', async () => {
   const onCoursePress = jest.fn();
   const view = await render(<CourseCatalogGrid courses={sampleCourses} ownedProgress={{}} onCoursePress={onCoursePress} />);
-  expect(view.container.queryAll(node => StyleSheet.flatten(node.props.style)?.width === '48.5%')).toHaveLength(3);
+  // 390 − 2×16 − 12 = 346 → две колонки по 173.
+  expect(view.container.queryAll(node => StyleSheet.flatten(node.props.style)?.width === 173)).toHaveLength(3);
   await fireEvent(view.getByTestId('course-catalog-layout'), 'layout', { nativeEvent: { layout: { width: 320 } } });
-  expect(view.container.queryAll(node => StyleSheet.flatten(node.props.style)?.width === '48.5%')).toHaveLength(0);
+  expect(view.container.queryAll(node => StyleSheet.flatten(node.props.style)?.width === 173)).toHaveLength(0);
   expect(view.getAllByRole('button')).toHaveLength(3);
   await fireEvent.press(view.getAllByRole('button')[0]);
   expect(onCoursePress).toHaveBeenCalledWith(sampleCourses[0].id);
@@ -132,7 +134,14 @@ it('exposes list loading without private avatar/text placeholders in accessibili
 
 it('preserves download shortcut copy and navigation', async () => {
   const onPress = jest.fn();
-  const view = await render(<LearningShortcut kind="downloads" count={4} onPress={onPress} />);
-  await fireEvent.press(view.getByRole('button', { name: 'Скачанные уроки. 4 · доступны без интернета' }));
+  const view = await render(<ShortcutTile icon="arrow.down.circle.fill" title="Скачанные" caption="Уроки без интернета" count={4} onPress={onPress} />);
+  await fireEvent.press(view.getByRole('button', { name: 'Скачанные, 4, Уроки без интернета' }));
+  expect(onPress).toHaveBeenCalledTimes(1);
+});
+
+it('keeps the gift shortcut copy and navigation', async () => {
+  const onPress = jest.fn();
+  const view = await render(<LearningShortcut kind="gift" subtitle="3 курса открыты бесплатно" onPress={onPress} />);
+  await fireEvent.press(view.getByRole('button', { name: 'Подарок новым участникам. 3 курса открыты бесплатно' }));
   expect(onPress).toHaveBeenCalledTimes(1);
 });

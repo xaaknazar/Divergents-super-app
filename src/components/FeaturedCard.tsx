@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { shadows } from '../theme/tokens';
 import { PressableScale } from './PressableScale';
 import { CourseCover } from './CourseCover';
 import { SF } from './SFIcon';
@@ -12,11 +13,11 @@ export function FeaturedCard({
   course, owned, progress, showPrice, onPress,
 }: { course: Course; owned?: boolean; progress?: number; showPrice?: boolean; onPress?: () => void }) {
   const badge = courseAccessBadge(course, showPrice);
-  const { T, ty } = useTheme();
+  const { T, ty, isDark } = useTheme();
   const count = course.chaptersCount ?? course.lessons.length;
   const pct = Math.round(progress ?? 0);
   return (
-    <PressableScale onPress={onPress} accessibilityLabel={`${course.title}. ${lessonsWord(count)}. ${owned ? `${pct}% пройдено` : badge.label}`}><View style={{ backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}>
+    <PressableScale onPress={onPress} accessibilityLabel={`${course.title}. ${lessonsWord(count)}. ${owned ? `${pct}% пройдено` : badge.label}`}><View style={[{ backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous' }, isDark ? null : shadows.tappable]}><View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden' }}>
       <CourseCover imageUrl={course.imageUrl} icon={course.icon} variant="featured" />
       <View style={{ paddingHorizontal: 14, paddingTop: 14, gap: 4 }}>
         <Text style={[ty.title3, { color: T.label }]}>{course.title}</Text>
@@ -41,6 +42,6 @@ export function FeaturedCard({
           </View>
         )}
       </View>
-    </View></PressableScale>
+    </View></View></PressableScale>
   );
 }

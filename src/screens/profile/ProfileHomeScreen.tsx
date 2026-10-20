@@ -8,6 +8,7 @@ import { AchievementMedal } from '../../components/AchievementMedal';
 import { ActionBlock } from '../../components/ActionBlock';
 import { ContentBlock } from '../../components/ContentBlock';
 import { GardnerChart } from '../../components/GardnerChart';
+import { IconTile } from '../../components/IconTile';
 import { IconBadge } from '../../components/IconBadge';
 import { Logo } from '../../components/Logo';
 import { PageIntro } from '../../components/PageIntro';
@@ -22,7 +23,7 @@ import { useAchievements } from '../../data/achievements';
 import { imgUrl } from '../../data/api';
 import { fetchMyShelf,ShelfEntry } from '../../data/books';
 import { fetchCommunityHome,fetchMyChallengeHistory,SportActivity,Trip } from '../../data/community';
-import { applyGallupOrder,effectiveResumeCompleteness,fmtList,GALLUP_DOMAIN_META,loadGallupOrder,mbtiName } from '../../data/talentslab';
+import { applyGallupOrder,effectiveResumeCompleteness,fmtList,GALLUP_DOMAIN_META,gallupEnglishName,loadGallupOrder,mbtiName } from '../../data/talentslab';
 import { ProfileStackParams } from '../../navigation/types';
 import { formatPace,paceTimeSec } from '../../state/ActivityContext';
 import { useCareer } from '../../state/CareerContext';
@@ -352,7 +353,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {(profile?.gallup ?? []).length > 0 ? (
         <Wrapper marginHorizontal={16} marginTop={18}><ContentBlock size="regular">
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{t('strengths')}</Text>
+            <Text accessibilityRole="header" style={[ty.title3, { color: T.label, flexShrink: 1 }]}>{t('strengths')}</Text>
             {!live ? (
               <Pressable onPress={() => reload()} accessibilityRole="button" accessibilityLabel={t('demo_refresh')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 6 }}>
                 <SF name="arrow.clockwise" size={12} color={T.labelSecondary} />
@@ -366,7 +367,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
               return (
                 <View key={g.rank} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 16, borderCurve: 'continuous', backgroundColor: c + '18' }}>
                   <Text style={[ty.caption2Em, { color: c }]}>{g.rank}</Text>
-                  <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{g.name}</Text>
+                  <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{gallupEnglishName(g.name)}</Text>
                 </View>
               );
             })}
@@ -389,7 +390,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
         <Pressable onPress={() => navigation.navigate('MyFitness')} accessibilityRole="button" accessibilityLabel={tr('Мои тренировки')}
           style={({ pressed }) => ({ padding: 14, gap: 12, opacity: pressed ? 0.8 : 1 })}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <IconBadge icon="figure.run" size="large" />
+            <IconTile icon="figure.run" tone="brand" size="sm" />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Мои тренировки')}</Text>
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
@@ -420,7 +421,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
             </Pressable>
             <Pressable onPress={() => navigation.navigate('MyFitness')} accessibilityRole="button" accessibilityLabel={tr('Открыть мои тренировки')}
               style={({ pressed }) => ({ flex: 1, minHeight: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
-              <SF name="trophy.fill" size={15} color={T.brand} />
+              <SF name="arrow.right" size={15} color={T.brand} />
               <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Открыть')}</Text>
             </Pressable>
           </View>

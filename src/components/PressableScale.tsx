@@ -6,9 +6,11 @@ import { hSelect } from '../lib/haptics';
 import { useTheme } from '../theme/ThemeContext';
 
 export function PressableScale({
-  children, onPress, disabled, accessibilityLabel, accessibilityHint,
+  children, onPress, disabled, accessibilityLabel, accessibilityHint, fill = false,
 }: {
   children: React.ReactNode;
+  /** Растянуть на всю высоту ячейки (плитки одной высоты в ряду). */
+  fill?: boolean;
   onPress?: (e: GestureResponderEvent) => void;
   disabled?: boolean;
   accessibilityLabel?: string;
@@ -27,11 +29,11 @@ export function PressableScale({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      style={({ pressed }) => ({ opacity: disabled ? 0.45 : pressed && reduceMotion ? 0.7 : 1 })}
+      style={({ pressed }) => ({ flexGrow: fill ? 1 : undefined, opacity: disabled ? 0.45 : pressed && reduceMotion ? 0.7 : 1 })}
       onPressIn={() => { hSelect(); if (!reduceMotion) to(0.97); }}
       onPressOut={() => { if (!reduceMotion) to(1, 5); }}
     >
-      <Animated.View style={{ transform: [{ scale }] }}>{children}</Animated.View>
+      <Animated.View style={{ flexGrow: fill ? 1 : undefined, transform: [{ scale }] }}>{children}</Animated.View>
     </Pressable>
   );
 }
