@@ -15,6 +15,7 @@ jest.mock('../../../state/CourseContext', () => ({ useCourses: () => mockCatalog
 jest.mock('../../../state/useMyCourses', () => ({ useMyCourses: () => mockOwned }));
 jest.mock('../../../state/useRole', () => ({ useRole: () => ({ feature: (key: string) => mockFeatures[key] !== false, gift: mockGift }) }));
 jest.mock('../../../state/downloads', () => ({ useDownloads: () => ({ items: mockDownloads }) }));
+jest.mock('../../../state/useProfileButton', () => ({ useProfileButton: () => ({}) }));
 jest.mock('../../../state/useTalentProfile', () => ({ useTalentProfile: () => ({ profile: null, live: false }) }));
 jest.mock('@clerk/clerk-expo', () => ({ useUser: () => ({ user: { firstName: 'Участник' } }) }));
 jest.mock('../../../state/LanguageContext', () => ({
