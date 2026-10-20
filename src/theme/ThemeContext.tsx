@@ -35,11 +35,22 @@ type Ctx = {
   reduceMotion: boolean;
 };
 
-const ThemeCtx = createContext<Ctx | undefined>(undefined);
+export const ThemeCtx = createContext<Ctx | undefined>(undefined);
 
 function resolve(mode: ThemeMode, sys: ColorSchemeName): Scheme {
   if (mode === 'system') return sys === 'dark' ? 'dark' : 'light';
   return mode;
+}
+
+/** Same palette resolution in the app and isolated component previews. */
+export function resolveThemePalette(scheme: Scheme, accent = 'divergents'): Theme {
+  const base = scheme === 'dark' ? darkTheme : lightTheme;
+  const acc = ACCENTS.find(a => a.key === accent) ?? ACCENTS[0];
+  const ac = scheme === 'dark' ? acc.dark : acc.light;
+  return { ...base, brand: ac.brand, brandAccent: ac.accent,
+    brandText: scheme === 'dark' ? ac.accent : ac.brand, onBrand: contrastForeground(ac.brand),
+    brandTinted: hexToRgba(ac.accent, scheme === 'dark' ? 0.18 : 0.13),
+    brandTintedStrong: hexToRgba(ac.accent, scheme === 'dark' ? 0.28 : 0.20) };
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -96,15 +107,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const acc = ACCENTS.find((a) => a.key === accent) ?? ACCENTS[0];
   const ac = scheme === 'dark' ? acc.dark : acc.light;
 
-  const T: Theme = {
-    ...base,
-    brand: ac.brand,
-    brandAccent: ac.accent,
-    brandText: scheme === 'dark' ? ac.accent : ac.brand,
-    onBrand: contrastForeground(ac.brand),
-    brandTinted: hexToRgba(ac.accent, scheme === 'dark' ? 0.18 : 0.13),
-    brandTintedStrong: hexToRgba(ac.accent, scheme === 'dark' ? 0.28 : 0.20),
-  };
+  const T = resolveThemePalette(scheme, accent);
 
   const bg = BACKGROUNDS.find((b) => b.key === background) ?? BACKGROUNDS[0];
   const auroraColors = bg.key === 'none'

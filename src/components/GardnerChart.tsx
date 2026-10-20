@@ -3,12 +3,15 @@
 // language: rounded-top coloured bars, % above each bar, emoji + short name
 // below, light Y gridlines at 0/25/50/75/100. Horizontally scrollable when the
 // bars don't fit the available width. Bars grow in subtly on mount (Animated).
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React,{ useEffect,useMemo,useRef,useState } from 'react';
 import {
-  View, Text, ScrollView, Animated, LayoutChangeEvent,
+Animated,LayoutChangeEvent,
+ScrollView,
+Text,
+View,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { radius, space } from '../theme/tokens';
+import { radius,space } from '../theme/tokens';
 
 // ─── Type config ───────────────────────────────────────────────────
 // Exported so screens can reuse the same colours / emoji / labels. `match`

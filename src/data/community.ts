@@ -6,6 +6,8 @@
 // [] / null and the screens render a proper Russian empty/error state; we never
 // fall back to fake/branded seed data.
 import { z } from 'zod';
+import { captureAchievementRecorder } from './achievementEvents';
+import { challengeAchievementUpdate } from './achievementProgress';
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { API_BASE } from './api';
@@ -14,6 +16,7 @@ import { fetchJson, arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 import { TalentProfile, normalizeProfile } from './talentslab';
 import * as pl from './plural';
 import { netFetch } from './net';
+import { ReadAccessError } from './readAccessError';
 
 // ─── Server contracts (GET /api/mobile/{trips,challenges,sport}) ─────────────
 // Zod schemas validate every response at the network boundary and are the single
@@ -51,6 +54,7 @@ const RawChallengeSchema = z.object({
 }).passthrough();
 
 const RawTripSchema = z.object({
+  city: zStrN,
   id: zId,
   title: zStr(''),
   region: zStrN,
@@ -80,6 +84,7 @@ const RawTripSchema = z.object({
 // Мероприятие — встреча сообщества. На сервере называется Meetup: слово
 // «событие» там уже занято общей логикой поездок и спорта.
 const RawMeetupSchema = z.object({
+  city: zStrN,
   id: zId,
   title: zStr(''),
   description: zStrN,
@@ -98,6 +103,7 @@ const RawMeetupSchema = z.object({
 }).passthrough();
 
 const RawSportSchema = z.object({
+  city: zStrN,
   id: zId,
   title: zStr(''),
   place: zStr(''),
@@ -273,6 +279,7 @@ function challengeStartLabel(c: RawChallenge): string {
 // ─── Challenge scoring model ───────────────────────────────────────────────
 export interface MetricTask {
   id: string;
+  version?: number;
   kind: 'metric';
   title: string;
   icon: SFName;
@@ -286,6 +293,7 @@ export interface MetricTask {
 
 export interface BinaryTask {
   id: string;
+  version?: number;
   kind: 'binary';
   title: string;
   icon: SFName;
@@ -491,7 +499,7 @@ export interface Member {
   isMe?: boolean;
   // Server-computed disciplinary state. flags are per-category 🚩 counts;
   // eliminated freezes the member's points (🏳️ / «выбыл»). penalty is the total
-  // штрафных баллов (−100/−300), отрицательное число; уже учтено в weekBase.
+  // фактически списанных баллов (не больше доступного баланса), уже в weekBase.
   flags?: FlagCounts;
   eliminated?: boolean;
   /** Вышел по белому флагу 🏳️ — в отличие от вылета, это не наказание. */
@@ -550,7 +558,7 @@ export interface ChallengeDay {
   steps: number;
   /** Заработано баллов (с коэффициентом). */
   positive: number;
-  /** Штрафы дня, отрицательное число. У текущего дня 0. */
+  /** Фактическое списание за день, ограниченное балансом. У текущего дня 0. */
   penalty: number;
   /** Флаги, полученные именно в этот день. */
   flags: FlagCounts;
@@ -610,6 +618,7 @@ const EMPTY_ACTIVE: ActiveChallengeData = { challenge: null, members: [], ok: fa
 // the daily metric/binary task definitions (incl. the user's current values),
 // members is the full team leaderboard. We pass it through with light guards.
 interface RawActiveTask {
+  version?: unknown;
   id?: unknown; kind?: unknown; title?: unknown; icon?: unknown;
   unit?: unknown; min?: unknown; current?: unknown; basePts?: unknown;
   unitSize?: unknown; ptsPerUnit?: unknown; done?: unknown;
@@ -641,6 +650,14 @@ function flagsOf(v: unknown): FlagCounts {
 
 export function totalFlags(f: FlagCounts | undefined): number {
   return f ? f.R + f.NS + f.A : 0;
+}
+
+/** Только фактические списания сервера. Флаги не являются долгом команды. */
+export function sumMemberPenalties(members: ReadonlyArray<Pick<Member, 'penalty'>>): number {
+  return members.reduce((sum, member) => {
+    const penalty = member.penalty;
+    return sum + (typeof penalty === 'number' && Number.isFinite(penalty) ? Math.min(0, penalty) : 0);
+  }, 0);
 }
 
 /**
@@ -687,6 +704,7 @@ function mapActiveTask(raw: RawActiveTask): ChallengeTask | null {
     return {
       id,
       kind: 'binary',
+      version: numOf(raw.version),
       title,
       icon: coerceIcon(raw.icon, 'checkmark.circle.fill'),
       done: raw.done === true,
@@ -696,6 +714,7 @@ function mapActiveTask(raw: RawActiveTask): ChallengeTask | null {
   return {
     id,
     kind: 'metric',
+    version: numOf(raw.version),
     title,
     icon: coerceIcon(raw.icon, 'target'),
     unit: strOf(raw.unit),
@@ -855,6 +874,32 @@ export async function fetchActiveChallenge(
   }
 }
 
+/** All approved, currently running memberships. Never substitute one for another. */
+export async function fetchActiveChallenges(token?: string | null, timeoutMs = 20000): Promise<{ challenges: ActiveChallengeData[]; ok: boolean }> {
+  if (!token) return { challenges: [], ok: false };
+  try {
+    const res = await netFetch(`${API_BASE}/api/mobile/challenges/active?all=1`, {
+      timeoutMs, headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return { challenges: [], ok: false };
+    const data = await res.json();
+    // An old server's singleton response is not proof that other memberships disappeared.
+    if (!Array.isArray(data?.activeChallenges)) return { challenges: [], ok: false };
+    const challenges: ActiveChallengeData[] = data.activeChallenges.map((snapshot: any) => {
+      const challenge = snapshot?.challenge ? mapActiveChallenge(snapshot.challenge) : null;
+      const members = (Array.isArray(snapshot?.members) ? snapshot.members : [])
+        .map(mapActiveMember).filter((member: Member | null): member is Member => member !== null);
+      if (challenge && challenge.members === 0) challenge.members = members.length;
+      return { challenge, members, ok: true };
+    });
+    if (challenges.some(snapshot => !snapshot.challenge || !snapshot.members.some(member => member.isMe))
+      || new Set(challenges.map(snapshot => snapshot.challenge?.id)).size !== challenges.length) {
+      return { challenges: [], ok: false };
+    }
+    return { challenges, ok: true };
+  } catch { return { challenges: [], ok: false }; }
+}
+
 // Результат отправки отметки. Раньше возвращался голый boolean, и отказ «время
 // вышло» (409 deadline_passed) был неотличим от обрыва связи: приложение молча
 // оставляло отметку на экране и вечно её переотправляло.
@@ -876,6 +921,8 @@ export interface ProgressResult {
    */
   savedValue?: number;
   savedDone?: boolean;
+  version?: number;
+  current?: { challengeId: string; taskId: string; day: number; version: number; value: number; done: boolean };
   /** Сервер отбросил запись как опоздавшую — в savedValue актуальное значение. */
   superseded?: boolean;
   /** Значение обрезано потолком (защита от опечатки в лишний разряд). */
@@ -887,10 +934,12 @@ export interface ProgressResult {
 // Never throws: сетевой сбой возвращается как { ok:false, status:0 }.
 export async function postChallengeProgress(
   challengeId: string,
-  body: { taskId: string; value?: number; done?: boolean },
+  body: { taskId: string; value?: number; done?: boolean; operationId: string; expectedVersion: number; day: number },
   token?: string | null,
   timeoutMs = 12000,
 ): Promise<ProgressResult> {
+  const record = captureAchievementRecorder(token ?? null);
+  // Server deadlines use Almaty civil days, independent of the phone timezone.
   if (!challengeId || !body.taskId || !token) return { ok: false, status: 401, reason: 'no-token' };
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -899,18 +948,31 @@ export async function postChallengeProgress(
       method: 'POST',
       signal: ctrl.signal,
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      // `force` — обещание серверу, что это намеренная запись, а не догнавший
-      // повтор: с этой сборки по одной задаче в воздухе не бывает двух запросов
-      // одновременно, поэтому серверную защиту от гонки можно не применять и
-      // осознанное уменьшение числа проходит сразу.
-      body: JSON.stringify({ ...body, force: true }),
+      body: JSON.stringify(body),
     });
     let data: any = null;
     try { data = await res.json(); } catch { /* пустое / не-JSON тело */ }
     if (res.ok) {
+      // v1 may have accepted the value but cannot prove WHICH operation/day was
+      // committed. Keep the durable command; never fabricate a v2 receipt.
+      if (data?.ok === true && data.operationId === undefined && data.version === undefined) {
+        return { ok: false, status: res.status, reason: 'protocol_mismatch' };
+      }
+      if (data?.ok !== true || data.operationId !== body.operationId || data.challengeId !== challengeId
+        || data.taskId !== body.taskId || data.day !== body.day || data.version !== body.expectedVersion + 1
+        || !Number.isSafeInteger(data.value) || data.value < 0 || typeof data.done !== 'boolean'
+        || (body.value !== undefined && data.value !== body.value) || (body.done !== undefined && data.done !== body.done)
+        || typeof data.acceptedAt !== 'string' || !Number.isFinite(Date.parse(data.acceptedAt))) {
+        return { ok: false, status: res.status, reason: 'invalid_receipt' };
+      }
+      if (data?.superseded !== true && (data?.done === true || (typeof data?.value === 'number' && data.value > 0))) {
+        const reportDay = new Date(Date.parse(data.acceptedAt) + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        record({ facts: { challengeReports: [`${challengeId}:${reportDay}`] } });
+      }
       return {
         ok: true,
         status: res.status,
+        version: data.version,
         savedValue: typeof data?.value === 'number' ? data.value : undefined,
         savedDone: typeof data?.done === 'boolean' ? data.done : undefined,
         superseded: data?.superseded === true,
@@ -922,6 +984,10 @@ export async function postChallengeProgress(
       status: res.status,
       reason: typeof data?.reason === 'string' ? data.reason : undefined,
       deadlineHour: typeof data?.deadlineHour === 'number' ? data.deadlineHour : undefined,
+      current: data?.current?.challengeId === challengeId && data?.current?.taskId === body.taskId
+        && data?.current?.day === body.day && Number.isSafeInteger(data?.current?.version)
+        && data.current.version >= 0 && Number.isSafeInteger(data.current.value) && typeof data.current.done === 'boolean'
+        ? data.current : undefined,
     };
   } catch {
     return { ok: false, status: 0, reason: 'network' };
@@ -933,6 +999,7 @@ export async function postChallengeProgress(
 // ─── Trips ─────────────────────────────────────────────────────────────────
 export interface ItineraryItem { day: string; title: string; note: string; icon: SFName; color: string; }
 export interface Trip {
+  city?: string;
   id: string;
   date: string;
   title: string;
@@ -942,7 +1009,7 @@ export interface Trip {
   days: number;
   going: number;
   spots: number;
-  /** Цена как её ввёл организатор («от 45 000 ₸») либо «Цена уточняется». */
+  /** Все офлайн-события бесплатны. */
   price: string;
   /** Сложность или '' — экран сам решает, показывать ли строку. */
   difficulty: string;
@@ -962,9 +1029,10 @@ export interface Trip {
 function mapTrip(raw: RawTrip, index: number): Trip {
   const region = raw.region ?? '';
   const dateLabel = tripDateLabel(raw.date);
-  const meta = [region, dateLabel].filter(Boolean).join(' · ');
+  const meta = [raw.city, region, dateLabel].filter(Boolean).join(' · ');
   return {
     id: raw.id,
+    city: raw.city ?? '',
     date: dateLabel,
     title: raw.title ?? '',
     region,
@@ -973,7 +1041,7 @@ function mapTrip(raw: RawTrip, index: number): Trip {
     days: typeof raw.days === 'number' ? raw.days : 0,
     going: applicationsOf(raw),
     spots: typeof raw.spots === 'number' ? raw.spots : 0,
-    price: priceText(raw.price),
+    price: 'Бесплатно',
     // '—' раньше рендерилось как «сложность: —»; пусто = поля просто нет.
     difficulty: (raw.difficulty ?? '').trim(),
     // Только псевдоним. Если сервер его почему-то не прислал — лучше показать
@@ -998,6 +1066,9 @@ export async function fetchTrips(): Promise<Trip[]> {
 }
 
 const TripDetailSchema = z.object({
+  isCreator: z.boolean().optional(),
+  myStatus: z.string().nullable().optional(),
+  closed: z.boolean().optional(),
   trip: RawTripSchema,
   // Организатор события (или админ) видит кнопку «Заявки» и счётчик новых.
   canManage: z.boolean().optional(),
@@ -1008,6 +1079,9 @@ const TripDetailSchema = z.object({
 
 /** Поездка плюс права текущего пользователя на неё. */
 export interface TripDetail {
+  isCreator: boolean;
+  myStatus: string | null;
+  closed: boolean;
   trip: Trip;
   canManage: boolean;
   pendingCount: number;
@@ -1031,6 +1105,9 @@ export async function fetchTripDetail(id: string, token?: string | null): Promis
   return {
     trip,
     canManage: data.canManage === true,
+    isCreator: data.isCreator === true,
+    myStatus: data.myStatus ?? null,
+    closed: data.closed === true,
     pendingCount: typeof data.pendingCount === 'number' ? data.pendingCount : 0,
     // Старый сервер флага не шлёт — тогда считаем сами по тем же правилам.
     past: data.past === true || isEventPast(trip.meetAt, trip.days),
@@ -1042,6 +1119,7 @@ export async function fetchTripDetail(id: string, token?: string | null): Promis
 // у поездки: заявка → решение организатора. Полей меньше — нет региона, числа
 // дней и сложности, они про поход.
 export interface Meetup {
+  city?: string;
   id: string;
   title: string;
   description: string;
@@ -1063,6 +1141,7 @@ export interface Meetup {
 function mapMeetup(raw: RawMeetup, index = 0): Meetup {
   return {
     id: raw.id,
+    city: raw.city ?? '',
     title: raw.title ?? '',
     description: (raw.description ?? '').trim(),
     date: (raw.date ?? '').trim(),
@@ -1070,7 +1149,7 @@ function mapMeetup(raw: RawMeetup, index = 0): Meetup {
     place: (raw.place ?? '').trim(),
     meetLat: raw.meetLat ?? null,
     meetLng: raw.meetLng ?? null,
-    price: priceText(raw.price),
+    price: 'Бесплатно',
     spots: typeof raw.spots === 'number' ? raw.spots : 0,
     going: applicationsOf(raw),
     // Только псевдоним: `createdBy` — это почта, её показывать нельзя.
@@ -1087,6 +1166,9 @@ export async function fetchMeetups(): Promise<Meetup[]> {
 }
 
 const MeetupDetailSchema = z.object({
+  isCreator: z.boolean().optional(),
+  myStatus: z.string().nullable().optional(),
+  closed: z.boolean().optional(),
   meetup: RawMeetupSchema,
   canManage: z.boolean().optional(),
   pendingCount: z.number().optional(),
@@ -1094,6 +1176,9 @@ const MeetupDetailSchema = z.object({
 }).passthrough();
 
 export interface MeetupDetail {
+  isCreator: boolean;
+  myStatus: string | null;
+  closed: boolean;
   meetup: Meetup;
   canManage: boolean;
   pendingCount: number;
@@ -1108,9 +1193,21 @@ export async function fetchMeetupDetail(id: string, token?: string | null): Prom
   return {
     meetup,
     canManage: data.canManage === true,
+    isCreator: data.isCreator === true,
+    myStatus: data.myStatus ?? null,
+    closed: data.closed === true,
     pendingCount: typeof data.pendingCount === 'number' ? data.pendingCount : 0,
     past: data.past === true || isEventPast(meetup.meetAt, 1),
   };
+}
+
+/** Sport uses the same meeting-card contract and application workflow. */
+export async function fetchSportDetail(id: string, token?: string | null): Promise<MeetupDetail | null> {
+  const schema = MeetupDetailSchema.omit({ meetup: true }).extend({ sport: RawMeetupSchema });
+  const { data } = await fetchJson(`/api/mobile/sport/${encodeURIComponent(id)}`, schema, { token });
+  if (!data) return null;
+  return { meetup: mapMeetup(data.sport), isCreator: data.isCreator === true, canManage: data.canManage === true, myStatus: data.myStatus ?? null,
+    closed: data.closed === true, pendingCount: data.pendingCount ?? 0, past: data.past === true || isEventPast(data.sport.meetAt, 1) };
 }
 
 // ─── Заявки на офлайн-событие: разбор организатором ─────────────────────────
@@ -1121,18 +1218,19 @@ export type EventAppStatus = 'pending' | 'approved' | 'rejected';
 export interface EventApplicant {
   id: string;
   userId: string;
-  userEmail: string;
+  userEmail?: string;
   /** Псевдоним — то, что видят все. */
   userName: string;
-  /** ФИО — только организатору, он решает, кого берёт. */
-  fullName: string | null;
+  /** ФИО — только при явном разрешении сервера для администратора. */
+  fullName?: string | null;
   status: EventAppStatus | string;
   createdAt: string;
   /** Анкета Talentslab или null, если её нет. */
-  profile: any | null;
+  profile?: any | null;
 }
 
 export interface EventApplicants {
+  canViewProfiles: boolean;
   applications: EventApplicant[];
   counts: { total: number; pending: number; approved: number; rejected: number };
 }
@@ -1156,7 +1254,11 @@ export async function fetchEventApplicants(
     if (!res.ok) return null;
     const d = await res.json();
     return {
-      applications: Array.isArray(d?.applications) ? d.applications : [],
+      applications: Array.isArray(d?.applications) ? d.applications.map((a: EventApplicant) => ({
+        id: a.id, userId: a.userId, userName: a.userName, status: a.status, createdAt: a.createdAt,
+        ...(d.canViewProfiles === true ? { userEmail: a.userEmail, fullName: a.fullName, profile: a.profile } : {}),
+      })) : [],
+      canViewProfiles: d?.canViewProfiles === true,
       counts: d?.counts ?? { total: 0, pending: 0, approved: 0, rejected: 0 },
     };
   } catch {
@@ -1169,7 +1271,7 @@ export async function fetchEventApplicants(
 /** Решение по заявке. `reason: 'full'` — состав уже набран. */
 export interface DecideResult {
   ok: boolean;
-  reason?: 'full' | 'not_found' | 'forbidden' | 'network';
+  reason?: 'full' | 'not_found' | 'forbidden' | 'network' | 'closed' | 'cancelled';
   spots?: number;
   taken?: number;
 }
@@ -1294,8 +1396,8 @@ export const CHALLENGE_RULES: string[] = [
   'Три категории: Чтение (R), No Sugar (NS), Активность (A). Норма: 20 страниц и 10 000 шагов в день.',
   'Баллы: 1 страница = 1 балл, день без сахара = 0 баллов, 400 шагов = 1 балл.',
   'Активность можно набирать бегом, плаванием, велосипедом и силовыми (см. таблицу пересчёта).',
-  'Изменения принимаются до закрытия дня. Если за день нет ни одной отметки: −300 баллов и три 🚩.',
-  'Штраф за невыполнение нормы: −100 баллов и 🚩 по этой категории. Баллы не уходят в минус (минимум 0).',
+  'Изменения принимаются до закрытия дня. Если за день нет ни одной отметки: штраф до 300 баллов и три 🚩.',
+  'За невыполнение нормы: штраф до 100 баллов и 🚩 по этой категории. Списывается не больше баланса участника; минимум — 0. Команда теряет только фактически списанные баллы, без отдельного штрафа за флаги.',
   'Баллы команды обновляются по отметкам и окончательно пересчитываются в 23:01 при закрытии дня.',
   '3 🚩 по одной категории → 🏳️ и вылет. Очки фиксируются.',
   'Размер команды задаёт организатор (например, 20–35 человек): капитан и 2 советника, выбранные участниками.',
@@ -1413,6 +1515,7 @@ export function daysUntil(iso?: string): number {
 
 // ─── Спорт ─────────────────────────────────────────────────────────
 export interface SportActivity {
+  city?: string;
   id: string;
   title: string;
   place: string;
@@ -1440,7 +1543,8 @@ export async function fetchSport(): Promise<SportActivity[]> {
     return {
       id: x.id,
       title: x.title,
-      place: x.place,
+      place: [x.city, x.place].filter(Boolean).join(' · '),
+      city: x.city ?? '',
       date: x.date,
       icon: 'figure.run',
       going,
@@ -1549,6 +1653,7 @@ export interface ChallengeApplicant {
   isCaptain: boolean;
   date: string;
   profile: TalentProfile | null;
+  profileStatus?: 'live' | 'snapshot' | 'not_found' | 'not_loaded' | 'unavailable';
 }
 
 // Admin sees all applicants; a team captain sees only their team's. `canManage`
@@ -1686,6 +1791,7 @@ export async function fetchChallengeApplicants(
         isCaptain: a.isCaptain === true,
         date: a.date ?? '',
         profile: a.profile ? normalizeProfile(a.profile) : null,
+        profileStatus: a.profileStatus,
       })),
     };
   } catch { return { applicants: [], canManage: false, ok: false }; }
@@ -1940,15 +2046,19 @@ export interface ChallengeHistoryItem {
 }
 
 export async function fetchMyChallengeHistory(token: string | null): Promise<ChallengeHistoryItem[]> {
+  const record = captureAchievementRecorder(token ?? null);
   if (!token) return [];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
   try {
     const r = await fetch(`${API_BASE}/api/mobile/me/challenges`, {
+      signal: controller.signal,
       headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     });
     if (!r.ok) return [];
     const d = await r.json();
     const list: any[] = Array.isArray(d?.history) ? d.history : [];
-    return list.map((x) => ({
+    const history = list.map((x) => ({
       challengeId: String(x.challengeId),
       title: String(x.title ?? ''),
       seq: numOf(x.seq),
@@ -1964,7 +2074,9 @@ export async function fetchMyChallengeHistory(token: string | null): Promise<Cha
       announcedAt: typeof x.announcedAt === 'string' ? x.announcedAt : null,
       result: mapMyResult(x.result),
     }));
-  } catch { return []; }
+    record(challengeAchievementUpdate(history));
+    return history;
+  } catch { return []; } finally { clearTimeout(timer); }
 }
 
 function mapMyResult(raw: any): MyChallengeResult | null {
@@ -2089,12 +2201,16 @@ export async function claimChallengeAward(
 export async function fetchChallengeResults(
   challengeId: string,
   token: string | null,
+  options?: { view: 'summary' | 'days'; signal?: AbortSignal },
 ): Promise<ChallengeResults | null> {
   if (!token || !challengeId) return null;
   try {
-    const r = await fetch(`${API_BASE}/api/mobile/challenges/${challengeId}/results`, {
+    const query = options ? `?view=${options.view}` : '';
+    const r = await netFetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/results${query}`, {
       headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      timeoutMs: 12000, retries: 0, signal: options?.signal,
     });
+    if (options && [401, 403, 404].includes(r.status)) throw new ReadAccessError(r.status);
     if (!r.ok) return null;
     const d = await r.json();
     if (!d?.ok) return null;
@@ -2173,7 +2289,8 @@ export async function fetchChallengeResults(
         award: m?.award === true,
       })),
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof ReadAccessError) throw error;
     return null;
   }
 }

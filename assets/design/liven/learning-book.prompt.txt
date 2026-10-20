@@ -1,0 +1,11 @@
+Use case: stylized-concept
+Asset type: original transparent mobile-app illustration for the right-side artwork of a daily learning header, displayed at 96 to 140 points.
+Scene/backdrop: genuinely transparent background with native alpha. Isolated objects only, no floor, no backdrop and no cast ground shadow.
+Subject: one open blue book with thick rounded royal-blue covers and a small fan of luminous silver-white pages; one small blue bookmark with a silver edge floats just above the open book, and one subtly lifted page catches a tiny four-point white sparkle. All elements belong to one compact composition.
+Style/medium: premium friendly cheerful dimensional 3D app illustration with smooth generous forms, softly polished ceramic-like covers, rounded paper edges, a crisp simple silhouette and subtle tactile volume. Original illustration, not a copy of any app graphic and not a flat icon.
+Composition/framing: square canvas; full composition visible and centered, fills about 82 percent of the canvas; open book viewed from a slightly elevated three-quarter angle, gently tilted to expose the pages and blue cover; compact and legible at 96 points. No thin fragile details.
+Lighting/mood: soft bright studio lighting from above-left, cool luminous highlights and soft form shadows, inviting and optimistic. Preserve light rim highlights so the silhouette works on both white and deep navy interfaces.
+Color palette: ONLY Divergents deep navy #234088, royal blue #3D5BDB and periwinkle blue #8AA0FF, with white and neutral silver pages and accents. No green, yellow, gold, pink, red, teal or warm accents.
+Materials/textures: smooth satin-gloss covers, soft thick clean pages with a few broad page layers, not many thin lines; bookmark has rounded edges. No grain or weathering.
+Text: none; pages are blank.
+Constraints: no letters, numbers, text, logos, watermark, UI, frame, border, confetti, extra props, background glow, giant flare, painted checkerboard or opaque background. Keep all page surfaces opaque white/silver and preserve clean transparency around the book and floating bookmark. Output a clean transparent PNG cutout.

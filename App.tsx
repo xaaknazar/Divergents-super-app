@@ -18,6 +18,7 @@ import { PlacesProvider } from './src/state/PlacesContext';
 import { ChannelProvider } from './src/state/ChannelContext';
 import { ActivityProvider } from './src/state/ActivityContext';
 import { FitnessProvider } from './src/state/FitnessContext';
+import { AchievementProvider } from './src/state/AchievementContext';
 import { AudioPlayerProvider } from './src/state/AudioPlayerContext';
 // Импорт ради побочного эффекта: модуль регистрирует фоновую задачу записи
 // маршрута. Система может поднять приложение из фона ради одной координаты —
@@ -137,7 +138,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
                           экраны размонтируются при переходах, а лекция должна
                           продолжать играть. */}
                       <AudioPlayerProvider>
-                        {children}
+                        <AchievementProvider>{children}</AchievementProvider>
                       </AudioPlayerProvider>
                     </ModerationProvider>
                   </NotificationsProvider>

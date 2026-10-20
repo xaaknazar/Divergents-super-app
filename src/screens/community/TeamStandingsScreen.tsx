@@ -1,3 +1,5 @@
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Team-vs-team ranking (Рейтинг команд). Shows every team by total points with
 // its rank; the signed-in user's own team is highlighted. Data is server-computed
 // and rides along in the active-challenge payload (challenge.teamStandings).
@@ -8,7 +10,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection } from '../../components/ui';
+import { ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
@@ -18,9 +20,9 @@ import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'TeamStandings'>;
 
-export function TeamStandingsScreen({ navigation }: Props) {
+export function TeamStandingsScreen({ navigation, route }: Props) {
   const { T, ty } = useTheme();
-  const { challenge } = useChallenge();
+  const { challenge } = useChallenge(route.params.challengeId);
   const standings = challenge.teamStandings ?? [];
 
   return (
@@ -37,7 +39,7 @@ export function TeamStandingsScreen({ navigation }: Props) {
         {standings.length === 0 ? (
           <EmptyState icon="trophy.fill" title={tr('Рейтинг ещё пуст')} subtitle={tr('Команды появятся здесь, когда наберут очки.')} />
         ) : (
-          <ListSection header={tr('Все команды')} footer={tr('Очки команды — сумма баллов всех её участников за челлендж.')}>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Все команды')} footer={tr('Очки команды — сумма баллов всех её участников за челлендж.')}>
             {standings.map((tm, i) => {
               const medal = MEDAL_FOR_RANK(tm.rank);
               return (
@@ -62,7 +64,7 @@ export function TeamStandingsScreen({ navigation }: Props) {
                         только когда они есть: у чистой команды пустое место
                         читается лучше, чем «🚩 0». */}
                     {tm.flags ? (
-                      <Capsule bg="rgba(255,59,48,0.14)" color={T.red}>🚩 {tm.flags}</Capsule>
+                      <StatusBadge label={["🚩 ", (tm.flags)].join('')} tone="danger" />
                     ) : null}
                     <Text style={[ty.headline, { color: tm.isMine ? T.brand : T.label }]} numberOfLines={1}>{tm.points} pts</Text>
                   </View>
@@ -70,7 +72,7 @@ export function TeamStandingsScreen({ navigation }: Props) {
                 </View>
               );
             })}
-          </ListSection>
+          </ListSection></Wrapper>
         )}
         <View style={{ height: 30 }} />
       </Screen>

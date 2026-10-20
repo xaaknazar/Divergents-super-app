@@ -1,3 +1,6 @@
+import { Wrapper } from '../../components/Wrapper';
+import { ContentBlock } from '../../components/ContentBlock';
+import { NavHeader } from '../../components/NavHeader';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Share, RefreshControl } from 'react-native';
@@ -10,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { Segmented } from '../../components/ui';
-import { BackNav } from '../../components/headers';
 import { useRole } from '../../state/useRole';
 import { useModeration } from '../../state/ModerationContext';
 import { useChannel } from '../../state/ChannelContext';
@@ -173,14 +175,14 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   };
 
   if (loading) {
-    return <View style={{ flex: 1, backgroundColor: T.groupedBg }}><BackNav back="Каналы" onBack={() => navigation.goBack()} /><View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View></View>;
+    return <View style={{ flex: 1, backgroundColor: T.groupedBg }}><NavHeader backLabel="Каналы" onBack={() => navigation.goBack()} /><View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View></View>;
   }
   if (!ch) {
     // Fresh channels can lag the public list — offer a retry + a way back instead
     // of a dead end (this is what the "new channel" push used to land on).
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <BackNav back="Каналы" onBack={() => navigation.goBack()} />
+        <NavHeader backLabel="Каналы" onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30, gap: 6 }}>
           <View style={{ width: 66, height: 66, borderRadius: 33, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
             <SF name="tray" size={28} color={T.labelSecondary} />
@@ -204,7 +206,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back="Каналы" onBack={() => navigation.goBack()} trailing={!owner ? (
+      <NavHeader backLabel="Каналы" onBack={() => navigation.goBack()} trailing={!owner ? (
         <Pressable onPress={moderateChannel} hitSlop={10} accessibilityRole="button" accessibilityLabel="Пожаловаться или заблокировать">
           <SF name="ellipsis" size={18} color={T.label} />
         </Pressable>
@@ -312,7 +314,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
 
             {ch.posts.length === 0 ? (
               owner ? (
-                <View style={{ backgroundColor: T.cardBg, borderRadius: 20, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, padding: 24, alignItems: 'center' }}>
+                <ContentBlock size="regular"><Wrapper align={'center'}>
                   <View style={{ width: 60, height: 60, borderRadius: 20, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                     <SF name="square.and.pencil" size={26} color={T.brand} />
                   </View>
@@ -321,7 +323,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                   <Pressable onPress={() => setPostOpen(true)} style={{ marginTop: 16, height: 46, paddingHorizontal: 22, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     <SF name="plus" size={15} color="#fff" /><Text style={[ty.subheadEm, { color: '#fff' }]}>Создать пост</Text>
                   </Pressable>
-                </View>
+                </Wrapper></ContentBlock>
               ) : (
                 <View style={{ alignItems: 'center', paddingVertical: 34 }}>
                   <View style={{ width: 60, height: 60, borderRadius: 30, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="quote.bubble.fill" size={24} color={T.labelSecondary} /></View>
@@ -336,7 +338,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                 const isOpen = !!expanded[p.id];
                 const totalReactions = p.reactions ? Object.values(p.reactions).reduce((s, n) => s + (n || 0), 0) : 0;
                 return (
-                  <View key={p.id} style={{ backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 16, marginBottom: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+                  <Wrapper marginBottom={12} key={p.id}><ContentBlock size="regular">
                     {/* Header: type badge + time (+ owner delete) */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: T.brandTinted, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, borderCurve: 'continuous' }}>
@@ -400,7 +402,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                         </>
                       ) : null}
                     </View>
-                  </View>
+                  </ContentBlock></Wrapper>
                 );
               })
             )}
@@ -431,14 +433,14 @@ export function ServerChannelScreen({ route, navigation }: Props) {
           <Text style={[ty.title3, { color: T.label, paddingHorizontal: 20, paddingBottom: 10 }]}>Запросы на вступление</Text>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 10 }}>
             {requests.length === 0 ? <Text style={[ty.subhead, { color: T.labelTertiary, paddingHorizontal: 4, paddingVertical: 10 }]}>Новых запросов нет.</Text> : requests.map((r) => (
-              <View key={r.id} style={{ backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', padding: 12, marginBottom: 10 }}>
+              <Wrapper marginBottom={10} key={r.id}><ContentBlock size="compact">
                 <Text style={[ty.subheadEm, { color: T.label }]}>{r.profile?.fullName || r.userName || r.userEmail}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary }]}>{r.userEmail}{r.profile?.phone ? ` · ${r.profile.phone}` : ''}{r.profile?.mbtiType ? ` · MBTI ${r.profile.mbtiType}` : ''}</Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                   <Pressable accessibilityRole="button" accessibilityLabel="Принять заявку" onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'approve'); loadRequests(); load(); }} style={{ flex: 1, minHeight: 48, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.onBrand }]}>Принять</Text></Pressable>
                   <Pressable accessibilityRole="button" accessibilityLabel="Отклонить заявку" onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'reject'); loadRequests(); }} style={{ flex: 1, minHeight: 48, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]}>Отклонить</Text></Pressable>
                 </View>
-              </View>
+              </ContentBlock></Wrapper>
             ))}
           </ScrollView>
         </View>
@@ -638,13 +640,13 @@ function ManageChannel({ channel, onClose, onSaved, onDeleted }: { channel: Serv
 
           <Text style={[sectionLabel, { marginTop: 20 }]}>Участники · {members.length}</Text>
           {members.length === 0 ? <Text style={[ty.subhead, { color: T.labelTertiary, marginLeft: 4 }]}>Пока нет участников.</Text> : members.map((m) => (
-            <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', padding: 12, marginBottom: 8 }}>
+            <Wrapper marginBottom={8} key={m.id}><ContentBlock size="compact"><Wrapper dir={'row'} align={'center'} gap={10}>
               <View style={{ flex: 1 }}>
                 <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{m.userName || m.userEmail}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{m.userEmail}</Text>
               </View>
               <Pressable onPress={() => remove(m.userId, m.userName || m.userEmail)} hitSlop={8}><SF name="xmark.circle.fill" size={20} color={T.red} /></Pressable>
-            </View>
+            </Wrapper></ContentBlock></Wrapper>
           ))}
 
           <Pressable onPress={save} disabled={busy} style={{ marginTop: 20, height: 50, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>

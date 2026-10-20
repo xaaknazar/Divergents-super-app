@@ -1,0 +1,11 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { BottomBar } from './BottomBar';
+import { Button } from './Button';
+const meta = { title: 'Liven/Details/BottomBar', component: BottomBar, args: { children: <Button label="Продолжить" onPress={() => {}} /> },  } satisfies Meta<typeof BottomBar>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Tablet: Story = { parameters: { viewport: 'tablet' } };

@@ -1,3 +1,6 @@
+import { ContentBlock } from '../../components/ContentBlock';
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Дни челленджа: календарь прошедших дней и результат каждого — свой и командный.
 //
 // Раньше человек видел только сегодня. Понять, за какой день прилетел флаг и
@@ -7,7 +10,7 @@
 //
 // Разбор считает тот же зачёт, что и баллы (challenge-scoring на сервере), а не
 // отдельная формула: экран истории и таблица разойтись не могут.
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Modal, ScrollView, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
@@ -16,13 +19,12 @@ import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { AwardBadge } from '../../components/AwardBadge';
-import { Capsule, ListSection, Segmented } from '../../components/ui';
+import { ListSection, Segmented } from '../../components/ui';
 import { MemberAvatar } from '../../components/MemberAvatar';
-import { EmptyState } from '../../components/StateViews';
+import { EmptyState, ErrorState } from '../../components/StateViews';
+import { useChallengeResults } from '../../state/useChallengeResults';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
-import { useAuth } from '@clerk/clerk-expo';
-import { fetchChallengeResults, ChallengeResults } from '../../data/community';
 import { ChallengeDay, MemberDay, totalFlags, flagsToEliminate } from '../../data/community';
 import { fmtInt } from '../../data/format';
 import * as pl from '../../data/plural';
@@ -98,8 +100,7 @@ interface TeamDayRow {
 
 export function ChallengeDaysScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
-  const { challenge, leaderboard } = useChallenge();
-  const { getToken, isSignedIn } = useAuth();
+  const { challenge, leaderboard } = useChallenge(route.params?.challengeId);
   const challengeId = route.params?.challengeId ?? challenge.id;
 
   // Живой челлендж или завершённый — экран один.
@@ -108,20 +109,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
   // пуст, и переход сюда из итогов показывал пустой календарь. Поэтому если в
   // контексте не тот челлендж — дочитываем всё из итогов.
   const isLive = challenge.id === challengeId;
-  const [past, setPast] = useState<ChallengeResults | null>(null);
-
-  useEffect(() => {
-    if (isLive) return;
-    let alive = true;
-    (async () => {
-      const token = isSignedIn ? await getToken() : null;
-      const res = await fetchChallengeResults(challengeId, token);
-      if (!alive || !res) return;
-      setPast(res);
-    })();
-    return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [challengeId, isLive, isSignedIn]);
+  const { data: past, error: daysError, reload: reloadDays } = useChallengeResults(challengeId, 'days', !isLive);
 
   const myDays = isLive ? challenge.myDays ?? [] : past?.myDays ?? [];
   // У живого челленджа состав берётся из таблицы, у завершённого — из итогов.
@@ -309,7 +297,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
         {shownDays.length === 0 && !isLive && !past ? (
           // Итоги завершённого челленджа ещё грузятся. Показать «история пуста»
           // здесь было бы неправдой: история есть, её просто ещё не принесли.
-          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+          daysError ? <ErrorState message={tr('Не удалось загрузить историю. Попробуйте ещё раз.')} onRetry={reloadDays} /> : <View style={{ paddingVertical: 40, alignItems: 'center' }}>
             <ActivityIndicator color={T.brand} />
           </View>
         ) : shownDays.length === 0 ? (
@@ -321,7 +309,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
         ) : (
           <>
             {/* Календарь: одна плитка — один день. Нажатие открывает разбор. */}
-            <View style={{ marginHorizontal: 16, padding: 14, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
+            <Wrapper marginHorizontal={16}><ContentBlock size="compact">
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {Array.from({ length: total }).map((_, i) => {
                   const n = i + 1;
@@ -373,7 +361,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
                   </View>
                 ))}
               </View>
-            </View>
+            </ContentBlock></Wrapper>
 
             {/* Сводка за прошедшие дни */}
             <View style={{ flexDirection: 'row', marginTop: 16, marginHorizontal: 16 }}>
@@ -391,7 +379,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
             </View>
 
             {/* Список: то же самое, но подробнее и с прокруткой */}
-            <ListSection
+            <Wrapper marginTop={6} marginHorizontal={16}><ListSection
               header={tr('По дням')}
               footer={team
                 ? tr('Нажмите на день, чтобы увидеть результат каждого участника команды.')
@@ -404,7 +392,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
                 : [...myDays].reverse().map((d, i, arr) => (
                     <DayRow key={d.day} d={d} last={i === arr.length - 1} onPress={() => setOpenDay(d.day)} />
                   ))}
-            </ListSection>
+            </ListSection></Wrapper>
           </>
         )}
 
@@ -458,7 +446,7 @@ function DayRow({ d, last, onPress }: { d: ChallengeDay; last: boolean; onPress:
           </Text>
         </View>
 
-        {flags > 0 ? <Capsule bg="rgba(255,59,48,0.14)" color={T.red}>🚩 {flags}</Capsule> : null}
+        {flags > 0 ? <StatusBadge label={["🚩 ", (flags)].join('')} tone="danger" /> : null}
 
         <View style={{ alignItems: 'flex-end', minWidth: 54 }}>
           <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>+{Math.round(d.positive)}</Text>
@@ -503,7 +491,7 @@ function TeamDayRowView({ d, last, onPress }: { d: TeamDay; last: boolean; onPre
           </Text>
         </View>
 
-        {d.flags > 0 ? <Capsule bg="rgba(255,59,48,0.14)" color={T.red}>🚩 {d.flags}</Capsule> : null}
+        {d.flags > 0 ? <StatusBadge label={["🚩 ", (d.flags)].join('')} tone="danger" /> : null}
 
         <View style={{ alignItems: 'flex-end', minWidth: 54 }}>
           <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>+{Math.round(d.positive)}</Text>
@@ -591,12 +579,12 @@ function DayDetail({ day: d, onClose }: { day: ChallengeDay | null; onClose: () 
       ) : !d.reported ? (
         <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, borderCurve: 'continuous', backgroundColor: 'rgba(255,59,48,0.12)' }}>
           <Text style={[ty.caption1, { color: T.label }]}>
-            {tr('В этот день отметок не было или они пришли после 23:00: −300 баллов и по флагу в каждой категории.')}
+            {tr('За этот день нет своевременных отметок: по флагу в каждой категории и штраф до 300 баллов, но не больше вашего баланса. Команда теряет только фактически списанные баллы.')}
           </Text>
         </View>
       ) : null}
 
-      <ListSection header={tr('По категориям')}>
+      <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('По категориям')}>
         {rows.map((r, i) => (
           <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: i < rows.length - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
             <SF name={r.icon} size={18} color={r.ok ? T.green : T.labelSecondary} />
@@ -613,16 +601,16 @@ function DayDetail({ day: d, onClose }: { day: ChallengeDay | null; onClose: () 
             {r.flags > 0 ? <Text style={{ fontSize: 14 }}>🚩</Text> : r.ok ? <SF name="checkmark" size={15} color={T.green} /> : null}
           </View>
         ))}
-      </ListSection>
+      </ListSection></Wrapper>
 
-      <ListSection header={tr('Итог дня')}>
+      <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Итог дня')}>
         <View style={{ padding: 14, gap: 8 }}>
           <Line T={T} k={tr('Заработано')} v={`+${Math.round(d.positive)}`} />
           {d.penalty ? <Line T={T} k={tr('Штрафы')} v={String(Math.round(d.penalty))} danger /> : null}
           <View style={{ height: 0.5, backgroundColor: T.separator }} />
           <Line T={T} k={tr('Всего за день')} v={String(Math.round(d.positive + d.penalty))} bold />
         </View>
-      </ListSection>
+      </ListSection></Wrapper>
     </Sheet>
   );
 }
@@ -654,11 +642,11 @@ function TeamDayDetail({ t, rows, onClose }: {
         ))}
       </View>
 
-      <ListSection header={tr('Участники')}>
+      <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Участники')}>
         {rows.map((r, i) => (
           <MemberDayRow key={r.id} r={r} past={t.past} last={i === rows.length - 1} />
         ))}
-      </ListSection>
+      </ListSection></Wrapper>
     </Sheet>
   );
 }
@@ -730,7 +718,7 @@ function MemberDayRow({ r, past, last }: { r: TeamDayRow; past: boolean; last: b
             ) : null}
           </View>
 
-          {flags > 0 && !left ? <Capsule bg="rgba(255,59,48,0.14)" color={T.red}>🚩 {flags}</Capsule> : null}
+          {flags > 0 && !left ? <StatusBadge label={["🚩 ", (flags)].join('')} tone="danger" /> : null}
 
           <View style={{ alignItems: 'flex-end', minWidth: 52 }}>
             <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>+{Math.round(d?.positive ?? 0)}</Text>

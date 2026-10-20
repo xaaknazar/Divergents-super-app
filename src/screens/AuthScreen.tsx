@@ -1,3 +1,4 @@
+import { ContentBlock } from '../components/ContentBlock';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
@@ -264,7 +265,7 @@ export function AuthScreen({}: Props) {
           </View>
 
           {/* Card */}
-          <View style={{ backgroundColor: T.cardBg, borderRadius: 22, borderCurve: 'continuous', padding: 18, borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
+          <ContentBlock size="regular">
             {step === 'email' ? (
               <>
                 {/* Segmented intent */}
@@ -413,7 +414,7 @@ export function AuthScreen({}: Props) {
                 </Pressable>
               </>
             )}
-          </View>
+          </ContentBlock>
 
           {step === 'email' ? (
             <Pressable onPress={recover} disabled={busy} accessibilityRole="button" accessibilityLabel={t('recover')} accessibilityState={{ disabled: busy }} style={{ minHeight: 48, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>

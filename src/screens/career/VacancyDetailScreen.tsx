@@ -1,3 +1,6 @@
+import { ContentBlock } from '../../components/ContentBlock';
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
@@ -8,7 +11,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, PrimaryButton } from '../../components/ui';
+import { ListSection, Button } from '../../components/ui';
 import { ListSkeleton, EmptyState } from '../../components/StateViews';
 import { Job, fetchVacancy, formatSalary, fetchMyVacancyApplications, MyApplication } from '../../data/career';
 import { useCareer } from '../../state/CareerContext';
@@ -90,7 +93,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} />
-        <View style={{ paddingTop: 16 }}><ListSkeleton rows={5} /></View>
+        <Wrapper paddingTop={16} marginHorizontal={16}><ListSkeleton rows={5} /></Wrapper>
       </View>
     );
   }
@@ -112,12 +115,12 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
   };
 
   return (
-    <Screen gradient={isDark ? [T.systemBg, T.groupedBg, T.secondaryBg] : ['#EAF4EF', '#F3F6F4', '#F2F2F7']} topInset={false} tabPadding={false}>
-      <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} transparent trailing={
+    <Screen topInset={false} tabPadding={false}>
+      <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} trailing={
         <Pressable onPress={() => toggleSave(job.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Сохранить')}>
           <SF name={isSaved(job.id) ? 'bookmark.fill' : 'bookmark'} size={20} color={T.brandAccent} />
         </Pressable>
-      } />
+      } variant="plain" />
 
       {/* Hero */}
       <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}>
@@ -135,9 +138,9 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
-          {job.format ? <Capsule bg={T.fillTertiary} color={T.label}>{job.format}</Capsule> : null}
-          {job.salary ? <Capsule bg={T.fillTertiary} color={T.label}>{formatSalary(job.salary)}</Capsule> : null}
-          {job.postedLabel ? <Capsule bg={T.fillTertiary} color={T.labelSecondary}>{job.postedLabel}</Capsule> : null}
+          {job.format ? <StatusBadge label={String((job.format))} tone="neutral" /> : null}
+          {job.salary ? <StatusBadge label={String((formatSalary(job.salary)))} tone="neutral" /> : null}
+          {job.postedLabel ? <StatusBadge label={String((job.postedLabel))} tone="neutral" /> : null}
         </View>
       </View>
 
@@ -153,7 +156,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
 
       {/* My application status + feedback */}
       {myApp ? (
-        <View style={{ marginHorizontal: 16, marginTop: 6, padding: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <Wrapper marginHorizontal={16} marginTop={6}><ContentBlock size="compact">
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <SF name={myApp.status === 'approved' ? 'checkmark.circle.fill' : myApp.status === 'rejected' ? 'xmark.circle.fill' : 'clock'} size={16} color={myApp.status === 'approved' ? T.green : myApp.status === 'rejected' ? '#FF3B30' : T.orange} />
             <Text style={[ty.subheadEm, { color: T.label }]}>
@@ -161,23 +164,23 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
             </Text>
           </View>
           {myApp.feedback ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 8 }]}>{myApp.feedback}</Text> : null}
-        </View>
+        </ContentBlock></Wrapper>
       ) : null}
 
       {/* Почему эта вакансия (текст от работодателя). Блок «Совпадение %» убран:
           job.match никто не записывает — это была одна и та же константа для
           всех. Настоящее совпадение считается ниже по талантам Gallup. */}
       {job.reason ? (
-        <View style={{ marginHorizontal: 16, marginTop: 10, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16 }}>
+        <Wrapper marginHorizontal={16} marginTop={10}><ContentBlock size="regular">
           <Text style={[ty.subhead, { color: T.label }]}>{job.reason}</Text>
-        </View>
+        </ContentBlock></Wrapper>
       ) : null}
 
       {/* Why you fit — talents (matched against your live Gallup profile) */}
       {job.talents.length > 0 ? (() => {
         const m = talentMatch(job.talents, gallup);
         return (
-          <ListSection header={tr('Почему вам подходит')}>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Почему вам подходит')}>
             <View style={{ padding: 14 }}>
               {/* m.total — количество талантов ВАКАНСИИ, а не пользователя,
                   поэтому формулировка считает совпадения по талантам роли. */}
@@ -186,19 +189,17 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {m.items.map((it) => (
-                  <Capsule key={it.name} bg={it.has ? 'rgba(52,199,89,0.14)' : T.fillTertiary} color={it.has ? T.green : T.labelSecondary}>
-                    <SF name={it.has ? 'checkmark.circle.fill' : 'circle'} size={11} color={it.has ? T.green : T.labelTertiary} />{it.name}
-                  </Capsule>
+                  <StatusBadge key={it.name} label={String((it.name))} tone={it.has ? 'success' : 'neutral'} icon={it.has ? 'checkmark.circle.fill' : 'circle'} />
                 ))}
               </View>
             </View>
-          </ListSection>
+          </ListSection></Wrapper>
         );
       })() : null}
 
       {/* О компании */}
       {(job.companyValues.length > 0 || job.officeAddress) ? (
-        <ListSection header={tr('О компании')}>
+        <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('О компании')}>
           <View style={{ padding: 14, gap: 12 }}>
             {job.officeAddress ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -218,12 +219,12 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
               </View>
             ) : null}
           </View>
-        </ListSection>
+        </ListSection></Wrapper>
       ) : null}
 
       {/* Условия */}
       {(job.conditions || job.benefits.length > 0) ? (
-        <ListSection header={tr('Условия')}>
+        <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Условия')}>
           <View style={{ padding: 14, gap: 12 }}>
             {job.conditions ? <Text style={[ty.body, { color: T.label }]}>{job.conditions}</Text> : null}
             {job.benefits.length > 0 ? (
@@ -238,12 +239,12 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
               </View>
             ) : null}
           </View>
-        </ListSection>
+        </ListSection></Wrapper>
       ) : null}
 
       {/* Требования */}
       {(job.experience.length > 0 || job.diplomaRequired !== null || job.adjacentFields || job.otherRequirements || job.gallupFile) ? (
-        <ListSection header={tr('Требования')}>
+        <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Требования')}>
           <View style={{ padding: 14, gap: 12 }}>
             {job.gallupFile ? (
               <Pressable onPress={() => Linking.openURL(job.gallupFile).catch(() => {})} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -255,7 +256,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
             {job.experience.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {job.experience.map((e) => (
-                  <Capsule key={e} bg={T.fillTertiary} color={T.label}><SF name="clock" size={11} color={T.labelSecondary} />{e}</Capsule>
+                  <StatusBadge key={e} label={String((e))} tone="neutral" icon="clock" />
                 ))}
               </View>
             ) : null}
@@ -273,30 +274,23 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
             ) : null}
             {job.otherRequirements ? <Text style={[ty.body, { color: T.label }]}>{job.otherRequirements}</Text> : null}
           </View>
-        </ListSection>
+        </ListSection></Wrapper>
       ) : null}
 
       {/* About */}
       {job.about ? (
-        <ListSection header={tr('О вакансии')}>
+        <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('О вакансии')}>
           <View style={{ padding: 14 }}>
             <Text style={[ty.body, { color: T.label }]}>{job.about}</Text>
           </View>
-        </ListSection>
+        </ListSection></Wrapper>
       ) : null}
 
       {/* Seekers apply here. Owners (canCreate) manage the vacancy via the
           "Отклики" button above and never see an apply action for it. */}
       {!canCreate ? (
         <View style={{ padding: 16, paddingTop: 20 }}>
-          <PrimaryButton
-            label={applied ? tr('Отклик отправлен ✓') : tr('Откликнуться')}
-            icon={applied ? 'checkmark' : 'paperplane.fill'}
-            color={applied ? T.green : T.brand}
-            disabled={!hydrated || applying || applied}
-            loading={applying}
-            onPress={submitApplication}
-          />
+          <Button label={applied ? tr('Отклик отправлен ✓') : tr('Откликнуться')} icon={applied ? 'checkmark' : 'paperplane.fill'} disabled={!hydrated || applying || applied} loading={applying} onPress={submitApplication} tone={applied ? 'success' : 'brand'} />
         </View>
       ) : null}
       <View style={{ height: 20 }} />

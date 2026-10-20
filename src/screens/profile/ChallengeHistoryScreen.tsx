@@ -1,3 +1,4 @@
+import { ApplicationStatusBadge, applicationStatusLabel } from '../../components/ApplicationStatusBadge';
 // История всех челленджей пользователя: где участвовал, в какой команде и с
 // каким статусом заявки. Открывается по тапу на плитку «День» в профиле.
 import React, { useCallback, useEffect, useState } from 'react';
@@ -6,23 +7,14 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule } from '../../components/ui';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { fetchMyChallengeHistory, ChallengeHistoryItem } from '../../data/community';
 import { fmtInt } from '../../data/format';
 import { nums } from '../../theme/tokens';
 import { AwardBadge, AWARD_GOLD, AWARD_GOLD_DEEP } from '../../components/AwardBadge';
 import { tr } from '../../state/LanguageContext';
-import type { Theme } from '../../theme/tokens';
-import * as pl from '../../data/plural';
 
-// Text colours come from the theme (accessible *Text variants), so the capsule
-// labels pass contrast in both light and dark.
-const APP_STATUS = (T: Theme): Record<string, { label: string; color: string; bg: string }> => ({
-  pending: { label: 'На рассмотрении', color: T.labelSecondary, bg: 'rgba(142,142,147,0.16)' },
-  approved: { label: 'Участвую', color: T.greenText, bg: 'rgba(52,199,89,0.16)' },
-  rejected: { label: 'Отклонена', color: T.redText, bg: 'rgba(255,59,48,0.14)' },
-});
+import * as pl from '../../data/plural';
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '';
@@ -50,7 +42,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
     } finally { setLoading(false); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn]);
-  const statuses = APP_STATUS(T);
+
   useEffect(() => { load(); }, [load]);
 
   const onRefresh = async () => { setRefreshing(true); try { await load(); } finally { setRefreshing(false); } };
@@ -70,12 +62,12 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
   const past = items.filter((i) => i.finished);
 
   const Row = ({ item }: { item: ChallengeHistoryItem }) => {
-    const st = statuses[item.status] ?? statuses.pending;
+
     const r = item.result;
     const won = r?.isWinnerTeam === true;
     return (
       <Pressable onPress={() => open(item)} accessibilityRole="button"
-        accessibilityLabel={`${item.title}. ${r ? `${r.rank} место, ${fmtInt(r.points)} очков` : st.label}`}
+        accessibilityLabel={`${item.title}. ${r ? `${r.rank} место, ${fmtInt(r.points)} очков` : applicationStatusLabel(item.status, 'participation')}`}
         style={({ pressed }) => ({
           backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10,
           borderRadius: 16, borderCurve: 'continuous',
@@ -114,7 +106,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
               </Text>
             </View>
           ) : (
-            <Capsule bg={st.bg} color={st.color}>{st.label}</Capsule>
+            <ApplicationStatusBadge status={item.status} context="participation" />
           )}
         </View>
 
@@ -143,7 +135,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Мои челленджи')} onBack={() => navigation.goBack()} hairline />
+      <NavHeader title={tr('Мои челленджи')} onBack={() => navigation.goBack()} />
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       ) : error && items.length === 0 ? (

@@ -1,0 +1,11 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { DetailScreen } from './DetailScreen';
+import { PageHeading } from './PageHeading';
+const meta = { title: 'Liven/Details/DetailScreen', component: DetailScreen, args: { title: 'Демо · Книга', onBack: () => {}, children: <PageHeading title="Маленькие шаги" description="Содержимое вложенного экрана" /> }, parameters: { canvasLayout: 'screen' }, } satisfies Meta<typeof DetailScreen>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Tablet: Story = { parameters: { viewport: 'tablet' } };

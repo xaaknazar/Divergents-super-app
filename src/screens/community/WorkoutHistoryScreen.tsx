@@ -1,3 +1,5 @@
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // История тренировок: пробежки и ходьба с маршрутом, дистанцией, временем и
 // темпом. Карточки — как в Strava: рисунок маршрута слева, цифры справа.
 //
@@ -11,7 +13,7 @@ import { nums } from '../../theme/tokens';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection } from '../../components/ui';
+import { ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { RouteThumb } from '../../components/RouteThumb';
 import { tr } from '../../state/LanguageContext';
@@ -101,7 +103,7 @@ export function WorkoutHistoryScreen({ navigation }: Props) {
           />
         ) : (
           groups.map((g) => (
-            <ListSection key={g.title} header={g.title}>
+            <Wrapper key={g.title} marginTop={6} marginHorizontal={16}><ListSection  header={g.title}>
               {g.items.map((w, i) => (
                 <Row
                   key={w.id}
@@ -110,7 +112,7 @@ export function WorkoutHistoryScreen({ navigation }: Props) {
                   onPress={() => navigation.navigate('WorkoutDetail', { workoutId: w.id })}
                 />
               ))}
-            </ListSection>
+            </ListSection></Wrapper>
           ))
         )}
 
@@ -165,7 +167,7 @@ function Row({ w, last, onPress }: { w: Workout; last: boolean; onPress: () => v
         {/* Засчитанную в челлендж тренировку помечаем: иначе непонятно, ушли ли
             её шаги в дневную норму. */}
         {w.addedToChallenge ? (
-          <Capsule bg="rgba(52,199,89,0.16)" color={T.greenText}>✓</Capsule>
+          <StatusBadge label={String("✓")} tone="success" />
         ) : (
           <SF name="chevron.forward" size={13} color={T.labelTertiary} />
         )}

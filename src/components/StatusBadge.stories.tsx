@@ -1,0 +1,14 @@
+import type { Meta,StoryObj } from '@storybook/react-native';
+import { StatusBadge } from './StatusBadge';
+const meta = { title: 'Основа/StatusBadge', component: StatusBadge, args: { label: 'Скоро', icon: 'clock.fill', tone: 'brand' } } satisfies Meta<typeof StatusBadge>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Brand: Story = {};
+export const Success: Story = { args: { tone: 'success', label: 'Принята', icon: 'checkmark' } };
+export const Warning: Story = { args: { tone: 'warning', label: 'На рассмотрении' } };
+export const Danger: Story = { args: { tone: 'danger', label: 'Отклонена', icon: 'xmark' } };
+export const LongText: Story = { args: { label: 'Заявка отправлена и ожидает решения организатора' }, parameters: { viewport: 'compact', textSize: 'xl' } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const CompactSolid: Story = { args: { variant: 'solid', size: 'compact', label: '65%', icon: undefined } };
+export const OnImage: Story = { args: { variant: 'media', label: '21 октября', icon: 'calendar' } };
+export const Surface: Story = { args: { variant: 'surface', label: 'Лидерство', icon: undefined } };

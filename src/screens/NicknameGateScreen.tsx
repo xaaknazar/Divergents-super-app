@@ -1,3 +1,4 @@
+import { Wrapper } from '../components/Wrapper';
 // One-time nickname gate. Users who registered BEFORE nicknames existed are
 // asked for one on their next launch — the app shows a public псевдоним instead
 // of a full name everywhere, so it cannot be empty. There is no skip, but the
@@ -7,18 +8,18 @@ import { View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView, Aler
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { Logo } from '../components/Logo';
-import { PrimaryButton, SecondaryButton } from '../components/ui';
+import { Button } from '../components/ui';
 import { SF } from '../components/SFIcon';
 import { useResume } from '../state/useResume';
-import { NICKNAME_HINT, NICKNAME_MAX, nicknameError, sanitizeNickname } from '../data/nickname';
-import { checkNicknameAvailable, getTalentslabToken } from '../data/talentslab';
+import { NICKNAME_HINT, NICKNAME_MAX, NICKNAME_TAKEN_MESSAGE, nicknameError, sanitizeNickname } from '../data/nickname';
+import { checkPublicNickname } from '../data/nicknameAvailability';
 import { signOutAndClear } from '../state/signOut';
 import { useAuth, useClerk } from '@clerk/clerk-expo';
 
 export function NicknameGateScreen() {
   const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
-  const { answers, setField, submit, submitting } = useResume();
+  const { answers, setField, submitResult, submitting } = useResume();
   const { getToken } = useAuth();
   const { signOut } = useClerk();
   const [value, setValue] = useState(typeof answers.nickname === 'string' ? answers.nickname : '');
@@ -34,34 +35,36 @@ export function NicknameGateScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const [checkNonce, setCheckNonce] = useState(0);
   const reqIdRef = useRef(0);
+  const savingRef = useRef(false);
 
   const formatError = nicknameError(value);
 
   // Debounced availability check while typing (or on «Повторить» → checkNonce).
   useEffect(() => {
     setSaveError(null);
-    if (formatError) { setTaken(null); setChecking(false); setCheckFailed(false); return; }
     const id = ++reqIdRef.current;
+    setTaken(null);
+    if (formatError) { setTaken(null); setChecking(false); setCheckFailed(false); return; }
     setChecking(true); setCheckFailed(false);
     const timer = setTimeout(async () => {
-      const token = await getTalentslabToken(getToken);
-      const available = await checkNicknameAvailable(token, value.trim());
+      const available = await checkPublicNickname(getToken, value.trim());
       if (reqIdRef.current !== id) return; // устарел
       setTaken(available === null ? null : !available);
       setCheckFailed(available === null);
       setChecking(false);
     }, 450);
-    return () => { clearTimeout(timer); };
+    return () => { clearTimeout(timer); ++reqIdRef.current; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, formatError, checkNonce]);
 
-  const error = formatError ?? (taken ? 'Этот псевдоним уже занят — придумайте другой' : null);
+  const error = formatError ?? (taken ? NICKNAME_TAKEN_MESSAGE : null);
   const showError = (touched || taken === true) && !!error;
 
   const save = async () => {
     setTouched(true);
     setSaveError(null);
-    if (error || checking) return;
+    if (error || checking || savingRef.current) return;
+    savingRef.current = true;
     const nickname = value.trim();
     setField('nickname', nickname);
     // Псевдоним передаём В САМ ВЫЗОВ, а не надеемся, что setField успеет:
@@ -69,13 +72,12 @@ export function NicknameGateScreen() {
     // анкету без него — ровно так ник и не доезжал до сервера.
     //
     // Уникальность решает сервер: если имя заняли, пока человек печатал,
-    // сохранение отклонят — тогда перепроверяем и говорим, что именно
+    // сохранение отклонят — показываем точную причину из ответа сервера,
     // случилось, вместо молчаливого «ничего не произошло».
-    const ok = await submit({ nickname });
-    if (!ok) {
-      const token = await getTalentslabToken(getToken);
-      const available = await checkNicknameAvailable(token, value.trim());
-      if (available === false) {
+    const result = await submitResult({ nickname });
+    savingRef.current = false;
+    if (!result.ok) {
+      if (result.reason === 'nickname_taken') {
         setTaken(true);
       } else {
         setSaveError('Не удалось сохранить псевдоним. Проверьте подключение.');
@@ -121,9 +123,10 @@ export function NicknameGateScreen() {
           <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 6, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Псевдоним</Text>
           <TextInput
             value={value}
-            onChangeText={(v) => setValue(sanitizeNickname(v))}
+            onChangeText={(v) => { if (!savingRef.current) setValue(sanitizeNickname(v)); }}
+            editable={!submitting}
             onBlur={() => setTouched(true)}
-            placeholder="Например: alex_k"
+            placeholder="Например: Aknazar"
             placeholderTextColor={T.labelTertiary}
             autoCapitalize="none"
             autoCorrect={false}
@@ -140,7 +143,7 @@ export function NicknameGateScreen() {
             {checking ? <ActivityIndicator size="small" color={T.labelTertiary} />
               : <SF name={showError ? 'xmark.circle.fill' : taken === false ? 'checkmark.circle.fill' : 'checkmark.seal.fill'} size={13}
                   color={showError ? T.red : taken === false ? T.green : T.labelTertiary} />}
-            <Text style={[ty.caption1, { color: showError ? T.redText : taken === false ? T.greenText : T.labelTertiary, flex: 1 }]}>
+            <Text accessibilityLiveRegion="polite" style={[ty.caption1, { color: showError ? T.redText : taken === false ? T.greenText : T.labelTertiary, flex: 1 }]}>
               {checking ? 'Проверяем, свободен ли псевдоним…'
                 : showError ? error
                 : taken === false ? 'Псевдоним свободен'
@@ -168,23 +171,8 @@ export function NicknameGateScreen() {
           ) : null}
 
           <View style={{ height: 22 }} />
-          <PrimaryButton
-            label="Сохранить и продолжить"
-            icon="checkmark"
-            loading={submitting}
-            disabled={!!error || submitting || checking}
-            onPress={save}
-          />
-          <SecondaryButton
-            label="Выйти из аккаунта"
-            icon="arrow.right"
-            tinted={false}
-            color={T.labelSecondary}
-            loading={signingOut}
-            disabled={submitting}
-            onPress={handleSignOut}
-            style={{ marginTop: 12, borderWidth: 0 }}
-          />
+          <Button label="Сохранить и продолжить" icon="checkmark" loading={submitting} disabled={!!error || submitting || checking} onPress={save} />
+          <Wrapper marginTop={12}><Button label="Выйти из аккаунта" icon="arrow.right" loading={signingOut} disabled={submitting} onPress={handleSignOut} variant="plain" tone="neutral" /></Wrapper>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

@@ -1,3 +1,5 @@
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Creator's control room for a challenge — available only BEFORE it starts.
 // Rename the challenge, rename teams, change each team's size and captain, move
 // participants between teams and remove them. Once the challenge starts the
@@ -13,7 +15,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection } from '../../components/ui';
+import { ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import {
@@ -251,7 +253,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <NavHeader title="Управление" backLabel="Назад" onBack={() => navigation.goBack()} hairline />
+        <NavHeader title="Управление" backLabel="Назад" onBack={() => navigation.goBack()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       </View>
     );
@@ -259,7 +261,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
   if (!manage || !manage.canManage) {
     return (
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-        <NavHeader title="Управление" backLabel="Назад" onBack={() => navigation.goBack()} hairline />
+        <NavHeader title="Управление" backLabel="Назад" onBack={() => navigation.goBack()} />
         <EmptyState icon="lock.fill" title="Нет доступа" subtitle="Управление челленджем доступно только его создателю." />
       </View>
     );
@@ -269,7 +271,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title="Управление" backLabel="Назад" onBack={() => navigation.goBack()} hairline />
+      <NavHeader title="Управление" backLabel="Назад" onBack={() => navigation.goBack()} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
         <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
 
@@ -281,7 +283,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
           ) : null}
 
           {/* ── Challenge ── */}
-          <ListSection header="Челлендж">
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Челлендж">
             <View style={{ padding: 14, gap: 12 }}>
               <LabeledInput label="Название" value={title} onChangeText={setTitle} editable={!locked} placeholder="Название челленджа" T={T} />
               <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -307,10 +309,10 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                 </Pressable>
               ) : null}
             </View>
-          </ListSection>
+          </ListSection></Wrapper>
 
           {/* ── Teams ── */}
-          <ListSection header="Команды" footer={locked ? undefined : 'Размер — сколько человек можно набрать. Меньше числа уже принятых поставить нельзя.'}>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Команды" footer={locked ? undefined : 'Размер — сколько человек можно набрать. Меньше числа уже принятых поставить нельзя.'}>
             {teams.map((team, i) => {
               const count = countFor(team.id);
               return (
@@ -369,10 +371,10 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                 </View>
               );
             })}
-          </ListSection>
+          </ListSection></Wrapper>
 
           {/* ── Participants ── */}
-          <ListSection header="Участники" footer={locked ? undefined : 'Нажмите на участника, чтобы переместить его в другую команду или удалить.'}>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Участники" footer={locked ? undefined : 'Нажмите на участника, чтобы переместить его в другую команду или удалить.'}>
             {members.length === 0 ? (
               <View style={{ padding: 18, alignItems: 'center' }}>
                 <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>Пока никто не в командах. Принимайте заявки на экране «Заявки».</Text>
@@ -398,7 +400,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                 ) : null}
               </>
             )}
-          </ListSection>
+          </ListSection></Wrapper>
 
           {/* Link to the applications review */}
           <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId })} accessibilityRole="button" accessibilityLabel="Заявки на вступление"
@@ -449,7 +451,7 @@ function MemberRow({ m, captain, locked, onPress, T }: { m: ManageMember; captai
         <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>{name}{captain ? '  👑' : ''}</Text>
         {m.userEmail ? <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{m.userEmail}</Text> : null}
       </View>
-      {m.status === 'pending' ? <Capsule bg="rgba(142,142,147,0.16)" color={T.labelSecondary}>заявка</Capsule> : null}
+      {m.status === 'pending' ? <StatusBadge label={String("заявка")} tone="neutral" /> : null}
       {!locked ? <SF name="ellipsis" size={18} color={T.labelTertiary} /> : null}
     </Pressable>
   );

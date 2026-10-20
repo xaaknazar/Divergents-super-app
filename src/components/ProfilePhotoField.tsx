@@ -1,17 +1,17 @@
 // Фото профиля: показывает текущее фото из Talentslab и позволяет заменить его
 // прямо из приложения (регистрация и редактирование анкеты). Загружается в тот
 // же storage, что и на сайте, поэтому фото совпадает в обоих местах.
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert, Linking } from 'react-native';
+import { useAuth } from '@clerk/clerk-expo';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useAuth } from '@clerk/clerk-expo';
+import React,{ useCallback,useEffect,useState } from 'react';
+import { ActivityIndicator,Alert,Linking,Pressable,Text,View } from 'react-native';
+import { syncProfileToSite } from '../data/api';
+import { fetchTalentProfile,getTalentslabToken,uploadProfilePhoto } from '../data/talentslab';
+import { hSuccess } from '../lib/haptics';
+import { emitProfileChanged } from '../state/profileBus';
 import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
-import { hSuccess } from '../lib/haptics';
-import { fetchTalentProfile, uploadProfilePhoto, getTalentslabToken } from '../data/talentslab';
-import { syncProfileToSite } from '../data/api';
-import { emitProfileChanged } from '../state/profileBus';
 
 export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => void }) {
   const { T, ty } = useTheme();

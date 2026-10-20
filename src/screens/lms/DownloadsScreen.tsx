@@ -1,19 +1,23 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useTheme } from '../../theme/ThemeContext';
-import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, Alert, ActivityIndicator, GestureResponderEvent, LayoutChangeEvent } from 'react-native';
+import { Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SF } from '../../components/SFIcon';
-import { NavHeader } from '../../components/NavHeader';
-import { ListSection, ProgressBar } from '../../components/ui';
-import { EmptyState } from '../../components/StateViews';
+import { useLang, tr } from '../../state/LanguageContext';
 import { useDownloads, DownloadRecord } from '../../state/downloads';
 import { useAudioPlayer } from '../../state/AudioPlayerContext';
 import { useAuth } from '@clerk/clerk-expo';
 import { useMyCourses } from '../../state/useMyCourses';
 import { fetchOwnedDetail, lessonAudioUrl } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
+import { DetailScreen } from '../../components/DetailScreen';
+import { DownloadRow } from '../../components/DownloadRow';
+import { DownloadPlayer } from '../../components/DownloadPlayer';
+import { Wrapper } from '../../components/Wrapper';
+import { ListSection } from '../../components/ListSection';
+import { SectionHeader } from '../../components/SectionHeader';
+import { TextSection } from '../../components/TextSection';
+import { Button } from '../../components/Button';
+import { ContentLoading } from '../../components/ContentLoading';
+import { EmptyState } from '../../components/EmptyState';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Downloads'>;
 type DownloadsProps = {
@@ -24,22 +28,8 @@ type DownloadsProps = {
   onExitOffline?: () => void;
 };
 
-function fmtTime(sec: number): string {
-  if (!isFinite(sec) || sec < 0) sec = 0;
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s < 10 ? '0' : ''}${s}`;
-}
-function fmtSize(bytes: number): string {
-  if (!bytes || bytes <= 0) return '';
-  const mb = bytes / (1024 * 1024);
-  return mb >= 1 ? `${mb.toFixed(1)} МБ` : `${Math.max(1, Math.round(bytes / 1024))} КБ`;
-}
-
 export function DownloadsScreen({ navigation, offlineStandalone = false, onExitOffline }: DownloadsProps) {
-  const { T, ty } = useTheme();
   useLang();
-  const insets = useSafeAreaInsets();
   const { items, pending, removeDownload, cancelDownload, downloadLesson, isDownloaded, isDownloading, progress } = useDownloads();
   const { getToken, isSignedIn } = useAuth();
   const my = useMyCourses();
@@ -94,7 +84,6 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
   // хотя пульт к нему на экране урока.
   const selectedId = track?.kind === 'download' ? track.lessonId : null;
 
-  const [barWidth, setBarWidth] = useState(0);
   const selected = useMemo(() => items.find((i) => i.lessonId === selectedId) ?? null, [items, selectedId]);
 
   // Group downloads by course, preserving the newest-first order of `items`.
@@ -107,12 +96,6 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
     }
     return Array.from(map.values());
   }, [items]);
-
-  const seek = (e: GestureResponderEvent) => {
-    if (barWidth <= 0 || duration <= 0) return;
-    const x = Math.max(0, Math.min(barWidth, e.nativeEvent.locationX));
-    seekTo((x / barWidth) * duration);
-  };
 
   const confirmDelete = (rec: DownloadRecord) => {
     Alert.alert(
@@ -133,171 +116,33 @@ export function DownloadsScreen({ navigation, offlineStandalone = false, onExitO
     );
   };
 
-  const frac = duration > 0 ? Math.max(0, Math.min(1, currentTime / duration)) : 0;
-
-  return (
-    <View style={{ flex: 1, backgroundColor: T.systemBg }}>
-      <NavHeader
-        title={offlineStandalone ? tr('Офлайн-уроки') : tr('Загрузки')}
-        onBack={offlineStandalone ? undefined : () => navigation.goBack()}
-        hairline
-      />
-
-      {offlineStandalone ? (
-        <View style={{ marginHorizontal: 16, marginTop: 12, marginBottom: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <SF name="wifi.slash" size={18} color={T.brand} />
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.subheadEm, { color: T.label }]}>{tr('Нет подключения')}</Text>
-            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]}>{tr('Скачанные уроки доступны без интернета. Остальные разделы откроются после восстановления сети.')}</Text>
-          </View>
-          {onExitOffline ? (
-            <Pressable onPress={onExitOffline} hitSlop={8} style={{ paddingVertical: 7, paddingHorizontal: 9 }}>
-              <Text style={[ty.footnoteEm, { color: T.brand }]}>{tr('Войти')}</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : null}
-
-      {items.length === 0 && availFiltered.length === 0 && pending.length === 0 ? (
-        <View style={{ flex: 1 }}>
-          {loadingAvail ? (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
-          ) : (
-            <EmptyState icon="arrow.down.circle" title={tr('Нет загрузок')} subtitle={tr('Скачайте аудио уроков из доступного вам курса, чтобы слушать их без интернета.')} />
-          )}
-        </View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 4, paddingBottom: insets.bottom + (selected ? 150 : 30) }}>
-          {/* In progress — keeps downloading after you leave the lesson; stop it here */}
-          {pending.length > 0 ? (
-            <ListSection header={`${tr('Скачивается')} · ${pending.length}`}>
-              {pending.map((p, i) => (
-                <View key={p.lessonId} style={{ paddingVertical: 12, paddingHorizontal: 16, position: 'relative' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <View style={{ width: 38, height: 38, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-                      <ActivityIndicator size="small" color={T.brand} />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={[ty.body, { color: T.label }]} numberOfLines={2}>{p.n ? `${p.n}. ` : ''}{p.title}</Text>
-                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{p.courseTitle} · {Math.round(p.progress * 100)}%</Text>
-                    </View>
-                    <Pressable onPress={() => cancelDownload(p.lessonId)} hitSlop={10} style={{ padding: 4 }} accessibilityRole="button" accessibilityLabel={tr('Остановить загрузку')}>
-                      <SF name="xmark.circle.fill" size={22} color={T.labelTertiary} />
-                    </Pressable>
-                  </View>
-                  <View style={{ marginTop: 8, marginLeft: 50 }}>
-                    <ProgressBar value={Math.max(0.03, p.progress)} height={3} color={T.brand} accessibilityLabel={tr('Загрузка')} />
-                  </View>
-                  {i < pending.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
-                </View>
-              ))}
-            </ListSection>
-          ) : null}
-
-          {/* Downloaded (offline) */}
-          {groups.length > 0 ? (
-            <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Скачано')} · {items.length}</Text>
-          ) : null}
-          {groups.map((g, gi) => (
-            <ListSection key={gi} header={g.title}>
-              {g.rows.map((rec, i) => {
-                const active = rec.lessonId === selectedId;
-                return (
-                  <Pressable key={rec.lessonId} onPress={() => play(rec)} onLongPress={() => confirmDelete(rec)}
-                    style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, backgroundColor: active ? T.brandTinted : 'transparent', opacity: pressed ? 0.6 : 1 })}>
-                    <View style={{ width: 38, height: 38, borderRadius: 9, borderCurve: 'continuous', backgroundColor: active ? T.brand : T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-                      <SF name={active && isPlaying ? 'pause.fill' : 'play.fill'} size={16} color={active ? '#fff' : T.brand} />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={[ty.body, { color: T.label }]} numberOfLines={2}>{rec.n ? `${rec.n}. ` : ''}{rec.title}</Text>
-                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
-                        {[fmtSize(rec.size), tr('Доступно офлайн')].filter(Boolean).join(' · ')}
-                      </Text>
-                    </View>
-                    <Pressable onPress={() => confirmDelete(rec)} hitSlop={10} style={{ padding: 4 }}
-                      accessibilityRole="button" accessibilityLabel={tr('Удалить загрузку')}>
-                      <SF name="trash" size={18} color={T.red} />
-                    </Pressable>
-                    {i < g.rows.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
-                  </Pressable>
-                );
-              })}
-            </ListSection>
-          ))}
-
-          {/* Available to download (from purchased courses) */}
-          {availFiltered.length > 0 ? (
-            <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Доступно для скачивания')}</Text>
-          ) : null}
-          {availFiltered.map((g, gi) => (
-            <ListSection key={`av${gi}`} header={g.courseTitle}>
-              {g.lessons.map((l, i) => {
-                const pct = progress[l.id];
-                const downloading = isDownloading(l.id);
-                return (
-                  <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
-                    <View style={{ width: 38, height: 38, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
-                      <SF name="headphones" size={16} color={T.labelSecondary} />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={[ty.body, { color: T.label }]} numberOfLines={2}>{l.n ? `${l.n}. ` : ''}{l.title}</Text>
-                      <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
-                        {downloading ? `${tr('Скачивание')} ${Math.round((pct ?? 0) * 100)}%` : tr('Аудио для офлайна')}
-                      </Text>
-                    </View>
-                    <Pressable onPress={() => onDownload(g, l)} disabled={downloading} hitSlop={10} style={{ padding: 4 }}
-                      accessibilityRole="button" accessibilityLabel={tr('Скачать аудио')} accessibilityState={{ disabled: downloading }}>
-                      {downloading ? <ActivityIndicator size="small" color={T.brand} /> : <SF name="arrow.down.circle" size={24} color={T.brand} />}
-                    </Pressable>
-                    {i < g.lessons.length - 1 ? <View style={{ position: 'absolute', bottom: 0, left: 60, right: 0, height: 0.5, backgroundColor: T.separator }} /> : null}
-                  </View>
-                );
-              })}
-            </ListSection>
-          ))}
-        </ScrollView>
-      )}
-
-      {/* Mini player */}
-      {selected ? (
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Pressable onPress={() => selected && play(selected)}
-              accessibilityRole="button" accessibilityLabel={isPlaying ? tr('Пауза') : tr('Воспроизвести')}
-              style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-              <SF name={isPlaying ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
-            </Pressable>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={1}>{selected.title}</Text>
-              <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{selected.courseTitle}</Text>
-            </View>
-          </View>
-          {/* Seek bar */}
-          <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38, textAlign: 'right' }]} numberOfLines={1}>{fmtTime(currentTime)}</Text>
-            <View
-              onLayout={(e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width)}
-              onStartShouldSetResponder={() => true}
-              onResponderGrant={seek}
-              onResponderMove={seek}
-              accessible
-              accessibilityRole="adjustable"
-              accessibilityLabel={tr('Позиция воспроизведения')}
-              accessibilityValue={{ min: 0, max: 100, now: Math.round(frac * 100), text: `${fmtTime(currentTime)} ${tr('из')} ${fmtTime(duration)}` }}
-              // VoiceOver swipe up/down: nudge by 15 seconds.
-              onAccessibilityAction={(e) => {
-                if (duration <= 0) return;
-                const delta = e.nativeEvent.actionName === 'increment' ? 15 : e.nativeEvent.actionName === 'decrement' ? -15 : 0;
-                if (delta) seekTo(currentTime + delta);
-              }}
-              accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-              style={{ flex: 1, height: 24, justifyContent: 'center' }}>
-              <ProgressBar value={frac} height={4} color={T.brand} accessibilityLabel={tr('Позиция воспроизведения')} />
-            </View>
-            <Text style={[ty.caption2, { color: T.labelSecondary, width: 38 }]} numberOfLines={1}>{fmtTime(duration)}</Text>
-          </View>
-        </View>
-      ) : null}
-    </View>
-  );
+  return <DetailScreen title={offlineStandalone ? tr('Офлайн-уроки') : tr('Загрузки')}
+    onBack={offlineStandalone ? undefined : () => navigation.goBack()}
+    footer={selected ? <DownloadPlayer title={selected.title} courseTitle={selected.courseTitle} playing={isPlaying}
+      currentTime={currentTime} duration={duration} onToggle={() => play(selected)} onSeek={seekTo} /> : undefined}>
+    <Wrapper padding={16} gap={16}>
+      {offlineStandalone ? <>
+        <TextSection title={tr('Нет подключения')} text={tr('Скачанные уроки доступны без интернета. Остальные разделы откроются после восстановления сети.')} />
+        {onExitOffline ? <Button label={tr('Войти')} variant="tinted" onPress={onExitOffline} /> : null}
+      </> : null}
+      {items.length === 0 && availFiltered.length === 0 && pending.length === 0 ? loadingAvail ? <ContentLoading /> :
+        <EmptyState icon="arrow.down.circle" title={tr('Нет загрузок')} subtitle={tr('Скачайте аудио уроков из доступного вам курса, чтобы слушать их без интернета.')} /> : <>
+        {pending.length > 0 ? <ListSection header={tr('Скачивается') + ' · ' + pending.length}>
+          {pending.map(item => <DownloadRow key={item.lessonId} state="pending" title={item.title} number={item.n}
+            courseTitle={item.courseTitle} progress={item.progress} onAction={() => cancelDownload(item.lessonId)} />)}
+        </ListSection> : null}
+        {groups.length > 0 ? <SectionHeader title={tr('Скачано') + ' · ' + items.length} /> : null}
+        {groups.map((group, index) => <ListSection key={index} header={group.title}>
+          {group.rows.map(record => <DownloadRow key={record.lessonId} state="downloaded" title={record.title} number={record.n}
+            bytes={record.size ?? 0} selected={record.lessonId === selectedId} playing={isPlaying}
+            onPlay={() => play(record)} onAction={() => confirmDelete(record)} />)}
+        </ListSection>)}
+        {availFiltered.length > 0 ? <SectionHeader title={tr('Доступно для скачивания')} /> : null}
+        {availFiltered.map(group => <ListSection key={group.courseId} header={group.courseTitle}>
+          {group.lessons.map(lesson => <DownloadRow key={lesson.id} state="available" title={lesson.title} number={lesson.n}
+            progress={progress[lesson.id]} busy={isDownloading(lesson.id)} onAction={() => onDownload(group, lesson)} />)}
+        </ListSection>)}
+      </>}
+    </Wrapper>
+  </DetailScreen>;
 }

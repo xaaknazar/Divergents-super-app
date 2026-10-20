@@ -9,6 +9,8 @@ export const navigationRef = createNavigationContainerRef<any>();
  */
 const SCREEN_REQUIRES_PARAM: Record<string, string> = {
   ChallengeDetail: 'challengeId',
+  ReadingChallenge: 'challengeId',
+  ReadingApplicants: 'challengeId',
   ChallengeApplicants: 'challengeId',
   ChallengeRoster: 'challengeId',
   ManageChallenge: 'challengeId',
@@ -16,9 +18,11 @@ const SCREEN_REQUIRES_PARAM: Record<string, string> = {
   TeamStandings: 'challengeId',
   ChallengeDays: 'challengeId',
   ChallengeResults: 'challengeId',
+  ChallengeFinalStandings: 'challengeId',
   OverallStandings: 'challengeId',
   TripDetail: 'tripId',
   MeetupDetail: 'meetupId',
+  SportDetail: 'sportId',
   WorkoutDetail: 'workoutId',
   EventApplicants: 'eventId',
   ServerChannel: 'channelId',
@@ -32,6 +36,7 @@ const SCREEN_REQUIRES_PARAM: Record<string, string> = {
 
 /** Есть ли в параметрах непустой идентификатор, который требует экран. */
 function hasRequiredParam(screen: string, params: unknown): boolean {
+  if (screen === 'EventApplicants' && !['trip', 'meetup', 'sport'].includes(String((params as Record<string, unknown> | null)?.kind))) return false;
   const key = SCREEN_REQUIRES_PARAM[screen];
   if (!key) return true;
   const value = (params as Record<string, unknown> | null | undefined)?.[key];

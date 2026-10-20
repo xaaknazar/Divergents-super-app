@@ -1,6 +1,7 @@
 // Live data client for the Divergents LMS website.
 // Talks to the public read-only API added at /api/mobile on divergents-lms.kz.
 import { z } from 'zod';
+import { captureAchievementRecorder } from './achievementEvents';
 import * as WebBrowser from 'expo-web-browser';
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
@@ -13,6 +14,7 @@ import { arrayOf, zId, zStr, zStrN, zNumN } from './contracts/http';
 import { API_BASE } from '../config';
 import * as pl from './plural';
 import { netFetch, netJson } from './net';
+import { NicknameTakenError } from './nickname';
 export { API_BASE };
 
 // A Lesson that also carries an optional offline-audio URL (Mux audio.m4a).
@@ -230,23 +232,32 @@ async function timedFetch(url: string, init?: RequestInit, timeoutMs = 12000): P
   return netFetch(url, { ...init, timeoutMs });
 }
 
-export async function fetchMyCourses(token: string): Promise<Course[]> {
+export async function fetchMyCourses(token: string, achievementSilent = true): Promise<Course[]> {
+  const record = captureAchievementRecorder(token ?? null);
   const data = await getJsonAuthed('/api/mobile/me/courses', token);
-  return OwnedListSchema.parse(data).map((c) => ({
+  const courses = OwnedListSchema.parse(data).map((c) => ({
     ...mapSummary(c),
     serverProgress: typeof c.progress === 'number' ? c.progress : undefined,
     source: 'live' as const,
   }));
+  record({ silent: achievementSilent, source: 'courses', facts: { coursesOwned: courses.map(c => c.id), coursesDone: courses.filter(c => (c.serverProgress ?? 0) >= 100).map(c => c.id) } });
+  return courses;
 }
 
 // Owned course detail (chapters unlocked with Mux HLS for every chapter).
 export async function fetchOwnedDetail(id: string, token: string): Promise<Course & { owned: boolean }> {
+  const record = captureAchievementRecorder(token ?? null);
   const data = await getJsonAuthed(`/api/mobile/me/courses/${id}`, token);
   const parsed = ApiCourseDetailSchema.safeParse(data);
   if (!parsed.success && __DEV__) console.warn(`[contracts] /me/courses/${id} failed validation:`, parsed.error.issues.slice(0, 4));
   const detail = parsed.success ? parsed.data : (data as ApiCourseDetail);
+  const mapped = mapDetail(detail);
+  record({ silent: true, facts: {
+    coursesOwned: [id], lessonsDone: mapped.lessons.filter(l => l.completed).map(l => `${id}:${l.id}`),
+    coursesDone: detail.progress != null && detail.progress >= 100 ? [id] : [],
+  } });
   return {
-    ...mapDetail(detail),
+    ...mapped,
     owned: true,
     ...(typeof detail.progress === 'number' ? { serverProgress: detail.progress } : {}),
   };
@@ -301,6 +312,7 @@ export function syncNicknameToSite(nickname: string, token: string): Promise<boo
 export async function markLessonComplete(
   courseId: string, lessonId: string, token: string,
 ): Promise<boolean> {
+  const record = captureAchievementRecorder(token ?? null);
   for (let attempt = 0; attempt < 2; attempt++) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 12000);
@@ -311,7 +323,7 @@ export async function markLessonComplete(
         headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ lessonId, completed: true }),
       });
-      if (res.ok) return true;
+      if (res.ok) { record({ facts: { lessonsDone: [`${courseId}:${lessonId}`] } }); return true; }
       // Authentication/validation/not-found errors will not heal on immediate retry.
       if (res.status < 500 && res.status !== 408 && res.status !== 429) return false;
     } catch {
@@ -502,6 +514,13 @@ export function applyToChallenge(
   });
 }
 
+/** Refresh the signed-in applicant's snapshots in existing challenge applications. */
+export async function syncResumeSnapshot(token: string | null, profile: unknown): Promise<boolean> {
+  const result = await requestAuthed('POST', '/api/mobile/me/profile-snapshot', token, { profile });
+  if (result.reason === 'nickname_taken') throw new NicknameTakenError();
+  return result.ok;
+}
+
 // Человеческая причина отказа в заявке на челлендж.
 export function challengeApplyFailureMessage(r: PostResult): { title: string; body: string } {
   if (r.reason === 'team_full') {
@@ -625,6 +644,8 @@ export async function fetchMyRole(token: string | null): Promise<MyRole> {
 // подключение» — то есть предлагали чинить интернет вместо реальной причины.
 export interface PostResult {
   ok: boolean;
+  /** Confirmed creation response only. Missing IDs fall back to the collection. */
+  createdId?: string;
   /** HTTP-статус; 0 — сети не было вовсе (или таймаут). */
   status: number;
   /** Причина из тела ответа: 'full' | 'closed' | 'no-token' | … */
@@ -645,6 +666,7 @@ export interface PostResult {
 }
 
 async function requestAuthed(method: 'POST' | 'DELETE', path: string, token: string | null, body?: any): Promise<PostResult> {
+  const record = captureAchievementRecorder(token ?? null);
   if (!token) return { ok: false, status: 401, reason: 'no-token' };
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 15000);
@@ -666,7 +688,21 @@ async function requestAuthed(method: 'POST' | 'DELETE', path: string, token: str
         capacity: typeof data?.capacity === 'number' ? data.capacity : undefined,
       };
     }
-    return { ok: true, status: res.status, reason: typeof data?.status === 'string' ? data.status : undefined };
+    if (method === 'POST' && /^\/api\/mobile\/(trips|meetups|sport)$/.test(path)) {
+      const id = data?.id ?? data?.trip?.id ?? data?.meetup?.id ?? data?.sport?.id;
+      if (typeof id === 'string' && id) record({ facts: { eventsCreated: [`${path}:${id}`] } });
+    }
+    const registration = path.match(/^\/api\/mobile\/(trips|meetups|sport)\/([^/]+)\/(apply|join)$/);
+    if (method === 'POST' && registration && (data?.status === 'approved' || data?.status === 'going')) {
+      const kind = registration[1] === 'trips' ? 'trip' : registration[1] === 'meetups' ? 'meetup' : 'sport';
+      const ids = [`${kind}:${decodeURIComponent(registration[2])}`];
+      record({ facts: { eventsApproved: ids, tripsApproved: kind === 'trip' ? ids : [], sportsApproved: kind === 'sport' ? ids : [] } });
+    }
+    const creation = method === 'POST' ? path.match(/^\/api\/mobile\/(challenges|trips|meetups|sport|channels)$/) : null;
+    const entityKey = creation ? ({ challenges: 'challenge', trips: 'trip', meetups: 'meetup', sport: 'sport', channels: 'channel' } as const)[creation[1] as 'challenges' | 'trips' | 'meetups' | 'sport' | 'channels'] : undefined;
+    const createdId = entityKey ? data?.id ?? data?.[entityKey]?.id : undefined;
+    return { ok: true, status: res.status, reason: typeof data?.status === 'string' ? data.status : undefined,
+      ...(typeof createdId === 'string' && createdId.trim() ? { createdId } : {}) };
   } catch { return { ok: false, status: 0, reason: 'network' }; } finally { clearTimeout(t); }
 }
 
@@ -752,14 +788,18 @@ function normalizeEnrollments(raw: unknown, legacyIds: unknown): MyEnrollment[] 
   return [];
 }
 
-export async function fetchMyTrips(token: string | null): Promise<MyEnrollment[]> {
-  if (!token) return [];
+export async function fetchMyTrips(token: string | null, strict = false): Promise<MyEnrollment[]> {
+  const record = captureAchievementRecorder(token ?? null);
+  if (!token) { if (strict) throw new Error('Unauthorized'); return []; }
   try {
     const r = await timedFetch(`${API_BASE}/api/mobile/me/trips`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!r.ok) return [];
+    if (!r.ok) throw new Error('Could not load event registrations');
     const d = await r.json();
-    return normalizeEnrollments(d?.trips, d?.tripIds);
-  } catch { return []; }
+    const list = normalizeEnrollments(d?.trips, d?.tripIds);
+    const approved = list.filter(x => x.status === 'approved').map(x => `trip:${x.id}`);
+    record({ silent: true, source: 'trips', facts: { eventsApproved: approved, tripsApproved: approved } });
+    return list;
+  } catch (error) { if (strict) throw error; return []; }
 }
 export async function fetchLiveTrips(): Promise<LiveTrip[]> {
   try { const res = await timedFetch(`${API_BASE}/api/mobile/trips`); if (!res.ok) return []; const d = await res.json(); return Array.isArray(d?.trips) ? d.trips : []; } catch { return []; }
@@ -768,14 +808,17 @@ export const applyToTrip = (token: string | null, tripId: string): Promise<PostR
   requestAuthed('POST', `/api/mobile/trips/${encodeURIComponent(tripId)}/apply`, token, {});
 
 // ───────── Мероприятия (встречи сообщества) ─────────
-export async function fetchMyMeetups(token: string | null): Promise<MyEnrollment[]> {
-  if (!token) return [];
+export async function fetchMyMeetups(token: string | null, strict = false): Promise<MyEnrollment[]> {
+  const record = captureAchievementRecorder(token ?? null);
+  if (!token) { if (strict) throw new Error('Unauthorized'); return []; }
   try {
     const r = await timedFetch(`${API_BASE}/api/mobile/me/meetups`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!r.ok) return [];
+    if (!r.ok) throw new Error('Could not load event registrations');
     const d = await r.json();
-    return normalizeEnrollments(d?.meetups, d?.meetupIds);
-  } catch { return []; }
+    const list = normalizeEnrollments(d?.meetups, d?.meetupIds);
+    record({ silent: true, source: 'meetups', facts: { eventsApproved: list.filter(x => x.status === 'approved').map(x => `meetup:${x.id}`) } });
+    return list;
+  } catch (error) { if (strict) throw error; return []; }
 }
 export const applyToMeetup = (token: string | null, meetupId: string): Promise<PostResult> =>
   requestAuthed('POST', `/api/mobile/meetups/${encodeURIComponent(meetupId)}/apply`, token, {});
@@ -944,14 +987,18 @@ export async function startCoursePayment(
 
 // ───────── Sport (server) ─────────
 export interface LiveSport { id: string; title: string; place?: string | null; date?: string | null; spots: number; description?: string | null; meetLat?: number | null; meetLng?: number | null; meetAt?: string | null; _count?: { applications: number } }
-export async function fetchMySport(token: string | null): Promise<MyEnrollment[]> {
-  if (!token) return [];
+export async function fetchMySport(token: string | null, strict = false): Promise<MyEnrollment[]> {
+  const record = captureAchievementRecorder(token ?? null);
+  if (!token) { if (strict) throw new Error('Unauthorized'); return []; }
   try {
     const r = await timedFetch(`${API_BASE}/api/mobile/me/sport`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!r.ok) return [];
+    if (!r.ok) throw new Error('Could not load event registrations');
     const d = await r.json();
-    return normalizeEnrollments(d?.sport, d?.sportIds);
-  } catch { return []; }
+    const list = normalizeEnrollments(d?.sport, d?.sportIds);
+    const approved = list.filter(x => x.status === 'approved').map(x => `sport:${x.id}`);
+    record({ silent: true, source: 'sport', facts: { eventsApproved: approved, sportsApproved: approved } });
+    return list;
+  } catch (error) { if (strict) throw error; return []; }
 }
 export async function fetchLiveSport(): Promise<LiveSport[]> {
   try { const r = await timedFetch(`${API_BASE}/api/mobile/sport`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.sport) ? d.sport : []; } catch { return []; }
@@ -963,3 +1010,6 @@ export const joinSport = (token: string | null, id: string): Promise<PostResult>
 // `going`, а следующий запуск возвращал кнопку в «Вы идёте».
 export const leaveSport = (token: string | null, id: string): Promise<PostResult> =>
   requestAuthed('DELETE', `/api/mobile/sport/${encodeURIComponent(id)}/join`, token);
+
+export const cancelEventApplication = (kind: 'trip' | 'meetup' | 'sport', token: string | null, id: string): Promise<PostResult> =>
+  requestAuthed('DELETE', `/api/mobile/${kind === 'trip' ? 'trips' : kind === 'meetup' ? 'meetups' : 'sport'}/${encodeURIComponent(id)}/${kind === 'sport' ? 'join' : 'apply'}`, token);

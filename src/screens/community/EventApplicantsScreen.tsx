@@ -1,3 +1,6 @@
+import { FieldValueRow } from '../../components/FieldValueRow';
+import { ApplicationStatusBadge, applicationStatusLabel } from '../../components/ApplicationStatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Заявки на офлайн-событие: поездку или спортивную встречу.
 //
 // Раньше такого экрана не было. Человек создавал поездку в приложении, к нему
@@ -7,16 +10,19 @@
 // одобренными.
 //
 // Устроено как разбор заявок в челлендже: список с псевдонимами, по нажатию —
-// анкета Talentslab и решение. Отличие одно: у поездки нет команд, поэтому нет
+// для администратора — анкета Talentslab, для остальных — только имя и решение.
+// У поездки нет команд, поэтому нет
 // и выбора команды.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Modal, ActivityIndicator, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, PrimaryButton } from '../../components/ui';
+import { ListSection, Button } from '../../components/ui';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import {
@@ -38,35 +44,19 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Снялся',
 };
 
-function statusMeta(status: string, T: any): { label: string; bg: string; color: string } {
-  if (status === 'approved' || status === 'going') {
-    return { label: STATUS_LABEL[status], bg: 'rgba(52,199,89,0.16)', color: T.greenText };
-  }
-  if (status === 'rejected' || status === 'cancelled') {
-    return { label: STATUS_LABEL[status], bg: 'rgba(255,59,48,0.14)', color: T.redText };
-  }
-  return { label: STATUS_LABEL.pending, bg: 'rgba(142,142,147,0.16)', color: T.labelSecondary };
-}
 
-function Row({ T, k, v }: { T: any; k: string; v?: string | null }) {
-  const { ty } = useTheme();
-  if (!v) return null;
-  return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-      <Text style={[ty.subhead, { color: T.labelSecondary, flexShrink: 0 }]}>{k}</Text>
-      <Text style={[ty.subhead, { color: T.label, flex: 1, textAlign: 'right' }]}>{v}</Text>
-    </View>
-  );
-}
 
 export function EventApplicantsScreen({ route, navigation }: Props) {
   // С запасом: уведомление могло прийти без параметров, и падение экрана
   // выглядело бы для человека как вылет из приложения.
-  const kind: EventKind = route.params?.kind === 'sport' ? 'sport' : 'trip';
+  const kind: EventKind = route.params?.kind;
   const eventId = route.params?.eventId ?? '';
   const eventTitle = route.params?.title ?? '';
   const { T, ty } = useTheme();
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
+  const insets = useSafeAreaInsets();
+  const decisionLock = useRef(false);
+  const loadGeneration = useRef(0);
 
   const [data, setData] = useState<EventApplicants | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,24 +68,31 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
   getTokenRef.current = getToken;
 
   const load = useCallback(async () => {
-    if (!eventId) { setError(true); setLoading(false); return; }
+    const generation = ++loadGeneration.current;
+    if (!eventId || !['trip', 'meetup', 'sport'].includes(kind)) { setError(true); setLoading(false); return; }
     setLoading(true);
     setError(false);
     try {
       const token = await getTokenRef.current();
       const res = await fetchEventApplicants(kind, eventId, token);
+      if (generation !== loadGeneration.current) return;
       if (!res) { setError(true); return; }
       setData(res);
     } catch {
-      setError(true);
+      if (generation === loadGeneration.current) setError(true);
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
-  }, [kind, eventId]);
+  }, [kind, eventId, userId]);
 
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => {
+    setData(null); setSel(null); void load();
+    return () => { ++loadGeneration.current; };
+  }, [load]));
 
   const decide = async (applicant: EventApplicant, status: EventAppStatus) => {
+    if (decisionLock.current || applicant.status === 'cancelled') return;
+    decisionLock.current = true;
     setBusy(true);
     try {
       const token = await getTokenRef.current();
@@ -109,7 +106,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
       if (res.reason === 'full') {
         Alert.alert(
           'Свободных мест нет',
-          `Состав уже набран: ${res.taken ?? '?'} из ${res.spots ?? '?'}. Освободите место или увеличьте вместимость события.`,
+          `Состав уже набран: ${res.taken ?? '?'} из ${res.spots ?? '?'}. Сначала освободите место, если кто-то отменил участие.`,
         );
         return;
       }
@@ -122,24 +119,22 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
         return;
       }
       Alert.alert('Не получилось', 'Заявка не найдена — возможно, её уже обработали.');
+    } catch {
+      Alert.alert('Нет связи', 'Не удалось получить результат. Обновите список перед повторным решением.');
     } finally {
+      decisionLock.current = false;
       setBusy(false);
     }
   };
 
   const items = data?.applications ?? [];
   const counts = data?.counts;
-  const p = sel?.profile ?? null;
+  const canViewProfiles = data?.canViewProfiles === true;
+  const p = canViewProfiles ? sel?.profile ?? null : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader
-        title="Заявки"
-        subtitle={eventTitle || undefined}
-        backLabel={kind === 'trip' ? 'Поездка' : 'Спорт'}
-        onBack={() => navigation.goBack()}
-        hairline
-      />
+      <NavHeader title="Заявки" subtitle={eventTitle || undefined} backLabel={kind === 'trip' ? 'Поездка' : kind === 'sport' ? 'Спорт' : 'Мероприятие'} onBack={() => navigation.goBack()} />
 
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -161,16 +156,16 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
             </Text>
           ) : null}
           {items.map((a) => {
-            const meta = statusMeta(a.status, T);
+
             // В списке — ПСЕВДОНИМ. ФИО и почта появляются, только когда
-            // организатор откроет заявку: до решения это лишние личные данные.
+            // администратор откроет заявку. Обычный организатор их не получает.
             const name = a.userName || 'Участник';
             return (
               <Pressable
                 key={a.id}
                 onPress={() => setSel(a)}
                 accessibilityRole="button"
-                accessibilityLabel={`${name}, ${meta.label}`}
+                accessibilityLabel={`${name}, ${applicationStatusLabel(a.status, 'event')}`}
                 style={({ pressed }) => ({
                   flexDirection: 'row', alignItems: 'center', gap: 12,
                   backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10,
@@ -184,10 +179,10 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{name}</Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>
-                    {a.profile?.completeness != null ? `анкета ${a.profile.completeness}%` : 'анкета не заполнена'}
+                    {canViewProfiles ? (a.profile?.completeness != null ? `анкета ${a.profile.completeness}%` : 'анкета не заполнена') : 'Публичное имя участника'}
                   </Text>
                 </View>
-                <Capsule bg={meta.bg} color={meta.color}>{meta.label}</Capsule>
+                <ApplicationStatusBadge status={a.status} context="event" />
               </Pressable>
             );
           })}
@@ -197,19 +192,20 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
       {/* Карточка заявителя */}
       <Modal visible={!!sel} animationType="slide" onRequestClose={() => setSel(null)}>
         <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-          <NavHeader title={sel?.userName || 'Участник'} backLabel="Закрыть" onBack={() => setSel(null)} hairline />
+          <NavHeader title={sel?.userName || 'Участник'} backLabel="Закрыть" onBack={() => setSel(null)} />
           <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }}>
-            <ListSection header="Заявка">
+            <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Заявка">
               <View style={{ padding: 14, gap: 8 }}>
-                <Row T={T} k="Статус" v={sel ? STATUS_LABEL[sel.status] ?? sel.status : ''} />
-                {/* ФИО и почта — только организатору и только здесь: он решает,
-                    кого берёт, и должен понимать, кто перед ним. */}
-                <Row T={T} k="Имя" v={sel?.fullName} />
-                <Row T={T} k="Почта" v={sel?.userEmail} />
+                <FieldValueRow label="Статус" value={sel ? STATUS_LABEL[sel.status] ?? sel.status : ''} hideWhenEmpty />
+                {/* ФИО и почта доступны только администраторам. */}
+                {canViewProfiles ? <FieldValueRow label="Имя" value={sel?.fullName} hideWhenEmpty /> : null}
+                {canViewProfiles ? <FieldValueRow label="Почта" value={sel?.userEmail} hideWhenEmpty /> : null}
               </View>
-            </ListSection>
+            </ListSection></Wrapper>
 
-            {!p ? (
+            {!canViewProfiles ? (
+              <Text style={[ty.subhead, { color: T.labelSecondary, padding: 20 }]}>Анкеты и контакты доступны только администраторам. Вы можете принять или отклонить заявку по публичному имени.</Text>
+            ) : !p ? (
               <View style={{ padding: 20, gap: 6 }}>
                 <Text style={[ty.subhead, { color: T.label }]}>Анкета не заполнена.</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary }]}>
@@ -217,45 +213,39 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                 </Text>
               </View>
             ) : (
-              <ListSection header="Анкета">
+              <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Анкета">
                 <View style={{ padding: 14, gap: 8 }}>
-                  {resumeRows(p?.resume ?? null).map((r, i) => <Row key={i} T={T} k={r.label} v={r.value} />)}
+                  {resumeRows(p?.resume ?? null).map((r, i) => <FieldValueRow key={i} label={r.label} value={r.value} hideWhenEmpty />)}
                 </View>
-              </ListSection>
+              </ListSection></Wrapper>
             )}
           </ScrollView>
 
           {/* Решение. «Вернуть на рассмотрение» нужно, чтобы отказ не был
               необратимым: организатор мог нажать не то. */}
-          <View style={{ padding: 16, gap: 8, borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: T.cardBg }}>
-            {sel && sel.status !== 'approved' && sel.status !== 'going' ? (
-              <PrimaryButton
-                label="Принять"
-                icon="checkmark"
-                color={T.green}
-                loading={busy}
-                onPress={() => sel && decide(sel, 'approved')}
-              />
+          <View style={{ padding: 16, paddingBottom: insets.bottom + 16, gap: 8, borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: T.cardBg }}>
+            {sel && sel.status !== 'cancelled' && sel.status !== 'approved' && sel.status !== 'going' ? (
+              <Button label="Принять" icon="checkmark" loading={busy} onPress={() => sel && decide(sel, 'approved')} tone="success" />
             ) : null}
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              {sel && sel.status !== 'rejected' ? (
+              {sel && sel.status !== 'cancelled' && sel.status !== 'rejected' ? (
                 <Pressable
                   disabled={busy}
                   onPress={() => sel && decide(sel, 'rejected')}
                   accessibilityRole="button"
                   accessibilityLabel="Отклонить заявку"
-                  style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,59,48,0.12)', opacity: pressed || busy ? 0.6 : 1 })}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 48, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,59,48,0.12)', opacity: pressed || busy ? 0.6 : 1 })}
                 >
                   <Text style={[ty.headline, { color: T.redText }]}>Отклонить</Text>
                 </Pressable>
               ) : null}
-              {sel && sel.status !== 'pending' ? (
+              {sel && sel.status !== 'cancelled' && sel.status !== 'pending' ? (
                 <Pressable
                   disabled={busy}
                   onPress={() => sel && decide(sel, 'pending')}
                   accessibilityRole="button"
                   accessibilityLabel="Вернуть заявку на рассмотрение"
-                  style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: T.fillSecondary, opacity: pressed || busy ? 0.6 : 1 })}
+                  style={({ pressed }) => ({ flex: 1, minHeight: 48, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: T.fillSecondary, opacity: pressed || busy ? 0.6 : 1 })}
                 >
                   <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>На рассмотрение</Text>
                 </Pressable>

@@ -1,0 +1,12 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { LessonRow } from './LessonRow';
+import { demoDetailCourse } from '../storybook/detailFixtures';
+const meta = { title: 'Liven/Details/LessonRow', component: LessonRow, args: { lesson: demoDetailCourse.lessons[1], state: 'current', onPress: () => {} },  } satisfies Meta<typeof LessonRow>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Tablet: Story = { parameters: { viewport: 'tablet' } };
+export const Locked: Story = { args: { state: 'locked' } }; export const Free: Story = { args: { state: 'free' } }; export const Done: Story = { args: { state: 'done' } };

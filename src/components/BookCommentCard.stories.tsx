@@ -1,0 +1,12 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { BookCommentCard } from './BookCommentCard';
+import { demoBookComment } from '../storybook/detailFixtures';
+const meta = { title: 'Liven/Details/BookCommentCard', component: BookCommentCard, args: { comment: demoBookComment, onEdit: () => {}, onDelete: () => {} },  } satisfies Meta<typeof BookCommentCard>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Tablet: Story = { parameters: { viewport: 'tablet' } };
+export const AnotherReader: Story = { args: { comment: { ...demoBookComment, mine: false, award: false } } };

@@ -1,3 +1,5 @@
+import { Wrapper } from '../../components/Wrapper';
+import { ContentBlock } from '../../components/ContentBlock';
 // Одна тренировка: маршрут на карте и цифры под ним.
 //
 // Здесь, в отличие от списка, карта настоящая: человек пришёл смотреть именно
@@ -12,7 +14,7 @@ import { nums } from '../../theme/tokens';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
-import { PrimaryButton } from '../../components/ui';
+import { Button } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import { tr } from '../../state/LanguageContext';
@@ -20,6 +22,7 @@ import {
   useActivities, formatDistance, formatDuration, formatPace, distanceToSteps, paceTimeSec, stepsPlausible,
 } from '../../state/ActivityContext';
 import { useChallenge } from '../../state/ChallengeContext';
+import { ChallengePicker } from '../../components/ChallengePicker';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
 import { fmtInt } from '../../data/format';
@@ -58,7 +61,9 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { workouts, removeWorkout, markAdded } = useActivities();
-  const { challenge, setMetric, isParticipant, dayLocked } = useChallenge();
+  const memberships = useChallenge();
+  const [selectedChallengeId, selectChallenge] = useState<string>();
+  const { challenge, setMetric, isParticipant, dayLocked, canMark } = useChallenge(selectedChallengeId ?? memberships.challenge.id);
   const mapRef = useRef<MapView | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -113,7 +118,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
   // Добавить в зачёт можно только сегодняшнюю тренировку и только один раз:
   // день закрывается в 23:00, а повторное добавление удвоило бы шаги.
   const canAdd = !!activityTask && activityTask.kind === 'metric'
-    && challengeSteps > 0 && !w.addedToChallenge && isToday && !dayLocked;
+    && challengeSteps > 0 && !w.addedToChallenge && isToday && canMark;
 
   const addToChallenge = () => {
     if (!canAdd || !activityTask || activityTask.kind !== 'metric') return;
@@ -122,7 +127,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
       setMetric(activityTask.id, activityTask.current + challengeSteps);
       markAdded(w.id);
       hSuccess();
-      Alert.alert(tr('Добавлено в челлендж'), `+${pl.steps(challengeSteps)} к сегодняшней активности.`);
+      Alert.alert(tr('Отметка отправлена'), `+${pl.steps(challengeSteps)} в «${challenge.title}». Статус подтверждения доступен на странице челленджа.`);
     } finally {
       setBusy(false);
     }
@@ -149,19 +154,18 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader
-        backLabel={tr('Тренировки')}
-        onBack={() => navigation.goBack()}
-        trailing={
+      <NavHeader backLabel={tr('Тренировки')} onBack={() => navigation.goBack()} trailing={
           <Pressable onPress={confirmDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel={tr('Удалить тренировку')}>
             <SF name="trash.fill" size={18} color={T.red} />
           </Pressable>
-        }
-      />
+        } />
 
       {/* Прокрутка: карта, цифры и подробности не помещаются на экран целиком,
           а нижняя панель с действиями закрывала хвост. */}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+        {(memberships.activeChallenges?.length ?? 0) > 1 ? <Wrapper paddingHorizontal={16} paddingVertical={8}>
+          <ChallengePicker challenges={memberships.activeChallenges!} selectedId={challenge.id} onChange={selectChallenge} disabled={busy || w.addedToChallenge} />
+        </Wrapper> : null}
         {/* Шапка: что и когда */}
         <View style={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -202,11 +206,11 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
             </View>
           </View>
         ) : (
-          <View style={{ marginHorizontal: 16, padding: 20, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center' }}>
+          <Wrapper marginHorizontal={16}><ContentBlock size="regular"><Wrapper align={'center'}>
             <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>
               {tr('Маршрут не записался — GPS не дал точек.')}
             </Text>
-          </View>
+          </Wrapper></ContentBlock></Wrapper>
         )}
 
         {/* Цифры */}
@@ -222,7 +226,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
         {/* Подробности строками «подпись — значение». Раньше это был сплошной
             текст в две строки с обрезанием: iOS рвал «6 795» по неразрывному
             пробелу и прятал хвост за многоточием. */}
-        <View style={{ marginHorizontal: 16, marginTop: 8, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <Wrapper marginHorizontal={16} marginTop={8}><ContentBlock size="flush">
           {typeof w.movingSec === 'number' && w.durationSec - w.movingSec >= 5 ? (
             <>
               <DetailRow T={T} ty={ty} label={tr('Общее время')} value={formatDuration(w.durationSec)} />
@@ -246,7 +250,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
               last
             />
           ) : null}
-        </View>
+        </ContentBlock></Wrapper>
       </ScrollView>
 
       {/* Действия */}
@@ -257,12 +261,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
             <Text style={[ty.headline, { color: T.greenText }]}>{tr('Засчитано в челлендж')}</Text>
           </View>
         ) : canAdd ? (
-          <PrimaryButton
-            label={`${tr('Добавить в челлендж')} · +${pl.steps(challengeSteps)}`}
-            icon="plus"
-            loading={busy}
-            onPress={addToChallenge}
-          />
+          <Button label={`${tr('Добавить в челлендж')} · +${pl.steps(challengeSteps)}`} icon="plus" loading={busy} onPress={addToChallenge} />
         ) : activityTask && !isToday ? (
           <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center' }]}>
             {tr('В зачёт идут только сегодняшние тренировки — день закрывается в 23:00.')}

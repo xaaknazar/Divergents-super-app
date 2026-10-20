@@ -11,31 +11,25 @@
 // Если однажды понадобится настоящая маска — компонент менять не придётся,
 // достаточно переписать его внутренности: наружу он отдаёт один прямоугольник.
 import React from 'react';
-import { View, StyleSheet, Platform, ViewStyle } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface ProgressiveBlurProps {
   /** С какого края экрана растёт размытие. */
   position?: 'top' | 'bottom';
-  /** Высота зоны размытия. */
-  height?: number;
-  /** Сила размытия у самой кромки (0–100). */
-  intensity?: number;
-  /** Сколько слоёв: больше — плавнее и дороже. 4 хватает. */
-  layers?: number;
-  style?: ViewStyle;
 }
 
 export function ProgressiveBlur({
   position = 'bottom',
-  height = 96,
-  intensity = 70,
-  layers = 4,
-  style,
 }: ProgressiveBlurProps) {
   const { isDark, reduceTransparency } = useTheme();
+  const insets = useSafeAreaInsets();
+  const height = (position === 'bottom' ? insets.bottom : insets.top) + 74;
+  const intensity = 60;
+  const layers = 4;
 
   // Цвет подложки в rgba: градиент должен уходить в прозрачность, а не в белое
   // пятно. Берём цвет фона экрана и меняем только альфу.
@@ -57,13 +51,13 @@ export function ProgressiveBlur({
       <LinearGradient
         pointerEvents="none"
         colors={fadeColors}
-        style={[{ height }, styles.fill, edge, style]}
+        style={[{ height }, styles.fill, edge]}
       />
     );
   }
 
   return (
-    <View pointerEvents="none" style={[{ height, overflow: 'hidden' }, styles.fill, edge, style]}>
+    <View pointerEvents="none" style={[{ height, overflow: 'hidden' }, styles.fill, edge]}>
       {Array.from({ length: layers }).map((_, i) => {
         // Каждый следующий слой занимает бо́льшую долю высоты и размывает
         // слабее: их наложение и даёт нарастание от края к центру.

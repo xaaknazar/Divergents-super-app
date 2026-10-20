@@ -4,7 +4,7 @@ import { View, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF, SFName } from '../components/SFIcon';
-import { PrimaryButton } from '../components/ui';
+import { Button } from '../components/ui';
 import { useAppFlow } from '../state/AppFlowContext';
 import { useLang } from '../state/LanguageContext';
 import { RootStackParams } from '../navigation/types';
@@ -62,9 +62,9 @@ export function OnboardingScreen({ navigation }: Props) {
 
       {/* Buttons */}
       <View style={{ gap: 10 }}>
-        <PrimaryButton label={last ? t('start') : t('next')} onPress={() => (last ? finish() : setStep((v) => v + 1))} />
-        {/* PrimaryButton is minHeight 50 (≥ 44 pt) — the skip target is already HIG-sized. */}
-        {last ? null : <PrimaryButton label={lang === 'ru' ? 'Пропустить' : 'Skip'} color="transparent" onPress={finish} style={{ minHeight: 48 }} />}
+        <Button label={last ? t('start') : t('next')} onPress={() => (last ? finish() : setStep((v) => v + 1))} />
+        {/* Button owns its touch target; layout spacing stays in Wrapper. */}
+        {last ? null : <Button label={lang === 'ru' ? 'Пропустить' : 'Skip'} onPress={finish} variant="plain" size="compact" />}
       </View>
     </View>
   );

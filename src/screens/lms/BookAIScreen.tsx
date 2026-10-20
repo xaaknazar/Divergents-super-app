@@ -1,13 +1,11 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../theme/ThemeContext';
-import { NavHeader } from '../../components/NavHeader';
-import { SF } from '../../components/SFIcon';
-import { Chip } from '../../components/ui';
-import { MarkdownText } from '../../components/MarkdownText';
+import { DetailScreen } from '../../components/DetailScreen';
+import { BottomBar } from '../../components/BottomBar';
+import { ChatThread } from '../../components/ChatThread';
+import { ChatComposer } from '../../components/ChatComposer';
+import { ChatSuggestions } from '../../components/ChatSuggestions';
 import { askAi, AiMessage, AiUnavailableError } from '../../data/ai';
 import { profileSummary } from '../../data/talentslab';
 import { useTalentProfile } from '../../state/useTalentProfile';
@@ -32,8 +30,6 @@ const BOOK_FOCUS =
   'Вопрос пользователя: ';
 
 export function BookAIScreen({ navigation }: Props) {
-  const { T, ty } = useTheme();
-  const insets = useSafeAreaInsets();
   const { getToken, isSignedIn } = useAuth();
   const { profile } = useTalentProfile();
   // Та же история, что у общего ассистента, но своей веткой: советник по книгам
@@ -41,7 +37,6 @@ export function BookAIScreen({ navigation }: Props) {
   const { messages: msgs, setMessages: setMsgs } = useAiThread('books');
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
 
   const send = async (raw?: string) => {
     const q = (raw ?? text).trim();
@@ -50,7 +45,6 @@ export function BookAIScreen({ navigation }: Props) {
     setMsgs((p) => [...p, userMsg]);
     setText('');
     setBusy(true);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     try {
       const token = isSignedIn ? await getToken() : null;
       const history: AiMessage[] = getAiThread('books').map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
@@ -67,65 +61,17 @@ export function BookAIScreen({ navigation }: Props) {
       setMsgs((p) => [...p, { id: uid(), role: 'bot', text: `⚠️ ${msg}` }]);
     } finally {
       setBusy(false);
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     }
   };
 
-  return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      {/* Title lives in the header, so it stays visible once the intro card
-          (which carried the only title before) scrolls away after the first message. */}
-      <NavHeader title="Книжный советник" backLabel="Книги" onBack={() => navigation.goBack()} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 64}>
-        <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-          {msgs.length === 0 ? (
-            <View style={{ alignItems: 'center', paddingTop: 28, paddingHorizontal: 12 }}>
-              <View style={{ width: 64, height: 64, borderRadius: 20, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                <SF name="sparkles" size={30} color="#fff" />
-              </View>
-              <Text style={[ty.title3, { color: T.label, textAlign: 'center' }]}>Книжный советник</Text>
-              <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', marginTop: 6 }]}>
-                Знаю всю библиотеку Divergents и ваш профиль — подберу книги под ваши таланты, психотип и цели.
-              </Text>
-              {!isSignedIn ? (
-                <Text style={[ty.footnote, { color: T.labelTertiary, textAlign: 'center', marginTop: 10 }]}>
-                  Войдите, чтобы рекомендации учитывали ваш профиль.
-                </Text>
-              ) : null}
-            </View>
-          ) : null}
-
-          {msgs.map((m) => (
-            <View key={m.id} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%', marginBottom: 12 }}>
-              <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, borderCurve: 'continuous', backgroundColor: m.role === 'user' ? T.brand : T.cardBg }}>
-                {m.role === 'user'
-                  ? <Text style={[ty.body, { color: '#fff' }]}>{m.text}</Text>
-                  : <MarkdownText text={m.text} color={T.label} />}
-              </View>
-            </View>
-          ))}
-          {busy ? (
-            <View style={{ alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.cardBg, marginBottom: 12 }}>
-              <ActivityIndicator color={T.brand} size="small" />
-            </View>
-          ) : null}
-        </ScrollView>
-
-        {msgs.length === 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
-            {SUGGEST.map((s) => <Chip key={s} label={s} onPress={() => send(s)} />)}
-          </ScrollView>
-        ) : null}
-
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-          <View style={{ flex: 1, backgroundColor: T.fillTertiary, borderRadius: 18, borderCurve: 'continuous', paddingHorizontal: 14, paddingVertical: 8, maxHeight: 120 }}>
-            <TextInput value={text} onChangeText={setText} multiline placeholder="Спросить про книги…" placeholderTextColor={T.labelTertiary} accessibilityLabel="Спросить про книги" style={[ty.body, { color: T.label, paddingVertical: 0 }]} />
-          </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Отправить сообщение" accessibilityState={{ disabled: busy || !text.trim() }} onPress={() => send()} disabled={busy || !text.trim()} style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: text.trim() ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="arrow.up" size={18} color={text.trim() ? '#fff' : T.labelTertiary} />
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </View>
-  );
+  return <DetailScreen title="Книжный советник" backLabel="Книги" onBack={() => navigation.goBack()} scroll={false} keyboard
+    footer={<BottomBar>
+      {!msgs.length ? <ChatSuggestions suggestions={SUGGEST} onSelect={send} disabled={busy} /> : null}
+      <ChatComposer value={text} onChangeText={setText} onSend={() => send()} busy={busy} disabled={false} multiline
+        inputLabel="Спросить про книги" placeholder="Спросить про книги…" />
+    </BottomBar>}>
+    <ChatThread messages={msgs} busy={busy} title="Книжный советник"
+      description="Знаю всю библиотеку Divergents и ваш профиль — подберу книги под ваши таланты, психотип и цели."
+      note={!isSignedIn ? 'Войдите, чтобы рекомендации учитывали ваш профиль.' : undefined} />
+  </DetailScreen>;
 }

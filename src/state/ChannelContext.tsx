@@ -30,6 +30,7 @@ interface ChannelState {
 }
 
 const Ctx = createContext<ChannelState | null>(null);
+export { Ctx as ChannelStateContext };
 
 export function ChannelProvider({ children }: { children: React.ReactNode }) {
   const { getToken } = useAuth();

@@ -204,7 +204,8 @@ export function createTypography(scale = 1): Typography {
 // ─── Spatial scales ────────────────────────────────────────────────
 // Coherent corner-radius and spacing ramps used across atoms/screens.
 // `xxl` is kept for backward compatibility; `pill` is the fully-rounded token.
-export const radius = { sm: 8, md: 10, lg: 12, xl: 14, xxl: 16, pill: 999 } as const;
+// Original Divergents geometry, with semantic aliases for extracted components.
+export const radius = { sm: 8, md: 10, lg: 12, xl: 14, xxl: 16, block: 16, input: 12, action: 14, pill: 999 } as const;
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
 // 48 dp also satisfies the iOS 44 pt minimum and keeps shared components safe
 // on both platforms without relying on hitSlop.

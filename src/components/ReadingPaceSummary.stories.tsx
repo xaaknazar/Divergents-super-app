@@ -1,0 +1,11 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingPaceSummary } from './ReadingPaceSummary';
+import { continuousReadingFixture } from '../storybook/readingFixtures';
+const meta = { title: 'Reading/Pace', component: ReadingPaceSummary, args: { member: continuousReadingFixture.me! } } satisfies Meta<typeof ReadingPaceSummary>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+export const BelowGoal: Story = { args: { member: { ...continuousReadingFixture.me!, averageMinutes: 42, pace: 'below_target' } } };
+export const Observation: Story = { args: { member: { ...continuousReadingFixture.me!, rankingEligible: false, qualificationDaysLeft: 7, daysParticipated: 3 } } };

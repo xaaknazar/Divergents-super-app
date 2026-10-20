@@ -1,0 +1,11 @@
+Use case: stylized-concept
+Asset type: original transparent mobile-app companion illustration for a 96-point AI introduction and a 32-point chat indicator.
+Scene/backdrop: genuinely transparent background with native alpha. Isolated object only, no floor, no backdrop and no cast ground shadow.
+Subject: one small round glossy blue companion orb, with a luminous silver-white core slightly off centre and visible within its softly translucent rich blue surface. A simple tactile sphere with a subtle organic softness, entirely abstract and friendly.
+Style/medium: premium cheerful dimensional 3D app illustration, smooth generous forms, rich enamel and blown-glass material, crisp rounded silhouette and controlled highlights. Original illustration, not copied from any app graphic and not a flat icon.
+Composition/framing: square canvas, one complete orb centred and filling about 80 percent of the canvas. Legible as one simple volumetric form at 32 points. No separate objects.
+Lighting/mood: soft bright studio light from above-left, cool silver-white rim highlights and a gentle luminous core with a calm optimistic feel. Internal luminosity belongs inside the orb; clean silhouette without an external glow, readable on both white and deep navy interfaces.
+Color palette: ONLY Divergents deep navy #234088, royal blue #3D5BDB and periwinkle blue #8AA0FF, with white and neutral silver. No green, yellow, gold, pink, red, teal or warm accents.
+Materials/textures: smooth glossy blue enamel and glass, soft translucent depth, broad reflections, no grain or weathering.
+Text: none.
+Constraints: no rings, orbit lines, face, eyes, mouth, character features, symbols, letters, numbers, text, logos, watermark, UI, frame, border, sparkles, confetti, props, background glow, giant flare, painted checkerboard or opaque background. Output a clean transparent PNG cutout and preserve native alpha.

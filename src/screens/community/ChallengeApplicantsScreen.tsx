@@ -1,3 +1,7 @@
+import { FieldValueRow } from '../../components/FieldValueRow';
+import { ApplicationStatusBadge, applicationStatusLabel } from '../../components/ApplicationStatusBadge';
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Challenge applicants — admin sees everyone, a team captain sees only their
 // team. Shows each candidate's full Talentslab анкета, and lets the reviewer
 // accept/reject with a reason. Admins can also promote an applicant to captain
@@ -9,7 +13,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection } from '../../components/ui';
+import { ListSection } from '../../components/ui';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import {
@@ -22,12 +26,7 @@ import { CommunityStackParams } from '../../navigation/types';
 type Props = NativeStackScreenProps<CommunityStackParams, 'ChallengeApplicants'>;
 
 const STATUS_LABEL: Record<ChallengeAppStatus, string> = { pending: 'Новый', approved: 'Принят', rejected: 'Отклонён' };
-// Цвет текста берём из темы (контрастные *Text-токены), фон — мягкая заливка.
-function statusMeta(status: ChallengeAppStatus, T: any): { label: string; bg: string; color: string } {
-  if (status === 'approved') return { label: STATUS_LABEL.approved, bg: 'rgba(52,199,89,0.16)', color: T.greenText };
-  if (status === 'rejected') return { label: STATUS_LABEL.rejected, bg: 'rgba(255,59,48,0.14)', color: T.redText };
-  return { label: STATUS_LABEL.pending, bg: 'rgba(142,142,147,0.16)', color: T.labelSecondary };
-}
+
 
 export function ChallengeApplicantsScreen({ route, navigation }: Props) {
   // Разбор с запасом: уведомление могло прийти без параметров, и падение
@@ -139,7 +138,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={directProfile ? 'Анкета участника' : 'Заявки'} onBack={() => navigation.goBack()} hairline />
+      <NavHeader title={directProfile ? 'Анкета участника' : 'Заявки'} onBack={() => navigation.goBack()} />
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       ) : error ? (
@@ -152,14 +151,14 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
         <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: 30 }}>
           <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Заявок · {items.length}</Text>
           {items.map((a) => {
-            const meta = statusMeta(a.status, T);
+
             // В списке — псевдоним (его отдаёт сервер). ФИО и почта тут не
             // показываются: капитан ещё ничего не решил, а это личные данные.
             // Настоящее имя видно в анкете, когда он откроет заявку.
             const name = a.userName || 'Участник';
             return (
               <Pressable key={a.id} onPress={() => openApplicant(a)}
-                accessibilityRole="button" accessibilityLabel={`${name}${a.teamName ? `, ${a.teamName}` : ''}, ${meta.label}`}
+                accessibilityRole="button" accessibilityLabel={`${name}${a.teamName ? `, ${a.teamName}` : ''}, ${applicationStatusLabel(a.status)}`}
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, minHeight: 48, opacity: pressed ? 0.7 : 1 })}>
                 <View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.headline, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
@@ -171,8 +170,8 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                   </Text>
                 </View>
                 {a.isCaptain
-                  ? <Capsule bg={T.brandTinted} color={T.brand}>капитан</Capsule>
-                  : <Capsule bg={meta.bg} color={meta.color}>{meta.label}</Capsule>}
+                  ? <StatusBadge label={String("капитан")} tone="brand" />
+                  : <ApplicationStatusBadge status={a.status} />}
               </Pressable>
             );
           })}
@@ -182,23 +181,23 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
       {/* Applicant detail */}
       <Modal visible={!!sel} animationType={directProfile ? "none" : "slide"} onRequestClose={closeApplicant}>
         <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-          <NavHeader title={sel?.userName || 'Участник'} backLabel={directProfile ? "Состав" : "Закрыть"} onBack={closeApplicant} hairline />
+          <NavHeader title={sel?.userName || 'Участник'} backLabel={directProfile ? "Состав" : "Закрыть"} onBack={closeApplicant} />
           <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
             <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
               {!directProfile ? (
-                <ListSection header="Заявка">
+                <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Заявка">
                   <View style={{ padding: 14, gap: 8 }}>
-                    {sel?.teamName ? <Row T={T} k="Команда" v={sel.teamName} /> : null}
-                    <Row T={T} k="Статус" v={sel ? STATUS_LABEL[sel.status] : ''} />
+                    {sel?.teamName ? <FieldValueRow label="Команда" value={sel.teamName} /> : null}
+                    <FieldValueRow label="Статус" value={sel ? STATUS_LABEL[sel.status] : ''} />
                     {sel?.telegram ? (
                       <Pressable onPress={() => Linking.openURL(`https://t.me/${sel.telegram}`).catch(() => {})} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
                         <Text style={[ty.subhead, { color: T.labelSecondary }]}>Telegram</Text>
                         <Text style={[ty.subhead, { color: T.brand }]} numberOfLines={1}>@{sel.telegram}</Text>
                       </Pressable>
                     ) : null}
-                    {sel && sel.coefficient !== 1 ? <Row T={T} k="Коэффициент" v={`×${sel.coefficient}`} /> : null}
+                    {sel && sel.coefficient !== 1 ? <FieldValueRow label="Коэффициент" value={`×${sel.coefficient}`} /> : null}
                   </View>
-                </ListSection>
+                </ListSection></Wrapper>
               ) : null}
 
               {!p ? (
@@ -207,9 +206,9 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                       просят. Писать «не найдена» — вводить капитана в
                       заблуждение, будто что-то сломалось. */}
                   <Text style={[ty.subhead, { color: T.label }]}>
-                    {sel?.source === 'site'
-                      ? 'Заявка подана через сайт — там анкету не заполняют.'
-                      : 'Анкета кандидата не найдена в Talentslab.'}
+                    {sel?.profileStatus === 'unavailable'
+                      ? 'Не удалось загрузить анкету. Обновите экран или попробуйте позже — это не означает, что участник её не заполнил.'
+                      : 'Анкета пока не получена. Участнику нужно открыть приложение и синхронизировать сохранённую анкету.'}
                   </Text>
                   <Text style={[ty.caption1, { color: T.labelSecondary }]}>
                     {sel?.fullName ? `${sel.fullName}. ` : ''}{sel?.userEmail ?? ''}
@@ -217,29 +216,29 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                 </View>
               ) : (
                 <>
-                  <ListSection header="Профиль">
+                  <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Профиль">
                     <View style={{ padding: 14, gap: 8 }}>
-                      {p.fullName || sel?.fullName ? <Row T={T} k="Имя" v={p.fullName || sel!.fullName} /> : null}
-                      {sel?.userEmail ? <Row T={T} k="Email" v={sel.userEmail} /> : null}
-                      {p.phone ? <Row T={T} k="Телефон" v={p.phone} /> : null}
-                      {p.currentCity ? <Row T={T} k="Город" v={p.currentCity} /> : null}
-                      {p.mbtiType ? <Row T={T} k="MBTI" v={`${p.mbtiType}${p.mbtiName ? ` · ${p.mbtiName}` : ''}`} /> : null}
-                      <Row T={T} k="Заполненность" v={`${p.completeness ?? 0}%`} />
+                      {p.fullName || sel?.fullName ? <FieldValueRow label="Имя" value={p.fullName || sel!.fullName} /> : null}
+                      {sel?.userEmail ? <FieldValueRow label="Email" value={sel.userEmail} /> : null}
+                      {p.phone ? <FieldValueRow label="Телефон" value={p.phone} /> : null}
+                      {p.currentCity ? <FieldValueRow label="Город" value={p.currentCity} /> : null}
+                      {p.mbtiType ? <FieldValueRow label="MBTI" value={`${p.mbtiType}${p.mbtiName ? ` · ${p.mbtiName}` : ''}`} /> : null}
+                      <FieldValueRow label="Заполненность" value={`${p.completeness ?? 0}%`} />
                     </View>
-                  </ListSection>
+                  </ListSection></Wrapper>
 
                   {p.gallup.length > 0 ? (
-                    <ListSection header="Топ таланты Gallup">
+                    <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Топ таланты Gallup">
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 14 }}>
                         {p.gallup.slice(0, 12).map((g) => (
-                          <Capsule key={g.rank} bg={T.fillTertiary} color={T.label}>{g.rank}. {g.name}</Capsule>
+                          <StatusBadge key={g.rank} label={[(g.rank), ". ", (g.name)].join('')} tone="neutral" />
                         ))}
                       </View>
-                    </ListSection>
+                    </ListSection></Wrapper>
                   ) : null}
 
                   {p.gardner.length > 0 ? (
-                    <ListSection header="Множественный интеллект (Гарднер)">
+                    <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Множественный интеллект (Гарднер)">
                       <View style={{ padding: 14, gap: 6 }}>
                         {p.gardner.slice().sort((a, b) => b.score - a.score).slice(0, 5).map((g) => (
                           <View key={g.category} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -248,15 +247,15 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                           </View>
                         ))}
                       </View>
-                    </ListSection>
+                    </ListSection></Wrapper>
                   ) : null}
 
                   {rows.length > 0 ? (
-                    <ListSection header="Анкета полностью">
+                    <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Анкета полностью">
                       <View style={{ padding: 14, gap: 8 }}>
-                        {rows.map((r, i) => <Row key={i} T={T} k={r.label} v={r.value} />)}
+                        {rows.map((r, i) => <FieldValueRow key={i} label={r.label} value={r.value} />)}
                       </View>
-                    </ListSection>
+                    </ListSection></Wrapper>
                   ) : null}
                 </>
               )}
@@ -266,7 +265,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                   бы капитана из его же команды. */}
               {!directProfile && !sel?.isCaptain ? (
                 <>
-                  <ListSection header="Ответ кандидату (причина)">
+                  <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Ответ кандидату (причина)">
                     <View style={{ padding: 14, gap: 10 }}>
                       <TextInput value={feedback} onChangeText={setFeedback} multiline placeholder="Напишите причину приёма/отклонения — кандидат увидит её…"
                         placeholderTextColor={T.labelTertiary}
@@ -277,7 +276,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                         <Text style={[ty.subheadEm, { color: feedback.trim() ? T.brand : T.labelTertiary }]}>Отправить ответ</Text>
                       </Pressable>
                     </View>
-                  </ListSection>
+                  </ListSection></Wrapper>
 
                   {canManage && sel?.teamId ? (
                     <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
@@ -305,16 +304,6 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
           </KeyboardAvoidingView>
         </View>
       </Modal>
-    </View>
-  );
-}
-
-function Row({ T, k, v }: { T: any; k: string; v: string }) {
-  const { ty } = useTheme();
-  return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-      <Text style={[ty.subhead, { color: T.labelSecondary, flexShrink: 0, maxWidth: '45%' }]}>{k}</Text>
-      <Text style={[ty.subhead, { color: T.label, flex: 1, textAlign: 'right' }]}>{v}</Text>
     </View>
   );
 }

@@ -43,5 +43,5 @@ export function useResumeAccess() {
     return false;
   }, [hydrated, missing]);
 
-  return { can, missing, require, hydrated };
+  return { can, missing, require, hydrated, mergedAnswers };
 }

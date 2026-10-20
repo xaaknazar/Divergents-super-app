@@ -222,9 +222,13 @@ export function daysBetween(aKey: string, bKey: string): number {
 export type ProgramDayState = 'done' | 'missed' | 'today' | 'future' | 'partial';
 
 export interface ProgramStats {
-  /** Номер сегодняшнего дня программы, 1-based; 0 — ещё не началась; > days — завершена. */
+  /** Номер календарного дня, 1-based; <= 0 — ещё не началась. Завершение см. finished. */
   dayIndex: number;
   finished: boolean;
+  total: number;
+  activeDays: number;
+  bestStreak: number;
+  bestDay: number;
   done: number;
   missed: number;
   /** Сегодня выполнено. */
@@ -239,12 +243,14 @@ export interface ProgramStats {
 export function programStats(p: FitnessProgram, now = new Date()): ProgramStats {
   const todayKey = dayKey(now);
   const dayIndex = daysBetween(p.startKey, todayKey) + 1;
-  const finished = dayIndex > p.days;
+  const validValue = (key: string) => Number.isFinite(p.log[key]) ? Math.max(0, p.log[key]) : 0;
+  // Итог доступен сразу после нормы в последний день, без ожидания полуночи.
+  const finished = dayIndex > p.days || (dayIndex === p.days && p.target > 0 && validValue(todayKey) >= p.target);
   const grid: ProgramStats['grid'] = [];
   let done = 0, missed = 0;
   for (let i = 0; i < p.days; i++) {
     const key = shiftKey(p.startKey, i);
-    const value = p.log[key] ?? 0;
+    const value = key <= todayKey ? validValue(key) : 0;
     const isDone = value >= p.target && p.target > 0;
     let state: ProgramDayState;
     if (i + 1 < dayIndex) state = isDone ? 'done' : 'missed';
@@ -254,8 +260,8 @@ export function programStats(p: FitnessProgram, now = new Date()): ProgramStats 
     if (state === 'missed') missed += 1;
     grid.push({ key, index: i + 1, state, value });
   }
-  const todayValue = p.log[todayKey] ?? 0;
-  const todayDone = todayValue >= p.target && p.target > 0 && dayIndex >= 1 && !finished;
+  const todayValue = dayIndex >= 1 && dayIndex <= p.days ? validValue(todayKey) : 0;
+  const todayDone = todayValue >= p.target && p.target > 0 && dayIndex >= 1 && dayIndex <= p.days;
 
   // Серия: от сегодняшнего дня назад; если сегодня ещё не сделано — от вчера.
   // У завершённой программы «сегодня» нет — считаем от её последнего дня.
@@ -266,5 +272,13 @@ export function programStats(p: FitnessProgram, now = new Date()): ProgramStats 
     const g = grid[i - 1];
     if (g && g.state === 'done') { streak += 1; i -= 1; } else break;
   }
-  return { dayIndex, finished, done, missed, todayDone, todayValue, streak, grid };
+  let total = 0, activeDays = 0, bestStreak = 0, bestDay = 0, run = 0;
+  for (const g of grid) {
+    total += g.value;
+    if (g.value > 0) activeDays++;
+    bestDay = Math.max(bestDay, g.value);
+    run = g.state === 'done' ? run + 1 : 0;
+    bestStreak = Math.max(bestStreak, run);
+  }
+  return { dayIndex, finished, done, missed, todayDone, todayValue, streak, grid, total, activeDays, bestStreak, bestDay };
 }

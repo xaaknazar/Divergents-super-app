@@ -3,9 +3,9 @@
 //   • inline back chevron + label (was `BackNav`)            → variant="inline"
 //   • inline + large title below (was BackNav + a <Text>)     → largeTitle
 //   • floating round buttons over a hero image / gradient     → variant="overlay"
-// Safe-area aware, optional frosted blur, optional hairline separator.
+// Safe-area aware. Surface, separator and contrast belong to semantic variants.
 import React from 'react';
-import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, Pressable, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { minTouch, space } from '../theme/tokens';
@@ -28,77 +28,38 @@ export type NavHeaderProps = {
   onBack?: () => void;
   /** Right-hand slot (icons / buttons). In `overlay` use round buttons. */
   trailing?: React.ReactNode;
-  /** "inline" (default) for solid bars, "overlay" for floating buttons on a hero. */
-  variant?: 'inline' | 'overlay';
+  /** Default plain shares the page background; other surfaces require an explicit variant. */
+  variant?: 'inline' | 'plain' | 'frosted' | 'hero' | 'overlay';
   /** Overlay button colour scheme. 'dark' = dark scrim + white icon (default). */
   overlayScheme?: 'light' | 'dark';
-  /** Chevron / label colour. Defaults to brand accent (inline) or white (overlay). */
-  tint?: string;
-  /** No background fill and no hairline (e.g. over a tinted Screen gradient). */
-  transparent?: boolean;
-  /** Frosted blur background instead of an opaque fill. */
-  blur?: boolean;
-  /** Force the hairline separator on/off. Defaults: on when opaque, off otherwise. */
-  hairline?: boolean;
   /** Apply the top safe-area inset. Default true. */
   safeArea?: boolean;
-  style?: StyleProp<ViewStyle>;
 };
 
 /** Circular translucent action button for the `overlay` variant (and trailing slots). */
-export function NavRoundButton({
-  icon, onPress, scheme = 'dark', size = 34, accessibilityLabel,
-}: { icon: string; onPress?: () => void; scheme?: 'light' | 'dark'; size?: number; accessibilityLabel?: string }) {
-  const dark = scheme === 'dark';
-  const controlSize = Math.max(size, minTouch);
-  return (
-    <Pressable
-      onPress={onPress ? () => { hSelect(); onPress(); } : undefined}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? `Действие: ${icon}`}
-      accessibilityState={{ disabled: !onPress }}
-      style={({ pressed }) => ({
-        width: controlSize, height: controlSize, borderRadius: controlSize / 2,
-        borderCurve: 'continuous',
-        backgroundColor: dark ? 'rgba(0,0,0,0.42)' : 'rgba(255,255,255,0.82)',
-        alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1,
-        // Кнопка лежит на фотографии, а не на фоне экрана. На светлом снимке
-        // белый круг сливался с ним — тонкая рамка и тень отделяют его от
-        // любого кадра, не утяжеляя вид.
-        borderWidth: 0.5,
-        borderColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.10)',
-        shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 4,
-        shadowOffset: { width: 0, height: 1 }, elevation: 2,
-      })}>
-      {/* Цвет иконки НЕ берём из темы. Раньше здесь стоял `T.label`, а в тёмной
-          теме он белый — и белая иконка на почти белом круге пропадала: на
-          карточке поездки кнопки «назад», «в избранное» и «поделиться» были
-          пустыми кружками. Круг светлый всегда (он поверх фото), значит и
-          иконка на нём всегда тёмная. */}
-      <SF name={icon} size={Math.round(size * 0.47)} color={dark ? '#fff' : '#1C1C1E'} />
-    </Pressable>
-  );
-}
+import { NavRoundButton } from './NavRoundButton';
+export { NavRoundButton } from './NavRoundButton';
 
 export function NavHeader({
   title, largeTitle = false, subtitle, backLabel = 'Назад', hideBackLabel = false,
-  onBack, trailing, variant = 'inline', overlayScheme = 'dark', tint,
-  transparent = false, blur = false, hairline, safeArea = true, style,
+  onBack, trailing, variant = 'plain', overlayScheme = 'dark', safeArea = true,
 }: NavHeaderProps) {
-  const { T, isDark, reduceTransparency, ty } = useTheme();
+  const { T, isDark, reduceTransparency, ty, textScale = 1 } = useTheme();
+  const { fontScale, width } = useWindowDimensions();
+  const stackedTitle = !largeTitle && (fontScale * textScale > 1.3 || width < 350);
   const insets = useSafeAreaInsets();
   const top = safeArea ? insets.top : 0;
-  const useBlur = blur && !reduceTransparency;
+  const useBlur = variant === 'frosted' && !reduceTransparency;
 
   // ── Overlay: floating round buttons over a hero / gradient ──
   if (variant === 'overlay') {
     return (
       <View
         pointerEvents="box-none"
-        style={[{
+        style={{
           paddingTop: top + space.xs + 2, paddingHorizontal: space.md,
           flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        }, style]}>
+        }}>
         {onBack
           ? <NavRoundButton icon="chevron.left" scheme={overlayScheme} onPress={onBack} accessibilityLabel={backLabel} />
           : <View style={{ width: minTouch }} />}
@@ -107,8 +68,10 @@ export function NavHeader({
     );
   }
 
-  const fg = tint ?? T.brandText;
-  const showHairline = hairline ?? (!transparent && !useBlur);
+  const fg = variant === 'hero' ? '#FFFFFF' : T.brandText;
+  const titleColor = variant === 'hero' ? '#FFFFFF' : T.label;
+  const subtitleColor = variant === 'hero' ? 'rgba(255,255,255,0.85)' : T.labelSecondary;
+  const showHairline = variant === 'inline' || (variant === 'frosted' && reduceTransparency);
 
   const bar = (
     <View style={{
@@ -116,38 +79,33 @@ export function NavHeader({
       paddingTop: top + space.sm - 2, paddingBottom: space.sm + 2,
       paddingLeft: space.md, paddingRight: space.sm, minHeight: minTouch,
     }}>
-      {/* Centered inline title (behind the row so side widths don't shift it). */}
-      {title && !largeTitle ? (
-        <View pointerEvents="none" style={{ position: 'absolute', left: 56, right: 56, top: top + space.sm - 2, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-          <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]} numberOfLines={1}>{title}</Text>
-        </View>
-      ) : null}
-
       {onBack ? (
         <Pressable onPress={() => { hSelect(); onBack(); }} accessibilityRole="button" accessibilityLabel={backLabel}
-          style={({ pressed }) => ({ minWidth: minTouch, minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 6, opacity: pressed ? 0.6 : 1 })}>
+          style={({ pressed }) => ({ minWidth: minTouch, minHeight: minTouch, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 6, opacity: pressed ? 0.6 : 1 })}>
           <SF name="chevron.left" size={20} color={fg} />
-          {!hideBackLabel ? <Text style={[ty.body, { color: fg }]} numberOfLines={1}>{backLabel}</Text> : null}
+          {!hideBackLabel && (!title || largeTitle) ? <Text style={[ty.body, { color: fg, flexShrink: 1 }]}>{backLabel}</Text> : null}
         </Pressable>
       ) : <View style={{ width: 8 }} />}
 
-      <View style={{ flexDirection: 'row', gap: space.md, paddingRight: 6, alignItems: 'center' }}>{trailing}</View>
+      {title && !largeTitle && !stackedTitle ? <Text accessibilityRole="header" style={[ty.headline, { color: titleColor, flex: 1, textAlign: 'center', marginHorizontal: 8 }]}>{title}</Text> : null}
+      <View style={{ minWidth: title && !stackedTitle ? minTouch : 0, flexShrink: 1, flexDirection: 'row', gap: space.sm, paddingRight: 6, alignItems: 'center', justifyContent: 'flex-end' }}>{trailing}</View>
     </View>
   );
 
   return (
-    <View style={[{ position: 'relative' }, style]}>
+    <View style={{ position: 'relative' }}>
       {useBlur ? (
         <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-      ) : (!transparent || blur) ? (
+      ) : (variant === 'inline' || variant === 'frosted') ? (
         // Opaque fill when not blurring — incl. Reduce Transparency fallback for a blur header.
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: T.cardBg }} />
       ) : null}
       {bar}
+      {stackedTitle && title ? <Text accessibilityRole="header" style={[ty.headline, { color: titleColor, paddingHorizontal: space.xl, paddingBottom: space.md }]}>{title}</Text> : null}
       {largeTitle && title ? (
         <View style={{ paddingHorizontal: space.xl, paddingTop: space.xs, paddingBottom: subtitle ? space.sm : space.lg }}>
-          <Text accessibilityRole="header" style={[ty.largeTitle, { color: T.label }]}>{title}</Text>
-          {subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: space.xs }]}>{subtitle}</Text> : null}
+          <Text accessibilityRole="header" style={[ty.largeTitle, { color: titleColor }]}>{title}</Text>
+          {subtitle ? <Text style={[ty.subhead, { color: subtitleColor, marginTop: space.xs }]}>{subtitle}</Text> : null}
         </View>
       ) : null}
       {showHairline ? (

@@ -1,0 +1,42 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useReadingHistory } from '../useReadingHistory';
+import { fetchReadingHistory } from '../../data/readingBooks';
+import { sendReadingCommand } from '../../data/reading';
+let mockAccount = 'reader';
+jest.mock('@clerk/clerk-expo', () => ({ useAuth: () => ({ userId: mockAccount, getToken: async () => 'token' }) }));
+jest.mock('@react-navigation/native', () => ({ useFocusEffect: (fn: () => void) => require('react').useEffect(fn, [fn]) }));
+jest.mock('../../data/readingBooks', () => ({ fetchReadingHistory: jest.fn() }));
+jest.mock('../../data/reading', () => ({ sendReadingCommand: jest.fn() }));
+jest.mock('expo-crypto', () => ({ randomUUID: () => '11111111-1111-4111-8111-111111111111' }));
+const fetchHistory = jest.mocked(fetchReadingHistory), send = jest.mocked(sendReadingCommand);
+const history = { challengeId: 'club', own: true, reader: { name: 'Reader' }, books: [] } as any;
+beforeEach(() => { mockAccount = 'reader'; fetchHistory.mockReset().mockResolvedValue(history); send.mockReset().mockResolvedValue({ ok: true }); });
+test('failed book status is not optimistic and retry reuses the operation ID', async () => {
+  send.mockRejectedValueOnce(new Error('Нет подтверждения'));
+  const h = await renderHook(() => useReadingHistory('club', 'reader'));
+  await waitFor(() => expect(h.result.current.data).toBe(history));
+  await act(async () => { await h.result.current.markBook('book', true); });
+  expect(h.result.current.error).toBe('Нет подтверждения');
+  expect(h.result.current.data).toBe(history);
+  await act(async () => { await h.result.current.markBook('book', true); });
+  expect(send.mock.calls[1][1]).toEqual(send.mock.calls[0][1]);
+  expect(fetchHistory).toHaveBeenCalledTimes(2);
+});
+test('spectator cannot send a book status command', async () => {
+  const h = await renderHook(() => useReadingHistory('club', 'other'));
+  await waitFor(() => expect(h.result.current.data).toBeTruthy());
+  await act(async () => { await h.result.current.markBook('book', true); });
+  expect(send).not.toHaveBeenCalled();
+});
+test('late history response does not replace the new account context', async () => {
+  let resolve!: (value: any) => void;
+  fetchHistory.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+  const h = await renderHook(() => useReadingHistory('club', mockAccount));
+  await waitFor(() => expect(fetchHistory).toHaveBeenCalledTimes(1));
+  mockAccount = 'other';
+  const other = { ...history, reader: { name: 'Other' } }; fetchHistory.mockResolvedValueOnce(other);
+  await h.rerender({});
+  await waitFor(() => expect(h.result.current.data).toBe(other));
+  await act(async () => { resolve(history); });
+  expect(h.result.current.data).toBe(other);
+});

@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
-import { SF } from './SFIcon';
-import { useTheme } from '../theme/ThemeContext';
+import { Pressable,View } from 'react-native';
 import { hSelect } from '../lib/haptics';
+import { useTheme } from '../theme/ThemeContext';
+import { SF } from './SFIcon';
 
 export function Stars({ value, size = 14, onChange, color }: { value: number; size?: number; onChange?: (v: number) => void; color?: string }) {
   const { T } = useTheme();

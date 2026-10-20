@@ -1,0 +1,166 @@
+{
+  "regions": [
+    {
+      "id": "light-card",
+      "kind": "chrome",
+      "box": {
+        "x": 0.0458984375,
+        "y": 0.07747395833333333,
+        "w": 0.908203125,
+        "h": 0.3938802083333333
+      },
+      "note": "Neutral white rounded card with subtle outline, not a blue fill",
+      "container": true,
+      "grid": "A0:J4",
+      "snap": false
+    },
+    {
+      "id": "light-book",
+      "kind": "plate",
+      "box": {
+        "x": 0.470703125,
+        "y": 0.10416666666666667,
+        "w": 0.4833984375,
+        "h": 0.2701822916666667
+      },
+      "note": "Fine engraved open book with blue satin ribbon, clipped at card's right boundary",
+      "bleed": true,
+      "plate": "assets/design/reading/engraving-light.png",
+      "grid": "E1:J3",
+      "snap": false
+    },
+    {
+      "id": "light-label",
+      "kind": "text",
+      "box": {
+        "x": 0.0947265625,
+        "y": 0.14583333333333334,
+        "w": 0.380859375,
+        "h": 0.024739583333333332
+      },
+      "note": "Reading challenge label, rounded brand sans",
+      "grid": "A1:D1",
+      "snap": false
+    },
+    {
+      "id": "light-title",
+      "kind": "text",
+      "box": {
+        "x": 0.095703125,
+        "y": 0.18619791666666666,
+        "w": 0.4345703125,
+        "h": 0.041666666666666664
+      },
+      "note": "Время для книги, bold rounded brand sans",
+      "grid": "A1:F2",
+      "snap": false
+    },
+    {
+      "id": "light-subtitle",
+      "kind": "text",
+      "box": {
+        "x": 0.095703125,
+        "y": 0.24283854166666666,
+        "w": 0.3857421875,
+        "h": 0.0234375
+      },
+      "note": "60 минут в день",
+      "grid": "A2:D2",
+      "snap": false
+    },
+    {
+      "id": "light-action",
+      "kind": "control",
+      "box": {
+        "x": 0.095703125,
+        "y": 0.38671875,
+        "w": 0.8095703125,
+        "h": 0.06380208333333333
+      },
+      "note": "Quiet blue text action and arrow separated by a fine rule",
+      "grid": "A3:J4",
+      "snap": false
+    },
+    {
+      "id": "dark-card",
+      "kind": "chrome",
+      "box": {
+        "x": 0.0458984375,
+        "y": 0.5052083333333334,
+        "w": 0.908203125,
+        "h": 0.43359375
+      },
+      "note": "Graphite neutral rounded header",
+      "container": true,
+      "grid": "A5:J9",
+      "snap": false
+    },
+    {
+      "id": "dark-book",
+      "kind": "plate",
+      "box": {
+        "x": 0.470703125,
+        "y": 0.5052083333333334,
+        "w": 0.4833984375,
+        "h": 0.279296875
+      },
+      "note": "Silver engraved book and blue ribbon on transparentground, clipped at top/right",
+      "bleed": true,
+      "plate": "assets/design/reading/engraving-dark.png",
+      "grid": "E5:J7",
+      "snap": false
+    },
+    {
+      "id": "dark-label",
+      "kind": "text",
+      "box": {
+        "x": 0.0947265625,
+        "y": 0.6783854166666666,
+        "w": 0.380859375,
+        "h": 0.024088541666666668
+      },
+      "note": "Reading challenge label",
+      "grid": "A6:D6",
+      "snap": false
+    },
+    {
+      "id": "dark-title",
+      "kind": "text",
+      "box": {
+        "x": 0.0947265625,
+        "y": 0.7161458333333334,
+        "w": 0.8095703125,
+        "h": 0.044921875
+      },
+      "note": "\"Extreme reading\" Challenge, adaptive wrapping title",
+      "grid": "A7:J7",
+      "snap": false
+    },
+    {
+      "id": "dark-subtitle",
+      "kind": "text",
+      "box": {
+        "x": 0.0947265625,
+        "y": 0.771484375,
+        "w": 0.5859375,
+        "h": 0.02734375
+      },
+      "note": "Читаем каждый день.",
+      "grid": "A7:F7",
+      "snap": false
+    },
+    {
+      "id": "dark-action",
+      "kind": "control",
+      "box": {
+        "x": 0.0947265625,
+        "y": 0.8307291666666666,
+        "w": 0.8095703125,
+        "h": 0.080078125
+      },
+      "note": "Outlined Команды и заявки navigation action",
+      "grid": "A8:J9",
+      "snap": false
+    }
+  ]
+}

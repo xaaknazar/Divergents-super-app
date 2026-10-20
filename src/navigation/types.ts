@@ -30,6 +30,11 @@ export type CommunityStackParams = {
   ServerChannel: { channelId: string };
   CreateContent: undefined;
   ChallengeDetail: { challengeId: string };
+  ReadingChallenge: { challengeId: string };
+  ReadingAppearance: undefined;
+  ReadingApplicants: { challengeId: string };
+  ReadingHistory: { challengeId: string; readerId: string };
+  CreateReadingChallenge: undefined;
   ChallengeApplicants: { challengeId: string; applicantUserId?: string };
   ChallengeRoster: { challengeId: string };
   TeamStandings: { challengeId: string };
@@ -39,6 +44,8 @@ export type CommunityStackParams = {
   ChallengeDays: { challengeId: string };
   /** Итоги завершённого челленджа: свои цифры, команда, лучшие. */
   ChallengeResults: { challengeId: string };
+  /** Финальный рейтинг команд и всех участников конкретного челленджа. */
+  ChallengeFinalStandings: { challengeId: string };
   ManageChallenge: { challengeId: string };
   WorkoutTrack: { challengeId?: string } | undefined;
   /** История тренировок: маршруты, дистанция, время, темп. */
@@ -50,6 +57,7 @@ export type CommunityStackParams = {
   TripDetail: { tripId: string };
   /** Мероприятие — встреча сообщества. На сервере называется Meetup. */
   MeetupDetail: { meetupId: string };
+  SportDetail: { sportId: string };
   // Разбор заявок на офлайн-событие. Один экран на поездки, спорт и
   // мероприятия: логика одинаковая, различается только слово в заголовке.
   EventApplicants: { kind: 'trip' | 'sport' | 'meetup'; eventId: string; title?: string };
@@ -69,6 +77,8 @@ export type ProfileStackParams = {
   TalentProfile: TalentProfileParams;
   /** Физические показатели: рекорды, цели, показатели, история забегов. */
   MyFitness: undefined;
+  ProgramHistory: undefined;
+  ProgramResult: { programId: string };
   // Тренировки доступны и из профиля — те же экраны, что в сообществе.
   WorkoutTrack: { challengeId?: string } | undefined;
   WorkoutHistory: undefined;

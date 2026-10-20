@@ -1,28 +1,35 @@
-import React, { useRef, useState, useMemo, useEffect } from 'react';
-import { useTheme } from '../../theme/ThemeContext';
-import { useLang, tr } from '../../state/LanguageContext';
-import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard, Alert } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
-import { SF } from '../../components/SFIcon';
-import { Capsule } from '../../components/ui';
-import { PageIntro } from '../../components/PageIntro';
-import { EmptyState } from '../../components/StateViews';
-import { Logo } from '../../components/Logo';
-import { MarkdownText } from '../../components/MarkdownText';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Clipboard from 'expo-clipboard';
-import { hSuccess } from '../../lib/haptics';
-import { useMyCourses } from '../../state/useMyCourses';
-import { useCourses } from '../../state/CourseContext';
+import React,{ useEffect,useMemo,useRef,useState } from 'react';
+import { ActivityIndicator,Alert,Keyboard,KeyboardAvoidingView,Platform,ScrollView,Text,View,useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChatComposer } from '../../components/ChatComposer';
+import { ChatIntroduction } from '../../components/ChatIntroduction';
+import { ChatMessage } from '../../components/ChatMessage';
+import { ChatSuggestions } from '../../components/ChatSuggestions';
+import { HeaderIcon } from '../../components/HeaderIcon';
+import { NavBarLarge } from '../../components/NavBarLarge';
+import { PageIntro } from '../../components/PageIntro';
+import { Screen } from '../../components/Screen';
+import { ScreenDescription } from '../../components/ScreenDescription';
+import { EmptyState } from '../../components/StateViews';
+import { } from '../../components/ui';
+import { Wrapper } from '../../components/Wrapper';
+import { AiMessage,AiUnavailableError,askAi } from '../../data/ai';
 import { askCourseAI } from '../../data/api';
-import { askAi, AiMessage, AiUnavailableError } from '../../data/ai';
-import { profileSummary } from '../../data/talentslab';
-import { useTalentProfile } from '../../state/useTalentProfile';
-import { AIStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
-import { useAiThread, setAiThread, getAiThread, AiChatMsg } from '../../state/aiChat';
-import { minTouch } from '../../theme/tokens';
+import { profileSummary } from '../../data/talentslab';
+import { hSuccess } from '../../lib/haptics';
+import { tabDockContentInset, tabDockMiniPlayerHeight } from '../../lib/tabDockLayout';
+import { AIStackParams } from '../../navigation/types';
+import { AiChatMsg,getAiThread,setAiThread,useAiThread } from '../../state/aiChat';
+import { useOptionalAudioTrack } from '../../state/audioPlayerValue';
+import { useCourses } from '../../state/CourseContext';
+import { tr,useLang } from '../../state/LanguageContext';
+import { useMyCourses } from '../../state/useMyCourses';
+import { useTalentProfile } from '../../state/useTalentProfile';
+import { useTheme } from '../../theme/ThemeContext';
 
 type Props = NativeStackScreenProps<AIStackParams, 'AIChat'>;
 // `err` marks a bubble the APP produced locally (network/server failure), not
@@ -39,6 +46,10 @@ export function AIChatScreen({}: Props) {
   const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
+  const audioTrack = useOptionalAudioTrack();
+  const dockInset = tabDockContentInset(insets.bottom, audioTrack
+    ? tabDockMiniPlayerHeight(ty.footnoteEm.lineHeight ?? 18, ty.caption2.lineHeight ?? 14, fontScale) : 0);
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
   const { courses } = useCourses();
@@ -160,43 +171,18 @@ export function AIChatScreen({}: Props) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.systemBg, paddingTop: insets.top }}>
+    <Screen scroll={false} tabPadding={false} aurora={false}>
       <PageIntro page="ai" />
-      {/* Header */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Logo size={22} />
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Divergents AI</Text>
-            <Text style={[ty.caption1, { color: T.green }]} numberOfLines={1}>
-              {/* Ассистент знает КАТАЛОГ (названия, категории, описания), но не
-                  содержимое уроков — обещать «знает все курсы» нечестно. */}
-              {isGeneral
-                ? (isSignedIn && profile?.found ? tr('Знает каталог курсов и ваш профиль') : tr('Знает каталог курсов Divergents'))
-                : `${tr('Знает материалы курса')} «${activeCourse?.title ?? ''}»`}
-            </Text>
-          </View>
-          {/* Переписка теперь сохраняется между запусками — значит, нужен и
-              честный способ начать заново. */}
-          {messages.length > 0 ? (
-            <Pressable
-              onPress={() => Alert.alert(
-                tr('Начать новый чат?'),
-                tr('Переписка будет удалена с этого устройства.'),
-                [
-                  { text: tr('Отмена'), style: 'cancel' },
-                  { text: tr('Начать заново'), style: 'destructive', onPress: () => { clearThread(); setUnavailable(false); } },
-                ],
-              )}
-              accessibilityRole="button"
-              accessibilityLabel={tr('Новый чат')}
-              style={{ minWidth: minTouch, minHeight: minTouch, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <SF name="square.and.pencil" size={19} color={T.brand} />
-            </Pressable>
-          ) : null}
-        </View>
-      </View>
+      <NavBarLarge title="Divergents AI" trailing={messages.length > 0 ? <HeaderIcon name="square.and.pencil" label={tr('Новый чат')}
+        onPress={() => Alert.alert(tr('Начать новый чат?'), tr('Переписка будет удалена с этого устройства.'), [
+          { text: tr('Отмена'), style: 'cancel' },
+          { text: tr('Начать заново'), style: 'destructive', onPress: () => { clearThread(); setUnavailable(false); } },
+        ])} /> : undefined} />
+      <Wrapper paddingHorizontal={20} paddingBottom={16}>
+        <ScreenDescription text={isGeneral
+          ? (isSignedIn && profile?.found ? tr('Знает каталог курсов и ваш профиль') : tr('Знает каталог курсов Divergents'))
+          : `${tr('Знает материалы курса')} «${activeCourse?.title ?? ''}»`} />
+      </Wrapper>
 
       {unavailable ? (
         <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -210,75 +196,28 @@ export function AIChatScreen({}: Props) {
         </View>
       ) : (
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
-        <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }} keyboardDismissMode="interactive">
-          {messages.length === 0 ? (
-            <View style={{ alignItems: 'center', paddingTop: 28 }}>
-              <Capsule bg={T.brandTinted} color={T.brand}><SF name="sparkles" size={11} color={T.brand} />{isGeneral ? tr('Спросите что угодно') : tr('Спросите о курсе')}</Capsule>
-              <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 14, textAlign: 'center', paddingHorizontal: 20 }]}>
-                {isGeneral
-                  ? tr('Ассистент Divergents поможет с курсами, психотипами, талантами, карьерой и развитием.')
-                  : `${tr('Вопросы по материалам курса')} «${activeCourse?.title ?? ''}» — ${tr('отвечаю по урокам с таймкодами.')}`}
-              </Text>
-            </View>
-          ) : null}
-
-          {messages.map((m) => (
-            <View key={m.id} style={{ marginBottom: 12, alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-              <View style={{
-                maxWidth: '90%',
-                backgroundColor: m.role === 'user' ? T.brand : T.fillTertiary,
-                borderRadius: 18,
-                borderCurve: 'continuous',
-                borderBottomRightRadius: m.role === 'user' ? 4 : 18,
-                borderBottomLeftRadius: m.role === 'user' ? 18 : 4,
-                paddingVertical: 12, paddingHorizontal: 14,
-              }}>
-                {m.role === 'user'
-                  ? <Text style={[ty.body, { color: '#fff' }]}>{m.text}</Text>
-                  : <MarkdownText text={m.text} color={T.label} />}
-              </View>
-              {m.role === 'bot' && m.text.length > 0 ? (
-                <Pressable onPress={() => { Clipboard.setStringAsync(m.text).then(hSuccess).catch(() => {}); }} hitSlop={6} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5, paddingHorizontal: 6, opacity: pressed ? 0.5 : 1 })}>
-                  <SF name="doc.text" size={12} color={T.labelTertiary} />
-                  <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{tr('Копировать')}</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ))}
+        <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, padding: 16, paddingBottom: 8 }} keyboardDismissMode="interactive">
+          {messages.length === 0 ? <ChatIntroduction title={isGeneral ? tr('Спросите что угодно') : tr('Спросите о курсе')}
+            description={isGeneral ? tr('Ассистент Divergents поможет с курсами, психотипами, талантами, карьерой и развитием.')
+              : `${tr('Вопросы по материалам курса')} «${activeCourse?.title ?? ''}» — ${tr('отвечаю по урокам с таймкодами.')}`} /> : null}
+          {messages.map(m => <ChatMessage key={m.id} role={m.role} text={m.text}
+            onCopy={() => { Clipboard.setStringAsync(m.text).then(hSuccess).catch(() => {}); }} />)}
 
           {busy ? (
-            <View style={{ backgroundColor: T.fillTertiary, alignSelf: 'flex-start', borderRadius: 18, borderCurve: 'continuous', borderBottomLeftRadius: 4, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <View accessible accessibilityLabel={isGeneral ? 'Ассистент готовит ответ' : 'Ищу в материалах курса'} accessibilityState={{ busy: true }} accessibilityLiveRegion="polite" style={{ backgroundColor: T.fillTertiary, alignSelf: 'flex-start', borderRadius: 18, borderCurve: 'continuous', borderBottomLeftRadius: 4, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <ActivityIndicator color={T.labelSecondary} />
               <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{isGeneral ? tr('Думаю…') : tr('Ищу в материалах курса…')}</Text>
             </View>
           ) : null}
         </ScrollView>
 
-        <View style={{ borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: T.cardBg, paddingTop: 8, paddingBottom: kbShown ? 10 : insets.bottom + 70 }}>
-          {messages.length === 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 10 }}>
-              {quick.map((q) => (
-                <Pressable key={q} onPress={() => send(q)} disabled={locked} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.separator, borderRadius: 18, borderCurve: 'continuous', paddingVertical: 7, paddingHorizontal: 14, opacity: locked ? 0.5 : pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
-                  <SF name="sparkles" size={11} color={T.brand} />
-                  <Text style={[ty.subhead, { color: T.label }]} numberOfLines={1}>{tr(q)}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          ) : null}
-          <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, alignItems: 'center' }}>
-            <TextInput
-              value={text} onChangeText={setText}
-              placeholder={isGeneral ? tr('Спросите ассистента…') : tr('Спросите о курсе…')} placeholderTextColor={T.labelTertiary}
-              style={[ty.body, { flex: 1, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', paddingVertical: 9, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.separator, color: T.label }]}
-              onSubmitEditing={() => send(text)} returnKeyType="send" editable={!locked}
-            />
-            <Pressable onPress={() => send(text)} hitSlop={6} disabled={locked || !text.trim()}>
-              <SF name="arrow.up.circle.fill" size={32} color={text.trim() && !locked ? T.brand : T.labelTertiary} />
-            </Pressable>
-          </View>
-        </View>
+        <Wrapper paddingHorizontal={16} paddingTop={8} paddingBottom={kbShown ? 10 : dockInset}>
+          {messages.length === 0 ? <ChatSuggestions suggestions={quick.map(q => tr(q))} onSelect={send} disabled={locked} /> : null}
+          <ChatComposer value={text} onChangeText={setText} onSend={() => send(text)} disabled={locked} busy={busy}
+            placeholder={isGeneral ? tr('Спросите ассистента…') : tr('Спросите о курсе…')} />
+        </Wrapper>
       </KeyboardAvoidingView>
       )}
-    </View>
+    </Screen>
   );
 }

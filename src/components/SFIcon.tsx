@@ -1,13 +1,13 @@
 // Icon component backed by @expo/vector-icons (Ionicons + MaterialCommunityIcons).
 // Keeps the SF-Symbols-style names used across the app, mapped to real icons.
+import { Ionicons,MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export type SFName =
-  | 'book.fill' | 'book' | 'sparkles' | 'person.3.fill' | 'person.3'
+  | 'book.fill' | 'book' | 'sparkles' | 'sparkles.outline' | 'person.3.fill' | 'person.3'
   | 'briefcase.fill' | 'briefcase' | 'person.crop.circle.fill' | 'person.crop.circle'
   | 'play.fill' | 'play.circle.fill' | 'chevron.forward' | 'chevron.right' | 'chevron.left'
-  | 'chevron.down' | 'magnifyingglass' | 'flame.fill' | 'trophy.fill' | 'crown.fill' | 'list.number'
+  | 'chevron.down' | 'chevron.up' | 'magnifyingglass' | 'flame.fill' | 'trophy.fill' | 'crown.fill' | 'list.number'
   | 'medal.fill' | 'star.fill' | 'star' | 'heart.fill' | 'heart' | 'checkmark.circle.fill'
   | 'checkmark' | 'checkmark.seal.fill' | 'plus' | 'plus.circle' | 'plus.circle.fill'
   | 'xmark' | 'gearshape' | 'bell.fill' | 'bell.badge.fill' | 'envelope.fill' | 'phone.fill'
@@ -35,13 +35,14 @@ type Lib = 'ion' | 'mci';
 // name -> [library, icon]
 const MAP: Record<string, [Lib, string]> = {
   'book.fill': ['ion', 'book'], 'book': ['ion', 'book-outline'],
-  'sparkles': ['ion', 'sparkles'],
+  'sparkles': ['ion', 'sparkles'], 'sparkles.outline': ['ion', 'sparkles-outline'],
   'person.3.fill': ['ion', 'people'], 'person.3': ['ion', 'people-outline'],
   'briefcase.fill': ['ion', 'briefcase'], 'briefcase': ['ion', 'briefcase-outline'],
   'person.crop.circle.fill': ['ion', 'person-circle'], 'person.crop.circle': ['ion', 'person-circle-outline'],
   'play.fill': ['ion', 'play'], 'play.circle.fill': ['ion', 'play-circle'],
   'chevron.forward': ['ion', 'chevron-forward'], 'chevron.right': ['ion', 'chevron-forward'],
   'chevron.left': ['ion', 'chevron-back'], 'chevron.down': ['ion', 'chevron-down'],
+  'chevron.up': ['ion', 'chevron-up'],
   'magnifyingglass': ['ion', 'search'],
   'flame.fill': ['ion', 'flame'], 'trophy.fill': ['ion', 'trophy'],
   // Нумерованный список — для рейтинга участников. Без явной пары имя

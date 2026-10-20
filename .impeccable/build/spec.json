@@ -1,0 +1,826 @@
+{
+  "tool": "comp-spec",
+  "version": 1,
+  "createdAt": "2026-10-19T19:52:09.674Z",
+  "comp": "/Users/xaknazar/.codex/visualizations/2026/09/01/01a05b3e-1214-7a50-8d56-42161f3a2616/reading-directions-2026-10-20/variant-1-v2.png",
+  "warnings": [
+    "region light-card: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)",
+    "region light-book: \"bleed\": true set in the regions file (the clipped-artwork refusal is overridden: the page crops it there)",
+    "region dark-card: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)",
+    "region dark-book: \"bleed\": true set in the regions file (the clipped-artwork refusal is overridden: the page crops it there)"
+  ],
+  "uncoveredInkCells": [],
+  "compSize": {
+    "width": 1024,
+    "height": 1536
+  },
+  "aspect": 0.6667,
+  "orientation": "portrait",
+  "palette": [
+    {
+      "hex": "#f7f7f7",
+      "coverage": 0.5831
+    },
+    {
+      "hex": "#192738",
+      "coverage": 0.3288
+    },
+    {
+      "hex": "#59657c",
+      "coverage": 0.0331
+    },
+    {
+      "hex": "#bfc7d1",
+      "coverage": 0.0284
+    },
+    {
+      "hex": "#8f98ab",
+      "coverage": 0.0266
+    }
+  ],
+  "bands": [
+    {
+      "y": 0.1979,
+      "strength": 0.479
+    },
+    {
+      "y": 0.2188,
+      "strength": 0.4303
+    },
+    {
+      "y": 0.2969,
+      "strength": 0.2395
+    },
+    {
+      "y": 0.3333,
+      "strength": 0.2012
+    },
+    {
+      "y": 0.4219,
+      "strength": 0.2376
+    },
+    {
+      "y": 0.5052,
+      "strength": 1
+    },
+    {
+      "y": 0.7292,
+      "strength": 0.5474
+    },
+    {
+      "y": 0.75,
+      "strength": 0.8166
+    },
+    {
+      "y": 0.9375,
+      "strength": 1
+    }
+  ],
+  "regions": [
+    {
+      "id": "light-card",
+      "kind": "chrome",
+      "note": "Neutral white rounded card with subtle outline, not a blue fill",
+      "grid": "A0:J4",
+      "container": true,
+      "snap": false,
+      "box": {
+        "x": 0.0459,
+        "y": 0.0775,
+        "w": 0.9082,
+        "h": 0.3939
+      },
+      "px": {
+        "x": 47,
+        "y": 119,
+        "w": 930,
+        "h": 605
+      },
+      "aspect": 1.5372,
+      "palette": [
+        {
+          "hex": "#f6f6f7",
+          "coverage": 0.8777
+        },
+        {
+          "hex": "#b7bfcb",
+          "coverage": 0.0583
+        },
+        {
+          "hex": "#7b8599",
+          "coverage": 0.0281
+        },
+        {
+          "hex": "#1a2637",
+          "coverage": 0.0184
+        },
+        {
+          "hex": "#4e5873",
+          "coverage": 0.0174
+        }
+      ],
+      "detail": {
+        "energy": 20.4295
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "light-book",
+      "kind": "plate",
+      "note": "Fine engraved open book with blue satin ribbon, clipped at card's right boundary",
+      "grid": "E1:J3",
+      "bleed": true,
+      "snap": false,
+      "box": {
+        "x": 0.4707,
+        "y": 0.1042,
+        "w": 0.4834,
+        "h": 0.2702
+      },
+      "px": {
+        "x": 482,
+        "y": 160,
+        "w": 495,
+        "h": 415
+      },
+      "aspect": 1.1928,
+      "palette": [
+        {
+          "hex": "#f3f3f5",
+          "coverage": 0.6965
+        },
+        {
+          "hex": "#bdc5d1",
+          "coverage": 0.1259
+        },
+        {
+          "hex": "#919aad",
+          "coverage": 0.0796
+        },
+        {
+          "hex": "#5c6880",
+          "coverage": 0.0568
+        },
+        {
+          "hex": "#2c374f",
+          "coverage": 0.0413
+        }
+      ],
+      "detail": {
+        "energy": 30.3441
+      },
+      "medium": "raster",
+      "plate": "assets/design/reading/engraving-light.png",
+      "text": null
+    },
+    {
+      "id": "light-label",
+      "kind": "text",
+      "note": "Reading challenge label, rounded brand sans",
+      "grid": "A1:D1",
+      "snap": false,
+      "box": {
+        "x": 0.0947,
+        "y": 0.1458,
+        "w": 0.3809,
+        "h": 0.0247
+      },
+      "px": {
+        "x": 97,
+        "y": 224,
+        "w": 390,
+        "h": 38
+      },
+      "aspect": 10.2632,
+      "palette": [
+        {
+          "hex": "#f7f7f8",
+          "coverage": 0.9018
+        },
+        {
+          "hex": "#677087",
+          "coverage": 0.0527
+        },
+        {
+          "hex": "#b9c1cc",
+          "coverage": 0.0254
+        },
+        {
+          "hex": "#969bab",
+          "coverage": 0.0172
+        },
+        {
+          "hex": "#454868",
+          "coverage": 0.003
+        }
+      ],
+      "detail": {
+        "energy": 36.9039
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 16,
+          "capHeightPx": 20.5,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.5853,
+          "advTall": 0.3902,
+          "advX": 0.5975,
+          "gap": 0.1463,
+          "xRatio": 0.7083,
+          "stemW": 0.139,
+          "contrast": 1.093,
+          "serif": 0.8595,
+          "densTall": 0.5721,
+          "densX": 0.5551,
+          "weight": 0.5721
+        },
+        "widthClass": "normal",
+        "weightClass": "bold"
+      }
+    },
+    {
+      "id": "light-title",
+      "kind": "text",
+      "note": "Время для книги, bold rounded brand sans",
+      "grid": "A1:F2",
+      "snap": false,
+      "box": {
+        "x": 0.0957,
+        "y": 0.1862,
+        "w": 0.4346,
+        "h": 0.0417
+      },
+      "px": {
+        "x": 98,
+        "y": 286,
+        "w": 445,
+        "h": 64
+      },
+      "aspect": 6.9531,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.7169
+        },
+        {
+          "hex": "#151f30",
+          "coverage": 0.2125
+        },
+        {
+          "hex": "#5a606e",
+          "coverage": 0.0388
+        },
+        {
+          "hex": "#bcbfca",
+          "coverage": 0.0186
+        },
+        {
+          "hex": "#92979e",
+          "coverage": 0.0131
+        }
+      ],
+      "detail": {
+        "energy": 72.2199
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 13,
+          "capHeightPx": 44.8,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6024,
+          "advTall": 0.6917,
+          "advX": 0.5913,
+          "gap": 0.0781,
+          "xRatio": 0.6988,
+          "stemW": 0.1524,
+          "contrast": 1.0808,
+          "serif": 1.0104,
+          "densTall": 0.6092,
+          "densX": 0.6206,
+          "weight": 0.6092
+        },
+        "widthClass": "normal",
+        "weightClass": "bold",
+        "chosen": {
+          "family": "Gurajada",
+          "weight": 400,
+          "fontSizePx": 61,
+          "source": "index",
+          "fp": {
+            "lines": 1,
+            "glyphs": 13,
+            "capHeightPx": 44.9,
+            "inkIsDark": true,
+            "allCaps": false,
+            "advance": 0.6242,
+            "advTall": 0.758,
+            "advX": 0.6242,
+            "gap": 0.1338,
+            "xRatio": 0.7357,
+            "stemW": 0.1354,
+            "contrast": 1.0513,
+            "serif": null,
+            "densTall": 0.569,
+            "densX": 0.5832,
+            "weight": 0.569
+          },
+          "stamp": "b3efddf9b4c5"
+        }
+      }
+    },
+    {
+      "id": "light-subtitle",
+      "kind": "text",
+      "note": "60 минут в день",
+      "grid": "A2:D2",
+      "snap": false,
+      "box": {
+        "x": 0.0957,
+        "y": 0.2428,
+        "w": 0.3857,
+        "h": 0.0234
+      },
+      "px": {
+        "x": 98,
+        "y": 373,
+        "w": 395,
+        "h": 36
+      },
+      "aspect": 10.9722,
+      "palette": [
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.8913
+        },
+        {
+          "hex": "#636c83",
+          "coverage": 0.067
+        },
+        {
+          "hex": "#aeb3c1",
+          "coverage": 0.0392
+        },
+        {
+          "hex": "#9393b3",
+          "coverage": 0.0019
+        },
+        {
+          "hex": "#484868",
+          "coverage": 0.0006
+        }
+      ],
+      "detail": {
+        "energy": 32.0032
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 12,
+          "capHeightPx": 21.9,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6177,
+          "advTall": 0.7092,
+          "advX": 0.6062,
+          "gap": 0.183,
+          "xRatio": 0.7231,
+          "stemW": 0.1361,
+          "contrast": 1.0526,
+          "serif": 1.0136,
+          "densTall": 0.4643,
+          "densX": 0.5379,
+          "weight": 0.4643
+        },
+        "widthClass": "normal",
+        "weightClass": "regular"
+      }
+    },
+    {
+      "id": "light-action",
+      "kind": "control",
+      "note": "Quiet blue text action and arrow separated by a fine rule",
+      "grid": "A3:J4",
+      "snap": false,
+      "box": {
+        "x": 0.0957,
+        "y": 0.3867,
+        "w": 0.8096,
+        "h": 0.0638
+      },
+      "px": {
+        "x": 98,
+        "y": 594,
+        "w": 829,
+        "h": 98
+      },
+      "aspect": 8.4592,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9786
+        },
+        {
+          "hex": "#0c20ea",
+          "coverage": 0.012
+        },
+        {
+          "hex": "#d3dbf8",
+          "coverage": 0.0042
+        },
+        {
+          "hex": "#b8c1f8",
+          "coverage": 0.0032
+        },
+        {
+          "hex": "#8c9cf4",
+          "coverage": 0.002
+        }
+      ],
+      "detail": {
+        "energy": 10.6421
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "dark-card",
+      "kind": "chrome",
+      "note": "Graphite neutral rounded header",
+      "grid": "A5:J9",
+      "container": true,
+      "snap": false,
+      "box": {
+        "x": 0.0459,
+        "y": 0.5052,
+        "w": 0.9082,
+        "h": 0.4336
+      },
+      "px": {
+        "x": 47,
+        "y": 776,
+        "w": 930,
+        "h": 666
+      },
+      "aspect": 1.3964,
+      "palette": [
+        {
+          "hex": "#192838",
+          "coverage": 0.8479
+        },
+        {
+          "hex": "#8892a5",
+          "coverage": 0.0511
+        },
+        {
+          "hex": "#4b5868",
+          "coverage": 0.036
+        },
+        {
+          "hex": "#c0c7d4",
+          "coverage": 0.0333
+        },
+        {
+          "hex": "#f0f2f3",
+          "coverage": 0.0317
+        }
+      ],
+      "detail": {
+        "energy": 23.4918
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "dark-book",
+      "kind": "plate",
+      "note": "Silver engraved book and blue ribbon on transparentground, clipped at top/right",
+      "grid": "E5:J7",
+      "bleed": true,
+      "snap": false,
+      "box": {
+        "x": 0.4707,
+        "y": 0.5052,
+        "w": 0.4834,
+        "h": 0.2793
+      },
+      "px": {
+        "x": 482,
+        "y": 776,
+        "w": 495,
+        "h": 429
+      },
+      "aspect": 1.1538,
+      "palette": [
+        {
+          "hex": "#1c293a",
+          "coverage": 0.567
+        },
+        {
+          "hex": "#667187",
+          "coverage": 0.1665
+        },
+        {
+          "hex": "#98a2b3",
+          "coverage": 0.0994
+        },
+        {
+          "hex": "#434d69",
+          "coverage": 0.093
+        },
+        {
+          "hex": "#c5cad7",
+          "coverage": 0.0739
+        }
+      ],
+      "detail": {
+        "energy": 39.1136
+      },
+      "medium": "raster",
+      "plate": "assets/design/reading/engraving-dark.png",
+      "text": null
+    },
+    {
+      "id": "dark-label",
+      "kind": "text",
+      "note": "Reading challenge label",
+      "grid": "A6:D6",
+      "snap": false,
+      "box": {
+        "x": 0.0947,
+        "y": 0.6784,
+        "w": 0.3809,
+        "h": 0.0241
+      },
+      "px": {
+        "x": 97,
+        "y": 1042,
+        "w": 390,
+        "h": 37
+      },
+      "aspect": 10.5405,
+      "palette": [
+        {
+          "hex": "#182636",
+          "coverage": 0.8857
+        },
+        {
+          "hex": "#1a1b3b",
+          "coverage": 0.0313
+        },
+        {
+          "hex": "#dfeef8",
+          "coverage": 0.0276
+        },
+        {
+          "hex": "#7d8ea6",
+          "coverage": 0.0276
+        },
+        {
+          "hex": "#b9c9e3",
+          "coverage": 0.0276
+        }
+      ],
+      "detail": {
+        "energy": 43.6448
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 16,
+          "capHeightPx": 19.4,
+          "inkIsDark": false,
+          "allCaps": false,
+          "advance": 0.5939,
+          "advTall": 0.4003,
+          "advX": 0.6068,
+          "gap": 0.1549,
+          "xRatio": 0.7122,
+          "stemW": 0.1328,
+          "contrast": 1.0575,
+          "serif": 1.0303,
+          "densTall": 0.5368,
+          "densX": 0.5223,
+          "weight": 0.5368
+        },
+        "widthClass": "normal",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "dark-title",
+      "kind": "text",
+      "note": "\"Extreme reading\" Challenge, adaptive wrapping title",
+      "grid": "A7:J7",
+      "snap": false,
+      "box": {
+        "x": 0.0947,
+        "y": 0.7161,
+        "w": 0.8096,
+        "h": 0.0449
+      },
+      "px": {
+        "x": 97,
+        "y": 1100,
+        "w": 829,
+        "h": 69
+      },
+      "aspect": 12.0145,
+      "palette": [
+        {
+          "hex": "#1a2636",
+          "coverage": 0.751
+        },
+        {
+          "hex": "#f6f6f6",
+          "coverage": 0.1823
+        },
+        {
+          "hex": "#4d5565",
+          "coverage": 0.0314
+        },
+        {
+          "hex": "#1f2444",
+          "coverage": 0.0184
+        },
+        {
+          "hex": "#3b59a3",
+          "coverage": 0.0169
+        }
+      ],
+      "detail": {
+        "energy": 97.9689
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 27,
+          "capHeightPx": 51.7,
+          "inkIsDark": false,
+          "allCaps": false,
+          "advance": 0.5026,
+          "advTall": null,
+          "advX": 0.5026,
+          "gap": 0.0773,
+          "xRatio": 0.5847,
+          "stemW": 0.1303,
+          "contrast": 1.1346,
+          "serif": 0.9642,
+          "densTall": null,
+          "densX": 0.5866,
+          "weight": 0.5866
+        },
+        "widthClass": "condensed",
+        "weightClass": "bold",
+        "chosen": {
+          "family": "Merienda",
+          "weight": 400,
+          "fontSizePx": 74,
+          "source": "catalog",
+          "estimatedSize": true,
+          "stamp": "b0b2b1774bdb"
+        }
+      }
+    },
+    {
+      "id": "dark-subtitle",
+      "kind": "text",
+      "note": "Читаем каждый день.",
+      "grid": "A7:F7",
+      "snap": false,
+      "box": {
+        "x": 0.0947,
+        "y": 0.7715,
+        "w": 0.5859,
+        "h": 0.0273
+      },
+      "px": {
+        "x": 97,
+        "y": 1185,
+        "w": 600,
+        "h": 42
+      },
+      "aspect": 14.2857,
+      "palette": [
+        {
+          "hex": "#182736",
+          "coverage": 0.9062
+        },
+        {
+          "hex": "#c8d6eb",
+          "coverage": 0.0417
+        },
+        {
+          "hex": "#485064",
+          "coverage": 0.0311
+        },
+        {
+          "hex": "#a5b0c6",
+          "coverage": 0.0123
+        },
+        {
+          "hex": "#1b1b3b",
+          "coverage": 0.0087
+        }
+      ],
+      "detail": {
+        "energy": 31.1295
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 17,
+          "capHeightPx": 22.6,
+          "inkIsDark": false,
+          "allCaps": false,
+          "advance": 0.5985,
+          "advTall": 0.6539,
+          "advX": 0.5985,
+          "gap": 0.1552,
+          "xRatio": 0.7197,
+          "stemW": 0.1271,
+          "contrast": 1.0645,
+          "serif": 5.7028,
+          "densTall": 0.402,
+          "densX": 0.5123,
+          "weight": 0.402
+        },
+        "widthClass": "normal",
+        "weightClass": "regular"
+      }
+    },
+    {
+      "id": "dark-action",
+      "kind": "control",
+      "note": "Outlined Команды и заявки navigation action",
+      "grid": "A8:J9",
+      "snap": false,
+      "box": {
+        "x": 0.0947,
+        "y": 0.8307,
+        "w": 0.8096,
+        "h": 0.0801
+      },
+      "px": {
+        "x": 97,
+        "y": 1276,
+        "w": 829,
+        "h": 123
+      },
+      "aspect": 6.7398,
+      "palette": [
+        {
+          "hex": "#182837",
+          "coverage": 0.9102
+        },
+        {
+          "hex": "#415067",
+          "coverage": 0.0484
+        },
+        {
+          "hex": "#677696",
+          "coverage": 0.0267
+        },
+        {
+          "hex": "#f5f5f5",
+          "coverage": 0.0123
+        },
+        {
+          "hex": "#1c1c3c",
+          "coverage": 0.0025
+        }
+      ],
+      "detail": {
+        "energy": 12.6166
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+Use case: stylized-concept
+Asset type: original transparent mobile-app illustration for a 180 by 180 point achievement and completion header.
+Scene/backdrop: genuinely transparent background with native alpha. Isolated object only, no floor, no backdrop and no cast ground shadow.
+Subject: one substantial blue ceramic and enamel trophy, with a deep rounded cup, generous sculpted handles, a short stem and rounded plinth. A compact blue laurel branch curves around each side of the lower cup. One tiny four-point silver-white sparkle floats near its upper right.
+Style/medium: premium, friendly, cheerful dimensional 3D app illustration with smooth generous forms, carefully polished ceramic and enamel surfaces, a crisp simple silhouette and subtle tactile volume. Original illustration, not a copy of any app graphic and not a flat icon.
+Composition/framing: square canvas; entire object fully visible, centered and filling about 82 percent of the canvas; slightly elevated three-quarter view; readable as a compact celebratory silhouette at 180 points.
+Lighting/mood: soft bright studio lighting from above-left, luminous cool highlights and clear form shadows, calm celebratory feeling. Preserve light rim highlights so the blue silhouette works on both white and deep navy interfaces.
+Color palette: ONLY Divergents deep navy #234088, royal blue #3D5BDB and periwinkle blue #8AA0FF, with white and neutral silver accents. Use rich royal blue for the cup, navy in occlusion and periwinkle on highlighted curves. No green, yellow, gold, pink, red, teal or warm accents.
+Materials/textures: smooth satin-gloss ceramic body with enamel richness and small controlled white reflections; laurel is rounded blue ceramic, not foliage realism; no grain or weathering.
+Text: none.
+Constraints: no letters, numbers, text, logos, watermark, badge lettering, UI, frame, border, confetti, extra props, giant flare, background glow, painted checkerboard or opaque background. Preserve transparent holes in the handles and spaces around the laurel. Keep white and silver object paint opaque. Output a clean transparent PNG cutout.

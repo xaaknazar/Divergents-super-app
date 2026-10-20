@@ -5,9 +5,9 @@
 // сотня нативных вью, каждая со своим движком и запросами тайлов: прокрутка
 // начинает дёргаться, а трафик уходит впустую. Форма маршрута узнаётся и без
 // улиц под ней, а настоящая карта открывается по нажатию.
-import React, { useMemo } from 'react';
+import React,{ useMemo } from 'react';
 import { View } from 'react-native';
-import Svg, { Polyline, Circle } from 'react-native-svg';
+import Svg,{ Circle,Polyline } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeContext';
 
 export interface ThumbCoord { latitude: number; longitude: number }

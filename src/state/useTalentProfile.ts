@@ -5,6 +5,7 @@
 // Screens that want to preview the feature use MOCK_PROFILE explicitly and mark
 // it clearly as demo (see TalentProfileScreen).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import {
   fetchTalentProfile,
@@ -16,6 +17,7 @@ import {
 import { loadJSON, saveJSON } from './persist';
 import { onProfileChanged } from './profileBus';
 import { syncProfileToSite } from '../data/api';
+import { pendingResume } from './resumeSync';
 
 const CACHE_KEY = 'dvg.talentProfileCache.v1';
 // Псевдоним живёт в анкете (Talentslab), а комментарии/рецензии/челлендж — на
@@ -108,7 +110,16 @@ export function useTalentProfile() {
       if (request === requestRef.current) {
         profileIdentityRef.current = identity;
         if (next.found) {
-          setProfile(next);
+          const pending = await pendingResume(identity);
+          if (request !== requestRef.current) return;
+          const local = pending ? profileFromSavedResume({ ...next.resume, ...pending.answers }, email) : null;
+          setProfile(local ? {
+            ...next, ...local,
+            resumeStep: next.resumeStep, completeness: next.completeness,
+            fullName: local.fullName || next.fullName,
+            gallup: next.gallup, gardner: next.gardner, reports: next.reports,
+            reportsText: next.reportsText, photoUrl: local.photoUrl || next.photoUrl,
+          } : next);
           setSource('live');
           saveJSON(CACHE_KEY, { identity, profile: next, savedAt: Date.now() } satisfies CachedTalentProfile);
         } else {
@@ -145,6 +156,10 @@ export function useTalentProfile() {
   const runRef = useRef(run);
   runRef.current = run;
   useEffect(() => onProfileChanged(() => { runRef.current(true, true); }), []);
+  useEffect(() => {
+    const listener = AppState.addEventListener('change', (state) => { if (state === 'active') void runRef.current(true); });
+    return () => listener.remove();
+  }, []);
 
   // "Live" only when the backend actually resolved a candidate record. A
   // found:false / null profile is NOT live and must not be shown as the user's

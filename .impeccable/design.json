@@ -1,0 +1,950 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-20T04:32:03.000Z",
+  "title": "Design System: Divergents Super App",
+  "extensions": {
+    "colorMeta": {
+      "reading-light-ink": {
+        "role": "neutral",
+        "displayName": "Reading light ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00)",
+          "oklch(26.43% 0.00000 0.00)",
+          "oklch(37.86% 0.00000 0.00)",
+          "oklch(49.29% 0.00000 0.00)",
+          "oklch(60.71% 0.00000 0.00)",
+          "oklch(72.14% 0.00000 0.00)",
+          "oklch(83.57% 0.00000 0.00)",
+          "oklch(95.00% 0.00000 0.00)"
+        ]
+      },
+      "reading-dark-paper": {
+        "role": "neutral",
+        "displayName": "Reading graphite paper",
+        "tonalRamp": [
+          "oklch(15.00% 0.02290 265.58)",
+          "oklch(26.43% 0.02290 265.58)",
+          "oklch(37.86% 0.02290 265.58)",
+          "oklch(49.29% 0.02290 265.58)",
+          "oklch(60.71% 0.02290 265.58)",
+          "oklch(72.14% 0.02290 265.58)",
+          "oklch(83.57% 0.02290 265.58)",
+          "oklch(95.00% 0.02290 265.58)"
+        ]
+      },
+      "light-brand": {
+        "role": "primary",
+        "displayName": "light brand",
+        "tonalRamp": [
+          "oklch(15.00% 0.12549 264.71)",
+          "oklch(26.43% 0.12549 264.71)",
+          "oklch(37.86% 0.12549 264.71)",
+          "oklch(49.29% 0.12549 264.71)",
+          "oklch(60.71% 0.12549 264.71)",
+          "oklch(72.14% 0.12549 264.71)",
+          "oklch(83.57% 0.12549 264.71)",
+          "oklch(95.00% 0.12549 264.71)"
+        ]
+      },
+      "light-brand-accent": {
+        "role": "primary",
+        "displayName": "light brand accent",
+        "tonalRamp": [
+          "oklch(15.00% 0.19825 268.55)",
+          "oklch(26.43% 0.19825 268.55)",
+          "oklch(37.86% 0.19825 268.55)",
+          "oklch(49.29% 0.19825 268.55)",
+          "oklch(60.71% 0.19825 268.55)",
+          "oklch(72.14% 0.19825 268.55)",
+          "oklch(83.57% 0.19825 268.55)",
+          "oklch(95.00% 0.19825 268.55)"
+        ]
+      },
+      "light-brand-text": {
+        "role": "primary",
+        "displayName": "light brand text",
+        "tonalRamp": [
+          "oklch(15.00% 0.12549 264.71)",
+          "oklch(26.43% 0.12549 264.71)",
+          "oklch(37.86% 0.12549 264.71)",
+          "oklch(49.29% 0.12549 264.71)",
+          "oklch(60.71% 0.12549 264.71)",
+          "oklch(72.14% 0.12549 264.71)",
+          "oklch(83.57% 0.12549 264.71)",
+          "oklch(95.00% 0.12549 264.71)"
+        ]
+      },
+      "light-on-brand": {
+        "role": "primary",
+        "displayName": "light on brand",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00)",
+          "oklch(26.43% 0.00000 0.00)",
+          "oklch(37.86% 0.00000 0.00)",
+          "oklch(49.29% 0.00000 0.00)",
+          "oklch(60.71% 0.00000 0.00)",
+          "oklch(72.14% 0.00000 0.00)",
+          "oklch(83.57% 0.00000 0.00)",
+          "oklch(95.00% 0.00000 0.00)"
+        ]
+      },
+      "light-brand-tint": {
+        "role": "primary",
+        "displayName": "light brand tint",
+        "tonalRamp": [
+          "oklch(15.00% 0.19825 268.55 / 0.13)",
+          "oklch(26.43% 0.19825 268.55 / 0.13)",
+          "oklch(37.86% 0.19825 268.55 / 0.13)",
+          "oklch(49.29% 0.19825 268.55 / 0.13)",
+          "oklch(60.71% 0.19825 268.55 / 0.13)",
+          "oklch(72.14% 0.19825 268.55 / 0.13)",
+          "oklch(83.57% 0.19825 268.55 / 0.13)",
+          "oklch(95.00% 0.19825 268.55 / 0.13)"
+        ]
+      },
+      "light-brand-tint-strong": {
+        "role": "primary",
+        "displayName": "light brand tint strong",
+        "tonalRamp": [
+          "oklch(15.00% 0.19825 268.55 / 0.2)",
+          "oklch(26.43% 0.19825 268.55 / 0.2)",
+          "oklch(37.86% 0.19825 268.55 / 0.2)",
+          "oklch(49.29% 0.19825 268.55 / 0.2)",
+          "oklch(60.71% 0.19825 268.55 / 0.2)",
+          "oklch(72.14% 0.19825 268.55 / 0.2)",
+          "oklch(83.57% 0.19825 268.55 / 0.2)",
+          "oklch(95.00% 0.19825 268.55 / 0.2)"
+        ]
+      },
+      "dark-brand": {
+        "role": "primary",
+        "displayName": "dark brand",
+        "tonalRamp": [
+          "oklch(15.00% 0.19825 268.55)",
+          "oklch(26.43% 0.19825 268.55)",
+          "oklch(37.86% 0.19825 268.55)",
+          "oklch(49.29% 0.19825 268.55)",
+          "oklch(60.71% 0.19825 268.55)",
+          "oklch(72.14% 0.19825 268.55)",
+          "oklch(83.57% 0.19825 268.55)",
+          "oklch(95.00% 0.19825 268.55)"
+        ]
+      },
+      "dark-brand-accent": {
+        "role": "primary",
+        "displayName": "dark brand accent",
+        "tonalRamp": [
+          "oklch(15.00% 0.14018 272.62)",
+          "oklch(26.43% 0.14018 272.62)",
+          "oklch(37.86% 0.14018 272.62)",
+          "oklch(49.29% 0.14018 272.62)",
+          "oklch(60.71% 0.14018 272.62)",
+          "oklch(72.14% 0.14018 272.62)",
+          "oklch(83.57% 0.14018 272.62)",
+          "oklch(95.00% 0.14018 272.62)"
+        ]
+      },
+      "dark-brand-text": {
+        "role": "primary",
+        "displayName": "dark brand text",
+        "tonalRamp": [
+          "oklch(15.00% 0.14018 272.62)",
+          "oklch(26.43% 0.14018 272.62)",
+          "oklch(37.86% 0.14018 272.62)",
+          "oklch(49.29% 0.14018 272.62)",
+          "oklch(60.71% 0.14018 272.62)",
+          "oklch(72.14% 0.14018 272.62)",
+          "oklch(83.57% 0.14018 272.62)",
+          "oklch(95.00% 0.14018 272.62)"
+        ]
+      },
+      "dark-on-brand": {
+        "role": "primary",
+        "displayName": "dark on brand",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00)",
+          "oklch(26.43% 0.00000 0.00)",
+          "oklch(37.86% 0.00000 0.00)",
+          "oklch(49.29% 0.00000 0.00)",
+          "oklch(60.71% 0.00000 0.00)",
+          "oklch(72.14% 0.00000 0.00)",
+          "oklch(83.57% 0.00000 0.00)",
+          "oklch(95.00% 0.00000 0.00)"
+        ]
+      },
+      "dark-brand-tint": {
+        "role": "primary",
+        "displayName": "dark brand tint",
+        "tonalRamp": [
+          "oklch(15.00% 0.14018 272.62 / 0.18)",
+          "oklch(26.43% 0.14018 272.62 / 0.18)",
+          "oklch(37.86% 0.14018 272.62 / 0.18)",
+          "oklch(49.29% 0.14018 272.62 / 0.18)",
+          "oklch(60.71% 0.14018 272.62 / 0.18)",
+          "oklch(72.14% 0.14018 272.62 / 0.18)",
+          "oklch(83.57% 0.14018 272.62 / 0.18)",
+          "oklch(95.00% 0.14018 272.62 / 0.18)"
+        ]
+      },
+      "dark-brand-tint-strong": {
+        "role": "primary",
+        "displayName": "dark brand tint strong",
+        "tonalRamp": [
+          "oklch(15.00% 0.14018 272.62 / 0.28)",
+          "oklch(26.43% 0.14018 272.62 / 0.28)",
+          "oklch(37.86% 0.14018 272.62 / 0.28)",
+          "oklch(49.29% 0.14018 272.62 / 0.28)",
+          "oklch(60.71% 0.14018 272.62 / 0.28)",
+          "oklch(72.14% 0.14018 272.62 / 0.28)",
+          "oklch(83.57% 0.14018 272.62 / 0.28)",
+          "oklch(95.00% 0.14018 272.62 / 0.28)"
+        ]
+      },
+      "light-system": {
+        "role": "neutral",
+        "displayName": "light system",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00)",
+          "oklch(26.43% 0.00000 0.00)",
+          "oklch(37.86% 0.00000 0.00)",
+          "oklch(49.29% 0.00000 0.00)",
+          "oklch(60.71% 0.00000 0.00)",
+          "oklch(72.14% 0.00000 0.00)",
+          "oklch(83.57% 0.00000 0.00)",
+          "oklch(95.00% 0.00000 0.00)"
+        ]
+      },
+      "light-grouped": {
+        "role": "neutral",
+        "displayName": "light grouped",
+        "tonalRamp": [
+          "oklch(15.00% 0.00343 247.86)",
+          "oklch(26.43% 0.00343 247.86)",
+          "oklch(37.86% 0.00343 247.86)",
+          "oklch(49.29% 0.00343 247.86)",
+          "oklch(60.71% 0.00343 247.86)",
+          "oklch(72.14% 0.00343 247.86)",
+          "oklch(83.57% 0.00343 247.86)",
+          "oklch(95.00% 0.00343 247.86)"
+        ]
+      },
+      "light-secondary": {
+        "role": "neutral",
+        "displayName": "light secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.00516 247.88)",
+          "oklch(26.43% 0.00516 247.88)",
+          "oklch(37.86% 0.00516 247.88)",
+          "oklch(49.29% 0.00516 247.88)",
+          "oklch(60.71% 0.00516 247.88)",
+          "oklch(72.14% 0.00516 247.88)",
+          "oklch(83.57% 0.00516 247.88)",
+          "oklch(95.00% 0.00516 247.88)"
+        ]
+      },
+      "light-card": {
+        "role": "neutral",
+        "displayName": "light card",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00)",
+          "oklch(26.43% 0.00000 0.00)",
+          "oklch(37.86% 0.00000 0.00)",
+          "oklch(49.29% 0.00000 0.00)",
+          "oklch(60.71% 0.00000 0.00)",
+          "oklch(72.14% 0.00000 0.00)",
+          "oklch(83.57% 0.00000 0.00)",
+          "oklch(95.00% 0.00000 0.00)"
+        ]
+      },
+      "light-label": {
+        "role": "neutral",
+        "displayName": "light label",
+        "tonalRamp": [
+          "oklch(15.00% 0.03465 252.80)",
+          "oklch(26.43% 0.03465 252.80)",
+          "oklch(37.86% 0.03465 252.80)",
+          "oklch(49.29% 0.03465 252.80)",
+          "oklch(60.71% 0.03465 252.80)",
+          "oklch(72.14% 0.03465 252.80)",
+          "oklch(83.57% 0.03465 252.80)",
+          "oklch(95.00% 0.03465 252.80)"
+        ]
+      },
+      "light-label-secondary": {
+        "role": "neutral",
+        "displayName": "light label secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.00635 286.16)",
+          "oklch(26.43% 0.00635 286.16)",
+          "oklch(37.86% 0.00635 286.16)",
+          "oklch(49.29% 0.00635 286.16)",
+          "oklch(60.71% 0.00635 286.16)",
+          "oklch(72.14% 0.00635 286.16)",
+          "oklch(83.57% 0.00635 286.16)",
+          "oklch(95.00% 0.00635 286.16)"
+        ]
+      },
+      "light-label-tertiary": {
+        "role": "neutral",
+        "displayName": "light label tertiary",
+        "tonalRamp": [
+          "oklch(15.00% 0.00773 286.13)",
+          "oklch(26.43% 0.00773 286.13)",
+          "oklch(37.86% 0.00773 286.13)",
+          "oklch(49.29% 0.00773 286.13)",
+          "oklch(60.71% 0.00773 286.13)",
+          "oklch(72.14% 0.00773 286.13)",
+          "oklch(83.57% 0.00773 286.13)",
+          "oklch(95.00% 0.00773 286.13)"
+        ]
+      },
+      "light-fill-tertiary": {
+        "role": "neutral",
+        "displayName": "light fill tertiary",
+        "tonalRamp": [
+          "oklch(15.00% 0.01523 285.91 / 0.12)",
+          "oklch(26.43% 0.01523 285.91 / 0.12)",
+          "oklch(37.86% 0.01523 285.91 / 0.12)",
+          "oklch(49.29% 0.01523 285.91 / 0.12)",
+          "oklch(60.71% 0.01523 285.91 / 0.12)",
+          "oklch(72.14% 0.01523 285.91 / 0.12)",
+          "oklch(83.57% 0.01523 285.91 / 0.12)",
+          "oklch(95.00% 0.01523 285.91 / 0.12)"
+        ]
+      },
+      "light-separator": {
+        "role": "neutral",
+        "displayName": "light separator",
+        "tonalRamp": [
+          "oklch(15.00% 0.01198 285.78 / 0.2)",
+          "oklch(26.43% 0.01198 285.78 / 0.2)",
+          "oklch(37.86% 0.01198 285.78 / 0.2)",
+          "oklch(49.29% 0.01198 285.78 / 0.2)",
+          "oklch(60.71% 0.01198 285.78 / 0.2)",
+          "oklch(72.14% 0.01198 285.78 / 0.2)",
+          "oklch(83.57% 0.01198 285.78 / 0.2)",
+          "oklch(95.00% 0.01198 285.78 / 0.2)"
+        ]
+      },
+      "dark-system": {
+        "role": "neutral",
+        "displayName": "dark system",
+        "tonalRamp": [
+          "oklch(15.00% 0.02823 249.03)",
+          "oklch(26.43% 0.02823 249.03)",
+          "oklch(37.86% 0.02823 249.03)",
+          "oklch(49.29% 0.02823 249.03)",
+          "oklch(60.71% 0.02823 249.03)",
+          "oklch(72.14% 0.02823 249.03)",
+          "oklch(83.57% 0.02823 249.03)",
+          "oklch(95.00% 0.02823 249.03)"
+        ]
+      },
+      "dark-grouped": {
+        "role": "neutral",
+        "displayName": "dark grouped",
+        "tonalRamp": [
+          "oklch(15.00% 0.02823 249.03)",
+          "oklch(26.43% 0.02823 249.03)",
+          "oklch(37.86% 0.02823 249.03)",
+          "oklch(49.29% 0.02823 249.03)",
+          "oklch(60.71% 0.02823 249.03)",
+          "oklch(72.14% 0.02823 249.03)",
+          "oklch(83.57% 0.02823 249.03)",
+          "oklch(95.00% 0.02823 249.03)"
+        ]
+      },
+      "dark-secondary": {
+        "role": "neutral",
+        "displayName": "dark secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.02969 245.14)",
+          "oklch(26.43% 0.02969 245.14)",
+          "oklch(37.86% 0.02969 245.14)",
+          "oklch(49.29% 0.02969 245.14)",
+          "oklch(60.71% 0.02969 245.14)",
+          "oklch(72.14% 0.02969 245.14)",
+          "oklch(83.57% 0.02969 245.14)",
+          "oklch(95.00% 0.02969 245.14)"
+        ]
+      },
+      "dark-card": {
+        "role": "neutral",
+        "displayName": "dark card",
+        "tonalRamp": [
+          "oklch(15.00% 0.02969 245.14)",
+          "oklch(26.43% 0.02969 245.14)",
+          "oklch(37.86% 0.02969 245.14)",
+          "oklch(49.29% 0.02969 245.14)",
+          "oklch(60.71% 0.02969 245.14)",
+          "oklch(72.14% 0.02969 245.14)",
+          "oklch(83.57% 0.02969 245.14)",
+          "oklch(95.00% 0.02969 245.14)"
+        ]
+      },
+      "dark-tertiary": {
+        "role": "neutral",
+        "displayName": "dark tertiary",
+        "tonalRamp": [
+          "oklch(15.00% 0.03102 239.74)",
+          "oklch(26.43% 0.03102 239.74)",
+          "oklch(37.86% 0.03102 239.74)",
+          "oklch(49.29% 0.03102 239.74)",
+          "oklch(60.71% 0.03102 239.74)",
+          "oklch(72.14% 0.03102 239.74)",
+          "oklch(83.57% 0.03102 239.74)",
+          "oklch(95.00% 0.03102 239.74)"
+        ]
+      },
+      "dark-label": {
+        "role": "neutral",
+        "displayName": "dark label",
+        "tonalRamp": [
+          "oklch(15.00% 0.00574 264.53)",
+          "oklch(26.43% 0.00574 264.53)",
+          "oklch(37.86% 0.00574 264.53)",
+          "oklch(49.29% 0.00574 264.53)",
+          "oklch(60.71% 0.00574 264.53)",
+          "oklch(72.14% 0.00574 264.53)",
+          "oklch(83.57% 0.00574 264.53)",
+          "oklch(95.00% 0.00574 264.53)"
+        ]
+      },
+      "dark-label-secondary": {
+        "role": "neutral",
+        "displayName": "dark label secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.01323 266.69)",
+          "oklch(26.43% 0.01323 266.69)",
+          "oklch(37.86% 0.01323 266.69)",
+          "oklch(49.29% 0.01323 266.69)",
+          "oklch(60.71% 0.01323 266.69)",
+          "oklch(72.14% 0.01323 266.69)",
+          "oklch(83.57% 0.01323 266.69)",
+          "oklch(95.00% 0.01323 266.69)"
+        ]
+      },
+      "dark-label-tertiary": {
+        "role": "neutral",
+        "displayName": "dark label tertiary",
+        "tonalRamp": [
+          "oklch(15.00% 0.01543 264.47)",
+          "oklch(26.43% 0.01543 264.47)",
+          "oklch(37.86% 0.01543 264.47)",
+          "oklch(49.29% 0.01543 264.47)",
+          "oklch(60.71% 0.01543 264.47)",
+          "oklch(72.14% 0.01543 264.47)",
+          "oklch(83.57% 0.01543 264.47)",
+          "oklch(95.00% 0.01543 264.47)"
+        ]
+      },
+      "dark-fill-tertiary": {
+        "role": "neutral",
+        "displayName": "dark fill tertiary",
+        "tonalRamp": [
+          "oklch(15.00% 0.04649 270.60 / 0.15)",
+          "oklch(26.43% 0.04649 270.60 / 0.15)",
+          "oklch(37.86% 0.04649 270.60 / 0.15)",
+          "oklch(49.29% 0.04649 270.60 / 0.15)",
+          "oklch(60.71% 0.04649 270.60 / 0.15)",
+          "oklch(72.14% 0.04649 270.60 / 0.15)",
+          "oklch(83.57% 0.04649 270.60 / 0.15)",
+          "oklch(95.00% 0.04649 270.60 / 0.15)"
+        ]
+      },
+      "dark-separator": {
+        "role": "neutral",
+        "displayName": "dark separator",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00 / 0.1)",
+          "oklch(26.43% 0.00000 0.00 / 0.1)",
+          "oklch(37.86% 0.00000 0.00 / 0.1)",
+          "oklch(49.29% 0.00000 0.00 / 0.1)",
+          "oklch(60.71% 0.00000 0.00 / 0.1)",
+          "oklch(72.14% 0.00000 0.00 / 0.1)",
+          "oklch(83.57% 0.00000 0.00 / 0.1)",
+          "oklch(95.00% 0.00000 0.00 / 0.1)"
+        ]
+      },
+      "light-success": {
+        "role": "semantic",
+        "displayName": "light success",
+        "tonalRamp": [
+          "oklch(15.00% 0.19438 147.44)",
+          "oklch(26.43% 0.19438 147.44)",
+          "oklch(37.86% 0.19438 147.44)",
+          "oklch(49.29% 0.19438 147.44)",
+          "oklch(60.71% 0.19438 147.44)",
+          "oklch(72.14% 0.19438 147.44)",
+          "oklch(83.57% 0.19438 147.44)",
+          "oklch(95.00% 0.19438 147.44)"
+        ]
+      },
+      "light-success-text": {
+        "role": "semantic",
+        "displayName": "light success text",
+        "tonalRamp": [
+          "oklch(15.00% 0.13856 147.42)",
+          "oklch(26.43% 0.13856 147.42)",
+          "oklch(37.86% 0.13856 147.42)",
+          "oklch(49.29% 0.13856 147.42)",
+          "oklch(60.71% 0.13856 147.42)",
+          "oklch(72.14% 0.13856 147.42)",
+          "oklch(83.57% 0.13856 147.42)",
+          "oklch(95.00% 0.13856 147.42)"
+        ]
+      },
+      "light-danger": {
+        "role": "semantic",
+        "displayName": "light danger",
+        "tonalRamp": [
+          "oklch(15.00% 0.23214 28.66)",
+          "oklch(26.43% 0.23214 28.66)",
+          "oklch(37.86% 0.23214 28.66)",
+          "oklch(49.29% 0.23214 28.66)",
+          "oklch(60.71% 0.23214 28.66)",
+          "oklch(72.14% 0.23214 28.66)",
+          "oklch(83.57% 0.23214 28.66)",
+          "oklch(95.00% 0.23214 28.66)"
+        ]
+      },
+      "light-danger-text": {
+        "role": "semantic",
+        "displayName": "light danger text",
+        "tonalRamp": [
+          "oklch(15.00% 0.19761 27.91)",
+          "oklch(26.43% 0.19761 27.91)",
+          "oklch(37.86% 0.19761 27.91)",
+          "oklch(49.29% 0.19761 27.91)",
+          "oklch(60.71% 0.19761 27.91)",
+          "oklch(72.14% 0.19761 27.91)",
+          "oklch(83.57% 0.19761 27.91)",
+          "oklch(95.00% 0.19761 27.91)"
+        ]
+      },
+      "light-warning": {
+        "role": "semantic",
+        "displayName": "light warning",
+        "tonalRamp": [
+          "oklch(15.00% 0.17521 62.57)",
+          "oklch(26.43% 0.17521 62.57)",
+          "oklch(37.86% 0.17521 62.57)",
+          "oklch(49.29% 0.17521 62.57)",
+          "oklch(60.71% 0.17521 62.57)",
+          "oklch(72.14% 0.17521 62.57)",
+          "oklch(83.57% 0.17521 62.57)",
+          "oklch(95.00% 0.17521 62.57)"
+        ]
+      },
+      "light-warning-text": {
+        "role": "semantic",
+        "displayName": "light warning text",
+        "tonalRamp": [
+          "oklch(15.00% 0.12189 54.42)",
+          "oklch(26.43% 0.12189 54.42)",
+          "oklch(37.86% 0.12189 54.42)",
+          "oklch(49.29% 0.12189 54.42)",
+          "oklch(60.71% 0.12189 54.42)",
+          "oklch(72.14% 0.12189 54.42)",
+          "oklch(83.57% 0.12189 54.42)",
+          "oklch(95.00% 0.12189 54.42)"
+        ]
+      },
+      "dark-success": {
+        "role": "semantic",
+        "displayName": "dark success",
+        "tonalRamp": [
+          "oklch(15.00% 0.20825 146.98)",
+          "oklch(26.43% 0.20825 146.98)",
+          "oklch(37.86% 0.20825 146.98)",
+          "oklch(49.29% 0.20825 146.98)",
+          "oklch(60.71% 0.20825 146.98)",
+          "oklch(72.14% 0.20825 146.98)",
+          "oklch(83.57% 0.20825 146.98)",
+          "oklch(95.00% 0.20825 146.98)"
+        ]
+      },
+      "dark-success-text": {
+        "role": "semantic",
+        "displayName": "dark success text",
+        "tonalRamp": [
+          "oklch(15.00% 0.15713 149.48)",
+          "oklch(26.43% 0.15713 149.48)",
+          "oklch(37.86% 0.15713 149.48)",
+          "oklch(49.29% 0.15713 149.48)",
+          "oklch(60.71% 0.15713 149.48)",
+          "oklch(72.14% 0.15713 149.48)",
+          "oklch(83.57% 0.15713 149.48)",
+          "oklch(95.00% 0.15713 149.48)"
+        ]
+      },
+      "dark-danger": {
+        "role": "semantic",
+        "displayName": "dark danger",
+        "tonalRamp": [
+          "oklch(15.00% 0.22361 28.29)",
+          "oklch(26.43% 0.22361 28.29)",
+          "oklch(37.86% 0.22361 28.29)",
+          "oklch(49.29% 0.22361 28.29)",
+          "oklch(60.71% 0.22361 28.29)",
+          "oklch(72.14% 0.22361 28.29)",
+          "oklch(83.57% 0.22361 28.29)",
+          "oklch(95.00% 0.22361 28.29)"
+        ]
+      },
+      "dark-danger-text": {
+        "role": "semantic",
+        "displayName": "dark danger text",
+        "tonalRamp": [
+          "oklch(15.00% 0.14300 24.57)",
+          "oklch(26.43% 0.14300 24.57)",
+          "oklch(37.86% 0.14300 24.57)",
+          "oklch(49.29% 0.14300 24.57)",
+          "oklch(60.71% 0.14300 24.57)",
+          "oklch(72.14% 0.14300 24.57)",
+          "oklch(83.57% 0.14300 24.57)",
+          "oklch(95.00% 0.14300 24.57)"
+        ]
+      },
+      "dark-warning": {
+        "role": "semantic",
+        "displayName": "dark warning",
+        "tonalRamp": [
+          "oklch(15.00% 0.17106 67.22)",
+          "oklch(26.43% 0.17106 67.22)",
+          "oklch(37.86% 0.17106 67.22)",
+          "oklch(49.29% 0.17106 67.22)",
+          "oklch(60.71% 0.17106 67.22)",
+          "oklch(72.14% 0.17106 67.22)",
+          "oklch(83.57% 0.17106 67.22)",
+          "oklch(95.00% 0.17106 67.22)"
+        ]
+      },
+      "dark-warning-text": {
+        "role": "semantic",
+        "displayName": "dark warning text",
+        "tonalRamp": [
+          "oklch(15.00% 0.12946 75.72)",
+          "oklch(26.43% 0.12946 75.72)",
+          "oklch(37.86% 0.12946 75.72)",
+          "oklch(49.29% 0.12946 75.72)",
+          "oklch(60.71% 0.12946 75.72)",
+          "oklch(72.14% 0.12946 75.72)",
+          "oklch(83.57% 0.12946 75.72)",
+          "oklch(95.00% 0.12946 75.72)"
+        ]
+      },
+      "on-status": {
+        "role": "semantic",
+        "displayName": "on status",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00)",
+          "oklch(26.43% 0.00000 0.00)",
+          "oklch(37.86% 0.00000 0.00)",
+          "oklch(49.29% 0.00000 0.00)",
+          "oklch(60.71% 0.00000 0.00)",
+          "oklch(72.14% 0.00000 0.00)",
+          "oklch(83.57% 0.00000 0.00)",
+          "oklch(95.00% 0.00000 0.00)"
+        ]
+      },
+      "light-card-border": {
+        "role": "neutral",
+        "displayName": "Light subtle group outline",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00 / 0.08)",
+          "oklch(26.43% 0.00000 0.00 / 0.08)",
+          "oklch(37.86% 0.00000 0.00 / 0.08)",
+          "oklch(49.29% 0.00000 0.00 / 0.08)",
+          "oklch(60.71% 0.00000 0.00 / 0.08)",
+          "oklch(72.14% 0.00000 0.00 / 0.08)",
+          "oklch(83.57% 0.00000 0.00 / 0.08)",
+          "oklch(95.00% 0.00000 0.00 / 0.08)"
+        ]
+      },
+      "dark-card-border": {
+        "role": "neutral",
+        "displayName": "Dark subtle group outline",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00 / 0.08)",
+          "oklch(26.43% 0.00000 0.00 / 0.08)",
+          "oklch(37.86% 0.00000 0.00 / 0.08)",
+          "oklch(49.29% 0.00000 0.00 / 0.08)",
+          "oklch(60.71% 0.00000 0.00 / 0.08)",
+          "oklch(72.14% 0.00000 0.00 / 0.08)",
+          "oklch(83.57% 0.00000 0.00 / 0.08)",
+          "oklch(95.00% 0.00000 0.00 / 0.08)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "largeTitle": {
+        "displayName": "largeTitle",
+        "purpose": "Top-level screen display title."
+      },
+      "title1": {
+        "displayName": "title1",
+        "purpose": "Prominent content and profile title."
+      },
+      "title2": {
+        "displayName": "title2",
+        "purpose": "Secondary title hierarchy."
+      },
+      "title3": {
+        "displayName": "title3",
+        "purpose": "Compact content title."
+      },
+      "headline": {
+        "displayName": "headline",
+        "purpose": "Prominent controls and section headings."
+      },
+      "body": {
+        "displayName": "body",
+        "purpose": "Primary content and input text."
+      },
+      "callout": {
+        "displayName": "callout",
+        "purpose": "Secondary body copy."
+      },
+      "subhead": {
+        "displayName": "subhead",
+        "purpose": "Supporting row copy."
+      },
+      "subheadEm": {
+        "displayName": "subheadEm",
+        "purpose": "Emphasized supporting label."
+      },
+      "footnote": {
+        "displayName": "footnote",
+        "purpose": "Supporting metadata."
+      },
+      "footnoteEm": {
+        "displayName": "footnoteEm",
+        "purpose": "Emphasized metadata and chips."
+      },
+      "caption1": {
+        "displayName": "caption1",
+        "purpose": "Small supplementary label."
+      },
+      "caption2": {
+        "displayName": "caption2",
+        "purpose": "Navigation caption."
+      },
+      "caption2Em": {
+        "displayName": "caption2Em",
+        "purpose": "Emphasized small caption."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "shadowColor #000; shadowOpacity 0.06; shadowRadius 10; shadowOffset { width: 0, height: 3 }; elevation 2",
+        "purpose": "Native source preset retained in tokens.ts; ordinary ContentBlock does not apply it."
+      },
+      {
+        "name": "floating",
+        "value": "shadowColor #000; shadowOpacity 0.14; shadowRadius 18; shadowOffset { width: 0, height: 8 }; elevation 6",
+        "purpose": "Native preset for explicitly elevated ContentBlock."
+      }
+    ],
+    "motion": [
+      {
+        "name": "reading-paper-card-press",
+        "value": "opacity 0.8 pressed; active theme brandText focus border; static book illustration",
+        "purpose": "ReadingChallengeCard feature interaction. No entrance animation, timed opacity transition or scale animation is added."
+      },
+      {
+        "name": "action-block-press",
+        "value": "Animated.spring: scale 0.97 on press, 1 on release; speed 40; release bounciness 5; useNativeDriver true",
+        "purpose": "PressableScale behavior for ActionBlock and ProfileSummary. Reduced motion keeps scale 1 and uses pressed opacity 0.7."
+      },
+      {
+        "name": "button-press",
+        "value": "opacity 0.8 pressed; 0.45 explicitly disabled",
+        "purpose": "Immediate native Button feedback; no duration token is defined."
+      },
+      {
+        "name": "list-row-press",
+        "value": "opacity 0.6 pressed",
+        "purpose": "Native interactive ListRow state."
+      },
+      {
+        "name": "tab-dock-press",
+        "value": "brand tint background and opacity 0.65 pressed; selected state changes icon and label ink",
+        "purpose": "Native TabDock item state."
+      },
+      {
+        "name": "composer-send-press",
+        "value": "opacity 0.7 pressed",
+        "purpose": "Native ChatComposer send state."
+      },
+      {
+        "name": "milestone-entrance",
+        "value": "Animated.timing: 420 ms; Easing.out(Easing.cubic); opacity 0→1; translateY 12→0; scale 0.88→1; useNativeDriver true",
+        "purpose": "Opt-in MilestoneIllustration entrance. Reduced motion shows its complete static state; native fidelity is not verified."
+      },
+      {
+        "name": "progress-ring-update",
+        "value": "Animated.timing: 380 ms; Easing.out(Easing.cubic); strokeDashoffset maps clamped progress 0–1; useNativeDriver false",
+        "purpose": "ProgressRing value update. Reduced motion sets the value immediately."
+      },
+      {
+        "name": "success-confirmation",
+        "value": "Arrival 320 ms; burst 620 ms after 140 ms; Easing.out(Easing.cubic); useNativeDriver true",
+        "purpose": "SuccessCelebration one-shot checkmark and 12-particle burst. Reduced motion removes ring and particles; decorative motion never gates saving or navigation."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack-header-below-native-logical-width",
+        "value": "350"
+      },
+      {
+        "name": "reading-paper-card-stack",
+        "value": "measured card width < 350 logical units OR system fontScale × app textScale > 1.15; pre-layout width estimate is window width minus 32"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Reading paper card · footer fragment",
+      "kind": "custom",
+      "refersTo": "reading-card-footer",
+      "description": "Current light-theme documentation fragment of the Reading feature card footer: a half-unit separator, 12-unit top padding, minimum height 48, subheadEm action and 22-unit arrow. The native card is the single press target; this isolated browser button only demonstrates its control styling. Example label assumes an approved active membership. The book and full card composition are omitted; this is not a native capture. Hover/focus outline are documentation-only.",
+      "html": "<button class=\"ds-reading-footer\" type=\"button\"><span class=\"ds-reading-footer-label\">Продолжить чтение</span><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button><small class=\"ds-reading-preview-note\">Фрагмент карточки · приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-reading-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; padding:12px 0 0; border:0; border-top:.5px solid rgba(60,60,67,.20); background:#FFFFFF; color:#234088; text-align:left; cursor:pointer; } .ds-reading-footer-label { flex-shrink:1; font:700 15px/20px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-.1px; } .ds-reading-footer svg { flex-shrink:0; } .ds-reading-footer:hover { opacity:.9; } .ds-reading-footer:active { opacity:.8; } .ds-reading-footer:focus-visible { outline:2px solid #234088; outline-offset:3px; } .ds-reading-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "Button · solid",
+      "kind": "button",
+      "refersTo": "button-solid",
+      "description": "Approximate light-theme HTML documentation preview of Button variant=\"solid\" with the default brand tone. Not native proof. Rounded rectangle uses the 16-unit action radius. Native minimum height is 52 logical units; browser hover and focus are panel-only affordances.",
+      "html": "<button class=\"ds-button-solid\" type=\"button\">Продолжить</button><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-button-solid { min-height:52px; padding:14px 20px; border-radius:16px; border:0; background:#234088; color:#FFFFFF; font:700 17px/22px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-0.2px; text-align:center; cursor:pointer; } .ds-button-solid:hover:not(:disabled) { opacity:.9; } .ds-button-solid:active:not(:disabled) { opacity:.8; } .ds-button-solid:disabled { opacity:.45; cursor:default; } .ds-button-solid:focus-visible { outline:2px solid #234088; outline-offset:3px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "Button · tinted",
+      "kind": "button",
+      "refersTo": "button-tinted",
+      "description": "Approximate light-theme HTML documentation preview of Button variant=\"tinted\" with the default brand tone. Not native proof. Rounded rectangle uses the 16-unit action radius. Native minimum height is 52 logical units; browser hover and focus are panel-only affordances.",
+      "html": "<button class=\"ds-button-tinted\" type=\"button\">Мои курсы</button><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-button-tinted { min-height:52px; padding:14px 20px; border-radius:16px; border:0; background:rgba(61,91,219,0.13); color:#234088; font:700 17px/22px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-0.2px; text-align:center; cursor:pointer; } .ds-button-tinted:hover:not(:disabled) { opacity:.9; } .ds-button-tinted:active:not(:disabled) { opacity:.8; } .ds-button-tinted:disabled { opacity:.45; cursor:default; } .ds-button-tinted:focus-visible { outline:2px solid #234088; outline-offset:3px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "Button · outline",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Approximate light-theme HTML documentation preview of Button variant=\"outline\" with the default brand tone. Not native proof. Rounded rectangle uses the 16-unit action radius. Native minimum height is 52 logical units; browser hover and focus are panel-only affordances.",
+      "html": "<button class=\"ds-button-outline\" type=\"button\">Повторить</button><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-button-outline { min-height:52px; padding:14px 20px; border-radius:16px; border:1px solid #234088; background:transparent; color:#234088; font:700 17px/22px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-0.2px; text-align:center; cursor:pointer; } .ds-button-outline:hover:not(:disabled) { opacity:.9; } .ds-button-outline:active:not(:disabled) { opacity:.8; } .ds-button-outline:disabled { opacity:.45; cursor:default; } .ds-button-outline:focus-visible { outline:2px solid #234088; outline-offset:3px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "Button · plain",
+      "kind": "button",
+      "refersTo": "button-plain",
+      "description": "Approximate light-theme HTML documentation preview of Button variant=\"plain\" with the default brand tone. Not native proof. Rounded rectangle uses the 16-unit action radius. Native minimum height is 52 logical units; browser hover and focus are panel-only affordances.",
+      "html": "<button class=\"ds-button-plain\" type=\"button\">Отмена</button><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-button-plain { min-height:52px; padding:14px 20px; border-radius:16px; border:0; background:transparent; color:#234088; font:700 17px/22px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-0.2px; text-align:center; cursor:pointer; } .ds-button-plain:hover:not(:disabled) { opacity:.9; } .ds-button-plain:active:not(:disabled) { opacity:.8; } .ds-button-plain:disabled { opacity:.45; cursor:default; } .ds-button-plain:focus-visible { outline:2px solid #234088; outline-offset:3px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "SearchField",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Approximate light-theme HTML preview of SearchField, not native evidence. The app uses a 52-unit minimum outlined rectangle, changes its stroke from separator to brand on focus, and exposes a separate 48-unit clear action when populated. This preview shows the empty state; browser outlines are panel-only.",
+      "html": "<label class=\"ds-search\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"m16 16 4 4\"/></svg><input class=\"ds-search-input\" type=\"search\" aria-label=\"Поиск курсов\" placeholder=\"Поиск курсов\"></label><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-search { display:flex; align-items:center; gap:10px; min-height:52px; padding-left:14px; padding-right:14px; border:1px solid rgba(60,60,67,.20); border-radius:16px; background:#FFFFFF; color:#5C5C60; } .ds-search-input { flex:1; min-width:0; min-height:48px; padding:10px 0; border:0; color:#101D2C; background:transparent; font:17px/24px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-.2px; } .ds-search-input::placeholder { color:#5C5C60; opacity:1; } .ds-search:hover { border-color:#234088; } .ds-search:focus-within { border-color:#234088; } .ds-search-input:focus-visible { outline:2px solid #234088; outline-offset:3px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "ContentBlock / ActionBlock",
+      "kind": "card",
+      "refersTo": "content-block",
+      "description": "Approximate light-theme HTML preview of regular ContentBlock / ActionBlock: 20-unit continuous-corner approximation, 18-unit padding and subtle one-unit outline. Not native evidence. This example is interactive; plain ContentBlock is not. Native spring, haptics and continuous corners are not reproduced.",
+      "html": "<button type=\"button\" class=\"ds-action-block\"><span class=\"ds-action-title\">Мои курсы</span><span class=\"ds-action-copy\">Продолжить обучение</span></button><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-action-block { display:block; width:100%; padding:18px; border:1px solid rgba(0,0,0,.08); border-radius:20px; background:#FFFFFF; color:#101D2C; text-align:left; cursor:pointer; } .ds-action-title { display:block; font:700 22px/28px 'Gotham Rounded', system-ui, sans-serif; } .ds-action-copy { display:block; margin-top:8px; color:#5C5C60; font:15px/20px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-.1px; } .ds-action-block:hover { opacity:.95; } .ds-action-block:active { transform:scale(.97); } .ds-action-block:disabled { opacity:.45; } .ds-action-block:focus-visible { outline:2px solid #234088; outline-offset:3px; } @media (prefers-reduced-motion:reduce) { .ds-action-block:active { transform:none; opacity:.7; } } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "ListSection / ListRow",
+      "kind": "custom",
+      "refersTo": "list-section",
+      "description": "Approximate light-theme HTML preview of an outlined ListSection and ListRow. Not native evidence. Group padding is zero; row minimum height is 58 logical units, with 14 × 16 internal padding and 12-unit gap. Native rows wrap and announce title, subtitle and detail together.",
+      "html": "<section class=\"ds-list\"><h3 class=\"ds-list-heading\">Поддержка</h3><div class=\"ds-list-group\"><button class=\"ds-list-row\" type=\"button\"><span class=\"ds-list-content\"><span class=\"ds-list-title\">Написать в поддержку</span><span class=\"ds-list-subtitle\">Вопросы и предложения</span></span><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 5 7 7-7 7\"/></svg></button></div></section><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-list-heading { margin:0; padding:12px 4px; color:#101D2C; font:700 17px/22px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-.2px; } .ds-list-group { padding:0; border:1px solid rgba(0,0,0,.08); border-radius:20px; overflow:hidden; background:#FFFFFF; } .ds-list-row { display:flex; width:100%; min-height:58px; gap:12px; padding:14px 16px; align-items:center; border:0; background:transparent; color:#6B6B70; text-align:left; cursor:pointer; } .ds-list-content { display:block; flex:1; min-width:0; } .ds-list-title { display:block; color:#101D2C; font:17px/24px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-.2px; } .ds-list-subtitle { display:block; margin-top:1px; color:#5C5C60; font:15px/20px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-.1px; } .ds-list-row:hover { opacity:.85; } .ds-list-row:active { opacity:.6; } .ds-list-row:focus-visible { outline:2px solid #234088; outline-offset:-3px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "Chip · active and inactive",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Approximate light-theme HTML preview of Chip states. Not native evidence. Selection uses brand tint, brand ink and brand border; the unselected state uses card fill and card border. The static preview does not change app state.",
+      "html": "<div class=\"ds-chip-row\"><button type=\"button\" class=\"ds-chip ds-chip-active\" aria-pressed=\"true\">Все</button><button type=\"button\" class=\"ds-chip\" aria-pressed=\"false\">Мои курсы</button></div><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-chip-row { display:flex; flex-wrap:wrap; gap:8px; } .ds-chip { min-height:48px; padding:8px 14px; border:1px solid rgba(0,0,0,.08); border-radius:999px; background:#FFFFFF; color:#101D2C; font:700 13px/18px 'Gotham Rounded', system-ui, sans-serif; cursor:pointer; } .ds-chip-active { background:rgba(61,91,219,.13); color:#234088; border-color:#234088; } .ds-chip:hover:not(:disabled) { opacity:.85; } .ds-chip:active:not(:disabled) { opacity:.65; } .ds-chip:focus-visible { outline:2px solid #234088; outline-offset:3px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "TabDock",
+      "kind": "nav",
+      "refersTo": "tab-dock",
+      "description": "Approximate light-theme HTML preview of the attached five-destination TabDock, not native evidence. Its full-width top border and top-only rounded corners replace the previous floating capsule. The static preview omits safe-area insets, fit estimation, feature flags, route visibility, tab events and mini-player. Browser states are documentation-only.",
+      "html": "<nav class=\"ds-dock\" aria-label=\"Основные разделы\"><button type=\"button\" class=\"ds-dock-item ds-dock-selected\" aria-label=\"Обучение\" aria-current=\"page\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 4h7l2 2 2-2h7v16h-7l-2 1-2-1H3zM12 6v15\"/></svg><span class=\"ds-dock-label\">Обучение</span></button><button type=\"button\" class=\"ds-dock-item\" aria-label=\"AI\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z\"/></svg><span class=\"ds-dock-label\">AI</span></button><button type=\"button\" class=\"ds-dock-item\" aria-label=\"Сообщество\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"3\"/><path d=\"M6 21v-3a6 6 0 0 1 12 0v3M4 5a3 3 0 0 0 0 6m16-6a3 3 0 0 1 0 6\"/></svg><span class=\"ds-dock-label\">Сообщество</span></button><button type=\"button\" class=\"ds-dock-item\" aria-label=\"Карта\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zM9 3v16M15 5v16\"/></svg><span class=\"ds-dock-label\">Карта</span></button><button type=\"button\" class=\"ds-dock-item\" aria-label=\"Карьера\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"7\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"M8 7V3h8v4M3 12h18M10 12v3h4v-3\"/></svg><span class=\"ds-dock-label\">Карьера</span></button></nav><small class=\"ds-preview-note\">Приблизительный HTML-пример · не native QA</small>",
+      "css": ".ds-dock { display:flex; width:100%; max-width:620px; padding:6px 8px 8px; border-radius:20px 20px 0 0; border-top:1px solid rgba(0,0,0,.08); background:#FFFFFF; } .ds-dock-item { flex:1; min-width:0; min-height:52px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:0; border-radius:12px; background:transparent; color:#5C5C60; cursor:pointer; } .ds-dock-selected { color:#234088; } .ds-dock-label { font:500 11px/14px 'Gotham Rounded', system-ui, sans-serif; white-space:nowrap; } .ds-dock-item:hover { opacity:.85; } .ds-dock-item:active { background:rgba(61,91,219,.13); opacity:.65; } .ds-dock-item:focus-visible { outline:2px solid #234088; outline-offset:-3px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    },
+    {
+      "name": "ProgressRing",
+      "kind": "custom",
+      "refersTo": "progress-ring",
+      "description": "Approximate light-theme HTML/SVG preview of the 80-unit ProgressRing with a five-unit stroke. Not native evidence. The displayed 60% is documentation example data. The native component clamps progress, exposes progressbar semantics and animates updates for 380 ms unless reduced motion is enabled; this preview is static.",
+      "html": "<div class=\"ds-progress\" role=\"progressbar\" aria-label=\"Пример прогресса\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"60\"><svg class=\"ds-progress-svg\" xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"80\" viewBox=\"0 0 80 80\" aria-hidden=\"true\"><circle cx=\"40\" cy=\"40\" r=\"34\" fill=\"none\" stroke=\"rgba(118,118,128,.12)\" stroke-width=\"5\"/><circle cx=\"40\" cy=\"40\" r=\"34\" fill=\"none\" stroke=\"#234088\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-dasharray=\"213.628 213.628\" stroke-dashoffset=\"85.451\" transform=\"rotate(-90 40 40)\"/></svg><span class=\"ds-progress-label\">60%</span></div><small class=\"ds-preview-note\">Пример данных · приблизительный HTML/SVG · не native QA</small>",
+      "css": ".ds-progress { position:relative; width:80px; height:80px; display:flex; align-items:center; justify-content:center; } .ds-progress-svg { position:absolute; inset:0; } .ds-progress-label { color:#101D2C; font:700 17px/22px 'Gotham Rounded', system-ui, sans-serif; letter-spacing:-.2px; } .ds-preview-note { display:block; margin-top:12px; color:#5C5C60; font:12px/16px system-ui,sans-serif; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Liven progress and accomplishment adapted to Divergents",
+    "overview": "Liven is the user-selected global visual authority, replacing Revolut Business. The implemented shared language combines compact outlined groups, rounded rectangular actions, illustrated learning and accomplishment, and quiet attached navigation. Divergents blue/navy, Gotham Rounded, Russian content, both appearances and the five destinations remain established commitments.\n\nThis document describes the current code in `src/theme`, `src/components` and the migrated screens. It does not claim that every route has completed the new visual language. The sports flows retain their selected task hierarchy and creation flows retain their confirmation behavior, now expressed through the Liven shared layer. The [direction contract](docs/liven-direction-contract.md), [PRODUCT.md](PRODUCT.md) and [implementation report](docs/liven-redesign-2026-10-08.md) record the approved scope and remaining work.\n\nNative visual verification is incomplete. The [finish disposition](.impeccable/review/liven-status.md) is RECAPTURE because valid native captures were unavailable; Simulator control timed out. The implementation handoff reports 58 passing Jest suites / 425 tests, passing TypeScript and Storybook generation, and successful iOS and Android production JavaScript exports. These are not native builds, visual or motion approval, or release approval. The boundary audit still reports 2,427 findings across 51 screens; 90 of 108 component files have stories, with 18 legacy files missing stories. Reference study covered all 279 static Liven screens through Mobbin MCP and the signed-in browser; only two actual animation clips were analysed from 25 available recordings. Static coverage does not establish motion coverage.\n\nThe 2026-10-20 Reading extension adds the user-selected “Тишина и бумага” card and header within this incumbent system. Only `reading-*` tokens and the explicitly scoped Reading guidance below were reconciled against current code. The older global neutral colors and radius values have pre-existing drift and remain a historical record pending a separate refresh; they must not override `src/theme` when implementing Reading. The [surface brief](.impeccable/surfaces/reading-paper.md) and [implementation record](docs/reading-paper-2026-10-20.md) distinguish the bounded native component review from the still-open web hero process and wider app verification.",
+    "keyCharacteristics": [
+      "Compact outlined content groups and rounded rectangular actions, with circles reserved for icons, portraits and progress.",
+      "Retained semantic light and dark palettes, accent personalization and Gotham Rounded hierarchy.",
+      "Original blue illustrations supporting real learning, progress and completion states.",
+      "Attached five-tab navigation, safe-area handling and text-size-aware shared controls.",
+      "Partial migration documented from code; native visual and motion acceptance remain pending."
+    ],
+    "rules": [
+      {
+        "name": "The Active Theme Rule",
+        "body": "Read colors and scaled typography from `useTheme()` so light/dark appearance, accent personalization and text-size preferences remain effective.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Label Rule",
+        "body": "Let Russian titles and action labels wrap or use the component's documented compact-label behavior; do not shrink text ad hoc to make a fixed layout fit.",
+        "section": "typography"
+      },
+      {
+        "name": "The Outlined Group Rule",
+        "body": "Use the shared subtle outline for ordinary content groups; reserve the floating shadow for explicitly elevated surfaces.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Reading Paper Rule",
+        "body": "In the selected Reading variants, keep the book separate from live native text, let titles wrap and use the actual phase and membership for the next action.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do apply the selected Liven language through the shared outlined groups, compact actions and existing progress components.",
+      "Do retain the exact source palettes, both appearances, accent personalization and Gotham Rounded.",
+      "Do use `useTheme()`, semantic component APIs and `Wrapper` for outer placement.",
+      "Do preserve Russian copy, real progress, access rules, five-tab navigation and existing actions while migrating a surface.",
+      "Do retain safe areas, native Back behavior, accessible labels, reduced motion and reduced transparency.",
+      "Do distinguish elapsed days, completed days and actual streaks in progress presentations.",
+      "Do keep illustration meaning in adjacent text and retain shipping asset provenance.",
+      "Do keep Reading's selected paper composition, authored book and wrapping live title within the scoped card and header."
+    ],
+    "donts": [
+      "Don't restore the superseded Revolut world or treat the documentation previews as native visual authority.",
+      "Don't replace the retained navy/blue palette with Liven green, copy its artwork or invent product claims.",
+      "Don't hardcode default blue where the component must respond to the active theme or accent.",
+      "Don't add local appearance overrides that bypass the shared content-group and action contracts.",
+      "Don't make decorative animation gate saving, rewards or navigation.",
+      "Don't describe the partial migration, passing tests or JavaScript exports as native visual approval, complete motion review or a mobile release.",
+      "Don't infer full-flow, physical-device or pixel-diff approval from the four reviewed Reading component captures."
+    ]
+  }
+}

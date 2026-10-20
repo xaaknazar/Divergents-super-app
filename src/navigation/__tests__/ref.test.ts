@@ -1,6 +1,11 @@
 import { normalizeTabTarget } from '../ref';
 
 describe('цель уведомления', () => {
+  it('sports and meetup application notifications retain their event kind', () => {
+    expect(normalizeTabTarget('CommunityTab', 'SportDetail', { sportId: 's1' }).params).toMatchObject({ screen: 'SportDetail', params: { sportId: 's1' } });
+    expect(normalizeTabTarget('CommunityTab', 'EventApplicants', { kind: 'meetup', eventId: 'm1' }).params).toMatchObject({ screen: 'EventApplicants', params: { kind: 'meetup', eventId: 'm1' } });
+    expect(normalizeTabTarget('CommunityTab', 'EventApplicants', { eventId: 'm1' })).toEqual({ screen: 'CommunityTab' });
+  });
   it('вкладка без экрана — валидная цель', () => {
     expect(normalizeTabTarget('CommunityTab')).toEqual({ screen: 'CommunityTab' });
   });
@@ -44,5 +49,10 @@ describe('цель уведомления', () => {
       params: { screen: 'ChallengeResults', params: { challengeId: 'ch1' }, initial: false },
     });
     expect(normalizeTabTarget('CommunityTab', 'ChallengeResults', {})).toEqual({ screen: 'CommunityTab' });
+    expect(normalizeTabTarget('CommunityTab', 'ChallengeFinalStandings', { challengeId: 'finished-season' })).toEqual({
+      screen: 'CommunityTab',
+      params: { screen: 'ChallengeFinalStandings', params: { challengeId: 'finished-season' }, initial: false },
+    });
+    expect(normalizeTabTarget('CommunityTab', 'ChallengeFinalStandings', {})).toEqual({ screen: 'CommunityTab' });
   });
 });

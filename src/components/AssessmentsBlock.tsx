@@ -1,21 +1,26 @@
+import { ContentBlock } from './ContentBlock';
+import { Wrapper } from './Wrapper';
 // Gallup + Гарднер прямо в приложении.
 //
 // Gallup — файл (PDF/фото): загружается на Talentslab тем же путём, что и на
 // сайте (сохранение кандидату + разбор в фоновой очереди).
 // Гарднер — не файл, а тест: он проходится на сайте Talentslab, поэтому здесь
 // честная кнопка перехода, а статус подтягивается с сервера.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert, Linking, Platform, ActionSheetIOS, AppState } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '@clerk/clerk-expo';
-import { useTheme } from '../theme/ThemeContext';
-import { SF } from './SFIcon';
-import { minTouch } from '../theme/tokens';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+import React,{ useCallback,useEffect,useRef,useState } from 'react';
+import { ActionSheetIOS,ActivityIndicator,Alert,AppState,Linking,Platform,Pressable,Text,View } from 'react-native';
 import {
-  fetchTestsStatus, uploadGallupFile, getTalentslabToken, TestsStatus, GARDNER_TEST_URL,
+fetchTestsStatus,
+GARDNER_TEST_URL,
+getTalentslabToken,TestsStatus,
+uploadGallupFile,
 } from '../data/talentslab';
 import { emitProfileChanged } from '../state/profileBus';
+import { useTheme } from '../theme/ThemeContext';
+import { minTouch } from '../theme/tokens';
+import { SF } from './SFIcon';
 
 /** Ограничение сервера: 10 МБ на файл отчёта. */
 const MAX_GALLUP_BYTES = 10 * 1024 * 1024;
@@ -182,7 +187,7 @@ export function AssessmentsBlock() {
   const gardnerDone = !!status?.gardnerDone;
 
   return (
-    <View style={{ marginTop: 10, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
+    <Wrapper marginTop={10}><ContentBlock size="compact">
       <Row
         icon="doc.text.fill"
         title="Отчёт Gallup"
@@ -202,6 +207,6 @@ export function AssessmentsBlock() {
         action="Пройти"
         onPress={openGardner}
       />
-    </View>
+    </ContentBlock></Wrapper>
   );
 }

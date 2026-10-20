@@ -7,24 +7,30 @@ import React, { createContext, useContext, useEffect, useMemo, useState, useCall
 import { Alert, AppState, Platform } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
-import { loadJSON, saveJSON } from './persist';
+import { loadJSON, readJSON, saveJSON } from './persist';
+import { randomUUID } from 'expo-crypto';
+import { ProgressOutbox, mergeProgressOutbox, type ProgressOutboxState } from './progressOutbox';
 import {
-  DEFAULT_CHALLENGE, Challenge, ChallengeTask, Member, fetchActiveChallenge, fetchChallenges, postChallengeProgress,
+  DEFAULT_CHALLENGE, Challenge, Member, fetchActiveChallenges, postChallengeProgress,
   challengePointsToday, challengeBonusToday, taskPoints, taskBonus, taskDone, totalFlags,
-  averagePerPastDay, DEFAULT_REPORT_DEADLINE_HOUR,
+  averagePerPastDay, sumMemberPenalties,
 } from '../data/community';
-import { expectedChallengeDay, isChallengeDayLocked, marksClosed } from '../data/challengeDay';
-import { applyPending, type PendingUpdate, type SavedPending } from './challengeMerge';
+import { isChallengeDayLocked, marksClosed } from '../data/challengeDay';
+
 
 export interface RankedMember extends Member { rank: number; points: number }
 
 interface ChallengeState {
   challenge: Challenge;
+  /** All approved running memberships, used by the community cards. */
+  activeChallenges?: Challenge[];
+  byId?: Record<string, ChallengeState>;
   loading: boolean;
   /** Последняя загрузка активного челленджа с сервера не удалась. */
   error: boolean;
   isParticipant: boolean;
   syncPending: boolean;
+  syncError: string | null;
   dayLocked: boolean;
   /**
    * Отметку сейчас примут. Учитывает и закрытый день, и вылет, и выход по
@@ -47,28 +53,14 @@ interface ChallengeState {
 }
 
 const Ctx = createContext<ChallengeState | null>(null);
+// Allows isolated component previews without mounting network-backed providers.
+export { Ctx as ChallengeStateContext };
 
-const PROGRESS_KEY = 'dvg.challengeProgress.v1';
-const PENDING_KEY = 'dvg.challengeProgressPending.v1';
+const PENDING_KEY = 'dvg.challengeProgressOutbox.v2';
 const REMINDER_KEY = 'dvg.challengeReminder.v1';
-/** Пауза перед первым повтором неотправленной отметки. Дальше удваивается. */
-const BASE_RETRY_MS = 20_000;
-/** Потолок паузы: пять минут. Дольше ждать бессмысленно — день не резиновый. */
-const MAX_RETRY_MS = 5 * 60_000;
 const ALMATY_OFFSET_MS = 5 * 60 * 60 * 1000;
-
-interface SavedProgress {
-  id: string;
-  day: number;
-  tasks: { id: string; current?: number; done?: boolean }[];
-}
-
-interface SavedReminder {
-  id: string;
-  day: number;
-  notificationId: string;
-  scheduledFor: string;
-}
+type Snapshot = { challenge: Challenge; members: Member[] };
+interface SavedReminder { notificationId: string }
 
 // Challenge deadlines use Asia/Almaty (UTC+5), regardless of the phone's
 // current timezone. Kazakhstan has no daylight-saving transition.
@@ -84,379 +76,130 @@ function nextAlmatyTime(hour: number, minute: number, nowMs = Date.now()): numbe
   return today > nowMs ? today : today + 24 * 60 * 60 * 1000;
 }
 
-// Overlay persisted daily inputs onto a challenge's task definitions (only when
-// the saved progress belongs to the same challenge).
-//
-// Применяется ТОЛЬКО к заглушке до первого ответа сервера: там показывать
-// нечего, кроме последнего виденного. К живым данным — никогда, см. applyPending.
-function applyProgress(base: Challenge, saved: SavedProgress | null): Challenge {
-  if (!saved || saved.id !== base.id || saved.day !== base.currentDay) return base;
-  return {
-    ...base,
-    tasks: base.tasks.map((t) => {
-      const s = saved.tasks.find((x) => x.id === t.id);
-      if (!s) return t;
-      if (t.kind === 'metric') return { ...t, current: Math.max(0, s.current ?? t.current) };
-      return { ...t, done: s.done ?? t.done };
-    }),
-  };
-}
-
-function toSaved(c: Challenge): SavedProgress {
-  return {
-    id: c.id,
-    day: c.currentDay,
-    tasks: c.tasks.map((t) => (t.kind === 'metric' ? { id: t.id, current: t.current } : { id: t.id, done: t.done })),
-  };
-}
-
 export function ChallengeProvider({ children }: { children: React.ReactNode }) {
-  const { getToken, isSignedIn } = useAuth();
-  const [challenge, setChallenge] = useState<Challenge>(DEFAULT_CHALLENGE);
-  const [members, setMembers] = useState<Member[]>([]);
+  const { getToken, isSignedIn, userId } = useAuth();
+  const [data, setData] = useState<{ ownerId: string | null | undefined; snapshots: Snapshot[] }>({ ownerId: userId, snapshots: [] });
+  const snapshots = data.ownerId === userId ? data.snapshots : [];
+  const snapshotRef = useRef(snapshots); snapshotRef.current = snapshots;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [outbox, setOutbox] = useState<ProgressOutboxState | null>(null);
+  const [storageError, setStorageError] = useState(false);
   const [timeTick, setTimeTick] = useState(() => Date.now());
-  const savedRef = useRef<SavedProgress | null>(null);
-  const pendingRef = useRef<SavedPending | null>(null);
-  const flushingRef = useRef(false);
-  // Про закрытый день предупреждаем один раз за день, а не на каждую отметку.
-  const deadlineNoticeRef = useRef<string | null>(null);
-  // Keep the latest getToken in a ref so the load effect can run once without
-  // re-subscribing every time Clerk hands back a new function identity.
-  const getTokenRef = useRef(getToken);
-  getTokenRef.current = getToken;
+  const engineRef = useRef<ProgressOutbox | null>(null);
+  const ownerRef = useRef(userId); ownerRef.current = userId;
+  const getTokenRef = useRef(getToken); getTokenRef.current = getToken;
+  const revision = useRef(0);
+  const scopeKey = snapshots.map(s => s.challenge.id + ':' + s.challenge.currentDay).join('|');
+  const flushPending = useCallback(async () => { await engineRef.current?.flush(); }, []);
 
-  const savePending = useCallback((pending: SavedPending | null) => {
-    pendingRef.current = pending;
-    setPendingCount(pending?.updates.length ?? 0);
-    saveJSON(PENDING_KEY, pending);
-  }, []);
-
-  // Отметку, которую сервер не принял из-за дедлайна, из очереди убираем: иначе
-  // приложение переотправляло бы её каждые 20 секунд до конца челленджа.
-  const dropPending = useCallback((challengeId: string, day: number, taskId: string) => {
-    const latest = pendingRef.current;
-    if (!latest || latest.id !== challengeId || latest.day !== day) return;
-    const remaining = latest.updates.filter((item) => item.taskId !== taskId);
-    savePending(remaining.length ? { ...latest, updates: remaining } : null);
-  }, [savePending]);
-
-  const warnDeadlinePassed = useCallback((challengeId: string, day: number, hour?: number) => {
-    const key = `${challengeId}:${day}`;
-    if (deadlineNoticeRef.current === key) return;
-    deadlineNoticeRef.current = key;
-    const h = typeof hour === 'number' && hour > 0 ? hour : DEFAULT_REPORT_DEADLINE_HOUR;
-    Alert.alert(
-      'Отметки на сегодня закрыты',
-      `Отметки принимаются до ${h}:00 по Алматы включительно. Эта отметка не сохранена и в зачёт дня не попадёт — следующий день откроется в 00:00.`,
-    );
-  }, []);
-
-  // Refresh without replacing valid on-screen data during a temporary outage.
-  // A successful `{ challenge: null }` is different: it means the participant
-  // no longer has an active challenge and the card should be removed.
   const refreshLive = useCallback(async (): Promise<boolean> => {
-    if (!isSignedIn) return false;
+    if (!isSignedIn || !userId) return false;
+    const owner = userId;
+    const request = ++revision.current;
     try {
       const token = await getTokenRef.current();
-      const { challenge: live, members: nextMembers, ok } = await fetchActiveChallenge(token);
-      if (!ok) { setError(true); return false; }
+      const result = await fetchActiveChallenges(token);
+      if (ownerRef.current !== owner || request !== revision.current) return false;
+      if (!result.ok) { setError(true); return false; }
       setError(false);
-      const belongsToUser = !!live && nextMembers.some((member) => member.isMe);
-      if (live && belongsToUser) {
-        // Older `/active` payloads do not include startISO. Read it from the
-        // public catalog so the client can detect and lock a stale server day.
-        if (!live.startISO) {
-          const catalog = await fetchChallenges().catch(() => []);
-          live.startISO = catalog.find((item) => item.id === live.id)?.startISO;
-        }
-        const next = applyPending(live, pendingRef.current);
-        setChallenge(next);
-        setMembers(nextMembers);
-        // A server-side day rollover invalidates yesterday's local snapshot.
-        if (savedRef.current?.id !== next.id || savedRef.current?.day !== next.currentDay) {
-          const snap = toSaved(next);
-          savedRef.current = snap;
-          saveJSON(PROGRESS_KEY, snap);
-        }
-      } else {
-        setChallenge(DEFAULT_CHALLENGE);
-        setMembers([]);
+      {
+        const next = result.challenges.flatMap(view => {
+          if (!view.challenge || !view.members.some(member => member.isMe)) return [];
+          const challenge = mergeProgressOutbox(view.challenge, engineRef.current?.state ?? null);
+          const prior = snapshotRef.current.find(s => s.challenge.id === challenge.id)?.challenge;
+          if (prior?.currentDay === challenge.currentDay) {
+            challenge.tasks = challenge.tasks.map(task => {
+              const old = prior.tasks.find(t => t.id === task.id);
+              return old && (old.version ?? 0) > (task.version ?? 0) ? old : task;
+            });
+          }
+          return [{ challenge, members: view.members }];
+        });
+        // Fence closed-day callbacks immediately, not only after React commits.
+        snapshotRef.current = next;
+        setData({ ownerId: owner, snapshots: next });
       }
       return true;
     } catch {
-      setError(true);
+      if (ownerRef.current === owner && request === revision.current) setError(true);
       return false;
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, userId]);
 
-  useEffect(() => {
-    if (loading || challenge.id === DEFAULT_CHALLENGE.id) return;
-    const timer = setInterval(() => setTimeTick(Date.now()), 15_000);
-    return () => clearInterval(timer);
-  }, [challenge.id, loading]);
-
-  // Load persisted progress first, then enrich with the server's active
-  // challenge + leaderboard (re-applying the saved daily inputs by task id).
   useEffect(() => {
     let alive = true;
-    if (isSignedIn) setLoading(true);
+    ++revision.current;
+    snapshotRef.current = [];
+    setData({ ownerId: userId, snapshots: [] });
+    setLoading(true); setError(false); setOutbox(null); setStorageError(false);
     (async () => {
       try {
-        const saved = await loadJSON<SavedProgress | null>(PROGRESS_KEY, null);
-        savedRef.current = saved;
-        if (alive && saved && saved.id === DEFAULT_CHALLENGE.id) {
-          setChallenge(applyProgress(DEFAULT_CHALLENGE, saved));
+        engineRef.current?.dispose(); engineRef.current = null;
+        if (!isSignedIn || !userId) return;
+        const restored = await readJSON<ProgressOutboxState | null>(PENDING_KEY, null);
+        if (!alive || ownerRef.current !== userId) return;
+        if (!restored.ok) { setStorageError(true); setError(true); return; }
+        const owner = userId;
+        const engine = new ProgressOutbox(owner, restored.value, {
+          uuid: randomUUID,
+          save: state => saveJSON(PENDING_KEY, state, { strict: true }),
+          send: async operation => {
+            if (ownerRef.current !== owner) return { ok: false, status: 401 };
+            const token = await getTokenRef.current();
+            if (ownerRef.current !== owner) return { ok: false, status: 401 };
+            return postChallengeProgress(operation.challengeId, operation, token);
+          },
+          changed: (state, issue) => {
+            if (!alive || ownerRef.current !== owner) return;
+            setOutbox({ ...state }); setStorageError(issue === 'storage');
+            const next = snapshotRef.current.map(s => ({ ...s, challenge: mergeProgressOutbox(s.challenge, state) }));
+            snapshotRef.current = next;
+            setData({ ownerId: owner, snapshots: next });
+          },
+        });
+        engineRef.current = engine; setOutbox({ ...engine.state });
+        const legacy = await loadJSON<{ updates?: unknown[] } | null>('dvg.challengeProgressPending.v1', null);
+        if (alive && ownerRef.current === owner && legacy?.updates?.length) {
+          Alert.alert('Проверьте старые отметки', 'Есть неподтверждённые отметки из прошлой версии. Проверьте результат на сервере; старые значения не будут отправлены автоматически.');
         }
-        const pending = await loadJSON<SavedPending | null>(PENDING_KEY, null);
-        pendingRef.current = pending;
-        if (alive) setPendingCount(pending?.updates.length ?? 0);
-        if (!isSignedIn) {
-          if (alive) { setChallenge(DEFAULT_CHALLENGE); setMembers([]); setError(false); }
-          return;
-        }
-        await refreshLive();
-      } catch {
-        // best-effort: keep the locally-restored challenge on any failure
-        if (alive) setError(true);
-      } finally {
-        // Always clear loading, even if getToken()/fetch throws — otherwise the
-        // screen would spin forever.
-        if (alive) setLoading(false);
-      }
+        if (alive && ownerRef.current === owner) await refreshLive();
+      } catch { if (alive) setError(true); }
+      finally { if (alive) setLoading(false); }
     })();
-    return () => { alive = false; };
-  }, [isSignedIn, refreshLive]);
+    return () => { alive = false; ++revision.current; engineRef.current?.dispose(); engineRef.current = null; };
+  }, [isSignedIn, userId, refreshLive]);
 
-  // Снимок дня на устройстве: экран должен пережить перезапуск приложения.
-  // Объявлен здесь, а не ниже рядом с setMetric, потому что нужен отправке.
-  const persist = useCallback((c: Challenge) => {
-    const snap = toSaved(c);
-    savedRef.current = snap;
-    saveJSON(PROGRESS_KEY, snap);
-  }, []);
-
-  // Приводим экран к тому, что реально записал сервер. Нужно, когда отметку
-  // обогнал другой запрос: локальный снимок дня иначе так и показывал бы
-  // несохранённое значение до конца дня.
-  const adoptServerValue = useCallback((taskId: string, value?: number, done?: boolean) => {
-    if (value === undefined && done === undefined) return;
-    setChallenge((prev) => {
-      const task = prev.tasks.find((t) => t.id === taskId);
-      if (!task) return prev;
-      const same = task.kind === 'metric'
-        ? value === undefined || task.current === value
-        : done === undefined || task.done === done;
-      if (same) return prev;
-      const next = {
-        ...prev,
-        tasks: prev.tasks.map((t) => {
-          if (t.id !== taskId) return t;
-          if (t.kind === 'metric' && value !== undefined) return { ...t, current: value };
-          if (t.kind === 'binary' && done !== undefined) return { ...t, done };
-          return t;
-        }),
-      };
-      persist(next);
-      return next;
-    });
-  }, [persist]);
-
-  // ─── Отправка отметок ───────────────────────────────────────────────────────
-  // Правило: по одной задаче в любой момент времени в воздухе НЕ БОЛЕЕ ОДНОГО
-  // запроса.
-  //
-  // Раньше запрос уходил на каждое изменение: нажал «+1» пять раз — ушло пять
-  // запросов. Записывался пришедший последним, а не нажатый последним, и у
-  // человека, отметившего 25 страниц, в зачёт попадало 12. Повторы из очереди
-  // добавляли к этому ещё и старые значения.
-  //
-  // Теперь очередь — единственный источник правды о том, что надо отправить, а
-  // `inFlightRef` не даёт запустить второй запрос по той же задаче. Пока он
-  // летит, новые нажатия просто обновляют значение в очереди; после ответа
-  // отправляется актуальное, если оно успело измениться.
-  const inFlightRef = useRef<Set<string>>(new Set());
-
-  // ── Пауза между повторами ──────────────────────────────────────────────────
-  //
-  // Очередь повторялась ровно каждые двадцать секунд, чем бы ни закончилась
-  // прошлая попытка. Одиннадцатого сентября это обернулось против нас: сервер
-  // перестал отвечать в 22:00, и сто шестьдесят приложений начали долбить его
-  // втрое чаще обычного — сбой сам себя кормил.
-  //
-  // Теперь после каждой неудачи пауза удваивается, а к ней добавляется случайная
-  // добавка. Разброс здесь важнее самой паузы: упали все одновременно, и без
-  // него все одновременно и вернулись бы — тем же залпом, от которого сервер
-  // лёг.
-  const failStreakRef = useRef(0);
-  const retryAfterRef = useRef(0);
-
-  const noteSendResult = useCallback((ok: boolean) => {
-    if (ok) {
-      failStreakRef.current = 0;
-      retryAfterRef.current = 0;
-      return;
-    }
-    failStreakRef.current = Math.min(failStreakRef.current + 1, 5);
-    const base = Math.min(BASE_RETRY_MS * 2 ** (failStreakRef.current - 1), MAX_RETRY_MS);
-    retryAfterRef.current = Date.now() + base + Math.random() * base;
-  }, []);
-
-  const sendTask = useCallback(async (challengeId: string, day: number, taskId: string, rollback?: () => void) => {
-    if (inFlightRef.current.has(taskId)) return; // уже летит — догонит следующим кругом
-    inFlightRef.current.add(taskId);
-    try {
-      // Цикл: отправили — проверили, не изменилось ли значение за это время.
-      for (;;) {
-        const queue = pendingRef.current;
-        if (!queue || queue.id !== challengeId || queue.day !== day) return;
-        const update = queue.updates.find((item) => item.taskId === taskId);
-        if (!update) return; // уже подтверждено
-
-        const token = await getTokenRef.current();
-        const res = await postChallengeProgress(challengeId, update, token);
-
-        if (!res.ok) {
-          if (res.reason === 'deadline_passed') {
-            // День закрыт — оптимистичную запись откатываем, иначе на экране
-            // «сохранено», а сервер этой отметки не знает.
-            dropPending(challengeId, day, taskId);
-            rollback?.();
-            warnDeadlinePassed(challengeId, day, res.deadlineHour);
-          } else if (res.reason === 'left' || res.reason === 'forbidden' || res.reason === 'challenge_not_active') {
-            // Окончательные отказы: человек вышел по белому флагу 🏳️, не
-            // участник или челлендж закончился. Повторять такой запрос по
-            // таймеру бессмысленно — он будет отклонён ровно так же, а очередь
-            // никогда не опустеет. Снимаем и откатываем без предупреждения:
-            // причину экран уже показывает баннером.
-            dropPending(challengeId, day, taskId);
-            rollback?.();
-          }
-          // Отказ по существу — не повод отступать: сервер жив и ответил.
-          // Откат нужен только при сбое связи или пятисотке.
-          noteSendResult(res.status >= 400 && res.status < 500);
-          return; // сеть/сервер — оставляем в очереди, повторим позже
-        }
-        noteSendResult(true);
-
-        // Сервер мог записать не то, что мы прислали: обрезать по потолку или
-        // отбросить нашу запись как опоздавшую. Приводим экран к его правде.
-        adoptServerValue(taskId, res.savedValue, res.savedDone);
-
-        const after = pendingRef.current;
-        if (!after || after.id !== challengeId || after.day !== day) return;
-        const still = after.updates.find((item) => item.taskId === taskId);
-        // Значение не менялось, пока запрос летел, — снимаем из очереди.
-        if (!still || (still.value === update.value && still.done === update.done)) {
-          const remaining = after.updates.filter((item) => item.taskId !== taskId);
-          savePending(remaining.length ? { ...after, updates: remaining } : null);
-          return;
-        }
-        // Изменилось — идём на второй круг и отправляем актуальное.
-      }
-    } catch {
-      // Оставляем в очереди: повтор произойдёт по таймеру, с паузой.
-      noteSendResult(false);
-    } finally {
-      inFlightRef.current.delete(taskId);
-    }
-  }, [adoptServerValue, dropPending, noteSendResult, savePending, warnDeadlinePassed]);
-
-  // Каждое нажатие сохраняется локально и кладётся в очередь, и только потом
-  // уходит в сеть. Неотправленное остаётся в очереди и повторяется, пока
-  // приложение открыто, — отдельного «отчёта за день» человеку слать не нужно.
-  const syncTask = useCallback((challengeId: string, day: number, body: PendingUpdate, rollback?: () => void) => {
-    if (!challengeId || challengeId === DEFAULT_CHALLENGE.id) return;
-    const previous = pendingRef.current;
-    const updates = previous?.id === challengeId && previous.day === day ? previous.updates : [];
-    savePending({
-      id: challengeId,
-      day,
-      updates: [...updates.filter((item) => item.taskId !== body.taskId), body],
-    });
-    void sendTask(challengeId, day, body.taskId, rollback);
-  }, [savePending, sendTask]);
-
-  const flushPending = useCallback(async () => {
-    if (flushingRef.current || !isSignedIn || challenge.id === DEFAULT_CHALLENGE.id) return;
-    const pending = pendingRef.current;
-    if (!pending) return;
-    if (pending.id !== challenge.id || pending.day !== challenge.currentDay) {
-      // Отметки за прошлый день сервер уже не примет (дедлайн). Раньше очередь
-      // просто стиралась, и человек был уверен, что его вчерашний офлайн-ввод
-      // ушёл в зачёт.
-      const stale = pending.id === challenge.id && pending.updates.length > 0;
-      savePending(null);
-      if (stale) warnDeadlinePassed(challenge.id, pending.day);
-      return;
-    }
-    // Ещё не отстоялись после прошлой неудачи — этот заход пропускаем.
-    // Нажатие человека сюда не попадает: оно уходит своим путём, минуя очередь.
-    if (Date.now() < retryAfterRef.current) return;
-    flushingRef.current = true;
-    try {
-      // Берём только СПИСОК ЗАДАЧ, а не их значения: значение `sendTask`
-      // прочитает из очереди в момент отправки. Раньше здесь шёл снимок
-      // очереди, сделанный до начала цикла, — и если человек правил число,
-      // пока повтор летел, на сервер уходило устаревшее.
-      const taskIds = pending.updates.map((u) => u.taskId);
-      // Последовательно, а не Promise.all: параллельные запросы по разным
-      // задачам сервер выдержит, но при слабой связи они мешают друг другу.
-      for (const taskId of taskIds) {
-        await sendTask(challenge.id, challenge.currentDay, taskId);
-      }
-    } finally {
-      flushingRef.current = false;
-    }
-  }, [challenge.id, challenge.currentDay, isSignedIn, sendTask]);
-
-  // Retry failed writes while the app is open.
   useEffect(() => {
-    if (loading || !isSignedIn || challenge.id === DEFAULT_CHALLENGE.id) return;
-    flushPending();
+    if (loading || !isSignedIn) return;
+    void flushPending();
     const timer = setInterval(flushPending, 20_000);
     return () => clearInterval(timer);
-  }, [challenge.id, challenge.currentDay, flushPending, isSignedIn, loading]);
+  }, [flushPending, isSignedIn, loading]);
 
-  // Coming back to the app must show the server's latest day, penalties and
-  // leaderboard. Flush first so a mark made before backgrounding is not lost.
   useEffect(() => {
     if (!isSignedIn) return;
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state !== 'active') return;
-      flushPending().finally(() => refreshLive());
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') flushPending().finally(() => refreshLive());
     });
-    return () => sub.remove();
+    const push = Notifications.addNotificationReceivedListener(() => { void refreshLive(); });
+    return () => { sub.remove(); push.remove(); };
   }, [flushPending, isSignedIn, refreshLive]);
 
-  // At 23:01 Almaty the server closes the day. Refresh at the boundary and a
-  // few times afterwards to tolerate a delayed cron invocation. A lightweight
-  // five-minute refresh also keeps ranks current while the tracker is open.
   useEffect(() => {
-    if (loading || !isSignedIn || challenge.id === DEFAULT_CHALLENGE.id) return;
+    if (loading || !isSignedIn) return;
+    const tick = setInterval(() => setTimeTick(Date.now()), 15_000);
+    const refresh = setInterval(refreshLive, 5 * 60_000);
     const now = Date.now();
     const rolloverAt = nextAlmatyTime(23, 1, now);
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const preCloseDelay = rolloverAt - 10_000 - now;
-    if (preCloseDelay > 0) timers.push(setTimeout(() => { flushPending(); }, preCloseDelay));
-    for (const extraDelay of [5_000, 30_000, 60_000, 120_000, 300_000]) {
-      timers.push(setTimeout(() => {
-        flushPending().finally(() => refreshLive());
-      }, Math.max(0, rolloverAt + extraDelay - now)));
+    if (rolloverAt - 10_000 > now) timers.push(setTimeout(() => { void flushPending(); }, rolloverAt - 10_000 - now));
+    for (const delay of [5_000, 30_000, 60_000, 120_000, 300_000]) {
+      timers.push(setTimeout(() => { flushPending().finally(() => refreshLive()); }, Math.max(0, rolloverAt + delay - now)));
     }
-    const refreshTimer = setInterval(refreshLive, 5 * 60_000);
-    return () => {
-      timers.forEach(clearTimeout);
-      clearInterval(refreshTimer);
-    };
-  }, [challenge.id, challenge.currentDay, flushPending, isSignedIn, loading, refreshLive]);
+    return () => { clearInterval(tick); clearInterval(refresh); timers.forEach(clearTimeout); };
+  }, [loading, isSignedIn, scopeKey, flushPending, refreshLive]);
 
-  // Напоминание «отметьте цели» в 22:00 шлёт СЕРВЕР (lib/challenge-reminder.ts)
-  // — тем же текстом, по реальным отметкам и с защитой от повтора. Локальное
-  // расписание давало участнику второе уведомление через минуту, поэтому его
-  // здесь больше нет: гасим только то, что запланировала прошлая версия.
   useEffect(() => {
     if (Platform.OS === 'web') return;
     let cancelled = false;
@@ -469,63 +212,25 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Откат оптимистичной записи, когда сервер отметку не принял.
-  const revertTask = useCallback((taskId: string, restore: { value?: number; done?: boolean }) => {
-    setChallenge((prev) => {
-      const next = {
-        ...prev,
-        tasks: prev.tasks.map((t) => {
-          if (t.id !== taskId) return t;
-          if (t.kind === 'metric' && restore.value !== undefined) return { ...t, current: restore.value };
-          if (t.kind === 'binary' && restore.done !== undefined) return { ...t, done: restore.done };
-          return t;
-        }),
-      };
-      persist(next);
-      return next;
-    });
-  }, [persist]);
-
-  const setMetric = useCallback((taskId: string, value: number) => {
-    const safe = Math.max(0, value);
-    setChallenge((prev) => {
-      if (marksClosed(prev)) return prev;
-      const before = prev.tasks.find((t) => t.id === taskId);
-      const previousValue = before && before.kind === 'metric' ? before.current : 0;
-      const next = {
-        ...prev,
-        tasks: prev.tasks.map((t) =>
-          t.id === taskId && t.kind === 'metric' ? { ...t, current: safe } : t),
-      };
-      persist(next);
-      syncTask(next.id, next.currentDay, { taskId, value: safe }, () => revertTask(taskId, { value: previousValue }));
-      return next;
-    });
-  }, [persist, revertTask, syncTask]);
-
-  const toggleBinary = useCallback((taskId: string) => {
-    setChallenge((prev) => {
-      if (marksClosed(prev)) return prev;
-      const before = prev.tasks.find((t) => t.id === taskId);
-      const previousDone = before && before.kind === 'binary' ? before.done : false;
-      const next = {
-        ...prev,
-        tasks: prev.tasks.map((t) =>
-          t.id === taskId && t.kind === 'binary' ? { ...t, done: !t.done } : t),
-      };
-      const updated = next.tasks.find((t) => t.id === taskId);
-      const done = updated && updated.kind === 'binary' ? updated.done : undefined;
-      persist(next);
-      if (done !== undefined) {
-        syncTask(next.id, next.currentDay, { taskId, done }, () => revertTask(taskId, { done: previousDone }));
-      }
-      return next;
-    });
-  }, [persist, revertTask, syncTask]);
+  const enqueue = useCallback((owner: typeof userId, challengeId: string, day: number, taskId: string, value?: number) => {
+    if (!owner || ownerRef.current !== owner) return;
+    const current = snapshotRef.current.find(s => s.challenge.id === challengeId)?.challenge;
+    // A stale dialog callback cannot write to a different challenge or a new day.
+    if (!current || current.currentDay !== day || marksClosed(current) || !engineRef.current) return;
+    const task = current.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    if (task.kind === 'metric') {
+      if (value === undefined || !Number.isFinite(value)) return;
+      engineRef.current.enqueue({ challengeId, day, taskId, value: Math.max(0, Math.round(value)), expectedVersion: task.version ?? 0 });
+    } else if (value === undefined) {
+      engineRef.current.enqueue({ challengeId, day, taskId, done: !task.done, expectedVersion: task.version ?? 0 });
+    }
+  }, []);
 
   const value = useMemo<ChallengeState>(() => {
+    const makeState = ({ challenge, members }: Snapshot): ChallengeState => {
     const me = members.find((m) => m.isMe) ?? null;
-    const myEliminated = me?.eliminated === true || challenge.eliminated === true;
+    const myEliminated = me?.eliminated === true || challenge.eliminated === true || me?.left === true || challenge.whiteFlag?.left === true;
     // Коэффициент участника приходит с сервера и умножает ВЕСЬ день — без него
     // участница с ×1.5 весь день видела две трети своих настоящих баллов.
     const myCoefficient = me?.coefficient ?? 1;
@@ -538,9 +243,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     // Eliminated members are already frozen by the server.
     const ranked = members
       .map((m) => {
-        const dayPoints = m.isMe && !m.eliminated ? pointsToday : m.day;
+        const dayPoints = m.isMe && !myEliminated ? pointsToday : m.day;
         const points = m.weekBase + dayPoints;
-        const todayTasks = m.isMe && !m.eliminated
+        const todayTasks = m.isMe && !myEliminated
           ? challenge.tasks.map((task) => {
               const serverTask = m.todayTasks.find((item) => item.id === task.id);
               if (task.kind === 'metric') {
@@ -594,29 +299,39 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       : ranked.reduce((s, m) => s + m.points, 0);
     // Team-wide discipline totals — every member sees the team's 🚩 and штрафы.
     const teamFlags = ranked.reduce((s, m) => s + totalFlags(m.flags), 0);
-    const teamPenalty = ranked.reduce((s, m) => {
-      const explicit = m.penalty ?? 0;
-      return s + (explicit < 0 ? explicit : -100 * totalFlags(m.flags));
-    }, 0);
+    const teamPenalty = sumMemberPenalties(ranked);
 
-    return {
-      challenge, loading, error, isParticipant: challenge.id !== DEFAULT_CHALLENGE.id && members.some((m) => m.isMe),
-      syncPending: pendingCount > 0,
-      dayLocked: isChallengeDayLocked(challenge, timeTick),
-      canMark: challenge.id !== DEFAULT_CHALLENGE.id && !marksClosed(challenge, timeTick),
-      setMetric, toggleBinary, pointsToday, bonusToday,
-      leaderboard: ranked, myRank, teamPoints, teamFlags, teamPenalty,
-      refresh: refreshLive,
+
+      const scopedOperations = outbox && outbox.ownerId === userId ? outbox.operations.filter(o => o.challengeId === challenge.id) : [];
+      return {
+        challenge, loading, error, isParticipant: challenge.id !== DEFAULT_CHALLENGE.id && members.some(m => m.isMe),
+        syncPending: scopedOperations.some(o => !o.blocked),
+        syncError: storageError ? 'storage' : engineRef.current?.issueFor(challenge.id) ?? null,
+        dayLocked: isChallengeDayLocked(challenge, timeTick),
+        canMark: challenge.id !== DEFAULT_CHALLENGE.id && !marksClosed(challenge, timeTick),
+        setMetric: (taskId, amount) => enqueue(userId, challenge.id, challenge.currentDay, taskId, amount),
+        toggleBinary: taskId => enqueue(userId, challenge.id, challenge.currentDay, taskId),
+        pointsToday, bonusToday, leaderboard: ranked, myRank, teamPoints, teamFlags, teamPenalty,
+        refresh: refreshLive,
+      };
     };
-  }, [challenge, members, loading, error, pendingCount, setMetric, timeTick, toggleBinary, refreshLive]);
-
+    const byId = Object.fromEntries(snapshots.map(snapshot => [snapshot.challenge.id, makeState(snapshot)]));
+    const fallback = makeState({ challenge: DEFAULT_CHALLENGE, members: [] });
+    return { ...(snapshots[0] ? byId[snapshots[0].challenge.id] : fallback),
+      activeChallenges: snapshots.map(s => s.challenge), byId };
+  }, [snapshots, loading, error, outbox, storageError, timeTick, userId, enqueue, refreshLive]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-export function useChallenge() {
+export function useChallenge(challengeId?: string) {
   const c = useContext(Ctx);
   if (!c) throw new Error('useChallenge must be used within ChallengeProvider');
-  return c;
+  if (!challengeId || challengeId === c.challenge.id) return c;
+  if (c.byId?.[challengeId]) return c.byId[challengeId];
+  // An unknown/non-member route never borrows the default participant's tracker.
+  return { ...c, challenge: DEFAULT_CHALLENGE, isParticipant: false, canMark: false,
+    leaderboard: [], pointsToday: 0, bonusToday: 0, myRank: 0, teamPoints: 0, teamFlags: 0, teamPenalty: 0,
+    syncPending: false, syncError: null, setMetric: () => {}, toggleBinary: () => {} };
 }
 
 export { taskPoints, taskBonus, taskDone };

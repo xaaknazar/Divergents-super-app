@@ -10,11 +10,16 @@ import { deleteAsync, documentDirectory } from 'expo-file-system/legacy';
 import { clearKeys } from './persist';
 import { resetDownloadsState } from './downloads';
 import { resetAiChatState } from './aiChat';
+import { stopAchievementSession } from '../data/achievementEvents';
+import { stopResumeSync } from './resumeSync';
+import { challengeReadCache, CHALLENGE_READ_CACHE_KEY } from './challengeReadCache';
+import { readingNative } from './readingNative';
 
 // Every user-scoped persisted key in the app. Grep the codebase for "dvg." to
 // keep this in sync when new persisted state is added.
 export // Окно итогов показывается один раз на устройство — отметка личная.
 const USER_DATA_KEYS: string[] = [
+  CHALLENGE_READ_CACHE_KEY,
   'dvg.challengeResultsSeen.v1',
   // LMS
   'dvg.completed',          // CourseContext — chapter completion / progress
@@ -25,6 +30,7 @@ const USER_DATA_KEYS: string[] = [
   'dvg.resume',             // useResume — local resume answers (Talentslab)
   'dvg.resumeComplete',     // наследие обязательного гейта анкеты — чистим, чтобы не осталось мусора
   'dvg.resumePending',      // useResume — failed-submit resend flag
+  'dvg.resumeOutbox.v1',    // account-bound saved questionnaire awaiting sync
   'dvg.talentProfileCache.v1', // last verified Talentslab profile for offline fallback
   'dvg.gallup.order',       // Talentslab — local Gallup priority ordering
   'dvg.blockedAuthors',     // ModerationContext — blocked UGC authors
@@ -52,6 +58,7 @@ const USER_DATA_KEYS: string[] = [
   // Active challenge — today's local values and unsent automatic updates
   'dvg.challengeProgress.v1',
   'dvg.challengeProgressPending.v1',
+  'dvg.challengeProgressOutbox.v2',
   'dvg.challengeReminder.v1',
   'dvg.challengeReport.v1', // legacy manual-report state (pre auto-save)
   // Registration flow (анкета after sign-up) — reset for the next account
@@ -74,6 +81,13 @@ const USER_DATA_DIRS: string[] = [
  * Individual key failures are swallowed by clearKeys.
  */
 export async function clearAllAppData(): Promise<void> {
+  // Release shields offline. The account-bound native journal remains until its server receipt is confirmed.
+  await readingNative.pause().catch(() => {});
+  await challengeReadCache.reset();
+  await stopResumeSync();
+  // Invalidate late responses before the first await; erase only this account.
+  const achievementKey = stopAchievementSession();
+  if (achievementKey) await clearKeys([achievementKey]);
   // Снимаем ВСЕ запланированные локальные уведомления.
   //
   // Напоминания программ тренировок планирует система, а их идентификаторы

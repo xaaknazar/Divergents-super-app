@@ -1,15 +1,18 @@
+import { Wrapper } from '../../components/Wrapper';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useUser } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, LayoutAnimation } from 'react-native';
 import { usePreventRemove } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { PrimaryButton } from '../../components/ui';
+import { Button } from '../../components/ui';
 import { RESUME_STEPS, ResumeField, ResumeStep } from '../../data/resumeSchema';
 import { isFieldMissing } from '../../data/resumeAccess';
 import { isValidPhone } from '../../data/phone';
+import { nicknameError, NICKNAME_TAKEN_MESSAGE } from '../../data/nickname';
+import { checkPublicNickname } from '../../data/nicknameAvailability';
 import { ResumeFieldInput, isTextLikeField } from '../../components/ResumeField';
 import { AssessmentsBlock } from '../../components/AssessmentsBlock';
 import { ProfilePhotoField } from '../../components/ProfilePhotoField';
@@ -39,6 +42,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 function fieldError(field: ResumeField, value: unknown): string | undefined {
   const raw = typeof value === 'string' ? value.trim() : '';
+  if (field.key === 'nickname') return nicknameError(raw) ?? undefined;
   if (field.key === 'email') {
     if (!raw && field.optional) return undefined;
     if (!raw) return 'Заполните это поле';
@@ -70,7 +74,13 @@ export function ResumeFormScreen({ navigation, route }: Props) {
   useLang();
   const insets = useSafeAreaInsets();
   const kbShown = useKeyboardShown();
-  const { answers, mergedAnswers, setField, completeness, submit, submitting, dirty } = useResume();
+  const { answers, mergedAnswers, setField, completeness, submitResult, submitting, dirty } = useResume();
+  const { getToken } = useAuth();
+  const [checkingNickname, setCheckingNickname] = useState(false);
+  const busy = useRef(false);
+  const editRevision = useRef(0);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   // Почта из Clerk подтверждена кодом. Менять её в анкете нельзя: иначе вход и
   // анкета указывают на разных людей, а сервер связывает их именно по почте.
   const { user } = useUser();
@@ -134,20 +144,39 @@ export function ResumeFormScreen({ navigation, route }: Props) {
 
   // Назад — свободно. Вперёд — через ту же проверку, что и «Далее», и не дальше
   // первого незаполненного шага: иначе степпер был бы тихим обходом проверки.
-  const onStepPress = (i: number) => {
+  const validateNickname = async (): Promise<boolean> => {
+    const revision = editRevision.current;
+    const available = await checkPublicNickname(getToken, String(check.nickname ?? ''));
+    if (!mounted.current || revision !== editRevision.current) return false;
+    if (available === false) {
+      go(0, { nickname: NICKNAME_TAKEN_MESSAGE });
+      return false;
+    }
+    // A network failure is not "free". The final save still validates on server.
+    return true;
+  };
+
+  const onStepPress = async (i: number) => {
+    if (busy.current || submitting) return;
     if (i === step) return;
     if (i < step) { go(i); return; }
     if (!validateStep(step)) return;
-    const target = firstIncomplete >= 0 && firstIncomplete < i ? firstIncomplete : i;
-    go(target, target !== i ? stepErrors(RESUME_STEPS[target], check) : {});
+    busy.current = true;
+    setCheckingNickname(true);
+    try {
+      if (step === 0 && !await validateNickname()) return;
+      const target = firstIncomplete >= 0 && firstIncomplete < i ? firstIncomplete : i;
+      go(target, target !== i ? stepErrors(RESUME_STEPS[target], check) : {});
+    } finally { busy.current = false; if (mounted.current) setCheckingNickname(false); }
   };
 
-  const next = () => { if (validateStep(step)) go(step + 1); };
+  const next = () => onStepPress(step + 1);
 
   // onDone — куда уходить после успешного сохранения. По умолчанию просто
   // «назад»; при перехваченном свайпе нужно продолжить именно тот уход, который
   // человек уже начал, поэтому вызывающий передаёт своё продолжение.
   const finish = async (onDone?: () => void) => {
+    if (busy.current || submitting) return;
     // Полнота 100%: не общий Alert, а переход к первому незаполненному шагу с
     // подсветкой его полей.
     if (firstIncomplete >= 0) {
@@ -155,17 +184,26 @@ export function ResumeFormScreen({ navigation, route }: Props) {
       go(firstIncomplete, stepErrors(RESUME_STEPS[firstIncomplete], check));
       return;
     }
-    const ok = await submit();
-    // Truthful messaging: there is no automatic retry/queue. On success the data
-    // is in Talentslab; on failure it stays saved locally and the user can open
-    // the form and tap "Сохранить" again to retry.
-    Alert.alert(
-      ok ? tr('Анкета сохранена') : tr('Сохранено в приложении'),
-      ok
-        ? tr('Данные отправлены в Talentslab.')
-        : tr('Нет связи с Talentslab. Анкета сохранена в приложении — откройте её и нажмите «Сохранить» ещё раз, когда появится связь.'),
-      [{ text: tr('Готово'), onPress: () => (onDone ? onDone() : navigation.goBack()) }],
-    );
+    busy.current = true;
+    setCheckingNickname(true);
+    try {
+      if (!await validateNickname()) return;
+      const result = await submitResult();
+      if (!mounted.current) return;
+      if (!result.ok && result.reason === 'nickname_taken') {
+        go(0, { nickname: NICKNAME_TAKEN_MESSAGE });
+        return; // Do not close the form or suggest this can be fixed by retrying offline.
+      }
+      const ok = result.ok;
+      // Only transient failures are retried automatically; conflicts stay here.
+      Alert.alert(
+        ok ? tr('Анкета сохранена') : tr('Сохранено в приложении'),
+        ok
+          ? tr('Данные отправлены в Talentslab.')
+          : tr('Анкета сохранена в приложении, но синхронизация ещё не завершена. Повторим её автоматически, пока приложение открыто. Если ошибка сохраняется, попробуйте сохранить анкету ещё раз.'),
+        [{ text: tr('Готово'), onPress: () => (onDone ? onDone() : navigation.goBack()) }],
+      );
+    } finally { busy.current = false; if (mounted.current) setCheckingNickname(false); }
   };
 
   // Локально всё уже сохранено; спрашиваем только про то, что не ушло на сервер.
@@ -189,6 +227,8 @@ export function ResumeFormScreen({ navigation, route }: Props) {
   const close = () => navigation.goBack();
 
   const onChangeField = (f: ResumeField, v: any) => {
+    if (submitting) return;
+    editRevision.current += 1;
     setField(f.key, v);
     // Ошибка снимается сразу, как только значение стало годным.
     if (errors[f.key] && !fieldError(f, v)) {
@@ -266,7 +306,7 @@ export function ResumeFormScreen({ navigation, route }: Props) {
                   field={f}
                   value={f.key === 'email' && verifiedEmail ? verifiedEmail : answers[f.key]}
                   onChange={(v) => onChangeField(f, v)}
-                  locked={f.key === 'email' && !!verifiedEmail}
+                  locked={submitting || (f.key === 'email' && !!verifiedEmail)}
                   lockNote={f.key === 'email' && verifiedEmail ? tr('Почта подтверждена при входе — изменить её нельзя.') : undefined}
                   error={errors[f.key] ? tr(errors[f.key]) : undefined}
                   inputRef={textIdx >= 0 ? (r) => { inputRefs.current[f.key] = r; } : undefined}
@@ -289,12 +329,12 @@ export function ResumeFormScreen({ navigation, route }: Props) {
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {step > 0 ? (
-              <PrimaryButton label={tr('Назад')} color="transparent" style={{ flex: 1 }} onPress={() => go(step - 1)} />
+              <Wrapper flex={1}><Button label={tr('Назад')} disabled={checkingNickname || submitting} onPress={() => go(step - 1)} variant="plain" /></Wrapper>
             ) : null}
             {last ? (
-              <PrimaryButton label={tr('Сохранить')} icon="checkmark" loading={submitting} style={{ flex: 2 }} onPress={() => finish()} />
+              <Wrapper flex={2}><Button label={tr('Сохранить')} icon="checkmark" loading={submitting || checkingNickname} onPress={() => finish()} /></Wrapper>
             ) : (
-              <PrimaryButton label={tr('Далее')} icon="arrow.right" style={{ flex: 2 }} onPress={next} />
+              <Wrapper flex={2}><Button label={tr('Далее')} icon="arrow.right" loading={checkingNickname} onPress={next} /></Wrapper>
             )}
           </View>
         </View>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '@clerk/clerk-expo';
 import { Alert } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { CommunityHomeScreen } from '../CommunityHomeScreen';
@@ -17,9 +18,11 @@ jest.mock('../../../state/LanguageContext', () => ({
   useLang: () => ({ t: (key: string) => key }),
   tr: (text: string) => text,
 }));
-jest.mock('../../../state/EnrollmentContext', () => ({
-  useEnrollment: () => ({ ready: true, has: () => false, statusOf: () => undefined }),
-}));
+jest.mock('@react-navigation/native', () => ({ ...jest.requireActual('@react-navigation/native'), useFocusEffect: (cb: any) => require('react').useEffect(cb, [cb]) }));
+jest.mock('../../../state/EnrollmentContext', () => {
+  const refresh = jest.fn();
+  return { useEnrollment: () => ({ ready: true, has: () => false, statusOf: () => undefined, refresh }) };
+});
 jest.mock('../../../state/NotificationsContext', () => ({ useNotifications: () => ({ unread: 0 }) }));
 jest.mock('../../../state/ChannelContext', () => ({
   useChannel: () => ({ channels: [], error: false, reload: jest.fn() }),
@@ -35,6 +38,7 @@ jest.mock('../../../components/Screen', () => ({ Screen: require('react-native')
 jest.mock('../../../components/PageIntro', () => ({ PageIntro: () => null }));
 jest.mock('../../../components/ResumeCallout', () => ({ ResumeCallout: () => null }));
 jest.mock('../../../components/ProfileAvatarButton', () => ({ ProfileAvatarButton: () => null }));
+jest.mock('../../../state/useProfilePhoto', () => ({ useProfilePhoto: () => null }));
 jest.mock('../../../components/SFIcon', () => ({ SF: () => null }));
 jest.mock('../../../components/Logo', () => ({ Logo: () => null }));
 
@@ -67,10 +71,11 @@ function screen(focus?: 'challenge') {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.mocked(useAuth).mockReturnValue({ isSignedIn: true } as ReturnType<typeof useAuth>);
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   mockUseChallenge.mockReturnValue({
     challenge: { ...DEFAULT_CHALLENGE, id: active.id, title: active.title, currentDay: 5 },
-    loading: false, error: false, isParticipant: false, syncPending: false, dayLocked: false, canMark: false,
+    loading: false, error: false, isParticipant: false, syncPending: false, syncError: null, dayLocked: false, canMark: false,
     setMetric: jest.fn(), toggleBinary: jest.fn(), refresh: jest.fn(),
     pointsToday: 10, bonusToday: 0, leaderboard: [], myRank: 1, teamPoints: 100,
     teamFlags: 0, teamPenalty: 0,
@@ -80,22 +85,18 @@ beforeEach(() => {
 
 afterEach(() => { jest.restoreAllMocks(); });
 
-it('shows a running challenge to nonparticipants but explains the access restriction on press', async () => {
+it('opens a running challenge for nonparticipants in the read-only entry flow', async () => {
   const view = await render(screen('challenge'));
 
   expect(view.getByText(active.title)).toBeTruthy();
   expect(view.getByText('Челлендж идёт')).toBeTruthy();
-  expect(view.getByText('Только для участников')).toBeTruthy();
+  expect(view.getByText('Рейтинги доступны для просмотра')).toBeTruthy();
   expect(view.queryByText('Войти в челлендж')).toBeNull();
   expect(view.queryByText('Набор открыт')).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: `${active.title}. Челлендж идёт` }));
 
-  expect(Alert.alert).toHaveBeenCalledWith(
-    'Челлендж уже начался',
-    'Доступ открыт только действующим участникам этого челленджа.',
-    [{ text: 'Понятно' }],
-  );
-  expect(navigate).not.toHaveBeenCalled();
+  expect(Alert.alert).not.toHaveBeenCalled();
+  expect(navigate).toHaveBeenCalledWith('ChallengeDetail', { challengeId: active.id });
 });
 
 it('keeps the participant entry once and does not grant access to another running challenge', async () => {
@@ -110,8 +111,8 @@ it('keeps the participant entry once and does not grant access to another runnin
 
   navigate.mockClear();
   await fireEvent.press(view.getByRole('button', { name: `${otherActive.title}. Челлендж идёт` }));
-  expect(Alert.alert).toHaveBeenCalledTimes(1);
-  expect(navigate).not.toHaveBeenCalled();
+  expect(Alert.alert).not.toHaveBeenCalled();
+  expect(navigate).toHaveBeenCalledWith('ChallengeDetail', { challengeId: otherActive.id });
 });
 
 it('still opens an upcoming challenge for someone who is not a participant', async () => {
@@ -124,13 +125,34 @@ it('still opens an upcoming challenge for someone who is not a participant', asy
   expect(Alert.alert).not.toHaveBeenCalled();
 });
 
-it('keeps running challenges out of a nonparticipant’s home feed', async () => {
+it('shows both running and upcoming challenges in a nonparticipant’s home feed without granting access', async () => {
   setCatalog([active, upcoming]);
   const view = await render(screen());
 
-  expect(view.queryByText(active.title)).toBeNull();
+  expect(view.getByText(active.title)).toBeTruthy();
   expect(view.queryByText('Войти в челлендж')).toBeNull();
   expect(view.getByText(upcoming.title)).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: `${active.title}. Челлендж идёт` }));
+  expect(Alert.alert).not.toHaveBeenCalled();
+  expect(navigate).toHaveBeenCalledWith('ChallengeDetail', { challengeId: active.id });
+});
+
+it.each([undefined, 'challenge'] as const)('shows both approved active trackers and the new recruitment in %s', async focus => {
+  const base = mockUseChallenge();
+  const first = { ...base, isParticipant: true, challenge: { ...base.challenge, id: active.id, title: active.title } };
+  const second = { ...base, isParticipant: true, challenge: { ...base.challenge, id: otherActive.id, title: otherActive.title, currentDay: 2 } };
+  mockUseChallenge.mockImplementation(id => id === otherActive.id ? second : {
+    ...first, activeChallenges: [first.challenge, second.challenge],
+  });
+  setCatalog([active, otherActive, upcoming]);
+  const view = await render(screen(focus));
+  for (const challenge of [active, otherActive, upcoming]) expect(view.getAllByText(challenge.title)).toHaveLength(1);
+  const entries = view.getAllByRole('button', { name: 'Войти в челлендж' });
+  expect(entries).toHaveLength(2);
+  await fireEvent.press(entries[1]);
+  expect(navigate).toHaveBeenLastCalledWith('ChallengeDetail', { challengeId: otherActive.id });
+  await fireEvent.press(view.getByText(upcoming.title));
+  expect(navigate).toHaveBeenLastCalledWith('ChallengeDetail', { challengeId: upcoming.id });
 });
 
 it('waits for participation to load before showing a running challenge as locked', async () => {

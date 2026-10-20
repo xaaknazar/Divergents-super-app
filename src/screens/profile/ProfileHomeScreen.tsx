@@ -1,40 +1,44 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth,useClerk,useUser } from '@clerk/clerk-expo';
+import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Image } from 'expo-image';
+import React,{ useCallback,useEffect,useRef,useState } from 'react';
+import { Alert,Linking,Pressable,ScrollView,Text,View } from 'react-native';
+import { AchievementMedal } from '../../components/AchievementMedal';
+import { ActionBlock } from '../../components/ActionBlock';
+import { ContentBlock } from '../../components/ContentBlock';
+import { GardnerChart } from '../../components/GardnerChart';
+import { IconBadge } from '../../components/IconBadge';
+import { Logo } from '../../components/Logo';
+import { PageIntro } from '../../components/PageIntro';
+import { ProfileSummary } from '../../components/ProfileSummary';
+import { SF } from '../../components/SFIcon';
+import { Screen } from '../../components/Screen';
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
+import { HeaderIcon,NavBarLarge } from '../../components/headers';
+import { ListRow,ListSection } from '../../components/ui';
+import { useAchievements } from '../../data/achievements';
+import { imgUrl } from '../../data/api';
+import { fetchMyShelf,ShelfEntry } from '../../data/books';
+import { fetchCommunityHome,fetchMyChallengeHistory,SportActivity,Trip } from '../../data/community';
+import { applyGallupOrder,effectiveResumeCompleteness,fmtList,GALLUP_DOMAIN_META,loadGallupOrder,mbtiName } from '../../data/talentslab';
+import { ProfileStackParams } from '../../navigation/types';
+import { formatPace,paceTimeSec } from '../../state/ActivityContext';
+import { useCareer } from '../../state/CareerContext';
+import { useChallenge } from '../../state/ChallengeContext';
+import { useCourses } from '../../state/CourseContext';
+import { useEnrollment } from '../../state/EnrollmentContext';
+import { useFitness } from '../../state/FitnessContext';
+import { tr,useLang } from '../../state/LanguageContext';
+import { useModeration } from '../../state/ModerationContext';
+import { useNotifications } from '../../state/NotificationsContext';
+import { onShelfChanged } from '../../state/shelfBus';
+import { deleteAccountAndClear,signOutAndClear } from '../../state/signOut';
+import { useResume } from '../../state/useResume';
+import { useTalentProfile } from '../../state/useTalentProfile';
 import { useTheme } from '../../theme/ThemeContext';
 import { nums } from '../../theme/tokens';
-import { View, Text, ScrollView, Linking, Pressable, Alert } from 'react-native';
-import { Image } from 'expo-image';
-import { Logo } from '../../components/Logo';
-import { LinearGradient } from 'expo-linear-gradient';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
-import { Screen } from '../../components/Screen';
-import { PageIntro } from '../../components/PageIntro';
-import { NavBarLarge, HeaderIcon } from '../../components/headers';
-import { useNotifications } from '../../state/NotificationsContext';
-import { SF } from '../../components/SFIcon';
-import { AwardBadge } from '../../components/AwardBadge';
-import { Capsule, IconCircle, ListSection, ListRow, Segmented } from '../../components/ui';
-import { Ring } from '../../components/talentUI';
-import { GardnerChart } from '../../components/GardnerChart';
-import { fetchMyShelf, ShelfEntry } from '../../data/books';
-import { onShelfChanged } from '../../state/shelfBus';
-import { imgUrl } from '../../data/api';
-import { useChallenge } from '../../state/ChallengeContext';
-import { useEnrollment } from '../../state/EnrollmentContext';
-import { useCourses } from '../../state/CourseContext';
-import { useCareer } from '../../state/CareerContext';
-import { useResume } from '../../state/useResume';
-import { useModeration } from '../../state/ModerationContext';
-import { useLang, tr } from '../../state/LanguageContext';
-import { useTalentProfile } from '../../state/useTalentProfile';
-import { deleteAccountAndClear, signOutAndClear } from '../../state/signOut';
-import { useAchievements } from '../../data/achievements';
-import { useFitness } from '../../state/FitnessContext';
-import { formatPace, paceTimeSec } from '../../state/ActivityContext';
-import { GALLUP_DOMAIN_META, mbtiName, fmtList, effectiveResumeCompleteness, applyGallupOrder, loadGallupOrder } from '../../data/talentslab';
-import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
-import { ProfileStackParams } from '../../navigation/types';
-import { fetchCommunityHome, fetchMyChallengeHistory, SportActivity, Trip } from '../../data/community';
 
 type Props = NativeStackScreenProps<ProfileStackParams, 'ProfileHome'>;
 
@@ -250,69 +254,29 @@ export function ProfileHomeScreen({ navigation }: Props) {
     ['Страны', fmtList(rz?.visited_countries)], ['Книг в год', rz?.books_per_year],
   ]);
   const Sec = (header: string, data: [string, string][]) => data.length === 0 ? null : (
-    <ListSection header={header}>
+    <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={header}>
       {data.map(([l, v], i) => (
-        <ListRow key={l} title={l} detail={v.length > 24 ? undefined : v} subtitle={v.length > 24 ? v : undefined} last={i === data.length - 1} />
+        <ListRow key={l} title={l} detail={v.length > 24 ? undefined : v} subtitle={v.length > 24 ? v : undefined} />
       ))}
-    </ListSection>
+    </ListSection></Wrapper>
   );
 
   return (
     <Screen largeTitle="Профиль" onRefresh={async () => { reloadCourses(); await Promise.all([reload(), loadCommunityActivities(), loadShelf()]); }}>
       <PageIntro page="profile" />
       <NavBarLarge title={t('profile')} trailing={(
-        <HeaderIcon name="bell.fill" color={T.brand} badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
+        <HeaderIcon name="bell.fill" badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
       )} />
 
-      {/* Gradient hero card — tap to edit the anketa (single edit entry) */}
-      <Pressable onPress={editAnketa} accessibilityRole="button" accessibilityLabel="Редактировать анкету"
-        style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 22, borderCurve: 'continuous', overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
-        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
-          {/* Legibility scrim (same as PersonalizeScreen): white copy must stay
-              readable when the user's accent is a pastel, esp. in dark theme. */}
-          <LinearGradient
-            pointerEvents="none"
-            colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.06)']}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-          />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            {photoUrl ? (
-              <Image source={{ uri: photoUrl }} style={{ width: 64, height: 64, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
-            ) : (
-              <View style={{ width: 64, height: 64, borderRadius: 18, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={[ty.title1, { color: T.onBrand }]}>{initial}</Text>
-              </View>
-            )}
-            <View style={{ flex: 1 }}>
-              {/* Награда 🏆 за победу в челлендже — рядом со своим именем.
-                  Её видит и сам человек: награда, которую видно только другим,
-                  наградой не ощущается. */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[ty.title2, { color: T.onBrand, flexShrink: 1 }]} numberOfLines={1}>{name}</Text>
-                {challengeStats.award ? <AwardBadge size={18} /> : null}
-              </View>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]} numberOfLines={1}>
-                {email ?? 'Divergents'}
-              </Text>
-              {profile?.mbtiType ? (
-                <View style={{ marginTop: 8 }}>
-                  <Capsule bg="rgba(255,255,255,0.2)" color={T.onBrand}><SF name="sparkles" size={11} color={T.onBrand} />MBTI · {profile.mbtiName || `${profile.mbtiType} ${mbtiName(profile.mbtiType)}`}</Capsule>
-                </View>
-              ) : null}
-            </View>
-            <Ring value={completeness / 100} size={62} color={T.onBrand} label={`${completeness}%`} sub={t('questionnaire')} textColor={T.onBrand} />
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 14, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.22)' }}>
-            <Text style={[ty.footnoteEm, { color: T.onBrand }]}>Редактировать анкету</Text>
-            <SF name="chevron.right" size={12} color="rgba(255,255,255,0.9)" />
-          </View>
-        </LinearGradient>
-      </Pressable>
+      <Wrapper marginHorizontal={16} marginBottom={14}>
+        <ProfileSummary name={name} email={email} photoUrl={photoUrl} completeness={completeness} award={!!challengeStats.award}
+          talent={profile?.mbtiType ? `MBTI · ${profile.mbtiName || `${profile.mbtiType} ${mbtiName(profile.mbtiType)}`}` : undefined}
+          onEdit={editAnketa} />
+      </Wrapper>
 
       {/* Live challenge — top placement, right after the profile/anketa hero */}
       {challengeActive ? (
-        <ListSection header={t('active_challenge')} style={{ marginBottom: 18 }}>
+        <Wrapper marginTop={6} marginHorizontal={16} marginBottom={18}><ListSection header={t('active_challenge')} >
           <Pressable onPress={goChallenge} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
             <View style={{ width: 30, height: 30, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
               <Logo size={19} body={T.onBrand} head={T.onBrand} />
@@ -323,52 +287,52 @@ export function ProfileHomeScreen({ navigation }: Props) {
             </View>
             <SF name="chevron.forward" size={14} color={T.labelTertiary} />
           </Pressable>
-        </ListSection>
+        </ListSection></Wrapper>
       ) : null}
 
       {(myTrips.length > 0 || mySport.length > 0) ? (
-        <ListSection header={tr('Мои активности')} style={{ marginBottom: 18 }}>
+        <Wrapper marginTop={6} marginHorizontal={16} marginBottom={18}><ListSection header={tr('Мои активности')} >
           {myTrips.map((trip, index) => (
-            <ListRow key={`trip:${trip.id}`} leading={<IconCircle icon="map.fill" color={T.onBrand} bg={T.brand} size={30} />}
+            <ListRow key={`trip:${trip.id}`} leading={<IconBadge icon="map.fill" />}
               title={trip.title} subtitle={`${statusOf(`trip:${trip.id}`) === 'pending' ? tr('Заявка на рассмотрении') : tr('Ваша поездка')}${trip.date ? ` · ${trip.date}` : ''}`}
-              chevron onPress={() => goTrip(trip.id)} last={index === myTrips.length - 1 && mySport.length === 0} />
+              chevron onPress={() => goTrip(trip.id)} />
           ))}
           {mySport.map((activity, index) => (
-            <ListRow key={`sport:${activity.id}`} leading={<IconCircle icon={activity.icon} color="#fff" bg={T.green} size={30} />}
+            <ListRow key={`sport:${activity.id}`} leading={<IconBadge icon={activity.icon} tone="success" />}
               title={activity.title} subtitle={`${tr('Вы записаны')}${activity.date ? ` · ${activity.date}` : ''}`}
-              chevron onPress={goSport} last={index === mySport.length - 1} />
+              chevron onPress={goSport} />
           ))}
-        </ListSection>
+        </ListSection></Wrapper>
       ) : null}
 
       {/* Stat tiles */}
       <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 18 }}>
         {tiles.map((t, i) => (
-          <Pressable key={i} onPress={t.onPress} accessibilityRole="button" accessibilityLabel={tileA11y(t.l, t.v)}
-            style={({ pressed }) => ({ flex: 1, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.7 : 1 })}>
+          <Wrapper flex={1} key={i}><ActionBlock size="compact" onPress={t.onPress} accessibilityRole="button" accessibilityLabel={tileA11y(t.l, t.v)}>
             <SF name={t.icon} size={18} color={t.c} />
             <Text style={[ty.title2, { color: T.label, marginTop: 8 }]} numberOfLines={1}>{t.v}</Text>
             <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={2}>{t.l}</Text>
-          </Pressable>
+          </ActionBlock></Wrapper>
         ))}
       </View>
 
       {/* Achievements */}
-      <ListSection header={`${t('achievements_n')} · ${ach.earned}/${ach.total}`}>
+      <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={`${t('achievements_n')} · ${ach.earned}/${ach.total}`}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
-          {ach.badges.map((b) => (
-            <View key={b.id} accessible accessibilityRole="image"
-              accessibilityLabel={`${b.title} — ${b.earned ? tr('получено') : tr('заблокировано')}`}
-              style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: b.earned ? b.color : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
-              <SF name={b.icon} size={20} color={b.earned ? '#fff' : T.labelTertiary} />
-            </View>
+          {[...ach.badges].sort((a, b) => Number(b.earned) - Number(a.earned) || b.progress - a.progress).slice(0, 4).map((b) => (
+            <Pressable key={b.id} accessibilityRole="button" onPress={() => navigation.navigate('Achievements')}
+              accessibilityLabel={`${b.title} — ${b.earned ? tr('получено') : tr('заблокировано')}. Открыть достижения`}
+              style={({ pressed }) => ({ width: 104, minHeight: 48, alignItems: 'center', gap: 8, paddingVertical: 8, opacity: pressed ? 0.65 : 1 })}>
+              <AchievementMedal b={b} size="regular" />
+              <Text style={[ty.caption1, { color: T.label, textAlign: 'center' }]}>{b.title}</Text>
+            </Pressable>
           ))}
         </ScrollView>
-        <ListRow title={t('view_all_ach')} valueColor={T.brand} chevron last onPress={() => navigation.navigate('Achievements')} />
-      </ListSection>
+        <ListRow title={t('view_all_ach')}  chevron onPress={() => navigation.navigate('Achievements')} />
+      </ListSection></Wrapper>
 
       {/* My books — reading now / read, with a link into the Library */}
-      <ListSection header={tr('Мои книги')} style={{ marginTop: 18 }}>
+      <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={tr('Мои книги')} >
         {reading.slice(0, 2).map((s) => (
           <ListRow key={s.book.id} onPress={() => openBook(s.book.id)}
             leading={s.book.imageUrl
@@ -377,16 +341,16 @@ export function ProfileHomeScreen({ navigation }: Props) {
             title={s.book.title} subtitle={`${tr('Читаю')} · ${s.progress}%`} chevron />
         ))}
         {readBooks.length > 0 ? (
-          <ListRow leading={<IconCircle icon="checkmark.circle.fill" color="#fff" bg={T.green} size={30} />}
+          <ListRow leading={<IconBadge icon="checkmark.circle.fill" tone="success" />}
             title={tr('Прочитано')} detail={String(readBooks.length)} chevron onPress={openLibrary} />
         ) : null}
-        <ListRow leading={<IconCircle icon="book.fill" color={T.onBrand} bg={T.brand} size={30} />}
-          title={tr('Библиотека книг')} chevron last onPress={openLibrary} />
-      </ListSection>
+        <ListRow leading={<IconBadge icon="book.fill" />}
+          title={tr('Библиотека книг')} chevron onPress={openLibrary} />
+      </ListSection></Wrapper>
 
       {/* Strengths snapshot */}
       {(profile?.gallup ?? []).length > 0 ? (
-        <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <Wrapper marginHorizontal={16} marginTop={18}><ContentBlock size="regular">
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <Text style={[ty.title3, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{t('strengths')}</Text>
             {!live ? (
@@ -407,7 +371,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
               );
             })}
           </View>
-        </View>
+        </ContentBlock></Wrapper>
       ) : null}
 
       {/* Gardner — множественный интеллект */}
@@ -421,11 +385,11 @@ export function ProfileHomeScreen({ navigation }: Props) {
       ) : null}
 
       {/* Физические показатели: рекорды из тренировок, цели, свои показатели. */}
-      <ListSection header={tr('Физические показатели')} style={{ marginTop: 18 }}>
+      <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={tr('Физические показатели')} >
         <Pressable onPress={() => navigation.navigate('MyFitness')} accessibilityRole="button" accessibilityLabel={tr('Мои тренировки')}
           style={({ pressed }) => ({ padding: 14, gap: 12, opacity: pressed ? 0.8 : 1 })}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <IconCircle icon="figure.run" color="#fff" bg={T.brand} size={36} />
+            <IconBadge icon="figure.run" size="large" />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Мои тренировки')}</Text>
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
@@ -461,74 +425,74 @@ export function ProfileHomeScreen({ navigation }: Props) {
             </Pressable>
           </View>
         </Pressable>
-      </ListSection>
+      </ListSection></Wrapper>
 
       {coursesInProgress > 0 ? (
-        <ListSection header={t('continue_')} style={{ marginTop: 18 }}>
-          <ListRow leading={<IconCircle icon="book.fill" color={T.onBrand} bg={T.brand} size={30} />} title={t('continue_learning')} subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? t('in_progress_1') : t('in_progress_n')}`} chevron last onPress={goLearning} />
-        </ListSection>
+        <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={t('continue_')} >
+          <ListRow leading={<IconBadge icon="book.fill" />} title={t('continue_learning')} subtitle={`${coursesInProgress} ${coursesInProgress === 1 ? t('in_progress_1') : t('in_progress_n')}`} chevron onPress={goLearning} />
+        </ListSection></Wrapper>
       ) : null}
 
       {/* Anketa — single entry that opens the full Talentslab report */}
-      <ListSection header={tr('Анкета')} style={{ marginTop: 18 }}>
+      <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={tr('Анкета')} >
         <ListRow
-          leading={<IconCircle icon="doc.text.fill" color={T.onBrand} bg={T.brand} size={30} />}
+          leading={<IconBadge icon="doc.text.fill" />}
           title={tr('Открыть свою анкету')}
           subtitle={tr('Полный отчёт: таланты, MBTI, Гарднер')}
-          chevron last
+          chevron
           onPress={() => navigation.navigate('TalentProfile', { origin: 'profile' })}
         />
-      </ListSection>
+      </ListSection></Wrapper>
 
       {/* Reports */}
       {(profile?.reports ?? []).length > 0 ? (
-        <ListSection header={t('reports')}>
+        <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={t('reports')}>
           {profile!.reports.map((r, i) => (
-            <ListRow key={i} onPress={() => Linking.openURL(encodeURI(r.url))} leading={<SF name="doc.fill" size={20} color={T.brand} />} title={r.title} trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />} last={i === profile!.reports.length - 1} />
+            <ListRow key={i} onPress={() => Linking.openURL(encodeURI(r.url))} leading={<SF name="doc.fill" size={20} color={T.brand} />} title={r.title} trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />} />
           ))}
-        </ListSection>
+        </ListSection></Wrapper>
       ) : null}
 
       {myApps.length > 0 ? (
-        <ListSection header={`${t('applications_n')} · ${myApps.length}`}>
+        <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={`${t('applications_n')} · ${myApps.length}`}>
           {myApps.map((j, i) => (
             <ListRow key={j.id} onPress={goCareer}
               leading={<View style={{ width: 36, height: 36, borderRadius: 8, borderCurve: 'continuous', backgroundColor: T.fillQuaternary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.subheadEm, { color: j.color }]}>{j.logo}</Text></View>}
               title={j.title} subtitle={`${j.company} · ${j.city}`}
-              trailing={<Capsule bg="rgba(52,199,89,0.15)" color={T.green}>{t('sent_')}</Capsule>} last={i === myApps.length - 1} />
+              trailing={<StatusBadge label={String((t('sent_')))} tone="success" />} />
           ))}
-        </ListSection>
+        </ListSection></Wrapper>
       ) : null}
 
       {/* Offline downloads — its own section */}
-      <ListSection header={tr('Офлайн')}>
-        <ListRow leading={<IconCircle icon="arrow.down.circle" color={T.onBrand} bg={T.brand} size={30} />}
-          title={tr('Загрузки')} subtitle={tr('Скачанные аудио-уроки и доступные к скачиванию')} chevron last onPress={() => navigation.navigate('Downloads')} />
-      </ListSection>
+      <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Офлайн')}>
+        <ListRow leading={<IconBadge icon="arrow.down.circle" />}
+          title={tr('Загрузки')} subtitle={tr('Скачанные аудио-уроки и доступные к скачиванию')} chevron onPress={() => navigation.navigate('Downloads')} />
+      </ListSection></Wrapper>
 
       {/* Appearance */}
-      <ListSection header={t('appearance')}>
-        <ListRow leading={<IconCircle icon="paintpalette.fill" color={T.onBrand} bg={T.brand} size={30} />}
-          title={t('personalization')} subtitle={t('personalization_sub')} chevron last onPress={() => navigation.navigate('Personalize')} />
+      <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={t('appearance')}>
+        <ListRow leading={<IconBadge icon="paintpalette.fill" />}
+          title={t('personalization')} subtitle={t('personalization_sub')} chevron onPress={() => navigation.navigate('Personalize')} />
         {/* Язык РУС/ENG временно скрыт — английский перевод на паузе */}
-      </ListSection>
+      </ListSection></Wrapper>
 
       {/* Support — write to us on Telegram */}
-      <ListSection header={tr('Поддержка')} footer={tr('Вопросы, ошибки или предложения — напишите нам в Telegram.')}>
-        <ListRow leading={<IconCircle icon="paperplane.fill" color={T.onBrand} bg={T.brand} size={30} />}
-          title={tr('Написать в поддержку')} subtitle="@haaknazar" chevron last
+      <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Поддержка')} footer={tr('Вопросы, ошибки или предложения — напишите нам в Telegram.')}>
+        <ListRow leading={<IconBadge icon="paperplane.fill" />}
+          title={tr('Написать в поддержку')} subtitle="@haaknazar" chevron
           onPress={() => Linking.openURL('https://t.me/haaknazar').catch(() => {})} />
-      </ListSection>
+      </ListSection></Wrapper>
 
       {/* Account — destructive actions live last (iOS Settings convention) */}
-      <ListSection header={t('account')} style={{ marginTop: 18 }}>
-        <ListRow leading={<IconCircle icon="person.crop.circle.fill" color={T.onBrand} bg={T.brand} size={30} />} title={email ?? t('signed_in')} subtitle="Divergents LMS · Talentslab" />
+      <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={t('account')} >
+        <ListRow leading={<IconBadge icon="person.crop.circle.fill" />} title={email ?? t('signed_in')} subtitle="Divergents LMS · Talentslab" />
         {blocked.length > 0 ? (
-          <ListRow leading={<IconCircle icon="hand.raised.fill" color="#fff" bg={T.labelSecondary} size={30} />} title="Заблокированные" detail={String(blocked.length)} chevron onPress={manageBlocked} />
+          <ListRow leading={<IconBadge icon="hand.raised.fill" tone="neutral" />} title="Заблокированные" detail={String(blocked.length)} chevron onPress={manageBlocked} />
         ) : null}
-        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')} valueColor={T.redText} onPress={handleSignOut} />
-        <ListRow leading={<SF name="trash.fill" size={20} color={T.red} />} title="Удалить аккаунт" subtitle="Без возможности восстановления" valueColor={T.redText} last onPress={handleDeleteAccount} />
-      </ListSection>
+        <ListRow leading={<SF name="arrow.right" size={20} color={T.red} />} title={t('signout')}  onPress={handleSignOut} />
+        <ListRow leading={<SF name="trash.fill" size={20} color={T.red} />} title="Удалить аккаунт" subtitle="Без возможности восстановления" onPress={handleDeleteAccount} />
+      </ListSection></Wrapper>
 
       <View style={{ height: 30 }} />
     </Screen>

@@ -1,0 +1,10 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingJoinGuide } from './ReadingJoinGuide';
+const meta = { title: 'Reading/Join guide', component: ReadingJoinGuide, args: { state: 'choose' } } satisfies Meta<typeof ReadingJoinGuide>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Choose: Story = {};
+export const Pending: Story = { args: { state: 'pending', teamName: 'Книжный клуб' } };
+export const BeforeStart: Story = { args: { state: 'approved', teamName: 'Книжный клуб', startLabel: '20 октября' } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };

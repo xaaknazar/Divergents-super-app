@@ -1,4 +1,6 @@
+import { Wrapper } from '../../components/Wrapper';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { captureAchievementRecorder } from '../../data/achievementEvents';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Keyboard, Platform } from 'react-native';
@@ -8,7 +10,7 @@ import { VideoView } from 'expo-video';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { Segmented, PrimaryButton, SecondaryButton } from '../../components/ui';
+import { Segmented, Button } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
@@ -182,7 +184,7 @@ export function VideoScreen({ route, navigation }: Props) {
     };
     return (
       <View style={{ flex: 1, backgroundColor: T.systemBg }}>
-        <NavHeader transparent hideBackLabel onBack={() => navigation.goBack()} />
+        <NavHeader hideBackLabel onBack={() => navigation.goBack()} variant="plain" />
         {chaptersPending ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 }}>
             <ActivityIndicator color={T.brand} />
@@ -198,7 +200,7 @@ export function VideoScreen({ route, navigation }: Props) {
           </View>
           <Text style={[ty.headline, { color: T.label, textAlign: 'center', marginTop: 4 }]} numberOfLines={1}>{tr('Урок недоступен')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Этот урок не найден или ещё не загружен. Вернитесь к курсу и попробуйте снова.')}</Text>
-          <PrimaryButton label={tr('Назад к курсу')} icon="chevron.left" onPress={() => navigation.goBack()} style={{ marginTop: 14, paddingHorizontal: 28, alignSelf: 'center' }} />
+          <Wrapper marginTop={14} alignSelf={'center'}><Button label={tr('Назад к курсу')} icon="chevron.left" onPress={() => navigation.goBack()} size="comfortable" /></Wrapper>
         </View>
         )}
       </View>
@@ -364,7 +366,13 @@ export function VideoScreen({ route, navigation }: Props) {
             attachments.length > 0 ? (
               <View style={{ paddingHorizontal: 16 }}>
                 {attachments.map((a, i) => (
-                  <Pressable key={a.id} onPress={() => Linking.openURL(a.url)}
+                  <Pressable key={a.id} accessibilityRole="button" accessibilityLabel={`Открыть материал: ${a.name}`} onPress={async () => {
+                    const record = captureAchievementRecorder();
+                    try {
+                      await Linking.openURL(a.url);
+                      if (isSignedIn && course.source === 'live') record({ facts: { materialsOpened: [`${courseId}:${a.id}`] } });
+                    } catch { Alert.alert('Не удалось открыть материал', 'Проверьте ссылку и подключение. Попробуйте ещё раз.'); }
+                  }}
                     style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: i < attachments.length - 1 ? 0.5 : 0, borderBottomColor: T.separator, opacity: pressed ? 0.6 : 1 })}>
                     <View style={{ width: 38, height: 38, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="doc.fill" size={18} color={T.brand} />
@@ -457,19 +465,14 @@ export function VideoScreen({ route, navigation }: Props) {
         {keyboardOpen ? null : (
           <View style={{ padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
             {needsPurchase ? (
-              <SecondaryButton label={tr('К программе курса')} icon="chevron.left" onPress={() => navigation.goBack()} />
+              <Button label={tr('К программе курса')} icon="chevron.left" onPress={() => navigation.goBack()} variant="tinted" />
             ) : alreadyDone ? (
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <SecondaryButton label={tr('Урок пройден')} icon="checkmark" disabled style={{ flex: 1 }} />
-                <PrimaryButton
-                  label={nextLesson ? tr('Следующий урок') : tr('К программе курса')}
-                  icon={nextLesson ? 'arrow.right' : 'chevron.left'}
-                  style={{ flex: 1 }}
-                  onPress={goNext}
-                />
+                <Wrapper flex={1}><Button label={tr('Урок пройден')} icon="checkmark" disabled variant="tinted" /></Wrapper>
+                <Wrapper flex={1}><Button label={nextLesson ? tr('Следующий урок') : tr('К программе курса')} icon={nextLesson ? 'arrow.right' : 'chevron.left'} onPress={goNext} /></Wrapper>
               </View>
             ) : (
-              <PrimaryButton label={tr('Завершить урок')} icon="checkmark" onPress={complete} />
+              <Button label={tr('Завершить урок')} icon="checkmark" onPress={complete} />
             )}
           </View>
         )}

@@ -1,3 +1,6 @@
+import { Wrapper } from '../../components/Wrapper';
+import { ActionBlock } from '../../components/ActionBlock';
+import { NavHeader } from '../../components/NavHeader';
 // Fullscreen channels list (pushed from Community → "Все"). A dedicated page so
 // the list isn't cramped inside the tab root.
 import React from 'react';
@@ -6,7 +9,6 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
-import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { useChannel } from '../../state/ChannelContext';
@@ -21,7 +23,7 @@ export function ChannelsScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={tr('Сообщество')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false} refreshControl={undefined}>
         <Text style={[ty.largeTitle, { color: T.label, paddingHorizontal: 4, paddingBottom: 12 }]}>{tr('Каналы')}</Text>
         {loading && channels.length === 0 ? (
@@ -36,9 +38,7 @@ export function ChannelsScreen({ navigation }: Props) {
           const initial = (ch.name?.trim()?.[0] ?? 'K').toUpperCase();
           const secondary = joined && posts[0] ? posts[0].title : (ch.bio?.trim() || '');
           return (
-            <Pressable key={ch.id} onPress={() => navigation.navigate('ServerChannel', { channelId: ch.id })}
-              accessibilityRole="button" accessibilityLabel={`${tr('Канал')} ${ch.name}`}
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.85 : 1 })}>
+            <Wrapper marginBottom={10} key={ch.id}><ActionBlock size="compact" onPress={() => navigation.navigate('ServerChannel', { channelId: ch.id })} accessibilityRole="button" accessibilityLabel={`${tr('Канал')} ${ch.name}`}><Wrapper dir={'row'} align={'center'} gap={14}>
               <View>
                 {ch.avatar ? (
                   <Image source={{ uri: ch.avatar }} style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
@@ -74,7 +74,7 @@ export function ChannelsScreen({ navigation }: Props) {
                   <Text style={[ty.caption2Em, { color: T.brand }]}>{closed ? tr('Запрос') : tr('Открыть')}</Text>
                 </View>
               )}
-            </Pressable>
+            </Wrapper></ActionBlock></Wrapper>
           );
         })}
       </ScrollView>

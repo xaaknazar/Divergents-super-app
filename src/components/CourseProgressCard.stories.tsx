@@ -1,0 +1,12 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { CourseProgressCard } from './CourseProgressCard';
+import { demoDetailCourse } from '../storybook/detailFixtures';
+const meta = { title: 'Liven/Details/CourseProgressCard', component: CourseProgressCard, args: { progress: 0.5, completed: false, lesson: demoDetailCourse.lessons[1], onStart: () => {} },  } satisfies Meta<typeof CourseProgressCard>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Tablet: Story = { parameters: { viewport: 'tablet' } };
+export const Complete: Story = { args: { progress: 1, completed: true } };

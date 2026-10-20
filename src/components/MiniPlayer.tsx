@@ -6,13 +6,13 @@
 // паузу, возврат и крестик: перемотка живёт на самом экране урока или загрузок,
 // а здесь важнее не занимать место.
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
-import { SF } from './SFIcon';
-import { minTouch } from '../theme/tokens';
-import { useAudioPlayer } from '../state/AudioPlayerContext';
+import { Pressable,Text,View } from 'react-native';
 import { navigationRef } from '../navigation/ref';
+import { useAudioPlayer } from '../state/AudioPlayerContext';
 import { tr } from '../state/LanguageContext';
+import { useTheme } from '../theme/ThemeContext';
+import { minTouch } from '../theme/tokens';
+import { SF } from './SFIcon';
 
 /** Куда вернуть человека по тапу: к уроку курса или на экран «Загрузки». */
 function openSource(track: { kind: 'download' | 'lesson'; lessonId: string; courseId?: string }) {

@@ -1,3 +1,7 @@
+import { ActionBlock } from '../../components/ActionBlock';
+import { ContentBlock } from '../../components/ContentBlock';
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Физические показатели: программы на каждый день, рекорды из тренировок,
 // цели, свои показатели и история забегов. Всем можно поделиться карточкой.
 //
@@ -11,15 +15,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { ListSection, ProgressBar, Chip, PrimaryButton, Capsule } from '../../components/ui';
+import { ListSection, ProgressBar, Chip, Button } from '../../components/ui';
 import { RouteThumb } from '../../components/RouteThumb';
 import { hTap, hSuccess, hSelect } from '../../lib/haptics';
 import { tr } from '../../state/LanguageContext';
 import { useActivities, formatDistance, formatDuration, formatPace, paceTimeSec, Workout } from '../../state/ActivityContext';
 import { useFitness } from '../../state/FitnessContext';
+import { useLocalDay } from '../../state/useLocalDay';
+import { ProgramResultContent } from '../../components/ProgramResult';
+import { programHistory, programShareCard } from '../../data/programResults';
 import {
   FitnessGoal, FitnessMetric, FitnessProgram, GoalKind, METRIC_PRESETS, PROGRAM_PRESETS, PROGRAM_DURATIONS,
-  goalProgress, goalValueText, metricBest, metricLast, programStats, ProgramStats,
+  goalProgress, goalValueText, metricBest, metricLast, programStats, ProgramStats, dayKey,
 } from '../../data/fitness';
 import { ProfileStackParams, ShareCard } from '../../navigation/types';
 import * as pl from '../../data/plural';
@@ -43,6 +50,7 @@ const GOAL_KINDS: { kind: GoalKind; label: string; hint: string; unit: string }[
 ];
 
 export function MyFitnessScreen({ navigation }: Props) {
+  const today = useLocalDay();
   const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { workouts } = useActivities();
@@ -63,9 +71,9 @@ export function MyFitnessScreen({ navigation }: Props) {
   const share = (card: ShareCard) => navigation.navigate('WorkoutShare', { card });
 
   // Программы: активные сверху, завершённые ниже.
-  const programRows = useMemo(() => programs.map((p) => ({ p, s: programStats(p) })), [programs]);
+  const programRows = useMemo(() => programs.map((p) => ({ p, s: programStats(p) })), [programs, today]);
   const activePrograms = programRows.filter((r) => !r.s.finished);
-  const finishedPrograms = programRows.filter((r) => r.s.finished);
+  const finishedPrograms = useMemo(() => programHistory(programs), [programs, today]);
   const todayLeft = activePrograms.filter((r) => r.s.dayIndex >= 1 && !r.s.todayDone).length;
 
   const recordCards: { key: string; icon: string; label: string; value: string; sub?: string; color: string; workout?: Workout | null; card: ShareCard }[] = [
@@ -123,7 +131,7 @@ export function MyFitnessScreen({ navigation }: Props) {
             как на странице челленджа. Сплошной цветной блок под белым навбаром
             выглядел приклеенным. */}
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <NavHeader transparent tint="#fff" backLabel={tr('Профиль')} onBack={() => navigation.goBack()} />
+          <NavHeader backLabel={tr('Профиль')} onBack={() => navigation.goBack()} variant="hero" />
           <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 22, position: 'relative' }}>
             <View style={{ position: 'absolute', right: 6, top: -10, opacity: 0.16 }}>
               <SF name="figure.run" size={130} color="#fff" />
@@ -151,24 +159,46 @@ export function MyFitnessScreen({ navigation }: Props) {
 
         {/* Программы */}
         <SectionTitle title={tr('Программы')} action={tr('Новая')} onAction={() => { hTap(); setProgramSheet(true); }} first />
-        {programs.length === 0 ? (
+        {activePrograms.length === 0 ? (
           <Hint
             icon="calendar"
-            title={tr('Каждый день — одно действие')}
+            title={finishedPrograms.length ? 'Новая программа — новый шаг' : tr('Каждый день — одно действие')}
             text={tr('Например, 30 отжиманий каждое утро 21 день. Приложение напомнит в выбранное время, посчитает сделанные и пропущенные дни и серию.')}
             action={tr('Составить программу')}
             onAction={() => setProgramSheet(true)}
           />
         ) : (
           <View style={{ marginHorizontal: 16, gap: 10 }}>
-            {[...activePrograms, ...finishedPrograms].map(({ p, s }) => (
+            {activePrograms.map(({ p, s }) => (
               <ProgramCard key={p.id} p={p} s={s}
                 onOpen={() => setOpenProgram(p.id)}
-                onDone={() => { hSuccess(); logProgram(p.id, p.target); }}
+                onDone={() => {
+                  hSuccess(); logProgram(p.id, p.target);
+                  if (programStats({ ...p, log: { ...p.log, [dayKey(new Date())]: p.target } }).finished) {
+                    navigation.navigate('ProgramResult', { programId: p.id });
+                  }
+                }}
               />
             ))}
           </View>
         )}
+
+        <Pressable accessibilityRole="button" accessibilityLabel={`История программ: ${finishedPrograms.length}`}
+          onPress={() => navigation.navigate('ProgramHistory')}
+          style={({ pressed }) => ({ marginHorizontal: 16, marginTop: 12, padding: 16, minHeight: 64, borderRadius: 20, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.75 : 1 })}>
+          <SF name="clock.arrow.circlepath" size={24} color={T.brandText} />
+          <View style={{ flex: 1 }}>
+            <Text style={[ty.headline, { color: T.label }]}>История программ</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{finishedPrograms.length ? `${pl.count(finishedPrograms.length, 'завершённая программа', 'завершённые программы', 'завершённых программ')} · ваши итоги` : 'Здесь сохранятся результаты и достижения'}</Text>
+          </View>
+          <SF name="chevron.right" size={16} color={T.labelSecondary} />
+        </Pressable>
+        {finishedPrograms[0] ? <Pressable accessibilityRole="button" accessibilityLabel={`Посмотреть итог: ${finishedPrograms[0].p.title}`}
+          onPress={() => navigation.navigate('ProgramResult', { programId: finishedPrograms[0].p.id })}
+          style={({ pressed }) => ({ marginHorizontal: 16, marginTop: 12, padding: 16, minHeight: 64, borderRadius: 20, backgroundColor: T.brandTinted, opacity: pressed ? 0.75 : 1, gap: 4 })}>
+          <Text style={[ty.subheadEm, { color: T.brandText }]}>Последний результат · {finishedPrograms[0].p.title}</Text>
+          <Text style={[ty.subhead, { color: T.label }]}>Норма выполнена: {finishedPrograms[0].s.done} из {finishedPrograms[0].p.days} дней. Посмотреть итоги</Text>
+        </Pressable> : null}
 
         {/* Рекорды */}
         <SectionTitle title={tr('Рекорды')} />
@@ -202,7 +232,7 @@ export function MyFitnessScreen({ navigation }: Props) {
         {goals.length === 0 ? (
           <Hint icon="target" title={tr('Поставьте цель')} text={tr('Пробежать десятку, выйти из 5:00 на километре или подтянуться пятнадцать раз. Прогресс считается сам по тренировкам и показателям.')} action={tr('Добавить цель')} onAction={() => setGoalSheet(true)} />
         ) : (
-          <ListSection>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection>
             {[...activeGoals, ...doneGoals].map((g, i, arr) => {
               const p = goalProgress(g, records, metrics);
               const metric = g.kind === 'metric' ? metrics.find((m) => m.id === g.metricId) : undefined;
@@ -214,7 +244,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <SF name={done ? 'checkmark.seal.fill' : 'target'} size={18} color={done ? T.green : T.brand} />
                     <Text style={[ty.body, { color: T.label, flex: 1 }]} numberOfLines={1}>{g.title}</Text>
-                    {done ? <Capsule bg="rgba(52,199,89,0.16)" color={T.greenText}>{tr('достигнута')}</Capsule> : null}
+                    {done ? <StatusBadge label={String((tr('достигнута')))} tone="success" /> : null}
                     <Pressable onPress={() => share({
                       title: done ? 'Цель достигнута' : 'Моя цель',
                       stats: [{ l: g.title, v: goalValueText(g.kind, g.target, unit) }, ...(done ? [] : [{ l: 'Сейчас', v: goalValueText(g.kind, p.current, unit) }])],
@@ -222,7 +252,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                       <SF name="square.and.arrow.up" size={15} color={T.labelTertiary} />
                     </Pressable>
                   </View>
-                  <ProgressBar value={done ? 1 : p.ratio} color={done ? T.green : T.brand} height={6} accessibilityLabel={g.title} />
+                  <ProgressBar value={done ? 1 : p.ratio} tone={done ? 'success' : 'brand'} size="prominent" accessibilityLabel={g.title} />
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('сейчас')} {goalValueText(g.kind, p.current, unit)}</Text>
                     <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('цель')} {goalValueText(g.kind, g.target, unit)}</Text>
@@ -230,7 +260,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                 </Pressable>
               );
             })}
-          </ListSection>
+          </ListSection></Wrapper>
         )}
 
         {/* Свои показатели */}
@@ -238,7 +268,7 @@ export function MyFitnessScreen({ navigation }: Props) {
         {metrics.length === 0 ? (
           <Hint icon="dumbbell" title={tr('Личные рекорды')} text={tr('Турник, отжимания, планка, вес — всё, что хочется отслеживать. Записывайте результат, рекорд считается сам.')} action={tr('Добавить показатель')} onAction={() => setMetricSheet(true)} />
         ) : (
-          <ListSection>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection>
             {metrics.map((m, i) => {
               const best = metricBest(m);
               const last = metricLast(m);
@@ -282,7 +312,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                 </View>
               );
             })}
-          </ListSection>
+          </ListSection></Wrapper>
         )}
 
         {/* Последние забеги */}
@@ -290,7 +320,7 @@ export function MyFitnessScreen({ navigation }: Props) {
         {recent.length === 0 ? (
           <Hint icon="figure.run" title={tr('Первая пробежка')} text={tr('Нажмите «Записать бег» — маршрут, темп и время сохранятся здесь.')} action={tr('Записать')} onAction={() => navigation.navigate('WorkoutTrack')} />
         ) : (
-          <ListSection>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection>
             {recent.map((w, i) => (
               <Pressable key={w.id} onPress={() => navigation.navigate('WorkoutDetail', { workoutId: w.id })} accessibilityRole="button"
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16, borderBottomWidth: i < recent.length - 1 ? 0.5 : 0, borderBottomColor: T.separator, opacity: pressed ? 0.7 : 1 })}>
@@ -304,7 +334,7 @@ export function MyFitnessScreen({ navigation }: Props) {
                 <SF name="chevron.right" size={13} color={T.labelTertiary} />
               </Pressable>
             ))}
-          </ListSection>
+          </ListSection></Wrapper>
         )}
       </ScrollView>
 
@@ -318,10 +348,8 @@ export function MyFitnessScreen({ navigation }: Props) {
         onShare={() => {
           if (!opened) return;
           const { p, s } = opened;
-          share({
-            title: s.finished ? 'Программа пройдена' : 'Моя программа',
-            stats: [{ l: `${p.title} · каждый день`, v: `${p.target} ${p.unit}` }, { l: 'Дней сделано', v: `${s.done} из ${p.days}` }, { l: 'Серия', v: pl.days(s.streak) }],
-          });
+          setOpenProgram(null);
+          share(programShareCard(p, s));
         }}
       />
       <GoalSheet visible={goalSheet} onClose={() => setGoalSheet(false)} metrics={metrics} onAdd={(g) => { addGoal(g); hSuccess(); setGoalSheet(false); }} />
@@ -338,8 +366,7 @@ function ProgramCard({ p, s, onOpen, onDone }: { p: FitnessProgram; s: ProgramSt
   const notStarted = s.dayIndex < 1;
   const ratio = p.days > 0 ? s.done / p.days : 0;
   return (
-    <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={p.title}
-      style={({ pressed }) => ({ backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 14, borderWidth: 0.5, borderColor: T.cardBorder, opacity: pressed ? 0.85 : 1, gap: 10 })}>
+    <ActionBlock size="compact" onPress={onOpen} accessibilityRole="button" accessibilityLabel={p.title}><Wrapper gap={10}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ width: 40, height: 40, borderRadius: 20, borderCurve: 'continuous', backgroundColor: s.finished ? 'rgba(52,199,89,0.16)' : T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
           <SF name={s.finished ? 'checkmark.seal.fill' : 'flame.fill'} size={19} color={s.finished ? T.green : T.brand} />
@@ -353,10 +380,10 @@ function ProgramCard({ p, s, onOpen, onDone }: { p: FitnessProgram; s: ProgramSt
         </View>
         {!s.finished && !notStarted ? (
           s.todayDone ? (
-            <Capsule bg="rgba(52,199,89,0.16)" color={T.greenText}>{tr('сегодня ✓')}</Capsule>
+            <StatusBadge label={String((tr('сегодня ✓')))} tone="success" />
           ) : (
             <Pressable onPress={onDone} accessibilityRole="button" accessibilityLabel={`${tr('Сделал')}: ${p.title}`}
-              style={({ pressed }) => ({ minHeight: 38, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
               <SF name="checkmark" size={14} color={T.onBrand} />
               <Text style={[ty.subheadEm, { color: T.onBrand }]}>{tr('Сделал')}</Text>
             </Pressable>
@@ -379,7 +406,7 @@ function ProgramCard({ p, s, onOpen, onDone }: { p: FitnessProgram; s: ProgramSt
         <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('сделано')} {s.done} · {tr('пропущено')} <Text style={{ color: s.missed ? T.redText : T.labelSecondary }}>{s.missed}</Text></Text>
         <Text style={[ty.caption1, { color: T.labelSecondary }]}>{s.streak > 0 ? `🔥 ${pl.days(s.streak)} ${tr('подряд')}` : `${Math.round(ratio * 100)}%`}</Text>
       </View>
-    </Pressable>
+    </Wrapper></ActionBlock>
   );
 }
 
@@ -405,9 +432,16 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
 
   const submit = () => {
     const n = Number(draft.replace(',', '.'));
-    if (!Number.isFinite(n) || n < 0) { Alert.alert(tr('Введите число')); return; }
+    if (!draft.trim() || !Number.isFinite(n) || n < 0) { Alert.alert(tr('Введите число')); return; }
     onLog(n); setDraft(''); hSuccess();
   };
+
+  if (s.finished) return (
+    <Sheet visible title="Итоги программы" onClose={onClose}>
+      <ProgramResultContent program={p} stats={s} />
+      <Button label="Поделиться результатом" icon="square.and.arrow.up" onPress={onShare} />
+    </Sheet>
+  );
 
   return (
     <Sheet visible title={`${p.title} · ${p.target} ${p.unit}`} onClose={onClose}
@@ -418,7 +452,7 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
       </Text>
 
       {/* Сетка дней */}
-      <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+      <ContentBlock size="compact">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {s.grid.map((g) => {
             const c = color(g.state);
@@ -437,11 +471,11 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
             </View>
           ))}
         </View>
-      </View>
+      </ContentBlock>
 
       {/* Сегодня */}
       {!s.finished && s.dayIndex >= 1 ? (
-        <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, gap: 10, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <ContentBlock size="compact"><Wrapper gap={10}>
           <Text style={[ty.subheadEm, { color: T.label }]}>{tr('Сегодня')}: {s.todayValue} / {p.target} {p.unit}{s.todayDone ? ' ✓' : ''}</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TextInput value={draft} onChangeText={setDraft} placeholder={String(p.target)} placeholderTextColor={T.labelTertiary} keyboardType="decimal-pad" accessibilityLabel={tr('Сколько сделали')}
@@ -455,12 +489,12 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
               </Pressable>
             ) : null}
           </View>
-        </View>
+        </Wrapper></ContentBlock>
       ) : null}
 
       {/* Напоминание */}
       {!s.finished ? (
-        <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, gap: 10, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <ContentBlock size="compact"><Wrapper gap={10}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <SF name="bell.fill" size={15} color={T.brand} />
             <Text style={[ty.subheadEm, { color: T.label, flex: 1 }]}>{tr('Напоминание')}</Text>
@@ -473,10 +507,10 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
             })}
             <Chip label={tr('Выкл.')} active={!p.remindAt} onPress={() => { hSelect(); onRemind(null); }} />
           </View>
-        </View>
+        </Wrapper></ContentBlock>
       ) : null}
 
-      <PrimaryButton label={tr('Поделиться')} icon="square.and.arrow.up" onPress={onShare} />
+      <Button label={tr('Поделиться')} icon="square.and.arrow.up" onPress={onShare} />
     </Sheet>
   );
 }
@@ -526,7 +560,7 @@ function ProgramSheet({ visible, onClose, onAdd }: { visible: boolean; onClose: 
           <Chip label={tr('Без напоминания')} active={!remind} onPress={() => setRemind(null)} />
         </View>
       </View>
-      <PrimaryButton label={tr('Начать с сегодня')} icon="flame.fill" onPress={submit} />
+      <Button label={tr('Начать с сегодня')} icon="flame.fill" onPress={submit} />
     </Sheet>
   );
 }
@@ -551,7 +585,7 @@ function SectionTitle({ title, action, onAction, first }: { title: string; actio
 function Hint({ icon, title, text, action, onAction }: { icon: string; title: string; text: string; action?: string; onAction?: () => void }) {
   const { T, ty } = useTheme();
   return (
-    <View style={{ marginHorizontal: 16, padding: 16, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, gap: 10 }}>
+    <Wrapper marginHorizontal={16}><ContentBlock size="regular"><Wrapper gap={10}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 34, height: 34, borderRadius: 17, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
           <SF name={icon} size={16} color={T.brand} />
@@ -564,7 +598,7 @@ function Hint({ icon, title, text, action, onAction }: { icon: string; title: st
           <Text style={[ty.subheadEm, { color: T.onBrand }]}>{action}</Text>
         </Pressable>
       ) : null}
-    </View>
+    </Wrapper></ContentBlock></Wrapper>
   );
 }
 
@@ -596,13 +630,17 @@ function Sheet({ visible, title, onClose, children, trailing }: { visible: boole
           {/* Затемнение — слоем ПОД шторкой, а не её родителем: Pressable вокруг
               прокручиваемого содержимого забирает жест себе, и список внутри
               перестаёт крутиться. */}
-          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={tr('Закрыть')}
+          <Pressable onPress={onClose} accessible={false} importantForAccessibility="no"
             style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
           <View style={{ backgroundColor: T.groupedBg, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderCurve: 'continuous', paddingBottom: insets.bottom + 12, maxHeight: sheetMax }}>
             <View style={{ alignItems: 'center', paddingTop: 10 }}><View style={{ width: 38, height: 4, borderRadius: 2, borderCurve: 'continuous', backgroundColor: T.fillTertiary }} /></View>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, gap: 12 }}>
               <Text style={[ty.title3, { color: T.label, flex: 1 }]} numberOfLines={1}>{title}</Text>
               {trailing}
+              <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={tr('Закрыть')}
+                style={({ pressed }) => ({ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 24, backgroundColor: T.fillTertiary, opacity: pressed ? 0.7 : 1 })}>
+                <SF name="xmark" size={18} color={T.labelSecondary} />
+              </Pressable>
             </View>
             <ScrollView contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 8 }} keyboardShouldPersistTaps="handled" style={{ maxHeight: listMax }}>{children}</ScrollView>
           </View>
@@ -671,7 +709,7 @@ function GoalSheet({ visible, onClose, metrics, onAdd }: { visible: boolean; onC
           : <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{metrics.map((m) => <Chip key={m.id} label={m.name} active={metric?.id === m.id} onPress={() => setMetricId(m.id)} />)}</View>
       ) : null}
       <Field label={`${spec.hint}${kind === 'metric' && metric ? ` (${metric.unit})` : spec.unit ? ` (${spec.unit})` : ''}`} value={value} onChange={setValue} placeholder={kind === 'run_pace' ? '5:30' : '10'} keyboard={kind === 'run_pace' ? 'numbers-and-punctuation' : 'decimal-pad'} />
-      <PrimaryButton label={tr('Поставить цель')} icon="target" onPress={submit} />
+      <Button label={tr('Поставить цель')} icon="target" onPress={submit} />
     </Sheet>
   );
 }
@@ -702,7 +740,7 @@ function MetricSheet({ visible, onClose, onAdd }: { visible: boolean; onClose: (
           <Chip label={tr('Меньше — лучше')} active={direction === 'min'} onPress={() => setDirection('min')} />
         </View>
       </View>
-      <PrimaryButton label={tr('Добавить')} icon="plus" onPress={submit} />
+      <Button label={tr('Добавить')} icon="plus" onPress={submit} />
     </Sheet>
   );
 }
@@ -721,7 +759,7 @@ function LogSheet({ metric, onClose, onLog }: { metric: FitnessMetric | null; on
     <Sheet visible={!!metric} title={metric ? `${tr('Записать')}: ${metric.name}` : ''} onClose={onClose}>
       {best != null ? <Text style={[ty.caption1, { color: T.labelSecondary }]}>{tr('Текущий рекорд')}: {best} {metric?.unit}</Text> : null}
       <Field label={`${tr('Результат')} (${metric?.unit ?? ''})`} value={value} onChange={setValue} placeholder="12" keyboard="decimal-pad" />
-      <PrimaryButton label={tr('Сохранить')} icon="checkmark" onPress={submit} />
+      <Button label={tr('Сохранить')} icon="checkmark" onPress={submit} />
     </Sheet>
   );
 }

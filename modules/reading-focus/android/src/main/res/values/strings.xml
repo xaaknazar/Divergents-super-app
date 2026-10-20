@@ -1,0 +1,4 @@
+<resources>
+  <string name="reading_focus_accessibility_description">Divergents определяет только название открытого приложения, чтобы закрыть доступ к выбранным вами приложениям во время чтения. Содержимое экрана, сообщения и вводимый текст не читаются и не отправляются. Разрешение можно отключить в настройках.</string>
+  <string name="reading_focus_label">Divergents · чтение без отвлечений</string>
+</resources>

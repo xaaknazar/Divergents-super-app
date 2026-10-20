@@ -1,3 +1,5 @@
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 import React, { useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
@@ -8,8 +10,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF, SFName } from '../../components/SFIcon';
-import { Capsule, PrimaryButton, Segmented, ProgressBar } from '../../components/ui';
-import { Ring } from '../../components/talentUI';
+import { Button, Segmented, ProgressBar } from '../../components/ui';
+import { ProgressRing } from '../../components/ProgressRing';
 import { ACCENTS, BACKGROUNDS, hexToRgba } from '../../theme/personalization';
 import { TEXT_SIZES } from '../../theme/tokens';
 import { hSelect, hSuccess } from '../../lib/haptics';
@@ -126,10 +128,7 @@ export function PersonalizeScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader
-        backLabel={tr('Профиль')}
-        onBack={() => navigation.goBack()}
-        trailing={!isDefault ? (
+      <NavHeader backLabel={tr('Профиль')} onBack={() => navigation.goBack()} trailing={!isDefault ? (
           <Pressable
             onPress={resetAll}
             hitSlop={8}
@@ -140,9 +139,9 @@ export function PersonalizeScreen({ navigation }: Props) {
             <SF name="arrow.counterclockwise" size={14} color={T.brandText} />
             <Text style={[ty.body, { color: T.brandText }]}>{tr('Сбросить')}</Text>
           </Pressable>
-        ) : undefined}
-      />
-      <Screen tabPadding={false} topInset={false} contentStyle={{ paddingBottom: 44 }}>
+        ) : undefined} />
+      <Screen tabPadding={false} topInset={false} bottomInset={false}>
+        <Wrapper paddingBottom={44}>
         <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
           <Text style={[ty.largeTitle, { color: T.label }]}>{tr('Персонализация')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Настройте тему, акцент и размер под себя')}</Text>
@@ -171,10 +170,10 @@ export function PersonalizeScreen({ navigation }: Props) {
                 <Text style={[ty.title3, { color: '#fff', textShadowColor: 'rgba(0,0,0,0.22)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={1}>{name}</Text>
                 <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.95)', marginTop: 2, textShadowColor: 'rgba(0,0,0,0.18)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }]} numberOfLines={1}>{tr('Так выглядит ваша тема')}</Text>
                 <View style={{ flexDirection: 'row', gap: 6, marginTop: 9 }}>
-                  <Capsule bg="rgba(255,255,255,0.22)" color="#fff"><SF name="sparkles" size={11} color="#fff" />{accObj.name}</Capsule>
+                  <StatusBadge label={String((accObj.name))} tone="inverse" icon="sparkles" />
                 </View>
               </View>
-              <Ring value={Math.max(0, Math.min(1, completeness / 100))} size={58} color="#fff" label={`${completeness}%`} textColor="#fff" />
+              <ProgressRing value={Math.max(0, Math.min(1, completeness / 100))} size="compact" tone="inverse" label={`${completeness}%`} accessibilityLabel="Заполнение анкеты" />
             </View>
           </LinearGradient>
 
@@ -189,10 +188,10 @@ export function PersonalizeScreen({ navigation }: Props) {
                 <Text style={[ty.footnote, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Размер меняется по всему приложению')}</Text>
               </View>
             </View>
-            <ProgressBar value={0.72} color={T.brand} height={6} />
+            <ProgressBar value={0.72} size="prominent" />
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginTop: 14 }}>
               <View style={{ flex: 1 }}>
-                <PrimaryButton label={tr('Кнопка')} icon="checkmark" onPress={() => {}} style={{ height: 44 }} />
+                <Button label={tr('Кнопка')} icon="checkmark" onPress={() => {}} size="compact" />
               </View>
               <View style={{ paddingVertical: 10, paddingHorizontal: 15, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
                 <Text style={[ty.footnoteEm, { color: T.brand }]}>{tr('Чип')}</Text>
@@ -297,6 +296,7 @@ export function PersonalizeScreen({ navigation }: Props) {
             ? 'Настройки сохраняются на этом устройстве и применяются ко всему приложению.'
             : 'Settings are saved on this device and applied across the whole app.'}
         </Text>
+        </Wrapper>
       </Screen>
     </View>
   );
