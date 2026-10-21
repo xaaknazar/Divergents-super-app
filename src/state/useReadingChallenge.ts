@@ -343,8 +343,9 @@ export function useReadingChallenge(challengeId: string) {
       if (!queued.ok) throw new Error('Не удалось проверить сохранённые действия. Повторите попытку.');
       if (hasPendingReadingClose(queued.value, account, local.sessionId))
         throw new Error('Этот подход уже завершён. Дождитесь сохранения страниц перед новым чтением.');
-      // Индивидуальные правила: после паузы подход можно закрыть и до часа — норма добирается следующими подходами.
-      if (action === 'finish' && local.terminal !== true && !isSoftPause(local)) {
+      // A soft pause is not a shortcut around the daily hour. Forced terminal
+      // journals (deadline/interruption) still retain their partial evidence.
+      if (action === 'finish' && local.terminal !== true) {
         const remaining = await localRemaining(local);
         if (!controlCurrent()) return;
         if (targetRemaining(dataRef.current, local, remaining) > 0) throw new Error('До 60 минут можно поставить паузу и продолжить чтение позже.');
@@ -384,7 +385,7 @@ export function useReadingChallenge(challengeId: string) {
     await queue.enqueue({ action: 'report', operationId: await readingOperationId(sessionId, 'report'), challengeId, sessionId, pages, ...(nextPage !== undefined ? { nextPage } : {}) });
     await synchronize();
   });
-  /** Страницы после паузы: мягкую паузу сначала закрываем на телефоне (finish), затем отправляем страницы.
+  /** Страницы после дневной цели: паузу сначала закрываем на телефоне (finish), затем отправляем страницы.
    * Если закрыть не удалось, ошибка уже показана и страницы не уходят. */
   const saveApproach = async (pages: number, nextPage?: number) => {
     const local = await readingNative.snapshot();
@@ -474,7 +475,5 @@ export function useReadingChallenge(challengeId: string) {
     }),
     // Индивидуальный зачёт: согласие с правилами — и человек сразу участник, без команды и модерации.
     join: () => command({ action: 'join', challengeId, acceptRules: true }),
-    review: (memberId: string, decision: 'approved' | 'rejected') => command({ action: 'review', challengeId, memberId, decision }),
-    resolve: (userId: string, day: number, decision: 'accept' | 'reject', reason: string) => command({ action: 'resolve', challengeId, userId, day, decision, reason }),
   };
 }

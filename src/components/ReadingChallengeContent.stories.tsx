@@ -32,18 +32,17 @@ export const StartReady: Story = { args: { data: fresh, remainingMs: 3_600_000 }
 export const Running: Story = { args: { timerState: 'running', data: { ...individualReadingFixture, session } }, parameters: { reduceMotion: false } };
 export const Overtime: Story = { args: { timerState: 'running', remainingMs: -754000, data: { ...individualReadingFixture, session,
   me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'complete', pages: 30, elapsedMs: 61 * 60000 }] } } }, parameters: { scheme: 'dark' } };
-/** Пауза: «Возобновить» и страницы за подход остаются под таймером, перед текущей книгой. */
-export const PausedPages: Story = { args: { timerState: 'paused', resumableSession: true, canResume: true, onResume: noop,
+/** До часа пауза только останавливает время; страницы доступны после дневной цели. */
+export const PausedBeforeGoal: Story = { args: { timerState: 'paused', resumableSession: true, canResume: true, onResume: noop,
   data: { ...individualReadingFixture, session } } };
+export const PausedPages: Story = { args: { timerState: 'paused', remainingMs: 0, resumableSession: true, canResume: true, onResume: noop,
+  data: { ...individualReadingFixture, session: { ...session, elapsedMs: 3_600_000 } } } };
 export const Saving: Story = { args: { timerState: 'paused', awaitingPages: true, busy: true, data: { ...individualReadingFixture, session: { ...session, status: 'awaiting_pages' as const } } } };
 /** После первого подхода: «Возобновить» и статус сохранения. */
 export const ResumeAfterApproach: Story = {};
 export const GoalDone: Story = { args: { timerState: 'complete', remainingMs: 0, data: { ...individualReadingFixture,
   me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'complete', pages: 40, elapsedMs: 72 * 60000 }] } } } };
-/** Проверка результата: статус под таймером, книга ниже; рейтинг остаётся перед историей. */
-export const Review: Story = { args: { data: { ...individualReadingFixture,
-  me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'review', pages: 10, elapsedMs: 20 * 60000 }] } } } };
-export const Qualifying: Story = { args: { data: { ...individualReadingFixture, me: { ...individualReadingFixture.ranking[3], userId: 'demo-reader' }, ranking: individualReadingFixture.ranking.map(m => m.userId === 'r4' ? { ...m, userId: 'demo-reader' } : m.userId === 'demo-reader' ? { ...m, userId: 'other' } : m) } } };
+export const FirstDayRanked: Story = { args: { data: { ...individualReadingFixture, me: { ...individualReadingFixture.ranking[3], userId: 'demo-reader' }, ranking: individualReadingFixture.ranking.map(m => m.userId === 'r4' ? { ...m, userId: 'demo-reader' } : m.userId === 'demo-reader' ? { ...m, userId: 'other' } : m) } } };
 export const Permission: Story = { args: { protection: 'permission' } };
 export const Unsupported: Story = { args: { protection: 'unavailable' } };
 export const Recovery: Story = { args: { needsRecovery: true, timerState: 'paused' } };

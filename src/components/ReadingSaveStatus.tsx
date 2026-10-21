@@ -5,9 +5,9 @@ import { radius } from '../theme/tokens';
 import { SF } from './SFIcon';
 
 /** Статус сохранения подхода без ложного успеха. saved — только после ответа сервера;
- * pending — записано на телефоне; retry — сервер не ответил; review — на проверке, не пропуск. */
+ * pending — записано на телефоне; retry — сервер не ответил. */
 export function ReadingSaveStatus({ state, detail, onRetry }: {
-  state: 'saved' | 'pending' | 'retry' | 'review';
+  state: 'saved' | 'pending' | 'retry';
   /** Вторая строка вместо стандартной (например, «24 мин · 15 страниц · подтверждено в 12:41»). */
   detail?: string;
   onRetry?: () => void;
@@ -17,7 +17,6 @@ export function ReadingSaveStatus({ state, detail, onRetry }: {
     saved: { title: 'Подход сохранён', text: 'Время и страницы подтверждены сервером', icon: 'checkmark.circle.fill', ink: T.greenText, bg: T.emeraldBadgeBg },
     pending: { title: 'Записано на телефоне', text: 'Ещё не в статистике — отправим автоматически', icon: 'clock.fill', ink: T.labelSecondary, bg: T.brandTinted },
     retry: { title: 'Сервер не ответил', text: 'Подход не потерян. Можно повторить безопасно', icon: 'exclamationmark.bubble', ink: T.orangeText, bg: 'rgba(255,149,0,0.14)' },
-    review: { title: 'Результат на проверке', text: 'Это не пропуск и не штраф — ответим после проверки', icon: 'eye.fill', ink: T.brandText, bg: T.brandTinted },
   }[state];
   return <View accessibilityLiveRegion="polite" style={[styles.box, { backgroundColor: S.bg }]}>
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name={S.icon} size={20} color={S.ink} /></View>

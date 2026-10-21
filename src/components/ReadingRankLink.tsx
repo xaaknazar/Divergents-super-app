@@ -6,18 +6,13 @@ import { nums } from '../theme/tokens';
 import { SF } from './SFIcon';
 import { TappableSurface } from './TappableSurface';
 
-/** «Мой рейтинг · 31 место из 48 участников ›». Вся карточка открывает «Рейтинг участников».
- * Без места — причина: «До участия в рейтинге — N дней» или «Результат на проверке». */
-export function ReadingRankLink({ place, participants, waitReason, review = false, onPress }: {
+/** «Мой рейтинг · 31 место из 48 участников ›». Вся карточка открывает «Рейтинг участников». */
+export function ReadingRankLink({ place, participants, onPress }: {
   place: number | null; participants: number;
-  /** Текст причины, если места нет. */
-  waitReason?: string;
-  /** Причина — проверка результата (оранжевый текст). */
-  review?: boolean;
   onPress: () => void;
 }) {
   const { T, ty } = useTheme();
-  const main = place != null ? `${place} место из ${participantsOf(participants)}` : waitReason ?? 'Место пока не определено';
+  const main = place != null ? `${place} место из ${participantsOf(participants)}` : 'Открыть рейтинг участников';
   return <TappableSurface onPress={onPress} accessibilityLabel={`Мой рейтинг. ${main}`} accessibilityHint="Открыть рейтинг участников">
     <View style={styles.row}>
       <View style={[styles.badge, { backgroundColor: T.brandTinted }]}>
@@ -26,7 +21,7 @@ export function ReadingRankLink({ place, participants, waitReason, review = fals
       </View>
       <View style={styles.copy}>
         <Text style={[ty.footnote, { color: T.labelSecondary }]}>Мой рейтинг</Text>
-        <Text style={[ty.headline, nums, { color: place == null && review ? T.orangeText : T.label }]}>{main}</Text>
+        <Text style={[ty.headline, nums, { color: T.label }]}>{main}</Text>
       </View>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name="chevron.forward" size={16} color={T.labelTertiary} /></View>
     </View>

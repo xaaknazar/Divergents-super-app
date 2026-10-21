@@ -49,7 +49,7 @@ enum ReadingFocusFailure: LocalizedError {
     case .selection: return "Выберите отвлекающие приложения и браузеры."
     case .active: return "Сначала сохраните предыдущий сеанс."
     case .storage: return "Не удалось надёжно сохранить сеанс. Чтение не начато."
-    case .boot: return "После перезагрузки время требует проверки."
+    case .boot: return "Телефон был перезагружен. Сохраните записанную часть подхода и продолжите чтение."
     case .deadline: return "День завершился. Откройте Divergents и сохраните результат."
     case .cannotResume: return "Этот подход уже завершён. Откройте Divergents."
     case .goal: return "До 60 минут доступна пауза. Завершить чтение можно после дневной цели."
@@ -156,7 +156,8 @@ enum ReadingFocusStore {
   }
   static func bootId() throws -> String {
     // kern.bootsessionuuid is sandbox-denied on physical iPhones. Boot time is
-    // available through the supported BSD sysctl; any discontinuity is reviewed.
+    // available through the supported BSD sysctl; a discontinuity seals only
+    // the saved reading evidence instead of crediting time across a reboot.
     var value = timeval(), size = MemoryLayout<timeval>.size
     var mib: [Int32] = [CTL_KERN, KERN_BOOTTIME]
     guard sysctl(&mib, 2, &value, &size, nil, 0) == 0 else { throw ReadingFocusFailure.boot }
@@ -447,9 +448,10 @@ enum ReadingFocusStore {
         if current.resumeVersion == 1 {
           guard let generation, current.generation == generation else { throw ReadingFocusFailure.cannotResume }
         }
-        // A soft pause may close the approach before the hour: the daily goal can be collected in several approaches.
-        // A running interval still cannot be finished before the goal; it must be paused first.
-        guard current.terminal == true || current.status == "paused" || deadlineReached(current) || current.integrity != "ok" ||
+        // A normal pause freezes the goal; it is not a shortcut to submitting
+        // pages before the mandatory hour. Forced interruption/day end still
+        // seals the actual partial evidence, never a synthetic completed hour.
+        guard current.terminal == true || deadlineReached(current) || current.integrity != "ok" ||
           elapsed(current) >= (current.targetMs ?? current.budgetMs) else { throw ReadingFocusFailure.goal }
         let wasShielded = hasShield
         releaseProtection()

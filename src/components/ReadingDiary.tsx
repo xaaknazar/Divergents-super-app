@@ -7,7 +7,8 @@ import { ContentBlock } from './ContentBlock';
 import { StatusBadge } from './StatusBadge';
 import { Button } from './Button';
 
-const STATE = { complete: 'Час выполнен', missed: 'Красный флаг', review: 'На проверке', open: 'Идёт', future: 'Впереди', excluded: 'Участие завершено' } as const;
+// Keep old cached histories readable without inventing a completed hour or flag.
+const STATE = { complete: 'Час выполнен', missed: 'Красный флаг', review: 'Записанные данные', open: 'Идёт', future: 'Впереди', excluded: 'Участие завершено' } as const;
 
 /** Дневник чтения по личным дням: «День N» с дня вступления, минуты, страницы, флаг дня. */
 export function ReadingDiary({ member }: { member: NonNullable<ReadingDetail['me']> }) {
@@ -22,7 +23,7 @@ export function ReadingDiary({ member }: { member: NonNullable<ReadingDetail['me
       <View style={styles.line}>
         <Text style={[ty.subheadEm, nums, { color: T.label }]}>День {h.day - (member.firstDay ?? 1) + 1}</Text>
         <StatusBadge label={STATE[h.state]} size="compact" icon={h.state === 'missed' ? 'flag.fill' : undefined}
-          tone={h.state === 'complete' ? 'success' : h.state === 'missed' ? 'danger' : h.state === 'review' ? 'warning' : 'neutral'} />
+          tone={h.state === 'complete' ? 'success' : h.state === 'missed' ? 'danger' : 'neutral'} />
       </View>
       <Text style={[ty.subhead, nums, { color: T.labelSecondary }]}>{Math.floor(h.elapsedMs / 60000)} мин · {h.pages} стр.{h.elapsedMs > 3600000 ? ` · +${Math.floor((h.elapsedMs - 3600000) / 60000)} мин сверх часа` : ''}</Text>
     </View>)}

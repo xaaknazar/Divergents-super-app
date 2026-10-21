@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReadingDetail, readingDaysOf, readingPaceOf, readingStandings, readingWaitReason } from '../data/reading';
+import { ReadingDetail, readingDaysOf, readingPaceOf, readingStandings } from '../data/reading';
 import { Wrapper } from './Wrapper';
 import { ContentBlock } from './ContentBlock';
 import { ScreenDescription } from './ScreenDescription';
@@ -11,9 +11,9 @@ export function ReadingRankingContent({ data, onHistory }: { data: ReadingDetail
   return <Wrapper padding={16} gap={12}>
     {rows.length ? <ContentBlock size="flush">{rows.map(({ member: m, place }, i) =>
       <ReadingRankRow key={m.userId} place={place} name={m.name} readingDays={readingDaysOf(m)} flags={m.flags} pace={readingPaceOf(m)}
-        isMe={m.userId === data.me?.userId} waitReason={place == null ? readingWaitReason(m) : undefined} review={!!m.rankingPending}
+        isMe={m.userId === data.me?.userId}
         last={i === rows.length - 1} onPress={onHistory ? () => onHistory(m.userId) : undefined} />)}
     </ContentBlock> : <ScreenDescription text="Пока никто не вступил. Первые участники появятся здесь." />}
-    <ScreenDescription text="Место — средний темп в страницах в день. Флаг ставится за день, когда к 00:00 по Алматы набрано меньше 60 минут; флаги накапливаются. Новички попадают в рейтинг через несколько дней участия." />
+    <ScreenDescription text="Рейтинг доступен с первого дня. Место — средний темп: все сохранённые страницы делятся на календарные дни участия, включая пропуски. Флаг ставится за день, когда к 00:00 по Алматы набрано меньше 60 минут; флаги накапливаются." />
   </Wrapper>;
 }

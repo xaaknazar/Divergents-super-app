@@ -54,18 +54,19 @@ test('a finished challenge cannot be joined', async () => {
 test('participant page: rank link opens the ranking; no challenge block, teams or tabs', async () => {
   const p = props();
   const view = await show(p);
-  await fireEvent.press(view.getByRole('button', { name: 'Мой рейтинг. 3 место из 5 участников' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Мой рейтинг. 4 место из 5 участников' }));
   expect(p.onRanking).toHaveBeenCalledTimes(1);
   expect(view.queryByText(individualReadingFixture.title)).toBeNull();
   expect(view.queryByText(/Команды|Участники/)).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: 'Мои книги и история' }));
   expect(p.onHistory).toHaveBeenCalledWith('demo-reader');
 });
-test('a participant without a place sees why', async () => {
+test('legacy qualification flags cannot hide a participant’s place', async () => {
   const p = props();
   p.data = { ...p.data, ranking: p.data.ranking.map(m => m.userId === 'demo-reader' ? { ...m, rankingEligible: false, qualificationDaysLeft: 4 } : m) };
   const view = await show(p);
-  expect(view.getByText('До участия в рейтинге — 4 дня')).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Мой рейтинг. 4 место из 5 участников' })).toBeTruthy();
+  expect(view.queryByText(/До участия в рейтинге/)).toBeNull();
 });
 test('today shows the red-flag warning until the hour is done', async () => {
   const p = { ...props(), timerState: 'ready' as const, data: withToday(18 * 60000) };
@@ -113,8 +114,18 @@ test('pause stays available during a pending request; the book of the running ap
   expect(view.queryByRole('button', { name: /Сменить книгу/ })).toBeNull();
   expect(view.getByText('Строгий режим · ограничения iOS')).toBeTruthy();
 });
-test('after a pause: pages for this approach and «Возобновить»', async () => {
-  const p = { ...props(), resumableSession: true, canResume: true, timerState: 'paused' as const, onResume: jest.fn() };
+test.each([1, 2400000])('with %i ms remaining a soft pause only offers resume, not page submission', async remainingMs => {
+  const p = { ...props(), remainingMs, resumableSession: true, canResume: true, timerState: 'paused' as const, onResume: jest.fn() };
+  const view = await show(p);
+  expect(view.queryByLabelText('Страниц за этот подход')).toBeNull();
+  expect(view.queryByRole('button', { name: 'Сохранить подход' })).toBeNull();
+  expect(view.getByText(/Наберите 60 минут за день/)).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
+  expect(p.onResume).toHaveBeenCalledTimes(1);
+  expect(p.onSaveApproach).not.toHaveBeenCalled();
+});
+test.each([0, -60000])('after the daily goal (%i ms remaining): pages and resume are available', async remainingMs => {
+  const p = { ...props(), remainingMs, resumableSession: true, canResume: true, timerState: 'paused' as const, onResume: jest.fn() };
   const view = await show(p);
   await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
   expect(p.onResume).toHaveBeenCalledTimes(1);
@@ -215,10 +226,12 @@ test.each(['paused', 'recording', 'saving'] as const)('%s keeps the frozen overt
   expect(view.getByText('+15:25')).toBeTruthy();
   expect(view.queryByText('00:00')).toBeNull();
 });
-test('a day under review keeps the timer visible and explains why a new approach cannot start', async () => {
+test('a legacy review marker does not block a new approach or claim a confirmed save', async () => {
   const p = { ...props(), timerState: 'paused' as const, remainingMs: 1800000, data: { ...withToday(1800000, 'review'), session: null } };
   const view = await show(p);
-  expect(view.getByText('Осталось сегодня')).toBeTruthy();
-  expect(view.getByText(/Чтение снова откроется завтра/)).toBeTruthy();
-  expect(view.queryByRole('button', { name: /Старт|Возобновить/ })).toBeNull();
+  expect(view.getByRole('timer')).toBeTruthy();
+  expect(view.queryByText(/на проверке|откроется завтра/)).toBeNull();
+  expect(view.queryByText('Подход сохранён')).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
+  expect(p.onStart).toHaveBeenCalledTimes(1);
 });

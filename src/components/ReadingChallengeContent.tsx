@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-import { READING_REQUIRE_VERIFIED_BOOK, ReadingDetail, readingStandings, readingWaitReason } from '../data/reading';
+import { READING_REQUIRE_VERIFIED_BOOK, ReadingDetail, readingStandings } from '../data/reading';
 import { ReadingBookMetadata } from '../data/readingBooks';
 import { readingDateLabel } from '../data/readingCreation';
 import { Button } from './Button';
@@ -32,7 +32,7 @@ export type ReadingChallengeContentProps = {
   blockingMode?: 'selected' | 'all-apps';
   resumableSession?: boolean; canResume?: boolean; onResume?: () => void;
   onPrepare: () => void; onStart: (book: string, metadata?: ReadingBookMetadata) => void; onPause: () => void;
-  /** Страницы после мягкой паузы: закрыть подход на телефоне и отправить страницы. */
+  /** После дневной цели: закрыть подход на телефоне и отправить страницы. */
   onSaveApproach: (pages: number, nextPage?: number) => void;
   /** Страницы уже закрытого подхода. */
   onReport: (pages: number, nextPage?: number) => void;
@@ -69,10 +69,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const today = member.history.find(h => h.day === d.currentDay);
   const todayMs = today?.elapsedMs ?? 0;
   const reader = d.phase === 'active' && !member.eliminatedOn;
-  const inReview = today?.state === 'review';
   const running = p.timerState === 'running';
   const softPaused = !!p.resumableSession && p.timerState === 'paused' && !p.awaitingPages;
-  const recording = softPaused || p.awaitingPages;
+  const recording = softPaused && p.remainingMs <= 0 || p.awaitingPages;
   const standing = readingStandings(d.ranking).find(s => s.member.userId === member.userId);
   const book = p.book;
   const bookReady = READING_REQUIRE_VERIFIED_BOOK ? !!book.verified : book.title.trim().length >= 2;
@@ -87,10 +86,11 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const nextPage = d.session?.fromPage != null && pages ? d.session.fromPage + Number(pages) : undefined;
   const pagesInvalid = !/^\d+$/.test(pages) || Number(pages) > 10000 || (nextPage ?? 0) > 100000;
   const submitPages = () => (softPaused ? p.onSaveApproach : p.onReport)(Number(pages), nextPage);
-  const timerVisual = p.awaitingPages && p.busy ? 'saving' as const : recording ? 'recording' as const
-    : inReview && !running ? 'ready' as const : p.timerState;
+  const timerVisual = p.awaitingPages && p.busy ? 'saving' as const : recording ? 'recording' as const : p.timerState;
   const todayMinutes = Math.floor(todayMs / 60000);
-  const savedToday = !recording && !running && todayMs > 0 && !inReview;
+  // A legacy cached review payload is not a save receipt. It never blocks reading,
+  // but must not be presented as newly confirmed credit before server refresh.
+  const savedToday = !recording && !running && todayMs > 0 && today?.state !== 'review';
   const idleAction = todayMs > 0 ? 'resume' as const : 'start' as const;
   return <Wrapper padding={16} gap={18}>
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
@@ -112,7 +112,10 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
             sessionMinutes={d.session?.elapsedMs != null ? Math.floor(d.session.elapsedMs / 60000) : undefined}
             fromPage={d.session?.fromPage} nextPage={nextPage} />
         </>
-        : inReview ? <ReadingSaveStatus state="review" detail="Сегодняшний подход на проверке, новый начать нельзя. Чтение снова откроется завтра." />
+        : softPaused ? <>
+          {p.onResume ? <ReadingTimerControls action="resume" disabled={!p.canResume} onPress={p.onResume} /> : null}
+          <ScreenDescription text="Чтение на паузе. Наберите 60 минут за день, затем завершите подход и запишите страницы." />
+        </>
         : <>
           {savedToday ? <ReadingSaveStatus state="saved" detail={`Сегодня: ${todayMinutes} мин · ${today?.pages ?? 0} стр. Подтверждено сервером.`} /> : null}
           {p.protection !== 'ready' ? <>
@@ -132,8 +135,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
           onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />}
     </Wrapper> : null}
     {d.phase !== 'upcoming' ? <ReadingProgressSummary member={member} todayMs={d.phase === 'active' ? todayMs : undefined} /> : null}
-    <ReadingRankLink place={standing?.place ?? null} participants={participants} onPress={p.onRanking}
-      waitReason={standing && standing.place == null ? readingWaitReason(standing.member) : undefined} review={!!standing?.member.rankingPending} />
+    <ReadingRankLink place={standing?.place ?? null} participants={participants} onPress={p.onRanking} />
     {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
     <ReadingRules variant="collapsed" blockingMode={p.blockingMode} />
   </Wrapper>;

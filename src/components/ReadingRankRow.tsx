@@ -7,26 +7,23 @@ import { nums } from '../theme/tokens';
 import { SF } from './SFIcon';
 
 /** Строка рейтинга индивидуального Reading challenge: место, имя, «N дней чтения», плашка «⚑ N»
- * (красная при N > 0, серая при 0) и справа средний темп «41 стр/день». Своя строка подсвечена и помечена «вы».
- * Без места — вместо места «—» и причина: «До участия в рейтинге — N дней» или «Результат на проверке». */
-export function ReadingRankRow({ place, name, readingDays, flags, pace, isMe = false, waitReason, review = false, last = false, onPress }: {
-  /** null — места пока нет. */
-  place: number | null; name: string; readingDays: number; flags: number;
+ * (красная при N > 0, серая при 0) и справа средний темп «41 стр/день». Своя строка подсвечена и помечена «вы». */
+export function ReadingRankRow({ place, name, readingDays, flags, pace, isMe = false, last = false, onPress }: {
+  place: number; name: string; readingDays: number; flags: number;
   /** Средний темп, страниц в день. */
   pace: number; isMe?: boolean;
-  waitReason?: string; review?: boolean; last?: boolean;
+  last?: boolean;
   /** Открыть книги и историю участника. */
   onPress?: () => void;
 }) {
   const { T, ty, isDark } = useTheme();
-  const ranked = place != null;
   const flagInk = flags > 0 ? T.redText : T.labelSecondary;
   const flagBg = flags > 0 ? (isDark ? 'rgba(255,69,58,0.18)' : 'rgba(197,34,31,0.10)') : T.fillTertiary;
   const paceLabel = `${fmtDecimal(pace)} стр/день`;
-  const label = [ranked ? `${place} место` : 'Пока без места', name, isMe ? 'это вы' : null, ranked ? null : waitReason,
-    days(readingDays) + ' чтения', `красных флагов: ${flags}`, ranked ? `средний темп ${paceLabel}` : null].filter(Boolean).join('. ');
+  const label = [`${place} место`, name, isMe ? 'это вы' : null,
+    days(readingDays) + ' чтения', `красных флагов: ${flags}`, `средний темп ${paceLabel}`].filter(Boolean).join('. ');
   const body = <>
-    <Text style={[ty.headline, nums, styles.place, { color: !ranked ? T.labelTertiary : isMe ? T.labelSecondary : T.brandText }]}>{ranked ? place : '—'}</Text>
+    <Text style={[ty.headline, nums, styles.place, { color: isMe ? T.labelSecondary : T.brandText }]}>{place}</Text>
     <View style={styles.main}>
       <View style={styles.nameRow}>
         <Text style={[ty.headline, styles.shrink, { color: T.label }]}>{name}</Text>
@@ -39,12 +36,11 @@ export function ReadingRankRow({ place, name, readingDays, flags, pace, isMe = f
           <Text style={[ty.footnoteEm, nums, { color: flagInk }]}>{flags}</Text>
         </View>
       </View>
-      {!ranked && waitReason ? <Text style={[ty.footnote, { color: review ? T.orangeText : T.labelSecondary }]}>{waitReason}</Text> : null}
     </View>
-    {ranked ? <View style={styles.value}>
+    <View style={styles.value}>
       <Text style={[ty.headline, nums, { color: T.label }]}>{fmtDecimal(pace)}</Text>
       <Text style={[ty.caption1, { color: T.labelSecondary }]}>стр/день</Text>
-    </View> : null}
+    </View>
   </>;
   const surface = [styles.row, { backgroundColor: isMe ? T.brandTinted : T.cardBg, borderBottomWidth: last ? 0 : 0.5, borderBottomColor: T.separator }];
   return onPress ? <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityHint="Открыть книги и историю"

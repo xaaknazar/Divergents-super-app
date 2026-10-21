@@ -199,7 +199,18 @@ test('soft-paused time is never reported without closing the approach first', as
   expect(readingNative.acknowledge).not.toHaveBeenCalled();
 });
 
-test('pages after a pause close the approach before the hour: exact time, then pages', async () => {
+test.each(['finish', 'saveApproach'] as const)('%s cannot close a soft pause before the daily hour', async action => {
+  const hook = await ready();
+  await act(async () => { await hook.result.current[action](12); });
+  expect(finish).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(queued()).toEqual([]);
+  expect(journal).toEqual(softPaused);
+  expect(hook.result.current.error).toBe('До 60 минут можно поставить паузу и продолжить чтение позже.');
+});
+
+test('pages after reaching the daily hour close the approach with exact time before sending pages', async () => {
+  journal = { ...softPaused, elapsedMs: 3_600_000, accumulatedMs: 3_600_000 };
   const hook = await ready();
 
   await act(async () => { await hook.result.current.saveApproach(12); });
@@ -207,11 +218,25 @@ test('pages after a pause close the approach before the hour: exact time, then p
 
   expect(finish).toHaveBeenCalledWith('demo-reader', 'session-a', 'generation-2');
   expect(send.mock.calls.map(call => call[1])).toEqual([
-    expect.objectContaining({ action: 'stop', sessionId: 'session-a', elapsedMs: 900_000, integrity: 'ok' }),
+    expect.objectContaining({ action: 'stop', sessionId: 'session-a', elapsedMs: 3_600_000, integrity: 'ok' }),
     expect.objectContaining({ action: 'report', sessionId: 'session-a', pages: 12 }),
   ]);
   expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 'session-a');
   expect(queued()).toEqual([]);
+});
+
+test('finishing uses the remaining daily goal, not an extra hour for each approach', async () => {
+  server = { ...server, me: { ...server.me!, elapsedMs: 2_700_000,
+    history: [{ day: 1, state: 'open', elapsedMs: 2_700_000, pages: 0 }] } };
+  journal = { ...softPaused, targetMs: 900_000, elapsedMs: 900_000, accumulatedMs: 900_000 };
+  const hook = await ready();
+  expect(hook.result.current.remainingMs).toBe(0);
+  await act(async () => { await hook.result.current.saveApproach(12); });
+  expect(finish).toHaveBeenCalledWith('demo-reader', 'session-a', 'generation-2');
+  expect(send.mock.calls.map(call => call[1])).toEqual([
+    expect.objectContaining({ action: 'stop', elapsedMs: 900_000 }),
+    expect.objectContaining({ action: 'report', pages: 12 }),
+  ]);
 });
 
 test('finish retains exact cumulative time and sends one final stop before pages are acknowledged', async () => {
@@ -295,6 +320,12 @@ test('a terminal day-end pause cannot resume and still offers pages for its shor
   await act(async () => { await hook.result.current.resume(); });
   expect(resume).not.toHaveBeenCalled();
   expect(send.mock.calls.map(call => call[1])).toEqual([expect.objectContaining({ action: 'stop', elapsedMs: 321_987 })]);
+  await act(async () => { await hook.result.current.report(4); });
+  expect(send.mock.calls.map(call => call[1])).toEqual([
+    expect.objectContaining({ action: 'stop', elapsedMs: 321_987 }),
+    expect.objectContaining({ action: 'report', pages: 4 }),
+  ]);
+  expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 'session-a');
 });
 
 test('legacy paused sessions still close and require pages instead of becoming resumable', async () => {

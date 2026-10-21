@@ -94,6 +94,8 @@ Task {
     result["firstPause"] = paused.elapsedMs!
     Harness.now = 110_000
     result["after100SecondPause"] = Harness.elapsed(paused)
+    do { _ = try await Harness.finish(accountId: "a", sessionId: "s", generation: paused.generation) }
+    catch { result["pausedBeforeGoalCannotFinish"] = !Harness.hasShield && Harness.journal!.terminal == false && Harness.journal!.elapsedMs == 10_000 }
     let resumed = try await Harness.resume(accountId: "a", sessionId: "s", generation: paused.generation)
     Harness.now = 130_000
     result["activeElapsed"] = Harness.elapsed(resumed)
@@ -120,6 +122,10 @@ Task {
     let afterSignout = try Harness.pause()!
     result["terminalEvidenceImmutable"] = afterSignout.elapsedMs == final.elapsedMs && afterSignout.integrity == final.integrity && afterSignout.generation == final.generation
     Harness.boot = "boot"; AuthorizationCenter.shared.authorizationStatus = .approved
+    Harness.journal = initial(); Harness.now = 40_000; Harness.hasShield = true
+    let goalPause = try Harness.pause()!
+    let goalFinish = try await Harness.finish(accountId: "a", sessionId: "s", generation: goalPause.generation)
+    result["pausedAtGoalCanFinish"] = goalFinish.terminal == true && goalFinish.elapsedMs == 40_000 && !Harness.hasShield
     Harness.journal = initial(deadline: 50_000); Harness.now = 10_000; Harness.hasShield = true
     let dayPause = try Harness.pause()!
     Harness.now = 60_000
@@ -159,6 +165,7 @@ dispatchMain()
   const output = execFileSync('xcrun', ['swift', '-swift-version', '5', '-e', code], { encoding: 'utf8', timeout: 45_000 });
   expect(JSON.parse(output.trim())).toEqual({
     firstPause: 10_000, after100SecondPause: 10_000, activeElapsed: 30_000,
+    pausedBeforeGoalCannotFinish: true, pausedAtGoalCanFinish: true,
     targetRemainingWithPrior20Seconds: 10_000, deadlineRemaining: 70_000,
     unknownAuthorizationPauseResumable: true, unknownAuthorizationNoProtectionKeepsPause: true,
     resumeContinuesFromSavedPlace: true, missingShieldStillRevokes: true,

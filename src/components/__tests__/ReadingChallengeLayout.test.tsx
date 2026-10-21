@@ -56,8 +56,7 @@ test.each<LayoutCase>(['ready', 'running', 'paused', 'review'])(
     }
     const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
     const timer = view.getByRole('timer');
-    const action = state === 'review' ? view.getByText('Результат на проверке')
-      : view.getByRole('button', { name: state === 'running' ? 'Пауза' : state === 'paused' ? 'Возобновить' : 'Старт' });
+    const action = view.getByRole('button', { name: state === 'running' ? 'Пауза' : state === 'paused' || state === 'review' ? 'Возобновить' : 'Старт' });
     const currentBook = view.getByLabelText(/^Что читаете:/);
     const progress = view.getByRole('header', { name: 'Сегодня' });
     const rank = view.getByRole('button', { name: /^Мой рейтинг\./ });
@@ -67,7 +66,7 @@ test.each<LayoutCase>(['ready', 'running', 'paused', 'review'])(
     expect(rank.parent).toBe(history.parent);
     const siblings = rank.parent!.children;
     expect(siblings.indexOf(history)).toBe(siblings.indexOf(rank) + 1);
-    if (state === 'paused') expectOrder(view.container, action, view.getByLabelText('Страниц за этот подход'), currentBook);
+    if (state === 'paused') expect(view.queryByLabelText('Страниц за этот подход')).toBeNull();
     if (state === 'running') {
       expect(action).toBeEnabled();
       await fireEvent.press(action);

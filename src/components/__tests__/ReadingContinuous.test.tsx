@@ -5,9 +5,11 @@ import { ReadingChallengeForm } from '../ReadingChallengeForm';
 import { ReadingBookHistoryCard } from '../ReadingBookHistoryCard';
 import { ReadingRankRow } from '../ReadingRankRow';
 import { ReadingBookField } from '../ReadingBookField';
+import { ReadingRankingContent } from '../ReadingRankingContent';
+import { ReadingDiary } from '../ReadingDiary';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
 import { individualReadingFixture } from '../../storybook/readingFixtures';
-import { readingStandings } from '../../data/reading';
+import { READING_CHALLENGE_RULES, readingStandings } from '../../data/reading';
 import { matchCatalogBooks } from '../../data/readingBooks';
 jest.mock('../../data/api', () => ({ API_BASE: 'https://example.test' }));
 jest.mock('../SFIcon', () => ({ SF: () => null }));
@@ -28,19 +30,46 @@ test('page report preserves its calculated continuation point', async () => {
   await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
   expect(p.onReport).toHaveBeenCalledWith(22, 43);
 });
-test('standings rank by average page pace; newcomers and results under review have no place', () => {
+test('standings rank everyone by average page pace from their first day', () => {
   const rows = readingStandings(individualReadingFixture.ranking);
-  expect(rows.map(r => [r.member.name, r.place])).toEqual([['Аружан', 1], ['Нурлан', 2], ['Акназар', 3], ['Дана', null], ['Ербол', null]]);
+  expect(rows.map(r => [r.member.name, r.place])).toEqual([['Аружан', 1], ['Нурлан', 2], ['Ербол', 3], ['Акназар', 4], ['Дана', 5]]);
   const tie = readingStandings([{ ...rows[0].member, userId: 'a', averagePages: 10, daysParticipated: 5 }, { ...rows[0].member, userId: 'b', averagePages: 10, daysParticipated: 9 }]);
   expect(tie.map(r => r.member.userId)).toEqual(['b', 'a']);
 });
-test('rank row: place, reading days, flags and pace; a newcomer has no misleading place', async () => {
+test('legacy waiting and review fields cannot exclude anyone; sorting does not mutate the payload', () => {
+  const ranking = individualReadingFixture.ranking.map(m => ({ ...m, rankingEligible: false, rankingPending: true, qualificationDaysLeft: 10 }));
+  const before = ranking.map(m => m.userId);
+  const rows = readingStandings(ranking);
+  expect(rows.map(r => r.place)).toEqual([1, 2, 3, 4, 5]);
+  expect(ranking.map(m => m.userId)).toEqual(before);
+  const newcomer = { ...ranking[0], userId: 'new', averagePages: 100, daysParticipated: 1, readingDays: 0 };
+  expect(readingStandings([...ranking, newcomer])[0]).toMatchObject({ member: newcomer, place: 1 });
+});
+test('rank row: even a first-day reader with no pages has a place and a zero pace', async () => {
   const v = await render(<ThemePreviewProvider><ReadingRankRow place={2} name="Нурлан" readingDays={13} flags={2} pace={36.5} /></ThemePreviewProvider>);
   expect(v.getByText('13 дней чтения')).toBeTruthy(); expect(v.getByText('36,5')).toBeTruthy(); expect(v.getByText('стр/день')).toBeTruthy();
   expect(v.getByLabelText(/2 место\. Нурлан\..*красных флагов: 2/)).toBeTruthy();
-  await v.rerender(<ThemePreviewProvider><ReadingRankRow place={null} name="Дана" readingDays={1} flags={0} pace={0} isMe waitReason="До участия в рейтинге — 9 дней" /></ThemePreviewProvider>);
-  expect(v.getByText('До участия в рейтинге — 9 дней')).toBeTruthy(); expect(v.getByText('вы')).toBeTruthy();
-  expect(v.queryByText('стр/день')).toBeNull();
+  await v.rerender(<ThemePreviewProvider><ReadingRankRow place={5} name="Дана" readingDays={0} flags={0} pace={0} isMe /></ThemePreviewProvider>);
+  expect(v.getByLabelText(/5 место\. Дана\..*средний темп 0 стр\/день/)).toBeTruthy();
+  expect(v.getByText('вы')).toBeTruthy();
+  expect(v.getByText('стр/день')).toBeTruthy();
+});
+test('ranking explanation and rules describe first-day calendar-day pace without a review queue', async () => {
+  const v = await render(<ThemePreviewProvider><ReadingRankingContent data={individualReadingFixture} /></ThemePreviewProvider>);
+  expect(v.getByText(/Рейтинг доступен с первого дня/)).toBeTruthy();
+  expect(v.getByText(/календарные дни участия, включая пропуски/)).toBeTruthy();
+  const rules = READING_CHALLENGE_RULES.map(r => r.text).join(' ');
+  expect(rules).toContain('с первого дня');
+  expect(rules).toContain('Когда за день наберётся 60 минут');
+  expect(rules).not.toMatch(/уходит на проверку|попадают в рейтинг не сразу|После паузы запишите/);
+});
+test('legacy review history stays visible without implying approval or a completed hour', async () => {
+  const v = await render(<ThemePreviewProvider><ReadingDiary member={{ ...individualReadingFixture.me!,
+    history: [{ day: 1, state: 'review', pages: 12, elapsedMs: 600000 }] }} /></ThemePreviewProvider>);
+  expect(v.getByText('Записанные данные')).toBeTruthy();
+  expect(v.getByText('10 мин · 12 стр.')).toBeTruthy();
+  expect(v.queryByText('На проверке')).toBeNull();
+  expect(v.queryByText('Час выполнен')).toBeNull();
 });
 test('verified book shows only title and author, no page number', async () => {
   const v = await render(<ThemePreviewProvider><ReadingBookField status="verified" title="Атомные привычки" author="Джеймс Клир"

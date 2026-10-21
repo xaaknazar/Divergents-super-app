@@ -35,7 +35,7 @@ export const individualReadingFixture: ReadingDetail = {
   me: reader('demo-reader', 'Акназар', 22.3, 9, 1),
   ranking: [
     reader('r1', 'Аружан', 41, 14, 0), reader('r2', 'Нурлан', 36.5, 13, 1), reader('demo-reader', 'Акназар', 22.3, 9, 1),
-    reader('r4', 'Дана', 18, 2, 0, { rankingEligible: false, qualificationDaysLeft: 8, daysParticipated: 2 }),
-    reader('r5', 'Ербол', 30, 11, 2, { rankingEligible: false, rankingPending: true }),
+    reader('r4', 'Дана', 18, 1, 0, { daysParticipated: 1, pages: 18 }),
+    reader('r5', 'Ербол', 30, 11, 2),
   ],
 };
