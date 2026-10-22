@@ -14,7 +14,7 @@ export interface MapSearchHeaderProps {
   onSearchFocus?: () => void;
   onSearchBlur?: () => void;
   searchPlaceholder: string;
-  profile: Omit<ProfileAvatarButtonProps, 'onPress' | 'variant'>;
+  profile: Omit<ProfileAvatarButtonProps, 'onPress'>;
   onOpenProfile: () => void;
 }
 
@@ -26,7 +26,7 @@ export function MapSearchHeader(p: MapSearchHeaderProps) {
         <MapCityButton city={p.city} country={p.country} expanded={p.cityPickerOpen} onPress={p.onChooseCity} />
       </Wrapper>
       <Wrapper shrink={0}>
-        <ProfileAvatarButton {...p.profile} variant="floating" onPress={p.onOpenProfile} />
+        <ProfileAvatarButton {...p.profile} onPress={p.onOpenProfile} />
       </Wrapper>
     </Wrapper>
     <Wrapper testID="map-search-row">

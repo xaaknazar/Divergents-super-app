@@ -105,11 +105,17 @@ test('pause keeps the current card and asynchronous content updates converge to 
   expect(store).toContain('desired = after');
 });
 
-test('partial acknowledgement retains the card and a new start replaces same-account acknowledged sessions even if their freeze update is delayed', () => {
+test('acknowledgement closes only the saved approach card, including a partial book, without ending a later session', () => {
   const store = source('modules/reading-focus/ios/ReadingFocusStore.swift');
   const acknowledge = store.split('static func acknowledge')[1].split('static func endActivities')[0];
-  expect(acknowledge).toContain('(value.targetMs ?? value.budgetMs) - (value.elapsedMs ?? 0) <= 0');
+  expect(acknowledge).not.toContain('value.targetMs');
+  expect(acknowledge).toContain('value.accountId == accountId, value.sessionId == sessionId');
+  expect(acknowledge).toContain('value.resumeVersion != 1 || value.terminal == true');
   expect(acknowledge).toContain('completedActivities = matchingActivities(sessionId: sessionId)');
+  expect(acknowledge.indexOf('completedActivities = matchingActivities')).toBeLessThan(acknowledge.indexOf('removeItem'));
+  expect(acknowledge).toContain('let activitiesToEnd = completedActivities');
+  expect(acknowledge).toContain('Task { await endActivities(activitiesToEnd) }');
+  expect(acknowledge).not.toContain('Activity<ReadingActivityAttributes>.activities');
   expect(store).toContain('$0.attributes.accountId == accountId && $0.attributes.sessionId != nil && $0.attributes.sessionId != sessionId');
   expect(store).toContain('await endActivities(priorSessions)');
   const replacement = store.split('let priorSessions =')[1].split('// No suspension')[0];

@@ -54,7 +54,7 @@ test('a finished challenge cannot be joined', async () => {
 test('participant page: rank link opens the ranking; no challenge block, teams or tabs', async () => {
   const p = props();
   const view = await show(p);
-  await fireEvent.press(view.getByRole('button', { name: 'Мой рейтинг. 4 место из 5 участников' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Мой рейтинг. По среднему темпу: 4 место из 5 участников. По страницам: 4 место из 5 участников' }));
   expect(p.onRanking).toHaveBeenCalledTimes(1);
   expect(view.queryByText(individualReadingFixture.title)).toBeNull();
   expect(view.queryByText(/Команды|Участники/)).toBeNull();
@@ -65,7 +65,7 @@ test('legacy qualification flags cannot hide a participant’s place', async () 
   const p = props();
   p.data = { ...p.data, ranking: p.data.ranking.map(m => m.userId === 'demo-reader' ? { ...m, rankingEligible: false, qualificationDaysLeft: 4 } : m) };
   const view = await show(p);
-  expect(view.getByRole('button', { name: 'Мой рейтинг. 4 место из 5 участников' })).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Мой рейтинг. По среднему темпу: 4 место из 5 участников. По страницам: 4 место из 5 участников' })).toBeTruthy();
   expect(view.queryByText(/До участия в рейтинге/)).toBeNull();
 });
 test('today shows the red-flag warning until the hour is done', async () => {
@@ -73,7 +73,7 @@ test('today shows the red-flag warning until the hour is done', async () => {
   const view = await show(p);
   expect(view.getByText('Ещё 42 мин до 00:00, иначе красный флаг')).toBeTruthy();
   expect(view.getByText('22,3 стр/день')).toBeTruthy();
-  expect(view.getByText('средний темп · по нему рейтинг')).toBeTruthy();
+  expect(view.getByText('средний темп')).toBeTruthy();
   await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={withToday(61 * 60000, 'complete')} timerState="complete" /></ThemePreviewProvider>);
   expect(view.getByText('Час выполнен — сегодня без флага')).toBeTruthy();
 });
@@ -84,10 +84,10 @@ test('a foreign session cannot show or pause someone else’s timer', async () =
   await fireEvent.press(view.getByRole('button', { name: 'Повторить' }));
   expect(p.onRetry).toHaveBeenCalledTimes(1);
 });
-test('collapsed rules expand in place: 9 items, each opens its text', async () => {
+test('collapsed rules expand in place: every rule opens its text', async () => {
   const view = await render(<ThemePreviewProvider><ReadingRules /></ThemePreviewProvider>);
   expect(view.queryByText(READING_CHALLENGE_RULES[0].title)).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Правила челленджа, 9 пунктов' }));
+  await fireEvent.press(view.getByRole('button', { name: `Правила челленджа, ${READING_CHALLENGE_RULES.length} пунктов` }));
   for (const rule of READING_CHALLENGE_RULES) expect(view.getByText(rule.title)).toBeTruthy();
   expect(view.queryByText(READING_CHALLENGE_RULES[6].text)).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: `Пункт 7. ${READING_CHALLENGE_RULES[6].title}` }));
@@ -114,15 +114,27 @@ test('pause stays available during a pending request; the book of the running ap
   expect(view.queryByRole('button', { name: /Сменить книгу/ })).toBeNull();
   expect(view.getByText('Строгий режим · ограничения iOS')).toBeTruthy();
 });
-test.each([1, 2400000])('with %i ms remaining a soft pause only offers resume, not page submission', async remainingMs => {
+test.each([1, 2400000])('with %i ms remaining a soft pause permits resuming without forcing pages', async remainingMs => {
   const p = { ...props(), remainingMs, resumableSession: true, canResume: true, timerState: 'paused' as const, onResume: jest.fn() };
   const view = await show(p);
   expect(view.queryByLabelText('Страниц за этот подход')).toBeNull();
   expect(view.queryByRole('button', { name: 'Сохранить подход' })).toBeNull();
-  expect(view.getByText(/Наберите 60 минут за день/)).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Записать страницы' })).toBeEnabled();
   await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
   expect(p.onResume).toHaveBeenCalledTimes(1);
   expect(p.onSaveApproach).not.toHaveBeenCalled();
+});
+test('an explicit page action saves the current book before the daily goal without enabling a second book early', async () => {
+  const p = { ...props(), remainingMs: 35 * 60000, resumableSession: true, canResume: true, timerState: 'paused' as const, onResume: jest.fn() };
+  const view = await show(p);
+  await fireEvent.press(view.getByRole('button', { name: 'Записать страницы' }));
+  expect(view.getByRole('button', { name: 'Возобновить' })).toBeEnabled();
+  expect(view.queryByRole('button', { name: /Сменить книгу/ })).toBeNull();
+  await fireEvent.changeText(view.getByLabelText('Страниц за этот подход'), '15');
+  await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
+  expect(p.onSaveApproach).toHaveBeenCalledWith(15, undefined);
+  expect(p.onReport).not.toHaveBeenCalled();
+  expect(p.onStart).not.toHaveBeenCalled();
 });
 test.each([0, -60000])('after the daily goal (%i ms remaining): pages and resume are available', async remainingMs => {
   const p = { ...props(), remainingMs, resumableSession: true, canResume: true, timerState: 'paused' as const, onResume: jest.fn() };
@@ -203,7 +215,8 @@ test('strict start explains full scope and requires explicit confirmation', asyn
     const view = await show(p);
     await fireEvent.press(view.getByRole('button', { name: 'Старт' }));
     expect(p.onStart).not.toHaveBeenCalled();
-    expect(alert.mock.calls[0][1]).toContain('банки, карты и читалки');
+    expect(alert.mock.calls[0][1]).toContain('банки и карты');
+    expect(alert.mock.calls[0][1]).toContain('разрешённые приложения');
     expect(alert.mock.calls[0][1]).toContain('даже без интернета');
     alert.mock.calls[0][2]?.find(button => button.text === 'Начать чтение')?.onPress?.();
     expect(p.onStart).toHaveBeenCalledWith('Атомные привычки', expect.any(Object));

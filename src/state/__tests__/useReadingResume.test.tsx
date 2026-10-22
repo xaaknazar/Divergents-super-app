@@ -35,7 +35,7 @@ jest.mock('../readingNative', () => ({
 jest.mock('expo-crypto', () => ({
   CryptoDigestAlgorithm: { SHA256: 'SHA256' },
   digestStringAsync: async (_algorithm: string, value: string) =>
-    (value.endsWith(':report') ? 'b' : value.endsWith(':stop') ? 'a' : 'c').repeat(64),
+    jest.requireActual('crypto').createHash('sha256').update(value).digest('hex'),
   randomUUID: () => 'new-session-id',
 }));
 
@@ -140,6 +140,36 @@ beforeEach(() => {
 
 afterEach(() => { jest.restoreAllMocks(); });
 
+test('the pages form gets exact frozen approach time, not server lag or the daily countdown', async () => {
+  journal = { ...softPaused, elapsedMs: 1_500_217, accumulatedMs: 1_500_217, targetMs: 2_100_000 };
+  server = { ...server, session: { ...server.session!, elapsedMs: 12_000 } };
+  const hook = await ready();
+  expect(hook.result.current.sessionElapsedMs).toBe(1_500_217);
+  expect(hook.result.current.remainingMs).toBe(599_783);
+});
+
+test.each([null, { ...softPaused, accountId: 'another-reader' }, { ...softPaused, sessionId: 'another-session' }])(
+  'approach time falls back to confirmed server evidence when native evidence is absent or unrelated: %s', async local => {
+    journal = local;
+    server = { ...server, session: { ...server.session!, status: 'awaiting_pages', elapsedMs: 720_123 } };
+    const hook = await ready();
+    expect(hook.result.current.sessionElapsedMs).toBe(720_123);
+  },
+);
+
+test('unknown approach time stays undefined and does not expose a previous account after switching', async () => {
+  journal = null;
+  const hook = await ready();
+  expect(hook.result.current.sessionElapsedMs).toBeUndefined();
+  server = { ...server, session: { ...server.session!, status: 'awaiting_pages', elapsedMs: 720_123 } };
+  await act(async () => { await hook.result.current.retry(); });
+  expect(hook.result.current.sessionElapsedMs).toBe(720_123);
+  mockAccount = 'another-reader';
+  await hook.rerender({});
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+  expect(hook.result.current.sessionElapsedMs).toBeUndefined();
+});
+
 test('a soft pause stays local through offline retry, foreground and relaunch without creating a stop', async () => {
   journal = { ...softPaused, status: 'running', elapsedMs: null, canResume: false };
   const hook = await ready();
@@ -199,14 +229,91 @@ test('soft-paused time is never reported without closing the approach first', as
   expect(readingNative.acknowledge).not.toHaveBeenCalled();
 });
 
-test.each(['finish', 'saveApproach'] as const)('%s cannot close a soft pause before the daily hour', async action => {
+test('finishing a partial book approach keeps exact time and awaits pages without completing the day', async () => {
   const hook = await ready();
-  await act(async () => { await hook.result.current[action](12); });
-  expect(finish).not.toHaveBeenCalled();
-  expect(send).not.toHaveBeenCalled();
+  await act(async () => { await hook.result.current.finish(); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+  expect(finish).toHaveBeenCalledWith('demo-reader', 'session-a', 'generation-2');
+  expect(send.mock.calls.map(call => call[1])).toEqual([
+    expect.objectContaining({ action: 'stop', sessionId: 'session-a', elapsedMs: 900_000 }),
+  ]);
+  expect(hook.result.current.awaitingPages).toBe(true);
+  expect(hook.result.current.canResume).toBe(false);
+  expect(hook.result.current.remainingMs).toBe(2_700_000);
+  expect(hook.result.current.data?.me?.history[0].state).toBe('open');
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+});
+
+test('saving partial pages seals the owned approach before its immutable stop and report', async () => {
+  const hook = await ready();
+  await act(async () => { await hook.result.current.saveApproach(15); });
+  expect(finish).toHaveBeenCalledWith('demo-reader', 'session-a', 'generation-2');
+  expect(send.mock.calls.map(call => call[1])).toEqual([
+    expect.objectContaining({ action: 'stop', sessionId: 'session-a', elapsedMs: 900_000, integrity: 'ok' }),
+    expect.objectContaining({ action: 'report', sessionId: 'session-a', pages: 15 }),
+  ]);
+  expect(finish.mock.invocationCallOrder[0]).toBeLessThan(send.mock.invocationCallOrder[0]);
+  expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 'session-a');
   expect(queued()).toEqual([]);
-  expect(journal).toEqual(softPaused);
-  expect(hook.result.current.error).toBe('До 60 минут можно поставить паузу и продолжить чтение позже.');
+});
+
+test('two books keep separate page reports and share the daily hour: 25 minutes plus 35 minutes', async () => {
+  const saved: { sessionId: string; book: string; elapsedMs: number; pages: number }[] = [];
+  journal = { ...softPaused, book: 'Первая книга', elapsedMs: 1_500_000, accumulatedMs: 1_500_000 };
+  server = { ...server, session: { ...server.session!, book: 'Первая книга' } };
+  send.mockImplementation(async (_token, command) => {
+    if (command.action === 'start') {
+      server = { ...server, session: { id: String(command.sessionId), book: String(command.book),
+        deviceId: String(command.deviceId), day: 1, budgetMs: softPaused.budgetMs,
+        startedAt: new Date(server.serverNow).toISOString(), elapsedMs: null, status: 'running' } };
+    } else if (command.action === 'stop' && server.session) {
+      server = { ...server, session: { ...server.session, status: 'awaiting_pages', elapsedMs: Number(command.elapsedMs) } };
+    } else if (command.action === 'report' && server.session) {
+      expect(server.session.status).toBe('awaiting_pages');
+      saved.push({ sessionId: server.session.id, book: server.session.book,
+        elapsedMs: server.session.elapsedMs!, pages: Number(command.pages) });
+      const elapsedMs = saved.reduce((sum, approach) => sum + approach.elapsedMs, 0);
+      const pages = saved.reduce((sum, approach) => sum + approach.pages, 0);
+      server = { ...server, session: null, reportedSessionIds: saved.map(approach => approach.sessionId),
+        me: { ...server.me!, elapsedMs, pages, completedDays: elapsedMs >= 3_600_000 ? 1 : 0,
+          history: [{ day: 1, elapsedMs, pages, state: elapsedMs >= 3_600_000 ? 'complete' : 'open' }] } };
+    }
+    return { ok: true };
+  });
+  jest.mocked(readingNative.start).mockImplementation(async (accountId, sessionId, deviceId, book, budgetMs, targetMs) => {
+    journal = { ...softPaused, accountId, sessionId, deviceId, book, budgetMs, targetMs,
+      accumulatedMs: 0, elapsedMs: null, status: 'running', canResume: false, generation: 'book-b-start' };
+    return journal;
+  });
+  const hook = await ready();
+
+  await act(async () => { await hook.result.current.saveApproach(15); });
+  expect(hook.result.current.data?.me?.history[0]).toMatchObject({ state: 'open', elapsedMs: 1_500_000, pages: 15 });
+  expect(hook.result.current.remainingMs).toBe(2_100_000);
+  expect(hook.result.current.timerState).toBe('ready');
+  expect(journal).toBeNull();
+
+  await act(async () => { await hook.result.current.start('Вторая книга'); });
+  expect(readingNative.start).toHaveBeenCalledWith('demo-reader', 'new-session-id', 'new-session-id', 'Вторая книга',
+    expect.any(Number), 2_100_000);
+  expect(hook.result.current.remainingMs).toBe(2_100_000);
+  journal = { ...journal!, accumulatedMs: 2_100_000 };
+  await act(async () => { await hook.result.current.pause(); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(false));
+  expect(hook.result.current.canResume).toBe(true);
+  expect(saved).toHaveLength(1);
+  await act(async () => { await hook.result.current.saveApproach(20); });
+
+  expect(saved).toEqual([
+    { sessionId: 'session-a', book: 'Первая книга', elapsedMs: 1_500_000, pages: 15 },
+    { sessionId: 'new-session-id', book: 'Вторая книга', elapsedMs: 2_100_000, pages: 20 },
+  ]);
+  expect(hook.result.current.data?.me?.history[0]).toEqual({ day: 1, state: 'complete', elapsedMs: 3_600_000, pages: 35 });
+  expect(hook.result.current.remainingMs).toBe(0);
+  expect(hook.result.current.timerState).toBe('complete');
+  expect(queued()).toEqual([]);
+  const reports = send.mock.calls.map(call => call[1]).filter(command => command.action === 'report');
+  expect(new Set(reports.map(command => command.operationId)).size).toBe(2);
 });
 
 test('pages after reaching the daily hour close the approach with exact time before sending pages', async () => {
@@ -264,8 +371,8 @@ test('finish retains exact cumulative time and sends one final stop before pages
   expect(queued()).toEqual([]);
 });
 
-test('offline finalization durably queues the exact total and pages with one immutable closing operation', async () => {
-  journal = { ...softPaused, elapsedMs: 3_600_217, accumulatedMs: 3_600_217 };
+test('offline partial-book finalization durably queues exact time and pages with one immutable closing operation', async () => {
+  journal = { ...softPaused, elapsedMs: 900_217, accumulatedMs: 900_217 };
   const hook = await ready();
   send.mockRejectedValue(new Error('offline'));
   fetchDetail.mockRejectedValue(new Error('offline'));
@@ -275,13 +382,13 @@ test('offline finalization durably queues the exact total and pages with one imm
   await act(async () => { await hook.result.current.report(15); });
 
   expect(queued()).toEqual([
-    expect.objectContaining({ action: 'stop', sessionId: 'session-a', elapsedMs: 3_600_217 }),
+    expect.objectContaining({ action: 'stop', sessionId: 'session-a', elapsedMs: 900_217 }),
     expect.objectContaining({ action: 'report', sessionId: 'session-a', pages: 15 }),
   ]);
   const stopAttempts = send.mock.calls.map(call => call[1]).filter(command => command.action === 'stop');
   expect(stopAttempts.length).toBeGreaterThan(0);
   expect(new Set(stopAttempts.map(command => JSON.stringify(command))).size).toBe(1);
-  expect(journal).toMatchObject({ terminal: true, elapsedMs: 3_600_217 });
+  expect(journal).toMatchObject({ terminal: true, elapsedMs: 900_217 });
   expect(readingNative.acknowledge).not.toHaveBeenCalled();
 });
 

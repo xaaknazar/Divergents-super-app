@@ -32,7 +32,7 @@ export function ReadingChallengeForm({ busy, error, onSubmit, initialDraft, onCa
   return <CreationFormLayout onCancel={onCancel} onSubmit={submit} busy={busy}
     error={attempted && firstError ? `Проверьте поля выше: ${firstError}` : undefined}>
     <CreationTypePicker options={[{ key: 'reading', label: 'Читательский челлендж' }]} value="reading" />
-    <ScreenDescription text="Индивидуальный зачёт: без команд и капитанов. Каждый вступает сам, после согласия с правилами, и начинает со своего дня 1. Рейтинг — средний темп в страницах в день." />
+    <ScreenDescription text="Индивидуальный зачёт: без команд и капитанов. Каждый вступает сам, после согласия с правилами, и начинает со своего дня 1. Два рейтинга: по среднему темпу в страницах в день и по общему количеству прочитанных страниц." />
     {error ? <InlineNotice message={error} /> : null}
     <CreationField label="Название" error={attempted ? titleError : undefined}>
       <CreationTextInput label="Название челленджа" value={title} onChange={setTitle} disabled={busy} placeholder="Название челленджа" />

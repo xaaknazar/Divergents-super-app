@@ -46,10 +46,10 @@ test('legacy waiting and review fields cannot exclude anyone; sorting does not m
   expect(readingStandings([...ranking, newcomer])[0]).toMatchObject({ member: newcomer, place: 1 });
 });
 test('rank row: even a first-day reader with no pages has a place and a zero pace', async () => {
-  const v = await render(<ThemePreviewProvider><ReadingRankRow place={2} name="Нурлан" readingDays={13} flags={2} pace={36.5} /></ThemePreviewProvider>);
-  expect(v.getByText('13 дней чтения')).toBeTruthy(); expect(v.getByText('36,5')).toBeTruthy(); expect(v.getByText('стр/день')).toBeTruthy();
+  const v = await render(<ThemePreviewProvider><ReadingRankRow place={2} name="Нурлан" readingDays={13} flags={2} pace={36.5} pages={511} /></ThemePreviewProvider>);
+  expect(v.getByText('13 дней чтения')).toBeTruthy(); expect(v.getByText('36,5 стр/день')).toBeTruthy(); expect(v.getByText('стр/день')).toBeTruthy();
   expect(v.getByLabelText(/2 место\. Нурлан\..*красных флагов: 2/)).toBeTruthy();
-  await v.rerender(<ThemePreviewProvider><ReadingRankRow place={5} name="Дана" readingDays={0} flags={0} pace={0} isMe /></ThemePreviewProvider>);
+  await v.rerender(<ThemePreviewProvider><ReadingRankRow place={5} name="Дана" readingDays={0} flags={0} pace={0} pages={0} isMe /></ThemePreviewProvider>);
   expect(v.getByLabelText(/5 место\. Дана\..*средний темп 0 стр\/день/)).toBeTruthy();
   expect(v.getByText('вы')).toBeTruthy();
   expect(v.getByText('стр/день')).toBeTruthy();
@@ -60,7 +60,8 @@ test('ranking explanation and rules describe first-day calendar-day pace without
   expect(v.getByText(/календарные дни участия, включая пропуски/)).toBeTruthy();
   const rules = READING_CHALLENGE_RULES.map(r => r.text).join(' ');
   expect(rules).toContain('с первого дня');
-  expect(rules).toContain('Когда за день наберётся 60 минут');
+  expect(rules).toContain('Это можно сделать и до 60 минут');
+  expect(rules).toContain('Время всех сохранённых подходов складывается');
   expect(rules).not.toMatch(/уходит на проверку|попадают в рейтинг не сразу|После паузы запишите/);
 });
 test('legacy review history stays visible without implying approval or a completed hour', async () => {

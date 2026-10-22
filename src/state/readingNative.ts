@@ -6,6 +6,7 @@ export const NativeReadingSchema = z.object({ accountId: z.string(), sessionId: 
   budgetMs: z.number().min(0).max(86_400_000), targetMs: z.number().nullable().optional(), anchorMs: z.number(), bootId: z.string(), elapsedMs: z.number().nullable().optional(),
   // Existing sessions retain their original selected-app policy after an update.
   blockingMode: z.enum(['all-apps', 'selected']).optional(),
+  allowedAppCount: z.number().int().min(0).max(50).optional(),
   // Explicit per-session version: a new binary must not reopen legacy journals
   // whose immutable stop may already be queued or accepted by the server.
   resumeVersion: z.literal(1).optional(), terminal: z.boolean().optional(), canResume: z.boolean().optional(),
@@ -17,7 +18,10 @@ const LiveActivityStatusSchema = z.object({
   canRestore: z.boolean(), activityId: z.string().optional(), error: z.string().optional(),
 });
 export type ReadingLiveActivityStatus = z.infer<typeof LiveActivityStatusSchema>;
-export type ReadingCapabilities = { available: boolean; authorized: boolean; selectedCount: number; platform: string; blockingMode: ReadingBlockingMode; liveActivityEnabled?: boolean; supportsResume?: boolean };
+export type ReadingCapabilities = { available: boolean; authorized: boolean; selectedCount: number; platform: string; blockingMode: ReadingBlockingMode; liveActivityEnabled?: boolean; supportsResume?: boolean; supportsAllowedApps?: boolean };
+const AllowedAppsStatusSchema = z.object({ count: z.number().int().min(0).max(50), revision: z.string().min(1),
+  editable: z.boolean(), needsReselection: z.boolean() });
+export type ReadingAllowedAppsStatus = z.infer<typeof AllowedAppsStatusSchema>;
 type NativeFocus = {
   capabilities(): Promise<Omit<ReadingCapabilities, 'blockingMode'> & { blockingMode?: ReadingBlockingMode }>;
   authorize(): Promise<void>; selectApps(): Promise<void>;
@@ -29,6 +33,8 @@ type NativeFocus = {
   endLiveActivities?(): Promise<void>;
   resume?(accountId: string, sessionId: string, expectedGeneration: string): Promise<string>;
   finish?(accountId: string, sessionId: string, expectedGeneration: string): Promise<string>;
+  allowedAppsStatus?(accountId: string): Promise<unknown>;
+  selectAllowedApps?(accountId: string, expectedRevision: string | null): Promise<unknown>;
 };
 const native = requireOptionalNativeModule<NativeFocus>('ReadingFocus');
 const parse = (raw: string | null) => raw ? NativeReadingSchema.parse(JSON.parse(raw)) : null;
@@ -58,6 +64,16 @@ export const readingNative = {
     return { ...caps, blockingMode: caps.blockingMode === 'all-apps' ? 'all-apps' : 'selected' };
   },
   authorize: () => requireFocus().authorize(), selectApps: () => requireFocus().selectApps(),
+  allowedAppsStatus: async (accountId: string): Promise<ReadingAllowedAppsStatus> => {
+    if (!native?.allowedAppsStatus) return { count: 0, revision: 'unsupported', editable: false, needsReselection: false };
+    const raw = await native.allowedAppsStatus(accountId);
+    return AllowedAppsStatusSchema.parse(typeof raw === 'string' ? JSON.parse(raw) : raw);
+  },
+  selectAllowedApps: async (accountId: string, expectedRevision?: string): Promise<ReadingAllowedAppsStatus> => {
+    if (!accountId || !native?.selectAllowedApps) throw new Error('Выбор разрешённых приложений недоступен в этой сборке.');
+    const raw = await native.selectAllowedApps(accountId, expectedRevision ?? null);
+    return AllowedAppsStatusSchema.parse(typeof raw === 'string' ? JSON.parse(raw) : raw);
+  },
   start: async (accountId: string, sessionId: string, deviceId: string, book: string, budgetMs: number, targetMs: number) =>
     NativeReadingSchema.parse(JSON.parse(await requireFocus().start(accountId, sessionId, deviceId, book, budgetMs, targetMs))),
   snapshot: () => {

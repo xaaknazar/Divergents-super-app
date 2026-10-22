@@ -7,7 +7,7 @@ import { Button } from './Button';
 
 /** Страницы за остановленный подход (не за день): − / число / +, следующая страница,
  * «Ноль — тоже можно…» и «Сохранить подход». Пустое поле не сохраняется: число нужно указать явно. */
-export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sessionMinutes, fromPage, nextPage, invalid = false }: {
+export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sessionMinutes, fromPage, nextPage, bookTitle, invalid = false }: {
   value: string; onChange: (value: string) => void; onSubmit: () => void; busy?: boolean;
   /** Длительность подхода в минутах, если известна. */
   sessionMinutes?: number;
@@ -15,6 +15,7 @@ export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sess
   fromPage?: number | null;
   /** Следующая страница — когда известна начальная и введено число. */
   nextPage?: number;
+  bookTitle?: string;
   invalid?: boolean;
 }) {
   const { T, ty } = useTheme();
@@ -23,6 +24,7 @@ export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sess
   const context = [sessionMinutes !== undefined ? `Подход ${sessionMinutes} мин` : null, fromPage != null ? `начали со страницы ${fromPage}` : null].filter(Boolean).join(' · ');
   return <View style={[styles.card, { backgroundColor: T.cardBg, borderColor: T.cardBorder }]}>
     <Text accessibilityRole="header" style={[ty.title3, styles.center, { color: T.label }]}>Страницы за этот подход</Text>
+    {bookTitle ? <Text style={[ty.headline, styles.center, { color: T.label }]}>{bookTitle}</Text> : null}
     {context ? <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>{context}</Text> : null}
     <View style={styles.stepper}>
       <StepButton icon="minus" label="Меньше страниц" disabled={busy || !n} onPress={() => step(-1)} />

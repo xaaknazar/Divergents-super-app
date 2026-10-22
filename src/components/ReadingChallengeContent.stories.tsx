@@ -16,7 +16,7 @@ const meta = { title: 'Reading/Challenge', component: ReadingChallengeContent,
 export default meta;
 type Story = StoryObj<typeof meta>;
 const fresh = { ...individualReadingFixture, me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'open' as const, pages: 0, elapsedMs: 0 }] } };
-/** Вступление: блок челленджа, 9 правил, галочка, «Присоединиться». */
+/** Вступление: блок челленджа, правила, галочка, «Присоединиться». */
 export const Join: Story = { args: { data: { ...individualReadingFixture, membership: null, me: null } } };
 export const JoinDark: Story = { args: { data: { ...individualReadingFixture, membership: null, me: null } }, parameters: { scheme: 'dark' } };
 /** Старт: таймер на 60:00, книга не написана. */
@@ -32,7 +32,7 @@ export const StartReady: Story = { args: { data: fresh, remainingMs: 3_600_000 }
 export const Running: Story = { args: { timerState: 'running', data: { ...individualReadingFixture, session } }, parameters: { reduceMotion: false } };
 export const Overtime: Story = { args: { timerState: 'running', remainingMs: -754000, data: { ...individualReadingFixture, session,
   me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'complete', pages: 30, elapsedMs: 61 * 60000 }] } } }, parameters: { scheme: 'dark' } };
-/** До часа пауза только останавливает время; страницы доступны после дневной цели. */
+/** Пауза не требует страниц: можно продолжить или явно сохранить короткий подход. */
 export const PausedBeforeGoal: Story = { args: { timerState: 'paused', resumableSession: true, canResume: true, onResume: noop,
   data: { ...individualReadingFixture, session } } };
 export const PausedPages: Story = { args: { timerState: 'paused', remainingMs: 0, resumableSession: true, canResume: true, onResume: noop,
@@ -48,3 +48,12 @@ export const Unsupported: Story = { args: { protection: 'unavailable' } };
 export const Recovery: Story = { args: { needsRecovery: true, timerState: 'paused' } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+export const MultipleBooksToday: Story = { args: { timerState: 'complete', remainingMs: 0,
+  data: { ...individualReadingFixture, todayBooks: [
+    { key: 'ol:OL1W', title: 'Атомные привычки', author: 'Джеймс Клир', coverId: null, pages: 15, elapsedMs: 25 * 60000, nextPage: null },
+    { key: 'ol:OL2W', title: 'Пять уровней лидерства', author: 'Джон Максвелл', coverId: null, pages: 20, elapsedMs: 35 * 60000, nextPage: null },
+  ], me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'complete', pages: 35, elapsedMs: 60 * 60000 }] } },
+  library: { busy: false, retry: noop, select: noop, books: [
+    { key: 'ol:OL1W', title: 'Атомные привычки', author: 'Джеймс Клир', coverId: null, pages: 15, elapsedMs: 25 * 60000, nextPage: null },
+    { key: 'ol:OL2W', title: 'Пять уровней лидерства', author: 'Джон Максвелл', coverId: null, pages: 20, elapsedMs: 35 * 60000, nextPage: null },
+  ] } } };

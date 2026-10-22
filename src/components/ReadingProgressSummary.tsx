@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { ReadingDetail, readingDaysOf, readingPaceOf } from '../data/reading';
+import { ReadingBookSummary, ReadingDetail, readingDaysOf, readingPaceOf } from '../data/reading';
 import { word } from '../data/plural';
 import { fmtDecimal, fmtInt } from '../data/format';
 import { useTheme } from '../theme/ThemeContext';
 import { nums, radius } from '../theme/tokens';
+import { ReadingTodayBooks } from './ReadingTodayBooks';
 
 const GOAL_MINUTES = 60;
 
 /** «Сегодня»: «18 / 60 мин» с полосой и строкой про красный флаг, ниже сетка 2×2 — средний темп
- * в страницах (по нему рейтинг), дни чтения, красные флаги, страницы всего. Без `todayMs` — только сетка (история). */
-export function ReadingProgressSummary({ member, todayMs }: { member: NonNullable<ReadingDetail['me']>; todayMs?: number }) {
+ * в страницах, дни чтения, красные флаги, страницы всего. Оба показателя доступны в рейтинге.
+ * Без `todayMs` — только сетка (история). */
+export function ReadingProgressSummary({ member, todayMs, books }: {
+  member: NonNullable<ReadingDetail['me']>; todayMs?: number; books?: ReadingBookSummary[];
+}) {
   const { T, ty, textScale } = useTheme();
   const { fontScale, width } = useWindowDimensions();
   const [cardWidth, setCardWidth] = useState(width - 32);
@@ -19,7 +23,7 @@ export function ReadingProgressSummary({ member, todayMs }: { member: NonNullabl
   const left = Math.max(0, GOAL_MINUTES - minutes);
   const readingDays = readingDaysOf(member);
   const cells = [
-    { value: `${fmtDecimal(readingPaceOf(member))} стр/день`, label: 'средний темп · по нему рейтинг', tone: T.label },
+    { value: `${fmtDecimal(readingPaceOf(member))} стр/день`, label: 'средний темп', tone: T.label },
     { value: String(readingDays), label: `${word(readingDays, 'день', 'дня', 'дней')} чтения`, tone: T.label },
     { value: String(member.flags), label: word(member.flags, 'красный флаг', 'красных флага', 'красных флагов'), tone: member.flags ? T.redText : T.label },
     { value: fmtInt(member.pages), label: `${word(member.pages, 'страница', 'страницы', 'страниц')} всего`, tone: T.label },
@@ -40,6 +44,7 @@ export function ReadingProgressSummary({ member, todayMs }: { member: NonNullabl
         {left ? `Ещё ${left} мин до 00:00, иначе красный флаг` : 'Час выполнен — сегодня без флага'}
       </Text>
       <View style={[styles.rule, { backgroundColor: T.separator }]} />
+      {books ? <><ReadingTodayBooks books={books} /><View style={[styles.rule, { backgroundColor: T.separator }]} /></> : null}
     </> : null}
     <View style={styles.grid}>
       {cells.map((c, i) => <View key={c.label} style={[styles.cell, single ? styles.full : styles.half,

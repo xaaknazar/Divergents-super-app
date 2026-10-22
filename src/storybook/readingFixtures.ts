@@ -39,3 +39,5 @@ export const individualReadingFixture: ReadingDetail = {
     reader('r5', 'Ербол', 30, 11, 2),
   ],
 };
+export const readingBookExample = { key: 'ol:OL1W', title: 'Атомные привычки', author: 'Джеймс Клир',
+  coverId: null, pages: 15, elapsedMs: 25 * 60000, nextPage: null };

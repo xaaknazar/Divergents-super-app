@@ -6,8 +6,10 @@ import DeviceActivity
 import ActivityKit
 import AppIntents
 import Combine
+import CryptoKit
 
-// Shared by app, DeviceActivity monitor and Live Activity. No token/credentials here.
+// Shared by app, DeviceActivity monitor and Live Activity. No auth credentials.
+// Opaque Screen Time tokens remain local; use exportedSession for any export.
 struct ReadingFocusSession: Codable {
   let accountId: String
   let sessionId: String
@@ -31,6 +33,28 @@ struct ReadingFocusSession: Codable {
   var generation: String?
   var terminal: Bool?
   var canResume: Bool?
+  // Frozen per approach. Old journals have no exceptions, even if the user
+  // configures reader apps after installing this version.
+  var allowedApplicationTokens: Set<ApplicationToken>? = nil
+  var allowedAppsRevision: String? = nil
+  var allowedAppsAuthorizationEpoch: String? = nil
+}
+
+struct ReadingAllowedAppsRecord: Codable {
+  let accountId: String
+  let revision: String
+  let authorizationEpoch: String
+  let applicationTokens: Set<ApplicationToken>
+}
+struct ReadingAllowedAppsAuthorization: Codable {
+  var epoch: String = "initial"
+  var revoked: Bool = false
+}
+struct ReadingAllowedAppsStatus: Codable {
+  let count: Int
+  let revision: String
+  let editable: Bool
+  let needsReselection: Bool
 }
 
 struct ReadingLiveActivityStatus: Codable {
@@ -41,7 +65,7 @@ struct ReadingLiveActivityStatus: Codable {
 }
 
 enum ReadingFocusFailure: LocalizedError {
-  case unavailable, permission, selection, active, storage, boot, deadline, cannotResume, goal
+  case unavailable, permission, selection, active, storage, boot, deadline, cannotResume, allowedAppsSelection, allowedAppsChanged
   var errorDescription: String? {
     switch self {
     case .unavailable: return "Блокировка ещё не подключена в этой сборке."
@@ -52,7 +76,8 @@ enum ReadingFocusFailure: LocalizedError {
     case .boot: return "Телефон был перезагружен. Сохраните записанную часть подхода и продолжите чтение."
     case .deadline: return "День завершился. Откройте Divergents и сохраните результат."
     case .cannotResume: return "Этот подход уже завершён. Откройте Divergents."
-    case .goal: return "До 60 минут доступна пауза. Завершить чтение можно после дневной цели."
+    case .allowedAppsSelection: return "Выберите не больше 50 отдельных приложений. Категории и сайты добавлять в исключения нельзя."
+    case .allowedAppsChanged: return "Настройки или аккаунт изменились. Закройте выбор и откройте его снова."
     }
   }
 }
@@ -208,6 +233,16 @@ enum ReadingFocusStore {
   static func write(_ session: ReadingFocusSession) throws {
     try JSONEncoder().encode(session).write(to: directory().appendingPathComponent("session.json"), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
   }
+  static func exportedSession(_ session: ReadingFocusSession) throws -> [String: Any] {
+    var value = try JSONSerialization.jsonObject(with: JSONEncoder().encode(session)) as! [String: Any]
+    // Shared by the JS bridge and local QA diagnostics. Never copy opaque
+    // selections or authorization generations into an outbox or export.
+    value.removeValue(forKey: "allowedApplicationTokens")
+    value.removeValue(forKey: "allowedAppsAuthorizationEpoch")
+    value.removeValue(forKey: "allowedAppsRevision")
+    value["allowedAppCount"] = session.allowedApplicationTokens?.count ?? 0
+    return value
+  }
   static func selection() throws -> FamilyActivitySelection {
     let file = try directory().appendingPathComponent("selection.json")
     guard FileManager.default.fileExists(atPath: file.path) else { throw ReadingFocusFailure.selection }
@@ -219,6 +254,114 @@ enum ReadingFocusStore {
   static func selectedCount() -> Int {
     guard let value = try? selection() else { return 0 }
     return value.applicationTokens.count + value.categoryTokens.count + value.webDomainTokens.count
+  }
+  // Only opaque tokens stay on this device. Never return them through the JS
+  // bridge, send them to the server, or reuse the discouraged-apps QA selection.
+  private static var allowedAppsAccountContext: String?
+  private static var allowedAppsAccountGeneration = UUID().uuidString
+  static func allowedAppsFile(accountId: String) throws -> URL {
+    guard !accountId.isEmpty, accountId.count <= 256 else { throw ReadingFocusFailure.allowedAppsChanged }
+    let digest = SHA256.hash(data: Data(accountId.utf8)).map { String(format: "%02x", $0) }.joined()
+    return try directory().appendingPathComponent("allowed-apps-\(digest).json")
+  }
+  static func allowedAppsAuthorizationLocked(_ auth: ReadingAuthorization) throws -> ReadingAllowedAppsAuthorization {
+    let file = try directory().appendingPathComponent("allowed-apps-authorization.json")
+    var value = FileManager.default.fileExists(atPath: file.path)
+      ? try JSONDecoder().decode(ReadingAllowedAppsAuthorization.self, from: Data(contentsOf: file)) : ReadingAllowedAppsAuthorization()
+    if auth == .denied && !value.revoked {
+      // Revocation voids Apple's tokens for every signed-in account. Unknown
+      // during a cold launch is not revocation and must not rotate this epoch.
+      value.epoch = UUID().uuidString; value.revoked = true
+      try JSONEncoder().encode(value).write(to: file, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    } else if auth == .approved && value.revoked {
+      value.revoked = false
+      try JSONEncoder().encode(value).write(to: file, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    }
+    return value
+  }
+  static func allowedAppsRecordLocked(accountId: String) throws -> ReadingAllowedAppsRecord? {
+    let file = try allowedAppsFile(accountId: accountId)
+    guard FileManager.default.fileExists(atPath: file.path) else { return nil }
+    let value = try JSONDecoder().decode(ReadingAllowedAppsRecord.self, from: Data(contentsOf: file))
+    guard value.accountId == accountId, value.applicationTokens.count <= 50 else { throw ReadingFocusFailure.allowedAppsChanged }
+    return value
+  }
+  static func allowedAppsStatus(accountId: String, activate: Bool = true) throws -> ReadingAllowedAppsStatus {
+    let auth = authorization()
+    return try locked {
+      if activate {
+        let nextAccount = accountId.isEmpty ? nil : accountId
+        if nextAccount != allowedAppsAccountContext {
+          allowedAppsAccountContext = nextAccount
+          allowedAppsAccountGeneration = UUID().uuidString
+        }
+      }
+      guard !accountId.isEmpty else { return ReadingAllowedAppsStatus(count: 0, revision: "none", editable: false, needsReselection: false) }
+      let epoch = try allowedAppsAuthorizationLocked(auth)
+      let record = try allowedAppsRecordLocked(accountId: accountId)
+      let stale = record.map { !$0.applicationTokens.isEmpty && $0.authorizationEpoch != epoch.epoch } ?? false
+      let idle = try read() == nil
+      return ReadingAllowedAppsStatus(count: record?.applicationTokens.count ?? 0, revision: "\(record?.revision ?? "none"):\(epoch.epoch)",
+        editable: pilotEnabled && blockingMode == "all-apps" && auth == .approved && idle,
+        needsReselection: stale)
+    }
+  }
+  static func allowedAppsSelection(accountId: String, expectedRevision: String?) throws -> (FamilyActivitySelection, String, String) {
+    let auth = authorization()
+    return try locked {
+      guard pilotEnabled, blockingMode == "all-apps" else { throw ReadingFocusFailure.unavailable }
+      guard auth == .approved else { throw ReadingFocusFailure.permission }
+      guard allowedAppsAccountContext == accountId else { throw ReadingFocusFailure.allowedAppsChanged }
+      guard try read() == nil else { throw ReadingFocusFailure.active }
+      let epoch = try allowedAppsAuthorizationLocked(auth)
+      let record = try allowedAppsRecordLocked(accountId: accountId), revision = "\(record?.revision ?? "none"):\(epoch.epoch)"
+      guard expectedRevision == nil || expectedRevision == revision else { throw ReadingFocusFailure.allowedAppsChanged }
+      var selected = FamilyActivitySelection(includeEntireCategory: false)
+      if record?.authorizationEpoch == epoch.epoch { selected.applicationTokens = record?.applicationTokens ?? [] }
+      return (selected, revision, allowedAppsAccountGeneration)
+    }
+  }
+  static func saveAllowedApps(_ selection: FamilyActivitySelection, accountId: String, expectedRevision: String, expectedContext: String) throws -> ReadingAllowedAppsStatus {
+    let auth = authorization()
+    try locked {
+      guard pilotEnabled, blockingMode == "all-apps" else { throw ReadingFocusFailure.unavailable }
+      guard auth == .approved else { throw ReadingFocusFailure.permission }
+      // An A -> B -> A account round-trip invalidates the original picker too,
+      // even when this account's persisted selection revision never changed.
+      guard allowedAppsAccountContext == accountId, allowedAppsAccountGeneration == expectedContext
+        else { throw ReadingFocusFailure.allowedAppsChanged }
+      // A timer may have started while the system picker was open. Even a soft
+      // pause/terminal approach must be saved before editing its next policy.
+      guard try read() == nil else { throw ReadingFocusFailure.active }
+      guard selection.categoryTokens.isEmpty, selection.webDomainTokens.isEmpty, selection.applicationTokens.count <= 50
+        else { throw ReadingFocusFailure.allowedAppsSelection }
+      let current = try allowedAppsRecordLocked(accountId: accountId)
+      let epoch = try allowedAppsAuthorizationLocked(auth)
+      // Reauthorization while the picker was open invalidates its draft too;
+      // never promote old opaque tokens to a new authorization generation.
+      guard "\(current?.revision ?? "none"):\(epoch.epoch)" == expectedRevision else { throw ReadingFocusFailure.allowedAppsChanged }
+      let record = ReadingAllowedAppsRecord(accountId: accountId, revision: UUID().uuidString,
+        authorizationEpoch: epoch.epoch, applicationTokens: selection.applicationTokens)
+      // An explicitly saved empty selection resets to the strict default.
+      try JSONEncoder().encode(record).write(to: allowedAppsFile(accountId: accountId), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    }
+    return try allowedAppsStatus(accountId: accountId, activate: false)
+  }
+  static func allowedAppsForStartLocked(accountId: String) throws -> ReadingAllowedAppsRecord? {
+    let epoch = try allowedAppsAuthorizationLocked(.approved)
+    let record = try allowedAppsRecordLocked(accountId: accountId)
+    guard record == nil || record!.applicationTokens.isEmpty || record!.authorizationEpoch == epoch.epoch
+      else { throw ReadingFocusFailure.allowedAppsChanged }
+    return record
+  }
+  static func frozenAllowedAppsLocked(_ session: ReadingFocusSession) throws -> Set<ApplicationToken> {
+    let tokens = session.allowedApplicationTokens ?? []
+    guard tokens.count <= 50 else { throw ReadingFocusFailure.allowedAppsChanged }
+    if !tokens.isEmpty {
+      let epoch = try allowedAppsAuthorizationLocked(.unknown)
+      guard session.allowedAppsAuthorizationEpoch == epoch.epoch, !epoch.revoked else { throw ReadingFocusFailure.allowedAppsChanged }
+    }
+    return tokens
   }
   static func remaining(_ value: ReadingFocusSession) -> Double {
     max(0, value.budgetMs - elapsed(value))
@@ -232,6 +375,7 @@ enum ReadingFocusStore {
     value.resumeVersion == 1 && uptimeMs() >= (value.deadlineMs ?? value.anchorMs + value.budgetMs)
   }
   private static func applyProtection(_ value: ReadingFocusSession) throws {
+    let allowed = (value.blockingMode ?? "selected") == "all-apps" ? try frozenAllowedAppsLocked(value) : []
     let availableMs = value.resumeVersion == 1
       ? max(0, (value.deadlineMs ?? value.anchorMs + value.budgetMs) - uptimeMs())
       : remaining(value)
@@ -258,7 +402,9 @@ enum ReadingFocusStore {
       settings.shield.webDomainCategories = .specific(picked.categoryTokens)
     } else {
       settings.shield.applications = nil
-      settings.shield.applicationCategories = .all(except: exceptions)
+      // iOS exempts the controlling app from .all. Do not add an unreliable
+      // bundle-ID token or consume a 51st exception when 50 apps were chosen.
+      settings.shield.applicationCategories = .all(except: allowed)
       settings.shield.webDomains = nil
       settings.shield.webDomainCategories = .all(except: [])
     }
@@ -282,10 +428,16 @@ enum ReadingFocusStore {
         throw ReadingFocusFailure.active
       }
       let anchor = uptimeMs(), generation = UUID().uuidString
-      let value = ReadingFocusSession(accountId: accountId, sessionId: sessionId, deviceId: deviceId, book: book,
+      let allowed = blockingMode == "all-apps" ? try allowedAppsForStartLocked(accountId: accountId) : nil
+      var value = ReadingFocusSession(accountId: accountId, sessionId: sessionId, deviceId: deviceId, book: book,
         budgetMs: budgetMs, targetMs: targetMs, anchorMs: anchor, bootId: try bootId(), elapsedMs: nil, integrity: "ok", status: "running",
         blockingMode: blockingMode, monitoringName: activityName(for: sessionId, generation: generation).rawValue,
         resumeVersion: 1, accumulatedMs: 0, deadlineMs: anchor + budgetMs, generation: generation, terminal: false, canResume: false)
+      if blockingMode == "all-apps" {
+        value.allowedApplicationTokens = allowed?.applicationTokens ?? []
+        value.allowedAppsRevision = allowed?.revision ?? "none"
+        value.allowedAppsAuthorizationEpoch = allowed?.authorizationEpoch ?? "initial"
+      }
       try write(value) // Fail closed BEFORE applying any shields.
       do {
         try applyProtection(value)
@@ -448,18 +600,16 @@ enum ReadingFocusStore {
         if current.resumeVersion == 1 {
           guard let generation, current.generation == generation else { throw ReadingFocusFailure.cannotResume }
         }
-        // A normal pause freezes the goal; it is not a shortcut to submitting
-        // pages before the mandatory hour. Forced interruption/day end still
-        // seals the actual partial evidence, never a synthetic completed hour.
-        guard current.terminal == true || deadlineReached(current) || current.integrity != "ok" ||
-          elapsed(current) >= (current.targetMs ?? current.budgetMs) else { throw ReadingFocusFailure.goal }
+        // Explicit saving closes one book's approach, not the daily goal.
+        // Preserve only measured active time; the server aggregates confirmed
+        // approaches and completes the day only after the required hour.
         let wasShielded = hasShield
         releaseProtection()
         return try pauseLocked(current, wasShielded: wasShielded, authorization: auth, terminal: true)
       }
     } catch let failure as ReadingFocusFailure {
       switch failure {
-      case .active, .cannotResume, .goal: throw failure // Rejected controls must not release someone else's/live unfinished session.
+      case .active, .cannotResume: throw failure // Rejected controls must not release someone else's/live unfinished session.
       default:
         releaseProtection(); await endActivities(captured); throw failure
       }
@@ -516,6 +666,7 @@ enum ReadingFocusStore {
       // Keep missing-journal cleanup under the same lock as start(), so an
       // overlapping poll cannot clear a newly persisted session's protection.
       return try locked { () throws -> ReadingFocusSession? in
+        if auth == .denied { _ = try allowedAppsAuthorizationLocked(auth) }
         guard let value = try read() else { releaseProtection(); return nil }
         let invalid = (try? bootId()) != value.bootId || auth == .denied
         if (value.status == "running" && (remaining(value) <= 0 || invalid || !hasShield || deadlineReached(value))) ||
@@ -539,11 +690,10 @@ enum ReadingFocusStore {
     try locked {
       guard let value = try read(), value.accountId == accountId, value.sessionId == sessionId, value.status == "paused" else { throw ReadingFocusFailure.active }
       guard value.resumeVersion != 1 || value.terminal == true else { throw ReadingFocusFailure.active }
-      if (value.targetMs ?? value.budgetMs) - (value.elapsedMs ?? 0) <= 0 {
-        // Acknowledgement alone is only a segment upload. End the card only
-        // once that accepted report has actually fulfilled the reading goal.
-        completedActivities = matchingActivities(sessionId: sessionId)
-      }
+      // The book's approach is now durably reported, even when today's hour
+      // remains unfinished. Capture only its own card under the journal lock:
+      // delayed cleanup must never end a later book's Live Activity.
+      completedActivities = matchingActivities(sessionId: sessionId)
       try FileManager.default.removeItem(at: directory().appendingPathComponent("session.json"))
     }
     let activitiesToEnd = completedActivities

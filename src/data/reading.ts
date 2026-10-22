@@ -12,11 +12,12 @@ export const READING_CHALLENGE_RULES: { title: string; text: string }[] = [
   { title: 'Каждый сам за себя', text: 'Зачёт индивидуальный: команд, капитанов и заявок нет. Вступить можно в любой день — после согласия с правилами вы сразу участник.' },
   { title: 'Ваш день 1 — день вступления', text: 'Челлендж для каждого начинается в день его вступления. Дни, флаги и темп считаются для каждого участника отдельно.' },
   { title: 'Час чтения в день', text: 'Норма — минимум 60 минут чтения по таймеру в день. Её можно набрать несколькими подходами с паузами.' },
-  { title: 'Пауза и страницы', text: 'На паузе время не идёт, ограничения приложений снимаются. Нажмите «Возобновить», чтобы продолжить. Когда за день наберётся 60 минут, можно завершить подход и записать прочитанные страницы — без проверки результата.' },
+  { title: 'Пауза и страницы', text: 'На паузе время не идёт, ограничения приложений снимаются. «Возобновить» продолжает ту же книгу. Чтобы закончить подход или сменить книгу, нажмите «Записать страницы» и сохраните число страниц именно этой книги. Это можно сделать и до 60 минут — без проверки результата.' },
+  { title: 'Несколько книг за день', text: 'Добавляйте несколько книг на свою полку заранее. Выбирайте одну книгу для каждого нового подхода — остальные останутся на полке со своим прогрессом. Время всех сохранённых подходов складывается в общую цель 60 минут, а страницы сохраняются отдельно по каждой книге и суммируются за день. Короткий подход сам по себе не закрывает дневную цель.' },
   { title: 'Дополнительное время', text: 'После 60 минут таймер продолжает считать дополнительное время. Оно тоже записывается, блокировка остаётся до паузы.' },
   { title: 'День заканчивается в 00:00 по Алматы', text: 'Сутки считаются по времени Казахстана (Asia/Almaty). После полуночи начинается следующий день.' },
   { title: 'Красный флаг', text: 'Если к 00:00 за день набрано меньше 60 минут, за этот день ставится красный флаг. Флаг ставит сервер при закрытии дня — в том числе за дни, когда приложение не открывали. Флаги накапливаются.' },
-  { title: 'Рейтинг — с первого дня', text: 'Вы попадаете в рейтинг с первого дня участия. Место определяет средний темп: все сохранённые страницы делятся на календарные дни участия, включая дни без чтения. Другие участники видят имя, дни чтения, флаги и темп.' },
+  { title: 'Два рейтинга — с первого дня', text: 'Вы попадаете в оба рейтинга с первого дня участия. «Средний темп» — все сохранённые страницы делятся на календарные дни участия, включая дни без чтения. «Всего страниц» — суммарно прочитанные страницы по всем книгам за всё участие в этом челлендже. В каждом рейтинге видно оба показателя. При равном числе страниц выше участник с большим средним темпом; при равном темпе — с большим числом дней участия.' },
   { title: 'Книга и честность', text: 'Название и автора книги вы пишете сами, ИИ проверяет, что такая книга существует. Во время чтения приложения ограничены. Страницы указывайте честно: результат не требует отдельного подтверждения администратором.' },
 ];
 const phase = z.enum(['upcoming', 'active', 'finished']);
@@ -31,10 +32,15 @@ const member = z.object({ userId: z.string(), name: z.string(), teamId: z.string
 const mode = z.enum(['scheduled', 'continuous']).optional();
 const catalogItem = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, membership, mode });
 export const ReadingCatalogSchema = z.object({ enabled: z.boolean(), challenges: z.array(catalogItem) });
+export const ReadingBookSummarySchema = z.object({ key: z.string(), title: z.string(), author: z.string(), coverId: z.number().nullable(),
+  pages: z.number(), elapsedMs: z.number(), nextPage: z.number().nullable() });
+export type ReadingBookSummary = z.infer<typeof ReadingBookSummarySchema>;
 export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, mode,
   format: z.enum(['individual', 'teams']).optional(), participants: z.number().optional(),
   currentDay: z.number(), serverNow: z.number(), dayEnd: z.number(), membership, me: member.nullable(), ranking: z.array(member),
   reportedSessionIds: z.array(z.string()),
+  // Omitted by older servers: do not turn missing data into a misleading empty day.
+  todayBooks: z.array(ReadingBookSummarySchema).optional(),
   session: z.object({ id: z.string(), deviceId: z.string(), day: z.number(), book: z.string(), budgetMs: z.number(),
     author: z.string().nullable().optional(), bookKey: z.string().nullable().optional(), coverId: z.number().nullable().optional(),
     fromPage: z.number().nullable().optional(),
@@ -73,15 +79,18 @@ type ReadingMemberStats = ReadingDetail['ranking'][number];
 export function readingDaysOf(m: ReadingMemberStats) {
   return m.readingDays ?? m.history.filter(h => h.elapsedMs > 0).length;
 }
-/** Средний темп в страницах в день — метрика рейтинга. Сервер присылает averagePages. */
+/** Средний темп в страницах в день. Сервер присылает averagePages. */
 export function readingPaceOf(m: ReadingMemberStats) {
   return m.averagePages ?? 0;
 }
-/** Все участники получают место с первого дня; порядок — средний темп в страницах,
- * затем дольше участие. Сервер сортирует так же; клиент повторяет порядок, чтобы место совпадало. */
-export function readingStandings(ranking: ReadingMemberStats[]) {
+export type ReadingRankingMetric = 'pace' | 'pages';
+/** Two views of the SAME credited server totals, never a weighted score or a
+ * client-side sum of book/history rows. Keep the existing pace order unchanged.
+ * All participants rank from day one; final ID ordering makes ties stable. */
+export function readingStandings(ranking: ReadingMemberStats[], metric: ReadingRankingMetric = 'pace') {
   return [...ranking]
-    .sort((a, b) => readingPaceOf(b) - readingPaceOf(a) || (b.daysParticipated ?? 0) - (a.daysParticipated ?? 0) || a.userId.localeCompare(b.userId))
+    .sort((a, b) => (metric === 'pages' ? b.pages - a.pages : 0)
+      || readingPaceOf(b) - readingPaceOf(a) || (b.daysParticipated ?? 0) - (a.daysParticipated ?? 0) || a.userId.localeCompare(b.userId))
     .map((member, index) => ({ member, place: index + 1 }));
 }
 /** «из 48 участников», «из 21 участника». */

@@ -21,6 +21,7 @@ function declaration(signature: string): string {
   const code = `
 import Foundation
 import Dispatch
+typealias ApplicationToken = String
 ${declaration('struct ReadingFocusSession:')}
 ${declaration('enum ReadingFocusFailure:')}
 ${declaration('enum ReadingAuthorization:')}
@@ -94,8 +95,7 @@ Task {
     result["firstPause"] = paused.elapsedMs!
     Harness.now = 110_000
     result["after100SecondPause"] = Harness.elapsed(paused)
-    do { _ = try await Harness.finish(accountId: "a", sessionId: "s", generation: paused.generation) }
-    catch { result["pausedBeforeGoalCannotFinish"] = !Harness.hasShield && Harness.journal!.terminal == false && Harness.journal!.elapsedMs == 10_000 }
+    result["softPauseRemainsResumable"] = paused.terminal == false && paused.canResume == true
     let resumed = try await Harness.resume(accountId: "a", sessionId: "s", generation: paused.generation)
     Harness.now = 130_000
     result["activeElapsed"] = Harness.elapsed(resumed)
@@ -113,15 +113,20 @@ Task {
     do { _ = try await Harness.finish(accountId: "a", sessionId: "s", generation: resumed.generation) }
     catch { result["staleFinishProtected"] = Harness.hasShield && Harness.journal!.terminal == false }
     Harness.now = 145_000
-    do { _ = try await Harness.finish(accountId: "a", sessionId: "s", generation: againRunning.generation) }
-    catch { result["prematureFinishProtected"] = Harness.hasShield && Harness.journal!.terminal == false }
-    Harness.now = 150_000
     let final = try await Harness.finish(accountId: "a", sessionId: "s", generation: againRunning.generation)
     result["finishedActiveElapsed"] = final.elapsedMs!
+    result["runningPartialFinishUnlocks"] = final.terminal == true && final.canResume == false && !Harness.hasShield
     Harness.boot = "new-boot"; AuthorizationCenter.shared.authorizationStatus = .denied
     let afterSignout = try Harness.pause()!
     result["terminalEvidenceImmutable"] = afterSignout.elapsedMs == final.elapsedMs && afterSignout.integrity == final.integrity && afterSignout.generation == final.generation
     Harness.boot = "boot"; AuthorizationCenter.shared.authorizationStatus = .approved
+    Harness.journal = initial(); Harness.now = 10_000; Harness.hasShield = true
+    let partialPause = try Harness.pause()!
+    Harness.now = 110_000
+    let partialFinish = try await Harness.finish(accountId: "a", sessionId: "s", generation: partialPause.generation)
+    result["pausedBeforeGoalCanSaveExactApproach"] = partialFinish.terminal == true && partialFinish.elapsedMs == 10_000 && partialFinish.targetMs == 40_000 && !Harness.hasShield
+    do { _ = try await Harness.resume(accountId: "a", sessionId: "s", generation: partialFinish.generation) }
+    catch { result["savedPartialCannotResume"] = Harness.journal!.terminal == true && !Harness.hasShield }
     Harness.journal = initial(); Harness.now = 40_000; Harness.hasShield = true
     let goalPause = try Harness.pause()!
     let goalFinish = try await Harness.finish(accountId: "a", sessionId: "s", generation: goalPause.generation)
@@ -165,12 +170,13 @@ dispatchMain()
   const output = execFileSync('xcrun', ['swift', '-swift-version', '5', '-e', code], { encoding: 'utf8', timeout: 45_000 });
   expect(JSON.parse(output.trim())).toEqual({
     firstPause: 10_000, after100SecondPause: 10_000, activeElapsed: 30_000,
-    pausedBeforeGoalCannotFinish: true, pausedAtGoalCanFinish: true,
+    softPauseRemainsResumable: true, pausedBeforeGoalCanSaveExactApproach: true, savedPartialCannotResume: true,
+    pausedAtGoalCanFinish: true, runningPartialFinishUnlocks: true,
     targetRemainingWithPrior20Seconds: 10_000, deadlineRemaining: 70_000,
     unknownAuthorizationPauseResumable: true, unknownAuthorizationNoProtectionKeepsPause: true,
     resumeContinuesFromSavedPlace: true, missingShieldStillRevokes: true,
     oldMonitorIgnored: true, repeatResumeDoesNotRebase: true, repeatPauseStable: true,
-    staleFinishProtected: true, prematureFinishProtected: true, finishedActiveElapsed: 40_000,
+    staleFinishProtected: true, finishedActiveElapsed: 35_000,
     terminalEvidenceImmutable: true, midnightCannotExtend: true, failedResumeNoCredit: true,
     wrongOwnerDoesNotUnlock: true, storageFailureUnlocks: true,
   });

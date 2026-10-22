@@ -14,7 +14,7 @@ export function ReadingRankingScreen({ route, navigation }: NativeStackScreenPro
   return <Screen topInset={false} onRefresh={state.retry}>
     <NavHeader title="Рейтинг участников" largeTitle backLabel="Назад" onBack={() => navigation.goBack()} />
     {state.error ? <Wrapper padding={16}><InlineNotice message={state.error} onRetry={state.retry} /></Wrapper> : null}
-    {state.data ? <ReadingRankingContent data={state.data}
+    {state.data ? <ReadingRankingContent key={state.data.id} data={state.data}
       onHistory={readerId => navigation.navigate('ReadingHistory', { challengeId: route.params.challengeId, readerId })} />
       : !state.error ? <ContentLoading /> : null}
   </Screen>;

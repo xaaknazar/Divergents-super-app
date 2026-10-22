@@ -6,14 +6,17 @@ import { nums } from '../theme/tokens';
 import { SF } from './SFIcon';
 import { TappableSurface } from './TappableSurface';
 
-/** «Мой рейтинг · 31 место из 48 участников ›». Вся карточка открывает «Рейтинг участников». */
-export function ReadingRankLink({ place, participants, onPress }: {
-  place: number | null; participants: number;
+/** Оба места из одного списка участников; карточка открывает переключаемый рейтинг. */
+export function ReadingRankLink({ place, pagesPlace, participants, onPress }: {
+  /** Место по среднему темпу. */
+  place: number | null; pagesPlace: number | null; participants: number;
   onPress: () => void;
 }) {
   const { T, ty } = useTheme();
   const main = place != null ? `${place} место из ${participantsOf(participants)}` : 'Открыть рейтинг участников';
-  return <TappableSurface onPress={onPress} accessibilityLabel={`Мой рейтинг. ${main}`} accessibilityHint="Открыть рейтинг участников">
+  const pages = pagesPlace != null ? `По страницам: ${pagesPlace} место из ${participantsOf(participants)}` : 'По страницам: место пока недоступно';
+  return <TappableSurface onPress={onPress} accessibilityLabel={`Мой рейтинг. По среднему темпу: ${main}. ${pages}`}
+    accessibilityHint="Открыть рейтинг и выбрать средний темп или всего страниц">
     <View style={styles.row}>
       <View style={[styles.badge, { backgroundColor: T.brandTinted }]}>
         {place != null ? <Text style={[ty.headline, nums, { color: T.brandText }]} numberOfLines={1}>{place}</Text>
@@ -21,7 +24,9 @@ export function ReadingRankLink({ place, participants, onPress }: {
       </View>
       <View style={styles.copy}>
         <Text style={[ty.footnote, { color: T.labelSecondary }]}>Мой рейтинг</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary }]}>По среднему темпу</Text>
         <Text style={[ty.headline, nums, { color: T.label }]}>{main}</Text>
+        <Text style={[ty.subhead, nums, { color: T.labelSecondary }]}>{pages}</Text>
       </View>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name="chevron.forward" size={16} color={T.labelTertiary} /></View>
     </View>

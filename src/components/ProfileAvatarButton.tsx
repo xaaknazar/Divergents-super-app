@@ -1,6 +1,7 @@
 // Кнопка «Профиль» в шапке вкладки (handoff 2026-10-20, §2.2).
 //
-// Зона 52, лицо 42: фото или инициалы на градиенте бренда. Вокруг — кольцо
+// Единая видимая поверхность и зона нажатия 52, лицо 42 на КАЖДОЙ вкладке:
+// фото или инициалы на градиенте бренда. Вокруг — кольцо
 // заполненности анкеты (скрыто при 0 и 100 %), сверху — бейдж новых событий.
 // Только представление; источники фото/анкеты/событий собирает useProfileButton.
 // Компонент не требует авторизации и самостоятельно обрабатывает битое фото.
@@ -23,8 +24,6 @@ export interface ProfileAvatarButtonProps {
   progress?: number;
   /** Число новых событий; > 9 показывается как «9+». */
   badge?: number;
-  /** floating — стеклянный круг поверх карты. */
-  variant?: 'plain' | 'floating';
   onPress?: () => void;
 }
 
@@ -38,7 +37,7 @@ function initialsOf(name?: string | null) {
   return parts.slice(0, 2).map(p => p[0]).join('').toUpperCase();
 }
 
-export function ProfileAvatarButton({ photoUrl, name, progress = 0, badge = 0, variant = 'plain', onPress }: ProfileAvatarButtonProps) {
+export function ProfileAvatarButton({ photoUrl, name, progress = 0, badge = 0, onPress }: ProfileAvatarButtonProps) {
   const { T, isDark, reduceMotion, reduceTransparency } = useTheme();
   // Ссылка на фото может протухнуть (файл удалили на сайте) — тогда молча
   // возвращаемся к инициалам, а не показываем пустой серый квадрат.
@@ -51,15 +50,13 @@ export function ProfileAvatarButton({ photoUrl, name, progress = 0, badge = 0, v
   const label = tr('Профиль')
     + (ring ? `, анкета заполнена на ${pct}%` : '')
     + (badge > 0 ? `, новых: ${badge}` : '');
-  const floating = variant === 'floating';
-
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}
       disabled={!onPress} accessibilityState={{ disabled: !onPress }}
-      style={({ pressed }) => [styles.root, floating ? [{
+      style={({ pressed }) => [styles.root, {
         backgroundColor: reduceTransparency ? T.cardBg : hexToRgba(T.cardBg, isDark ? 0.84 : 0.72),
         borderColor: isDark ? T.separator : 'rgba(0,0,0,0.06)',
-      }, styles.floating, shadow({ color: '#101D2C', opacity: 0.16, radius: 9, y: 6, elevation: 6 })] : null,
+      }, shadow({ color: '#101D2C', opacity: 0.16, radius: 9, y: 6, elevation: 6 }),
       { opacity: pressed ? 0.6 : 1 }]}>
       {ring ? <View pointerEvents="none" style={styles.ring}>
         <Svg width={BOX} height={BOX} viewBox={`0 0 ${BOX} ${BOX}`}>
@@ -70,7 +67,7 @@ export function ProfileAvatarButton({ photoUrl, name, progress = 0, badge = 0, v
         </Svg>
       </View> : null}
       <View style={[styles.faceShadow, shadow({ color: '#234088', opacity: 0.28, radius: 3, y: 2, elevation: 2 })]}>
-        <View style={styles.face}>
+        <View testID="profile-avatar-face" style={styles.face}>
           {showPhoto ? (
             <Image source={{ uri: photoUrl as string }} onError={() => setBrokenUrl(photoUrl ?? null)}
               style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={reduceMotion ? 0 : 120} />
@@ -82,7 +79,7 @@ export function ProfileAvatarButton({ photoUrl, name, progress = 0, badge = 0, v
           <View pointerEvents="none" style={styles.faceRim} />
         </View>
       </View>
-      {badge > 0 ? <View pointerEvents="none" style={[styles.badge, { borderColor: floating || !isDark ? '#FFFFFF' : T.systemBg }]}>
+      {badge > 0 ? <View pointerEvents="none" style={[styles.badge, { borderColor: T.cardBg }]}>
         <Text allowFontScaling={false} style={styles.badgeText}>{badge > 9 ? '9+' : String(badge)}</Text>
       </View> : null}
     </Pressable>
@@ -90,8 +87,10 @@ export function ProfileAvatarButton({ photoUrl, name, progress = 0, badge = 0, v
 }
 
 const styles = StyleSheet.create({
-  root: { width: BOX, height: BOX, borderRadius: BOX / 2, alignItems: 'center', justifyContent: 'center' },
-  floating: { borderWidth: 0.5 },
+  // Explicit bounds prevent a narrow title/actions row (including web previews)
+  // from shrinking the profile while another header keeps its full dimensions.
+  root: { width: BOX, height: BOX, minWidth: BOX, maxWidth: BOX, minHeight: BOX, maxHeight: BOX,
+    flexShrink: 0, flexGrow: 0, borderRadius: BOX / 2, borderWidth: 0.5, alignItems: 'center', justifyContent: 'center' },
   ring: { position: 'absolute', top: 0, left: 0 },
   faceShadow: { width: FACE, height: FACE, borderRadius: FACE / 2 },
   face: { width: FACE, height: FACE, borderRadius: FACE / 2, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },

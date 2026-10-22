@@ -11,32 +11,33 @@ import { Checkbox } from './Checkbox';
 import { ReadingChallengeHeader } from './ReadingChallengeHeader';
 import { ReadingRules } from './ReadingRules';
 import { ReadingRankLink } from './ReadingRankLink';
-import { ReadingBookField, ReadingBookFieldStatus } from './ReadingBookField';
+import { ReadingBookField, ReadingBookInput } from './ReadingBookField';
 import { ReadingTimer } from './ReadingTimer';
 import { ReadingTimerControls } from './ReadingTimerControls';
 import { ReadingPagesForm } from './ReadingPagesForm';
 import { ReadingSaveStatus } from './ReadingSaveStatus';
 import { ReadingProgressSummary } from './ReadingProgressSummary';
 import { ReadingHistoryLink } from './ReadingHistoryLink';
+import { ReadingBookLibrary, ReadingBookshelf, ReadingShelfComposer } from './ReadingBookshelf';
+import { ReadingAllowedAppsCard, ReadingAllowedAppsView } from './ReadingAllowedAppsCard';
+export type { ReadingBookInput } from './ReadingBookField';
 
 const HOUR = 3_600_000;
-export type ReadingBookInput = {
-  title: string; author: string; status: ReadingBookFieldStatus; error?: string;
-  verified: { title: string; author: string; key?: string; coverId?: number; manual?: boolean } | null;
-  suggestions: { title: string; author: string }[]; pick: (index: number) => void; reject: () => void; manual: () => void;
-  setTitle: (value: string) => void; setAuthor: (value: string) => void; check: () => void; edit: () => void;
-};
 export type ReadingChallengeContentProps = {
   data: ReadingDetail; remainingMs: number; timerState: 'ready' | 'running' | 'paused' | 'complete';
   protection: 'unavailable' | 'permission' | 'selection' | 'ready'; busy: boolean; error?: string; awaitingPages: boolean;
   blockingMode?: 'selected' | 'all-apps';
   resumableSession?: boolean; canResume?: boolean; onResume?: () => void;
+  sessionElapsedMs?: number;
   onPrepare: () => void; onStart: (book: string, metadata?: ReadingBookMetadata) => void; onPause: () => void;
-  /** После дневной цели: закрыть подход на телефоне и отправить страницы. */
+  /** Закрыть отдельный подход (в том числе до дневной цели) и отправить его страницы. */
   onSaveApproach: (pages: number, nextPage?: number) => void;
   /** Страницы уже закрытого подхода. */
   onReport: (pages: number, nextPage?: number) => void;
   book: ReadingBookInput;
+  library?: ReadingBookLibrary;
+  composer?: ReadingShelfComposer;
+  allowedApps?: ReadingAllowedAppsView;
   onJoin: () => void; onRetry: () => void; onRanking: () => void; onHistory?: (userId: string) => void;
   sessionNotice?: { kind: 'test-running' | 'other-account' | 'other-challenge'; message: string }; startBlocked?: boolean;
   needsRecovery: boolean; onRecover: () => void;
@@ -49,7 +50,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const d = p.data;
   const [agreed, setAgreed] = useState(false);
   const [pages, setPages] = useState('');
-  useEffect(() => { setPages(''); }, [d.session?.id]);
+  const [pagesRequested, setPagesRequested] = useState(false);
+  useEffect(() => { setPages(''); setPagesRequested(false); }, [d.id, d.me?.userId, d.session?.id]);
+  useEffect(() => { if (p.timerState === 'running') setPagesRequested(false); }, [p.timerState]);
   const member = d.membership === 'approved' ? d.me : null;
   const participants = d.participants ?? d.ranking.length;
   const canJoin = !member && (d.phase === 'upcoming' || d.phase === 'active' && d.mode === 'continuous');
@@ -71,21 +74,27 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const reader = d.phase === 'active' && !member.eliminatedOn;
   const running = p.timerState === 'running';
   const softPaused = !!p.resumableSession && p.timerState === 'paused' && !p.awaitingPages;
-  const recording = softPaused && p.remainingMs <= 0 || p.awaitingPages;
+  const recording = softPaused && (p.remainingMs <= 0 || pagesRequested) || p.awaitingPages;
   const standing = readingStandings(d.ranking).find(s => s.member.userId === member.userId);
+  const pagesStanding = readingStandings(d.ranking, 'pages').find(s => s.member.userId === member.userId);
   const book = p.book;
   const bookReady = READING_REQUIRE_VERIFIED_BOOK ? !!book.verified : book.title.trim().length >= 2;
   const startBook = book.verified ?? { title: book.title.trim(), author: book.author.trim() };
-  const startConfirmed = () => p.onStart(startBook.title, { author: startBook.author || undefined, bookKey: book.verified?.key, coverId: book.verified?.coverId });
+  const previousBook = (d.todayBooks ?? []).find(saved => saved.key === book.verified?.key)
+    ?? p.library?.books.find(saved => saved.key === book.verified?.key);
+  const startConfirmed = () => p.onStart(startBook.title, { author: startBook.author || undefined, bookKey: book.verified?.key,
+    coverId: book.verified?.coverId, ...(previousBook?.nextPage != null ? { fromPage: previousBook.nextPage } : {}) });
+  const approachOpen = !!d.session || !!p.resumableSession || running || p.awaitingPages;
   const start = () => {
     if (p.blockingMode !== 'all-apps') { startConfirmed(); return; }
     Alert.alert('Начать чтение в строгом режиме?',
-      'На время чтения iOS ограничит все доступные для блокировки приложения и сайты, включая игры, соцсети, банки, карты и читалки. Divergents останется доступен.\n\nКнопка «Пауза» сразу снимет ограничения, даже без интернета.',
+      'На время чтения iOS ограничит все доступные для блокировки приложения и сайты. Divergents и выбранные вами разрешённые приложения останутся доступны. Остальные читалки, игры, соцсети, банки и карты могут блокироваться.\n\nКнопка «Пауза» сразу снимет ограничения, даже без интернета.',
       [{ text: 'Отмена', style: 'cancel' }, { text: 'Начать чтение', onPress: startConfirmed }]);
   };
   const nextPage = d.session?.fromPage != null && pages ? d.session.fromPage + Number(pages) : undefined;
   const pagesInvalid = !/^\d+$/.test(pages) || Number(pages) > 10000 || (nextPage ?? 0) > 100000;
   const submitPages = () => (softPaused ? p.onSaveApproach : p.onReport)(Number(pages), nextPage);
+  const sessionElapsedMs = p.sessionElapsedMs ?? d.session?.elapsedMs;
   const timerVisual = p.awaitingPages && p.busy ? 'saving' as const : recording ? 'recording' as const : p.timerState;
   const todayMinutes = Math.floor(todayMs / 60000);
   // A legacy cached review payload is not a save receipt. It never blocks reading,
@@ -106,36 +115,45 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
             { text: 'Отмена', style: 'cancel' }, { text: 'Закрыть подход', onPress: p.onRecover },
           ])} />
         : recording ? <>
-          {softPaused && p.onResume ? <ReadingTimerControls action="resume" secondary disabled={!p.canResume} onPress={p.onResume} /> : null}
+          {softPaused && p.onResume ? <ReadingTimerControls action="resume" secondary disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null}
           {d.session && d.session.day !== d.currentDay ? <InlineNotice message={`Это подход за прошлый день. Страницы запишутся в тот день, а не в сегодняшний.`} /> : null}
           <ReadingPagesForm value={pages} onChange={setPages} busy={p.busy} invalid={pagesInvalid} onSubmit={submitPages}
-            sessionMinutes={d.session?.elapsedMs != null ? Math.floor(d.session.elapsedMs / 60000) : undefined}
+            bookTitle={d.session?.book}
+            sessionMinutes={sessionElapsedMs != null ? Math.floor(sessionElapsedMs / 60000) : undefined}
             fromPage={d.session?.fromPage} nextPage={nextPage} />
         </>
         : softPaused ? <>
-          {p.onResume ? <ReadingTimerControls action="resume" disabled={!p.canResume} onPress={p.onResume} /> : null}
-          <ScreenDescription text="Чтение на паузе. Наберите 60 минут за день, затем завершите подход и запишите страницы." />
+          {p.onResume ? <ReadingTimerControls action="resume" disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null}
+          <Button label="Записать страницы" variant="tinted" disabled={p.busy} onPress={() => setPagesRequested(true)}
+            accessibilityHint="Завершить этот подход и сохранить страницы текущей книги. Потом можно выбрать другую книгу" />
+          <ScreenDescription text="Можно продолжить эту книгу или сохранить подход и выбрать другую. Все подходы складываются в общие 60 минут за день." />
         </>
         : <>
           {savedToday ? <ReadingSaveStatus state="saved" detail={`Сегодня: ${todayMinutes} мин · ${today?.pages ?? 0} стр. Подтверждено сервером.`} /> : null}
           {p.protection !== 'ready' ? <>
             <ScreenDescription text={p.blockingMode === 'all-apps'
-              ? 'Разрешите Экранное время: во время чтения iOS ограничит все приложения, которые можно блокировать, кроме Divergents.'
+              ? 'Разрешите Экранное время: во время чтения iOS ограничит приложения, кроме Divergents и выбранных вами исключений для чтения.'
               : 'Выберите соцсети и браузеры, которые будут недоступны во время чтения. Не выбирайте Divergents и приложение для книг.'} />
             <Button label={p.protection === 'permission' ? 'Разрешить блокировку' : 'Выбрать приложения'} variant="tinted" onPress={p.onPrepare} loading={p.busy} />
           </> : null}
           <ReadingTimerControls action={idleAction} onPress={start} loading={p.busy}
-            disabled={p.startBlocked || p.protection !== 'ready' || !bookReady} />
-          {!bookReady ? <ScreenDescription text={READING_REQUIRE_VERIFIED_BOOK ? 'Чтобы начать, выберите и подтвердите книгу.' : 'Чтобы начать, напишите название книги.'} /> : null}
+            disabled={p.startBlocked || p.protection !== 'ready' || !bookReady || !!p.allowedApps?.busy || !!p.composer?.adding} />
+          {!bookReady ? <ScreenDescription text={p.library ? 'Добавьте книгу на полку и выберите её для подхода.' : READING_REQUIRE_VERIFIED_BOOK ? 'Чтобы начать, выберите и подтвердите книгу.' : 'Чтобы начать, напишите название книги.'} /> : null}
         </>}
       {d.session ? <ReadingBookField status="verified" locked title={d.session.book} author={d.session.author ?? ''}
         onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />
-        : <ReadingBookField status={book.status} title={book.title} author={book.author} error={book.error} locked={p.busy}
+        : !p.library || book.verified ? <ReadingBookField status={book.status} title={book.title} author={book.author} error={book.error} locked={p.busy || !!p.library}
           suggestions={book.suggestions} onPick={book.pick} onReject={book.reject} onManual={book.manual} manual={!!book.verified?.manual}
-          onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />}
+          onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} /> : null}
     </Wrapper> : null}
-    {d.phase !== 'upcoming' ? <ReadingProgressSummary member={member} todayMs={d.phase === 'active' ? todayMs : undefined} /> : null}
-    <ReadingRankLink place={standing?.place ?? null} participants={participants} onPress={p.onRanking} />
+    {p.library ? <ReadingBookshelf key={`${d.id}:${member.userId}`} library={p.library} composer={p.composer}
+      selectedKey={d.session?.bookKey ?? book.verified?.key} selectionLocked={approachOpen || !!p.sessionNotice || !reader}
+      disabled={p.busy} /> : null}
+    {p.allowedApps && d.phase !== 'finished' ? <ReadingAllowedAppsCard value={{ ...p.allowedApps,
+      editable: p.allowedApps.editable && !approachOpen && !p.busy && !p.sessionNotice }} /> : null}
+    {d.phase !== 'upcoming' ? <ReadingProgressSummary member={member} todayMs={d.phase === 'active' ? todayMs : undefined}
+      books={d.phase === 'active' ? d.todayBooks : undefined} /> : null}
+    <ReadingRankLink place={standing?.place ?? null} pagesPlace={pagesStanding?.place ?? null} participants={participants} onPress={p.onRanking} />
     {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
     <ReadingRules variant="collapsed" blockingMode={p.blockingMode} />
   </Wrapper>;

@@ -8,13 +8,19 @@ import { Button } from './Button';
 
 export type ReadingBookFieldStatus = 'empty' | 'checking' | 'suggested' | 'verified' | 'notFound' | 'error';
 export type ReadingBookOption = { title: string; author: string };
+export type ReadingBookInput = {
+  title: string; author: string; status: ReadingBookFieldStatus; error?: string;
+  verified: { title: string; author: string; key?: string; coverId?: number; manual?: boolean } | null;
+  suggestions: ReadingBookOption[]; pick: (index: number) => void; reject: () => void; manual: () => void;
+  setTitle: (value: string) => void; setAuthor: (value: string) => void; check: () => void; edit: () => void;
+};
 
 /** «Что читаете»: участник пишет название (автора — по желанию), ИИ предлагает «Эта книга?».
  * empty — поля и «Найти книгу»; checking — ищем; suggested — до трёх вариантов «Название — Автор»,
  * у каждого «Да, эта», и «Нет, другая книга»; verified — только название и автор (без страниц);
  * notFound / error — не нашли: поля для правки и «Записать вручную» (название и автор обязательны);
  * verified + manual — книга записана самим участником. `locked` — книга текущего подхода, сменить нельзя. */
-export function ReadingBookField({ status, title, author, error, locked = false, manual = false, suggestions = [], onChangeTitle, onChangeAuthor, onCheck, onEdit, onPick, onReject, onManual }: {
+export function ReadingBookField({ status, title, author, error, locked = false, manual = false, purpose = 'approach', suggestions = [], onChangeTitle, onChangeAuthor, onCheck, onEdit, onPick, onReject, onManual }: {
   status: ReadingBookFieldStatus; title: string; author: string;
   /** Варианты для status="suggested". */
   suggestions?: ReadingBookOption[];
@@ -24,6 +30,7 @@ export function ReadingBookField({ status, title, author, error, locked = false,
   onManual?: () => void;
   /** Текст ошибки сервиса для status="error". */
   error?: string; locked?: boolean;
+  purpose?: 'approach' | 'add';
   onChangeTitle: (value: string) => void; onChangeAuthor: (value: string) => void;
   onCheck: () => void; onEdit: () => void;
 }) {
@@ -31,14 +38,15 @@ export function ReadingBookField({ status, title, author, error, locked = false,
   // Крупный шрифт: «Сменить» уходит под книгу, название не сжимается.
   const stacked = useWindowDimensions().fontScale * textScale > 1.15;
   const card = [styles.card, { backgroundColor: T.cardBg, borderColor: T.cardBorder }];
-  const heading = <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>Что читаете</Text>;
+  const headingText = purpose === 'add' ? 'Добавить книгу' : 'Что читаете';
+  const heading = <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>{headingText}</Text>;
   if (status === 'verified') return <View style={card}>
     <View style={[styles.verified, stacked && styles.stacked]}>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.spine, { backgroundColor: T.brandTinted, borderLeftColor: T.brandText }]}>
         <SF name="book.fill" size={18} color={T.brandText} />
       </View>
-      <View style={styles.copy} accessible accessibilityLabel={`Что читаете: ${title}${author ? `, ${author}` : ''}. ${manual ? 'Указана вручную' : 'Книга подтверждена'}`}>
-        <Text style={[ty.footnote, { color: T.labelSecondary }]}>Что читаете</Text>
+      <View style={styles.copy} accessible accessibilityLabel={`${headingText}: ${title}${author ? `, ${author}` : ''}. ${manual ? 'Указана вручную' : 'Книга подтверждена'}`}>
+        <Text style={[ty.footnote, { color: T.labelSecondary }]}>{headingText}</Text>
         <Text style={[ty.headline, { color: T.label }]}>{title}</Text>
         {author ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>{author}</Text> : null}
         <View style={styles.badge}>
@@ -46,9 +54,9 @@ export function ReadingBookField({ status, title, author, error, locked = false,
           <Text style={[ty.footnoteEm, { color: manual ? T.labelSecondary : T.greenText }]}>{manual ? 'Указана вручную' : 'Книга подтверждена'}</Text>
         </View>
       </View>
-      {!locked ? <Pressable onPress={onEdit} accessibilityRole="button" accessibilityLabel={`Сменить книгу: ${title}`}
+      {!locked ? <Pressable onPress={onEdit} accessibilityRole="button" accessibilityLabel={`${purpose === 'add' ? 'Исправить книгу' : 'Сменить книгу'}: ${title}`}
         style={({ pressed }) => [styles.action, { opacity: pressed ? 0.6 : 1 }]}>
-        <Text style={[ty.subheadEm, { color: T.brandText }]}>Сменить</Text>
+        <Text style={[ty.subheadEm, { color: T.brandText }]}>{purpose === 'add' ? 'Исправить' : 'Сменить'}</Text>
       </Pressable> : null}
     </View>
   </View>;
@@ -68,10 +76,10 @@ export function ReadingBookField({ status, title, author, error, locked = false,
         </View>
       </View>
       <Button label={suggestions.length > 1 ? 'Да, эта' : 'Да, эта книга'} icon="checkmark" size="compact"
-        variant={i === 0 ? 'solid' : 'tinted'} onPress={() => onPick?.(i)}
+        variant={i === 0 ? 'solid' : 'tinted'} onPress={() => onPick?.(i)} disabled={locked}
         accessibilityHint={`Подтвердить: ${b.title}${b.author ? `, ${b.author}` : ''}`} />
     </View>)}
-    <Button label="Нет, другая книга" variant="plain" onPress={() => onReject?.()} accessibilityHint="Исправить название или автора" />
+    <Button label="Нет, другая книга" variant="plain" onPress={() => onReject?.()} disabled={locked} accessibilityHint="Исправить название или автора" />
   </View>;
   const checking = status === 'checking';
   const canManual = (status === 'notFound' || status === 'error') && !!onManual;

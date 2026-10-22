@@ -206,7 +206,7 @@ import ActivityKit
       ]
       if let changedActivityId { entry["changedActivityId"] = changedActivityId }
       if let current = try ReadingFocusStore.locked({ try ReadingFocusStore.read() }) {
-        entry["session"] = try JSONSerialization.jsonObject(with: JSONEncoder().encode(current))
+        entry["session"] = try ReadingFocusStore.exportedSession(current)
         entry["remainingMs"] = ReadingFocusStore.remaining(current)
       }
       if let liveActivity { entry["liveActivity"] = try JSONSerialization.jsonObject(with: JSONEncoder().encode(liveActivity)) }

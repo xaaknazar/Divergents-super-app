@@ -195,6 +195,7 @@ export function useReadingChallenge(challengeId: string) {
       await readingNative.acknowledge(account, local.sessionId);
       if (!current()) return;
       setNativeSession(null); setSessionNotice(undefined);
+      setRemaining(3_600_000 - (result.me?.history.find(day => day.day === result.currentDay)?.elapsedMs ?? 0));
     } else if (local?.accountId === account && result.session && local.sessionId === result.session.id) {
       setSessionNotice(undefined);
       setNativeSession(local);
@@ -343,15 +344,10 @@ export function useReadingChallenge(challengeId: string) {
       if (!queued.ok) throw new Error('Не удалось проверить сохранённые действия. Повторите попытку.');
       if (hasPendingReadingClose(queued.value, account, local.sessionId))
         throw new Error('Этот подход уже завершён. Дождитесь сохранения страниц перед новым чтением.');
-      // A soft pause is not a shortcut around the daily hour. Forced terminal
-      // journals (deadline/interruption) still retain their partial evidence.
-      if (action === 'finish' && local.terminal !== true) {
-        const remaining = await localRemaining(local);
-        if (!controlCurrent()) return;
-        if (targetRemaining(dataRef.current, local, remaining) > 0) throw new Error('До 60 минут можно поставить паузу и продолжить чтение позже.');
-      }
       // Native ownership/generation/deadline checks are authoritative. Finish
-      // seals the journal before any immutable stop can enter the outbox.
+      // seals this book's approach, even before the daily goal. Only accumulated
+      // server-confirmed time can complete the day; finishing never adds time.
+      // Seal before any immutable stop can enter the outbox.
       await readingNative[action](account, local.sessionId, local.generation);
       if (!controlCurrent()) return;
       // A lock-screen action may have run while ActivityKit was updating.
@@ -385,7 +381,8 @@ export function useReadingChallenge(challengeId: string) {
     await queue.enqueue({ action: 'report', operationId: await readingOperationId(sessionId, 'report'), challengeId, sessionId, pages, ...(nextPage !== undefined ? { nextPage } : {}) });
     await synchronize();
   });
-  /** Страницы после дневной цели: паузу сначала закрываем на телефоне (finish), затем отправляем страницы.
+  /** Сохраняем отдельный подход к книге: сначала закрываем его на телефоне (finish), затем отправляем страницы.
+   * Дневная цель складывается из подтверждённого времени всех подходов; обычная пауза ничего не закрывает.
    * Если закрыть не удалось, ошибка уже показана и страницы не уходят. */
   const saveApproach = async (pages: number, nextPage?: number) => {
     const local = await readingNative.snapshot();
@@ -398,7 +395,13 @@ export function useReadingChallenge(challengeId: string) {
     await report(pages, nextPage);
   };
   const resumableSession = nativeSession?.accountId === account && nativeSession.resumeVersion === 1;
-  return { data, remainingMs, busy, error, sessionNotice, startBlocked: !!sessionNotice,
+  // Pages belong to one exact approach, not the daily countdown. Prefer its
+  // frozen native evidence, never elapsed time from another account/challenge.
+  const ownServerSession = data?.id === challengeId && data.me?.userId === account ? data.session : null;
+  const sessionElapsedMs = ownServerSession && nativeSession?.accountId === account
+    && nativeSession.sessionId === ownServerSession.id && nativeSession.status === 'paused'
+    && nativeSession.elapsedMs != null ? nativeSession.elapsedMs : ownServerSession?.elapsedMs ?? undefined;
+  return { data, remainingMs, sessionElapsedMs, busy, error, sessionNotice, startBlocked: !!sessionNotice,
     canPauseLocally: !!account && localPauseAccount === account,
     pauseLocally: () => pauseLocal(true),
     liveActivityStatus: localPauseAccount === account && liveActivity?.accountId === account ? liveActivity.status : null,
