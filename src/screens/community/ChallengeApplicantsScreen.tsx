@@ -38,6 +38,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
   const { getToken } = useAuth();
   const [items, setItems] = useState<ChallengeApplicant[]>([]);
   const [canManage, setCanManage] = useState(false);
+  const [canReview, setCanReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [sel, setSel] = useState<ChallengeApplicant | null>(null);
@@ -49,15 +50,16 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
+    setCanReview(false);
     try {
       const token = await getTokenRef.current();
       // Для одного человека передаём его id: сервер тогда подтянет анкету
       // живьём из Talentslab, а не снимок на момент подачи заявки.
-      const { applicants, canManage: cm, ok } = await fetchChallengeApplicants(challengeId, token, applicantUserId);
+      const { applicants, canManage: cm, canReviewApplications, ok } = await fetchChallengeApplicants(challengeId, token, applicantUserId);
       // Неудачный запрос — это ошибка с кнопкой «повторить», а не «анкета
       // недоступна»: второе означает, что человека нет, и уводит не туда.
       if (!ok) { setError(true); return; }
-      setItems(applicants); setCanManage(cm);
+      setItems(applicants); setCanManage(cm); setCanReview(canReviewApplications === true);
       if (applicantUserId) {
         const selected = applicants.find((a) => a.applicantUserId === applicantUserId);
         if (selected) {
@@ -80,7 +82,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
   // Отклонение — необратимое для кандидата действие: подтверждаем отдельно.
   const confirmReject = () => {
-    if (!sel) return;
+    if (!sel || !canReview || directProfile || sel.isCaptain || busy) return;
     const name = sel.userName || 'Участник';
     Alert.alert('Отклонить заявку?', `${name} получит отказ${feedback.trim() ? ' и ваш комментарий' : ''}. Подать заявку заново можно будет позже.`, [
       { text: 'Отмена', style: 'cancel' },
@@ -89,12 +91,12 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
   };
 
   const decide = async (status: ChallengeAppStatus) => {
-    if (!sel) return;
+    if (!sel || !canReview || directProfile || sel.isCaptain || busy) return;
     setBusy(true);
     const token = await getToken();
     const ok = await decideChallengeApplication(challengeId, sel.applicantUserId, { status, feedback: feedback.trim() || undefined }, token);
     setBusy(false);
-    if (!ok) { Alert.alert('Ошибка', 'Не удалось сохранить. Попробуйте ещё раз.'); return; }
+    if (!ok) { void load(); Alert.alert('Решение не сохранено', 'Проверьте соединение. Если челлендж уже начался, менять состав нельзя. Обновляем доступность действий.'); return; }
     hSuccess();
     setItems((p) => p.map((x) => x.id === sel.id ? { ...x, status, feedback: feedback.trim() } : x));
     if (directProfile) navigation.goBack();
@@ -102,7 +104,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
   };
 
   const saveFeedback = async () => {
-    if (!sel) return;
+    if (!sel || !canReview || directProfile || sel.isCaptain || busy) return;
     setBusy(true);
     const token = await getToken();
     const ok = await decideChallengeApplication(challengeId, sel.applicantUserId, { feedback: feedback.trim() }, token);
@@ -113,7 +115,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
   };
 
   const makeCaptain = async () => {
-    if (!sel || !sel.teamId) return;
+    if (!sel || !sel.teamId || !canReview || !canManage || busy) return;
     Alert.alert('Назначить капитаном?', `${sel.userName || 'Кандидат'} станет капитаном команды «${sel.teamName}» и сможет принимать заявки в неё.`, [
       { text: 'Отмена', style: 'cancel' },
       { text: 'Назначить', onPress: async () => {
@@ -145,6 +147,8 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
         <ErrorState onRetry={load} />
       ) : directProfile ? (
         <EmptyState icon="person.crop.circle.badge.exclamationmark" title="Анкета недоступна" subtitle="Не удалось найти анкету этого участника." />
+      ) : !canReview ? (
+        <EmptyState icon="lock.fill" title="Приём заявок закрыт" subtitle="После начала челленджа состав зафиксирован. Анкеты участников доступны через состав вашей команды." />
       ) : items.length === 0 ? (
         <EmptyState icon="person.2.fill" title="Пока нет заявок" subtitle="Как только кто-то подаст заявку, она появится здесь." />
       ) : (
@@ -263,7 +267,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
               {/* Капитану решения не выносят: его строка — членство в своей
                   команде, а не заявка. Принимать нечего, а «отклонить» снесло
                   бы капитана из его же команды. */}
-              {!directProfile && !sel?.isCaptain ? (
+              {canReview && !directProfile && !sel?.isCaptain ? (
                 <>
                   <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Ответ кандидату (причина)">
                     <View style={{ padding: 14, gap: 10 }}>

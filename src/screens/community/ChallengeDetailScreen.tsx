@@ -628,7 +628,6 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
       ...(isCaptain ? [
         { label: chat ? tr('Изменить чат команды') : tr('Добавить чат команды'), icon: 'paperplane.fill', run: editChat },
         { label: tr('Написать всей команде'), icon: 'megaphone.fill', run: broadcast },
-        { label: tr('Заявки и анкеты'), icon: 'person.crop.circle.badge.checkmark', run: () => navigation.navigate('ChallengeApplicants', { challengeId: c.id }) },
       ] : []),
       { label: tr('Как засчитать активность'), icon: 'info.circle', run: () => setShowConv(true) },
       { label: tr('Об условиях выхода'), icon: 'questionmark.circle', run: attemptLeave },

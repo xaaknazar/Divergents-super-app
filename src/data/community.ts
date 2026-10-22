@@ -1760,8 +1760,8 @@ async function whiteFlagCall(
 
 export async function fetchChallengeApplicants(
   challengeId: string, token: string | null | undefined, applicantUserId?: string,
-): Promise<{ applicants: ChallengeApplicant[]; canManage: boolean; ok: boolean }> {
-  if (!token) return { applicants: [], canManage: false, ok: false };
+): Promise<{ applicants: ChallengeApplicant[]; canManage: boolean; canReviewApplications: boolean; ok: boolean }> {
+  if (!token) return { applicants: [], canManage: false, canReviewApplications: false, ok: false };
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 12000);
   try {
@@ -1769,12 +1769,13 @@ export async function fetchChallengeApplicants(
     const res = await fetch(`${API_BASE}/api/mobile/challenges/${encodeURIComponent(challengeId)}/applications${q}`, {
       signal: ctrl.signal, headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) return { applicants: [], canManage: false, ok: false };
+    if (!res.ok) return { applicants: [], canManage: false, canReviewApplications: false, ok: false };
     const d = await res.json();
     const list: any[] = Array.isArray(d?.applications) ? d.applications : [];
     return {
       ok: true,
       canManage: !!d?.canManage,
+      canReviewApplications: d?.canReviewApplications === true,
       applicants: list.map((a) => ({
         id: String(a.id),
         applicantUserId: String(a.applicantUserId ?? ''),
@@ -1794,7 +1795,7 @@ export async function fetchChallengeApplicants(
         profileStatus: a.profileStatus,
       })),
     };
-  } catch { return { applicants: [], canManage: false, ok: false }; }
+  } catch { return { applicants: [], canManage: false, canReviewApplications: false, ok: false }; }
   finally { clearTimeout(t); }
 }
 
