@@ -56,7 +56,7 @@ test.each<LayoutCase>(['ready', 'running', 'paused', 'review'])(
     }
     const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
     const timer = view.getByRole('timer');
-    const action = view.getByRole('button', { name: state === 'running' ? 'Пауза' : state === 'paused' || state === 'review' ? 'Возобновить' : 'Старт' });
+    const action = view.getByRole('button', { name: state === 'running' ? 'Пауза' : state === 'paused' ? 'Возобновить' : state === 'review' ? 'Новый подход' : 'Старт' });
     const currentBook = view.getByLabelText(/^Что читаете:/);
     const progress = view.getByRole('header', { name: 'Сегодня' });
     const rank = view.getByRole('button', { name: /^Мой рейтинг\./ });
@@ -97,4 +97,37 @@ test.each(['upcoming', 'finished'] as const)('%s keeps rank directly above histo
   expect(rank.parent).toBe(history.parent);
   const siblings = rank.parent!.children;
   expect(siblings.indexOf(history)).toBe(siblings.indexOf(rank) + 1);
+});
+
+test.each(['ready', 'unavailable'] as const)('pending pages lead the screen even with %s protection and a stale prop', async protection => {
+  const p = props();
+  p.protection = protection;
+  p.data = { ...p.data, session: { ...session, elapsedMs: 3600000, status: 'awaiting_pages' } };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expectOrder(view.container, view.getByRole('header', { name: 'Осталось записать страницы' }),
+    view.getByLabelText('Страниц за этот подход'), view.getByRole('button', { name: 'Сохранить подход' }), view.getByRole('timer'));
+  expect(view.queryByRole('button', { name: 'Старт' })).toBeNull();
+  expect(view.queryByRole('button', { name: 'Новый подход' })).toBeNull();
+  expect(view.queryByRole('button', { name: 'Возобновить' })).toBeNull();
+  await fireEvent.changeText(view.getByLabelText('Страниц за этот подход'), '22');
+  await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
+  expect(p.onReport).toHaveBeenCalledWith(22, undefined);
+  expect(p.onStart).not.toHaveBeenCalled();
+});
+test('overtime reminder pauses, never silently finishes or credits pages', async () => {
+  const p = props(); p.timerState = 'running'; p.remainingMs = -1000; p.data = { ...p.data, session };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByText('Час прочитан. Запишите страницы')).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: 'Записать страницы' }));
+  expect(p.onPause).toHaveBeenCalledTimes(1);
+  expect(p.onReport).not.toHaveBeenCalled(); expect(p.onSaveApproach).not.toHaveBeenCalled();
+});
+test('previous-day pages remain actionable after a challenge finishes', async () => {
+  const p = props();
+  p.data = { ...p.data, phase: 'finished', currentDay: 15, session: { ...session, status: 'awaiting_pages' } };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByText('Осталось записать страницы')).toBeTruthy();
+  expect(view.getByText(/Это подход за прошлый день/)).toBeTruthy();
+  expect(view.getByLabelText('Страниц за этот подход')).toBeTruthy();
+  expect(view.queryByRole('timer')).toBeNull();
 });

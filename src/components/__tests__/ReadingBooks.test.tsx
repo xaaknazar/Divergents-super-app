@@ -54,7 +54,7 @@ test('after saving A the reader can pick B and its key/fromPage are used for the
   expect(p.library!.select).toHaveBeenCalledWith(second);
   await v.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} book={{ ...p.book, title: second.title, author: second.author,
     verified: { title: second.title, author: second.author, key: second.key } }} /></ThemePreviewProvider>);
-  await fireEvent.press(v.getByRole('button', { name: 'Возобновить' }));
+  await fireEvent.press(v.getByRole('button', { name: 'Новый подход' }));
   expect(p.onStart).toHaveBeenCalledWith(second.title, { author: second.author, bookKey: second.key, coverId: undefined, fromPage: 21 });
 });
 test('an unsaved approach keeps book selection locked even before reaching 60 minutes', async () => {

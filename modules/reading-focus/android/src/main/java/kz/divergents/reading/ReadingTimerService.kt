@@ -18,6 +18,7 @@ class ReadingTimerService : Service() {
         val session = ReadingFocusStore.snapshot(this@ReadingTimerService)
         if (session == null || session.getString("status") != "running") { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); return }
         ReadingFocusStore.checkpoint(this@ReadingTimerService)
+        ReadingFocusStore.remindGoal(this@ReadingTimerService)
         val remaining = session.optDouble("targetMs", session.getDouble("budgetMs")) - (session.getDouble("budgetMs") - ReadingFocusStore.remaining(session))
         val seconds = (kotlin.math.abs(remaining) / 1000).toInt()
         val label = if (remaining > 0) "До часа" else "Дополнительно"

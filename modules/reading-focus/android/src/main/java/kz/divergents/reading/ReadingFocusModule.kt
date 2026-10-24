@@ -66,5 +66,9 @@ class ReadingFocusModule : Module() {
     }
     AsyncFunction("remainingMs") { ReadingFocusStore.snapshot(context())?.let { ReadingFocusStore.remaining(it) } ?: 0.0 }
     AsyncFunction("acknowledge") { account: String, id: String -> ReadingFocusStore.acknowledge(context(), account, id) }
+    AsyncFunction("configurePageReminder") { account: String, id: String, challenge: String ->
+      ReadingFocusStore.configurePageReminder(context(), account, id, challenge)
+    }
+    AsyncFunction("endLiveActivities") { ReadingFocusStore.muteReminders(context()) }
   }
 }

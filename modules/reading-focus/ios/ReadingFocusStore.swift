@@ -7,6 +7,7 @@ import ActivityKit
 import AppIntents
 import Combine
 import CryptoKit
+import UserNotifications
 
 // Shared by app, DeviceActivity monitor and Live Activity. No auth credentials.
 // Opaque Screen Time tokens remain local; use exportedSession for any export.
@@ -38,6 +39,8 @@ struct ReadingFocusSession: Codable {
   var allowedApplicationTokens: Set<ApplicationToken>? = nil
   var allowedAppsRevision: String? = nil
   var allowedAppsAuthorizationEpoch: String? = nil
+  // Optional migration: old journals remain readable. Visible reminder text contains no book/account details.
+  var reminderChallengeId: String? = nil
 }
 
 struct ReadingAllowedAppsRecord: Codable {
@@ -231,7 +234,69 @@ enum ReadingFocusStore {
     return try JSONDecoder().decode(ReadingFocusSession.self, from: Data(contentsOf: file))
   }
   static func write(_ session: ReadingFocusSession) throws {
+    let previous = try? read()
     try JSONEncoder().encode(session).write(to: directory().appendingPathComponent("session.json"), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    updatePageReminders(previous: previous, session: session)
+  }
+  private static func reminderIds(_ session: ReadingFocusSession) -> [String] {
+    ["goal", "pages"].map { "\(storeName).\(session.sessionId).\(session.generation ?? "legacy").\($0)" }
+  }
+  private static func cancelPageReminders(_ session: ReadingFocusSession) {
+    let center = UNUserNotificationCenter.current()
+    center.removePendingNotificationRequests(withIdentifiers: reminderIds(session))
+    center.removeDeliveredNotifications(withIdentifiers: reminderIds(session))
+  }
+  static func configurePageReminder(accountId: String, sessionId: String, challengeId: String) throws {
+    guard !challengeId.isEmpty else { return }
+    try locked {
+      guard var session = try read(), session.accountId == accountId, session.sessionId == sessionId else { return }
+      guard session.reminderChallengeId != challengeId else { return }
+      session.reminderChallengeId = challengeId
+      try write(session)
+    }
+  }
+  // Runs only after a durable journal write. Never awaits notifications or an
+  // authorization prompt under flock: pause/release must remain local and fast.
+  // OS scheduling survives suspension; lock-screen pause/resume reschedules it.
+  private static func updatePageReminders(previous: ReadingFocusSession?, session: ReadingFocusSession) {
+    if let previous, previous.sessionId == session.sessionId, previous.generation == session.generation,
+      previous.status == session.status, previous.terminal == session.terminal,
+      previous.reminderChallengeId == session.reminderChallengeId { return }
+    if let previous { cancelPageReminders(previous) }
+    guard let challengeId = session.reminderChallengeId else { return }
+    let time = elapsed(session), remainingToGoal = (session.targetMs ?? session.budgetMs) - time
+    let availableMs = min(remaining(session), max(0, (session.deadlineMs ?? .greatestFiniteMagnitude) - uptimeMs()))
+    let kind: Int, delay: Double, title: String, body: String
+    if session.status == "running" && remainingToGoal > 0 && remainingToGoal <= availableMs {
+      kind = 0; delay = max(1, remainingToGoal / 1000)
+      title = "Час чтения завершён"
+      body = "Можно читать дальше. Когда закончите, откройте Divergents и сохраните страницы книги перед новым таймером."
+    } else if session.status == "paused" && (session.terminal == true || session.resumeVersion != 1 || remainingToGoal <= 0) {
+      kind = 1; delay = 60
+      title = "Не забудьте записать страницы"
+      body = "Сохраните прочитанные страницы книги — после этого можно начать новый таймер."
+    } else { return }
+    let id = reminderIds(session)[kind]
+    let content = UNMutableNotificationContent()
+    content.title = title; content.body = body; content.sound = .default
+    content.threadIdentifier = "\(storeName).pages"
+    content.userInfo = ["readingAccountId": session.accountId,
+      "target": ["tab": "CommunityTab", "screen": "ReadingChallenge", "params": ["challengeId": challengeId]]]
+    UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content,
+      trigger: UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false))) { _ in
+      // A delayed add must not resurrect a reminder after pause, saving or logout.
+      // Per-generation identifiers ensure cleanup cannot remove a newer reminder.
+      let stillCurrent = (try? locked {
+        guard let latest = try read() else { return false }
+        return latest.accountId == session.accountId && latest.sessionId == session.sessionId
+          && latest.generation == session.generation && latest.status == session.status
+          && latest.reminderChallengeId == challengeId
+      }) ?? false
+      if !stillCurrent {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [id])
+      }
+    }
   }
   static func exportedSession(_ session: ReadingFocusSession) throws -> [String: Any] {
     var value = try JSONSerialization.jsonObject(with: JSONEncoder().encode(session)) as! [String: Any]
@@ -695,6 +760,7 @@ enum ReadingFocusStore {
       // delayed cleanup must never end a later book's Live Activity.
       completedActivities = matchingActivities(sessionId: sessionId)
       try FileManager.default.removeItem(at: directory().appendingPathComponent("session.json"))
+      cancelPageReminders(value)
     }
     let activitiesToEnd = completedActivities
     Task { await endActivities(activitiesToEnd) }
@@ -721,7 +787,9 @@ enum ReadingFocusStore {
         releaseProtection()
         // Include a card whose request completed while we waited for the lock.
         captured = Activity<ReadingActivityAttributes>.activities
-        if let session = try read() {
+        if var session = try read() {
+          session.reminderChallengeId = nil
+          try write(session)
           _ = try pauseLocked(session, wasShielded: wasShielded, authorization: auth, terminal: true)
         }
       }

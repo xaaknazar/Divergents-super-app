@@ -401,7 +401,14 @@ export function useReadingChallenge(challengeId: string) {
   const sessionElapsedMs = ownServerSession && nativeSession?.accountId === account
     && nativeSession.sessionId === ownServerSession.id && nativeSession.status === 'paused'
     && nativeSession.elapsedMs != null ? nativeSession.elapsedMs : ownServerSession?.elapsedMs ?? undefined;
-  return { data, remainingMs, sessionElapsedMs, busy, error, sessionNotice, startBlocked: !!sessionNotice,
+  useEffect(() => {
+    if (!account || !current() || nativeSession?.accountId !== account || nativeSession.sessionId !== ownServerSession?.id) return;
+    // Native journal transitions handle background / lock-screen rescheduling.
+    // Never make timer controls wait for notification permission or delivery.
+    void readingNative.configurePageReminder?.(account, nativeSession.sessionId, challengeId).catch(() => {});
+  }, [account, challengeId, current, nativeSession?.accountId, nativeSession?.sessionId, ownServerSession?.id]);
+  return { data, remainingMs, sessionElapsedMs, busy, error, sessionNotice,
+    startBlocked: !!sessionNotice || !!nativeSession || !!data?.session,
     canPauseLocally: !!account && localPauseAccount === account,
     pauseLocally: () => pauseLocal(true),
     liveActivityStatus: localPauseAccount === account && liveActivity?.accountId === account ? liveActivity.status : null,

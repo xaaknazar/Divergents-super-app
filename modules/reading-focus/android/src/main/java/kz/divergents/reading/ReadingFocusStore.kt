@@ -58,6 +58,7 @@ object ReadingFocusStore {
     emergencyPaused = value
     write(c, value)
     emergencyPaused = null
+    remindPages(c, value)
     return value
   }
   @Synchronized fun snapshot(c: Context): JSONObject? {
@@ -79,5 +80,48 @@ object ReadingFocusStore {
     check(value.getString("accountId") == account && value.getString("sessionId") == id && value.getString("status") == "paused")
     check(prefs(c).edit().remove("session").commit())
     emergencyPaused = null
+    cancelReminders(c)
+  }
+  @Synchronized fun configurePageReminder(c: Context, account: String, id: String, challenge: String) {
+    val value = read(c) ?: return
+    if (value.getString("accountId") != account || value.getString("sessionId") != id || challenge.isBlank()) return
+    if (value.optString("reminderChallengeId") == challenge && !value.optBoolean("reminderMuted")) return
+    value.put("reminderChallengeId", challenge).put("reminderMuted", false)
+    write(c, value)
+    if (value.getString("status") == "paused") remindPages(c, value)
+  }
+  @Synchronized fun remindGoal(c: Context) {
+    val value = snapshot(c) ?: return
+    if (value.getString("status") != "running" || value.optBoolean("goalReminderSent")) return
+    val left = value.optDouble("targetMs", value.getDouble("budgetMs")) - (value.getDouble("budgetMs") - remaining(value))
+    if (left > 0 || !remindersEnabled(value)) return
+    value.put("goalReminderSent", true); write(c, value)
+    showReminder(c, "Час чтения завершён", "Можно читать дальше. Когда закончите, сохраните страницы книги перед новым таймером.")
+  }
+  private fun remindersEnabled(value: JSONObject) = value.optString("reminderChallengeId").isNotBlank() && !value.optBoolean("reminderMuted")
+  private fun remindPages(c: Context, value: JSONObject) {
+    if (remindersEnabled(value)) showReminder(c, "Не забудьте записать страницы", "Сохраните прочитанные страницы книги — после этого можно начать новый таймер.")
+  }
+  private fun showReminder(c: Context, title: String, body: String) {
+    // No book/account details on the lock screen. Denied notifications never
+    // fail a timer, release of protection or durable evidence write.
+    try {
+      val manager = c.getSystemService(android.app.NotificationManager::class.java)
+      manager.createNotificationChannel(android.app.NotificationChannel("reading-pages", "Страницы после чтения", android.app.NotificationManager.IMPORTANCE_DEFAULT))
+      val builder = android.app.Notification.Builder(c, "reading-pages")
+        .setSmallIcon(android.R.drawable.ic_menu_agenda).setContentTitle(title).setContentText(body)
+        .setStyle(android.app.Notification.BigTextStyle().bigText(body)).setAutoCancel(true)
+        .setVisibility(android.app.Notification.VISIBILITY_PRIVATE)
+      c.packageManager.getLaunchIntentForPackage(c.packageName)?.let { launch ->
+        builder.setContentIntent(android.app.PendingIntent.getActivity(c, 6041, launch,
+          android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE))
+      }
+      manager.notify(6041, builder.build())
+    } catch (_: Exception) { /* System permission/settings may suppress delivery. */ }
+  }
+  private fun cancelReminders(c: Context) { c.getSystemService(android.app.NotificationManager::class.java).cancel(6041) }
+  @Synchronized fun muteReminders(c: Context) {
+    read(c)?.let { value -> value.put("reminderMuted", true); write(c, value) }
+    cancelReminders(c)
   }
 }

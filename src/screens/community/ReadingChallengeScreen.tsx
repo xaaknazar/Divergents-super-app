@@ -32,7 +32,9 @@ export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenP
     if (visited.current) void retry.current();
     visited.current = true;
   }, []));
-  return <Screen topInset={false} tabPadding={false} onRefresh={refresh}>
+  const pagesRequired = reading.awaitingPages || reading.resumableSession && reading.timerState === 'paused' && reading.remainingMs <= 0;
+  return <Screen topInset={false} tabPadding={false} keyboardAware onRefresh={refresh}
+    scrollResetKey={pagesRequired ? `reading-pages:${challengeId}:${reading.data?.session?.id}` : undefined}>
     <NavHeader backLabel="Сообщество" onBack={() => navigation.goBack()} />
     {reading.canPauseLocally && (!reading.data || reading.sessionNotice || reading.data.phase === 'upcoming' || reading.timerState !== 'running')
       ? <Wrapper padding={16} gap={12}>

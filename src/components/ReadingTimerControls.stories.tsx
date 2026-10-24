@@ -5,6 +5,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const Start: Story = {};
 export const StartDisabled: Story = { args: { disabled: true } };
+export const NextApproach: Story = { args: { action: 'next' } };
 export const Pause: Story = { args: { action: 'pause' } };
 export const Resume: Story = { args: { action: 'resume' } };
 export const ResumeWithPagesForm: Story = { args: { action: 'resume', secondary: true } };

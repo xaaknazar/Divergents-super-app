@@ -16,6 +16,7 @@ import { ReadingTimer } from './ReadingTimer';
 import { ReadingTimerControls } from './ReadingTimerControls';
 import { ReadingPagesForm } from './ReadingPagesForm';
 import { ReadingSaveStatus } from './ReadingSaveStatus';
+import { ReadingPagesNotice } from './ReadingPagesNotice';
 import { ReadingProgressSummary } from './ReadingProgressSummary';
 import { ReadingHistoryLink } from './ReadingHistoryLink';
 import { ReadingBookLibrary, ReadingBookshelf, ReadingShelfComposer } from './ReadingBookshelf';
@@ -44,7 +45,7 @@ export type ReadingChallengeContentProps = {
 };
 
 /** Reading challenge, индивидуальный зачёт. Не участник — вступление: компактный блок, правила, галочка,
- * «Присоединиться». Участник — сверху вниз: таймер и действия/статус подхода, «Что читаете»,
+ * «Присоединиться». Несохранённые страницы — первым обязательным шагом. Затем таймер, «Что читаете»,
  * «Сегодня», «Мой рейтинг», «Мои книги и история», свёрнутые правила. */
 export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const d = p.data;
@@ -73,8 +74,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const todayMs = today?.elapsedMs ?? 0;
   const reader = d.phase === 'active' && !member.eliminatedOn;
   const running = p.timerState === 'running';
-  const softPaused = !!p.resumableSession && p.timerState === 'paused' && !p.awaitingPages;
-  const recording = softPaused && (p.remainingMs <= 0 || pagesRequested) || p.awaitingPages;
+  const awaitingPages = p.awaitingPages || d.session?.status === 'awaiting_pages';
+  const softPaused = !!p.resumableSession && p.timerState === 'paused' && !awaitingPages;
+  const recording = softPaused && (p.remainingMs <= 0 || pagesRequested) || awaitingPages;
   const standing = readingStandings(d.ranking).find(s => s.member.userId === member.userId);
   const pagesStanding = readingStandings(d.ranking, 'pages').find(s => s.member.userId === member.userId);
   const book = p.book;
@@ -84,7 +86,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     ?? p.library?.books.find(saved => saved.key === book.verified?.key);
   const startConfirmed = () => p.onStart(startBook.title, { author: startBook.author || undefined, bookKey: book.verified?.key,
     coverId: book.verified?.coverId, ...(previousBook?.nextPage != null ? { fromPage: previousBook.nextPage } : {}) });
-  const approachOpen = !!d.session || !!p.resumableSession || running || p.awaitingPages;
+  const approachOpen = !!d.session || !!p.resumableSession || running || awaitingPages;
   const start = () => {
     if (p.blockingMode !== 'all-apps') { startConfirmed(); return; }
     Alert.alert('Начать чтение в строгом режиме?',
@@ -95,33 +97,37 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const pagesInvalid = !/^\d+$/.test(pages) || Number(pages) > 10000 || (nextPage ?? 0) > 100000;
   const submitPages = () => (softPaused ? p.onSaveApproach : p.onReport)(Number(pages), nextPage);
   const sessionElapsedMs = p.sessionElapsedMs ?? d.session?.elapsedMs;
-  const timerVisual = p.awaitingPages && p.busy ? 'saving' as const : recording ? 'recording' as const : p.timerState;
+  const timerVisual = awaitingPages && p.busy ? 'saving' as const : recording ? 'recording' as const : p.timerState;
   const todayMinutes = Math.floor(todayMs / 60000);
   // A legacy cached review payload is not a save receipt. It never blocks reading,
   // but must not be presented as newly confirmed credit before server refresh.
   const savedToday = !recording && !running && todayMs > 0 && today?.state !== 'review';
-  const idleAction = todayMs > 0 ? 'resume' as const : 'start' as const;
+  const idleAction = todayMs > 0 ? 'next' as const : 'start' as const;
   return <Wrapper padding={16} gap={18}>
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
     {p.sessionNotice ? <InlineNotice message={p.sessionNotice.message} onRetry={p.onRetry} /> : null}
     {member.eliminatedOn ? <InlineNotice message={`Участие завершено на ${member.eliminatedOn}-й день.`} /> : null}
     {d.phase === 'upcoming' ? <ScreenDescription text={`Челлендж начнётся ${readingDateLabel(d.startDate)}. В этот день здесь появится таймер.`} /> : null}
+    {recording && !p.sessionNotice ? <Wrapper gap={12}>
+      <ReadingPagesNotice state="required" />
+      {d.session && d.session.day !== d.currentDay ? <InlineNotice message="Это подход за прошлый день. Страницы запишутся в тот день, а не в сегодняшний." /> : null}
+      <ReadingPagesForm value={pages} onChange={setPages} busy={p.busy} invalid={pagesInvalid} onSubmit={submitPages}
+        bookTitle={d.session?.book}
+        sessionMinutes={sessionElapsedMs != null ? Math.floor(sessionElapsedMs / 60000) : undefined}
+        fromPage={d.session?.fromPage} nextPage={nextPage} />
+    </Wrapper> : null}
     {reader && !p.sessionNotice ? <Wrapper gap={16}>
       <ReadingTimer remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)} />
-      {running ? <ReadingTimerControls action="pause" onPress={p.onPause} />
+      {running && !awaitingPages ? <>
+        <ReadingTimerControls action="pause" onPress={p.onPause} />
+        {p.remainingMs <= 0 ? <ReadingPagesNotice state="goal" onRecord={p.onPause} busy={p.busy} /> : null}
+      </>
+        : recording ? softPaused && p.onResume ? <ReadingTimerControls action="resume" secondary disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null
         : p.protection === 'unavailable' ? <InlineNotice message="Системная блокировка недоступна в этой сборке. Запустить защищённый сеанс пока нельзя." />
         : p.needsRecovery ? <InlineNotice message="На сервере есть начатый подход, но на этом телефоне нет подтверждённого времени. Если чтение шло на другом устройстве, откройте его там."
           actionLabel="Закрыть прерванный подход" onRetry={() => Alert.alert('Закрыть прерванный подход?', 'Неподтверждённое время не будет начислено. Уже сохранённые подходы останутся.', [
             { text: 'Отмена', style: 'cancel' }, { text: 'Закрыть подход', onPress: p.onRecover },
           ])} />
-        : recording ? <>
-          {softPaused && p.onResume ? <ReadingTimerControls action="resume" secondary disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null}
-          {d.session && d.session.day !== d.currentDay ? <InlineNotice message={`Это подход за прошлый день. Страницы запишутся в тот день, а не в сегодняшний.`} /> : null}
-          <ReadingPagesForm value={pages} onChange={setPages} busy={p.busy} invalid={pagesInvalid} onSubmit={submitPages}
-            bookTitle={d.session?.book}
-            sessionMinutes={sessionElapsedMs != null ? Math.floor(sessionElapsedMs / 60000) : undefined}
-            fromPage={d.session?.fromPage} nextPage={nextPage} />
-        </>
         : softPaused ? <>
           {p.onResume ? <ReadingTimerControls action="resume" disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null}
           <Button label="Записать страницы" variant="tinted" disabled={p.busy} onPress={() => setPagesRequested(true)}
@@ -137,7 +143,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
             <Button label={p.protection === 'permission' ? 'Разрешить блокировку' : 'Выбрать приложения'} variant="tinted" onPress={p.onPrepare} loading={p.busy} />
           </> : null}
           <ReadingTimerControls action={idleAction} onPress={start} loading={p.busy}
-            disabled={p.startBlocked || p.protection !== 'ready' || !bookReady || !!p.allowedApps?.busy || !!p.composer?.adding} />
+            disabled={p.startBlocked || approachOpen || p.protection !== 'ready' || !bookReady || !!p.allowedApps?.busy || !!p.composer?.adding} />
           {!bookReady ? <ScreenDescription text={p.library ? 'Добавьте книгу на полку и выберите её для подхода.' : READING_REQUIRE_VERIFIED_BOOK ? 'Чтобы начать, выберите и подтвердите книгу.' : 'Чтобы начать, напишите название книги.'} /> : null}
         </>}
       {d.session ? <ReadingBookField status="verified" locked title={d.session.book} author={d.session.author ?? ''}

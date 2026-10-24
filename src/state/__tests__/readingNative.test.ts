@@ -9,6 +9,7 @@ const native = requireOptionalNativeModule('ReadingFocus') as unknown as {
   capabilities: jest.Mock; snapshot: jest.Mock; pause: jest.Mock; start: jest.Mock; acknowledge: jest.Mock;
   reconcileLiveActivity?: jest.Mock; restoreLiveActivity?: jest.Mock;
   endLiveActivities?: jest.Mock;
+  configurePageReminder?: jest.Mock;
   resume?: jest.Mock; finish?: jest.Mock;
   allowedAppsStatus?: jest.Mock; selectAllowedApps?: jest.Mock;
 };
@@ -19,8 +20,21 @@ beforeEach(() => {
   native.snapshot.mockReset().mockResolvedValue(null); native.acknowledge.mockReset().mockResolvedValue(undefined);
   delete native.reconcileLiveActivity; delete native.restoreLiveActivity;
   delete native.endLiveActivities;
+  delete native.configurePageReminder;
   delete native.resume; delete native.finish;
   delete native.allowedAppsStatus; delete native.selectAllowedApps;
+});
+
+test('page reminders are optional on older binaries and never change timer evidence', async () => {
+  await expect(readingNative.configurePageReminder('reader', 'session', 'challenge')).resolves.toBeUndefined();
+  expect(native.start).not.toHaveBeenCalled();
+  expect(native.pause).not.toHaveBeenCalled();
+  expect(native.acknowledge).not.toHaveBeenCalled();
+});
+test('page reminder context is passed only to the native owner/session binding', async () => {
+  native.configurePageReminder = jest.fn().mockResolvedValue(undefined);
+  await readingNative.configurePageReminder('reader', 'session', 'challenge');
+  expect(native.configurePageReminder).toHaveBeenCalledWith('reader', 'session', 'challenge');
 });
 
 test('old native binaries cannot silently enable reader-app exceptions', async () => {

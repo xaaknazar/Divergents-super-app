@@ -11,7 +11,7 @@ const meta = { title: 'Reading/Challenge', component: ReadingChallengeContent,
     awaitingPages: false, needsRecovery: false, book, onPrepare: noop, onStart: noop, onPause: noop, onReport: noop, onSaveApproach: noop,
     onJoin: noop, onRetry: noop, onRecover: noop, onRanking: noop, onHistory: noop },
   parameters: { canvasLayout: 'content', docs: { description: { component:
-    'Экран участника: таймер → действия или статус подхода → «Что читаете» → «Сегодня» → «Мой рейтинг» → «Мои книги и история» → правила. Кнопка паузы остаётся непосредственно под таймером. Порядок одинаковый в светлой и тёмной теме и при крупном шрифте.' } } },
+    'Несохранённые страницы — первым обязательным шагом. Далее: таймер → действия или статус подхода → «Что читаете» → «Сегодня» → «Мой рейтинг» → «Мои книги и история» → правила. Пауза непосредственно под таймером. Порядок одинаковый в обеих темах и при крупном шрифте.' } } },
 } satisfies Meta<typeof ReadingChallengeContent>;
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -38,8 +38,11 @@ export const PausedBeforeGoal: Story = { args: { timerState: 'paused', resumable
 export const PausedPages: Story = { args: { timerState: 'paused', remainingMs: 0, resumableSession: true, canResume: true, onResume: noop,
   data: { ...individualReadingFixture, session: { ...session, elapsedMs: 3_600_000 } } } };
 export const Saving: Story = { args: { timerState: 'paused', awaitingPages: true, busy: true, data: { ...individualReadingFixture, session: { ...session, status: 'awaiting_pages' as const } } } };
-/** После первого подхода: «Возобновить» и статус сохранения. */
+/** После первого подхода: «Новый подход» и статус сохранения. */
 export const ResumeAfterApproach: Story = {};
+export const RequiredPagesDark: Story = { args: { timerState: 'paused', remainingMs: 0, awaitingPages: true,
+  data: { ...individualReadingFixture, session: { ...session, status: 'awaiting_pages' as const, elapsedMs: 3_600_000 } } }, parameters: { scheme: 'dark' } };
+export const RequiredPagesLargeText: Story = { ...RequiredPagesDark, parameters: { viewport: 'compact', textSize: 'xl' } };
 export const GoalDone: Story = { args: { timerState: 'complete', remainingMs: 0, data: { ...individualReadingFixture,
   me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'complete', pages: 40, elapsedMs: 72 * 60000 }] } } } };
 export const FirstDayRanked: Story = { args: { data: { ...individualReadingFixture, me: { ...individualReadingFixture.ranking[3], userId: 'demo-reader' }, ranking: individualReadingFixture.ranking.map(m => m.userId === 'r4' ? { ...m, userId: 'demo-reader' } : m.userId === 'demo-reader' ? { ...m, userId: 'other' } : m) } } };

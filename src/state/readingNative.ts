@@ -28,6 +28,7 @@ type NativeFocus = {
   start(accountId: string, sessionId: string, deviceId: string, book: string, budgetMs: number, targetMs: number): Promise<string>;
   snapshot(): Promise<string | null>; pause(): Promise<string | null>; remainingMs(): Promise<number>;
   acknowledge(accountId: string, sessionId: string): Promise<void>;
+  configurePageReminder?(accountId: string, sessionId: string, challengeId: string): Promise<void>;
   reconcileLiveActivity?(accountId: string, sessionId: string): Promise<unknown>;
   restoreLiveActivity?(accountId: string, sessionId: string): Promise<unknown>;
   endLiveActivities?(): Promise<void>;
@@ -104,6 +105,9 @@ export const readingNative = {
   },
   remainingMs: async () => native ? native.remainingMs() : 0,
   acknowledge: (accountId: string, sessionId: string) => requireFocus().acknowledge(accountId, sessionId),
+  configurePageReminder: async (accountId: string, sessionId: string, challengeId: string): Promise<void> => {
+    await native?.configurePageReminder?.(accountId, sessionId, challengeId);
+  },
   reconcileLiveActivity: (accountId: string, sessionId: string) => liveActivityStatus('reconcileLiveActivity', accountId, sessionId),
   restoreLiveActivity: (accountId: string, sessionId: string) => liveActivityStatus('restoreLiveActivity', accountId, sessionId),
   // Account exit is distinct from a reading pause: hide even retained cards

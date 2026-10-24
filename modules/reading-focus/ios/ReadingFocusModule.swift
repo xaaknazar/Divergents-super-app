@@ -131,6 +131,10 @@ public class ReadingFocusModule: Module {
       guard #available(iOS 16.2, *) else { return }
       try ReadingFocusStore.acknowledge(accountId: accountId, sessionId: sessionId)
     }
+    AsyncFunction("configurePageReminder") { (accountId: String, sessionId: String, challengeId: String) throws in
+      guard #available(iOS 16.2, *) else { return }
+      try ReadingFocusStore.configurePageReminder(accountId: accountId, sessionId: sessionId, challengeId: challengeId)
+    }
   }
 }
 

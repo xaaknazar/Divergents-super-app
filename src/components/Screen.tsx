@@ -1,7 +1,7 @@
 // Screen scaffold: themed bg + Aurora backdrop + safe-area inset, with an
 // optional collapsing blurred header that fades in on scroll (iOS large-title style).
-import React, { useRef, useState } from 'react';
-import { View, Animated, RefreshControl, Text, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Animated, ScrollView, RefreshControl, Text, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
@@ -24,10 +24,12 @@ export interface ScreenProps {
   largeTitle?: string;
   onRefresh?: () => void | Promise<void>;
   keyboardAware?: boolean;
+  /** A newly required action at the start of a screen must not remain above the viewport. */
+  scrollResetKey?: string;
 }
 
 export function Screen({ children, surface = 'grouped', scroll = true, tabPadding = true,
-  topInset = true, bottomInset = true, aurora = true, backdrop, largeTitle, onRefresh, keyboardAware = false }: ScreenProps) {
+  topInset = true, bottomInset = true, aurora = true, backdrop, largeTitle, onRefresh, keyboardAware = false, scrollResetKey }: ScreenProps) {
   const { T, isDark, reduceTransparency, ty, background: backgroundPreset } = useTheme();
   const background = surface === 'transparent' ? 'transparent' : T.groupedBg;
   const insets = useSafeAreaInsets();
@@ -37,6 +39,10 @@ export function Screen({ children, surface = 'grouped', scroll = true, tabPaddin
   const playerHeight = audioTrack ? tabDockMiniPlayerHeight(ty.footnoteEm.lineHeight ?? 18, ty.caption2.lineHeight ?? 14, fontScale) : 0;
   const bottom = tabPadding ? tabDockContentInset(bottomInset ? insets.bottom : 0, playerHeight) : bottomInset ? insets.bottom : 0;
   const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (scrollResetKey !== undefined) scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [scrollResetKey]);
   const [refreshing, setRefreshing] = useState(false);
   const doRefresh = async () => { if (!onRefresh) return; setRefreshing(true); try { await onRefresh(); } finally { setRefreshing(false); } };
 
@@ -49,6 +55,7 @@ export function Screen({ children, surface = 'grouped', scroll = true, tabPaddin
 
       {scroll ? (
         <Animated.ScrollView
+          ref={scrollRef}
           style={{ flex: 1, backgroundColor: 'transparent' }}
           contentContainerStyle={{ paddingTop: top, paddingBottom: bottom }}
           showsVerticalScrollIndicator={false}

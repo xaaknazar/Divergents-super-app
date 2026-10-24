@@ -158,14 +158,14 @@ test('an already closed approach reports its pages', async () => {
   await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
   expect(p.onReport).toHaveBeenCalledWith(0, undefined);
 });
-test('«Старт» at 60:00 and «Возобновить» after the first approach start a new approach with the checked book', async () => {
+test('«Старт» at 60:00 and «Новый подход» after a saved approach distinguish new reading from resume', async () => {
   const p = { ...props(), timerState: 'ready' as const, remainingMs: 3_600_000, data: withToday(0) };
   const view = await show(p);
   await fireEvent.press(view.getByRole('button', { name: 'Старт' }));
   expect(p.onStart).toHaveBeenCalledWith('Атомные привычки', { author: 'Джеймс Клир', bookKey: 'ol:OL1W', coverId: undefined });
   await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={withToday(18 * 60000)} remainingMs={42 * 60000} /></ThemePreviewProvider>);
   expect(view.queryByRole('button', { name: 'Старт' })).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Новый подход' }));
   expect(p.onStart).toHaveBeenCalledTimes(2);
 });
 test('«Старт» needs a confirmed book: AI proposes «Эта книга?», the reader picks or rejects', async () => {
@@ -245,6 +245,6 @@ test('a legacy review marker does not block a new approach or claim a confirmed 
   expect(view.getByRole('timer')).toBeTruthy();
   expect(view.queryByText(/на проверке|откроется завтра/)).toBeNull();
   expect(view.queryByText('Подход сохранён')).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Новый подход' }));
   expect(p.onStart).toHaveBeenCalledTimes(1);
 });

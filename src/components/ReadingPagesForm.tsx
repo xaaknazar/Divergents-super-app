@@ -35,8 +35,9 @@ export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sess
       <StepButton icon="plus" label="Больше страниц" disabled={busy || (n ?? 0) >= 10000} onPress={() => step(1)} />
     </View>
     {nextPage !== undefined && n !== null ? <Text style={[ty.subheadEm, styles.center, { color: T.brandText }]}>В следующий раз начнём со страницы {nextPage}</Text> : null}
-    <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>Ноль — тоже можно, если сразу отвлекли.</Text>
-    <Button label="Сохранить подход" size="large" loading={busy} disabled={n === null || invalid} onPress={onSubmit} />
+    <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>Укажите количество страниц, а не номер последней страницы. Если не прочитали ни одной — введите 0.</Text>
+    <Button label="Сохранить подход" size="large" loading={busy} disabled={n === null || invalid} onPress={onSubmit}
+      accessibilityHint="Сохранить страницы этой книги. После подтверждения можно выбрать другую книгу и начать новый подход" />
   </View>;
 }
 

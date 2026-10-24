@@ -17,7 +17,7 @@ jest.mock('../persist', () => ({ loadJSON: jest.fn(async (key, fallback) => mock
   saveJSON: jest.fn(async (key, value) => { mockDisk[key] = JSON.parse(JSON.stringify(value)); }) }));
 jest.mock('../readingNative', () => ({ ...jest.requireActual('../readingNative'), readingNative: { capabilities: jest.fn(),
   snapshot: jest.fn(async () => null), remainingMs: jest.fn(async () => 1800000), pause: jest.fn(), start: jest.fn(), acknowledge: jest.fn(), authorize: jest.fn(), selectApps: jest.fn(),
-  reconcileLiveActivity: jest.fn(), restoreLiveActivity: jest.fn() } }));
+  reconcileLiveActivity: jest.fn(), restoreLiveActivity: jest.fn(), configurePageReminder: jest.fn(async () => {}) } }));
 jest.mock('expo-crypto', () => ({ CryptoDigestAlgorithm: { SHA256: 'SHA256' },
   digestStringAsync: async (algorithm: string, value: string) => value.includes('report') ? 'b'.repeat(64) : 'a'.repeat(64), randomUUID: () => 'random-id' }));
 const fetchDetail = jest.mocked(fetchReadingDetail), send = jest.mocked(sendReadingCommand);
@@ -26,6 +26,26 @@ const local = { accountId: 'demo-reader', sessionId: 's1', deviceId: 'phone', bo
 const server = { ...readingFixture, session: { id: 's1', deviceId: 'phone', day: 1, book: 'Книга', budgetMs: 3600000,
   startedAt: '2026-11-01T00:00:00Z', elapsedMs: null, status: 'running' as const } };
 const selectedCapabilities = { available: true, authorized: true, selectedCount: 1, platform: 'ios', blockingMode: 'selected' as const };
+test('an unreported server approach blocks any new timer even without a local journal', async () => {
+  fetchDetail.mockResolvedValue({ ...server, session: { ...server.session, status: 'awaiting_pages', elapsedMs: 3600000 } });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  expect(h.result.current.awaitingPages).toBe(true); expect(h.result.current.startBlocked).toBe(true);
+  await act(async () => { await h.result.current.start('Другая книга'); });
+  expect(send).not.toHaveBeenCalled(); expect(readingNative.start).not.toHaveBeenCalled();
+  expect(h.result.current.error).toMatch(/сохраните страницы/);
+});
+test('reminder routing is attached only to the matching owner and server approach', async () => {
+  fetchDetail.mockResolvedValue(server);
+  jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, status: 'running' });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  expect(readingNative.configurePageReminder).toHaveBeenCalledWith('demo-reader', 's1', 'reading-demo');
+  jest.mocked(readingNative.configurePageReminder).mockClear();
+  jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, accountId: 'another-account' });
+  await act(async () => { await h.result.current.retry(); });
+  expect(readingNative.configurePageReminder).not.toHaveBeenCalled();
+});
 beforeEach(() => { jest.clearAllMocks(); mockAccount = 'demo-reader'; mockDisk = {};
   jest.spyOn(AppState, 'addEventListener').mockImplementation(() => ({ remove: jest.fn() }));
   fetchDetail.mockReset().mockResolvedValue(readingFixture); send.mockReset().mockResolvedValue({ ok: true });
