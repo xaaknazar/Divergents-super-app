@@ -52,9 +52,10 @@ export type ReadingChallengeContentProps = {
 export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const d = p.data;
   const [agreed, setAgreed] = useState(false);
-  const [pages, setPages] = useState('');
+  // Ноль — допустимый результат подхода: форма сразу готова сохранить 0 страниц.
+  const [pages, setPages] = useState('0');
   const [pagesRequested, setPagesRequested] = useState(false);
-  useEffect(() => { setPages(''); setPagesRequested(false); }, [d.id, d.me?.userId, d.session?.id]);
+  useEffect(() => { setPages('0'); setPagesRequested(false); }, [d.id, d.me?.userId, d.session?.id]);
   useEffect(() => { if (p.timerState === 'running') setPagesRequested(false); }, [p.timerState]);
   const member = d.membership === 'approved' ? d.me : null;
   const participants = d.participants ?? d.ranking.length;

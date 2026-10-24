@@ -151,7 +151,8 @@ test.each([0, -60000])('after the daily goal (%i ms remaining): pages and resume
 test('an already closed approach reports its pages', async () => {
   const p = { ...props(), timerState: 'paused' as const, awaitingPages: true };
   const view = await show(p);
-  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeDisabled();
+  expect(view.getByLabelText('Страниц за этот подход').props.value).toBe('0');
+  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeEnabled();
   expect(view.getByRole('button', { name: 'Меньше страниц' })).toBeDisabled();
   await fireEvent.press(view.getByRole('button', { name: 'Больше страниц' }));
   await fireEvent.press(view.getByRole('button', { name: 'Меньше страниц' }));
@@ -247,4 +248,15 @@ test('a legacy review marker does not block a new approach or claim a confirmed 
   expect(view.queryByText('Подход сохранён')).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: 'Новый подход' }));
   expect(p.onStart).toHaveBeenCalledTimes(1);
+});
+test('zero pages can be saved right away; typing replaces the leading zero; an empty field is not saved', async () => {
+  const p = { ...props(), timerState: 'paused' as const, awaitingPages: true };
+  const view = await show(p);
+  await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
+  expect(p.onReport).toHaveBeenLastCalledWith(0, undefined);
+  const input = view.getByLabelText('Страниц за этот подход');
+  await fireEvent.changeText(input, '012');
+  expect(view.getByLabelText('Страниц за этот подход').props.value).toBe('12');
+  await fireEvent.changeText(view.getByLabelText('Страниц за этот подход'), '');
+  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeDisabled();
 });

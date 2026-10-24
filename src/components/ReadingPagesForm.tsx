@@ -5,8 +5,8 @@ import { FONT, nums, radius } from '../theme/tokens';
 import { SF } from './SFIcon';
 import { Button } from './Button';
 
-/** Страницы за остановленный подход (не за день): − / число / +, следующая страница,
- * «Ноль — тоже можно…» и «Сохранить подход». Пустое поле не сохраняется: число нужно указать явно. */
+/** Страницы за остановленный подход (не за день): − / число / +, следующая страница и «Сохранить подход».
+ * Ноль — допустимый результат: форма открывается с 0 и сохраняет его. Пустое поле не сохраняется. */
 export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sessionMinutes, fromPage, nextPage, bookTitle, invalid = false }: {
   value: string; onChange: (value: string) => void; onSubmit: () => void; busy?: boolean;
   /** Длительность подхода в минутах, если известна. */
@@ -28,14 +28,14 @@ export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sess
     {context ? <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>{context}</Text> : null}
     <View style={styles.stepper}>
       <StepButton icon="minus" label="Меньше страниц" disabled={busy || !n} onPress={() => step(-1)} />
-      <TextInput value={value} onChangeText={next => onChange(next.replace(/\D/g, '').slice(0, 5))} editable={!busy}
+      <TextInput value={value} onChangeText={next => onChange(next.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 5))} editable={!busy}
         accessibilityLabel="Страниц за этот подход" keyboardType="number-pad" inputMode="numeric" placeholder="0"
         placeholderTextColor={T.labelQuaternary} selectionColor={T.brandText} maxLength={5}
         style={[styles.number, nums, { color: T.label }]} />
       <StepButton icon="plus" label="Больше страниц" disabled={busy || (n ?? 0) >= 10000} onPress={() => step(1)} />
     </View>
     {nextPage !== undefined && n !== null ? <Text style={[ty.subheadEm, styles.center, { color: T.brandText }]}>В следующий раз начнём со страницы {nextPage}</Text> : null}
-    <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>Укажите количество страниц, а не номер последней страницы. Если не прочитали ни одной — введите 0.</Text>
+    <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>Укажите количество страниц, а не номер последней страницы. Не успели прочитать — можно сохранить 0.</Text>
     <Button label="Сохранить подход" size="large" loading={busy} disabled={n === null || invalid} onPress={onSubmit}
       accessibilityHint="Сохранить страницы этой книги. После подтверждения можно выбрать другую книгу и начать новый подход" />
   </View>;
