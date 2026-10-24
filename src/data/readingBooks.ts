@@ -76,6 +76,8 @@ export async function addReadingBook(token: string | null, challengeId: string, 
 /** Проверка книги: человек пишет название (и автора), сервер предлагает настоящие книги — «Эта книга?».
  * Подтверждена книга только после выбора человеком. */
 export type ReadingBookCandidate = { title: string; author: string; key?: string; coverId?: number };
+/** Сервер с улучшенным поиском присылает до пяти вариантов (каталоги + ИИ-библиограф). */
+export const READING_BOOK_CANDIDATES = 5;
 export type ReadingBookCheck = { status: 'found'; books: ReadingBookCandidate[] } | { status: 'notFound' };
 const VerifySchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('found'), books: z.array(z.object({ key: z.string().nullable().optional(), title: z.string(), author: z.string(), coverId: z.number().optional() })).min(1) }),
@@ -102,13 +104,13 @@ export async function verifyReadingBook(token: string | null, title: string, aut
     // Сервер ещё без проверки: предлагаем записи каталога (с исправлением опечаток), выбор — за человеком.
     const found = (await searchReadingBooks(token, `${title} ${author}`.trim(), true)).books;
     const close = matchCatalogBooks(title, author, found);
-    const books = (close.length ? close : found).slice(0, 3).map(b => ({ title: b.title, author: b.author || author, key: b.key, coverId: b.coverId }));
+    const books = (close.length ? close : found).slice(0, READING_BOOK_CANDIDATES).map(b => ({ title: b.title, author: b.author || author, key: b.key, coverId: b.coverId }));
     return books.length ? { status: 'found', books } : { status: 'notFound' };
   }
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(typeof body?.message === 'string' ? body.message : 'Проверка недоступна. Повторите позже.');
   const parsed = VerifySchema.parse(body);
   return parsed.status === 'found'
-    ? { status: 'found', books: parsed.books.slice(0, 3).map(b => ({ title: b.title, author: b.author, key: b.key ?? undefined, coverId: b.coverId })) }
+    ? { status: 'found', books: parsed.books.slice(0, READING_BOOK_CANDIDATES).map(b => ({ title: b.title, author: b.author, key: b.key ?? undefined, coverId: b.coverId })) }
     : parsed;
 }

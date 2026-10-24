@@ -1,4 +1,4 @@
-import { addReadingBook, fetchReadingHistory, ReadingHistorySchema, readingBookAddSelection } from '../readingBooks';
+import { addReadingBook, fetchReadingHistory, ReadingHistorySchema, readingBookAddSelection, verifyReadingBook } from '../readingBooks';
 import { netFetch } from '../net';
 import { ReadingApiError } from '../reading';
 import { individualReadingFixture, readingBookExample } from '../../storybook/readingFixtures';
@@ -80,4 +80,13 @@ test('normalizes display whitespace but preserves opaque identity and matches se
   expect(() => readingBookAddSelection({ title: 'Книга', author: 'a'.repeat(181) })).toThrow();
   expect(() => readingBookAddSelection({ title: 'Книга', author: '', key: 'a'.repeat(188) })).toThrow();
   expect(() => readingBookAddSelection({ title: 'Книга', author: '', coverId: 0 })).toThrow();
+});
+test('book check shows up to five server candidates and keeps AI proposals without keys', async () => {
+  const books = Array.from({ length: 6 }, (_, i) => ({ key: i ? null : 'ol:OL1W', title: `Книга ${i + 1}`, author: 'Автор', source: i ? 'ai' : 'catalog' }));
+  net.mockResolvedValueOnce(response({ status: 'found', books }));
+  const result = await verifyReadingBook('token', 'Книга', '');
+  expect(result.status).toBe('found');
+  if (result.status !== 'found') return;
+  expect(result.books.map(b => b.title)).toEqual(['Книга 1', 'Книга 2', 'Книга 3', 'Книга 4', 'Книга 5']);
+  expect(result.books[0].key).toBe('ol:OL1W'); expect(result.books[1].key).toBeUndefined();
 });

@@ -11,7 +11,7 @@ export type ReadingBookView = {
   title: string; author: string; status: ReadingBookFieldStatus; error?: string;
   /** Подтверждённая ИИ книга — её и отправляем при старте. */
   verified: ReadingVerifiedBook | null;
-  /** Что предложил ИИ: «Эта книга?» — до трёх вариантов. */
+  /** Что предложил ИИ: «Эта книга?» — до пяти вариантов. */
   suggestions: ReadingBookCandidate[];
   pick: (index: number) => void; reject: () => void;
   /** Записать книгу вручную — если ИИ не нашёл (нужны название и автор). */
