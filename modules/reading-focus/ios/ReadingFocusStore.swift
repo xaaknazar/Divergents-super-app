@@ -19,7 +19,7 @@ struct ReadingFocusSession: Codable {
   let budgetMs: Double
   let targetMs: Double?
   var anchorMs: Double
-  let bootId: String
+  var bootId: String
   var elapsedMs: Double?
   var integrity: String
   var status: String
@@ -41,6 +41,12 @@ struct ReadingFocusSession: Codable {
   var allowedAppsAuthorizationEpoch: String? = nil
   // Optional migration: old journals remain readable. Visible reminder text contains no book/account details.
   var reminderChallengeId: String? = nil
+  // Durable high-water mark. Never replace measured progress with zero after
+  // a reboot; only the unobserved interval is untrusted across clock epochs.
+  var checkpointElapsedMs: Double? = nil
+  var checkpointUptimeMs: Double? = nil
+  // Returned by snapshot under the same journal lock; not a running-time anchor.
+  var measuredElapsedMs: Double? = nil
 }
 
 struct ReadingAllowedAppsRecord: Codable {
@@ -183,13 +189,48 @@ enum ReadingFocusStore {
     return events
   }
   static func bootId() throws -> String {
-    // kern.bootsessionuuid is sandbox-denied on physical iPhones. Boot time is
-    // available through the supported BSD sysctl; a discontinuity seals only
-    // the saved reading evidence instead of crediting time across a reboot.
-    var value = timeval(), size = MemoryLayout<timeval>.size
-    var mib: [Int32] = [CTL_KERN, KERN_BOOTTIME]
-    guard sysctl(&mib, 2, &value, &size, nil, 0) == 0 else { throw ReadingFocusFailure.boot }
-    return "\(value.tv_sec):\(value.tv_usec)"
+    // Public App Group IPC. Unlike KERN_BOOTTIME this kernel-owned object is
+    // independent of calendar changes, survives process death, and disappears
+    // on reboot. All callers hold reading.lock; QA has its own object. Never
+    // unlink it during sign-out/acknowledge, or invalidate another live process.
+    // The name must fit Darwin's 31-byte PSHMNAMLEN limit.
+    let name = "\(group)/\(isQA ? "q" : "p")"
+    let fd = ReadingBootMarkerOpen(name)
+    guard fd >= 0 else { throw ReadingFocusFailure.storage }
+    defer { close(fd) }
+    var info = stat()
+    guard fstat(fd, &info) == 0 else { throw ReadingFocusFailure.storage }
+    let length = 64
+    if info.st_size == 0 {
+      guard ftruncate(fd, off_t(length)) == 0 else { throw ReadingFocusFailure.storage }
+    // Darwin rounds a shared-memory allocation up to the hardware page size.
+    } else if info.st_size < length { throw ReadingFocusFailure.storage }
+    guard let memory = mmap(nil, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0), memory != MAP_FAILED
+      else { throw ReadingFocusFailure.storage }
+    defer { munmap(memory, length) }
+    let bytes = memory.assumingMemoryBound(to: UInt8.self)
+    if bytes[0] == 0 {
+      let token = Array(("shm-v1:" + UUID().uuidString).utf8)
+      // Publish first byte last: a process killed mid-initialization leaves an
+      // uninitialized marker, never a valid token used by a persisted session.
+      for index in 1..<token.count { bytes[index] = token[index] }
+      bytes[token.count] = 0; bytes[0] = token[0]
+    }
+    let data = Array(UnsafeBufferPointer(start: bytes, count: length)).prefix { $0 != 0 }
+    guard let token = String(bytes: data, encoding: .utf8), token.hasPrefix("shm-v1:"),
+      UUID(uuidString: String(token.dropFirst(7))) != nil else { throw ReadingFocusFailure.storage }
+    return token
+  }
+  static func clockRebooted(_ value: ReadingFocusSession) throws -> Bool {
+    if uptimeMs() < max(value.anchorMs, value.checkpointUptimeMs ?? value.anchorMs) { return true }
+    let currentBoot = try bootId()
+    // Pre-fix journals contain calendar boot times, not identities. Migrate a
+    // continuous legacy journal once; never compare those values again.
+    guard value.bootId.hasPrefix("shm-v1:") else { return false }
+    return currentBoot != value.bootId
+  }
+  static func savedElapsed(_ value: ReadingFocusSession) -> Double {
+    min(value.budgetMs, max(0, max(value.elapsedMs ?? 0, max(value.accumulatedMs ?? 0, value.checkpointElapsedMs ?? 0))))
   }
   static func locked<T>(_ body: () throws -> T) throws -> T {
     let file = try directory().appendingPathComponent("reading.lock").path
@@ -434,7 +475,7 @@ enum ReadingFocusStore {
   static func elapsed(_ value: ReadingFocusSession) -> Double {
     if let elapsedMs = value.elapsedMs { return elapsedMs }
     let now = min(uptimeMs(), value.deadlineMs ?? .greatestFiniteMagnitude)
-    return min(value.budgetMs, (value.accumulatedMs ?? 0) + max(0, now - value.anchorMs))
+    return min(value.budgetMs, max(value.checkpointElapsedMs ?? 0, (value.accumulatedMs ?? 0) + max(0, now - value.anchorMs)))
   }
   static func deadlineReached(_ value: ReadingFocusSession) -> Bool {
     value.resumeVersion == 1 && uptimeMs() >= (value.deadlineMs ?? value.anchorMs + value.budgetMs)
@@ -498,6 +539,7 @@ enum ReadingFocusStore {
         budgetMs: budgetMs, targetMs: targetMs, anchorMs: anchor, bootId: try bootId(), elapsedMs: nil, integrity: "ok", status: "running",
         blockingMode: blockingMode, monitoringName: activityName(for: sessionId, generation: generation).rawValue,
         resumeVersion: 1, accumulatedMs: 0, deadlineMs: anchor + budgetMs, generation: generation, terminal: false, canResume: false)
+      value.checkpointElapsedMs = 0; value.checkpointUptimeMs = anchor
       if blockingMode == "all-apps" {
         value.allowedApplicationTokens = allowed?.applicationTokens ?? []
         value.allowedAppsRevision = allowed?.revision ?? "none"
@@ -576,18 +618,18 @@ enum ReadingFocusStore {
     // Once a stop payload can enter the immutable outbox, reboot, revocation
     // or sign-out must not rewrite that evidence under the same operation ID.
     if value.status == "paused" && (value.terminal == true || value.resumeVersion != 1) { return value }
-    let rebooted = (try? bootId()) != value.bootId || uptimeMs() < value.anchorMs
+    let rebooted = try? clockRebooted(value)
     if value.status == "running" {
-      if rebooted {
-        value.elapsedMs = value.resumeVersion == 1 ? value.accumulatedMs ?? 0 : 0
-        value.integrity = "rebooted"
+      if rebooted != false {
+        value.elapsedMs = savedElapsed(value)
+        value.integrity = rebooted == true ? "rebooted" : "revoked"
       } else {
         value.elapsedMs = floor(elapsed(value))
         if auth == .denied || !wasShielded { value.integrity = "revoked" }
       }
-    } else if rebooted {
+    } else if rebooted == true {
       value.integrity = "rebooted"
-    } else if auth == .denied {
+    } else if rebooted == nil || auth == .denied {
       value.integrity = "revoked"
     }
     value.status = "paused"
@@ -612,7 +654,7 @@ enum ReadingFocusStore {
       guard let current = try read(), current.accountId == accountId, current.sessionId == sessionId,
         current.resumeVersion == 1, current.terminal == false else { throw ReadingFocusFailure.cannotResume }
       guard let generation, current.generation == generation else { throw ReadingFocusFailure.cannotResume }
-      if (try? bootId()) != current.bootId || uptimeMs() < current.anchorMs {
+      if try clockRebooted(current) {
         let wasShielded = hasShield
         releaseProtection(); _ = try pauseLocked(current, wasShielded: wasShielded, authorization: auth, terminal: true)
         throw ReadingFocusFailure.boot
@@ -638,6 +680,8 @@ enum ReadingFocusStore {
       var next = current
       next.anchorMs = uptimeMs(); next.accumulatedMs = current.elapsedMs ?? current.accumulatedMs ?? 0
       next.elapsedMs = nil; next.status = "running"; next.canResume = false
+      next.measuredElapsedMs = nil; next.bootId = try bootId()
+      next.checkpointElapsedMs = next.accumulatedMs; next.checkpointUptimeMs = next.anchorMs
       next.generation = UUID().uuidString
       next.monitoringName = activityName(for: sessionId, generation: next.generation).rawValue
       do {
@@ -732,8 +776,9 @@ enum ReadingFocusStore {
       // overlapping poll cannot clear a newly persisted session's protection.
       return try locked { () throws -> ReadingFocusSession? in
         if auth == .denied { _ = try allowedAppsAuthorizationLocked(auth) }
-        guard let value = try read() else { releaseProtection(); return nil }
-        let invalid = (try? bootId()) != value.bootId || auth == .denied
+        guard var value = try read() else { releaseProtection(); return nil }
+        let clock = try? clockRebooted(value)
+        let invalid = clock != false || auth == .denied
         if (value.status == "running" && (remaining(value) <= 0 || invalid || !hasShield || deadlineReached(value))) ||
           (value.resumeVersion == 1 && value.terminal != true && (deadlineReached(value) || invalid)) {
           captured = matchingActivities(sessionId: value.sessionId)
@@ -741,6 +786,22 @@ enum ReadingFocusStore {
           releaseProtection()
           return try pauseLocked(value, wasShielded: wasShielded, authorization: auth, terminal: true)
         }
+        if value.status == "running" {
+          let measured = floor(elapsed(value)), now = uptimeMs()
+          // At most one durable write per five seconds while observed. A
+          // suspended app needs no ticking process: continuous time includes sleep.
+          if value.checkpointUptimeMs == nil || now - value.checkpointUptimeMs! >= 5_000 || !value.bootId.hasPrefix("shm-v1:") {
+            value.bootId = try bootId()
+            value.checkpointElapsedMs = measured; value.checkpointUptimeMs = now
+            // This is an advisory high-water mark, not a start/pause transition.
+            // The old running journal and monotonic anchor remain valid if the
+            // write fails. Unlocking here would let a later read count an
+            // unprotected gap. Retry without disturbing the active approach.
+            do { try write(value) }
+            catch { trace("checkpoint-write-failed", ["sessionId": value.sessionId]) }
+          }
+          value.measuredElapsedMs = measured
+        } else { value.measuredElapsedMs = value.elapsedMs }
         return value
       }
     } catch {

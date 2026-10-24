@@ -26,6 +26,45 @@ const local = { accountId: 'demo-reader', sessionId: 's1', deviceId: 'phone', bo
 const server = { ...readingFixture, session: { id: 's1', deviceId: 'phone', day: 1, book: 'Книга', budgetMs: 3600000,
   startedAt: '2026-11-01T00:00:00Z', elapsedMs: null, status: 'running' as const } };
 const selectedCapabilities = { available: true, authorized: true, selectedCount: 1, platform: 'ios', blockingMode: 'selected' as const };
+test('another installation shows a remote timer notice, never recovery or a destructive command', async () => {
+  mockDisk['dvg.readingDevice.v1'] = 'this-iphone';
+  fetchDetail.mockResolvedValue({ ...server, session: { ...server.session, deviceId: 'other-ipad' } });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.sessionNotice?.kind).toBe('other-device'));
+  expect(h.result.current.sessionNotice?.message).toContain('Чтение идёт на другом устройстве');
+  expect(h.result.current.needsRecovery).toBe(false);
+  expect(h.result.current.startBlocked).toBe(true);
+  await act(async () => { await h.result.current.recover(); });
+  expect(send).not.toHaveBeenCalled();
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+  fetchDetail.mockResolvedValue(readingFixture);
+  await act(async () => { await h.result.current.retry(); });
+  expect(h.result.current.sessionNotice).toBeUndefined();
+  expect(h.result.current.startBlocked).toBe(false);
+});
+test('recovery is offered only for an explicitly matching installation', async () => {
+  mockDisk['dvg.readingDevice.v1'] = 'phone';
+  fetchDetail.mockResolvedValue(server);
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.needsRecovery).toBe(true));
+  expect(h.result.current.sessionNotice).toBeUndefined();
+});
+test('running timer uses atomic native measurement even if a later remaining read would be zero', async () => {
+  fetchDetail.mockResolvedValue(server);
+  jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, status: 'running', elapsedMs: null,
+    targetMs: 3_600_000, measuredElapsedMs: 3_480_000 });
+  jest.mocked(readingNative.remainingMs).mockResolvedValue(0);
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.remainingMs).toBe(120_000));
+  expect(h.result.current.timerState).toBe('running');
+  expect(readingNative.remainingMs).not.toHaveBeenCalled();
+  jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, elapsedMs: 3_480_000,
+    measuredElapsedMs: 3_480_000, targetMs: 3_600_000, resumeVersion: 1, terminal: false, canResume: true });
+  await act(async () => { await h.result.current.retry(); });
+  expect(h.result.current.remainingMs).toBe(120_000);
+  expect(h.result.current.timerState).toBe('paused');
+  expect(send).not.toHaveBeenCalled();
+});
 test('an unreported server approach blocks any new timer even without a local journal', async () => {
   fetchDetail.mockResolvedValue({ ...server, session: { ...server.session, status: 'awaiting_pages', elapsedMs: 3600000 } });
   const h = await renderHook(() => useReadingChallenge('reading-demo'));
@@ -316,6 +355,46 @@ test('strict authorized mode starts with zero selected apps and preserves server
   expect(h.result.current.blockingMode).toBe('all-apps');
   expect(readingNative.selectApps).not.toHaveBeenCalled();
   expect(send.mock.calls.map(c => c[1].action)).toEqual(['start']);
+});
+
+test.each(['running', 'unreadable'] as const)('an ambiguous native start (%s journal) never sends a synthetic zero closure', async outcome => {
+  mockDisk['dvg.readingDevice.v1'] = 'phone';
+  send.mockImplementation(async (_token, command) => {
+    if (command.action === 'start') fetchDetail.mockResolvedValue({ ...server, session: { ...server.session, id: 'random-id' } });
+    return { ok: true };
+  });
+  jest.mocked(readingNative.start).mockImplementation(async () => {
+    if (outcome === 'unreadable') jest.mocked(readingNative.snapshot).mockRejectedValue(new Error('storage unavailable'));
+    else jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, sessionId: 'random-id',
+      status: 'running', elapsedMs: null, measuredElapsedMs: 30_000 });
+    throw new Error('native response lost');
+  });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  await act(async () => { await h.result.current.start('Книга'); });
+  expect(send.mock.calls.map(call => call[1].action)).toEqual(['start']);
+  expect(mockDisk[READING_OUTBOX_KEY]?.commands).toEqual([]);
+  if (outcome === 'running') expect(h.result.current.timerState).toBe('running');
+});
+
+test('terminal upload failures do not turn the one-second clock into a network retry loop', async () => {
+  jest.useFakeTimers();
+  const previousAppState = AppState.currentState;
+  AppState.currentState = 'active';
+  try {
+    fetchDetail.mockResolvedValue(server);
+    jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, status: 'running', elapsedMs: null });
+    const h = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(h.result.current.busy).toBe(false));
+    send.mockRejectedValue(new Error('offline'));
+    jest.mocked(readingNative.snapshot).mockResolvedValue(local);
+    await act(async () => { jest.advanceTimersByTime(1000); });
+    const attempts = send.mock.calls.length;
+    for (let i = 0; i < 10; i++) await act(async () => { jest.advanceTimersByTime(1000); });
+    expect(attempts).toBeGreaterThan(0);
+    expect(send).toHaveBeenCalledTimes(attempts);
+    await h.unmount();
+  } finally { AppState.currentState = previousAppState; jest.useRealTimers(); }
 });
 
 test.each([undefined, 'selected', 'all-apps'] as const)('an existing session keeps its own %s policy after a strict-mode update', async blockingMode => {

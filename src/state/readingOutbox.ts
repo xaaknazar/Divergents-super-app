@@ -17,9 +17,10 @@ export type ReadingOutboxDependencies = {
   send(command: ReadingCommand): Promise<ReadingReceipt>;
   isCurrentAccount(): boolean;
 };
-// Screens for parallel challenges share one disk journal. Serialize across instances,
-// including account switches, so one screen cannot overwrite another's pending report.
+// Only disk read-modify-write belongs under this lock. Network waits must never
+// prevent another screen from durably saving time/pages before the app exits.
 let journalTail: Promise<unknown> = Promise.resolve();
+const uploadTails = new Map<string, Promise<unknown>>();
 
 /** Serialized durable queue. Never delete on transport failure, never cross account boundaries. */
 export class ReadingOutbox {
@@ -39,21 +40,42 @@ export class ReadingOutbox {
     return { accountId: this.accountId, commands: own?.commands ?? [], ...(otherAccounts.length ? { otherAccounts } : {}) };
   }
   enqueue(command: ReadingCommand) {
+    return this.enqueueMany([command]);
+  }
+  /** Persist a close and its pages atomically; either all commands exist or none do. */
+  enqueueMany(commands: ReadingCommand[]) {
     return this.serialize(async () => {
       const q = await this.queue();
-      const existing = q.commands.find(c => c.operationId === command.operationId);
-      if (existing && JSON.stringify(existing) !== JSON.stringify(command)) throw new Error('Конфликт сохранённого действия');
-      if (!existing) {
+      const next = [...q.commands];
+      for (const command of commands) {
+        const existing = next.find(c => c.operationId === command.operationId);
+        if (existing && JSON.stringify(existing) !== JSON.stringify(command)) throw new Error('Конфликт сохранённого действия');
+        if (!existing) next.push(command);
+      }
+      if (next.length !== q.commands.length) {
         if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
-        await this.deps.write({ ...q, commands: [...q.commands, command] });
+        await this.deps.write({ ...q, commands: next });
       }
     });
   }
-  flush() {
+  private acknowledge(command: ReadingCommand) {
     return this.serialize(async () => {
-      let q = await this.queue();
+      // Re-read after the response: pages or another account's operations may
+      // have been saved while the request was in flight. Never overwrite them.
+      const q = await this.queue();
+      const existing = q.commands.find(c => c.operationId === command.operationId);
+      if (!existing || JSON.stringify(existing) !== JSON.stringify(command)) throw new Error('Конфликт сохранённого действия');
+      await this.deps.write({ ...q, commands: q.commands.filter(c => c.operationId !== command.operationId) });
+    });
+  }
+  flush() {
+    // Preserve command order across screens, but do not block a new account or
+    // any disk writes on the previous account's transport.
+    const result = (uploadTails.get(this.accountId) ?? Promise.resolve()).catch(() => {}).then(async () => {
       const receipts: { command: ReadingCommand; receipt: ReadingReceipt }[] = [];
-      while (q.commands.length) {
+      while (true) {
+        const q = await this.pending();
+        if (!q.commands.length) break;
         if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
         const command = q.commands[0];
         let receipt: ReadingReceipt;
@@ -61,17 +83,20 @@ export class ReadingOutbox {
         catch (error) {
           // A definitive rejected application can be edited/retried. Timing evidence stays durable.
           if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && ['apply', 'review', 'resolve', 'start'].includes(command.action)) {
-            if (this.deps.isCurrentAccount()) await this.deps.write({ ...q, commands: q.commands.slice(1) });
+            if (this.deps.isCurrentAccount()) await this.acknowledge(command);
           }
           throw error;
         }
         if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
-        q = { ...q, commands: q.commands.slice(1) };
-        await this.deps.write(q);
+        await this.acknowledge(command);
         receipts.push({ command, receipt });
       }
       return receipts;
     });
+    uploadTails.set(this.accountId, result);
+    const cleanup = () => { if (uploadTails.get(this.accountId) === result) uploadTails.delete(this.accountId); };
+    void result.then(cleanup, cleanup);
+    return result;
   }
   pending() { return this.serialize(() => this.queue()); }
 }

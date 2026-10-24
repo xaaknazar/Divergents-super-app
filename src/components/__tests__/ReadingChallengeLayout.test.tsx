@@ -39,6 +39,35 @@ function expectOrder(root: TestInstance, ...nodes: TestInstance[]) {
 }
 
 type LayoutCase = 'ready' | 'running' | 'paused' | 'review';
+test('remote timer notice replaces the fake local clock and destructive recovery while keeping history', async () => {
+  const p = props(); p.data = { ...p.data, session }; p.startBlocked = true;
+  p.sessionNotice = { kind: 'other-device', message: 'Чтение идёт на другом устройстве. Таймер не сброшен.' };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByText(p.sessionNotice.message)).toBeTruthy();
+  expect(view.queryByRole('timer')).toBeNull();
+  expect(view.queryByRole('button', { name: 'Старт' })).toBeNull();
+  expect(view.queryByRole('button', { name: 'Закрыть прерванный подход' })).toBeNull();
+  expect(view.getByRole('button', { name: 'Мои книги и история' })).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: 'Повторить' }));
+  expect(p.onRetry).toHaveBeenCalledTimes(1);
+  expect(p.onRecover).not.toHaveBeenCalled();
+});
+test('background refresh cannot disable local resume or saving pages, but an actual local save does', async () => {
+  const p = props();
+  p.busy = true; p.localBusy = false; p.timerState = 'paused'; p.resumableSession = true; p.canResume = true;
+  p.data = { ...p.data, session };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByRole('button', { name: 'Возобновить' })).toBeEnabled();
+  await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
+  expect(p.onResume).toHaveBeenCalledTimes(1);
+  await fireEvent.press(view.getByRole('button', { name: 'Записать страницы' }));
+  await fireEvent.changeText(view.getByLabelText('Страниц за этот подход'), '15');
+  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeEnabled();
+  await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
+  expect(p.onSaveApproach).toHaveBeenCalledWith(15, undefined);
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} localBusy /></ThemePreviewProvider>);
+  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeDisabled();
+});
 test.each<LayoutCase>(['ready', 'running', 'paused', 'review'])(
   '%s: timer actions precede the book, and rank is immediately before history',
   async state => {

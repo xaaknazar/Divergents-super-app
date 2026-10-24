@@ -27,6 +27,8 @@ const HOUR = 3_600_000;
 export type ReadingChallengeContentProps = {
   data: ReadingDetail; remainingMs: number; timerState: 'ready' | 'running' | 'paused' | 'complete';
   protection: 'unavailable' | 'permission' | 'selection' | 'ready'; busy: boolean; error?: string; awaitingPages: boolean;
+  /** Native transition/page save only. Background network refresh cannot disable local actions. */
+  localBusy?: boolean;
   blockingMode?: 'selected' | 'all-apps';
   resumableSession?: boolean; canResume?: boolean; onResume?: () => void;
   sessionElapsedMs?: number;
@@ -40,7 +42,7 @@ export type ReadingChallengeContentProps = {
   composer?: ReadingShelfComposer;
   allowedApps?: ReadingAllowedAppsView;
   onJoin: () => void; onRetry: () => void; onRanking: () => void; onHistory?: (userId: string) => void;
-  sessionNotice?: { kind: 'test-running' | 'other-account' | 'other-challenge'; message: string }; startBlocked?: boolean;
+  sessionNotice?: { kind: 'test-running' | 'other-account' | 'other-challenge' | 'other-device'; message: string }; startBlocked?: boolean;
   needsRecovery: boolean; onRecover: () => void;
 };
 
@@ -97,7 +99,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const pagesInvalid = !/^\d+$/.test(pages) || Number(pages) > 10000 || (nextPage ?? 0) > 100000;
   const submitPages = () => (softPaused ? p.onSaveApproach : p.onReport)(Number(pages), nextPage);
   const sessionElapsedMs = p.sessionElapsedMs ?? d.session?.elapsedMs;
-  const timerVisual = awaitingPages && p.busy ? 'saving' as const : recording ? 'recording' as const : p.timerState;
+  const timerVisual = awaitingPages && p.localBusy ? 'saving' as const : recording ? 'recording' as const : p.timerState;
   const todayMinutes = Math.floor(todayMs / 60000);
   // A legacy cached review payload is not a save receipt. It never blocks reading,
   // but must not be presented as newly confirmed credit before server refresh.
@@ -111,7 +113,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {recording && !p.sessionNotice ? <Wrapper gap={12}>
       <ReadingPagesNotice state="required" />
       {d.session && d.session.day !== d.currentDay ? <InlineNotice message="Это подход за прошлый день. Страницы запишутся в тот день, а не в сегодняшний." /> : null}
-      <ReadingPagesForm value={pages} onChange={setPages} busy={p.busy} invalid={pagesInvalid} onSubmit={submitPages}
+      <ReadingPagesForm value={pages} onChange={setPages} busy={p.localBusy} invalid={pagesInvalid} onSubmit={submitPages}
         bookTitle={d.session?.book}
         sessionMinutes={sessionElapsedMs != null ? Math.floor(sessionElapsedMs / 60000) : undefined}
         fromPage={d.session?.fromPage} nextPage={nextPage} />
@@ -120,17 +122,17 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
       <ReadingTimer remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)} />
       {running && !awaitingPages ? <>
         <ReadingTimerControls action="pause" onPress={p.onPause} />
-        {p.remainingMs <= 0 ? <ReadingPagesNotice state="goal" onRecord={p.onPause} busy={p.busy} /> : null}
+        {p.remainingMs <= 0 ? <ReadingPagesNotice state="goal" onRecord={p.onPause} busy={p.localBusy} /> : null}
       </>
-        : recording ? softPaused && p.onResume ? <ReadingTimerControls action="resume" secondary disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null
+        : recording ? softPaused && p.onResume ? <ReadingTimerControls action="resume" secondary disabled={!p.canResume || p.localBusy} onPress={p.onResume} /> : null
         : p.protection === 'unavailable' ? <InlineNotice message="Системная блокировка недоступна в этой сборке. Запустить защищённый сеанс пока нельзя." />
         : p.needsRecovery ? <InlineNotice message="На сервере есть начатый подход, но на этом телефоне нет подтверждённого времени. Если чтение шло на другом устройстве, откройте его там."
           actionLabel="Закрыть прерванный подход" onRetry={() => Alert.alert('Закрыть прерванный подход?', 'Неподтверждённое время не будет начислено. Уже сохранённые подходы останутся.', [
             { text: 'Отмена', style: 'cancel' }, { text: 'Закрыть подход', onPress: p.onRecover },
           ])} />
         : softPaused ? <>
-          {p.onResume ? <ReadingTimerControls action="resume" disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null}
-          <Button label="Записать страницы" variant="tinted" disabled={p.busy} onPress={() => setPagesRequested(true)}
+          {p.onResume ? <ReadingTimerControls action="resume" disabled={!p.canResume || p.localBusy} onPress={p.onResume} /> : null}
+          <Button label="Записать страницы" variant="tinted" disabled={p.localBusy} onPress={() => setPagesRequested(true)}
             accessibilityHint="Завершить этот подход и сохранить страницы текущей книги. Потом можно выбрать другую книгу" />
           <ScreenDescription text="Можно продолжить эту книгу или сохранить подход и выбрать другую. Все подходы складываются в общие 60 минут за день." />
         </>

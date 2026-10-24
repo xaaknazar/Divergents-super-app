@@ -54,6 +54,7 @@ module.exports = function withReadingFocus(config, options = {}) {
       const folder = path.join(c.modRequest.platformProjectRoot, name);
       fs.mkdirSync(folder, { recursive: true });
       fs.copyFileSync(path.join(root, 'modules/reading-focus/ios/ReadingFocusStore.swift'), path.join(folder, 'ReadingFocusStore.swift'));
+      fs.copyFileSync(path.join(root, 'modules/reading-focus/ios/ReadingBootMarker.h'), path.join(folder, 'ReadingBootMarker.h'));
       fs.copyFileSync(path.join(root, 'modules/reading-focus/ios/PrivacyInfo.xcprivacy'), path.join(folder, 'PrivacyInfo.xcprivacy'));
       fs.copyFileSync(path.join(root, `modules/reading-focus/extensions/${name}.swift`), path.join(folder, `${name}.swift`));
       const entitlement = { 'com.apple.security.application-groups': [GROUP], 'com.apple.developer.family-controls': true };
@@ -67,18 +68,21 @@ module.exports = function withReadingFocus(config, options = {}) {
         CFBundleName: '$(PRODUCT_NAME)', CFBundlePackageType: 'XPC!', CFBundleVersion: config.ios.buildNumber,
         CFBundleShortVersionString: config.version, NSExtension: extension, DivergentsReadingFocusPilot: true,
       }));
-      const existing = Object.values(project.pbxNativeTargetSection()).some(t => t && typeof t === 'object' && String(t.name).replace(/"/g, '') === name);
-      if (existing) continue;
-      const target = project.addTarget(name, 'app_extension', name, `${bundle}.${name}`);
-      project.addBuildPhase([`${name}/ReadingFocusStore.swift`, `${name}/${name}.swift`], 'PBXSourcesBuildPhase', 'Sources', target.uuid);
-      project.addBuildPhase([], 'PBXFrameworksBuildPhase', 'Frameworks', target.uuid);
-      project.addBuildPhase([`${name}/PrivacyInfo.xcprivacy`], 'PBXResourcesBuildPhase', 'Resources', target.uuid);
+      const existing = Object.entries(project.pbxNativeTargetSection()).find(([, t]) => t && typeof t === 'object' && String(t.name).replace(/"/g, '') === name);
+      const target = existing ? { uuid: existing[0], pbxNativeTarget: existing[1] }
+        : project.addTarget(name, 'app_extension', name, `${bundle}.${name}`);
+      if (!existing) {
+        project.addBuildPhase([`${name}/ReadingFocusStore.swift`, `${name}/${name}.swift`], 'PBXSourcesBuildPhase', 'Sources', target.uuid);
+        project.addBuildPhase([], 'PBXFrameworksBuildPhase', 'Frameworks', target.uuid);
+        project.addBuildPhase([`${name}/PrivacyInfo.xcprivacy`], 'PBXResourcesBuildPhase', 'Resources', target.uuid);
+      }
       const list = project.pbxXCConfigurationList()[target.pbxNativeTarget.buildConfigurationList];
       for (const ref of list.buildConfigurations) {
         Object.assign(project.pbxXCBuildConfigurationSection()[ref.value].buildSettings, {
           SWIFT_VERSION: '5.9', IPHONEOS_DEPLOYMENT_TARGET: '16.2', TARGETED_DEVICE_FAMILY: '1',
           CODE_SIGN_ENTITLEMENTS: `"${name}/${name}.entitlements"`, APPLICATION_EXTENSION_API_ONLY: 'YES',
           GENERATE_INFOPLIST_FILE: 'NO', CODE_SIGN_STYLE: 'Automatic',
+          SWIFT_OBJC_BRIDGING_HEADER: `"${name}/ReadingBootMarker.h"`,
         });
       }
     }

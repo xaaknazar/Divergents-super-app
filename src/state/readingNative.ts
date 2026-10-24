@@ -4,6 +4,9 @@ import { z } from 'zod';
 export type ReadingBlockingMode = 'all-apps' | 'selected';
 export const NativeReadingSchema = z.object({ accountId: z.string(), sessionId: z.string(), deviceId: z.string(), book: z.string(),
   budgetMs: z.number().min(0).max(86_400_000), targetMs: z.number().nullable().optional(), anchorMs: z.number(), bootId: z.string(), elapsedMs: z.number().nullable().optional(),
+  // Measured under the same native lock as status/session/generation. Never
+  // join a running snapshot with a later remainingMs from a different state.
+  measuredElapsedMs: z.number().finite().min(0).max(86_400_000).optional(),
   // Existing sessions retain their original selected-app policy after an update.
   blockingMode: z.enum(['all-apps', 'selected']).optional(),
   allowedAppCount: z.number().int().min(0).max(50).optional(),
@@ -40,6 +43,14 @@ type NativeFocus = {
 const native = requireOptionalNativeModule<NativeFocus>('ReadingFocus');
 const parse = (raw: string | null) => raw ? NativeReadingSchema.parse(JSON.parse(raw)) : null;
 let snapshotRead: Promise<NativeReadingSession | null> | null = null;
+let journalRevision = 0;
+async function changeJournal<T>(action: () => Promise<T>): Promise<T> {
+  // Never make a safety control wait for a poll. Invalidate both sides of the
+  // native call, including ambiguous failures which may have persisted first.
+  journalRevision += 1; snapshotRead = null;
+  try { return await action(); }
+  finally { journalRevision += 1; snapshotRead = null; }
+}
 // Old physical-device QA builds shared the production App Group. These exact
 // markers identify a local-only test, never a Clerk account or server session.
 export function isLegacyReadingQASession(session: NativeReadingSession) {
@@ -76,13 +87,21 @@ export const readingNative = {
     return AllowedAppsStatusSchema.parse(typeof raw === 'string' ? JSON.parse(raw) : raw);
   },
   start: async (accountId: string, sessionId: string, deviceId: string, book: string, budgetMs: number, targetMs: number) =>
-    NativeReadingSchema.parse(JSON.parse(await requireFocus().start(accountId, sessionId, deviceId, book, budgetMs, targetMs))),
-  snapshot: () => {
+    changeJournal(async () => NativeReadingSchema.parse(JSON.parse(await requireFocus().start(accountId, sessionId, deviceId, book, budgetMs, targetMs)))),
+  snapshot: (): Promise<NativeReadingSession | null> => {
     // Screen refresh and the one-second clock can read simultaneously. Share the
     // read/migration so the second caller cannot acknowledge a removed QA file.
-    if (!snapshotRead) snapshotRead = (async () => {
+    if (snapshotRead) return snapshotRead;
+    const revision = journalRevision;
+    const read = (async (): Promise<NativeReadingSession | null> => {
       if (!native) return null;
-      const session = parse(await native.snapshot());
+      let raw: string | null;
+      try { raw = await native.snapshot(); }
+      catch (e) { if (revision !== journalRevision) return readingNative.snapshot(); throw e; }
+      // A response captured before pause/resume/start/acknowledge is obsolete,
+      // even if the bridge delivers it after the control has already finished.
+      if (revision !== journalRevision) return readingNative.snapshot();
+      const session = parse(raw);
       // Only completed, positively identified QA data can be removed locally.
       // A live test or any real account's evidence must never be reset here.
       if (session?.status === 'paused' && isLegacyReadingQASession(session)) {
@@ -91,20 +110,21 @@ export const readingNative = {
         return null;
       }
       return session;
-    })().finally(() => { snapshotRead = null; });
-    return snapshotRead;
+    })().finally(() => { if (snapshotRead === read) snapshotRead = null; });
+    snapshotRead = read;
+    return read;
   },
-  pause: async () => native ? parse(await native.pause()) : null,
+  pause: () => changeJournal(async () => native ? parse(await native.pause()) : null),
   resume: async (accountId: string, sessionId: string, expectedGeneration: string): Promise<NativeReadingSession> => {
     if (!native?.resume) throw new Error('Этот подход нельзя продолжить в этой сборке. Сохраните страницы и начните новый.');
-    return NativeReadingSchema.parse(JSON.parse(await native.resume(accountId, sessionId, expectedGeneration)));
+    return changeJournal(async () => NativeReadingSchema.parse(JSON.parse(await native.resume!(accountId, sessionId, expectedGeneration))));
   },
   finish: async (accountId: string, sessionId: string, expectedGeneration: string): Promise<NativeReadingSession> => {
     if (!native?.finish) throw new Error('Завершение этого подхода недоступно в этой сборке.');
-    return NativeReadingSchema.parse(JSON.parse(await native.finish(accountId, sessionId, expectedGeneration)));
+    return changeJournal(async () => NativeReadingSchema.parse(JSON.parse(await native.finish!(accountId, sessionId, expectedGeneration))));
   },
   remainingMs: async () => native ? native.remainingMs() : 0,
-  acknowledge: (accountId: string, sessionId: string) => requireFocus().acknowledge(accountId, sessionId),
+  acknowledge: (accountId: string, sessionId: string) => changeJournal(() => requireFocus().acknowledge(accountId, sessionId)),
   configurePageReminder: async (accountId: string, sessionId: string, challengeId: string): Promise<void> => {
     await native?.configurePageReminder?.(accountId, sessionId, challengeId);
   },

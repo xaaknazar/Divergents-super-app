@@ -158,6 +158,32 @@ test('concurrent refresh and timer poll share a single QA migration', async () =
   await expect(Promise.all([readingNative.snapshot(), readingNative.snapshot()])).resolves.toEqual([null, null]);
   expect(native.acknowledge).toHaveBeenCalledTimes(1);
 });
+
+test.each(['start', 'pause', 'resume', 'finish', 'acknowledge'] as const)(
+  'a pending snapshot cannot return pre-%s state or clear the newer in-flight read', async method => {
+    let oldResult!: (raw: string | null) => void, newResult!: (raw: string | null) => void;
+    const changed = { ...qa, accountId: 'reader', generation: 'new-generation' };
+    native.snapshot.mockImplementationOnce(() => new Promise(resolve => { oldResult = resolve; }))
+      .mockImplementationOnce(() => new Promise(resolve => { newResult = resolve; }));
+    native[method] = jest.fn().mockResolvedValue(method === 'acknowledge' ? undefined : JSON.stringify(changed));
+    const old = readingNative.snapshot();
+    if (method === 'pause') await readingNative.pause();
+    else if (method === 'start') await readingNative.start('reader', 'qa-session', 'phone', 'Книга', 60_000, 60_000);
+    else if (method === 'acknowledge') await readingNative.acknowledge('reader', 'qa-session');
+    else await readingNative[method]('reader', 'qa-session', 'old-generation');
+    const fresh = readingNative.snapshot();
+    oldResult(null);
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    // Drain the old implementation too so a failed assertion leaves no pending reads.
+    const count = native.snapshot.mock.calls.length;
+    const joined = readingNative.snapshot();
+    if (newResult) newResult(method === 'acknowledge' ? null : JSON.stringify(changed));
+    const result = await Promise.all([old, fresh, joined]);
+    expect(count).toBe(2);
+    expect(native.snapshot).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(Array(3).fill(method === 'acknowledge' ? null : changed));
+  },
+);
 test('failed local cleanup remains retryable and does not report success', async () => {
   native.snapshot.mockResolvedValue(JSON.stringify(qa)); native.acknowledge.mockRejectedValueOnce(new Error('storage'));
   await expect(readingNative.snapshot()).rejects.toThrow('очистку проверочного таймера');

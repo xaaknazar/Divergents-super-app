@@ -257,6 +257,69 @@ test('saving partial pages seals the owned approach before its immutable stop an
   expect(queued()).toEqual([]);
 });
 
+test('saving pages during a stalled refresh persists the exact approach before the server answers', async () => {
+  const hook = await ready();
+  const pending = deferred<ReadingDetail>();
+  fetchDetail.mockImplementationOnce(() => pending.promise);
+  let refreshing!: Promise<void>;
+  await act(async () => { refreshing = hook.result.current.retry(); });
+  await waitFor(() => expect(hook.result.current.busy).toBe(true));
+  await act(async () => { await hook.result.current.saveApproach(15); });
+  const savedBeforeResponse = queued();
+  await act(async () => { pending.resolve(server); await refreshing; });
+  expect(savedBeforeResponse).toEqual([
+    expect.objectContaining({ action: 'stop', elapsedMs: 900_000 }),
+    expect.objectContaining({ action: 'report', pages: 15, sessionId: 'session-a' }),
+  ]);
+  await act(async () => { await hook.result.current.retry(); });
+  expect(send.mock.calls.map(call => call[1].action)).toEqual(['stop', 'report']);
+});
+
+test('a save snapshot failure is shown inline without an unhandled rejection or invented report', async () => {
+  const hook = await ready();
+  jest.mocked(readingNative.snapshot).mockRejectedValueOnce(new Error('Не удалось прочитать таймер'));
+  await act(async () => { await expect(hook.result.current.saveApproach(15)).resolves.toBeUndefined(); });
+  expect(hook.result.current.error).toContain('Не удалось прочитать таймер');
+  expect(queued()).toEqual([]); expect(send).not.toHaveBeenCalled();
+});
+
+test('rapid save taps seal and report the first submitted page count only once', async () => {
+  const hook = await ready();
+  await act(async () => { await Promise.all([hook.result.current.saveApproach(15), hook.result.current.saveApproach(202)]); });
+  expect(finish).toHaveBeenCalledTimes(1);
+  expect(send.mock.calls.map(call => call[1]).filter(c => c.action === 'report')).toEqual([
+    expect.objectContaining({ pages: 15, sessionId: 'session-a' }),
+  ]);
+});
+
+test.each([NaN, -1, 1.5, 10001])('invalid pages %s never seal the timer or poison the durable queue', async pages => {
+  const hook = await ready();
+  await act(async () => { await hook.result.current.saveApproach(pages); });
+  expect(finish).not.toHaveBeenCalled(); expect(send).not.toHaveBeenCalled(); expect(queued()).toEqual([]);
+  expect(hook.result.current.canResume).toBe(true);
+  expect(hook.result.current.error).toMatch(/количество страниц/);
+});
+
+test('recovery rechecks the native journal after waiting for the server', async () => {
+  journal = null; mockDisk['dvg.readingDevice.v1'] = 'phone';
+  const hook = await ready();
+  fetchDetail.mockImplementationOnce(async () => { journal = { ...softPaused }; return server; });
+  await act(async () => { await hook.result.current.recover(); });
+  expect(send).not.toHaveBeenCalled(); expect(queued()).toEqual([]);
+  expect(hook.result.current.error).toMatch(/сохранённое время/);
+});
+
+test('stale recovery cannot close an already completed approach with zero pages', async () => {
+  journal = null; mockDisk['dvg.readingDevice.v1'] = 'phone';
+  const hook = await ready();
+  expect(hook.result.current.needsRecovery).toBe(true);
+  server = { ...server, session: { ...server.session!, status: 'awaiting_pages', elapsedMs: 3_600_000 } };
+  await act(async () => { await hook.result.current.recover(); });
+  expect(send).not.toHaveBeenCalled(); expect(queued()).toEqual([]);
+  expect(hook.result.current.awaitingPages).toBe(true);
+  expect(hook.result.current.error).toMatch(/сохраните страницы/i);
+});
+
 test('two books keep separate page reports and share the daily hour: 25 minutes plus 35 minutes', async () => {
   const saved: { sessionId: string; book: string; elapsedMs: number; pages: number }[] = [];
   journal = { ...softPaused, book: 'Первая книга', elapsedMs: 1_500_000, accumulatedMs: 1_500_000 };

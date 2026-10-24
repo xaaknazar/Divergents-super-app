@@ -69,6 +69,8 @@ enum Harness {
   static func refreshActivities(_ values: [Activity<ReadingActivityAttributes>], session: ReadingFocusSession) async {}
   ${declaration('static func activityName(for')}
   ${declaration('static func elapsed(')}
+  ${declaration('static func savedElapsed(')}
+  ${declaration('static func clockRebooted(')}
   ${declaration('static func remaining(')}
   ${declaration('static func deadlineReached(')}
   ${declaration('private static func pauseLocked(')}
