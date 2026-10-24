@@ -22,12 +22,17 @@ export const READING_CHALLENGE_RULES: { title: string; text: string }[] = [
 ];
 const phase = z.enum(['upcoming', 'active', 'finished']);
 const membership = z.enum(['pending', 'approved', 'rejected']).nullable();
-const history = z.object({ day: z.number(), state: z.enum(['complete', 'missed', 'review', 'open', 'future', 'excluded']), pages: z.number(), elapsedMs: z.number() });
+const history = z.object({ day: z.number(), state: z.enum(['complete', 'missed', 'review', 'open', 'future', 'excluded']), pages: z.number(), elapsedMs: z.number(),
+  flagForgivenOn: z.number().int().positive().optional(), flagForgivenForDay: z.number().int().positive().optional() });
+const flagRecovery = z.object({ requiredDays: z.number().int().positive(), progressDays: z.number().int().nonnegative(),
+  daysRemaining: z.number().int().nonnegative(), earnedFlags: z.number().int().nonnegative(), forgivenFlags: z.number().int().nonnegative() });
+export type ReadingFlagRecoveryState = z.infer<typeof flagRecovery>;
 const member = z.object({ userId: z.string(), name: z.string(), teamId: z.string().nullable().optional(), flags: z.number(), completedDays: z.number(),
   pages: z.number(), elapsedMs: z.number(), extraMs: z.number().default(0), eliminatedOn: z.number().nullable(), history: z.array(history),
   averageMinutes: z.number().optional(), averagePages: z.number().optional(), daysParticipated: z.number().optional(), readingDays: z.number().optional(),
   firstDay: z.number().optional(), streak: z.number().optional(), bestStreak: z.number().optional(),
   rankingEligible: z.boolean().optional(), rankingPending: z.boolean().optional(), qualificationDaysLeft: z.number().optional(),
+  flagRecovery: flagRecovery.optional(),
   pace: z.enum(['on_target', 'below_target']).optional() });
 const mode = z.enum(['scheduled', 'continuous']).optional();
 const catalogItem = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, membership, mode });
@@ -37,6 +42,7 @@ export const ReadingBookSummarySchema = z.object({ key: z.string(), title: z.str
 export type ReadingBookSummary = z.infer<typeof ReadingBookSummarySchema>;
 export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, mode,
   format: z.enum(['individual', 'teams']).optional(), participants: z.number().optional(),
+  flagRecoveryDays: z.number().int().positive().optional(),
   currentDay: z.number(), serverNow: z.number(), dayEnd: z.number(), membership, me: member.nullable(), ranking: z.array(member),
   reportedSessionIds: z.array(z.string()),
   // Omitted by older servers: do not turn missing data into a misleading empty day.

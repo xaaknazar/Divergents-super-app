@@ -10,14 +10,18 @@ const STRICT_MODE = 'В строгом режиме iOS ограничивает
 /** Правила Reading challenge: пронумерованные пункты, каждый раскрывается на месте.
  * list — на экране вступления: заголовок «Правила» и пункты сразу видны.
  * collapsed — у участника: одна строка «Правила челленджа · 9», раскрывается на месте. */
-export function ReadingRules({ variant = 'collapsed', initiallyExpanded = false, blockingMode = 'selected' }: {
-  variant?: 'list' | 'collapsed'; initiallyExpanded?: boolean; blockingMode?: 'selected' | 'all-apps';
+export function ReadingRules({ variant = 'collapsed', initiallyExpanded = false, blockingMode = 'selected', flagRecoveryDays }: {
+  variant?: 'list' | 'collapsed'; initiallyExpanded?: boolean; blockingMode?: 'selected' | 'all-apps'; flagRecoveryDays?: number;
 }) {
   const { T, ty } = useTheme();
   const [expanded, setExpanded] = useState(initiallyExpanded);
   const [open, setOpen] = useState<number | null>(null);
-  const rules = READING_CHALLENGE_RULES.map((rule, index) => blockingMode === 'all-apps' && index === READING_CHALLENGE_RULES.length - 1
-    ? { ...rule, text: `${rule.text} ${STRICT_MODE}` } : rule);
+  const rules = READING_CHALLENGE_RULES.map((rule, index) => {
+    if (rule.title === 'Красный флаг' && flagRecoveryDays) return { title: 'Красные флаги и их снятие',
+      text: `Если за день не набраны 60 минут чтения, ставится красный флаг. За каждые ${flagRecoveryDays} дней подряд с выполненной нормой и сохранёнными страницами снимается один накопленный флаг. После снятия серия для следующего флага начинается заново. Пропуск прерывает серию. При нуле флагов списания не копятся на будущее; история пропусков сохраняется.` };
+    return blockingMode === 'all-apps' && index === READING_CHALLENGE_RULES.length - 1
+      ? { ...rule, text: `${rule.text} ${STRICT_MODE}` } : rule;
+  });
   const items = rules.map((rule, index) => {
     const isOpen = open === index;
     return <Pressable key={rule.title} onPress={() => setOpen(isOpen ? null : index)} accessibilityRole="button"

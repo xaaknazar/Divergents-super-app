@@ -22,10 +22,12 @@ export function ReadingDiary({ member }: { member: NonNullable<ReadingDetail['me
     {visible.map(h => <View key={h.day} style={[styles.day, { borderTopColor: T.separator }]}>
       <View style={styles.line}>
         <Text style={[ty.subheadEm, nums, { color: T.label }]}>День {h.day - (member.firstDay ?? 1) + 1}</Text>
-        <StatusBadge label={STATE[h.state]} size="compact" icon={h.state === 'missed' ? 'flag.fill' : undefined}
-          tone={h.state === 'complete' ? 'success' : h.state === 'missed' ? 'danger' : 'neutral'} />
+        <StatusBadge label={h.state === 'missed' && h.flagForgivenOn ? 'Флаг снят' : STATE[h.state]} size="compact" icon={h.state === 'missed' ? 'flag.fill' : undefined}
+          tone={h.flagForgivenOn ? 'neutral' : h.state === 'complete' ? 'success' : h.state === 'missed' ? 'danger' : 'neutral'} />
       </View>
       <Text style={[ty.subhead, nums, { color: T.labelSecondary }]}>{Math.floor(h.elapsedMs / 60000)} мин · {h.pages} стр.{h.elapsedMs > 3600000 ? ` · +${Math.floor((h.elapsedMs - 3600000) / 60000)} мин сверх часа` : ''}</Text>
+      {h.flagForgivenOn ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>Снят за серию чтения в день {h.flagForgivenOn - (member.firstDay ?? 1) + 1}. Пропуск остался в истории.</Text> : null}
+      {h.flagForgivenForDay ? <Text style={[ty.subheadEm, { color: T.greenText }]}>За серию чтения снят флаг за день {h.flagForgivenForDay - (member.firstDay ?? 1) + 1}.</Text> : null}
     </View>)}
     {days.length > 3 ? <Button label={expanded ? 'Свернуть' : `Все дни (${days.length})`} variant="plain" onPress={() => setExpanded(v => !v)} /> : null}
   </ContentBlock>;

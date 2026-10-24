@@ -10,5 +10,6 @@ export const BelowGoal: Story = {};
 export const NotStarted: Story = { args: { todayMs: 0, member: { ...member, flags: 0 } } };
 export const GoalDone: Story = { args: { todayMs: 72 * 60000, member: { ...member, flags: 0 } } };
 export const HistoryOnly: Story = { args: { todayMs: undefined } };
+export const RecoveringFlag: Story = { args: { member: { ...member, flagRecovery: { requiredDays: 5, progressDays: 3, daysRemaining: 2, earnedFlags: 2, forgivenFlags: 1 } } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };

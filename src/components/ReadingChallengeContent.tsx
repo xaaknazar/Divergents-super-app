@@ -62,7 +62,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
     <ReadingChallengeHeader variant="compact" title={d.title} phase={d.phase} day={d.currentDay} durationDays={d.durationDays}
       startDate={d.startDate} mode={d.mode} participants={participants} />
-    <ReadingRules variant="list" blockingMode={p.blockingMode} />
+    <ReadingRules variant="list" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />
     {canJoin ? <Wrapper gap={12}>
       <Checkbox label="Я ознакомился(-ась) с правилами челленджа" checked={agreed} onChange={setAgreed} disabled={p.busy} />
       <Button label="Присоединиться" size="large" onPress={p.onJoin} loading={p.busy} disabled={!agreed}
@@ -161,6 +161,6 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
       books={d.phase === 'active' ? d.todayBooks : undefined} /> : null}
     <ReadingRankLink place={standing?.place ?? null} pagesPlace={pagesStanding?.place ?? null} participants={participants} onPress={p.onRanking} />
     {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
-    <ReadingRules variant="collapsed" blockingMode={p.blockingMode} />
+    <ReadingRules variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />
   </Wrapper>;
 }

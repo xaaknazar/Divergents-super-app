@@ -6,6 +6,7 @@ import { fmtDecimal, fmtInt } from '../data/format';
 import { useTheme } from '../theme/ThemeContext';
 import { nums, radius } from '../theme/tokens';
 import { ReadingTodayBooks } from './ReadingTodayBooks';
+import { ReadingFlagRecovery } from './ReadingFlagRecovery';
 
 const GOAL_MINUTES = 60;
 
@@ -53,6 +54,7 @@ export function ReadingProgressSummary({ member, todayMs, books }: {
         <Text style={[ty.footnote, { color: T.labelSecondary }]}>{c.label}</Text>
       </View>)}
     </View>
+    {member.flagRecovery ? <ReadingFlagRecovery flags={member.flags} recovery={member.flagRecovery} /> : null}
   </View>;
 }
 const styles = StyleSheet.create({

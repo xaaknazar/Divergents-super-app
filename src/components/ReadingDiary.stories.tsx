@@ -9,5 +9,9 @@ const meta = { title: 'Reading/ReadingDiary', component: ReadingDiary, args: { m
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
+export const ForgivenFlag: Story = { args: { member: { ...member, flags: 0, history: [
+  { day: 4, state: 'missed', pages: 6, elapsedMs: 20 * 60000, flagForgivenOn: 9 },
+  { day: 9, state: 'complete', pages: 30, elapsedMs: 75 * 60000, flagForgivenForDay: 4 },
+] } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
