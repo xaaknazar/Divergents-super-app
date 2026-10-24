@@ -41,11 +41,12 @@ export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenP
         <ReadingLocalPause onPause={reading.pauseLocally} />
       </Wrapper> : null}
     {reading.data ? <ReadingChallengeContent data={reading.data} remainingMs={reading.remainingMs} timerState={reading.timerState}
-      protection={reading.protection} blockingMode={reading.blockingMode} busy={reading.busy} error={reading.error} awaitingPages={reading.awaitingPages}
+      protection={reading.protection} blockingMode={reading.blockingMode} busy={reading.actionBusy} error={reading.error} awaitingPages={reading.awaitingPages}
       resumableSession={reading.resumableSession} canResume={reading.canResume} onResume={reading.resume}
       sessionElapsedMs={reading.sessionElapsedMs}
       sessionNotice={reading.sessionNotice} startBlocked={reading.startBlocked}
-      needsRecovery={reading.needsRecovery} onRecover={reading.recover} book={book} library={{ ...library, select: book.selectSaved }}
+      needsRecovery={reading.needsRecovery} onRecover={reading.recover}
+      startRecovery={reading.startRecovery} onContinueStart={reading.continueStart} book={book} library={{ ...library, select: book.selectSaved }}
       allowedApps={allowedApps}
       composer={{ draft, supported: library.supportsBookshelf, adding: library.adding, error: library.addError,
         reset: () => { draft.reset(); library.clearAddError(); },

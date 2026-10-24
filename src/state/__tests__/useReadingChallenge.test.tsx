@@ -639,3 +639,172 @@ test('a running QA timer is explained specifically, not mistaken for a user acco
   expect(h.result.current.sessionNotice?.kind).toBe('test-running'); expect(h.result.current.error).toBeUndefined();
   expect(readingNative.pause).not.toHaveBeenCalled(); expect(readingNative.acknowledge).not.toHaveBeenCalled();
 });
+
+describe('start recovery and responsiveness', () => {
+  const reserved = { ...server, session: { ...server.session, id: 'random-id', deviceId: 'phone' } };
+  const pendingKey = 'dvg.readingPendingStart.v1.demo-reader.reading-demo';
+  const nativeRunning = { ...local, sessionId: 'random-id', status: 'running' as const, elapsedMs: null };
+  beforeEach(() => { mockDisk['dvg.readingDevice.v1'] = 'phone'; });
+
+  test('a lost start response is finished with the same session only after an explicit tap', async () => {
+    send.mockImplementationOnce(async () => { fetchDetail.mockResolvedValue(reserved); throw new TypeError('Network request failed'); });
+    send.mockResolvedValue({ ok: true, sessionId: 'random-id', budgetMs: 3600000 });
+    jest.mocked(readingNative.start).mockResolvedValue(nativeRunning);
+    const h = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(h.result.current.busy).toBe(false));
+    await act(async () => { await h.result.current.start('Книга'); });
+    expect(h.result.current.error).toContain('Нет подтверждения сервера');
+    expect(mockDisk[pendingKey]).toMatchObject({ sessionId: 'random-id', deviceId: 'phone', book: 'Книга' });
+    // A background retry delivers the same queued start and sees the reservation, but never launches the timer.
+    await act(async () => { await h.result.current.retry(); });
+    expect(mockDisk[READING_OUTBOX_KEY].commands).toEqual([]);
+    expect(h.result.current.startRecovery).toBe(true);
+    expect(h.result.current.needsRecovery).toBe(false);
+    expect(readingNative.start).not.toHaveBeenCalled();
+    await act(async () => { await h.result.current.continueStart(); });
+    expect(readingNative.start).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(readingNative.start).mock.calls[0].slice(0, 4)).toEqual(['demo-reader', 'random-id', 'phone', 'Книга']);
+    const starts = send.mock.calls.map(c => c[1]).filter(c => c.action === 'start');
+    expect(new Set(starts.map(c => `${c.operationId}:${c.sessionId}`)).size).toBe(1);
+    expect(send.mock.calls.map(c => c[1].action)).not.toContain('stop');
+    expect(mockDisk[pendingKey]).toBeNull();
+    expect(h.result.current.startRecovery).toBe(false);
+  });
+
+  test('a lost detail response after an accepted start survives an app restart', async () => {
+    send.mockImplementation(async (_token, command) => {
+      if (command.action === 'start') fetchDetail.mockRejectedValueOnce(new TypeError('Network request failed')).mockResolvedValue(reserved);
+      return { ok: true };
+    });
+    jest.mocked(readingNative.start).mockResolvedValue(nativeRunning);
+    const first = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(first.result.current.busy).toBe(false));
+    await act(async () => { await first.result.current.start('Книга'); });
+    expect(first.result.current.error).toBeDefined();
+    expect(readingNative.start).not.toHaveBeenCalled();
+    await first.unmount();
+    const restarted = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(restarted.result.current.startRecovery).toBe(true));
+    expect(readingNative.start).not.toHaveBeenCalled();
+    await act(async () => { await restarted.result.current.continueStart(); });
+    expect(readingNative.start).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls.filter(c => c[1].action === 'start')).toHaveLength(1);
+  });
+
+  test('another phone cannot continue a reservation it did not make', async () => {
+    fetchDetail.mockResolvedValue({ ...reserved, session: { ...reserved.session, deviceId: 'ipad' } });
+    mockDisk[pendingKey] = { accountId: 'demo-reader', challengeId: 'reading-demo', sessionId: 'random-id', deviceId: 'phone',
+      operationId: 'op', book: 'Книга', createdAt: 1 };
+    const h = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(h.result.current.busy).toBe(false));
+    expect(h.result.current.startRecovery).toBe(false);
+    expect(h.result.current.needsRecovery).toBe(true);
+    expect(mockDisk[pendingKey]).toBeNull();
+    await act(async () => { await h.result.current.continueStart(); });
+    expect(readingNative.start).not.toHaveBeenCalled();
+  });
+
+  test('a stale attempt that never reached the server is forgotten and a new start works', async () => {
+    mockDisk[pendingKey] = { accountId: 'demo-reader', challengeId: 'reading-demo', sessionId: 'old-id', deviceId: 'phone',
+      operationId: 'old-op', book: 'Книга', createdAt: 1 };
+    send.mockImplementation(async (_token, command) => {
+      if (command.action === 'start') fetchDetail.mockResolvedValue(reserved);
+      return { ok: true };
+    });
+    jest.mocked(readingNative.start).mockResolvedValue(nativeRunning);
+    const h = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(h.result.current.busy).toBe(false));
+    expect(mockDisk[pendingKey]).toBeNull();
+    await act(async () => { await h.result.current.start('Книга'); });
+    expect(readingNative.start).toHaveBeenCalledTimes(1);
+    expect(h.result.current.error).toBeUndefined();
+  });
+
+  test('a native failure while continuing closes the same reservation with zero credit', async () => {
+    fetchDetail.mockResolvedValue(reserved);
+    mockDisk[pendingKey] = { accountId: 'demo-reader', challengeId: 'reading-demo', sessionId: 'random-id', deviceId: 'phone',
+      operationId: 'op', book: 'Книга', createdAt: 1 };
+    jest.mocked(readingNative.start).mockRejectedValue(new Error('Экранное время недоступно'));
+    const h = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(h.result.current.startRecovery).toBe(true));
+    await act(async () => { await h.result.current.continueStart(); });
+    expect(h.result.current.error).toContain('Экранное время');
+    const sent = send.mock.calls.map(c => c[1]);
+    expect(sent.map(c => [c.action, c.sessionId, c.elapsedMs ?? c.pages])).toEqual([['stop', 'random-id', 0], ['report', 'random-id', 0]]);
+    expect(mockDisk[pendingKey]).toBeNull();
+  });
+
+  test('«Старт» during a background refresh waits for it instead of being ignored', async () => {
+    send.mockImplementation(async (_token, command) => {
+      if (command.action === 'start') fetchDetail.mockResolvedValue(reserved);
+      return { ok: true };
+    });
+    jest.mocked(readingNative.start).mockResolvedValue(nativeRunning);
+    const h = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(h.result.current.busy).toBe(false));
+    let finish!: (value: typeof readingFixture) => void;
+    fetchDetail.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    let refreshing!: Promise<void>, starting!: Promise<void>;
+    await act(async () => { refreshing = h.result.current.retry(); });
+    expect(h.result.current.busy).toBe(true);
+    expect(h.result.current.actionBusy).toBe(false);
+    await act(async () => { starting = h.result.current.start('Книга'); });
+    expect(h.result.current.actionBusy).toBe(true);
+    expect(send).not.toHaveBeenCalled();
+    await act(async () => { finish(readingFixture); await refreshing; await starting; });
+    expect(send.mock.calls.map(c => c[1].action)).toEqual(['start']);
+    expect(readingNative.start).toHaveBeenCalledTimes(1);
+    expect(h.result.current.actionBusy).toBe(false);
+    expect(h.result.current.error).toBeUndefined();
+  });
+
+  test('another screen of the same challenge cannot forget a start that is still in flight', async () => {
+    jest.mocked(readingNative.start).mockResolvedValue(nativeRunning);
+    const a = await renderHook(() => useReadingChallenge('reading-demo'));
+    const b = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(a.result.current.busy).toBe(false));
+    await waitFor(() => expect(b.result.current.busy).toBe(false));
+    // A's POST is accepted, but its detail GET is still on the way; B's GET is served first.
+    let answer!: () => void;
+    send.mockImplementation(async (_token, command) => {
+      if (command.action === 'start') fetchDetail.mockImplementationOnce(() => new Promise(resolve => { answer = () => resolve(reserved); }));
+      return { ok: true };
+    });
+    let starting!: Promise<void>;
+    await act(async () => { starting = a.result.current.start('Книга'); });
+    await waitFor(() => expect(answer).toBeDefined());
+    await act(async () => { await b.result.current.retry(); });
+    expect(mockDisk[pendingKey]).toMatchObject({ sessionId: 'random-id' });
+    await act(async () => { answer(); await starting; });
+    expect(readingNative.start).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls.filter(c => c[1].action === 'start')).toHaveLength(1);
+  });
+
+  test('an action interrupted by switching challenge does not leave controls busy', async () => {
+    let finish!: (value: typeof readingFixture) => void;
+    const h = await renderHook((props: { id: string }) => useReadingChallenge(props.id), { initialProps: { id: 'reading-demo' } });
+    await waitFor(() => expect(h.result.current.busy).toBe(false));
+    fetchDetail.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    let joining!: Promise<void>;
+    await act(async () => { joining = h.result.current.join(); });
+    expect(h.result.current.actionBusy).toBe(true);
+    fetchDetail.mockResolvedValue({ ...readingFixture, id: 'reading-other' });
+    await h.rerender({ id: 'reading-other' });
+    await act(async () => { finish(readingFixture); await joining; });
+    await waitFor(() => expect(h.result.current.busy).toBe(false));
+    expect(h.result.current.actionBusy).toBe(false);
+  });
+
+  test('two quick «Старт» taps reserve one session', async () => {
+    send.mockImplementation(async (_token, command) => {
+      if (command.action === 'start') fetchDetail.mockResolvedValue(reserved);
+      return { ok: true };
+    });
+    jest.mocked(readingNative.start).mockResolvedValue(nativeRunning);
+    const h = await renderHook(() => useReadingChallenge('reading-demo'));
+    await waitFor(() => expect(h.result.current.busy).toBe(false));
+    await act(async () => { await Promise.all([h.result.current.start('Книга'), h.result.current.start('Книга')]); });
+    expect(send.mock.calls.filter(c => c[1].action === 'start')).toHaveLength(1);
+    expect(readingNative.start).toHaveBeenCalledTimes(1);
+  });
+});

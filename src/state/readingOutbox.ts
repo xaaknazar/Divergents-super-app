@@ -17,11 +17,16 @@ export type ReadingOutboxDependencies = {
   send(command: ReadingCommand): Promise<ReadingReceipt>;
   isCurrentAccount(): boolean;
 };
-// Screens for parallel challenges share one disk journal. Serialize across instances,
-// including account switches, so one screen cannot overwrite another's pending report.
+// Screens for parallel challenges share one disk journal. Serialize only the short
+// read-modify-write of that journal, including across account switches, so one
+// screen cannot overwrite another's pending report. Never hold it across a network
+// request: a slow upload must not delay saving new local evidence.
 let journalTail: Promise<unknown> = Promise.resolve();
+// One sender per account: commands go out strictly in order (stop before report),
+// and two screens never send the same head command concurrently.
+const senders = new Map<string, Promise<unknown>>();
+const REJECTABLE = ['apply', 'review', 'resolve', 'start'];
 
-/** Serialized durable queue. Never delete on transport failure, never cross account boundaries. */
 export class ReadingOutbox {
   constructor(private accountId: string, private deps: ReadingOutboxDependencies) {}
   private serialize<T>(action: () => Promise<T>): Promise<T> {
@@ -49,28 +54,45 @@ export class ReadingOutbox {
       }
     });
   }
+  /** Sends queued commands of this account in order. Network waits happen outside the
+   * journal lock; a command leaves the journal only after its own receipt. */
   flush() {
-    return this.serialize(async () => {
-      let q = await this.queue();
-      const receipts: { command: ReadingCommand; receipt: ReadingReceipt }[] = [];
-      while (q.commands.length) {
-        if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
-        const command = q.commands[0];
-        let receipt: ReadingReceipt;
-        try { receipt = await this.deps.send(command); }
-        catch (error) {
-          // A definitive rejected application can be edited/retried. Timing evidence stays durable.
-          if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && ['apply', 'review', 'resolve', 'start'].includes(command.action)) {
-            if (this.deps.isCurrentAccount()) await this.deps.write({ ...q, commands: q.commands.slice(1) });
-          }
-          throw error;
+    const previous = senders.get(this.accountId) ?? Promise.resolve();
+    const run = previous.catch(() => {}).then(() => this.drain());
+    const tail = run.catch(() => {});
+    senders.set(this.accountId, tail);
+    void tail.then(() => { if (senders.get(this.accountId) === tail) senders.delete(this.accountId); });
+    return run;
+  }
+  private async drain() {
+    const receipts: { command: ReadingCommand; receipt: ReadingReceipt }[] = [];
+    for (;;) {
+      const command = await this.serialize(async () => (await this.queue()).commands[0]);
+      if (!command) return receipts;
+      if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
+      let receipt: ReadingReceipt;
+      try { receipt = await this.deps.send(command); }
+      catch (error) {
+        // A definitive rejected application/start can be edited/retried. Timing evidence stays durable.
+        if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && REJECTABLE.includes(command.action)
+          && this.deps.isCurrentAccount()) {
+          await this.remove(command.operationId);
         }
-        if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
-        q = { ...q, commands: q.commands.slice(1) };
-        await this.deps.write(q);
-        receipts.push({ command, receipt });
+        throw error;
       }
-      return receipts;
+      if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
+      await this.remove(command.operationId);
+      receipts.push({ command, receipt });
+    }
+  }
+  /** Removes exactly the acknowledged operation; commands enqueued meanwhile stay. */
+  private remove(operationId: string) {
+    return this.serialize(async () => {
+      const q = await this.queue();
+      const index = q.commands.findIndex(c => c.operationId === operationId);
+      if (index < 0) return;
+      if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
+      await this.deps.write({ ...q, commands: q.commands.filter((_, i) => i !== index) });
     });
   }
   pending() { return this.serialize(() => this.queue()); }

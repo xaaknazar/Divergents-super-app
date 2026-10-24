@@ -42,6 +42,8 @@ export type ReadingChallengeContentProps = {
   onJoin: () => void; onRetry: () => void; onRanking: () => void; onHistory?: (userId: string) => void;
   sessionNotice?: { kind: 'test-running' | 'other-account' | 'other-challenge'; message: string }; startBlocked?: boolean;
   needsRecovery: boolean; onRecover: () => void;
+  /** Сервер принял «Старт» этого телефона, но ответ потерялся: таймер ещё не идёт. */
+  startRecovery?: boolean; onContinueStart?: () => void;
 };
 
 /** Reading challenge, индивидуальный зачёт. Не участник — вступление: компактный блок, правила, галочка,
@@ -87,12 +89,16 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const startConfirmed = () => p.onStart(startBook.title, { author: startBook.author || undefined, bookKey: book.verified?.key,
     coverId: book.verified?.coverId, ...(previousBook?.nextPage != null ? { fromPage: previousBook.nextPage } : {}) });
   const approachOpen = !!d.session || !!p.resumableSession || running || awaitingPages;
-  const start = () => {
-    if (p.blockingMode !== 'all-apps') { startConfirmed(); return; }
+  const confirmStrict = (onConfirm: () => void) => {
+    if (p.blockingMode !== 'all-apps') { onConfirm(); return; }
     Alert.alert('Начать чтение в строгом режиме?',
       'На время чтения iOS ограничит все доступные для блокировки приложения и сайты. Divergents и выбранные вами разрешённые приложения останутся доступны. Остальные читалки, игры, соцсети, банки и карты могут блокироваться.\n\nКнопка «Пауза» сразу снимет ограничения, даже без интернета.',
-      [{ text: 'Отмена', style: 'cancel' }, { text: 'Начать чтение', onPress: startConfirmed }]);
+      [{ text: 'Отмена', style: 'cancel' }, { text: 'Начать чтение', onPress: onConfirm }]);
   };
+  const start = () => confirmStrict(startConfirmed);
+  const closeInterrupted = () => Alert.alert('Закрыть прерванный подход?', 'Неподтверждённое время не будет начислено. Уже сохранённые подходы останутся.', [
+    { text: 'Отмена', style: 'cancel' }, { text: 'Закрыть подход', onPress: p.onRecover },
+  ]);
   const nextPage = d.session?.fromPage != null && pages ? d.session.fromPage + Number(pages) : undefined;
   const pagesInvalid = !/^\d+$/.test(pages) || Number(pages) > 10000 || (nextPage ?? 0) > 100000;
   const submitPages = () => (softPaused ? p.onSaveApproach : p.onReport)(Number(pages), nextPage);
@@ -124,10 +130,16 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
       </>
         : recording ? softPaused && p.onResume ? <ReadingTimerControls action="resume" secondary disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null
         : p.protection === 'unavailable' ? <InlineNotice message="Системная блокировка недоступна в этой сборке. Запустить защищённый сеанс пока нельзя." />
+        : p.startRecovery && p.onContinueStart ? <Wrapper gap={10}>
+          <InlineNotice message="Сервер принял начало подхода с этого телефона, но ответ не дошёл. Таймер ещё не идёт, время не начислялось. Продолжите запуск: включатся таймер и ограничения приложений."
+            actionLabel="Продолжить запуск" onRetry={() => { const go = p.onContinueStart; if (go) confirmStrict(go); }} />
+          {p.protection !== 'ready' ? <Button label={p.protection === 'permission' ? 'Разрешить блокировку' : 'Выбрать приложения'}
+            variant="tinted" onPress={p.onPrepare} loading={p.busy} /> : null}
+          <Button label="Отменить подход" variant="plain" disabled={p.busy} onPress={closeInterrupted}
+            accessibilityHint="Закрыть начатый на сервере подход без времени и страниц" />
+        </Wrapper>
         : p.needsRecovery ? <InlineNotice message="На сервере есть начатый подход, но на этом телефоне нет подтверждённого времени. Если чтение шло на другом устройстве, откройте его там."
-          actionLabel="Закрыть прерванный подход" onRetry={() => Alert.alert('Закрыть прерванный подход?', 'Неподтверждённое время не будет начислено. Уже сохранённые подходы останутся.', [
-            { text: 'Отмена', style: 'cancel' }, { text: 'Закрыть подход', onPress: p.onRecover },
-          ])} />
+          actionLabel="Закрыть прерванный подход" onRetry={closeInterrupted} />
         : softPaused ? <>
           {p.onResume ? <ReadingTimerControls action="resume" disabled={!p.canResume || p.busy} onPress={p.onResume} /> : null}
           <Button label="Записать страницы" variant="tinted" disabled={p.busy} onPress={() => setPagesRequested(true)}

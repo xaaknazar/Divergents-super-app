@@ -131,3 +131,23 @@ test('previous-day pages remain actionable after a challenge finishes', async ()
   expect(view.getByLabelText('Страниц за этот подход')).toBeTruthy();
   expect(view.queryByRole('timer')).toBeNull();
 });
+test('a reserved start whose response was lost offers only «Продолжить запуск» or zero-credit cancel', async () => {
+  const p = props(); p.timerState = 'paused'; p.startRecovery = true; p.onContinueStart = jest.fn();
+  p.data = { ...p.data, session: { ...session, elapsedMs: null } };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByText(/ответ не дошёл/)).toBeTruthy();
+  expect(view.queryByRole('button', { name: 'Старт' })).toBeNull();
+  expect(view.queryByRole('button', { name: 'Закрыть прерванный подход' })).toBeNull();
+  await fireEvent.press(view.getByRole('button', { name: 'Продолжить запуск' }));
+  expect(p.onContinueStart).toHaveBeenCalledTimes(1);
+  expect(p.onStart).not.toHaveBeenCalled();
+  expect(view.getByRole('button', { name: 'Отменить подход' })).toBeTruthy();
+});
+test('a reserved start can repair blocking permission before continuing', async () => {
+  const p = props(); p.timerState = 'paused'; p.startRecovery = true; p.onContinueStart = jest.fn(); p.protection = 'permission';
+  p.data = { ...p.data, session: { ...session, elapsedMs: null } };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  await fireEvent.press(view.getByRole('button', { name: 'Разрешить блокировку' }));
+  expect(p.onPrepare).toHaveBeenCalledTimes(1);
+  expect(view.getByRole('button', { name: 'Продолжить запуск' })).toBeTruthy();
+});

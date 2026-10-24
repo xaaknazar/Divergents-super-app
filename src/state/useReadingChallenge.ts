@@ -32,6 +32,15 @@ function isTerminalSession(local: NativeReadingSession | null) {
 function isSoftPause(local: NativeReadingSession | null) {
   return local?.resumeVersion === 1 && local.status === 'paused' && local.terminal === false;
 }
+/** A start whose server outcome is not known yet on this phone. It is saved before the
+ * request, so a lost POST or follow-up GET response is finished later with the SAME
+ * session id and device; a second reservation is never created for it. */
+export type ReadingPendingStart = { accountId: string; challengeId: string; sessionId: string; deviceId: string;
+  operationId: string; book: string; createdAt: number };
+export const readingPendingStartKey = (accountId: string, challengeId: string) => `dvg.readingPendingStart.v1.${accountId}.${challengeId}`;
+// Starts being sent right now in this process, by pending-start key. Another screen
+// instance must not forget such an attempt while its request is still in flight.
+const startsInFlight = new Set<string>();
 export type ReadingSessionNotice = { kind: 'test-running' | 'other-account' | 'other-challenge'; message: string };
 function sessionNoticeFor(local: NativeReadingSession | null, account: string, sessionId?: string): ReadingSessionNotice | undefined {
   if (!local) return;
@@ -62,11 +71,21 @@ export function useReadingChallenge(challengeId: string) {
   const [error, setError] = useState<string>();
   const [sessionNotice, setSessionNotice] = useState<ReadingSessionNotice>();
   const [busy, setBusy] = useState(false);
-  const busyRef = useRef<{ context: symbol; operation: symbol } | null>(null), mounted = useRef(true);
+  const busyRef = useRef<{ context: symbol; operation: symbol; kind: 'action' | 'refresh'; done: Promise<void> } | null>(null), mounted = useRef(true);
+  // A user action (Start, pages, join…) that is waiting for or running its operation.
+  // Background refreshes never swallow it; a second user action is ignored meanwhile.
+  const actionRef = useRef<{ context: symbol; operation: symbol } | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [startRecovery, setStartRecovery] = useState<ReadingPendingStart | null>(null);
+  const startRecoveryRef = useRef<ReadingPendingStart | null>(null);
+  // Session id whose pending-start check has finished, so a reservation is not briefly
+  // offered for zero-credit closing before «Продолжить запуск» is known.
+  const [reconciledFor, setReconciledFor] = useState<string | null | undefined>(undefined);
   const dataRef = useRef(data); dataRef.current = data;
   const requestStartedAt = useRef(0);
   const account = userId ?? '';
   const cacheKey = `dvg.readingDetail.${account}.${challengeId}`;
+  const pendingStartKey = readingPendingStartKey(account, challengeId);
   const context = useMemo(() => Symbol('reading-screen'), [account, challengeId]);
   const contextRef = useRef(context); contextRef.current = context;
   const current = useCallback(() => mounted.current && authRef.current.userId === account && contextRef.current === context, [account, context]);
@@ -140,13 +159,59 @@ export function useReadingChallenge(challengeId: string) {
     if (current()) setCapabilities(caps);
     return result;
   }, [challengeId, current, cacheKey]);
-  const run = useCallback(async (action: () => Promise<void>) => {
-    if (busyRef.current?.context === context || !account || !current()) return;
+  const run = useCallback(async (action: () => Promise<void>, kind: 'action' | 'refresh' = 'action') => {
+    if (!account || !current()) return;
     const operation = Symbol('reading-operation');
-    busyRef.current = { context, operation }; setBusy(true); setError(undefined);
-    try { await action(); } catch (e) { if (current()) setError(readingErrorMessage(e)); }
-    finally { if (busyRef.current?.operation === operation) busyRef.current = null; if (current()) setBusy(false); }
+    if (kind === 'refresh') {
+      // Background work never queues: the running operation or a waiting user action synchronizes anyway.
+      if (busyRef.current?.context === context || actionRef.current?.context === context) return;
+    } else {
+      // One user action at a time, so a repeated «Старт» cannot reserve a second session.
+      if (actionRef.current?.context === context) return;
+      actionRef.current = { context, operation }; setActionBusy(true);
+    }
+    try {
+      // A user action waits for an in-flight refresh instead of becoming a silent no-op.
+      for (let active = busyRef.current; active?.context === context; active = busyRef.current) {
+        await active.done;
+        if (!current()) return;
+      }
+      let finished!: () => void;
+      const done = new Promise<void>(resolve => { finished = resolve; });
+      busyRef.current = { context, operation, kind, done }; setBusy(true); setError(undefined);
+      try { await action(); } catch (e) { if (current()) setError(readingErrorMessage(e)); }
+      finally { if (busyRef.current?.operation === operation) busyRef.current = null; finished(); if (current()) setBusy(false); }
+    } finally {
+      if (actionRef.current?.operation === operation) { actionRef.current = null; if (current()) setActionBusy(false); }
+    }
   }, [account, current, context]);
+  const clearPendingStart = useCallback(async () => {
+    startRecoveryRef.current = null;
+    if (current()) setStartRecovery(null);
+    await saveJSON(pendingStartKey, null, { strict: true });
+  }, [current, pendingStartKey]);
+  // Decides whether an earlier start with an unknown outcome can be finished on this phone.
+  // Never launches anything itself: only an explicit «Продолжить запуск» starts the timer.
+  const reconcilePendingStart = useCallback(async (d: ReadingDetail, local: NativeReadingSession | null) => {
+    const checked = d.session?.id ?? null;
+    if (startsInFlight.has(pendingStartKey)) return;
+    const pending = await loadJSON<ReadingPendingStart | null>(pendingStartKey, null);
+    if (!current()) return;
+    if (!pending || pending.accountId !== account || pending.challengeId !== challengeId) {
+      startRecoveryRef.current = null; setStartRecovery(null); setReconciledFor(checked); return;
+    }
+    const server = d.session?.id === pending.sessionId ? d.session : null;
+    const reserved = !!server && server.status === 'running' && server.deviceId === pending.deviceId
+      && server.day === d.currentDay && d.phase === 'active';
+    const nativeStarted = local?.accountId === account && local.sessionId === pending.sessionId;
+    // Not on the server yet: keep it only while the exact start command still waits to be sent.
+    const queued = !server && !nativeStarted
+      && (await queue.pending()).commands.some(command => command.operationId === pending.operationId);
+    if (!current() || startsInFlight.has(pendingStartKey)) return;
+    if (nativeStarted || !reserved && !queued) { await clearPendingStart(); setReconciledFor(checked); return; }
+    const offer = reserved && !local ? pending : null;
+    startRecoveryRef.current = offer; setStartRecovery(offer); setReconciledFor(checked);
+  }, [account, challengeId, current, pendingStartKey, queue, clearPendingStart]);
   const synchronize = useCallback(async (forceActivity = false) => {
     // Restore the last confirmed screen before a network operation: offline users must
     // still be able to pause and durably submit pages after restarting the app.
@@ -190,6 +255,8 @@ export function useReadingChallenge(challengeId: string) {
     const local = await readingNative.snapshot();
     if (!current()) return;
     observeLocalSession(local);
+    await reconcilePendingStart(result, local);
+    if (!current()) return;
     if (local?.sessionId !== initialLocal?.sessionId || local?.status !== initialLocal?.status) void reconcileLiveActivity(local);
     if (local?.accountId === account && isTerminalSession(local) && result.reportedSessionIds.includes(local.sessionId)) {
       await readingNative.acknowledge(account, local.sessionId);
@@ -216,20 +283,21 @@ export function useReadingChallenge(challengeId: string) {
       setSessionNotice(sessionNoticeFor(local, account, result.session?.id));
     }
     if (uploadError) throw uploadError;
-  }, [queue, refresh, current, account, challengeId, cacheKey, observeLocalSession, reconcileLiveActivity]);
+  }, [queue, refresh, current, account, challengeId, cacheKey, observeLocalSession, reconcileLiveActivity, reconcilePendingStart]);
   useEffect(() => {
     mounted.current = true;
     setData(null); dataRef.current = null; setNativeSession(null); setLocalPauseAccount(null); setRemaining(3_600_000); setBusy(false); setError(undefined); setSessionNotice(undefined);
+    setActionBusy(false); setStartRecovery(null); startRecoveryRef.current = null; setReconciledFor(undefined);
     ownedRunning.current = null; liveActivityRequest.current += 1; lastReconcile.current = null; setLiveActivity(null); setLiveActivityBusy(false);
-    void run(synchronize);
+    void run(synchronize, 'refresh');
     const subscription = AppState.addEventListener('change', s => {
       if (s !== 'active') return;
       // A stalled API operation must not hide a paused timer or dismissed card.
       // Normal synchronization already performs this local-only reconciliation.
       if (busyRef.current?.context === context) void refreshLocalSession();
-      else void run(() => synchronize(true));
+      else void run(() => synchronize(true), 'refresh');
     });
-    const retry = setInterval(() => { if (AppState.currentState === 'active') void run(synchronize); }, 30_000);
+    const retry = setInterval(() => { if (AppState.currentState === 'active') void run(synchronize, 'refresh'); }, 30_000);
     return () => { mounted.current = false; subscription.remove(); clearInterval(retry); };
   }, [run, synchronize, context, refreshLocalSession]);
   useEffect(() => {
@@ -246,7 +314,7 @@ export function useReadingChallenge(challengeId: string) {
           const remaining = await localRemaining(local);
           if (!alive || !current()) return;
           setNativeSession(local); setRemaining(targetRemaining(dataRef.current, local, remaining));
-          if (isTerminalSession(local) && dataRef.current?.session?.status === 'running') void run(synchronize);
+          if (isTerminalSession(local) && dataRef.current?.session?.status === 'running') void run(synchronize, 'refresh');
         } else if (!local) {
           setNativeSession(null); setSessionNotice(undefined);
           const d = dataRef.current;
@@ -295,7 +363,7 @@ export function useReadingChallenge(challengeId: string) {
       setNativeSession(local); setSessionNotice(undefined);
       if (local?.status === 'paused' && local.elapsedMs != null)
         setRemaining(targetRemaining(dataRef.current, local, Math.max(0, local.budgetMs - local.elapsedMs)));
-      if (local) void run(synchronize);
+      if (local) void run(synchronize, 'refresh');
       else if (snapshotError) setError(readingErrorMessage(snapshotError));
     } catch (e) { if (current()) setError(readingErrorMessage(e)); }
   };
@@ -360,7 +428,7 @@ export function useReadingChallenge(challengeId: string) {
       if (!controlCurrent()) return;
       setRemaining(targetRemaining(dataRef.current, changed, remaining));
       void reconcileLiveActivity(changed, true);
-      if (isTerminalSession(changed) && syncAfterFinish) void run(synchronize);
+      if (isTerminalSession(changed) && syncAfterFinish) void run(synchronize, 'refresh');
     } catch (e) { if (controlCurrent()) setError(readingErrorMessage(e)); }
     finally { if (timerControlRequest.current?.operation === operation) timerControlRequest.current = null; }
   };
@@ -393,6 +461,33 @@ export function useReadingChallenge(challengeId: string) {
       if (!current() || closed?.sessionId !== local.sessionId || closed.terminal !== true) return;
     }
     await report(pages, nextPage);
+  };
+  // Launches the native timer for a server-confirmed reservation made by THIS phone.
+  // A failure after the reservation closes it with zero credit; time is never invented.
+  const launchNative = async (pending: ReadingPendingStart, d: ReadingDetail) => {
+    const session = d.session;
+    if (session?.id !== pending.sessionId || session.status !== 'running') throw new Error('Сервер не подтвердил начало');
+    try {
+      if (session.day !== d.currentDay || d.phase !== 'active') throw new Error('День завершился. Обновите экран перед новым подходом.');
+      await saveJSON(cacheKey, d, { strict: true });
+      const targetMs = 3_600_000 - (d.me?.history.find(h => h.day === d.currentDay)?.elapsedMs ?? 0);
+      // Conservative deadline: network/cache latency must never move the stop past midnight.
+      const untilMidnight = Math.floor(d.dayEnd - d.serverNow - (performance.now() - requestStartedAt.current));
+      if (untilMidnight <= 0) throw new Error('День завершился. Обновите экран перед новым подходом.');
+      if (!current()) return;
+      const local = await readingNative.start(account, pending.sessionId, pending.deviceId, pending.book, Math.min(session.budgetMs, untilMidnight), targetMs);
+      // The native journal is now the evidence; a failed cleanup must not close a running timer.
+      await clearPendingStart().catch(() => {});
+      if (current()) { setNativeSession(local); observeLocalSession(local); setRemaining(targetMs); void reconcileLiveActivity(local); }
+    } catch (e) {
+      // Zero-credit closure if native authorization/storage failed after the server reserved the session.
+      await queue.enqueue({ action: 'stop', operationId: await readingOperationId(pending.sessionId, 'stop'), challengeId,
+        sessionId: pending.sessionId, deviceId: pending.deviceId, elapsedMs: 0, integrity: 'ok' });
+      await queue.enqueue({ action: 'report', operationId: await readingOperationId(pending.sessionId, 'report'), challengeId, sessionId: pending.sessionId, pages: 0 });
+      await clearPendingStart().catch(() => {});
+      await synchronize();
+      throw e;
+    }
   };
   const resumableSession = nativeSession?.accountId === account && nativeSession.resumeVersion === 1;
   // Pages belong to one exact approach, not the daily countdown. Prefer its
@@ -427,8 +522,12 @@ export function useReadingChallenge(challengeId: string) {
       : data?.me?.history.find(h => h.day === data.currentDay)?.state === 'complete' ? 'complete' as const
       : nativeSession || data?.session ? 'paused' as const : 'ready' as const,
     awaitingPages: isTerminalSession(nativeSession) || data?.session?.status === 'awaiting_pages',
-    needsRecovery: !!data?.session && data.session.status === 'running' && !nativeSession && !sessionNotice,
-    retry: () => run(() => synchronize(true)),
+    needsRecovery: !!data?.session && data.session.status === 'running' && !nativeSession && !sessionNotice && !startRecovery
+      && reconciledFor === data.session.id,
+    /** The server reserved this phone's start, but the response was lost before the timer began. */
+    startRecovery: !!startRecovery && data?.session?.id === startRecovery.sessionId && !nativeSession,
+    actionBusy,
+    retry: () => run(() => synchronize(true), 'refresh'),
     prepare: () => run(async () => { const c = await readingNative.capabilities();
       if (!c.authorized) await readingNative.authorize();
       else if (c.blockingMode !== 'all-apps') await readingNative.selectApps();
@@ -440,32 +539,46 @@ export function useReadingChallenge(challengeId: string) {
       const local = await readingNative.snapshot();
       if (!current()) return;
       if (local) throw new Error(sessionNoticeFor(local, account, dataRef.current?.session?.id)?.message ?? 'Сначала сохраните страницы предыдущего подхода');
+      if (startRecoveryRef.current) throw new Error('Подход уже начат на сервере с этого телефона. Нажмите «Продолжить запуск».');
       if (dataRef.current?.session) throw new Error('Сначала восстановите предыдущий сеанс и сохраните страницы');
+      if (await loadJSON<ReadingPendingStart | null>(pendingStartKey, null)) throw new Error('Предыдущий запуск ещё ждёт ответа сервера. Повторите через минуту.');
       const c = await readingNative.capabilities();
       if (!c.available || !c.authorized || c.blockingMode !== 'all-apps' && !c.selectedCount) throw new Error('Сначала подключите блокировку приложений');
       const deviceId = await loadJSON<string>('dvg.readingDevice.v1', '') || Crypto.randomUUID();
       await saveJSON('dvg.readingDevice.v1', deviceId, { strict: true });
+      if (startsInFlight.has(pendingStartKey)) throw new Error('Запуск уже выполняется на другом экране.');
       const sessionId = Crypto.randomUUID();
-      await queue.enqueue({ action: 'start', operationId: await readingOperationId(sessionId, 'start'), challengeId, sessionId, deviceId, book, ...metadata });
-      await queue.flush();
-      const d = await refresh();
-      if (!current() || d?.session?.id !== sessionId) throw new Error('Сервер не подтвердил начало');
+      const pending: ReadingPendingStart = { accountId: account, challengeId, sessionId, deviceId,
+        operationId: await readingOperationId(sessionId, 'start'), book, createdAt: Date.now() };
+      // Remember the attempt BEFORE the request: a lost response is finished later with
+      // this same session instead of a second reservation.
+      startsInFlight.add(pendingStartKey);
+      let d: ReadingDetail | null;
       try {
-        await saveJSON(cacheKey, d, { strict: true });
-        const targetMs = 3_600_000 - (d.me?.history.find(h => h.day === d.currentDay)?.elapsedMs ?? 0);
-        // Conservative deadline: network/cache latency must never move the stop past midnight.
-        const untilMidnight = Math.floor(d.dayEnd - d.serverNow - (performance.now() - requestStartedAt.current));
-        if (untilMidnight <= 0) throw new Error('День завершился. Обновите экран перед новым подходом.');
-        if (!current()) return;
-        const local = await readingNative.start(account, sessionId, deviceId, book, Math.min(d.session.budgetMs, untilMidnight), targetMs);
-        if (current()) { setNativeSession(local); observeLocalSession(local); setRemaining(targetMs); void reconcileLiveActivity(local); }
-      } catch (e) {
-        // Zero-credit closure if native authorization/storage failed after the server reserved the session.
-        await queue.enqueue({ action: 'stop', operationId: await readingOperationId(sessionId, 'stop'), challengeId, sessionId, deviceId, elapsedMs: 0, integrity: 'ok' });
-        await queue.enqueue({ action: 'report', operationId: await readingOperationId(sessionId, 'report'), challengeId, sessionId, pages: 0 });
-        await synchronize();
-        throw e;
-      }
+        await saveJSON(pendingStartKey, pending, { strict: true });
+        await queue.enqueue({ action: 'start', operationId: pending.operationId, challengeId, sessionId, deviceId, book, ...metadata });
+        await queue.flush();
+        d = await refresh();
+      } finally { startsInFlight.delete(pendingStartKey); }
+      if (!current() || !d) return;
+      if (d.session?.id !== sessionId) throw new Error('Сервер не подтвердил начало');
+      await launchNative(pending, d);
+    }),
+    /** Finishes a start whose server reservation is confirmed but whose response was lost.
+     * Only by explicit user action, only on the phone that reserved it, same session id. */
+    continueStart: () => run(async () => {
+      await synchronize();
+      if (!current()) return;
+      const pending = startRecoveryRef.current, d = dataRef.current;
+      if (!pending || !d) throw new Error('Начатого подхода для продолжения нет. Обновите экран.');
+      const local = await readingNative.snapshot();
+      if (!current()) return;
+      if (local) throw new Error(sessionNoticeFor(local, account, d.session?.id)?.message ?? 'На телефоне уже есть подход. Сначала сохраните его страницы.');
+      const deviceId = await loadJSON<string>('dvg.readingDevice.v1', '');
+      if (deviceId !== pending.deviceId) throw new Error('Этот сеанс начат на другом устройстве. Откройте Divergents на нём.');
+      const c = await readingNative.capabilities();
+      if (!c.available || !c.authorized || c.blockingMode !== 'all-apps' && !c.selectedCount) throw new Error('Сначала подключите блокировку приложений');
+      await launchNative(pending, d);
     }),
     // Pausing never waits on network or a busy API operation.
     pause: () => pauseLocal(false),

@@ -90,3 +90,51 @@ test('rejected start can be retried, but a timing conflict never discards eviden
   await h.box.enqueue(stop);
   await expect(h.box.flush()).rejects.toThrow(); expect(h.disk()?.commands).toEqual([stop]);
 });
+
+describe('network outside the journal lock', () => {
+  function slowHarness() {
+    const h = harness();
+    let release!: () => void;
+    h.io.send.mockImplementationOnce(() => new Promise(resolve => { release = () => resolve({ ok: true as const }); }));
+    return { ...h, release: () => release() };
+  }
+  test('a slow upload never delays saving another account evidence', async () => {
+    const h = slowHarness(), other = new ReadingOutbox('other', h.io);
+    await h.box.enqueue(stop);
+    const flushing = h.box.flush();
+    await new Promise(r => setTimeout(r, 0));
+    expect(h.io.send).toHaveBeenCalledTimes(1);
+    await other.enqueue(report);
+    const saved = h.disk(), parts = saved ? [saved, ...(saved.otherAccounts ?? [])] : [];
+    expect(parts.find(part => part.accountId === 'other')?.commands).toEqual([report]);
+    expect(parts.find(part => part.accountId === 'reader')?.commands).toEqual([stop]);
+    h.release(); await flushing;
+    expect(h.disk()).toEqual({ accountId: 'reader', commands: [], otherAccounts: [{ accountId: 'other', commands: [report] }] });
+  });
+  test('a command saved during an in-flight send is kept and sent after it, in order', async () => {
+    const h = slowHarness();
+    await h.box.enqueue(stop);
+    const flushing = h.box.flush();
+    await new Promise(r => setTimeout(r, 0));
+    await h.box.enqueue(report);
+    expect(h.disk()?.commands).toEqual([stop, report]);
+    h.release(); await flushing;
+    expect(h.io.send.mock.calls.map(c => c[0])).toEqual([stop, report]);
+    expect(h.disk()?.commands).toEqual([]);
+  });
+  test('parallel flushes from two screens send each command exactly once', async () => {
+    const h = slowHarness(), second = new ReadingOutbox('reader', h.io);
+    await h.box.enqueue(stop); await h.box.enqueue(report);
+    const a = h.box.flush(), b = second.flush();
+    await new Promise(r => setTimeout(r, 0));
+    h.release(); await Promise.all([a, b]);
+    expect(h.io.send.mock.calls.map(c => c[0])).toEqual([stop, report]);
+  });
+  test('a failed send keeps the command and the following one for an exact retry', async () => {
+    const h = harness();
+    await h.box.enqueue(stop); await h.box.enqueue(report);
+    h.io.send.mockRejectedValueOnce(new Error('offline'));
+    await expect(h.box.flush()).rejects.toThrow('offline');
+    expect(h.disk()?.commands).toEqual([stop, report]);
+  });
+});

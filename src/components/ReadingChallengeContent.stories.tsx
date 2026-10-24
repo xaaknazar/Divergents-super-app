@@ -49,6 +49,11 @@ export const FirstDayRanked: Story = { args: { data: { ...individualReadingFixtu
 export const Permission: Story = { args: { protection: 'permission' } };
 export const Unsupported: Story = { args: { protection: 'unavailable' } };
 export const Recovery: Story = { args: { needsRecovery: true, timerState: 'paused' } };
+/** Ответ на «Старт» потерялся, сервер подход уже принял: продолжить тем же подходом или отменить без времени. */
+export const StartRecovery: Story = { args: { startRecovery: true, onContinueStart: noop, timerState: 'paused',
+  data: { ...individualReadingFixture, session: { ...session, elapsedMs: null } } } };
+export const StartRecoveryDark: Story = { ...StartRecovery, parameters: { scheme: 'dark' } };
+export const StartRecoveryLargeText: Story = { ...StartRecovery, parameters: { viewport: 'compact', textSize: 'xl' } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
 export const MultipleBooksToday: Story = { args: { timerState: 'complete', remainingMs: 0,
