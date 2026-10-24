@@ -137,4 +137,57 @@ describe('network outside the journal lock', () => {
     await expect(h.box.flush()).rejects.toThrow('offline');
     expect(h.disk()?.commands).toEqual([stop, report]);
   });
+test('a stalled upload never blocks durable pages and its receipt preserves concurrently appended commands', async () => {
+  const h = harness(); await h.box.enqueue(stop);
+  let release!: () => void, started!: () => void;
+  const sending = new Promise<void>(resolve => { started = resolve; });
+  h.io.send.mockImplementationOnce(async () => { started(); await new Promise<void>(resolve => { release = resolve; }); return { ok: true }; });
+  const flushing = h.box.flush(); await sending;
+  let persisted = false;
+  const saving = h.box.enqueue(report).then(() => { persisted = true; });
+  // Drain local microtasks only: the server deliberately has not answered.
+  for (let i = 0; i < 30; i++) await Promise.resolve();
+  const savedBeforeResponse = persisted, durableBeforeResponse = h.disk()?.commands;
+  release(); await Promise.all([saving, flushing]);
+  // Also drain if the old implementation did not see the append until after its flush.
+  await h.box.flush();
+  expect(savedBeforeResponse).toBe(true);
+  expect(durableBeforeResponse).toEqual([stop, report]);
+  expect(h.io.send.mock.calls.map(call => call[0])).toEqual([stop, report]);
+  expect(h.disk()?.commands).toEqual([]);
+});
+
+test('parallel flushes of the same account send each operation once in order', async () => {
+  const h = harness(); await h.box.enqueue(stop); await h.box.enqueue(report);
+  await Promise.all([h.box.flush(), new ReadingOutbox('reader', h.io).flush()]);
+  expect(h.io.send.mock.calls.map(call => call[0])).toEqual([stop, report]);
+});
+
+test('stop and report batch is all-or-nothing on storage failure or a conflicting immutable report', async () => {
+  const h = harness();
+  h.io.write.mockRejectedValueOnce(new Error('disk full'));
+  await expect(h.box.enqueueMany([stop, report])).rejects.toThrow('disk full');
+  expect(h.disk()).toBeNull();
+  await h.box.enqueue(report);
+  await expect(h.box.enqueueMany([stop, { ...report, pages: 202 }])).rejects.toThrow('Конфликт');
+  expect(h.disk()?.commands).toEqual([report]);
+});
+
+test('switching accounts during an upload preserves new-account pages and old-account evidence', async () => {
+  const h = harness(); await h.box.enqueue(stop);
+  let release!: () => void, started!: () => void;
+  const sending = new Promise<void>(resolve => { started = resolve; });
+  h.io.send.mockImplementationOnce(async () => { started(); await new Promise<void>(resolve => { release = resolve; }); return { ok: true }; });
+  const previousUpload = h.box.flush();
+  const failed = expect(previousUpload).rejects.toThrow('Аккаунт изменился');
+  await sending;
+  h.io.isCurrentAccount.mockReturnValue(false);
+  const secondSend = jest.fn(async () => ({ ok: true as const }));
+  const second = new ReadingOutbox('second-reader', { ...h.io, isCurrentAccount: () => true, send: secondSend });
+  await second.enqueue(report); await second.flush();
+  expect(secondSend.mock.calls).toHaveLength(1);
+  expect(h.disk()?.otherAccounts).toEqual([{ accountId: 'reader', commands: [stop] }]);
+  release(); await failed;
+  expect(h.disk()?.otherAccounts).toEqual([{ accountId: 'reader', commands: [stop] }]);
+});
 });

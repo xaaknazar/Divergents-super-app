@@ -43,7 +43,7 @@ export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenP
     {reading.data ? <ReadingChallengeContent data={reading.data} remainingMs={reading.remainingMs} timerState={reading.timerState}
       protection={reading.protection} blockingMode={reading.blockingMode} busy={reading.actionBusy} error={reading.error} awaitingPages={reading.awaitingPages}
       resumableSession={reading.resumableSession} canResume={reading.canResume} onResume={reading.resume}
-      sessionElapsedMs={reading.sessionElapsedMs}
+      sessionElapsedMs={reading.sessionElapsedMs} localBusy={reading.localBusy}
       sessionNotice={reading.sessionNotice} startBlocked={reading.startBlocked}
       needsRecovery={reading.needsRecovery} onRecover={reading.recover}
       startRecovery={reading.startRecovery} onContinueStart={reading.continueStart} book={book} library={{ ...library, select: book.selectSaved }}

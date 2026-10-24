@@ -11,6 +11,6 @@ Pod::Spec.new do |s|
   s.swift_version = '5.9'
   s.static_framework = true
   s.dependency 'ExpoModulesCore'
-  s.source_files = '*.swift'
+  s.source_files = '*.{swift,h}'
   s.resource_bundles = { 'ReadingFocusPrivacy' => ['PrivacyInfo.xcprivacy'] }
 end

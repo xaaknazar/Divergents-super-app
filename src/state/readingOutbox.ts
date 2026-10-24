@@ -17,16 +17,12 @@ export type ReadingOutboxDependencies = {
   send(command: ReadingCommand): Promise<ReadingReceipt>;
   isCurrentAccount(): boolean;
 };
-// Screens for parallel challenges share one disk journal. Serialize only the short
-// read-modify-write of that journal, including across account switches, so one
-// screen cannot overwrite another's pending report. Never hold it across a network
-// request: a slow upload must not delay saving new local evidence.
+// Only disk read-modify-write belongs under this lock. Network waits must never
+// prevent another screen from durably saving time/pages before the app exits.
 let journalTail: Promise<unknown> = Promise.resolve();
-// One sender per account: commands go out strictly in order (stop before report),
-// and two screens never send the same head command concurrently.
-const senders = new Map<string, Promise<unknown>>();
-const REJECTABLE = ['apply', 'review', 'resolve', 'start'];
+const uploadTails = new Map<string, Promise<unknown>>();
 
+/** Serialized durable queue. Never delete on transport failure, never cross account boundaries. */
 export class ReadingOutbox {
   constructor(private accountId: string, private deps: ReadingOutboxDependencies) {}
   private serialize<T>(action: () => Promise<T>): Promise<T> {
@@ -44,56 +40,63 @@ export class ReadingOutbox {
     return { accountId: this.accountId, commands: own?.commands ?? [], ...(otherAccounts.length ? { otherAccounts } : {}) };
   }
   enqueue(command: ReadingCommand) {
+    return this.enqueueMany([command]);
+  }
+  /** Persist a close and its pages atomically; either all commands exist or none do. */
+  enqueueMany(commands: ReadingCommand[]) {
     return this.serialize(async () => {
+      const q = await this.queue();
+      const next = [...q.commands];
+      for (const command of commands) {
+        const existing = next.find(c => c.operationId === command.operationId);
+        if (existing && JSON.stringify(existing) !== JSON.stringify(command)) throw new Error('Конфликт сохранённого действия');
+        if (!existing) next.push(command);
+      }
+      if (next.length !== q.commands.length) {
+        if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
+        await this.deps.write({ ...q, commands: next });
+      }
+    });
+  }
+  private acknowledge(command: ReadingCommand) {
+    return this.serialize(async () => {
+      // Re-read after the response: pages or another account's operations may
+      // have been saved while the request was in flight. Never overwrite them.
       const q = await this.queue();
       const existing = q.commands.find(c => c.operationId === command.operationId);
-      if (existing && JSON.stringify(existing) !== JSON.stringify(command)) throw new Error('Конфликт сохранённого действия');
-      if (!existing) {
-        if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
-        await this.deps.write({ ...q, commands: [...q.commands, command] });
-      }
+      if (!existing || JSON.stringify(existing) !== JSON.stringify(command)) throw new Error('Конфликт сохранённого действия');
+      await this.deps.write({ ...q, commands: q.commands.filter(c => c.operationId !== command.operationId) });
     });
   }
-  /** Sends queued commands of this account in order. Network waits happen outside the
-   * journal lock; a command leaves the journal only after its own receipt. */
   flush() {
-    const previous = senders.get(this.accountId) ?? Promise.resolve();
-    const run = previous.catch(() => {}).then(() => this.drain());
-    const tail = run.catch(() => {});
-    senders.set(this.accountId, tail);
-    void tail.then(() => { if (senders.get(this.accountId) === tail) senders.delete(this.accountId); });
-    return run;
-  }
-  private async drain() {
-    const receipts: { command: ReadingCommand; receipt: ReadingReceipt }[] = [];
-    for (;;) {
-      const command = await this.serialize(async () => (await this.queue()).commands[0]);
-      if (!command) return receipts;
-      if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
-      let receipt: ReadingReceipt;
-      try { receipt = await this.deps.send(command); }
-      catch (error) {
-        // A definitive rejected application/start can be edited/retried. Timing evidence stays durable.
-        if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && REJECTABLE.includes(command.action)
-          && this.deps.isCurrentAccount()) {
-          await this.remove(command.operationId);
+    // Preserve command order across screens, but do not block a new account or
+    // any disk writes on the previous account's transport.
+    const result = (uploadTails.get(this.accountId) ?? Promise.resolve()).catch(() => {}).then(async () => {
+      const receipts: { command: ReadingCommand; receipt: ReadingReceipt }[] = [];
+      while (true) {
+        const q = await this.pending();
+        if (!q.commands.length) break;
+        if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
+        const command = q.commands[0];
+        let receipt: ReadingReceipt;
+        try { receipt = await this.deps.send(command); }
+        catch (error) {
+          // A definitive rejected application can be edited/retried. Timing evidence stays durable.
+          if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && ['apply', 'review', 'resolve', 'start'].includes(command.action)) {
+            if (this.deps.isCurrentAccount()) await this.acknowledge(command);
+          }
+          throw error;
         }
-        throw error;
+        if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
+        await this.acknowledge(command);
+        receipts.push({ command, receipt });
       }
-      if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
-      await this.remove(command.operationId);
-      receipts.push({ command, receipt });
-    }
-  }
-  /** Removes exactly the acknowledged operation; commands enqueued meanwhile stay. */
-  private remove(operationId: string) {
-    return this.serialize(async () => {
-      const q = await this.queue();
-      const index = q.commands.findIndex(c => c.operationId === operationId);
-      if (index < 0) return;
-      if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
-      await this.deps.write({ ...q, commands: q.commands.filter((_, i) => i !== index) });
+      return receipts;
     });
+    uploadTails.set(this.accountId, result);
+    const cleanup = () => { if (uploadTails.get(this.accountId) === result) uploadTails.delete(this.accountId); };
+    void result.then(cleanup, cleanup);
+    return result;
   }
   pending() { return this.serialize(() => this.queue()); }
 }

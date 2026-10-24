@@ -37,7 +37,10 @@ export const PausedBeforeGoal: Story = { args: { timerState: 'paused', resumable
   data: { ...individualReadingFixture, session } } };
 export const PausedPages: Story = { args: { timerState: 'paused', remainingMs: 0, resumableSession: true, canResume: true, onResume: noop,
   data: { ...individualReadingFixture, session: { ...session, elapsedMs: 3_600_000 } } } };
-export const Saving: Story = { args: { timerState: 'paused', awaitingPages: true, busy: true, data: { ...individualReadingFixture, session: { ...session, status: 'awaiting_pages' as const } } } };
+export const Saving: Story = { args: { timerState: 'paused', awaitingPages: true, busy: true, localBusy: true, data: { ...individualReadingFixture, session: { ...session, status: 'awaiting_pages' as const } } } };
+/** A stalled refresh must not disable local resume or prevent typing/saving pages. */
+export const SyncingPaused: Story = { ...PausedBeforeGoal, args: { ...PausedBeforeGoal.args, busy: true, localBusy: false } };
+export const SyncingPages: Story = { ...Saving, args: { ...Saving.args, localBusy: false } };
 /** После первого подхода: «Новый подход» и статус сохранения. */
 export const ResumeAfterApproach: Story = {};
 export const RequiredPagesDark: Story = { args: { timerState: 'paused', remainingMs: 0, awaitingPages: true,
@@ -54,6 +57,8 @@ export const StartRecovery: Story = { args: { startRecovery: true, onContinueSta
   data: { ...individualReadingFixture, session: { ...session, elapsedMs: null } } } };
 export const StartRecoveryDark: Story = { ...StartRecovery, parameters: { scheme: 'dark' } };
 export const StartRecoveryLargeText: Story = { ...StartRecovery, parameters: { viewport: 'compact', textSize: 'xl' } };
+export const OtherDevice: Story = { args: { data: { ...individualReadingFixture, session }, startBlocked: true,
+  sessionNotice: { kind: 'other-device', message: 'Чтение идёт на другом устройстве. Продолжите или завершите подход на том iPhone или iPad, где запустили таймер, и сохраните страницы. После этого результат появится здесь. Таймер не сброшен.' } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
 export const MultipleBooksToday: Story = { args: { timerState: 'complete', remainingMs: 0,
