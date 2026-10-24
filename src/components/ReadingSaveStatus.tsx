@@ -6,8 +6,10 @@ import { SF } from './SFIcon';
 
 /** Статус сохранения подхода без ложного успеха. saved — только после ответа сервера;
  * pending — записано на телефоне; retry — сервер не ответил. */
-export function ReadingSaveStatus({ state, detail, onRetry }: {
+export function ReadingSaveStatus({ state, detail, onRetry, variant = 'card' }: {
   state: 'saved' | 'pending' | 'retry';
+  /** inline — одна тихая строка под главной кнопкой (когда всё уже подтверждено). */
+  variant?: 'card' | 'inline';
   /** Вторая строка вместо стандартной (например, «24 мин · 15 страниц · подтверждено в 12:41»). */
   detail?: string;
   onRetry?: () => void;
@@ -18,6 +20,10 @@ export function ReadingSaveStatus({ state, detail, onRetry }: {
     pending: { title: 'Записано на телефоне', text: 'Ещё не в статистике — отправим автоматически', icon: 'clock.fill', ink: T.labelSecondary, bg: T.brandTinted },
     retry: { title: 'Сервер не ответил', text: 'Подход не потерян. Можно повторить безопасно', icon: 'exclamationmark.bubble', ink: T.orangeText, bg: 'rgba(255,149,0,0.14)' },
   }[state];
+  if (variant === 'inline') return <View accessibilityLiveRegion="polite" accessible accessibilityLabel={`${S.title}. ${detail ?? S.text}`} style={styles.inline}>
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name={S.icon} size={16} color={S.ink} /></View>
+    <Text style={[ty.footnoteEm, styles.inlineText, { color: S.ink }]}>{S.title}<Text style={[ty.footnote, { color: T.labelSecondary }]}> · {detail ?? S.text}</Text></Text>
+  </View>;
   return <View accessibilityLiveRegion="polite" style={[styles.box, { backgroundColor: S.bg }]}>
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name={S.icon} size={20} color={S.ink} /></View>
     <View style={styles.copy}>
@@ -33,5 +39,7 @@ export function ReadingSaveStatus({ state, detail, onRetry }: {
 const styles = StyleSheet.create({
   box: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.xl, borderCurve: 'continuous' },
   copy: { flex: 1, minWidth: 0, gap: 2 },
+  inline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 8 },
+  inlineText: { flexShrink: 1, textAlign: 'center' },
   action: { minHeight: 48, minWidth: 48, justifyContent: 'center', paddingLeft: 4 },
 });

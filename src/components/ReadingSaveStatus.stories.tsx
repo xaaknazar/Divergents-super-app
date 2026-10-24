@@ -8,3 +8,7 @@ export const Pending: Story = { args: { state: 'pending' } };
 export const Retry: Story = { args: { state: 'retry', onRetry: () => {} } };
 export const Dark: Story = { args: { state: 'retry', onRetry: () => {} }, parameters: { scheme: 'dark' } };
 export const LargeText: Story = { args: { state: 'pending' }, parameters: { viewport: 'compact', textSize: 'xl' } };
+/** Тихая строка под главной кнопкой, когда подход уже подтверждён. */
+export const SavedInline: Story = { args: { variant: 'inline', detail: 'сегодня 18 мин · 12 стр.' } };
+export const SavedInlineDark: Story = { args: { variant: 'inline', detail: 'сегодня 18 мин · 12 стр.' }, parameters: { scheme: 'dark' } };
+export const SavedInlineLargeText: Story = { args: { variant: 'inline', detail: 'сегодня 18 мин · 12 стр.' }, parameters: { viewport: 'compact', textSize: 'xl' } };

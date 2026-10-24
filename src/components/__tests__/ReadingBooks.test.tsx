@@ -147,3 +147,39 @@ test('the detail parser preserves daily book data while accepting an old server 
   expect(ReadingDetailSchema.parse(props().data).todayBooks).toEqual([readingBookExample]);
   expect(ReadingDetailSchema.parse(individualReadingFixture).todayBooks).toBeUndefined();
 });
+
+describe('clean layout', () => {
+  const allowedApps = { count: 1, editable: true, busy: false, needsReselection: false, choose: jest.fn() };
+  test('with a shelf the current book appears once, inside «Что читаете»', async () => {
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...props()} /></ThemePreviewProvider>);
+    expect(v.getAllByRole('header', { name: 'Что читаете' })).toHaveLength(1);
+    expect(v.queryByLabelText(/^Что читаете:/)).toBeNull();
+    expect(v.getByRole('button', { name: new RegExp(`Читать «${readingBookExample.title}»`) }).props.accessibilityState.selected).toBe(true);
+  });
+  test('reader-app settings are offered before reading and hidden while an approach is open', async () => {
+    const p = { ...props(), allowedApps };
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    expect(v.getByRole('header', { name: 'Приложения для чтения' })).toBeTruthy();
+    await v.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} timerState="running" data={{ ...p.data,
+      session: { id: 's1', deviceId: 'phone', day: p.data.currentDay, book: readingBookExample.title, bookKey: readingBookExample.key,
+        status: 'running', startedAt: '2026-10-22T06:00:00Z', elapsedMs: null, budgetMs: 36000000 } }} /></ThemePreviewProvider>);
+    expect(v.queryByRole('header', { name: 'Приложения для чтения' })).toBeNull();
+  });
+  test('a confirmed save is one quiet line below the next-approach button', async () => {
+    const p = props();
+    p.data = { ...p.data, me: { ...p.data.me!, history: [{ day: p.data.currentDay, state: 'open', pages: 15, elapsedMs: 25 * 60000 }] } };
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    const next = v.getByRole('button', { name: 'Новый подход' });
+    const saved = v.getByLabelText('Подход сохранён. сегодня 25 мин · 15 стр.');
+    const order: unknown[] = [];
+    const walk = (node: any) => { order.push(node); node.children?.forEach((child: any) => typeof child === 'string' ? null : walk(child)); };
+    walk(v.container);
+    expect(order.indexOf(saved)).toBeGreaterThan(order.indexOf(next));
+    expect(order.indexOf(next)).toBeGreaterThan(-1);
+  });
+  test('an empty day hides the «books today» placeholder from the summary', async () => {
+    const p = props(); p.data = { ...p.data, todayBooks: [] };
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    expect(v.queryByRole('header', { name: 'Книги за сегодня' })).toBeNull();
+  });
+});

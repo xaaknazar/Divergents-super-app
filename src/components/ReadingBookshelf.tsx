@@ -17,7 +17,8 @@ export type ReadingShelfComposer = {
   reset: () => void; save: () => Promise<boolean>;
 };
 
-/** A permanent shelf, not a replacement editor. Adding a book never changes the selected approach book. */
+/** «Что читаете» — постоянная полка и выбор книги подхода в одном блоке.
+ * Выбранная книга подсвечена; добавление книги не меняет выбранный подход. */
 export function ReadingBookshelf({ library, composer, selectedKey, selectionLocked = false, disabled = false }: {
   library: ReadingBookLibrary; composer?: ReadingShelfComposer; selectedKey?: string; selectionLocked?: boolean; disabled?: boolean;
 }) {
@@ -36,14 +37,19 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
       setSaveError(error instanceof Error ? error.message : 'Не удалось добавить книгу. Повторите попытку.');
     } finally { submitting.current = false; }
   };
-  return <ContentBlock><Wrapper gap={12}>
-    <Text accessibilityRole="header" style={[ty.title3, { color: T.label }]}>Моя книжная полка</Text>
-    <Text style={[ty.footnote, { color: T.labelSecondary }]}>Добавляйте несколько книг и читайте их параллельно. Для одного подхода выберите одну книгу — страницы и время сохранятся именно ей.</Text>
+  return <ContentBlock size="compact"><Wrapper gap={10}>
+    <Wrapper gap={2}>
+      <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>Что читаете</Text>
+      <Text style={[ty.footnote, { color: T.labelSecondary }]}>{selectionLocked
+        ? 'Книга подхода закреплена. Другую можно выбрать после сохранения страниц.'
+        : 'Выберите книгу для подхода — время и страницы сохранятся ей.'}</Text>
+    </Wrapper>
     {library.error ? <InlineNotice message={library.error} onRetry={library.retry} /> : null}
-    {library.books.map(book => <ReadingBookSummaryRow key={book.key} book={book} selected={book.key === selectedKey}
-      disabled={selectionLocked || disabled || !!composer?.adding} onSelect={() => library.select(book)} />)}
+    <Wrapper gap={4}>
+      {library.books.map(book => <ReadingBookSummaryRow key={book.key} book={book} selected={book.key === selectedKey}
+        disabled={selectionLocked || disabled || !!composer?.adding} onSelect={() => library.select(book)} />)}
+    </Wrapper>
     {!library.books.length ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>{library.busy ? 'Загружаем вашу полку…' : 'Добавьте первую книгу. Она останется на полке, даже если вы начнёте другую.'}</Text> : null}
-    {selectionLocked ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>Книга текущего подхода закреплена. Выбрать другую можно после сохранения страниц.</Text> : null}
     {notice ? <Text accessibilityLiveRegion="polite" style={[ty.footnoteEm, { color: T.greenText }]}>{notice}</Text> : null}
     {composer && !composer.supported && !library.busy ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>Добавление книг на полку станет доступно после обновления сервера. Сохранённую историю можно читать сейчас.</Text> : null}
     {composer && editing && draft ? <Wrapper gap={12}>
@@ -56,7 +62,7 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
         disabled={disabled || !composer.supported || !draft.verified} />
       <Button label="Отмена добавления" variant="plain" disabled={disabled || composer.adding}
         onPress={() => { composer.reset(); setEditing(false); }} />
-    </Wrapper> : composer ? <Button label="Добавить книгу" icon="plus" variant="tinted" disabled={disabled || library.busy || !composer.supported}
+    </Wrapper> : composer ? <Button label="Добавить книгу" icon="plus" variant="plain" disabled={disabled || library.busy || !composer.supported}
       onPress={() => { composer.reset(); setNotice(''); setSaveError(undefined); setEditing(true); }} /> : null}
   </Wrapper></ContentBlock>;
 }

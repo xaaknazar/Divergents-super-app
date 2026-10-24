@@ -18,8 +18,10 @@ const clockOf = (ms: number) => {
 /** Таймер обязательного часа (handoff 2026-10-20 §6): кольцо 248 (трек 10), цифры 56 tabular-nums,
  * «таблетка» блокировки. Доп. время — оранжевая дуга поверх полного синего круга и «+12:34».
  * Действия собирает экран: таймер только показывает состояние. */
-export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = 'selected' }: {
+export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = 'selected', size = 'regular' }: {
   remainingMs: number; state: ReadingTimerState;
+  /** compact — когда главный шаг экрана другой (ввод страниц): кольцо 148, цифры 34. */
+  size?: 'regular' | 'compact';
   blockingMode?: 'selected' | 'all-apps';
   /** Минуты сверх часа за сегодня — для «и ещё … сверху» в состоянии done. */
   extraMs?: number;
@@ -28,8 +30,10 @@ export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = '
   const { width, fontScale } = useWindowDimensions();
   const [availableWidth, setAvailableWidth] = useState(width - 32);
   const largeText = fontScale * textScale > 1.15;
-  const dimension = Math.max(160, Math.min(248, availableWidth));
-  const radius = dimension / 2 - 12, circumference = 2 * Math.PI * radius;
+  const compact = size === 'compact';
+  const dimension = compact ? 148 : Math.max(160, Math.min(248, availableWidth));
+  const stroke = compact ? 7 : 10;
+  const radius = dimension / 2 - stroke - 2, circumference = 2 * Math.PI * radius;
   const visual = state === 'complete' ? 'done' : state === 'running' && remainingMs < 0 ? 'overtime' : state;
   const overtimeMs = visual === 'overtime' ? -remainingMs : 0;
   const stopped = visual === 'paused' || visual === 'recording' || visual === 'saving';
@@ -69,19 +73,19 @@ export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = '
   }, [target, progress, reduceMotion]);
   // Доп. время рисуется дугой по кругу часа: 15 минут сверху — четверть окружности.
   const extraArc = visual === 'overtime' ? Math.min(1, (overtimeMs % HOUR) / HOUR) * circumference : 0;
-  const digits = <Text style={[ty.largeTitle, nums, styles.digits, { color: stopped ? T.labelSecondary : T.label }, largeText ? null : { fontSize: 56, lineHeight: 60 }]}>{clock}</Text>;
-  return <View onLayout={event => setAvailableWidth(event.nativeEvent.layout.width)} style={styles.root}>
+  const digits = <Text style={[ty.largeTitle, nums, styles.digits, { color: stopped ? T.labelSecondary : T.label }, largeText ? null : compact ? { fontSize: 34, lineHeight: 38 } : { fontSize: 56, lineHeight: 60 }]}>{clock}</Text>;
+  return <View onLayout={event => setAvailableWidth(event.nativeEvent.layout.width)} style={[styles.root, compact && styles.compactRoot]}>
     <View accessible accessibilityRole="timer" accessibilityLabel={`${S.over}. ${clock.replace('+', 'плюс ')}. ${S.under}`}
       style={{ width: dimension, height: dimension, justifyContent: 'center', alignItems: 'center' }}>
       <Animated.View pointerEvents="none" accessible={false} style={{ position: 'absolute', width: dimension - 44, height: dimension - 44,
         borderRadius: dimension / 2, backgroundColor: visual === 'running' ? hexToRgba(T.brand, isDark ? 0.12 : 0.05) : 'transparent', transform: [{ scale: breath }] }} />
       <Svg width={dimension} height={dimension} style={StyleSheet.absoluteFill} accessible={false}>
-        <Circle cx={dimension / 2} cy={dimension / 2} r={radius} fill="none" stroke={isDark ? 'rgba(255,255,255,0.10)' : T.fillQuaternary} strokeWidth={10} />
-        {target > 0 ? <AnimatedCircle cx={dimension / 2} cy={dimension / 2} r={radius} fill="none" stroke={ringInk} strokeWidth={10}
+        <Circle cx={dimension / 2} cy={dimension / 2} r={radius} fill="none" stroke={isDark ? 'rgba(255,255,255,0.10)' : T.fillQuaternary} strokeWidth={stroke} />
+        {target > 0 ? <AnimatedCircle cx={dimension / 2} cy={dimension / 2} r={radius} fill="none" stroke={ringInk} strokeWidth={stroke}
           strokeLinecap="round" rotation={-90} origin={`${dimension / 2},${dimension / 2}`}
           strokeDasharray={`${circumference} ${circumference}`}
           strokeDashoffset={progress.interpolate({ inputRange: [0, 1], outputRange: [circumference, 0] })} /> : null}
-        {extraArc > 0 ? <Circle cx={dimension / 2} cy={dimension / 2} r={radius} fill="none" stroke={extraInk} strokeWidth={10}
+        {extraArc > 0 ? <Circle cx={dimension / 2} cy={dimension / 2} r={radius} fill="none" stroke={extraInk} strokeWidth={stroke}
           strokeLinecap="round" rotation={-90} origin={`${dimension / 2},${dimension / 2}`} strokeDasharray={`${extraArc} ${circumference}`} /> : null}
       </Svg>
       <View style={styles.center}>
@@ -99,6 +103,7 @@ export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = '
 }
 const styles = StyleSheet.create({
   root: { alignItems: 'center', gap: 18 },
+  compactRoot: { gap: 12 },
   center: { alignItems: 'center', gap: 4, paddingHorizontal: 24 },
   centerText: { textAlign: 'center' },
   digits: { textAlign: 'center', letterSpacing: -1 },

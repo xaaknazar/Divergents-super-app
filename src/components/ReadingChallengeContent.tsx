@@ -123,7 +123,8 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
         fromPage={d.session?.fromPage} nextPage={nextPage} />
     </Wrapper> : null}
     {reader && !p.sessionNotice ? <Wrapper gap={16}>
-      <ReadingTimer remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)} />
+      <ReadingTimer remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)}
+        size={recording ? 'compact' : 'regular'} />
       {running && !awaitingPages ? <>
         <ReadingTimerControls action="pause" onPress={p.onPause} />
         {p.remainingMs <= 0 ? <ReadingPagesNotice state="goal" onRecord={p.onPause} busy={p.busy} /> : null}
@@ -147,7 +148,6 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
           <ScreenDescription text="Можно продолжить эту книгу или сохранить подход и выбрать другую. Все подходы складываются в общие 60 минут за день." />
         </>
         : <>
-          {savedToday ? <ReadingSaveStatus state="saved" detail={`Сегодня: ${todayMinutes} мин · ${today?.pages ?? 0} стр. Подтверждено сервером.`} /> : null}
           {p.protection !== 'ready' ? <>
             <ScreenDescription text={p.blockingMode === 'all-apps'
               ? 'Разрешите Экранное время: во время чтения iOS ограничит приложения, кроме Divergents и выбранных вами исключений для чтения.'
@@ -156,21 +156,22 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
           </> : null}
           <ReadingTimerControls action={idleAction} onPress={start} loading={p.busy}
             disabled={p.startBlocked || approachOpen || p.protection !== 'ready' || !bookReady || !!p.allowedApps?.busy || !!p.composer?.adding} />
+          {savedToday ? <ReadingSaveStatus variant="inline" state="saved" detail={`сегодня ${todayMinutes} мин · ${today?.pages ?? 0} стр.`} /> : null}
           {!bookReady ? <ScreenDescription text={p.library ? 'Добавьте книгу на полку и выберите её для подхода.' : READING_REQUIRE_VERIFIED_BOOK ? 'Чтобы начать, выберите и подтвердите книгу.' : 'Чтобы начать, напишите название книги.'} /> : null}
         </>}
-      {d.session ? <ReadingBookField status="verified" locked title={d.session.book} author={d.session.author ?? ''}
+      {p.library ? null : d.session ? <ReadingBookField status="verified" locked title={d.session.book} author={d.session.author ?? ''}
         onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />
-        : !p.library || book.verified ? <ReadingBookField status={book.status} title={book.title} author={book.author} error={book.error} locked={p.busy || !!p.library}
+        : <ReadingBookField status={book.status} title={book.title} author={book.author} error={book.error} locked={p.busy || !!p.library}
           suggestions={book.suggestions} onPick={book.pick} onReject={book.reject} onManual={book.manual} manual={!!book.verified?.manual}
-          onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} /> : null}
+          onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />}
     </Wrapper> : null}
     {p.library ? <ReadingBookshelf key={`${d.id}:${member.userId}`} library={p.library} composer={p.composer}
       selectedKey={d.session?.bookKey ?? book.verified?.key} selectionLocked={approachOpen || !!p.sessionNotice || !reader}
       disabled={p.busy} /> : null}
-    {p.allowedApps && d.phase !== 'finished' ? <ReadingAllowedAppsCard value={{ ...p.allowedApps,
+    {p.allowedApps && d.phase !== 'finished' && !approachOpen ? <ReadingAllowedAppsCard value={{ ...p.allowedApps,
       editable: p.allowedApps.editable && !approachOpen && !p.busy && !p.sessionNotice }} /> : null}
     {d.phase !== 'upcoming' ? <ReadingProgressSummary member={member} todayMs={d.phase === 'active' ? todayMs : undefined}
-      books={d.phase === 'active' ? d.todayBooks : undefined} /> : null}
+      books={d.phase === 'active' && d.todayBooks?.length ? d.todayBooks : undefined} /> : null}
     <ReadingRankLink place={standing?.place ?? null} pagesPlace={pagesStanding?.place ?? null} participants={participants} onPress={p.onRanking} />
     {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
     <ReadingRules variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />

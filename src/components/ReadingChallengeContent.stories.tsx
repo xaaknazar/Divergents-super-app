@@ -65,3 +65,23 @@ export const MultipleBooksToday: Story = { args: { timerState: 'complete', remai
     { key: 'ol:OL1W', title: 'Атомные привычки', author: 'Джеймс Клир', coverId: null, pages: 15, elapsedMs: 25 * 60000, nextPage: null },
     { key: 'ol:OL2W', title: 'Пять уровней лидерства', author: 'Джон Максвелл', coverId: null, pages: 20, elapsedMs: 35 * 60000, nextPage: null },
   ] } } };
+
+/** Как в приложении с iOS 99: полка книг и разрешённые читалки. Книга выбирается в одном блоке «Что читаете». */
+const shelfBooks = [
+  { key: 'ol:OL1W', title: 'Атомные привычки', author: 'Джеймс Клир', coverId: null, pages: 96, elapsedMs: 5 * 3_600_000, nextPage: 97 },
+  { key: 'ol:OL2W', title: 'Пять уровней лидерства', author: 'Джон Максвелл', coverId: null, pages: 40, elapsedMs: 2 * 3_600_000, nextPage: 41 },
+];
+const shelfArgs = {
+  book: { ...book, verified: { ...book.verified!, key: 'ol:OL1W' } },
+  library: { busy: false, retry: noop, select: noop, books: shelfBooks },
+  composer: { draft: { ...book, title: '', author: '', status: 'empty' as const, verified: null }, supported: true, adding: false, reset: noop, save: async () => false },
+  allowedApps: { count: 1, editable: true, busy: false, needsReselection: false, choose: noop },
+};
+const shelfToday = { ...individualReadingFixture, todayBooks: [{ ...shelfBooks[0], pages: 12, elapsedMs: 18 * 60000 }],
+  me: { ...individualReadingFixture.me!, flagRecovery: { requiredDays: 5, progressDays: 3, daysRemaining: 2, earnedFlags: 1, forgivenFlags: 0 } } };
+export const ShelfSaved: Story = { args: { ...shelfArgs, data: shelfToday } };
+export const ShelfSavedDark: Story = { ...ShelfSaved, parameters: { scheme: 'dark' } };
+export const ShelfSavedLargeText: Story = { ...ShelfSaved, parameters: { viewport: 'compact', textSize: 'xl' } };
+export const ShelfRunning: Story = { args: { ...shelfArgs, timerState: 'running', data: { ...shelfToday, session: { ...session, bookKey: 'ol:OL1W' } } } };
+export const ShelfPages: Story = { args: { ...shelfArgs, timerState: 'paused', remainingMs: 0, awaitingPages: true,
+  data: { ...shelfToday, session: { ...session, bookKey: 'ol:OL1W', status: 'awaiting_pages' as const, elapsedMs: 3_600_000 } } } };

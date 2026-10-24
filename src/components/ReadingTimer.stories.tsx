@@ -22,3 +22,7 @@ export const Done: Story = { args: { state: 'done', remainingMs: 0, extraMs: 754
 export const DoneDark: Story = { args: { state: 'done', remainingMs: 0, extraMs: 754000 }, parameters: { scheme: 'dark' } };
 export const StrictRunning: Story = { args: { blockingMode: 'all-apps' } };
 export const StrictOvertime: Story = { args: { blockingMode: 'all-apps', remainingMs: -925000 }, parameters: { scheme: 'dark' } };
+/** Ввод страниц — главный шаг: таймер уменьшен, кольцо 148. */
+export const RecordingCompact: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' } };
+export const RecordingCompactDark: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' }, parameters: { scheme: 'dark' } };
+export const RecordingCompactLargeText: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' }, parameters: { viewport: 'compact', textSize: 'xl' } };
