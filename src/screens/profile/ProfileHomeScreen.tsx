@@ -1,8 +1,7 @@
 import { useAuth,useClerk,useUser } from '@clerk/clerk-expo';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Image } from 'expo-image';
-import React,{ useCallback,useEffect,useRef,useState } from 'react';
+import React,{ useEffect,useState } from 'react';
 import { Alert,Linking,Pressable,ScrollView,Text,View } from 'react-native';
 import { AchievementMedal } from '../../components/AchievementMedal';
 import { ActionBlock } from '../../components/ActionBlock';
@@ -20,8 +19,8 @@ import { Wrapper } from '../../components/Wrapper';
 import { HeaderIcon,NavBarLarge } from '../../components/headers';
 import { ListRow,ListSection } from '../../components/ui';
 import { useAchievements } from '../../data/achievements';
-import { imgUrl } from '../../data/api';
-import { fetchMyShelf,ShelfEntry } from '../../data/books';
+import { BookThumb } from '../../components/BookThumb';
+import { useMyBooks } from '../../state/useMyBooks';
 import { fetchCommunityHome,fetchMyChallengeHistory,SportActivity,Trip } from '../../data/community';
 import { applyGallupOrder,effectiveResumeCompleteness,fmtList,GALLUP_DOMAIN_META,gallupEnglishName,loadGallupOrder,mbtiName } from '../../data/talentslab';
 import { ProfileStackParams } from '../../navigation/types';
@@ -34,7 +33,6 @@ import { useFitness } from '../../state/FitnessContext';
 import { tr,useLang } from '../../state/LanguageContext';
 import { useModeration } from '../../state/ModerationContext';
 import { useNotifications } from '../../state/NotificationsContext';
-import { onShelfChanged } from '../../state/shelfBus';
 import { deleteAccountAndClear,signOutAndClear } from '../../state/signOut';
 import { useResume } from '../../state/useResume';
 import { useTalentProfile } from '../../state/useTalentProfile';
@@ -67,25 +65,13 @@ export function ProfileHomeScreen({ navigation }: Props) {
   // Порядок талантов пользователь настраивает в «Профиле талантов»; читаем его
   // при каждом возврате на экран, иначе здесь оставался серверный порядок.
   const [gallupOrder, setGallupOrder] = React.useState<string[]>([]);
-  const [shelf, setShelf] = useState<ShelfEntry[]>([]);
+  // «Мои книги»: библиотека и книги Reading-челленджей, обновляются по shelfBus сразу после отметок.
+  const myBooks = useMyBooks();
   const [communityActivities, setCommunityActivities] = useState<{ trips: Trip[]; sport: SportActivity[] }>({ trips: [], sport: [] });
   // Сколько всего челленджей у человека и есть ли награда 🏆. Плитка
   // «Челленджи» показывает число, а не текущий день: челлендж кончился, а
   // раздел остался — в нём история.
   const [challengeStats, setChallengeStats] = useState<{ count: number; award: boolean }>({ count: 0, award: false });
-  const getTokenRef = useRef(getToken);
-  getTokenRef.current = getToken;
-  const loadShelf = useCallback(async () => {
-    if (!isSignedIn) { setShelf([]); return; }
-    try { const tok = await getTokenRef.current(); setShelf(await fetchMyShelf(tok)); } catch {}
-  }, [isSignedIn]);
-  useEffect(() => { loadShelf(); }, [loadShelf]);
-  // Полку могли изменить на экране книги — обновляем «Мои книги» сразу, без
-  // перезапуска приложения (см. shelfBus). Ссылка на актуальный загрузчик,
-  // чтобы подписка оформлялась один раз.
-  const loadShelfRef = useRef(loadShelf);
-  loadShelfRef.current = loadShelf;
-  useEffect(() => onShelfChanged(() => { loadShelfRef.current(); }), []);
   // Re-read the anketa/profile whenever the screen comes back into focus, so
   // edits made in the form show up immediately (silent = no full-screen spinner).
   useFocusEffect(React.useCallback(() => {
@@ -119,8 +105,9 @@ export function ProfileHomeScreen({ navigation }: Props) {
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn]);
-  const reading = shelf.filter((s) => s.status === 'reading');
-  const readBooks = shelf.filter((s) => s.status === 'read');
+  const reading = myBooks.items.filter((s) => s.status === 'reading');
+  const readBooks = myBooks.items.filter((s) => s.status === 'read');
+  const openMyBooks = () => navigation.navigate('MyBooks');
   const openBook = (id: string) => navigation.getParent()?.navigate('LMSTab', { screen: 'BookDetail', params: { bookId: id }, initial: false } as never);
   const openLibrary = () => navigation.getParent()?.navigate('LMSTab', { screen: 'Books', initial: false } as never);
 
@@ -263,7 +250,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   );
 
   return (
-    <Screen largeTitle="Профиль" backdrop="profile" onRefresh={async () => { reloadCourses(); await Promise.all([reload(), loadCommunityActivities(), loadShelf()]); }}>
+    <Screen largeTitle="Профиль" backdrop="profile" onRefresh={async () => { reloadCourses(); await Promise.all([reload(), loadCommunityActivities(), myBooks.reload()]); }}>
       <PageIntro page="profile" />
       <NavBarLarge title={t('profile')} trailing={(
         <HeaderIcon name="bell.fill" badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />
@@ -335,16 +322,15 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* My books — reading now / read, with a link into the Library */}
       <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={tr('Мои книги')} >
         {reading.slice(0, 2).map((s) => (
-          <ListRow key={s.book.id} onPress={() => openBook(s.book.id)}
-            leading={s.book.imageUrl
-              ? <Image source={imgUrl(s.book.imageUrl, 100)} style={{ width: 34, height: 50, borderRadius: 6 }} contentFit="cover" cachePolicy="memory-disk" />
-              : <View style={{ width: 34, height: 50, borderRadius: 6, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={16} color={T.labelTertiary} /></View>}
-            title={s.book.title} subtitle={`${tr('Читаю')} · ${s.progress}%`} chevron />
+          <ListRow key={s.id} onPress={() => s.libraryBookId ? openBook(s.libraryBookId) : openMyBooks()}
+            leading={<BookThumb uri={s.cover} />} title={s.title} subtitle={s.detail} chevron />
         ))}
         {readBooks.length > 0 ? (
           <ListRow leading={<IconBadge icon="checkmark.circle.fill" tone="success" />}
-            title={tr('Прочитано')} detail={String(readBooks.length)} chevron onPress={openLibrary} />
+            title={tr('Прочитано')} detail={String(readBooks.length)} chevron onPress={openMyBooks} />
         ) : null}
+        {myBooks.items.length > 0 ? <ListRow leading={<IconBadge icon="books.vertical.fill" />}
+          title={tr('Все мои книги')} detail={String(myBooks.items.length)} chevron onPress={openMyBooks} /> : null}
         <ListRow leading={<IconBadge icon="book.fill" />}
           title={tr('Библиотека книг')} chevron onPress={openLibrary} />
       </ListSection></Wrapper>

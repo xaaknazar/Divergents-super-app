@@ -48,7 +48,9 @@ export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenP
       needsRecovery={reading.needsRecovery} onRecover={reading.recover}
       startRecovery={reading.startRecovery} onContinueStart={reading.continueStart}
       offline={reading.offline} pendingApproaches={reading.pendingApproaches} pendingToday={reading.pendingToday}
-      rejectedApproaches={reading.rejectedApproaches} onDismissRejected={reading.dismissRejected} book={book} library={{ ...library, select: book.selectSaved }}
+      rejectedApproaches={reading.rejectedApproaches} onDismissRejected={reading.dismissRejected} book={book} library={{ ...library, select: book.selectSaved,
+        // A book marked read leaves «Что читаете»; if it was chosen for the next approach, the choice is cleared.
+        setFinished: async (key, finished) => { const ok = await library.setFinished(key, finished); if (ok && finished && key === book.verified?.key) book.reset(); return ok; } }}
       allowedApps={allowedApps}
       composer={{ draft, supported: library.supportsBookshelf, adding: library.adding, error: library.addError,
         reset: () => { draft.reset(); library.clearAddError(); },

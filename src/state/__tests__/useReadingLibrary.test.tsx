@@ -8,7 +8,8 @@ let mockToken = jest.fn(async (): Promise<string | null> => 'token');
 jest.mock('@clerk/clerk-expo', () => ({ useAuth: () => ({ userId: mockUserId, getToken: mockToken }) }));
 jest.mock('../../data/readingBooks', () => ({ ...jest.requireActual('../../data/readingBooks'), fetchReadingHistory: jest.fn(), addReadingBook: jest.fn() }));
 jest.mock('expo-crypto', () => ({ CryptoDigestAlgorithm: { SHA256: 'sha256' },
-  digestStringAsync: async (_algorithm: string, text: string) => require('crypto').createHash('sha256').update(text).digest('hex') }));
+  digestStringAsync: async (_algorithm: string, text: string) => require('crypto').createHash('sha256').update(text).digest('hex'),
+  randomUUID: () => require('crypto').randomUUID() }));
 jest.mock('../../data/api', () => ({ API_BASE: 'https://example.test' }));
 let mockDisk: Record<string, any> = {};
 jest.mock('../persist', () => ({ loadJSON: jest.fn(async (key: string, fallback: unknown) => mockDisk[key] ?? fallback),
@@ -260,4 +261,27 @@ test('without internet the last confirmed shelf comes from the phone, read-only'
   const other = await renderHook(() => useReadingLibrary('ch1', 'other'));
   await waitFor(() => expect(other.result.current.busy).toBe(false));
   expect(other.result.current.books).toEqual([]);
+});
+
+test('«Прочитана» is sent once per tap as bookStatus, refreshes the shelf and the profile books', async () => {
+  const reading = require('../../data/reading');
+  const bus = require('../shelfBus');
+  const send = jest.spyOn(reading, 'sendReadingCommand').mockResolvedValue({ ok: true });
+  const listener = jest.fn(); const off = bus.onShelfChanged(listener);
+  fetchHistory.mockResolvedValue(shelf());
+  const h = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+  await waitFor(() => expect(h.result.current.books).toHaveLength(2));
+  let ok = false;
+  await act(async () => { ok = await h.result.current.setFinished('unread', true); });
+  expect(ok).toBe(true);
+  expect(send.mock.calls[0][1]).toMatchObject({ action: 'bookStatus', challengeId: 'ch1', bookKey: 'unread', finished: true });
+  expect(listener).toHaveBeenCalledTimes(1);
+  expect(fetchHistory).toHaveBeenCalledTimes(2);
+  // A lost reply is retried with the same operation (the server answers from its receipt).
+  send.mockRejectedValueOnce(new TypeError('Network request failed'));
+  await act(async () => { await h.result.current.setFinished('unread', false); });
+  expect(h.result.current.finishError).toBeTruthy();
+  await act(async () => { await h.result.current.setFinished('unread', false); });
+  expect((send.mock.calls[2][1] as any).operationId).toBe((send.mock.calls[1][1] as any).operationId);
+  off(); send.mockRestore();
 });

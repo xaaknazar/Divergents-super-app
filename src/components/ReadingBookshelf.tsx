@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Text } from 'react-native';
+import { Alert, Text } from 'react-native';
 import { ReadingBookSummary } from '../data/reading';
 import { useTheme } from '../theme/ThemeContext';
 import { Button } from './Button';
@@ -8,9 +8,12 @@ import { Wrapper } from './Wrapper';
 import { InlineNotice } from './InlineNotice';
 import { ReadingBookField, ReadingBookInput } from './ReadingBookField';
 import { ReadingBookSummaryRow } from './ReadingBookSummaryRow';
+import { ReadingFinishedBooks } from './ReadingFinishedBooks';
 
 export type ReadingBookLibrary = {
-  books: ReadingBookSummary[]; busy: boolean; error?: string; retry: () => void; select: (book: ReadingBookSummary) => void;
+  books: (ReadingBookSummary & { finished?: boolean; editable?: boolean })[]; busy: boolean; error?: string; retry: () => void; select: (book: ReadingBookSummary) => void;
+  /** «Прочитана» / «Вернуть в чтение»: общий статус книги во всех челленджах и в профиле «Мои книги». */
+  setFinished?: (key: string, finished: boolean) => Promise<boolean>; finishingKey?: string; finishError?: string;
 };
 export type ReadingShelfComposer = {
   draft: ReadingBookInput; supported: boolean; adding: boolean; error?: string;
@@ -27,6 +30,15 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
   const [saveError, setSaveError] = useState<string>();
   const submitting = useRef(false);
   const draft = composer?.draft;
+  const active = library.books.filter(book => !book.finished);
+  const finished = library.books.filter(book => book.finished);
+  const selected = active.find(book => book.key === selectedKey);
+  const canFinish = !!library.setFinished && !!selected && selected.editable !== false && !selectionLocked && !disabled;
+  const finish = (book: typeof active[number]) => Alert.alert('Книга прочитана?',
+    `«${book.title}» уйдёт из «Что читаете» и отметится прочитанной в «Моих книгах» профиля. Вернуть её можно в разделе «Прочитанные».`, [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Прочитана', onPress: () => { void library.setFinished?.(book.key, true); } },
+    ]);
   const add = async () => {
     if (!composer?.supported || !draft?.verified || submitting.current || composer.adding || disabled) return;
     submitting.current = true;
@@ -45,13 +57,20 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
         : 'Выберите книгу для подхода — время и страницы сохранятся ей.'}</Text>
     </Wrapper>
     {library.error ? <InlineNotice message={library.error} onRetry={library.retry} /> : null}
+    {library.finishError ? <InlineNotice message={library.finishError} /> : null}
     <Wrapper gap={4}>
-      {library.books.map(book => <ReadingBookSummaryRow key={book.key} book={book} selected={book.key === selectedKey}
+      {active.map(book => <ReadingBookSummaryRow key={book.key} book={book} selected={book.key === selectedKey}
         disabled={selectionLocked || disabled || !!composer?.adding} onSelect={() => library.select(book)} />)}
     </Wrapper>
-    {!library.books.length ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>{library.busy ? 'Загружаем вашу полку…' : 'Добавьте первую книгу. Она останется на полке, даже если вы начнёте другую.'}</Text> : null}
+    {!library.books.length ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>{library.busy ? 'Загружаем вашу полку…' : 'Добавьте первую книгу. Она останется на полке, даже если вы начнёте другую.'}</Text>
+      : !active.length ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>Все книги на полке прочитаны. Добавьте следующую — или верните книгу из «Прочитанных».</Text> : null}
+    {canFinish && selected ? <Button label="Дочитал(а) эту книгу" icon="checkmark.circle" variant="plain" size="compact"
+      loading={library.finishingKey === selected.key} disabled={!!library.finishingKey}
+      accessibilityHint={`Отметить «${selected.title}» прочитанной и убрать из «Что читаете»`} onPress={() => finish(selected)} /> : null}
     {notice ? <Text accessibilityLiveRegion="polite" style={[ty.footnoteEm, { color: T.greenText }]}>{notice}</Text> : null}
     {composer && !composer.supported && !library.busy ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>Добавление книг на полку станет доступно после обновления сервера. Сохранённую историю можно читать сейчас.</Text> : null}
+    <ReadingFinishedBooks books={finished} busyKey={library.finishingKey} disabled={disabled}
+      onReturn={library.setFinished ? key => { void library.setFinished?.(key, false); } : undefined} />
     {composer && editing && draft ? <Wrapper gap={12}>
       <ReadingBookField purpose="add" title={draft.title} author={draft.author} status={draft.status} error={draft.error}
         locked={disabled || composer.adding} manual={draft.verified?.manual} suggestions={draft.suggestions}

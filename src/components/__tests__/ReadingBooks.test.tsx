@@ -183,3 +183,23 @@ describe('clean layout', () => {
     expect(v.queryByRole('header', { name: 'Книги за сегодня' })).toBeNull();
   });
 });
+
+test('a finished book leaves «Что читаете»: it is marked after a confirmation and can be returned', async () => {
+  const { Alert } = require('react-native');
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation((...args: unknown[]) => (args[2] as any[] | undefined)?.find(b => b.text === 'Прочитана')?.onPress?.());
+  const setFinished = jest.fn(async () => true);
+  const lib = { ...library(), setFinished, books: [{ ...readingBookExample, editable: true }, { ...second, finished: true, editable: true }] };
+  const v = await render(<ThemePreviewProvider><ReadingBookshelf library={lib} selectedKey={readingBookExample.key} /></ThemePreviewProvider>);
+  // The finished book is not offered for the next approach.
+  expect(v.queryByRole('button', { name: /Читать «Пять уровней лидерства»/ })).toBeNull();
+  await fireEvent.press(v.getByRole('button', { name: 'Дочитал(а) эту книгу' }));
+  expect(alert.mock.calls[0][1]).toMatch(/Моих книгах/);
+  expect(setFinished).toHaveBeenCalledWith(readingBookExample.key, true);
+  await fireEvent.press(v.getByRole('button', { name: 'Прочитанные книги: 1' }));
+  await fireEvent.press(v.getByRole('button', { name: 'Вернуть' }));
+  expect(setFinished).toHaveBeenLastCalledWith(second.key, false);
+  // An approach in progress keeps its book: no «finished» action while selection is locked.
+  await v.rerender(<ThemePreviewProvider><ReadingBookshelf library={lib} selectedKey={readingBookExample.key} selectionLocked /></ThemePreviewProvider>);
+  expect(v.queryByRole('button', { name: 'Дочитал(а) эту книгу' })).toBeNull();
+  alert.mockRestore();
+});

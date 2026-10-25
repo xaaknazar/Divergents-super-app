@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Crypto from 'expo-crypto';
 import { loadJSON, saveJSON } from './persist';
+import { sendReadingCommand } from '../data/reading';
+import { emitShelfChanged } from './shelfBus';
 import { addReadingBook, fetchReadingHistory, readingBookAddSelection, ReadingBookAddReceipt,
   ReadingBookSelection, ReadingShelfBook } from '../data/readingBooks';
 
@@ -98,11 +100,37 @@ export function useReadingLibrary(challengeId: string, readerId?: string, receip
       if (adding.current?.operation === operation) adding.current = null;
     }
   }, [context, generation, isCurrent, userId, challengeId, readerId, load]);
+  // «Прочитана» / «Вернуть в чтение». Сервер ставит тот же статус этой книге во всех челленджах
+  // читателя и на полке библиотеки, поэтому после ответа обновляем и «Мои книги» в профиле.
+  const [finishing, setFinishing] = useState<{ generation: symbol; key: string; error?: string }>();
+  const finishOperation = useRef<{ key: string; finished: boolean; operationId: string } | null>(null);
+  const setFinished = useCallback(async (key: string, finished: boolean) => {
+    if (!isCurrent() || !userId || readerId !== userId || finishing?.generation === generation && finishing.key === key) return false;
+    const previous = finishOperation.current;
+    // A retry after a lost reply resends the same operation: the receipt answers instead of a second write.
+    const operation = previous?.key === key && previous.finished === finished ? previous : { key, finished, operationId: Crypto.randomUUID() };
+    finishOperation.current = operation;
+    setFinishing({ generation, key });
+    try {
+      const token = await auth.current.getToken();
+      if (!isCurrent()) return false;
+      await sendReadingCommand(token, { action: 'bookStatus', challengeId, bookKey: key, finished, operationId: operation.operationId });
+      finishOperation.current = null;
+      emitShelfChanged();
+      if (isCurrent()) { setFinishing(undefined); await load(); }
+      return true;
+    } catch (error) {
+      if (isCurrent()) setFinishing({ generation, key: '', error: libraryError(error, 'Сервер не подтвердил отметку. Повторите попытку.') });
+      return false;
+    }
+  }, [isCurrent, userId, readerId, generation, finishing, challengeId, load]);
   const clearAddError = useCallback(() => {
     if (!isCurrent()) return;
     setAddition(previous => previous?.generation === generation ? { ...previous, error: undefined } : previous);
   }, [generation, isCurrent]);
   return { ...(state?.context === context ? state : { books: [], busy: false, error: undefined, supportsBookshelf: false }),
     retry: load, add, adding: addition?.generation === generation && addition.adding,
-    addError: addition?.generation === generation ? addition.error : undefined, clearAddError };
+    addError: addition?.generation === generation ? addition.error : undefined, clearAddError,
+    setFinished, finishingKey: finishing?.generation === generation && finishing.key ? finishing.key : undefined,
+    finishError: finishing?.generation === generation ? finishing.error : undefined };
 }

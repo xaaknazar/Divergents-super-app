@@ -79,6 +79,8 @@ export type ProfileStackParams = {
   MyFitness: undefined;
   ProgramHistory: undefined;
   ProgramResult: { programId: string };
+  /** Библиотека и книги Reading-челленджей вместе: «Читаю», «Прочитано», «В планах». */
+  MyBooks: undefined;
   // Тренировки доступны и из профиля — те же экраны, что в сообществе.
   WorkoutTrack: { challengeId?: string } | undefined;
   WorkoutHistory: undefined;

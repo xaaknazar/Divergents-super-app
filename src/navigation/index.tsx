@@ -66,6 +66,7 @@ import { TalentProfileScreen } from '../screens/career/TalentProfileScreen';
 import { CreateVacancyScreen } from '../screens/career/CreateVacancyScreen';
 import { VacancyApplicantsScreen } from '../screens/career/VacancyApplicantsScreen';
 import { ProfileHomeScreen } from '../screens/profile/ProfileHomeScreen';
+import { MyBooksScreen } from '../screens/profile/MyBooksScreen';
 import { ChallengeHistoryScreen } from '../screens/profile/ChallengeHistoryScreen';
 import { AchievementsScreen } from '../screens/profile/AchievementsScreen';
 import { PersonalizeScreen } from '../screens/profile/PersonalizeScreen';
@@ -177,6 +178,7 @@ function ProfileNavigator() {
       <ProfileStack.Screen name="MyFitness" component={MyFitnessScreen} />
       <ProfileStack.Screen name="ProgramHistory" component={ProgramHistoryScreen} />
       <ProfileStack.Screen name="ProgramResult" component={ProgramResultScreen} />
+      <ProfileStack.Screen name="MyBooks" component={MyBooksScreen} />
       <ProfileStack.Screen name="WorkoutTrack" component={WorkoutTrackScreen as React.ComponentType<any>} />
       <ProfileStack.Screen name="WorkoutHistory" component={WorkoutHistoryScreen as React.ComponentType<any>} />
       <ProfileStack.Screen name="WorkoutDetail" component={WorkoutDetailScreen as React.ComponentType<any>} />

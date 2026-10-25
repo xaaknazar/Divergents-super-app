@@ -135,15 +135,34 @@ export async function setBookShelf(id: string, token: string | null, status: She
   return result;
 }
 
-export async function fetchMyShelf(token: string | null): Promise<ShelfEntry[]> {
+/** Книга из Reading-челленджей читателя: один статус «Прочитана» на все челленджи. */
+export interface MyReadingBook {
+  key: string; title: string; author: string; coverId: number | null; pages: number; elapsedMs: number;
+  lastReadAt: string | null; addedAt: string | null; finished: boolean; challengeIds: string[];
+  /** Та же книга в библиотеке Divergents (если найдена по названию и автору). */
+  catalogBookId: string | null;
+}
+
+/** Полка библиотеки и книги Reading-челленджей одним запросом. Старый сервер readingBooks не отдаёт. */
+export async function fetchMyBooks(token: string | null): Promise<{ shelf: ShelfEntry[]; readingBooks: MyReadingBook[] }> {
   const record = captureAchievementRecorder(token ?? null);
-  const d = await authedGet<{ shelf?: ShelfEntry[] }>('/api/mobile/me/books', token, {});
+  const d = await authedGet<{ shelf?: ShelfEntry[]; readingBooks?: MyReadingBook[] }>('/api/mobile/me/books', token, {});
   const shelf = Array.isArray(d?.shelf) ? d.shelf : [];
+  const readingBooks = Array.isArray(d?.readingBooks) ? d.readingBooks.filter(b => b && typeof b.key === 'string' && typeof b.title === 'string'
+    && Array.isArray(b.challengeIds) && b.challengeIds.length > 0) : [];
+  recordShelfAchievements(record, token, shelf);
+  return { shelf, readingBooks };
+}
+
+function recordShelfAchievements(record: ReturnType<typeof captureAchievementRecorder>, token: string | null, shelf: ShelfEntry[]) {
   if (token) record({ silent: true, source: 'books', facts: {
     booksStarted: shelf.filter(s => s.status === 'reading' || s.status === 'read').map(s => s.book.id),
     booksRead: shelf.filter(s => s.status === 'read').map(s => s.book.id),
   } });
-  return shelf;
+}
+
+export async function fetchMyShelf(token: string | null): Promise<ShelfEntry[]> {
+  return (await fetchMyBooks(token)).shelf;
 }
 
 /** PATCH /api/mobile/books/:id/comment/:commentId — edit your own comment/review. */
