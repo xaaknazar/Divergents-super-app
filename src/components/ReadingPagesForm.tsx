@@ -7,7 +7,7 @@ import { Button } from './Button';
 
 /** Страницы за остановленный подход (не за день): − / число / +, следующая страница и «Сохранить подход».
  * Ноль — допустимый результат: форма открывается с 0 и сохраняет его. Пустое поле не сохраняется. */
-export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sessionMinutes, fromPage, nextPage, bookTitle, invalid = false }: {
+export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sessionMinutes, fromPage, nextPage, bookTitle, invalid = false, dayLabel, submitLabel = 'Сохранить подход' }: {
   value: string; onChange: (value: string) => void; onSubmit: () => void; busy?: boolean;
   /** Длительность подхода в минутах, если известна. */
   sessionMinutes?: number;
@@ -17,13 +17,16 @@ export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sess
   nextPage?: number;
   bookTitle?: string;
   invalid?: boolean;
+  /** День подхода, когда он уже закончился (страницы засчитаются в тот день), например «24 октября». */
+  dayLabel?: string;
+  submitLabel?: string;
 }) {
   const { T, ty } = useTheme();
   const n = /^\d+$/.test(value) ? Number(value) : null;
   const step = (delta: number) => onChange(String(Math.max(0, Math.min(10000, (n ?? 0) + delta))));
   const context = [sessionMinutes !== undefined ? `Подход ${sessionMinutes} мин` : null, fromPage != null ? `начали со страницы ${fromPage}` : null].filter(Boolean).join(' · ');
   return <View style={[styles.card, { backgroundColor: T.cardBg, borderColor: T.cardBorder }]}>
-    <Text accessibilityRole="header" style={[ty.title3, styles.center, { color: T.label }]}>Страницы за этот подход</Text>
+    <Text accessibilityRole="header" style={[ty.title3, styles.center, { color: T.label }]}>{dayLabel ? `Страницы за ${dayLabel}` : 'Страницы за этот подход'}</Text>
     {bookTitle ? <Text style={[ty.headline, styles.center, { color: T.label }]}>{bookTitle}</Text> : null}
     {context ? <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>{context}</Text> : null}
     <View style={styles.stepper}>
@@ -36,8 +39,9 @@ export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sess
     </View>
     {nextPage !== undefined && n !== null ? <Text style={[ty.subheadEm, styles.center, { color: T.brandText }]}>В следующий раз начнём со страницы {nextPage}</Text> : null}
     <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>Укажите количество страниц, а не номер последней страницы. Не успели прочитать — можно сохранить 0.</Text>
-    <Button label="Сохранить подход" size="large" loading={busy} disabled={n === null || invalid} onPress={onSubmit}
-      accessibilityHint="Сохранить страницы этой книги. После подтверждения можно выбрать другую книгу и начать новый подход" />
+    <Button label={submitLabel} size="large" loading={busy} disabled={n === null || invalid} onPress={onSubmit}
+      accessibilityHint={dayLabel ? `Страницы засчитаются в ${dayLabel}. После сохранения можно начать чтение за сегодня`
+        : 'Сохранить страницы этой книги. После подтверждения можно выбрать другую книгу и начать новый подход'} />
   </View>;
 }
 

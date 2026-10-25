@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { READING_REQUIRE_VERIFIED_BOOK, ReadingDetail, readingStandings } from '../data/reading';
 import { ReadingBookMetadata } from '../data/readingBooks';
 import { readingDateLabel } from '../data/readingCreation';
+import { readingDayDate } from '../data/readingOffline';
 import { Button } from './Button';
 import { Wrapper } from './Wrapper';
 import { ScreenDescription } from './ScreenDescription';
@@ -114,6 +115,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const pagesInvalid = !/^\d+$/.test(pages) || Number(pages) > 10000 || (nextPage ?? 0) > 100000;
   const submitPages = () => (softPaused ? p.onSaveApproach : p.onReport)(Number(pages), nextPage);
   const sessionElapsedMs = p.sessionElapsedMs ?? d.session?.elapsedMs;
+  // The approach's day is over (midnight passed before pages were written): its pages still belong to
+  // that day, and saving them opens today's timer.
+  const pastDay = d.session && d.session.day < d.currentDay ? readingShortDate(readingDayDate(d.startDate, d.session.day)) : undefined;
   const timerVisual = awaitingPages && p.localBusy ? 'saving' as const : recording ? 'recording' as const : p.timerState;
   const todayMinutes = Math.floor(todayMs / 60000);
   // A legacy cached review payload is not a save receipt. It never blocks reading,
@@ -130,8 +134,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {d.phase === 'upcoming' ? <ScreenDescription text={`Челлендж начнётся ${readingDateLabel(d.startDate)}. В этот день здесь появится таймер.`} /> : null}
     {recording && !p.sessionNotice ? <Wrapper gap={12}>
       <ReadingPagesNotice state="required" />
-      {d.session && d.session.day !== d.currentDay ? <InlineNotice message="Это подход за прошлый день. Страницы запишутся в тот день, а не в сегодняшний." /> : null}
+      {pastDay ? <InlineNotice message={`Это подход за ${pastDay}: день закончился, но время подхода сохранено. Страницы засчитаются в ${pastDay}, а не в сегодняшний день.${reader ? ' После сохранения можно сразу начать чтение за сегодня.' : ''}`} /> : null}
       <ReadingPagesForm value={pages} onChange={setPages} busy={p.localBusy} invalid={pagesInvalid} onSubmit={submitPages}
+        dayLabel={pastDay} submitLabel={pastDay && reader ? 'Сохранить и читать сегодня' : 'Сохранить подход'}
         bookTitle={d.session?.book}
         sessionMinutes={sessionElapsedMs != null ? Math.floor(sessionElapsedMs / 60000) : undefined}
         fromPage={d.session?.fromPage} nextPage={nextPage} />
@@ -191,4 +196,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
     <ReadingRules variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />
   </Wrapper>;
+}
+
+/** «24 октября» без года: день подхода рядом с сегодняшним. */
+function readingShortDate(value: string) {
+  return readingDateLabel(value).replace(/\s?\d{4}\s?г\.?$/, '').trim();
 }

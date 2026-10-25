@@ -46,6 +46,11 @@ export const ResumeAfterApproach: Story = {};
 export const RequiredPagesDark: Story = { args: { timerState: 'paused', remainingMs: 0, awaitingPages: true,
   data: { ...individualReadingFixture, session: { ...session, status: 'awaiting_pages' as const, elapsedMs: 3_600_000 } } }, parameters: { scheme: 'dark' } };
 export const RequiredPagesLargeText: Story = { ...RequiredPagesDark, parameters: { viewport: 'compact', textSize: 'xl' } };
+/** Полночь наступила до записи страниц: страницы за вчерашний день, затем таймер на сегодня. */
+export const PreviousDayPages: Story = { args: { timerState: 'paused', remainingMs: 0, awaitingPages: true,
+  data: { ...individualReadingFixture, currentDay: 15, session: { ...session, day: 14, status: 'awaiting_pages' as const, elapsedMs: 3_600_000 } } } };
+export const PreviousDayPagesDark: Story = { ...PreviousDayPages, parameters: { scheme: 'dark' } };
+export const PreviousDayPagesLargeText: Story = { ...PreviousDayPages, parameters: { viewport: 'compact', textSize: 'xl' } };
 export const GoalDone: Story = { args: { timerState: 'complete', remainingMs: 0, data: { ...individualReadingFixture,
   me: { ...individualReadingFixture.me!, history: [{ day: 14, state: 'complete', pages: 40, elapsedMs: 72 * 60000 }] } } } };
 export const FirstDayRanked: Story = { args: { data: { ...individualReadingFixture, me: { ...individualReadingFixture.ranking[3], userId: 'demo-reader' }, ranking: individualReadingFixture.ranking.map(m => m.userId === 'r4' ? { ...m, userId: 'demo-reader' } : m.userId === 'demo-reader' ? { ...m, userId: 'other' } : m) } } };

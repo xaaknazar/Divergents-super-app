@@ -14,6 +14,11 @@ export function readingDayEnd(startDate: string, day: number) {
   return readingStartMs(startDate) + day * READING_DAY_MS;
 }
 
+/** Calendar date (YYYY-MM-DD, Asia/Almaty) of a challenge day. */
+export function readingDayDate(startDate: string, day: number) {
+  return new Date(Date.parse(`${startDate}T00:00:00Z`) + (day - 1) * READING_DAY_MS).toISOString().slice(0, 10);
+}
+
 /** Server time this phone last received, with the monotonic clock reading taken right after it. */
 export type ReadingClockAnchor = { serverNow: number; uptimeMs: number; bootId: string;
   /** The server-signed answer for this app's own request (absent on servers without clock tokens). */

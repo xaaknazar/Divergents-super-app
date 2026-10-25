@@ -156,7 +156,10 @@ test('previous-day pages remain actionable after a challenge finishes', async ()
   p.data = { ...p.data, phase: 'finished', currentDay: 15, session: { ...session, status: 'awaiting_pages' } };
   const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
   expect(view.getByText('Осталось записать страницы')).toBeTruthy();
-  expect(view.getByText(/Это подход за прошлый день/)).toBeTruthy();
+  expect(view.getByText(/Это подход за \d+ \S+: день закончился/)).toBeTruthy();
+  // The challenge is over: no promise of a timer for today.
+  expect(view.queryByText(/начать чтение за сегодня/)).toBeNull();
+  expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeTruthy();
   expect(view.getByLabelText('Страниц за этот подход')).toBeTruthy();
   expect(view.queryByRole('timer')).toBeNull();
 });
@@ -192,4 +195,16 @@ test('offline: a calm status instead of an error, saved approaches marked as on 
   expect(p.onDismissRejected).toHaveBeenCalledTimes(1);
   // Starting stays possible offline.
   expect(view.getByRole('button', { name: 'Новый подход' })).toBeEnabled();
+});
+
+test('pages left from a day that has ended: saved into that day, then today\'s timer', async () => {
+  const p = props(); p.timerState = 'paused'; p.awaitingPages = true; p.remainingMs = 0;
+  p.data = { ...p.data, currentDay: p.data.currentDay + 1, session: { ...session, day: p.data.currentDay, status: 'awaiting_pages', elapsedMs: 3_600_000 } };
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByRole('header', { name: /^Страницы за \d+ \S+$/ })).toBeTruthy();
+  expect(view.getByText(/После сохранения можно сразу начать чтение за сегодня/)).toBeTruthy();
+  await fireEvent.changeText(view.getByLabelText('Страниц за этот подход'), '30');
+  await fireEvent.press(view.getByRole('button', { name: 'Сохранить и читать сегодня' }));
+  expect(p.onReport).toHaveBeenCalledWith(30, undefined);
+  expect(p.onStart).not.toHaveBeenCalled();
 });
