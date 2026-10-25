@@ -115,6 +115,9 @@ export class ReadingOutbox {
           // blocks the queue: user actions are shown as errors, approaches as visible records.
           if (!(error instanceof ReadingApiError) || ![400, 403, 404, 409].includes(error.status) || !this.deps.isCurrentAccount()) throw error;
           if (['apply', 'review', 'resolve'].includes(command.action)) { await this.acknowledge(command); throw error; }
+          // Only the reading API's own refusal (it always names a code) is final for an approach. A 400/403/404
+          // from a proxy, firewall or misrouted deploy carries no code: keep everything and retry.
+          if (!error.code) throw error;
           if (command.action === 'start' && !resolvable.has(error.code ?? '')) {
             const dropped = await this.rejectStart(command);
             await this.deps.onRejectedStart?.(command, dropped, error);

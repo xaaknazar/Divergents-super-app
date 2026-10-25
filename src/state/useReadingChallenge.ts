@@ -26,12 +26,14 @@ function withDeadline<T>(promise: Promise<T>, ms?: number): Promise<T> {
 }
 /** How long a user action waits for a background refresh, and how long a background refresh may take. */
 const ACTION_WAIT_MS = 4000, REFRESH_DEADLINE_MS = 10_000;
-/** Last server time this phone received + the monotonic clock right after it (one per installation). */
-export const READING_CLOCK_KEY = 'dvg.readingClock.v1';
+/** Last signed server time + the monotonic clock reading for it, per account (the token names the account). */
+export const readingClockKey = (accountId: string) => `dvg.readingClock.v2.${accountId}`;
+/** Longer round trips are not used as an anchor: the server time could be anywhere inside them. */
+const READING_ANCHOR_MAX_RTT_MS = 10_000;
 /** Real time when the phone can prove it (server anchor + monotonic clock), else its own date. */
 type ReadingPhoneNow = { now: number; source: 'synced' | 'device'; syncedAt?: number; syncNonce?: string; syncToken?: string };
-async function readingPhoneNow(): Promise<ReadingPhoneNow> {
-  const [anchor, clock] = await Promise.all([loadJSON<ReadingClockAnchor | null>(READING_CLOCK_KEY, null).catch(() => null),
+async function readingPhoneNow(accountId: string): Promise<ReadingPhoneNow> {
+  const [anchor, clock] = await Promise.all([loadJSON<ReadingClockAnchor | null>(readingClockKey(accountId), null).catch(() => null),
     readingNative.clock?.().catch(() => null) ?? null]);
   const now = anchoredNow(anchor, clock);
   if (now === null || !anchor) return { now: Date.now(), source: 'device' };
@@ -276,7 +278,7 @@ export function useReadingChallenge(challengeId: string) {
   const applyLocalView = useCallback(async (raw: ReadingDetail, stale: boolean) => {
     let approaches: ReturnType<typeof localApproaches> = [];
     try { approaches = localApproaches((await queue.pending()).commands, challengeId, raw); } catch { /* unreadable queue: show the server copy */ }
-    const view = readingLocalView(raw, approaches, stale ? (await readingPhoneNow()).now : Date.now(), stale);
+    const view = readingLocalView(raw, approaches, stale ? (await readingPhoneNow(account)).now : Date.now(), stale);
     if (!current()) return view;
     serverDetailRef.current = raw; staleRef.current = stale;
     setData(view); dataRef.current = view; setOffline(stale);
@@ -291,17 +293,21 @@ export function useReadingChallenge(challengeId: string) {
     // Fresh unpredictable nonce per request: only the signed clock answering THIS request may anchor
     // the phone's clock (a replayed or pre-fetched answer carries another nonce).
     const nonce = readingClockNonce();
+    // Monotonic reading BEFORE the request: the server time is later than it, so an anchor built on it
+    // can only run slightly ahead (bounded by the round trip), never behind — even if the app is
+    // suspended between the answer and the next line.
+    const sent = await readingNative.clock?.().catch(() => null);
     const result = await withDeadline(fetchReadingDetail(value, challengeId, nonce), deadlineMs);
     if (!current()) return null;
     if (result.id !== challengeId) throw new Error('Сервер вернул другой челлендж. Повторите обновление.');
     requestStartedAt.current = startedAt;
-    // Anchor the monotonic clock to this server time (read after the answer: never ahead of real time).
-    const clock = await readingNative.clock?.().catch(() => null);
-    if (clock) {
+    const received = sent ? await readingNative.clock?.().catch(() => null) : null;
+    if (sent && received && account && received.bootId === sent.bootId && received.uptimeMs >= sent.uptimeMs
+      && received.uptimeMs - sent.uptimeMs <= READING_ANCHOR_MAX_RTT_MS) {
       const signed = nonce && result.clock?.nonce === nonce ? result.clock : undefined;
-      const anchor: ReadingClockAnchor = signed ? { serverNow: signed.serverNow, uptimeMs: clock.uptimeMs, bootId: clock.bootId, nonce, token: signed.token }
-        : { serverNow: result.serverNow, uptimeMs: clock.uptimeMs, bootId: clock.bootId };
-      await saveJSON(READING_CLOCK_KEY, anchor).catch(() => {});
+      const anchor: ReadingClockAnchor = signed ? { serverNow: signed.serverNow, uptimeMs: sent.uptimeMs, bootId: sent.bootId, nonce, token: signed.token }
+        : { serverNow: result.serverNow, uptimeMs: sent.uptimeMs, bootId: sent.bootId };
+      await saveJSON(readingClockKey(account), anchor).catch(() => {});
     }
     if (result.supportsAttest && account) void registerAttestKey(account, value ?? '').catch(() => {});
     await saveJSON(cacheKey, result);
@@ -762,7 +768,7 @@ export function useReadingChallenge(challengeId: string) {
     const session = view.session;
     if (session?.id !== pending.sessionId) throw new Error('Не удалось начать подход на телефоне. Повторите.');
     try {
-      const untilMidnight = readingDayEnd(view.startDate, session.day) - (await readingPhoneNow()).now;
+      const untilMidnight = readingDayEnd(view.startDate, session.day) - (await readingPhoneNow(account)).now;
       if (untilMidnight <= 0) throw new Error('День завершился. Начните новый подход.');
       const targetMs = 3_600_000 - (view.me?.history.find(h => h.day === session.day)?.elapsedMs ?? 0);
       if (!current()) return;
@@ -873,7 +879,7 @@ export function useReadingChallenge(challengeId: string) {
       const sessionId = Crypto.randomUUID();
       // Measured from the last server time + monotonic clock when possible: a changed phone date
       // cannot move the approach to another day (the server accepts a bare phone date for today only).
-      const placed = await readingPhoneNow();
+      const placed = await readingPhoneNow(account);
       // Signed by a genuine copy of this app (App Attest, works offline): the server may then place it on a past day.
       const timing = placed.source === 'synced' ? { startedAt: placed.now, startedAtSource: placed.source, syncedAt: placed.syncedAt,
         ...(placed.syncNonce ? { syncNonce: placed.syncNonce, syncToken: placed.syncToken } : {}) }

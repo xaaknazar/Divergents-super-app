@@ -5,7 +5,8 @@ import { fetchReadingDetail, ReadingApiError, ReadingDetail, sendReadingCommand 
 import { readingNative } from '../readingNative';
 import { READING_OUTBOX_KEY } from '../readingOutbox';
 import { readingDayAt, readingDayEnd } from '../../data/readingOffline';
-import { READING_CLOCK_KEY, readingAttestKey } from '../useReadingChallenge';
+import { readingClockKey, readingAttestKey } from '../useReadingChallenge';
+const READING_CLOCK_KEY = readingClockKey('demo-reader');
 import { AppState } from 'react-native';
 
 let mockDisk: Record<string, any> = {};
@@ -145,7 +146,7 @@ test('a start the server later refuses drops its queued time and pages and is sh
   await act(async () => { await h.result.current.retry(); });
   await act(async () => { await h.result.current.report(5); });
   send.mockReset().mockImplementation(async (_token, command) => {
-    if (command.action === 'start') throw new ReadingApiError('Подход начат больше 7 дней назад и уже не принимается.', 409);
+    if (command.action === 'start') throw new ReadingApiError('Подход начат больше 7 дней назад и уже не принимается.', 409, 'offline_too_old');
     return { ok: true };
   });
   fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow: Date.now() });
@@ -315,4 +316,28 @@ test('a timer whose start was refused while it was launching is released on the 
   expect(journal).toBeNull();
   expect(h.result.current.sessionNotice).toBeUndefined();
   expect(h.result.current.rejectedApproaches).toHaveLength(1);
+});
+
+test('a 4xx without the reading API code (proxy, firewall) never drops queued approaches', async () => {
+  const h = await openOffline();
+  await act(async () => { await h.result.current.start('Книга'); });
+  stopOnPhone(20 * 60000);
+  await act(async () => { await h.result.current.retry(); });
+  await act(async () => { await h.result.current.report(8); });
+  send.mockReset().mockRejectedValue(new ReadingApiError('Invalid host', 400));
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow: Date.now() });
+  await act(async () => { await h.result.current.retry(); });
+  expect(queued().map(c => c.action)).toEqual(['start', 'stop', 'report']);
+  expect(h.result.current.rejectedApproaches).toEqual([]);
+});
+
+test('a slow answer (long round trip) is not used as a clock anchor', async () => {
+  let uptime = 1_000;
+  jest.mocked(readingNative.clock).mockImplementation(async () => ({ uptimeMs: (uptime += 30_000), bootId: 'boot-a' }));
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow: Date.now() });
+  send.mockReset().mockResolvedValue({ ok: true });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.offline).toBe(false));
+  expect(mockDisk[READING_CLOCK_KEY]).toBeUndefined();
+  await h.unmount();
 });
