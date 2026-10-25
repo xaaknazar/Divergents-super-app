@@ -2,6 +2,8 @@ import ExpoModulesCore
 import FamilyControls
 import SwiftUI
 import ActivityKit
+import DeviceCheck
+import CryptoKit
 
 public class ReadingFocusModule: Module {
   private var allowedAppsPickerPresented = false
@@ -127,6 +129,23 @@ public class ReadingFocusModule: Module {
     AsyncFunction("clock") { () throws -> [String: Any] in
       guard #available(iOS 16.2, *) else { throw ReadingFocusFailure.unavailable }
       return try ReadingFocusStore.locked { () throws -> [String: Any] in ["uptimeMs": ReadingFocusStore.uptimeMs(), "bootId": try ReadingFocusStore.bootId()] }
+    }
+    // App Attest: proves to the server that a start time was computed by a genuine copy of this app.
+    // The key lives in the Secure Enclave; signing works without internet, registration needs it.
+    AsyncFunction("attestSupported") { () -> Bool in DCAppAttestService.shared.isSupported }
+    AsyncFunction("attestGenerateKey") { () async throws -> String in
+      guard DCAppAttestService.shared.isSupported else { throw ReadingFocusFailure.unavailable }
+      return try await DCAppAttestService.shared.generateKey()
+    }
+    AsyncFunction("attestKey") { (keyId: String, clientData: String) async throws -> String in
+      guard DCAppAttestService.shared.isSupported else { throw ReadingFocusFailure.unavailable }
+      let hash = Data(SHA256.hash(data: Data(clientData.utf8)))
+      return try await DCAppAttestService.shared.attestKey(keyId, clientDataHash: hash).base64EncodedString()
+    }
+    AsyncFunction("attestAssertion") { (keyId: String, clientData: String) async throws -> String in
+      guard DCAppAttestService.shared.isSupported else { throw ReadingFocusFailure.unavailable }
+      let hash = Data(SHA256.hash(data: Data(clientData.utf8)))
+      return try await DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: hash).base64EncodedString()
     }
     AsyncFunction("remainingMs") { () throws -> Double in
       guard #available(iOS 16.2, *) else { return 0 }

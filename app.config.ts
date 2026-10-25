@@ -77,7 +77,7 @@ const config: ExpoConfig = {
   },
   web: { bundler: 'metro' },
   plugins: [
-    ['./plugins/withReadingFocus.js', { enabled: process.env.READING_FOCUS_PILOT === 'true' }],
+    ['./plugins/withReadingFocus.js', { enabled: process.env.READING_FOCUS_PILOT === 'true', appAttest: process.env.READING_APP_ATTEST === 'true' }],
     './plugins/withFmtConstevalWorkaround.js',
     ['expo-location', {
       locationWhenInUsePermission: 'Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.',

@@ -5,7 +5,7 @@ import { fetchReadingDetail, ReadingApiError, ReadingDetail, sendReadingCommand 
 import { readingNative } from '../readingNative';
 import { READING_OUTBOX_KEY } from '../readingOutbox';
 import { readingDayAt, readingDayEnd } from '../../data/readingOffline';
-import { READING_CLOCK_KEY } from '../useReadingChallenge';
+import { READING_CLOCK_KEY, readingAttestKey } from '../useReadingChallenge';
 import { AppState } from 'react-native';
 
 let mockDisk: Record<string, any> = {};
@@ -19,14 +19,16 @@ jest.mock('../persist', () => ({ loadJSON: jest.fn(async (key, fallback) => mock
   saveJSON: jest.fn(async (key, value) => { mockDisk[key] = JSON.parse(JSON.stringify(value)); }) }));
 jest.mock('../readingNative', () => ({ ...jest.requireActual('../readingNative'), readingNative: { capabilities: jest.fn(),
   snapshot: jest.fn(async () => null), remainingMs: jest.fn(async () => 1800000), pause: jest.fn(), start: jest.fn(), acknowledge: jest.fn(),
-  authorize: jest.fn(), selectApps: jest.fn(), clock: jest.fn(async () => mockClock), reconcileLiveActivity: jest.fn(), restoreLiveActivity: jest.fn(), configurePageReminder: jest.fn(async () => {}) } }));
+  authorize: jest.fn(), selectApps: jest.fn(), clock: jest.fn(async () => mockClock),
+  attest: { supported: jest.fn(async () => true), generateKey: jest.fn(async () => 'key-1'), attestKey: jest.fn(async () => 'attestation-1'),
+    assertion: jest.fn(async (_key: string, data: string) => `signed:${data}`) }, reconcileLiveActivity: jest.fn(), restoreLiveActivity: jest.fn(), configurePageReminder: jest.fn(async () => {}) } }));
 jest.mock('expo-crypto', () => ({ CryptoDigestAlgorithm: { SHA256: 'SHA256' },
   // Distinct, stable ids per session/action so that several approaches never collide.
   digestStringAsync: async (_algorithm: string, value: string) => {
     let h = 0; for (const ch of value) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
     return (h.toString(16).padStart(8, '0').repeat(8)).slice(0, 64);
   },
-  randomUUID: () => `session-${++mockUuid}` }));
+  randomUUID: () => `session-${++mockUuid}`, getRandomBytes: (n: number) => new Uint8Array(n).fill(7) }));
 
 const fetchDetail = jest.mocked(fetchReadingDetail), send = jest.mocked(sendReadingCommand);
 const offline = () => new TypeError('Network request failed');
@@ -193,13 +195,84 @@ test('after a reboot without internet only the phone date is known and it is mar
   expect(queued()[0].startedAt).toBeGreaterThanOrEqual(before);
 });
 
-test('a successful refresh anchors the monotonic clock to the server time', async () => {
+const NONCE = '07'.repeat(16);
+test('a successful refresh anchors the monotonic clock to the signed server time for its own nonce only', async () => {
   mockClock = { uptimeMs: 42_000, bootId: 'boot-a' };
   const serverNow = Date.now() - 1000;
-  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow });
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow,
+    clock: { serverNow, nonce: NONCE, token: 'signed-1' } });
   send.mockReset().mockResolvedValue({ ok: true });
   const h = await renderHook(() => useReadingChallenge('reading-demo'));
-  await waitFor(() => expect(mockDisk[READING_CLOCK_KEY]).toEqual({ serverNow, uptimeMs: 42_000, bootId: 'boot-a' }));
+  await waitFor(() => expect(mockDisk[READING_CLOCK_KEY]).toEqual({ serverNow, uptimeMs: 42_000, bootId: 'boot-a', nonce: NONCE, token: 'signed-1' }));
+  expect(fetchDetail.mock.calls[0][2]).toBe(NONCE);
+  await h.unmount();
+  // A replayed answer for another request (other nonce) is never used as a signed anchor.
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow: serverNow - 86_400_000,
+    clock: { serverNow: serverNow - 86_400_000, nonce: 'старый-nonce-0000000000', token: 'old' } });
+  const again = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(mockDisk[READING_CLOCK_KEY]?.serverNow).toBe(serverNow - 86_400_000));
+  expect(mockDisk[READING_CLOCK_KEY].token).toBeUndefined();
+  await again.unmount();
+});
+
+test('the offline start carries the signed anchor and the App Attest signature of its timing', async () => {
+  const serverNow = Date.now() - 3_600_000;
+  mockDisk[READING_CLOCK_KEY] = { serverNow, uptimeMs: 1_000, bootId: 'boot-a', nonce: NONCE, token: 'signed-1' };
+  mockDisk[readingAttestKey('demo-reader')] = { keyId: 'key-1' };
+  mockClock = { uptimeMs: 1_000 + 3_600_000, bootId: 'boot-a' };
+  const h = await openOffline();
+  await act(async () => { await h.result.current.start('Книга'); });
+  const start = queued()[0];
+  expect(start).toMatchObject({ startedAt: serverNow + 3_600_000, startedAtSource: 'synced', syncedAt: serverNow, syncNonce: NONCE, syncToken: 'signed-1',
+    attestKeyId: 'key-1', assertion: `signed:divergents-reading-start:session-1:${serverNow + 3_600_000}:synced:${serverNow}:${NONCE}` });
+});
+
+test('when the server checks App Attest, the app registers its key once', async () => {
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow: Date.now(), supportsAttest: true });
+  send.mockReset().mockResolvedValue({ ok: true });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(mockDisk[readingAttestKey('demo-reader')]).toEqual({ keyId: 'key-1' }));
+  expect(send.mock.calls.map(c => c[1])).toEqual([expect.objectContaining({ action: 'attestKey', keyId: 'key-1', attestation: 'attestation-1' })]);
+  expect(readingNative.attest.attestKey).toHaveBeenCalledWith('key-1', 'divergents-reading-key:demo-reader:key-1');
+  await h.unmount();
+});
+
+test('a stop the server refuses for good is shown, the queue moves on and the phone timer is released', async () => {
+  const h = await openOffline();
+  await act(async () => { await h.result.current.start('Книга'); });
+  stopOnPhone(20 * 60000);
+  await act(async () => { await h.result.current.retry(); });
+  await act(async () => { await h.result.current.report(8); });
+  send.mockReset().mockImplementation(async (_token, command) => {
+    if (command.action === 'stop') throw new ReadingApiError('Остановите сеанс на устройстве, где начали чтение', 403, 'device');
+    return { ok: true };
+  });
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow: Date.now() });
+  await act(async () => { await h.result.current.retry(); });
+  expect(queued()).toEqual([]);
+  expect(h.result.current.rejectedApproaches).toEqual([expect.objectContaining({ sessionId: 'session-1', elapsedMs: 20 * 60000, pages: 8,
+    message: expect.stringMatching(/устройстве/) })]);
+  expect(journal).toBeNull();
+});
+
+test('«Старт» in the last minute before midnight starts a full approach for the next day', async () => {
+  const dayEnd = readingDayEnd(startDate, today);
+  const serverNow = dayEnd - 30_000;
+  const live = { ...cached, currentDay: today, dayEnd, serverNow };
+  fetchDetail.mockReset().mockResolvedValue(live);
+  send.mockReset().mockResolvedValue({ ok: true });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.offline).toBe(false));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  // After the start reaches the server it is placed on the next day (counts from 00:00).
+  fetchDetail.mockReset().mockImplementation(async () => send.mock.calls.some(c => c[1].action === 'start') ? { ...live, session: { id: 'session-1',
+    deviceId: 'phone', day: today + 1, book: 'Книга', author: null, bookKey: null, fromPage: null, startedAt: new Date(dayEnd).toISOString(),
+    budgetMs: 86_400_000, elapsedMs: null, status: 'running' as const } } : live);
+  await act(async () => { await h.result.current.start('Книга'); });
+  expect(h.result.current.error).toBeUndefined();
+  const [, , , , budgetMs, targetMs] = jest.mocked(readingNative.start).mock.calls[0];
+  expect(targetMs).toBe(3_600_000);
+  expect(budgetMs).toBeGreaterThan(23 * 3_600_000);
   await h.unmount();
 });
 

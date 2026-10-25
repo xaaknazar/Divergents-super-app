@@ -45,6 +45,10 @@ export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(),
   flagRecoveryDays: z.number().int().positive().optional(),
   // The server accepts approaches started without internet (start.startedAt), delivered later.
   supportsOfflineStart: z.boolean().optional(),
+  /** Server time for this request's nonce, signed by the server: the anchor of the phone's monotonic clock. */
+  clock: z.object({ serverNow: z.number(), nonce: z.string(), token: z.string() }).optional(),
+  /** The server checks App Attest: the app registers its key so past-day offline starts can be proven. */
+  supportsAttest: z.boolean().optional(),
   currentDay: z.number(), serverNow: z.number(), dayEnd: z.number(), membership, me: member.nullable(), ranking: z.array(member),
   reportedSessionIds: z.array(z.string()),
   // Omitted by older servers: do not turn missing data into a misleading empty day.
@@ -69,9 +73,10 @@ export type ReadingReceipt = z.infer<typeof receipt>;
 export class ReadingApiError extends Error {
   constructor(message: string, public status: number, public code?: string) { super(message); }
 }
-async function request(token: string | null, id?: string, body?: ReadingCommand): Promise<unknown> {
+async function request(token: string | null, id?: string, body?: ReadingCommand, clockNonce?: string): Promise<unknown> {
   if (!token) throw new ReadingApiError('Войдите в аккаунт', 401);
-  const response = await netFetch(`${API_BASE}/api/mobile/reading-challenges${id ? `?id=${encodeURIComponent(id)}&v=2` : '?v=2'}`, {
+  const query = id ? `?id=${encodeURIComponent(id)}&v=2${clockNonce ? `&clockNonce=${encodeURIComponent(clockNonce)}` : ''}` : '?v=2';
+  const response = await netFetch(`${API_BASE}/api/mobile/reading-challenges${query}`, {
     method: body ? 'POST' : 'GET', retries: 0, timeoutMs: 12_000,
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
@@ -82,7 +87,10 @@ async function request(token: string | null, id?: string, body?: ReadingCommand)
   return value;
 }
 export async function fetchReadingCatalog(token: string | null) { return ReadingCatalogSchema.parse(await request(token)); }
-export async function fetchReadingDetail(token: string | null, id: string) { return ReadingDetailSchema.parse(await request(token, id)); }
+/** `clockNonce`: a fresh random value; the answer's signed clock is accepted only for this exact nonce. */
+export async function fetchReadingDetail(token: string | null, id: string, clockNonce?: string) {
+  return ReadingDetailSchema.parse(await request(token, id, undefined, clockNonce));
+}
 export async function sendReadingCommand(token: string | null, body: ReadingCommand) { return receipt.parse(await request(token, undefined, body)); }
 
 type ReadingMemberStats = ReadingDetail['ranking'][number];

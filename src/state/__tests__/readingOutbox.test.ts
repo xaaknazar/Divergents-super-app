@@ -83,12 +83,37 @@ test('late response after account switch is not acknowledged locally', async () 
   await expect(h.box.flush()).rejects.toThrow('Аккаунт изменился');
   expect(h.disk()?.commands).toEqual([report]);
 });
-test('rejected start can be retried, but a timing conflict never discards evidence', async () => {
-  const h = harness(); await h.box.enqueue({ ...stop, action: 'start' });
-  h.io.send.mockRejectedValue(new ReadingApiError('Сеанс уже есть', 409));
-  await expect(h.box.flush()).rejects.toThrow(); expect(h.disk()?.commands).toEqual([]);
-  await h.box.enqueue(stop);
-  await expect(h.box.flush()).rejects.toThrow(); expect(h.disk()?.commands).toEqual([stop]);
+test('a definitive refusal never blocks later approaches; transport errors and resolvable conflicts keep everything', async () => {
+  const later = { action: 'report', operationId: 'report-2', challengeId: 'c1', sessionId: 's2', pages: 3 };
+  const reasons: string[] = [];
+  const h = harness();
+  const box = new ReadingOutbox('reader', { ...h.io, onRejectedStart: (c, dropped) => { reasons.push(`start:${c.sessionId}:${dropped.length}`); },
+    onRejectedClose: (c, dropped) => { reasons.push(`${c.action}:${c.sessionId}:${dropped.map(d => d.action).join(',')}`); } });
+  // Refused start: its time and pages are dropped with it, the next approach is still delivered.
+  await box.enqueueMany([{ ...stop, action: 'start', operationId: 'start-1' }, stop, report, later]);
+  h.io.send.mockImplementation(async (c: { action: string }) => { if (c.action === 'start') throw new ReadingApiError('Подход начат больше 7 дней назад', 409, 'offline_too_old'); return { ok: true }; });
+  await expect(box.flush()).resolves.toEqual([expect.objectContaining({ command: later })]);
+  expect(h.disk()?.commands).toEqual([]); expect(reasons).toEqual(['start:s1:2']);
+  // Another device holds an open approach: resolvable, everything stays queued.
+  await box.enqueueMany([{ ...stop, action: 'start', operationId: 'start-2' }, stop]);
+  h.io.send.mockRejectedValue(new ReadingApiError('Сначала завершите предыдущий сеанс', 409, 'session_pending'));
+  await expect(box.flush()).rejects.toThrow(); expect(h.disk()?.commands.map(c => c.operationId)).toEqual(['start-2', 'stop-1']);
+  // Transport failure or 5xx: kept for an exact retry.
+  h.io.send.mockRejectedValue(new ReadingApiError('Сервер', 503));
+  await expect(box.flush()).rejects.toThrow(); expect(h.disk()?.commands).toHaveLength(2);
+  h.io.write.mockClear(); await h.io.write({ accountId: 'reader', commands: [] });
+  // Already stopped: the stop is acknowledged and the pages still go.
+  await box.enqueueMany([stop, report]);
+  h.io.send.mockImplementation(async (c: { action: string }) => { if (c.action === 'stop') throw new ReadingApiError('Сеанс уже остановлен', 409, 'state'); return { ok: true }; });
+  await box.flush(); expect(h.io.send.mock.calls.slice(-2).map(c => c[0].action)).toEqual(['stop', 'report']); expect(h.disk()?.commands).toEqual([]);
+  // Refused stop (wrong device): stop and its pages are dropped and reported; the next approach goes.
+  await h.io.write({ accountId: 'reader', commands: [] });
+  await box.enqueueMany([{ ...stop, operationId: 'stop-x' }, { ...report, operationId: 'report-x' }, later]);
+  h.io.send.mockReset().mockImplementation(async (c: { action: string; sessionId?: string }) => {
+    if (c.sessionId === 's1') throw new ReadingApiError('Остановите сеанс на устройстве, где начали чтение', 403, 'device'); return { ok: true }; });
+  await box.flush(); expect(h.disk()?.commands).toEqual([]);
+  expect(reasons.slice(-1)).toEqual(['stop:s1:report']);
+  expect(h.io.send.mock.calls.map(c => c[0].operationId)).toEqual(['stop-x', 'report-2']);
 });
 
 describe('network outside the journal lock', () => {

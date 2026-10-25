@@ -15,13 +15,24 @@ export function readingDayEnd(startDate: string, day: number) {
 }
 
 /** Server time this phone last received, with the monotonic clock reading taken right after it. */
-export type ReadingClockAnchor = { serverNow: number; uptimeMs: number; bootId: string };
+export type ReadingClockAnchor = { serverNow: number; uptimeMs: number; bootId: string;
+  /** The server-signed answer for this app's own request (absent on servers without clock tokens). */
+  nonce?: string; token?: string };
 /** Real time from the last server answer plus the monotonic clock. Null after a reboot or without
  * an anchor: then only the phone's own (changeable) date is known. */
 export function anchoredNow(anchor: ReadingClockAnchor | null | undefined, clock: { uptimeMs: number; bootId: string } | null | undefined) {
   if (!anchor || !clock || anchor.bootId !== clock.bootId || clock.uptimeMs < anchor.uptimeMs
     || !Number.isFinite(anchor.serverNow) || !Number.isFinite(anchor.uptimeMs)) return null;
   return Math.floor(anchor.serverNow + (clock.uptimeMs - anchor.uptimeMs));
+}
+
+/** A start in the last minute of a day counts from 00:00 of the next day when that day belongs to the
+ * challenge (the same rule as the server), so «Старт» just before midnight never ends at once. */
+export const READING_LAST_MINUTE_MS = 60_000;
+export function readingPlacedStart(detail: Pick<ReadingDetail, 'startDate' | 'mode' | 'durationDays'>, at: number) {
+  const day = readingDayAt(detail.startDate, at), end = readingDayEnd(detail.startDate, day);
+  const nextExists = detail.mode === 'continuous' || day + 1 <= detail.durationDays;
+  return day >= 1 && end - at < READING_LAST_MINUTE_MS && nextExists ? end : at;
 }
 
 /** One approach that exists on this phone but is not yet confirmed by the server. */
@@ -56,7 +67,8 @@ export function localApproaches(commands: ReadingCommand[], challengeId: string,
       bySession.set(sessionId, approach);
     }
     if (command.action === 'start') {
-      const startedAt = num(command.startedAt);
+      const claimed = num(command.startedAt);
+      const startedAt = claimed !== undefined && detail ? readingPlacedStart(detail, claimed) : claimed;
       Object.assign(approach, { startQueued: true, book: str(command.book) ?? approach.book, author: str(command.author),
         bookKey: str(command.bookKey), fromPage: num(command.fromPage), deviceId: str(command.deviceId), startedAt,
         day: startedAt !== undefined && detail ? readingDayAt(detail.startDate, startedAt) : approach.day });

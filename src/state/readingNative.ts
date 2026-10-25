@@ -31,6 +31,8 @@ type NativeFocus = {
   start(accountId: string, sessionId: string, deviceId: string, book: string, budgetMs: number, targetMs: number): Promise<string>;
   snapshot(): Promise<string | null>; pause(): Promise<string | null>; remainingMs(): Promise<number>;
   clock?(): Promise<unknown>;
+  attestSupported?(): Promise<boolean>; attestGenerateKey?(): Promise<string>;
+  attestKey?(keyId: string, clientData: string): Promise<string>; attestAssertion?(keyId: string, clientData: string): Promise<string>;
   acknowledge(accountId: string, sessionId: string): Promise<void>;
   configurePageReminder?(accountId: string, sessionId: string, challengeId: string): Promise<void>;
   reconcileLiveActivity?(accountId: string, sessionId: string): Promise<unknown>;
@@ -128,6 +130,13 @@ export const readingNative = {
     return changeJournal(async () => NativeReadingSchema.parse(JSON.parse(await native.finish!(accountId, sessionId, expectedGeneration))));
   },
   remainingMs: async () => native ? native.remainingMs() : 0,
+  /** App Attest (iOS). Every call is null when unavailable or failed: proof is optional evidence. */
+  attest: {
+    supported: async () => { try { return !!(await native?.attestSupported?.()); } catch { return false; } },
+    generateKey: async () => { try { return (await native?.attestGenerateKey?.()) ?? null; } catch { return null; } },
+    attestKey: async (keyId: string, clientData: string) => { try { return (await native?.attestKey?.(keyId, clientData)) ?? null; } catch { return null; } },
+    assertion: async (keyId: string, clientData: string) => { try { return (await native?.attestAssertion?.(keyId, clientData)) ?? null; } catch { return null; } },
+  },
   /** Null on builds without it: then only the phone's wall clock is known. */
   clock: async (): Promise<ReadingClock | null> => {
     if (!native?.clock) return null;

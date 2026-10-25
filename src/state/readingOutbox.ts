@@ -18,6 +18,8 @@ export type ReadingOutboxDependencies = {
   isCurrentAccount(): boolean;
   /** A start the server definitively refused, with the approach's queued close/pages that were dropped with it. */
   onRejectedStart?(start: ReadingCommand, dropped: ReadingCommand[], error: ReadingApiError): Promise<void> | void;
+  /** A stop/pages the server definitively refused, with the same approach's commands dropped with it. */
+  onRejectedClose?(command: ReadingCommand, dropped: ReadingCommand[], error: ReadingApiError): Promise<void> | void;
   /** Every delivered command with its receipt (e.g. a stop accepted without credit). Failures are ignored. */
   onReceipt?(command: ReadingCommand, receipt: ReadingReceipt): Promise<void> | void;
 };
@@ -85,6 +87,17 @@ export class ReadingOutbox {
       return dropped;
     });
   }
+  /** A definitively refused stop/pages: drop it (and, for a stop, the approach's pages) so that later
+   * approaches are still delivered. The caller keeps a visible record with the time and pages. */
+  private rejectClose(command: ReadingCommand) {
+    return this.serialize(async () => {
+      const q = await this.queue();
+      const dropped = command.action === 'stop' ? q.commands.filter(c => c.operationId !== command.operationId
+        && c.sessionId === command.sessionId && command.sessionId !== undefined && c.action === 'report') : [];
+      await this.deps.write({ ...q, commands: q.commands.filter(c => c.operationId !== command.operationId && !dropped.includes(c)) });
+      return dropped;
+    });
+  }
   flush() {
     // Preserve command order across screens, but do not block a new account or
     // any disk writes on the previous account's transport.
@@ -98,15 +111,21 @@ export class ReadingOutbox {
         let receipt: ReadingReceipt;
         try { receipt = await this.deps.send(command); }
         catch (error) {
-          // A definitive rejected application can be edited/retried. Timing evidence stays durable.
-          if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && ['apply', 'review', 'resolve', 'start'].includes(command.action)
-            && !(command.action === 'start' && resolvable.has(error.code ?? ''))) {
-            if (this.deps.isCurrentAccount()) {
-              if (command.action === 'start') {
-                const dropped = await this.rejectStart(command);
-                await this.deps.onRejectedStart?.(command, dropped, error);
-              } else await this.acknowledge(command);
-            }
+          // Transport errors, 401 and 5xx keep everything for a retry. A definitive refusal never
+          // blocks the queue: user actions are shown as errors, approaches as visible records.
+          if (!(error instanceof ReadingApiError) || ![400, 403, 404, 409].includes(error.status) || !this.deps.isCurrentAccount()) throw error;
+          if (['apply', 'review', 'resolve'].includes(command.action)) { await this.acknowledge(command); throw error; }
+          if (command.action === 'start' && !resolvable.has(error.code ?? '')) {
+            const dropped = await this.rejectStart(command);
+            await this.deps.onRejectedStart?.(command, dropped, error);
+            continue;
+          }
+          // Already stopped (another request got through): the pages of this approach still go.
+          if (command.action === 'stop' && error.code === 'state') { await this.acknowledge(command); continue; }
+          if (command.action === 'stop' || command.action === 'report') {
+            const dropped = await this.rejectClose(command);
+            await this.deps.onRejectedClose?.(command, dropped, error);
+            continue;
           }
           throw error;
         }

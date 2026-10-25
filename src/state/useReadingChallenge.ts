@@ -29,11 +29,37 @@ const ACTION_WAIT_MS = 4000, REFRESH_DEADLINE_MS = 10_000;
 /** Last server time this phone received + the monotonic clock right after it (one per installation). */
 export const READING_CLOCK_KEY = 'dvg.readingClock.v1';
 /** Real time when the phone can prove it (server anchor + monotonic clock), else its own date. */
-async function readingPhoneNow(): Promise<{ now: number; source: 'synced' | 'device'; syncedAt?: number }> {
+type ReadingPhoneNow = { now: number; source: 'synced' | 'device'; syncedAt?: number; syncNonce?: string; syncToken?: string };
+async function readingPhoneNow(): Promise<ReadingPhoneNow> {
   const [anchor, clock] = await Promise.all([loadJSON<ReadingClockAnchor | null>(READING_CLOCK_KEY, null).catch(() => null),
     readingNative.clock?.().catch(() => null) ?? null]);
   const now = anchoredNow(anchor, clock);
-  return now === null || !anchor ? { now: Date.now(), source: 'device' } : { now, source: 'synced', syncedAt: anchor.serverNow };
+  if (now === null || !anchor) return { now: Date.now(), source: 'device' };
+  return { now, source: 'synced', syncedAt: anchor.serverNow,
+    ...(anchor.nonce && anchor.token ? { syncNonce: anchor.nonce, syncToken: anchor.token } : {}) };
+}
+function readingClockNonce() {
+  try { return Array.from(Crypto.getRandomBytes(16), b => b.toString(16).padStart(2, '0')).join(''); }
+  catch { return undefined; } // no secure randomness: the anchor stays unsigned (today-only starts)
+}
+/** App Attest key of this installation for one account (iOS). */
+export const readingAttestKey = (accountId: string) => `dvg.readingAttest.v1.${accountId}`;
+/** Same text as the server's readingStartClientData: every field that decides the day of the approach. */
+export const readingStartClientData = (s: { sessionId: string; startedAt: number; startedAtSource: string; syncedAt?: number; syncNonce?: string }) =>
+  `divergents-reading-start:${s.sessionId}:${s.startedAt}:${s.startedAtSource}:${s.syncedAt ?? ''}:${s.syncNonce ?? ''}`;
+// One registration attempt per account per app launch; Apple's service may be unreachable.
+const attestAttempts = new Set<string>();
+async function registerAttestKey(account: string, value: string) {
+  if (attestAttempts.has(account)) return;
+  attestAttempts.add(account);
+  if (await loadJSON<{ keyId: string } | null>(readingAttestKey(account), null)) return;
+  if (!readingNative.attest || !await readingNative.attest.supported()) return;
+  const keyId = await readingNative.attest.generateKey();
+  if (!keyId) return;
+  const attestation = await readingNative.attest.attestKey(keyId, `divergents-reading-key:${account}:${keyId}`);
+  if (!attestation) return;
+  await sendReadingCommand(value, { action: 'attestKey', operationId: Crypto.randomUUID(), keyId, attestation });
+  await saveJSON(readingAttestKey(account), { keyId }, { strict: true });
 }
 export type ReadingRejectedApproach = { sessionId: string; book: string; elapsedMs?: number; pages?: number; message: string; at: number };
 
@@ -226,6 +252,15 @@ export function useReadingChallenge(challengeId: string) {
         } catch { /* the next synchronization shows the remaining journal */ }
       }
     },
+    // The server definitively refused the time or pages of an approach: keep a visible record.
+    onRejectedClose: async (command, dropped, error) => {
+      const sessionId = String(command.sessionId ?? '');
+      const known = [serverDetailRef.current?.session, dataRef.current?.session].find(s => s?.id === sessionId);
+      const report = command.action === 'report' ? command : dropped.find(c => c.action === 'report');
+      await rememberRejected(String(command.challengeId ?? ''), { sessionId, book: known?.book ?? '', message: error.message, at: Date.now(),
+        elapsedMs: typeof command.elapsedMs === 'number' ? command.elapsedMs : undefined,
+        pages: typeof report?.pages === 'number' ? report.pages : undefined });
+    },
     // Delivered, but the server did not credit the time (it overlaps another approach).
     onReceipt: async (command, receipt) => {
       if (command.action !== 'stop' || !receipt.rejected) return;
@@ -253,19 +288,28 @@ export function useReadingChallenge(challengeId: string) {
     const startedAt = performance.now();
     const value = await token();
     if (!current()) return null;
-    const result = await withDeadline(fetchReadingDetail(value, challengeId), deadlineMs);
+    // Fresh unpredictable nonce per request: only the signed clock answering THIS request may anchor
+    // the phone's clock (a replayed or pre-fetched answer carries another nonce).
+    const nonce = readingClockNonce();
+    const result = await withDeadline(fetchReadingDetail(value, challengeId, nonce), deadlineMs);
     if (!current()) return null;
     if (result.id !== challengeId) throw new Error('Сервер вернул другой челлендж. Повторите обновление.');
     requestStartedAt.current = startedAt;
     // Anchor the monotonic clock to this server time (read after the answer: never ahead of real time).
     const clock = await readingNative.clock?.().catch(() => null);
-    if (clock) await saveJSON(READING_CLOCK_KEY, { serverNow: result.serverNow, uptimeMs: clock.uptimeMs, bootId: clock.bootId }).catch(() => {});
+    if (clock) {
+      const signed = nonce && result.clock?.nonce === nonce ? result.clock : undefined;
+      const anchor: ReadingClockAnchor = signed ? { serverNow: signed.serverNow, uptimeMs: clock.uptimeMs, bootId: clock.bootId, nonce, token: signed.token }
+        : { serverNow: result.serverNow, uptimeMs: clock.uptimeMs, bootId: clock.bootId };
+      await saveJSON(READING_CLOCK_KEY, anchor).catch(() => {});
+    }
+    if (result.supportsAttest && account) void registerAttestKey(account, value ?? '').catch(() => {});
     await saveJSON(cacheKey, result);
     const view = await applyLocalView(result, false);
     const caps = await readingNative.capabilities();
     if (current()) setCapabilities(caps);
     return view;
-  }, [challengeId, current, cacheKey, token, applyLocalView]);
+  }, [challengeId, current, cacheKey, token, applyLocalView, account]);
   const run = useCallback(async (action: () => Promise<unknown>, kind: 'action' | 'refresh' = 'action') => {
     if (!account || !current()) return;
     const operation = Symbol('reading-operation');
@@ -387,9 +431,9 @@ export function useReadingChallenge(challengeId: string) {
     if (deviceError) throw deviceError;
     let local = await readingNative.snapshot();
     if (!current()) return;
-    // A timer whose start the server refused (possibly while it was being launched) can never be
-    // credited: release it so the next approach can start. The refusal stays visible.
-    if (local?.accountId === account && result.session?.id !== local.sessionId) {
+    // A timer whose start, time or pages the server definitively refused (possibly while it was being
+    // launched) can never be credited: release it so the next approach can start. The refusal stays visible.
+    if (local?.accountId === account) {
       const refusedNow = await loadJSON<ReadingRejectedApproach[]>(rejectedKey, []);
       if (Array.isArray(refusedNow) && refusedNow.some(r => r.sessionId === local!.sessionId)) {
         if (current()) setRejected(refusedNow);
@@ -675,11 +719,12 @@ export function useReadingChallenge(challengeId: string) {
     const session = d.session;
     if (session?.id !== pending.sessionId || session.status !== 'running') throw new Error('Сервер не подтвердил начало');
     try {
-      if (session.day !== d.currentDay || d.phase !== 'active') throw new Error('День завершился. Обновите экран перед новым подходом.');
+      // «Старт» in the last minute of a day is placed by the server on the next day (counts from 00:00).
+      if (session.day !== d.currentDay && session.day !== d.currentDay + 1 || d.phase !== 'active') throw new Error('День завершился. Обновите экран перед новым подходом.');
       await saveJSON(cacheKey, d, { strict: true });
-      const targetMs = 3_600_000 - (d.me?.history.find(h => h.day === d.currentDay)?.elapsedMs ?? 0);
+      const targetMs = 3_600_000 - (d.me?.history.find(h => h.day === session.day)?.elapsedMs ?? 0);
       // Conservative deadline: network/cache latency must never move the stop past midnight.
-      const untilMidnight = Math.floor(d.dayEnd - d.serverNow - (performance.now() - requestStartedAt.current));
+      const untilMidnight = Math.floor(readingDayEnd(d.startDate, session.day) - d.serverNow - (performance.now() - requestStartedAt.current));
       if (untilMidnight <= 0) throw new Error('День завершился. Обновите экран перед новым подходом.');
       if (!current()) return;
       const local = await readingNative.start(account, pending.sessionId, pending.deviceId, pending.book, Math.min(session.budgetMs, untilMidnight), targetMs);
@@ -829,6 +874,13 @@ export function useReadingChallenge(challengeId: string) {
       // Measured from the last server time + monotonic clock when possible: a changed phone date
       // cannot move the approach to another day (the server accepts a bare phone date for today only).
       const placed = await readingPhoneNow();
+      // Signed by a genuine copy of this app (App Attest, works offline): the server may then place it on a past day.
+      const timing = placed.source === 'synced' ? { startedAt: placed.now, startedAtSource: placed.source, syncedAt: placed.syncedAt,
+        ...(placed.syncNonce ? { syncNonce: placed.syncNonce, syncToken: placed.syncToken } : {}) }
+        : { startedAt: placed.now, startedAtSource: placed.source };
+      const attestKey = offlineCapable() ? await loadJSON<{ keyId: string } | null>(readingAttestKey(account), null).catch(() => null) : null;
+      const assertion = attestKey?.keyId ? await readingNative.attest?.assertion(attestKey.keyId,
+        readingStartClientData({ sessionId, ...timing })) : null;
       const pending: ReadingPendingStart = { accountId: account, challengeId, sessionId, deviceId,
         operationId: await readingOperationId(sessionId, 'start'), book, createdAt: Date.now() };
       // Remember the attempt BEFORE the request: a lost response is finished later with
@@ -839,8 +891,7 @@ export function useReadingChallenge(challengeId: string) {
         await saveJSON(pendingStartKey, pending, { strict: true });
         // The phone time travels with the start, so a late delivery lands on the right day.
         await queue.enqueue({ action: 'start', operationId: pending.operationId, challengeId, sessionId, deviceId, book, ...metadata,
-          ...(offlineCapable() ? { startedAt: placed.now, startedAtSource: placed.source,
-            ...(placed.syncedAt !== undefined ? { syncedAt: placed.syncedAt } : {}) } : {}) });
+          ...(offlineCapable() ? { ...timing, ...(assertion && attestKey ? { attestKeyId: attestKey.keyId, assertion } : {}) } : {}) });
         if (!offlineStart) {
           try {
             await withDeadline(queue.flush(), 8000);

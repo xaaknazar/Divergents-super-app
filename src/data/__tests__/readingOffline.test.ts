@@ -1,4 +1,4 @@
-import { anchoredNow, localApproaches, readingDayAt, readingDayEnd, readingLocalView, readingStartMs } from '../readingOffline';
+import { anchoredNow, readingPlacedStart, localApproaches, readingDayAt, readingDayEnd, readingLocalView, readingStartMs } from '../readingOffline';
 import { readingFixture } from '../../storybook/readingFixtures';
 import type { ReadingCommand, ReadingDetail } from '../reading';
 
@@ -72,4 +72,13 @@ test('an approach the server copy already counts is not added again; pages-only 
     startedAt: new Date(at(3, 12)).toISOString(), budgetMs: 1, elapsedMs: 10 * 60000, status: 'awaiting_pages' as const } };
   const pagesOnly = localApproaches([cmd('report', 's2', { pages: 3 })], detail.id, stopDelivered);
   expect(pagesOnly[0]).toMatchObject({ elapsedMs: 10 * 60000, pages: 3, phase: 'saved' });
+});
+
+test('a start in the last minute of a day belongs to the next day when that day exists', () => {
+  expect(readingPlacedStart(detail, at(4, 0) - 30_000)).toBe(at(4, 0));
+  expect(readingPlacedStart(detail, at(4, 0) - 90_000)).toBe(at(4, 0) - 90_000);
+  const scheduled = { ...detail, mode: 'scheduled', durationDays: 3 } as ReadingDetail;
+  expect(readingPlacedStart(scheduled, at(4, 0) - 30_000)).toBe(at(4, 0) - 30_000);
+  const view = readingLocalView(detail, localApproaches([cmd('start', 's1', { book: 'Книга', startedAt: at(4, 0) - 30_000 })], detail.id, detail), at(4, 0) - 20_000, true);
+  expect(view.session).toMatchObject({ day: 4, budgetMs: 86_400_000 });
 });

@@ -44,6 +44,9 @@ module.exports = function withReadingFocus(config, options = {}) {
   });
   config = withEntitlementsPlist(config, c => {
     c.modResults['com.apple.developer.family-controls'] = true;
+    // App Attest (offline reading starts). Opt-in: the App ID must have the App Attest capability
+    // in the Apple Developer portal first, otherwise signing fails (capability sync is disabled).
+    if (options.appAttest) c.modResults['com.apple.developer.devicecheck.appattest-environment'] = 'production';
     c.modResults['com.apple.security.application-groups'] = [...new Set([...(c.modResults['com.apple.security.application-groups'] || []), GROUP])];
     return c;
   });
