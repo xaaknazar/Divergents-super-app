@@ -43,6 +43,8 @@ export type ReadingBookSummary = z.infer<typeof ReadingBookSummarySchema>;
 export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, mode,
   format: z.enum(['individual', 'teams']).optional(), participants: z.number().optional(),
   flagRecoveryDays: z.number().int().positive().optional(),
+  // The server accepts approaches started without internet (start.startedAt), delivered later.
+  supportsOfflineStart: z.boolean().optional(),
   currentDay: z.number(), serverNow: z.number(), dayEnd: z.number(), membership, me: member.nullable(), ranking: z.array(member),
   reportedSessionIds: z.array(z.string()),
   // Omitted by older servers: do not turn missing data into a misleading empty day.

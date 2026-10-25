@@ -17,6 +17,7 @@ import { ReadingTimerControls } from './ReadingTimerControls';
 import { ReadingPagesForm } from './ReadingPagesForm';
 import { ReadingSaveStatus } from './ReadingSaveStatus';
 import { ReadingPagesNotice } from './ReadingPagesNotice';
+import { ReadingOfflineStatus } from './ReadingOfflineStatus';
 import { ReadingProgressSummary } from './ReadingProgressSummary';
 import { ReadingHistoryLink } from './ReadingHistoryLink';
 import { ReadingBookLibrary, ReadingBookshelf, ReadingShelfComposer } from './ReadingBookshelf';
@@ -46,6 +47,13 @@ export type ReadingChallengeContentProps = {
   needsRecovery: boolean; onRecover: () => void;
   /** Сервер принял «Старт» этого телефона, но ответ потерялся: таймер ещё не идёт. */
   startRecovery?: boolean; onContinueStart?: () => void;
+  /** Нет ответа сервера: экран работает по копии на телефоне. */
+  offline?: boolean;
+  /** Подходы, сохранённые на телефоне и ещё не принятые сервером (всего / за сегодня). */
+  pendingApproaches?: number; pendingToday?: number;
+  /** Подходы без интернета, которые сервер потом не принял. */
+  rejectedApproaches?: { sessionId: string; book: string; elapsedMs?: number; pages?: number; message: string }[];
+  onDismissRejected?: () => void;
 };
 
 /** Reading challenge, индивидуальный зачёт. Не участник — вступление: компактный блок, правила, галочка,
@@ -114,6 +122,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const idleAction = todayMs > 0 ? 'next' as const : 'start' as const;
   return <Wrapper padding={16} gap={18}>
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
+    {p.offline || p.pendingApproaches ? <ReadingOfflineStatus state={p.offline ? 'offline' : 'sending'} pending={p.pendingApproaches} /> : null}
+    {(p.rejectedApproaches ?? []).map(r => <InlineNotice key={r.sessionId} actionLabel="Понятно" onRetry={p.onDismissRejected}
+      message={`Сервер не принял подход без интернета «${r.book}»${r.elapsedMs != null ? ` (${Math.floor(r.elapsedMs / 60000)} мин${r.pages != null ? `, ${r.pages} стр.` : ''})` : ''}: ${r.message}`} />)}
     {p.sessionNotice ? <InlineNotice message={p.sessionNotice.message} onRetry={p.onRetry} /> : null}
     {member.eliminatedOn ? <InlineNotice message={`Участие завершено на ${member.eliminatedOn}-й день.`} /> : null}
     {d.phase === 'upcoming' ? <ScreenDescription text={`Челлендж начнётся ${readingDateLabel(d.startDate)}. В этот день здесь появится таймер.`} /> : null}
@@ -135,7 +146,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
         : recording ? softPaused && p.onResume ? <ReadingTimerControls action="resume" secondary disabled={!p.canResume || p.localBusy} onPress={p.onResume} /> : null
         : p.protection === 'unavailable' ? <InlineNotice message="Системная блокировка недоступна в этой сборке. Запустить защищённый сеанс пока нельзя." />
         : p.startRecovery && p.onContinueStart ? <Wrapper gap={10}>
-          <InlineNotice message="Сервер принял начало подхода с этого телефона, но ответ не дошёл. Таймер ещё не идёт, время не начислялось. Продолжите запуск: включатся таймер и ограничения приложений."
+          <InlineNotice message="Подход начат с этого телефона, но таймер ещё не запустился, время не начислялось. Продолжите запуск: включатся таймер и ограничения приложений."
             actionLabel="Продолжить запуск" onRetry={() => { const go = p.onContinueStart; if (go) confirmStrict(go); }} />
           {p.protection !== 'ready' ? <Button label={p.protection === 'permission' ? 'Разрешить блокировку' : 'Выбрать приложения'}
             variant="tinted" onPress={p.onPrepare} loading={p.busy} /> : null}
@@ -159,7 +170,8 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
           </> : null}
           <ReadingTimerControls action={idleAction} onPress={start} loading={p.busy}
             disabled={p.startBlocked || approachOpen || p.protection !== 'ready' || !bookReady || !!p.allowedApps?.busy || !!p.composer?.adding} />
-          {savedToday ? <ReadingSaveStatus variant="inline" state="saved" detail={`сегодня ${todayMinutes} мин · ${today?.pages ?? 0} стр.`} /> : null}
+          {savedToday ? <ReadingSaveStatus variant="inline" state={p.pendingToday ? 'pending' : 'saved'}
+            detail={`сегодня ${todayMinutes} мин · ${today?.pages ?? 0} стр.${p.pendingToday ? ' Отправим при связи' : ''}`} /> : null}
           {!bookReady ? <ScreenDescription text={p.library ? 'Добавьте книгу на полку и выберите её для подхода.' : READING_REQUIRE_VERIFIED_BOOK ? 'Чтобы начать, выберите и подтвердите книгу.' : 'Чтобы начать, напишите название книги.'} /> : null}
         </>}
       {p.library ? null : d.session ? <ReadingBookField status="verified" locked title={d.session.book} author={d.session.author ?? ''}

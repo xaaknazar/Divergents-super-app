@@ -1,0 +1,10 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingOfflineStatus } from './ReadingOfflineStatus';
+const meta = { title: 'Reading/Offline status', component: ReadingOfflineStatus, args: { state: 'offline', pending: 0 } } satisfies Meta<typeof ReadingOfflineStatus>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Offline: Story = {};
+export const OfflineWithSaved: Story = { args: { pending: 2 } };
+export const Sending: Story = { args: { state: 'sending', pending: 1 } };
+export const OfflineDark: Story = { args: { pending: 2 }, parameters: { scheme: 'dark' } };
+export const OfflineLargeText: Story = { args: { pending: 2 }, parameters: { viewport: 'compact', textSize: 'xl' } };

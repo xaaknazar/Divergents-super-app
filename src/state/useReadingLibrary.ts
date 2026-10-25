@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Crypto from 'expo-crypto';
+import { loadJSON, saveJSON } from './persist';
 import { addReadingBook, fetchReadingHistory, readingBookAddSelection, ReadingBookAddReceipt,
   ReadingBookSelection, ReadingShelfBook } from '../data/readingBooks';
 
@@ -36,10 +37,22 @@ export function useReadingLibrary(challengeId: string, readerId?: string, receip
       const data = await fetchReadingHistory(token, challengeId, readerId);
       if (!isCurrent() || sequence.current !== request) return;
       if (!data.own || data.reader.userId !== userId || data.challengeId !== challengeId) throw new Error('Не удалось загрузить ваши книги');
-      setState({ context, books: data.shelfBooks ?? data.books.map(book => ({ ...book, addedAt: null })), busy: false,
-        supportsBookshelf: data.shelfBooks !== undefined && data.supportsBookshelf !== false });
+      const books = data.shelfBooks ?? data.books.map(book => ({ ...book, addedAt: null }));
+      const supportsBookshelf = data.shelfBooks !== undefined && data.supportsBookshelf !== false;
+      setState({ context, books, busy: false, supportsBookshelf });
+      // A copy on the phone lets the reader pick a book and start without internet.
+      void saveJSON(`dvg.readingShelf.v1.${userId}.${challengeId}`, { books, supportsBookshelf }).catch(() => {});
     } catch (error) {
       if (!isCurrent() || sequence.current !== request) return;
+      const saved = stateRef.current?.context === context && stateRef.current.books.length ? null
+        : await loadJSON<{ books: ReadingShelfBook[]; supportsBookshelf: boolean } | null>(`dvg.readingShelf.v1.${userId}.${challengeId}`, null);
+      if (!isCurrent() || sequence.current !== request) return;
+      if (saved && Array.isArray(saved.books) && saved.books.length) {
+        // Offline: the last confirmed shelf. Adding books still needs the server.
+        setState({ context, books: saved.books, busy: false, supportsBookshelf: false,
+          error: 'Полка из памяти телефона. Новые книги можно будет добавить при связи.' });
+        return;
+      }
       setState(previous => ({ context, books: previous?.context === context ? previous.books : [], busy: false,
         supportsBookshelf: previous?.context === context && previous.supportsBookshelf,
         error: libraryError(error, 'Не удалось загрузить ваши книги. Повторите попытку.') }));

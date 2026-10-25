@@ -451,8 +451,10 @@ test('offline partial-book finalization durably queues exact time and pages with
   const stopAttempts = send.mock.calls.map(call => call[1]).filter(command => command.action === 'stop');
   expect(stopAttempts.length).toBeGreaterThan(0);
   expect(new Set(stopAttempts.map(command => JSON.stringify(command))).size).toBe(1);
-  expect(journal).toMatchObject({ terminal: true, elapsedMs: 900_217 });
-  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+  // Exact time and pages are durably in the outbox, so the phone journal is released for the next
+  // offline approach (changed 25.10: offline mode). Nothing was sent or credited by the server.
+  expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 'session-a');
+  expect(journal).toBeNull();
 });
 
 test.each(['stop', 'report'] as const)('a locally queued %s forbids resuming even before the server state changes', async action => {

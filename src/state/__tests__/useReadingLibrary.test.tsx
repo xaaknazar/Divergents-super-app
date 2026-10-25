@@ -10,6 +10,9 @@ jest.mock('../../data/readingBooks', () => ({ ...jest.requireActual('../../data/
 jest.mock('expo-crypto', () => ({ CryptoDigestAlgorithm: { SHA256: 'sha256' },
   digestStringAsync: async (_algorithm: string, text: string) => require('crypto').createHash('sha256').update(text).digest('hex') }));
 jest.mock('../../data/api', () => ({ API_BASE: 'https://example.test' }));
+let mockDisk: Record<string, any> = {};
+jest.mock('../persist', () => ({ loadJSON: jest.fn(async (key: string, fallback: unknown) => mockDisk[key] ?? fallback),
+  saveJSON: jest.fn(async (key: string, value: unknown) => { mockDisk[key] = JSON.parse(JSON.stringify(value)); }) }));
 const fetchHistory = jest.mocked(fetchReadingHistory);
 const addBook = jest.mocked(addReadingBook);
 const history = (id = 'demo-reader'): ReadingHistory => ({ challengeId: 'ch1', own: true,
@@ -19,7 +22,7 @@ const shelf = (id = 'demo-reader'): ReadingHistory => ({ ...history(id), support
   shelfBooks: [{ ...history(id).books[0], addedAt: null }, { ...readingBookExample, key: 'unread', title: 'Новая книга', pages: 0,
     elapsedMs: 0, lastReadAt: null, addedAt: '2026-10-22T06:00:00Z', finished: false, editable: true }] });
 const selection = { title: ' Новая книга ', author: ' Автор ', key: 'unread' };
-beforeEach(() => { mockUserId = 'demo-reader'; mockToken.mockReset(); mockToken.mockResolvedValue('token');
+beforeEach(() => { mockDisk = {}; mockUserId = 'demo-reader'; mockToken.mockReset(); mockToken.mockResolvedValue('token');
   fetchHistory.mockReset(); fetchHistory.mockResolvedValue(history()); addBook.mockReset(); addBook.mockResolvedValue({ bookKey: 'unread' }); });
 
 test('does not request another reader or a visitor library', async () => {
@@ -240,4 +243,21 @@ test('unmount during addition neither refreshes nor reports a success to the sta
   resolve({ bookKey: 'unread' });
   expect(await pending).toBeNull();
   expect(fetchHistory).toHaveBeenCalledTimes(1);
+});
+
+test('without internet the last confirmed shelf comes from the phone, read-only', async () => {
+  fetchHistory.mockResolvedValueOnce(shelf());
+  const first = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+  await waitFor(() => expect(first.result.current.books).toHaveLength(2));
+  await first.unmount();
+  fetchHistory.mockRejectedValue(new TypeError('Network request failed'));
+  const offline = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+  await waitFor(() => expect(offline.result.current.books.map(b => b.title)).toEqual([readingBookExample.title, 'Новая книга']));
+  expect(offline.result.current.supportsBookshelf).toBe(false);
+  expect(offline.result.current.error).toMatch(/памяти телефона/);
+  // Another account never sees this copy.
+  mockUserId = 'other';
+  const other = await renderHook(() => useReadingLibrary('ch1', 'other'));
+  await waitFor(() => expect(other.result.current.busy).toBe(false));
+  expect(other.result.current.books).toEqual([]);
 });

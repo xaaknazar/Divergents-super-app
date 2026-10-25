@@ -90,3 +90,11 @@ export const ShelfSavedLargeText: Story = { ...ShelfSaved, parameters: { viewpor
 export const ShelfRunning: Story = { args: { ...shelfArgs, timerState: 'running', data: { ...shelfToday, session: { ...session, bookKey: 'ol:OL1W' } } } };
 export const ShelfPages: Story = { args: { ...shelfArgs, timerState: 'paused', remainingMs: 0, awaitingPages: true,
   data: { ...shelfToday, session: { ...session, bookKey: 'ol:OL1W', status: 'awaiting_pages' as const, elapsedMs: 3_600_000 } } } };
+/** Без интернета: таймер и страницы на телефоне, отправка при связи. */
+export const OfflineSaved: Story = { args: { ...shelfArgs, offline: true, pendingApproaches: 1, pendingToday: 1,
+  data: { ...shelfToday, me: { ...shelfToday.me!, history: [{ day: 14, state: 'open', pages: 12, elapsedMs: 18 * 60000 }] } } } };
+export const OfflineRunning: Story = { args: { ...shelfArgs, offline: true, pendingApproaches: 1, timerState: 'running',
+  data: { ...shelfToday, session: { ...session, bookKey: 'ol:OL1W' } } } };
+export const OfflineDark: Story = { ...OfflineSaved, parameters: { scheme: 'dark' } };
+export const OfflineRejected: Story = { args: { ...shelfArgs, rejectedApproaches: [{ sessionId: 'x', book: 'Атомные привычки', elapsedMs: 25 * 60000, pages: 12,
+  message: 'Подход начат больше 7 дней назад и уже не принимается.' }], onDismissRejected: noop, data: shelfToday } };

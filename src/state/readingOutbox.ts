@@ -16,6 +16,8 @@ export type ReadingOutboxDependencies = {
   write(value: ReadingQueue): Promise<void>;
   send(command: ReadingCommand): Promise<ReadingReceipt>;
   isCurrentAccount(): boolean;
+  /** A start the server definitively refused, with the approach's queued close/pages that were dropped with it. */
+  onRejectedStart?(start: ReadingCommand, dropped: ReadingCommand[], error: ReadingApiError): Promise<void> | void;
 };
 // Only disk read-modify-write belongs under this lock. Network waits must never
 // prevent another screen from durably saving time/pages before the app exits.
@@ -68,6 +70,16 @@ export class ReadingOutbox {
       await this.deps.write({ ...q, commands: q.commands.filter(c => c.operationId !== command.operationId) });
     });
   }
+  /** A refused start makes its queued stop/pages undeliverable (the server has no such approach).
+   * Drop them together so they cannot block later approaches forever; the caller keeps a visible record. */
+  private rejectStart(command: ReadingCommand) {
+    return this.serialize(async () => {
+      const q = await this.queue();
+      const dropped = q.commands.filter(c => c.operationId !== command.operationId && c.sessionId === command.sessionId && command.sessionId !== undefined);
+      await this.deps.write({ ...q, commands: q.commands.filter(c => c.operationId !== command.operationId && !dropped.includes(c)) });
+      return dropped;
+    });
+  }
   flush() {
     // Preserve command order across screens, but do not block a new account or
     // any disk writes on the previous account's transport.
@@ -83,7 +95,12 @@ export class ReadingOutbox {
         catch (error) {
           // A definitive rejected application can be edited/retried. Timing evidence stays durable.
           if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && ['apply', 'review', 'resolve', 'start'].includes(command.action)) {
-            if (this.deps.isCurrentAccount()) await this.acknowledge(command);
+            if (this.deps.isCurrentAccount()) {
+              if (command.action === 'start') {
+                const dropped = await this.rejectStart(command);
+                await this.deps.onRejectedStart?.(command, dropped, error);
+              } else await this.acknowledge(command);
+            }
           }
           throw error;
         }

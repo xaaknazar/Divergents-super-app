@@ -46,7 +46,9 @@ export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenP
       sessionElapsedMs={reading.sessionElapsedMs} localBusy={reading.localBusy}
       sessionNotice={reading.sessionNotice} startBlocked={reading.startBlocked}
       needsRecovery={reading.needsRecovery} onRecover={reading.recover}
-      startRecovery={reading.startRecovery} onContinueStart={reading.continueStart} book={book} library={{ ...library, select: book.selectSaved }}
+      startRecovery={reading.startRecovery} onContinueStart={reading.continueStart}
+      offline={reading.offline} pendingApproaches={reading.pendingApproaches} pendingToday={reading.pendingToday}
+      rejectedApproaches={reading.rejectedApproaches} onDismissRejected={reading.dismissRejected} book={book} library={{ ...library, select: book.selectSaved }}
       allowedApps={allowedApps}
       composer={{ draft, supported: library.supportsBookshelf, adding: library.adding, error: library.addError,
         reset: () => { draft.reset(); library.clearAddError(); },

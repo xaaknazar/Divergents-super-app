@@ -416,7 +416,9 @@ test('cold offline restart restores controls and saves pages before sending', as
   jest.mocked(readingNative.snapshot).mockResolvedValue(local);
   fetchDetail.mockRejectedValue(new Error('offline')); send.mockRejectedValue(new Error('offline'));
   const h = await renderHook(() => useReadingChallenge('reading-demo'));
-  await waitFor(() => expect(h.result.current.error).toContain('Нет подтверждения сервера'));
+  // No internet is a calm offline state, not an error banner.
+  await waitFor(() => expect(h.result.current.offline).toBe(true));
+  expect(h.result.current.error).toBeUndefined();
   expect(h.result.current.data?.id).toBe('reading-demo'); expect(h.result.current.awaitingPages).toBe(true);
   await act(async () => { await h.result.current.report(22); });
   expect(mockDisk[READING_OUTBOX_KEY].commands.map((c: any) => [c.action, c.pages ?? c.elapsedMs])).toEqual([['stop', 1800000], ['report', 22]]);

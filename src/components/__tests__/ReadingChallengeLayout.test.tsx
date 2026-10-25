@@ -164,7 +164,7 @@ test('a reserved start whose response was lost offers only «Продолжит�
   const p = props(); p.timerState = 'paused'; p.startRecovery = true; p.onContinueStart = jest.fn();
   p.data = { ...p.data, session: { ...session, elapsedMs: null } };
   const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.getByText(/ответ не дошёл/)).toBeTruthy();
+  expect(view.getByText(/таймер ещё не запустился/)).toBeTruthy();
   expect(view.queryByRole('button', { name: 'Старт' })).toBeNull();
   expect(view.queryByRole('button', { name: 'Закрыть прерванный подход' })).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: 'Продолжить запуск' }));
@@ -179,4 +179,17 @@ test('a reserved start can repair blocking permission before continuing', async 
   await fireEvent.press(view.getByRole('button', { name: 'Разрешить блокировку' }));
   expect(p.onPrepare).toHaveBeenCalledTimes(1);
   expect(view.getByRole('button', { name: 'Продолжить запуск' })).toBeTruthy();
+});
+test('offline: a calm status instead of an error, saved approaches marked as on the phone, refusals explained', async () => {
+  const p = props(); p.offline = true; p.pendingApproaches = 2; p.pendingToday = 1; p.onDismissRejected = jest.fn();
+  p.data = { ...p.data, me: { ...p.data.me!, history: [{ day: 14, state: 'open', pages: 12, elapsedMs: 25 * 60_000 }] } };
+  p.rejectedApproaches = [{ sessionId: 'x', book: 'Книга', elapsedMs: 15 * 60_000, pages: 5, message: 'Подход начат больше 7 дней назад.' }];
+  const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(view.getByLabelText(/^Нет интернета\. .*Ждут отправки: 2 подхода/)).toBeTruthy();
+  expect(view.getByLabelText(/^Записано на телефоне\. сегодня 25 мин · 12 стр\. Отправим при связи/)).toBeTruthy();
+  expect(view.getByText(/не принял подход без интернета «Книга» \(15 мин, 5 стр\.\)/)).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: 'Понятно' }));
+  expect(p.onDismissRejected).toHaveBeenCalledTimes(1);
+  // Starting stays possible offline.
+  expect(view.getByRole('button', { name: 'Новый подход' })).toBeEnabled();
 });
