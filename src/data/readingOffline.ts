@@ -14,6 +14,16 @@ export function readingDayEnd(startDate: string, day: number) {
   return readingStartMs(startDate) + day * READING_DAY_MS;
 }
 
+/** Server time this phone last received, with the monotonic clock reading taken right after it. */
+export type ReadingClockAnchor = { serverNow: number; uptimeMs: number; bootId: string };
+/** Real time from the last server answer plus the monotonic clock. Null after a reboot or without
+ * an anchor: then only the phone's own (changeable) date is known. */
+export function anchoredNow(anchor: ReadingClockAnchor | null | undefined, clock: { uptimeMs: number; bootId: string } | null | undefined) {
+  if (!anchor || !clock || anchor.bootId !== clock.bootId || clock.uptimeMs < anchor.uptimeMs
+    || !Number.isFinite(anchor.serverNow) || !Number.isFinite(anchor.uptimeMs)) return null;
+  return Math.floor(anchor.serverNow + (clock.uptimeMs - anchor.uptimeMs));
+}
+
 /** One approach that exists on this phone but is not yet confirmed by the server. */
 export type ReadingLocalApproach = {
   sessionId: string; day: number | null; book: string; author?: string; bookKey?: string; fromPage?: number;
@@ -41,7 +51,8 @@ export function localApproaches(commands: ReadingCommand[], challengeId: string,
       const known = detail?.session?.id === sessionId ? detail.session : null;
       approach = { sessionId, day: known?.day ?? null, book: known?.book ?? '', author: known?.author ?? undefined,
         bookKey: known?.bookKey ?? undefined, fromPage: known?.fromPage ?? undefined, deviceId: known?.deviceId,
-        startQueued: false, phase: 'open' };
+        // Stop already delivered, only pages queued: the server copy holds the time.
+        elapsedMs: known?.elapsedMs ?? undefined, startQueued: false, phase: 'open' };
       bySession.set(sessionId, approach);
     }
     if (command.action === 'start') {
@@ -75,10 +86,12 @@ export function readingLocalView(detail: ReadingDetail, approaches: ReadingLocal
       phase: day < 1 ? 'upcoming' : day > detail.durationDays ? 'finished' : 'active' };
   }
   if (!approaches.length) return view;
-  const saved = approaches.filter(a => a.phase === 'saved' && a.day != null);
+  // Already counted by the server copy (pages delivered, queue not yet cleared): never add twice.
+  const counted = new Set(detail.reportedSessionIds ?? []);
+  const saved = approaches.filter(a => a.phase === 'saved' && a.day != null && !counted.has(a.sessionId));
   const open = [...approaches].reverse().find(a => a.phase !== 'saved');
   // A session closed on the phone is no longer an open server session in this view.
-  let session = view.session && saved.some(a => a.sessionId === view.session!.id) ? null : view.session;
+  let session = view.session && approaches.some(a => a.phase === 'saved' && a.sessionId === view.session!.id) ? null : view.session;
   if (!session && open && open.startQueued && open.day != null && open.startedAt !== undefined) {
     session = { id: open.sessionId, deviceId: open.deviceId ?? '', day: open.day, book: open.book, author: open.author ?? null,
       bookKey: open.bookKey ?? null, fromPage: open.fromPage ?? null, startedAt: new Date(open.startedAt).toISOString(),

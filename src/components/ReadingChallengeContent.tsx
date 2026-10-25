@@ -124,7 +124,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
     {p.offline || p.pendingApproaches ? <ReadingOfflineStatus state={p.offline ? 'offline' : 'sending'} pending={p.pendingApproaches} /> : null}
     {(p.rejectedApproaches ?? []).map(r => <InlineNotice key={r.sessionId} actionLabel="Понятно" onRetry={p.onDismissRejected}
-      message={`Сервер не принял подход без интернета «${r.book}»${r.elapsedMs != null ? ` (${Math.floor(r.elapsedMs / 60000)} мин${r.pages != null ? `, ${r.pages} стр.` : ''})` : ''}: ${r.message}`} />)}
+      message={`Сервер не засчитал подход${r.book ? ` «${r.book}»` : ''}${r.elapsedMs != null ? ` (${Math.floor(r.elapsedMs / 60000)} мин${r.pages != null ? `, ${r.pages} стр.` : ''})` : ''}: ${r.message}`} />)}
     {p.sessionNotice ? <InlineNotice message={p.sessionNotice.message} onRetry={p.onRetry} /> : null}
     {member.eliminatedOn ? <InlineNotice message={`Участие завершено на ${member.eliminatedOn}-й день.`} /> : null}
     {d.phase === 'upcoming' ? <ScreenDescription text={`Челлендж начнётся ${readingDateLabel(d.startDate)}. В этот день здесь появится таймер.`} /> : null}

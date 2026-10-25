@@ -62,10 +62,12 @@ export type ReadingCatalogItem = z.infer<typeof catalogItem>;
 export type ReadingDetail = z.infer<typeof ReadingDetailSchema>;
 export type ReadingCommand = { action: string; operationId: string; [key: string]: unknown };
 const receipt = z.object({ ok: z.literal(true), challengeId: z.string().optional(), sessionId: z.string().optional(),
-  budgetMs: z.number().optional(), serverNow: z.number().optional(), dayEnd: z.number().optional(), review: z.boolean().optional() });
+  budgetMs: z.number().optional(), serverNow: z.number().optional(), dayEnd: z.number().optional(), review: z.boolean().optional(),
+  // Accepted but not credited (e.g. 'overlap': the approach covers minutes of another approach).
+  rejected: z.string().optional(), message: z.string().optional() });
 export type ReadingReceipt = z.infer<typeof receipt>;
 export class ReadingApiError extends Error {
-  constructor(message: string, public status: number) { super(message); }
+  constructor(message: string, public status: number, public code?: string) { super(message); }
 }
 async function request(token: string | null, id?: string, body?: ReadingCommand): Promise<unknown> {
   if (!token) throw new ReadingApiError('Войдите в аккаунт', 401);
@@ -75,7 +77,8 @@ async function request(token: string | null, id?: string, body?: ReadingCommand)
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const value = await response.json().catch(() => null);
-  if (!response.ok) throw new ReadingApiError(typeof value?.message === 'string' ? value.message : 'Сервер не подтвердил действие', response.status);
+  if (!response.ok) throw new ReadingApiError(typeof value?.message === 'string' ? value.message : 'Сервер не подтвердил действие', response.status,
+    typeof value?.code === 'string' ? value.code : undefined);
   return value;
 }
 export async function fetchReadingCatalog(token: string | null) { return ReadingCatalogSchema.parse(await request(token)); }

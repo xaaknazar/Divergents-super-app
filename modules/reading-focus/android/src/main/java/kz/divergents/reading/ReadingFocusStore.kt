@@ -24,6 +24,7 @@ object ReadingFocusStore {
   private fun boot(c: Context): String = Settings.Global.getInt(c.contentResolver, Settings.Global.BOOT_COUNT, -1).also {
     check(it >= 0) { "Не удалось определить перезагрузку устройства" }
   }.toString()
+  fun clock(c: Context): Map<String, Any> = mapOf("uptimeMs" to SystemClock.elapsedRealtime().toDouble(), "bootId" to boot(c))
   private fun read(c: Context): JSONObject? = emergencyPaused ?: prefs(c).getString("session", null)?.let { JSONObject(it) }
   private fun write(c: Context, value: JSONObject) {
     check(prefs(c).edit().putString("session", value.toString()).commit()) { "Не удалось сохранить сеанс" }

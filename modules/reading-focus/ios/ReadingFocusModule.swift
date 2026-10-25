@@ -122,6 +122,12 @@ public class ReadingFocusModule: Module {
       let session = try await ReadingFocusStore.finish(accountId: accountId, sessionId: sessionId, generation: expectedGeneration)
       return try self.encodeSession(session)
     }
+    // Monotonic clock (counts sleep, unaffected by the phone's date) and boot identity. JS anchors it to
+    // a server time, so an approach started without internet is placed by real time, not by the settings.
+    AsyncFunction("clock") { () throws -> [String: Any] in
+      guard #available(iOS 16.2, *) else { throw ReadingFocusFailure.unavailable }
+      return try ReadingFocusStore.locked { () throws -> [String: Any] in ["uptimeMs": ReadingFocusStore.uptimeMs(), "bootId": try ReadingFocusStore.bootId()] }
+    }
     AsyncFunction("remainingMs") { () throws -> Double in
       guard #available(iOS 16.2, *) else { return 0 }
       guard let session = try ReadingFocusStore.snapshot() else { return 0 }

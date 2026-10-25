@@ -30,6 +30,7 @@ type NativeFocus = {
   authorize(): Promise<void>; selectApps(): Promise<void>;
   start(accountId: string, sessionId: string, deviceId: string, book: string, budgetMs: number, targetMs: number): Promise<string>;
   snapshot(): Promise<string | null>; pause(): Promise<string | null>; remainingMs(): Promise<number>;
+  clock?(): Promise<unknown>;
   acknowledge(accountId: string, sessionId: string): Promise<void>;
   configurePageReminder?(accountId: string, sessionId: string, challengeId: string): Promise<void>;
   reconcileLiveActivity?(accountId: string, sessionId: string): Promise<unknown>;
@@ -41,6 +42,9 @@ type NativeFocus = {
   selectAllowedApps?(accountId: string, expectedRevision: string | null): Promise<unknown>;
 };
 const native = requireOptionalNativeModule<NativeFocus>('ReadingFocus');
+const ClockSchema = z.object({ uptimeMs: z.number().finite().nonnegative(), bootId: z.string().min(1) });
+/** Monotonic phone clock (counts sleep, ignores date changes) with the boot it belongs to. */
+export type ReadingClock = z.infer<typeof ClockSchema>;
 const parse = (raw: string | null) => raw ? NativeReadingSchema.parse(JSON.parse(raw)) : null;
 let snapshotRead: Promise<NativeReadingSession | null> | null = null;
 let journalRevision = 0;
@@ -124,6 +128,12 @@ export const readingNative = {
     return changeJournal(async () => NativeReadingSchema.parse(JSON.parse(await native.finish!(accountId, sessionId, expectedGeneration))));
   },
   remainingMs: async () => native ? native.remainingMs() : 0,
+  /** Null on builds without it: then only the phone's wall clock is known. */
+  clock: async (): Promise<ReadingClock | null> => {
+    if (!native?.clock) return null;
+    try { const raw = await native.clock(); return ClockSchema.parse(typeof raw === 'string' ? JSON.parse(raw) : raw); }
+    catch { return null; }
+  },
   acknowledge: (accountId: string, sessionId: string) => changeJournal(() => requireFocus().acknowledge(accountId, sessionId)),
   configurePageReminder: async (accountId: string, sessionId: string, challengeId: string): Promise<void> => {
     await native?.configurePageReminder?.(accountId, sessionId, challengeId);

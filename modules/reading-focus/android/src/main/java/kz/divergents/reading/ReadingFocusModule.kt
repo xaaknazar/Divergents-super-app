@@ -64,6 +64,8 @@ class ReadingFocusModule : Module() {
       val c = context(); val result = ReadingFocusStore.pause(c)
       c.stopService(Intent(c, ReadingTimerService::class.java)); result?.toString()
     }
+    // Sleep-aware monotonic clock + boot identity; JS anchors it to a server time for offline starts.
+    AsyncFunction("clock") { ReadingFocusStore.clock(context()) }
     AsyncFunction("remainingMs") { ReadingFocusStore.snapshot(context())?.let { ReadingFocusStore.remaining(it) } ?: 0.0 }
     AsyncFunction("acknowledge") { account: String, id: String -> ReadingFocusStore.acknowledge(context(), account, id) }
     AsyncFunction("configurePageReminder") { account: String, id: String, challenge: String ->

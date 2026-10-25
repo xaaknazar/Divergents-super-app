@@ -7,7 +7,7 @@ import { loadJSON, readJSON, saveJSON } from './persist';
 import { readingNative, NativeReadingSession, ReadingCapabilities, ReadingLiveActivityStatus, isLegacyReadingQASession } from './readingNative';
 import { ReadingOutbox, ReadingQueue, READING_OUTBOX_KEY, readingErrorMessage, hasPendingReadingClose } from './readingOutbox';
 import { ReadingBookMetadata } from '../data/readingBooks';
-import { localApproaches, readingDayEnd, readingLocalView } from '../data/readingOffline';
+import { anchoredNow, localApproaches, ReadingClockAnchor, readingDayEnd, readingLocalView } from '../data/readingOffline';
 
 /** The server did not answer (no internet, airplane mode, timeout or no fresh sign-in token). */
 export class ReadingOfflineError extends Error {
@@ -26,6 +26,15 @@ function withDeadline<T>(promise: Promise<T>, ms?: number): Promise<T> {
 }
 /** How long a user action waits for a background refresh, and how long a background refresh may take. */
 const ACTION_WAIT_MS = 4000, REFRESH_DEADLINE_MS = 10_000;
+/** Last server time this phone received + the monotonic clock right after it (one per installation). */
+export const READING_CLOCK_KEY = 'dvg.readingClock.v1';
+/** Real time when the phone can prove it (server anchor + monotonic clock), else its own date. */
+async function readingPhoneNow(): Promise<{ now: number; source: 'synced' | 'device'; syncedAt?: number }> {
+  const [anchor, clock] = await Promise.all([loadJSON<ReadingClockAnchor | null>(READING_CLOCK_KEY, null).catch(() => null),
+    readingNative.clock?.().catch(() => null) ?? null]);
+  const now = anchoredNow(anchor, clock);
+  return now === null || !anchor ? { now: Date.now(), source: 'device' } : { now, source: 'synced', syncedAt: anchor.serverNow };
+}
 export type ReadingRejectedApproach = { sessionId: string; book: string; elapsedMs?: number; pages?: number; message: string; at: number };
 
 // A stable operation id survives app/extension death; retries keep the exact payload.
@@ -183,6 +192,12 @@ export function useReadingChallenge(challengeId: string) {
       }
     }
   }, [account, current, observeLocalSession, reconcileLiveActivity]);
+  const rememberRejected = useCallback(async (forChallenge: string, record: ReadingRejectedApproach) => {
+    const key = `dvg.readingRejected.v1.${account}.${forChallenge}`;
+    const list = [...(await loadJSON<ReadingRejectedApproach[]>(key, [])).filter(r => r.sessionId !== record.sessionId), record].slice(-10);
+    await saveJSON(key, list, { strict: true });
+    if (current() && key === rejectedKey) setRejected(list);
+  }, [account, current, rejectedKey]);
   const queue = useMemo(() => new ReadingOutbox(account, {
     read: async () => { const r = await readJSON<ReadingQueue | null>(READING_OUTBOX_KEY, null); if (!r.ok) throw new Error('Не удалось прочитать сохранённые действия'); return r.value; },
     write: q => saveJSON(READING_OUTBOX_KEY, q, { strict: true }),
@@ -193,21 +208,17 @@ export function useReadingChallenge(challengeId: string) {
       return sendReadingCommand(value, command);
     },
     // The server refused an approach started without internet: keep a visible record and
-    // release this phone's timer for it (its time cannot be credited anymore).
+    // release this phone's timer for it (its time cannot be credited anymore). The record is kept
+    // even when the timer is not running yet: a start racing this refusal is released by the next sync.
     onRejectedStart: async (start, dropped, error) => {
       const sessionId = String(start.sessionId ?? '');
       let local: NativeReadingSession | null = null;
       try { local = await readingNative.snapshot(); } catch { /* evidence stays in the record below */ }
       const own = local?.accountId === account && local.sessionId === sessionId ? local : null;
-      if (!own && !dropped.length) return;
       const stop = dropped.find(c => c.action === 'stop'), report = dropped.find(c => c.action === 'report');
-      const record: ReadingRejectedApproach = { sessionId, book: String(start.book ?? ''), message: error.message, at: Date.now(),
+      await rememberRejected(String(start.challengeId ?? ''), { sessionId, book: String(start.book ?? ''), message: error.message, at: Date.now(),
         elapsedMs: typeof stop?.elapsedMs === 'number' ? stop.elapsedMs : own?.elapsedMs ?? undefined,
-        pages: typeof report?.pages === 'number' ? report.pages : undefined };
-      const key = `dvg.readingRejected.v1.${account}.${String(start.challengeId ?? '')}`;
-      const list = [...(await loadJSON<ReadingRejectedApproach[]>(key, [])).filter(r => r.sessionId !== sessionId), record].slice(-10);
-      await saveJSON(key, list, { strict: true });
-      if (current() && key === rejectedKey) setRejected(list);
+        pages: typeof report?.pages === 'number' ? report.pages : undefined });
       if (own) {
         try {
           if (own.status === 'running') await readingNative.pause();
@@ -215,13 +226,22 @@ export function useReadingChallenge(challengeId: string) {
         } catch { /* the next synchronization shows the remaining journal */ }
       }
     },
-  }), [account, current, token, rejectedKey]);
+    // Delivered, but the server did not credit the time (it overlaps another approach).
+    onReceipt: async (command, receipt) => {
+      if (command.action !== 'stop' || !receipt.rejected) return;
+      const sessionId = String(command.sessionId ?? '');
+      const known = [serverDetailRef.current?.session, dataRef.current?.session].find(s => s?.id === sessionId);
+      await rememberRejected(String(command.challengeId ?? ''), { sessionId, book: known?.book ?? '', at: Date.now(),
+        message: receipt.message ?? 'Подход пересекается по времени с другим подходом и не засчитан.',
+        elapsedMs: typeof command.elapsedMs === 'number' ? command.elapsedMs : undefined });
+    },
+  }), [account, current, token, rememberRejected]);
   /** Server copy + approaches saved on this phone but not delivered yet. `stale`: no fresh server answer,
    * so the calendar day follows the phone clock. Never sends anything. */
   const applyLocalView = useCallback(async (raw: ReadingDetail, stale: boolean) => {
     let approaches: ReturnType<typeof localApproaches> = [];
     try { approaches = localApproaches((await queue.pending()).commands, challengeId, raw); } catch { /* unreadable queue: show the server copy */ }
-    const view = readingLocalView(raw, approaches, Date.now(), stale);
+    const view = readingLocalView(raw, approaches, stale ? (await readingPhoneNow()).now : Date.now(), stale);
     if (!current()) return view;
     serverDetailRef.current = raw; staleRef.current = stale;
     setData(view); dataRef.current = view; setOffline(stale);
@@ -237,6 +257,9 @@ export function useReadingChallenge(challengeId: string) {
     if (!current()) return null;
     if (result.id !== challengeId) throw new Error('Сервер вернул другой челлендж. Повторите обновление.');
     requestStartedAt.current = startedAt;
+    // Anchor the monotonic clock to this server time (read after the answer: never ahead of real time).
+    const clock = await readingNative.clock?.().catch(() => null);
+    if (clock) await saveJSON(READING_CLOCK_KEY, { serverNow: result.serverNow, uptimeMs: clock.uptimeMs, bootId: clock.bootId }).catch(() => {});
     await saveJSON(cacheKey, result);
     const view = await applyLocalView(result, false);
     const caps = await readingNative.capabilities();
@@ -362,8 +385,20 @@ export function useReadingChallenge(challengeId: string) {
     // Local storage/protection failures are actionable, but cannot hide teams,
     // membership or captain decisions fetched successfully from the server.
     if (deviceError) throw deviceError;
-    const local = await readingNative.snapshot();
+    let local = await readingNative.snapshot();
     if (!current()) return;
+    // A timer whose start the server refused (possibly while it was being launched) can never be
+    // credited: release it so the next approach can start. The refusal stays visible.
+    if (local?.accountId === account && result.session?.id !== local.sessionId) {
+      const refusedNow = await loadJSON<ReadingRejectedApproach[]>(rejectedKey, []);
+      if (Array.isArray(refusedNow) && refusedNow.some(r => r.sessionId === local!.sessionId)) {
+        if (current()) setRejected(refusedNow);
+        if (local.status === 'running') await readingNative.pause();
+        await readingNative.acknowledge(account, local.sessionId);
+        local = await readingNative.snapshot();
+        if (!current()) return;
+      }
+    }
     observeLocalSession(local);
     if (!stale && serverDetailRef.current) await reconcilePendingStart(serverDetailRef.current, local);
     else if (stale && !local) {
@@ -682,7 +717,7 @@ export function useReadingChallenge(challengeId: string) {
     const session = view.session;
     if (session?.id !== pending.sessionId) throw new Error('Не удалось начать подход на телефоне. Повторите.');
     try {
-      const untilMidnight = readingDayEnd(view.startDate, session.day) - Date.now();
+      const untilMidnight = readingDayEnd(view.startDate, session.day) - (await readingPhoneNow()).now;
       if (untilMidnight <= 0) throw new Error('День завершился. Начните новый подход.');
       const targetMs = 3_600_000 - (view.me?.history.find(h => h.day === session.day)?.elapsedMs ?? 0);
       if (!current()) return;
@@ -791,9 +826,11 @@ export function useReadingChallenge(challengeId: string) {
       await saveJSON('dvg.readingDevice.v1', deviceId, { strict: true });
       if (startsInFlight.has(pendingStartKey)) throw new Error('Запуск уже выполняется на другом экране.');
       const sessionId = Crypto.randomUUID();
-      const startedAt = Date.now();
+      // Measured from the last server time + monotonic clock when possible: a changed phone date
+      // cannot move the approach to another day (the server accepts a bare phone date for today only).
+      const placed = await readingPhoneNow();
       const pending: ReadingPendingStart = { accountId: account, challengeId, sessionId, deviceId,
-        operationId: await readingOperationId(sessionId, 'start'), book, createdAt: startedAt };
+        operationId: await readingOperationId(sessionId, 'start'), book, createdAt: Date.now() };
       // Remember the attempt BEFORE the request: a lost response is finished later with
       // this same session instead of a second reservation.
       startsInFlight.add(pendingStartKey);
@@ -802,7 +839,8 @@ export function useReadingChallenge(challengeId: string) {
         await saveJSON(pendingStartKey, pending, { strict: true });
         // The phone time travels with the start, so a late delivery lands on the right day.
         await queue.enqueue({ action: 'start', operationId: pending.operationId, challengeId, sessionId, deviceId, book, ...metadata,
-          ...(offlineCapable() ? { startedAt } : {}) });
+          ...(offlineCapable() ? { startedAt: placed.now, startedAtSource: placed.source,
+            ...(placed.syncedAt !== undefined ? { syncedAt: placed.syncedAt } : {}) } : {}) });
         if (!offlineStart) {
           try {
             await withDeadline(queue.flush(), 8000);

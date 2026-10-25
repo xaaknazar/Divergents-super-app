@@ -5,10 +5,12 @@ import { fetchReadingDetail, ReadingApiError, ReadingDetail, sendReadingCommand 
 import { readingNative } from '../readingNative';
 import { READING_OUTBOX_KEY } from '../readingOutbox';
 import { readingDayAt, readingDayEnd } from '../../data/readingOffline';
+import { READING_CLOCK_KEY } from '../useReadingChallenge';
 import { AppState } from 'react-native';
 
 let mockDisk: Record<string, any> = {};
 let mockUuid = 0;
+let mockClock: { uptimeMs: number; bootId: string } | null = null;
 jest.mock('@clerk/clerk-expo', () => ({ useAuth: () => ({ userId: 'demo-reader', getToken: async () => 'token' }) }));
 jest.mock('../../data/api', () => ({ API_BASE: 'https://example.test' }));
 jest.mock('../../data/reading', () => ({ ...jest.requireActual('../../data/reading'), fetchReadingDetail: jest.fn(), sendReadingCommand: jest.fn() }));
@@ -17,7 +19,7 @@ jest.mock('../persist', () => ({ loadJSON: jest.fn(async (key, fallback) => mock
   saveJSON: jest.fn(async (key, value) => { mockDisk[key] = JSON.parse(JSON.stringify(value)); }) }));
 jest.mock('../readingNative', () => ({ ...jest.requireActual('../readingNative'), readingNative: { capabilities: jest.fn(),
   snapshot: jest.fn(async () => null), remainingMs: jest.fn(async () => 1800000), pause: jest.fn(), start: jest.fn(), acknowledge: jest.fn(),
-  authorize: jest.fn(), selectApps: jest.fn(), reconcileLiveActivity: jest.fn(), restoreLiveActivity: jest.fn(), configurePageReminder: jest.fn(async () => {}) } }));
+  authorize: jest.fn(), selectApps: jest.fn(), clock: jest.fn(async () => mockClock), reconcileLiveActivity: jest.fn(), restoreLiveActivity: jest.fn(), configurePageReminder: jest.fn(async () => {}) } }));
 jest.mock('expo-crypto', () => ({ CryptoDigestAlgorithm: { SHA256: 'SHA256' },
   // Distinct, stable ids per session/action so that several approaches never collide.
   digestStringAsync: async (_algorithm: string, value: string) => {
@@ -41,7 +43,7 @@ const queued = () => (mockDisk[READING_OUTBOX_KEY]?.commands ?? []) as any[];
 let journal: any = null;
 
 beforeEach(() => {
-  jest.clearAllMocks(); mockUuid = 0; journal = null;
+  jest.clearAllMocks(); mockUuid = 0; journal = null; mockClock = null;
   mockDisk = { [cacheKey]: cached, 'dvg.readingDevice.v1': 'phone', 'dvg.readingSelectedBook': null };
   jest.spyOn(AppState, 'addEventListener').mockImplementation(() => ({ remove: jest.fn() }));
   fetchDetail.mockReset().mockRejectedValue(offline()); send.mockReset().mockRejectedValue(offline());
@@ -168,4 +170,76 @@ test('a slow network does not hold «Старт»: after the deadline the timer 
     expect(queued()).toEqual([expect.objectContaining({ action: 'start', sessionId: 'session-1' })]);
     await h.unmount();
   } finally { jest.useRealTimers(); }
+});
+
+test('the start time comes from the last server time + the monotonic clock, not from the phone date', async () => {
+  // Last answer from the server 2 hours ago; the monotonic clock has advanced by exactly 2 hours since.
+  const serverNow = Date.now() - 2 * 3_600_000;
+  mockDisk[READING_CLOCK_KEY] = { serverNow, uptimeMs: 1_000_000, bootId: 'boot-a' };
+  mockClock = { uptimeMs: 1_000_000 + 2 * 3_600_000, bootId: 'boot-a' };
+  const h = await openOffline();
+  await act(async () => { await h.result.current.start('Книга'); });
+  expect(queued()[0]).toMatchObject({ action: 'start', startedAt: serverNow + 2 * 3_600_000, startedAtSource: 'synced', syncedAt: serverNow });
+});
+
+test('after a reboot without internet only the phone date is known and it is marked as such', async () => {
+  mockDisk[READING_CLOCK_KEY] = { serverNow: Date.now() - 3_600_000, uptimeMs: 5_000_000, bootId: 'boot-a' };
+  mockClock = { uptimeMs: 60_000, bootId: 'boot-b' };
+  const h = await openOffline();
+  const before = Date.now();
+  await act(async () => { await h.result.current.start('Книга'); });
+  expect(queued()[0]).toMatchObject({ startedAtSource: 'device' });
+  expect(queued()[0].syncedAt).toBeUndefined();
+  expect(queued()[0].startedAt).toBeGreaterThanOrEqual(before);
+});
+
+test('a successful refresh anchors the monotonic clock to the server time', async () => {
+  mockClock = { uptimeMs: 42_000, bootId: 'boot-a' };
+  const serverNow = Date.now() - 1000;
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow });
+  send.mockReset().mockResolvedValue({ ok: true });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(mockDisk[READING_CLOCK_KEY]).toEqual({ serverNow, uptimeMs: 42_000, bootId: 'boot-a' }));
+  await h.unmount();
+});
+
+test('an approach blocked by an open session on another device stays queued until it is closed there', async () => {
+  const h = await openOffline();
+  await act(async () => { await h.result.current.start('Книга'); });
+  stopOnPhone(20 * 60000);
+  await act(async () => { await h.result.current.retry(); });
+  await act(async () => { await h.result.current.report(8); });
+  send.mockReset().mockRejectedValue(new ReadingApiError('Сначала завершите предыдущий сеанс и внесите страницы', 409, 'session_pending'));
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow: Date.now() });
+  await act(async () => { await h.result.current.retry(); });
+  expect(queued().map(c => c.action)).toEqual(['start', 'stop', 'report']);
+  expect(h.result.current.rejectedApproaches).toEqual([]);
+  expect(h.result.current.error).toMatch(/завершите предыдущий сеанс/);
+});
+
+test('time the server accepts without credit (overlap) is shown to the reader', async () => {
+  const h = await openOffline();
+  await act(async () => { await h.result.current.start('Книга'); });
+  stopOnPhone(20 * 60000);
+  await act(async () => { await h.result.current.retry(); });
+  await act(async () => { await h.result.current.report(8); });
+  send.mockReset().mockImplementation(async (_token, command) => command.action === 'stop'
+    ? { ok: true, rejected: 'overlap', message: 'Подход пересекается по времени с другим подходом и не засчитан.' } : { ok: true });
+  fetchDetail.mockReset().mockResolvedValue({ ...cached, currentDay: today, dayEnd: readingDayEnd(startDate, today), serverNow: Date.now(), reportedSessionIds: ['session-1'] });
+  await act(async () => { await h.result.current.retry(); });
+  expect(queued()).toEqual([]);
+  expect(h.result.current.rejectedApproaches).toEqual([expect.objectContaining({ sessionId: 'session-1', elapsedMs: 20 * 60000,
+    message: expect.stringMatching(/пересекается/) })]);
+});
+
+test('a timer whose start was refused while it was launching is released on the next sync', async () => {
+  journal = { accountId: 'demo-reader', sessionId: 'refused-1', deviceId: 'phone', book: 'Книга', budgetMs: 3_600_000, targetMs: 3_600_000,
+    anchorMs: 1, bootId: 'boot', elapsedMs: null, integrity: 'ok', status: 'running' };
+  mockDisk['dvg.readingRejected.v1.demo-reader.reading-demo'] = [{ sessionId: 'refused-1', book: 'Книга', message: 'Отказ', at: 1 }];
+  const h = await openOffline();
+  await waitFor(() => expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 'refused-1'));
+  expect(readingNative.pause).toHaveBeenCalled();
+  expect(journal).toBeNull();
+  expect(h.result.current.sessionNotice).toBeUndefined();
+  expect(h.result.current.rejectedApproaches).toHaveLength(1);
 });

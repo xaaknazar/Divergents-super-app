@@ -18,7 +18,12 @@ export type ReadingOutboxDependencies = {
   isCurrentAccount(): boolean;
   /** A start the server definitively refused, with the approach's queued close/pages that were dropped with it. */
   onRejectedStart?(start: ReadingCommand, dropped: ReadingCommand[], error: ReadingApiError): Promise<void> | void;
+  /** Every delivered command with its receipt (e.g. a stop accepted without credit). Failures are ignored. */
+  onReceipt?(command: ReadingCommand, receipt: ReadingReceipt): Promise<void> | void;
 };
+/** Refusals that a later attempt cannot change. `session_pending` is not one: the reader can close the
+ * approach open on another device, and the queued approach is then delivered. */
+const resolvable = new Set(['session_pending']);
 // Only disk read-modify-write belongs under this lock. Network waits must never
 // prevent another screen from durably saving time/pages before the app exits.
 let journalTail: Promise<unknown> = Promise.resolve();
@@ -94,7 +99,8 @@ export class ReadingOutbox {
         try { receipt = await this.deps.send(command); }
         catch (error) {
           // A definitive rejected application can be edited/retried. Timing evidence stays durable.
-          if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && ['apply', 'review', 'resolve', 'start'].includes(command.action)) {
+          if (error instanceof ReadingApiError && [400, 403, 404, 409].includes(error.status) && ['apply', 'review', 'resolve', 'start'].includes(command.action)
+            && !(command.action === 'start' && resolvable.has(error.code ?? ''))) {
             if (this.deps.isCurrentAccount()) {
               if (command.action === 'start') {
                 const dropped = await this.rejectStart(command);
@@ -107,6 +113,7 @@ export class ReadingOutbox {
         if (!this.deps.isCurrentAccount()) throw new Error('Аккаунт изменился');
         await this.acknowledge(command);
         receipts.push({ command, receipt });
+        try { await this.deps.onReceipt?.(command, receipt); } catch { /* a notice must never stall delivery */ }
       }
       return receipts;
     });

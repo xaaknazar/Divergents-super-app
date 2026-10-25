@@ -1,4 +1,4 @@
-import { localApproaches, readingDayAt, readingDayEnd, readingLocalView, readingStartMs } from '../readingOffline';
+import { anchoredNow, localApproaches, readingDayAt, readingDayEnd, readingLocalView, readingStartMs } from '../readingOffline';
 import { readingFixture } from '../../storybook/readingFixtures';
 import type { ReadingCommand, ReadingDetail } from '../reading';
 
@@ -52,4 +52,24 @@ test('stale copy follows the phone clock into the next day; fresh copy keeps ser
   expect(readingLocalView(detail, [], at(5, 2), false)).toBe(detail);
   const fixed = { ...detail, mode: 'scheduled', durationDays: 4 } as ReadingDetail;
   expect(readingLocalView(fixed, [], at(6, 1), true)).toMatchObject({ currentDay: 4, phase: 'finished' });
+});
+
+test('real time is the server anchor + monotonic clock of the same boot', () => {
+  const anchor = { serverNow: 1_000_000, uptimeMs: 500, bootId: 'a' };
+  expect(anchoredNow(anchor, { uptimeMs: 1_500, bootId: 'a' })).toBe(1_001_000);
+  expect(anchoredNow(anchor, { uptimeMs: 1_500, bootId: 'b' })).toBeNull();
+  expect(anchoredNow(anchor, { uptimeMs: 100, bootId: 'a' })).toBeNull();
+  expect(anchoredNow(null, { uptimeMs: 1_500, bootId: 'a' })).toBeNull();
+  expect(anchoredNow(anchor, null)).toBeNull();
+});
+
+test('an approach the server copy already counts is not added again; pages-only keeps the server time', () => {
+  const commands = [cmd('start', 's1', { book: 'Книга', startedAt: at(3, 10) }), cmd('stop', 's1', { elapsedMs: 15 * 60000 }), cmd('report', 's1', { pages: 6 })];
+  const counted = { ...detail, reportedSessionIds: ['s1'], me: { ...detail.me!, history: [{ day: 3, state: 'open' as const, pages: 16, elapsedMs: 65 * 60000 }] } };
+  expect(readingLocalView(counted, localApproaches(commands, detail.id, counted), at(3, 11), false).me?.history)
+    .toEqual([{ day: 3, state: 'open', pages: 16, elapsedMs: 65 * 60000 }]);
+  const stopDelivered = { ...detail, session: { id: 's2', deviceId: 'phone', day: 3, book: 'Книга', author: null, bookKey: null, fromPage: null,
+    startedAt: new Date(at(3, 12)).toISOString(), budgetMs: 1, elapsedMs: 10 * 60000, status: 'awaiting_pages' as const } };
+  const pagesOnly = localApproaches([cmd('report', 's2', { pages: 3 })], detail.id, stopDelivered);
+  expect(pagesOnly[0]).toMatchObject({ elapsedMs: 10 * 60000, pages: 3, phase: 'saved' });
 });

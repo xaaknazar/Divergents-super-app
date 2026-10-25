@@ -187,7 +187,7 @@ test('offline: a calm status instead of an error, saved approaches marked as on 
   const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
   expect(view.getByLabelText(/^Нет интернета\. .*Ждут отправки: 2 подхода/)).toBeTruthy();
   expect(view.getByLabelText(/^Записано на телефоне\. сегодня 25 мин · 12 стр\. Отправим при связи/)).toBeTruthy();
-  expect(view.getByText(/не принял подход без интернета «Книга» \(15 мин, 5 стр\.\)/)).toBeTruthy();
+  expect(view.getByText(/не засчитал подход «Книга» \(15 мин, 5 стр\.\)/)).toBeTruthy();
   await fireEvent.press(view.getByRole('button', { name: 'Понятно' }));
   expect(p.onDismissRejected).toHaveBeenCalledTimes(1);
   // Starting stays possible offline.
