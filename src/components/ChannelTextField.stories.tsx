@@ -1,0 +1,10 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { fn } from 'storybook/test';
+import { ChannelTextField } from './ChannelTextField';
+const meta = { title: 'Каналы/ChannelTextField', component: ChannelTextField, args: { label: 'Название', value: 'Книжный клуб', onChange: fn() } } satisfies Meta<typeof ChannelTextField>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Text: Story = {};
+export const Handle: Story = { args: { label: 'Имя канала', prefix: '@', value: 'bookclub' } };
+export const Paragraph: Story = { args: { label: 'Описание', value: '', placeholder: 'О чём этот канал', multiline: true } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };

@@ -60,7 +60,11 @@ export function ChannelProvider({ children }: { children: React.ReactNode }) {
   const reload = useCallback(() => {
     setLoading(true);
     void reloadMemberships();
-    fetchChannelData()
+    (async () => {
+      let token: string | null = null;
+      try { token = await getTokenRef.current(); } catch { token = null; }
+      return fetchChannelData(token);
+    })()
       .then(({ channels: ch, posts: ps, error: err }) => {
         channelsRef.current = ch;
         setChannels(ch);

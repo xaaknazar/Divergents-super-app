@@ -23,6 +23,10 @@ export interface Channel {
   baseSubscribers: number;
   bio: string;
   access: ChannelAccess;
+  /** Участников по данным сервера (у закрытого канала тоже). */
+  memberCount?: number;
+  /** Публикаций всего. Посты закрытого канала гостю не приходят, а счётчик — приходит. */
+  postCount: number;
 }
 
 export type PostType = 'audio' | 'article';
@@ -33,6 +37,8 @@ export interface ChannelPost {
   type: PostType;
   title: string;
   date: string;
+  /** ISO-время публикации (новые — первыми). */
+  createdAt: string;
   icon: SFName;
   cover?: string;
   audioUrl?: string;
@@ -73,7 +79,7 @@ const ApiChannelSchema = z.object({
   createdBy: z.string().nullish(),
   createdAt: zStr(),
   posts: arrayOf(ApiChannelPostSchema, 'channel post'),
-  _count: z.object({ posts: z.number() }).partial().nullish(),
+  _count: z.object({ posts: z.number(), members: z.number() }).partial().nullish(),
 }).passthrough();
 
 const ChannelsResponseSchema = z.object({
@@ -142,6 +148,8 @@ function mapChannel(c: ApiChannel): Channel {
     baseSubscribers: 0,
     bio: c.bio ?? '',
     access: mapAccess(c.access),
+    ...(typeof c._count?.members === 'number' ? { memberCount: c._count.members } : {}),
+    postCount: Math.max(c._count?.posts ?? 0, c.posts.length),
   };
 }
 
@@ -154,6 +162,7 @@ function mapPost(p: ApiChannelPost, channelId: string): ChannelPost {
     type: isAudio ? 'audio' : 'article',
     title: p.title || 'Без названия',
     date: relativeRu(p.createdAt),
+    createdAt: p.createdAt,
     icon: isAudio ? 'waveform' : 'doc.text.fill',
     excerpt: excerptFrom(paras),
     body: paras,
@@ -178,14 +187,16 @@ function toViewModels(res: ChannelsResponse): { channels: Channel[]; posts: Chan
   return { channels, posts };
 }
 
-export async function fetchChannels(): Promise<Channel[]> {
-  const { data } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema);
+// The list is personal: posts of a closed channel reach only its members, so the request
+// carries the account (without it a member of a closed channel would see an empty feed).
+export async function fetchChannels(token?: string | null): Promise<Channel[]> {
+  const { data } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema, { token: token ?? undefined });
   return data ? toViewModels(data).channels : [];
 }
 
 // Flattens the posts embedded in the single /channels response (no /posts call).
-export async function fetchChannelPosts(): Promise<ChannelPost[]> {
-  const { data } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema);
+export async function fetchChannelPosts(token?: string | null): Promise<ChannelPost[]> {
+  const { data } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema, { token: token ?? undefined });
   return data ? toViewModels(data).posts : [];
 }
 
@@ -195,8 +206,8 @@ export async function fetchChannelPosts(): Promise<ChannelPost[]> {
 // response (channels: []) is a success → the empty state, not the error state.
 export interface ChannelData { channels: Channel[]; posts: ChannelPost[]; error: boolean }
 
-export async function fetchChannelData(): Promise<ChannelData> {
-  const { data, error } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema);
+export async function fetchChannelData(token?: string | null): Promise<ChannelData> {
+  const { data, error } = await fetchJson('/api/mobile/channels', ChannelsResponseSchema, { token: token ?? undefined });
   if (!data) return { channels: [], posts: [], error };
   const { channels, posts } = toViewModels(data);
   return { channels, posts, error: false };
@@ -240,3 +251,6 @@ export async function createChannel(
     clearTimeout(timer);
   }
 }
+
+/** Короткая подпись времени публикации: «только что», «2 ч назад», «24 окт». */
+export const channelTimeLabel = relativeRu;

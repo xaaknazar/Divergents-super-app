@@ -1,0 +1,12 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { fn } from 'storybook/test';
+import { ChannelGate } from './ChannelGate';
+const meta = { title: 'Каналы/ChannelGate', component: ChannelGate, args: { kind: 'locked', postCount: 12, onAction: fn() } } satisfies Meta<typeof ChannelGate>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Locked: Story = {};
+export const Requested: Story = { args: { kind: 'requested' } };
+export const Empty: Story = { args: { kind: 'empty' } };
+export const EmptyOwner: Story = { args: { kind: 'empty-owner' } };
+export const NotFound: Story = { args: { kind: 'not-found' } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };

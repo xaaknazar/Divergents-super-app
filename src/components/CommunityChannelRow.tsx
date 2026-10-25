@@ -1,108 +1,61 @@
-// Карточка канала (в макете — ChannelCard). `plain` — обычная белая карточка (список
-// каналов); `cover` — на главной «Сообщества»: сверху полоса 72 с картинкой канала и
-// лёгким затемнением снизу, аватар 56 наезжает на неё на 26 с белой обводкой 3.
-// Без картинки у канала `cover` честно сводится к `plain`.
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
+// Строка канала в списке «Каналы»: аватар, название целиком (до двух строк), последняя
+// публикация или описание и счётчики. Подписка: время последней публикации и число новых;
+// не подписан — доступ и стрелка. Нажатие по всей строке открывает канал.
 import React from 'react';
-import { StyleSheet,Text,View } from 'react-native';
-import { Channel } from '../data/channel';
-import { CommunityStackParams } from '../navigation/types';
-import { useChannel } from '../state/ChannelContext';
-import { tr } from '../state/LanguageContext';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Channel, PostType } from '../data/channel';
+import { fmtInt } from '../data/format';
+import { count, word } from '../data/plural';
 import { useTheme } from '../theme/ThemeContext';
-import { shadow } from '../theme/tokens';
+import { minTouch, nums } from '../theme/tokens';
+import { ChannelAvatar } from './ChannelAvatar';
 import { SF } from './SFIcon';
-import { TappableSurface } from './TappableSurface';
-import { Wrapper } from './Wrapper';
-type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['navigation'];
 
-export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: { channel: Channel; navigation: Nav; variant?: 'plain' | 'cover' }) {
-  const { T, ty } = useTheme();
-  const { isJoined, unread, postsByChannel } = useChannel();
-  const joined = isJoined(channel.id);
-  const count = unread(channel.id);
-  const posts = postsByChannel(channel.id);
-  const last = posts[0];
-  const closed = channel.access === 'request';
-  const initial = (channel.name?.trim()?.[0] ?? 'K').toUpperCase();
-  const cover = variant === 'cover' && !!channel.avatar;
-  // Second line: latest post for subscribers, otherwise the channel bio.
-  const secondary = joined && last ? last.title : (channel.bio?.trim() || '');
-  return (
-    <Wrapper marginHorizontal={16} marginBottom={12}>
-      <TappableSurface onPress={() => navigation.navigate('ServerChannel', { channelId: channel.id })}
-        accessibilityLabel={`${tr('Канал')} ${channel.name}`}>
-        {cover ? <View style={styles.banner}>
-          <Image source={{ uri: channel.avatar }} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={{ top: '35%' }} cachePolicy="memory-disk" />
-          <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.25)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
-        </View> : null}
-        <View style={[styles.row, cover ? styles.rowCover : null]}>
-          <View style={cover ? [styles.avatarLift, shadow({ color: '#101D2C', opacity: 0.18, radius: 6, y: 4, elevation: 3 })] : null}>
-            <View style={[styles.avatarFrame, cover ? { borderColor: T.cardBg, borderWidth: 3 } : null]}>
-              {channel.avatar ? (
-                <Image source={{ uri: channel.avatar }} style={[styles.avatar, { backgroundColor: T.brandTinted }]} contentFit="cover" cachePolicy="memory-disk" />
-              ) : (
-                <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.avatar, styles.center]}>
-                  <Text style={[ty.title3, { color: '#fff' }]}>{initial}</Text>
-                </LinearGradient>
-              )}
-            </View>
-            {closed ? (
-              <View style={[styles.lock, { backgroundColor: T.cardBg }]}>
-                <View style={[styles.lockInner, { backgroundColor: T.labelTertiary }]}>
-                  <SF name="lock.fill" size={9} color="#fff" />
-                </View>
-              </View>
-            ) : null}
-          </View>
-          <View style={[styles.text, cover ? styles.textCover : null]}>
-            <View style={styles.titleRow}>
-              <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{channel.name}</Text>
-              {channel.verified ? <SF name="checkmark.seal.fill" size={16} color={T.sky} /> : null}
-            </View>
-            {secondary ? (
-              <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{secondary}</Text>
-            ) : null}
-            <View style={styles.meta}>
-              <SF name="doc.text.fill" size={10} color={T.labelTertiary} />
-              <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>
-                {posts.length}{closed ? ` · ${tr('Закрытый')}` : ` · ${tr('Открытый')}`}
-              </Text>
-            </View>
-          </View>
-          {joined && count > 0 ? (
-            <View style={[styles.count, { backgroundColor: T.brand }]}>
-              <Text style={[ty.caption2Em, { color: '#fff' }]}>{count}</Text>
-            </View>
-          ) : joined ? (
-            <SF name="checkmark.circle.fill" size={20} color={T.brandText} />
-          ) : (
-            <View style={[styles.open, { backgroundColor: T.brandTinted }]}>
-              <Text style={[ty.caption2Em, { color: T.brandText }]}>{closed ? tr('Запрос') : tr('Открыть')}</Text>
-            </View>
-          )}
-        </View>
-      </TappableSurface>
-    </Wrapper>
-  );
+export type ChannelLatest = { title: string; type: PostType; timeLabel: string };
+
+export function channelMeta(channel: Pick<Channel, 'memberCount' | 'postCount'>) {
+  return [channel.memberCount != null ? `${fmtInt(channel.memberCount)} ${word(channel.memberCount, 'участник', 'участника', 'участников')}` : null,
+    `${fmtInt(channel.postCount)} ${word(channel.postCount, 'публикация', 'публикации', 'публикаций')}`].filter(Boolean).join(' · ');
 }
 
+export function CommunityChannelRow({ channel, joined, unread = 0, latest, onPress }: {
+  channel: Channel; joined: boolean; unread?: number; latest?: ChannelLatest; onPress: () => void;
+}) {
+  const { T, ty } = useTheme();
+  const closed = channel.access === 'request';
+  const preview = joined && latest ? latest : null;
+  const subtitle = preview ? preview.title : channel.bio.trim();
+  const meta = channelMeta(channel);
+  const label = [channel.name, closed ? 'закрытый канал' : null, joined ? 'вы участник' : null, unread ? `${count(unread, 'новая публикация', 'новые публикации', 'новых публикаций')}` : null,
+    preview ? `последняя: ${preview.title}, ${preview.timeLabel}` : subtitle, meta].filter(Boolean).join('. ');
+  return <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}
+    style={({ pressed }) => [styles.row, { backgroundColor: pressed ? T.fillTertiary : 'transparent' }]}>
+    <ChannelAvatar name={channel.name} uri={channel.avatar} locked={closed} />
+    <View style={styles.body}>
+      <View style={styles.top}>
+        <View style={styles.title}>
+          <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{channel.name}</Text>
+          {channel.verified ? <SF name="checkmark.seal.fill" size={15} color={T.brandText} /> : null}
+        </View>
+        {preview ? <Text style={[ty.footnote, nums, { color: unread ? T.brandText : T.labelTertiary }]}>{preview.timeLabel}</Text> : null}
+      </View>
+      {subtitle || unread > 0 ? <View style={styles.line}>
+        {preview?.type === 'audio' ? <SF name="waveform" size={13} color={T.labelSecondary} /> : null}
+        <Text style={[ty.subhead, { color: T.labelSecondary, flex: 1 }]} numberOfLines={2}>{subtitle}</Text>
+        {unread > 0 ? <View style={[styles.badge, { backgroundColor: T.brand }]}>
+          <Text style={[ty.footnoteEm, nums, { color: T.onBrand }]}>{unread > 99 ? '99+' : unread}</Text>
+        </View> : null}
+      </View> : null}
+      {!joined ? <Text style={[ty.footnote, nums, { color: T.labelTertiary }]} numberOfLines={2}>{meta}</Text> : null}
+    </View>
+    {!joined ? <SF name="chevron.forward" size={14} color={T.labelTertiary} /> : null}
+  </Pressable>;
+}
 const styles = StyleSheet.create({
-  banner: { height: 72, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 },
-  rowCover: { alignItems: 'flex-end', gap: 12, paddingTop: 0 },
-  avatarLift: { marginTop: -26, borderRadius: 21 },
-  avatarFrame: { borderRadius: 21, borderCurve: 'continuous', overflow: 'hidden' },
-  avatar: { width: 56, height: 56, borderRadius: 18, borderCurve: 'continuous' },
-  center: { alignItems: 'center', justifyContent: 'center' },
-  lock: { position: 'absolute', right: -3, bottom: -3, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  lockInner: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  text: { flex: 1, minWidth: 0, gap: 2 },
-  textCover: { paddingTop: 10 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 },
-  count: { minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
-  open: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16, minHeight: minTouch },
+  body: { flex: 1, minWidth: 0, gap: 3 },
+  top: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  title: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  line: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  badge: { minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center' },
 });

@@ -846,8 +846,12 @@ export interface ServerChannel {
   posts: ServerChannelPost[]; _count?: { posts: number; members: number };
 }
 
-export async function fetchServerChannels(): Promise<ServerChannel[]> {
-  try { const r = await timedFetch(`${API_BASE}/api/mobile/channels`); if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.channels) ? d.channels : []; } catch { return []; }
+// With the account: a closed channel's posts and the reader's own reactions come only to its members.
+export async function fetchServerChannels(token?: string | null): Promise<ServerChannel[]> {
+  try {
+    const r = await timedFetch(`${API_BASE}/api/mobile/channels`, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+    if (!r.ok) return []; const d = await r.json(); return Array.isArray(d?.channels) ? d.channels : [];
+  } catch { return []; }
 }
 export async function joinChannel(token: string | null, id: string): Promise<string | null> {
   if (!token) return null;

@@ -1,83 +1,23 @@
-import { Wrapper } from '../../components/Wrapper';
-import { ActionBlock } from '../../components/ActionBlock';
-import { NavHeader } from '../../components/NavHeader';
-// Fullscreen channels list (pushed from Community → "Все"). A dedicated page so
-// the list isn't cramped inside the tab root.
-import React from 'react';
-import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
+// Все каналы отдельной страницей (из «Сообщества» → «Все»): свои с новым — сверху.
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useTheme } from '../../theme/ThemeContext';
-import { SF } from '../../components/SFIcon';
-import { EmptyState, ErrorState } from '../../components/StateViews';
+import React from 'react';
+import { CommunityChannels } from '../../components/CommunityChannels';
+import { DetailScreen } from '../../components/DetailScreen';
+import { PageHeading } from '../../components/PageHeading';
+import { Wrapper } from '../../components/Wrapper';
+import { CommunityStackParams } from '../../navigation/types';
 import { useChannel } from '../../state/ChannelContext';
 import { tr } from '../../state/LanguageContext';
-import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'Channels'>;
 
 export function ChannelsScreen({ navigation }: Props) {
-  const { T, ty } = useTheme();
-  const { channels, loading, error, reload, isJoined, unread, postsByChannel } = useChannel();
-
-  return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false} refreshControl={undefined}>
-        <Text style={[ty.largeTitle, { color: T.label, paddingHorizontal: 4, paddingBottom: 12 }]}>{tr('Каналы')}</Text>
-        {loading && channels.length === 0 ? (
-          <View style={{ paddingVertical: 44, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
-        ) : channels.length === 0 ? (
-          error ? <ErrorState onRetry={reload} /> : <EmptyState icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
-        ) : channels.map((ch) => {
-          const joined = isJoined(ch.id);
-          const count = unread(ch.id);
-          const posts = postsByChannel(ch.id);
-          const closed = ch.access === 'request';
-          const initial = (ch.name?.trim()?.[0] ?? 'K').toUpperCase();
-          const secondary = joined && posts[0] ? posts[0].title : (ch.bio?.trim() || '');
-          return (
-            <Wrapper marginBottom={10} key={ch.id}><ActionBlock size="compact" onPress={() => navigation.navigate('ServerChannel', { channelId: ch.id })} accessibilityRole="button" accessibilityLabel={`${tr('Канал')} ${ch.name}`}><Wrapper dir={'row'} align={'center'} gap={14}>
-              <View>
-                {ch.avatar ? (
-                  <Image source={{ uri: ch.avatar }} style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
-                ) : (
-                  <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 56, height: 56, borderRadius: 18, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={[ty.title3, { color: '#fff' }]}>{initial}</Text>
-                  </LinearGradient>
-                )}
-                {closed ? (
-                  <View style={{ position: 'absolute', right: -3, bottom: -3, width: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>
-                    <View style={{ width: 18, height: 18, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.labelTertiary, alignItems: 'center', justifyContent: 'center' }}>
-                      <SF name="lock.fill" size={9} color="#fff" />
-                    </View>
-                  </View>
-                ) : null}
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{ch.name}</Text>
-                {secondary ? <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{secondary}</Text> : null}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                  <SF name="doc.text.fill" size={10} color={T.labelTertiary} />
-                  <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{posts.length}{closed ? ` · ${tr('Закрытый')}` : ` · ${tr('Открытый')}`}</Text>
-                </View>
-              </View>
-              {joined && count > 0 ? (
-                <View style={{ minWidth: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', paddingHorizontal: 6, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={[ty.caption2Em, { color: '#fff' }]}>{count}</Text>
-                </View>
-              ) : joined ? (
-                <SF name="checkmark.circle.fill" size={20} color={T.brand} />
-              ) : (
-                <View style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
-                  <Text style={[ty.caption2Em, { color: T.brand }]}>{closed ? tr('Запрос') : tr('Открыть')}</Text>
-                </View>
-              )}
-            </Wrapper></ActionBlock></Wrapper>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
+  const { reload } = useChannel();
+  return <DetailScreen backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} onRefresh={reload}>
+    <Wrapper paddingHorizontal={20} paddingTop={4} paddingBottom={18}>
+      <PageHeading title={tr('Каналы')} description={tr('Статьи и голосовые от авторов сообщества. Подпишитесь, чтобы видеть новое первым.')} />
+    </Wrapper>
+    <CommunityChannels navigation={navigation} />
+    <Wrapper paddingBottom={24} />
+  </DetailScreen>;
 }

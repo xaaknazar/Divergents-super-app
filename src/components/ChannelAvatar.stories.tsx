@@ -1,0 +1,11 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ChannelAvatar } from './ChannelAvatar';
+const meta = { title: 'Каналы/ChannelAvatar', component: ChannelAvatar, args: { name: 'Книжный клуб', size: 'medium' } } satisfies Meta<typeof ChannelAvatar>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Letter: Story = {};
+export const Picture: Story = { args: { uri: 'https://picsum.photos/seed/divergents-books/400/400' } };
+export const Locked: Story = { args: { locked: true } };
+export const Large: Story = { args: { size: 'large', ring: true } };
+export const Small: Story = { args: { size: 'small' } };
+export const Dark: Story = { args: { locked: true }, parameters: { scheme: 'dark' } };

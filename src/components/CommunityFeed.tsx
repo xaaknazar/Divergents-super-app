@@ -3,12 +3,13 @@ import React from 'react';
 import { LayoutAnimation } from 'react-native';
 import { ChallengeListItem,SportActivity,Trip } from '../data/community';
 import { CommunityStackParams } from '../navigation/types';
-import { useChannel } from '../state/ChannelContext';
+import { useChannelDirectory } from '../state/useChannelDirectory';
 import { useEnrollment } from '../state/EnrollmentContext';
 import { tr,useLang } from '../state/LanguageContext';
 import { useTheme } from '../theme/ThemeContext';
 import { CommunityChallenges } from './CommunityChallenges';
-import { CommunityChannelRow } from './CommunityChannelRow';
+import { CommunityChannelRail } from './CommunityChannelRail';
+import { CommunityChannelTile } from './CommunityChannelTile';
 import { CommunitySportCard } from './CommunitySportCard';
 import { CommunityTripCard } from './CommunityTripCard';
 import { ContentEmptyState } from './ContentEmptyState';
@@ -21,7 +22,7 @@ type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['naviga
 export function CommunityFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { t } = useLang();
   const { reduceMotion } = useTheme();
-  const { channels, error: channelsError, reload: reloadChannels } = useChannel();
+  const { all: channels, error: channelsError, reload: reloadChannels } = useChannelDirectory();
   const { has, ready, statusOf } = useEnrollment();
   // Отклонённых заявок здесь уже нет (сервер их не отдаёт), но заявка на
   // рассмотрении — это ещё НЕ «Ваша поездка»: подписываем её честно.
@@ -51,7 +52,8 @@ export function CommunityFeed({ navigation, setSeg, trips, sport, challenges, er
       </Wrapper>
       {channels.length === 0
         ? <ContentEmptyState error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
-        : channels.map((ch) => <CommunityChannelRow key={ch.id} channel={ch} navigation={navigation} variant="cover" />)}
+        : <CommunityChannelRail>{channels.map(item => <CommunityChannelTile key={item.channel.id} channel={item.channel} joined={item.joined}
+          unread={item.unread} onPress={() => navigation.navigate('ServerChannel', { channelId: item.channel.id })} />)}</CommunityChannelRail>}
 
       <Wrapper marginTop={12}>
         <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />

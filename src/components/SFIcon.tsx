@@ -28,6 +28,7 @@ export type SFName =
   | 'applelogo' | 'logo.google'
   | 'wifi.slash' | 'arrow.clockwise' | 'tray' | 'moon.fill' | 'sun.max.fill'
   | 'rosette' | 'checkmark.circle' | 'gearshape.fill' | 'paintpalette.fill'
+  | 'face.smiling' | 'person.badge.plus' | 'mic.fill' | 'stop.fill'
   | 'circle.lefthalf.filled' | 'textformat.size' | 'arrow.counterclockwise'
   | 'arrow.down' | 'minus' | 'slider.horizontal.3'
   | 'square.and.pencil' | 'info.circle' | 'rectangle.portrait.and.arrow.right'
@@ -116,6 +117,7 @@ const MAP: Record<string, [Lib, string]> = {
   'square.and.pencil': ['ion', 'create-outline'], 'info.circle': ['ion', 'information-circle-outline'],
   'rectangle.portrait.and.arrow.right': ['ion', 'exit-outline'],
   'gift.fill': ['ion', 'gift'], 'gift': ['ion', 'gift-outline'],
+  'face.smiling': ['ion', 'happy-outline'], 'person.badge.plus': ['ion', 'person-add'], 'mic.fill': ['ion', 'mic'], 'stop.fill': ['ion', 'stop'],
   'stopwatch': ['ion', 'stopwatch'], 'mountain.2.fill': ['mci', 'image-filter-hdr'], 'tent.fill': ['mci', 'tent'],
   'chart.line.uptrend.xyaxis': ['ion', 'trending-up'], 'kettlebell': ['mci', 'kettlebell'],
   'waveform.path.ecg': ['ion', 'pulse'], 'arrow.down.circle.fill': ['ion', 'arrow-down-circle'],
