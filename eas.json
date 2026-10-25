@@ -35,6 +35,7 @@
         "EXPO_PUBLIC_STORYBOOK_ENABLED": "false",
         "EXPO_PUBLIC_READING_CHALLENGES": "true",
         "READING_FOCUS_PILOT": "true",
+        "READING_APP_ATTEST": "true",
         "EXPO_NO_CAPABILITY_SYNC": "1"
       }
     },
