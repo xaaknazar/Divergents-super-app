@@ -12,3 +12,7 @@ export const Revoked: Story = { args: { value: { ...value, count: 0, needsResele
 export const Failed: Story = { args: { value: { ...value, error: 'Не удалось сохранить исключения. Попробуйте ещё раз.' } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+/** Всё настроено: одна строка-ссылка внизу экрана. */
+export const ConfiguredRow: Story = { args: { variant: 'row' } };
+export const ConfiguredRowDark: Story = { args: { variant: 'row' }, parameters: { scheme: 'dark' } };
+export const ConfiguredRowLargeText: Story = { args: { variant: 'row' }, parameters: { viewport: 'compact', textSize: 'xl' } };

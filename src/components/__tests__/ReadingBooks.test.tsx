@@ -97,6 +97,10 @@ test('during an active approach a new shelf book can be added but the selected a
     bookKey: readingBookExample.key, status: 'running', startedAt: '2026-10-22T06:00:00Z', elapsedMs: null, budgetMs: 36000000 } };
   const composer = shelfComposer(jest.fn(async () => true));
   const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} composer={composer} /></ThemePreviewProvider>);
+  // While reading, only the approach's book is shown; the rest of the shelf folds under «Другие книги».
+  expect(v.queryByRole('button', { name: /Читать «Пять уровней лидерства»/ })).toBeNull();
+  expect(v.queryByRole('button', { name: 'Добавить книгу' })).toBeNull();
+  await fireEvent.press(v.getByRole('button', { name: 'Другие книги: 1' }));
   const other = v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ });
   expect(other).toBeDisabled();
   await fireEvent.press(other);
@@ -159,11 +163,22 @@ describe('clean layout', () => {
   test('reader-app settings are offered before reading and hidden while an approach is open', async () => {
     const p = { ...props(), allowedApps };
     const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    // Configured: one quiet row after «Мои книги и история», not a card between the book and «Сегодня».
+    const row = v.getByRole('button', { name: 'Приложения для чтения. Разрешено: 1' });
+    const history = v.getByRole('button', { name: 'Мои книги и история' });
+    expect(row.parent).toBe(history.parent);
+    expect(row.parent!.children.indexOf(row)).toBe(row.parent!.children.indexOf(history) + 1);
+    await fireEvent.press(row);
+    expect(allowedApps.choose).toHaveBeenCalledTimes(1);
+    // Nothing chosen yet: the full card with an explicit button stays above «Сегодня».
+    await v.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} allowedApps={{ ...allowedApps, count: 0 }} /></ThemePreviewProvider>);
     expect(v.getByRole('header', { name: 'Приложения для чтения' })).toBeTruthy();
+    expect(v.getByRole('button', { name: 'Выбрать читалки' })).toBeTruthy();
     await v.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} timerState="running" data={{ ...p.data,
       session: { id: 's1', deviceId: 'phone', day: p.data.currentDay, book: readingBookExample.title, bookKey: readingBookExample.key,
         status: 'running', startedAt: '2026-10-22T06:00:00Z', elapsedMs: null, budgetMs: 36000000 } }} /></ThemePreviewProvider>);
     expect(v.queryByRole('header', { name: 'Приложения для чтения' })).toBeNull();
+    expect(v.queryByRole('button', { name: /^Приложения для чтения/ })).toBeNull();
   });
   test('a confirmed save is one quiet line below the next-approach button', async () => {
     const p = props();

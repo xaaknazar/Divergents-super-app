@@ -24,10 +24,11 @@ export function ReadingBookSummaryRow({ book, onSelect, disabled = false, select
     <View style={styles.copy}>
       <Text style={[picker ? ty.subheadEm : ty.headline, { color: T.label }]}>{book.title}</Text>
       {book.author ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>{book.author}</Text> : null}
-      <View style={styles.meta}>
-        <Text style={[picker ? ty.footnoteEm : ty.subheadEm, nums, { color: T.brandText }]}>{picker && book.pages === 0 && book.elapsedMs === 0 ? 'Ещё не начали' : `${fmtInt(book.pages)} стр. · ${time}`}</Text>
-        {picker && book.nextPage != null ? <Text style={[ty.footnote, nums, { color: T.labelSecondary }]}>Со страницы {fmtInt(book.nextPage)}</Text> : null}
-      </View>
+      {/* Итог и страница продолжения — одной строкой: строка книги на полке не растёт в высоту. */}
+      <Text style={[picker ? ty.footnoteEm : ty.subheadEm, nums, { color: T.brandText }]}>
+        {picker && book.pages === 0 && book.elapsedMs === 0 ? 'Ещё не начали' : `${fmtInt(book.pages)} стр. · ${time}`}
+        {picker && book.nextPage != null ? <Text style={[ty.footnote, nums, { color: T.labelSecondary }]}> · со стр. {fmtInt(book.nextPage)}</Text> : null}
+      </Text>
     </View>
     {picker ? <SF name={selected ? 'checkmark.circle.fill' : 'circle'} size={22} color={selected ? T.brandText : T.labelTertiary} /> : null}
   </>;
@@ -45,5 +46,4 @@ const styles = StyleSheet.create({
   smallCover: { width: 34, height: 46, borderRadius: 5 },
   placeholder: { alignItems: 'center', justifyContent: 'center' },
   copy: { flex: 1, gap: 2 },
-  meta: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 2, alignItems: 'baseline' },
 });

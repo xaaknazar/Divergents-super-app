@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ReadingBookSummary } from '../data/reading';
 import { useTheme } from '../theme/ThemeContext';
+import { minTouch, nums } from '../theme/tokens';
+import { SF } from './SFIcon';
 import { Button } from './Button';
 import { ContentBlock } from './ContentBlock';
 import { Wrapper } from './Wrapper';
@@ -21,18 +23,26 @@ export type ReadingShelfComposer = {
 };
 
 /** «Что читаете» — постоянная полка и выбор книги подхода в одном блоке.
- * Выбранная книга подсвечена; добавление книги не меняет выбранный подход. */
+ * Выбранная книга подсвечена; добавление книги не меняет выбранный подход.
+ * Пока подход открыт, видна только его книга: остальные и «Добавить книгу» — под «Другие книги · N». */
 export function ReadingBookshelf({ library, composer, selectedKey, selectionLocked = false, disabled = false }: {
   library: ReadingBookLibrary; composer?: ReadingShelfComposer; selectedKey?: string; selectionLocked?: boolean; disabled?: boolean;
 }) {
   const { T, ty } = useTheme();
   const [editing, setEditing] = useState(false), [notice, setNotice] = useState('');
+  const [othersOpen, setOthersOpen] = useState(false);
   const [saveError, setSaveError] = useState<string>();
   const submitting = useRef(false);
   const draft = composer?.draft;
   const active = library.books.filter(book => !book.finished);
   const finished = library.books.filter(book => book.finished);
   const selected = active.find(book => book.key === selectedKey);
+  // Во время подхода выбор закреплён: показываем одну книгу, остальное свёрнуто (но доступно).
+  const folded = selectionLocked && !!selected && !othersOpen && !editing;
+  const others = active.length - (selected ? 1 : 0);
+  const pinned = selectionLocked && !!selected;
+  const row = (book: typeof active[number]) => <ReadingBookSummaryRow key={book.key} book={book} selected={book.key === selectedKey}
+    disabled={selectionLocked || disabled || !!composer?.adding} onSelect={() => library.select(book)} />;
   const canFinish = !!library.setFinished && !!selected && selected.editable !== false && !selectionLocked && !disabled;
   const finish = (book: typeof active[number]) => Alert.alert('Книга прочитана?',
     `«${book.title}» уйдёт из «Что читаете» и отметится прочитанной в «Моих книгах» профиля. Вернуть её можно в разделе «Прочитанные».`, [
@@ -53,14 +63,24 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
     <Wrapper gap={2}>
       <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>Что читаете</Text>
       <Text style={[ty.footnote, { color: T.labelSecondary }]}>{selectionLocked
-        ? 'Книга подхода закреплена. Другую можно выбрать после сохранения страниц.'
-        : 'Выберите книгу для подхода — время и страницы сохранятся ей.'}</Text>
+        ? 'Книга этого подхода. Сменить можно после сохранения страниц.'
+        : 'Время и страницы подхода сохранятся выбранной книге.'}</Text>
     </Wrapper>
     {library.error ? <InlineNotice message={library.error} onRetry={library.retry} /> : null}
     {library.finishError ? <InlineNotice message={library.finishError} /> : null}
     <Wrapper gap={4}>
-      {active.map(book => <ReadingBookSummaryRow key={book.key} book={book} selected={book.key === selectedKey}
-        disabled={selectionLocked || disabled || !!composer?.adding} onSelect={() => library.select(book)} />)}
+      {(pinned && selected ? [selected] : active).map(row)}
+      {pinned && (others > 0 || composer) ? <Pressable onPress={() => setOthersOpen(v => !v)} accessibilityRole="button"
+        accessibilityState={{ expanded: !folded }} accessibilityLabel={`Другие книги: ${others}`}
+        accessibilityHint="Показать остальные книги полки и добавление новой. Выбор книги подхода не изменится"
+        style={({ pressed }) => [styles.toggle, { borderTopColor: T.separator, opacity: pressed ? 0.6 : 1 }]}>
+        <Text style={[ty.subheadEm, styles.flex, { color: T.label }]}>Другие книги</Text>
+        <Text style={[ty.subhead, nums, { color: T.labelSecondary }]}>{others}</Text>
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <SF name={folded ? 'chevron.down' : 'chevron.up'} size={13} color={T.labelTertiary} />
+        </View>
+      </Pressable> : null}
+      {pinned && !folded ? active.filter(book => book !== selected).map(row) : null}
     </Wrapper>
     {!library.books.length ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>{library.busy ? 'Загружаем вашу полку…' : 'Добавьте первую книгу. Она останется на полке, даже если вы начнёте другую.'}</Text>
       : !active.length ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>Все книги на полке прочитаны. Добавьте следующую — или верните книгу из «Прочитанных».</Text> : null}
@@ -69,9 +89,9 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
       accessibilityHint={`Отметить «${selected.title}» прочитанной и убрать из «Что читаете»`} onPress={() => finish(selected)} /> : null}
     {notice ? <Text accessibilityLiveRegion="polite" style={[ty.footnoteEm, { color: T.greenText }]}>{notice}</Text> : null}
     {composer && !composer.supported && !library.busy ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>Добавление книг на полку станет доступно после обновления сервера. Сохранённую историю можно читать сейчас.</Text> : null}
-    <ReadingFinishedBooks books={finished} busyKey={library.finishingKey} disabled={disabled}
-      onReturn={library.setFinished ? key => { void library.setFinished?.(key, false); } : undefined} />
-    {composer && editing && draft ? <Wrapper gap={12}>
+    {folded ? null : <ReadingFinishedBooks books={finished} busyKey={library.finishingKey} disabled={disabled}
+      onReturn={library.setFinished ? key => { void library.setFinished?.(key, false); } : undefined} />}
+    {folded ? null : composer && editing && draft ? <Wrapper gap={12}>
       <ReadingBookField purpose="add" title={draft.title} author={draft.author} status={draft.status} error={draft.error}
         locked={disabled || composer.adding} manual={draft.verified?.manual} suggestions={draft.suggestions}
         onChangeTitle={draft.setTitle} onChangeAuthor={draft.setAuthor} onCheck={draft.check} onEdit={draft.edit}
@@ -85,3 +105,7 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
       onPress={() => { composer.reset(); setNotice(''); setSaveError(undefined); setEditing(true); }} /> : null}
   </Wrapper></ContentBlock>;
 }
+const styles = StyleSheet.create({
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: minTouch, borderTopWidth: StyleSheet.hairlineWidth },
+  flex: { flex: 1, minWidth: 0 },
+});

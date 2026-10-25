@@ -27,7 +27,7 @@ export function ReadingFlagRecovery({ flags, recovery }: { flags: number; recove
         style={[styles.track, { backgroundColor: T.fillSecondary }]}>
         <View style={[styles.fill, { backgroundColor: T.brandText, width: `${Math.min(100, recovery.progressDays / recovery.requiredDays * 100)}%` }]} />
       </View>
-      <Text style={[ty.footnote, { color: T.labelSecondary }]}>Ещё {left} {word(left, 'день', 'дня', 'дней')} с часом чтения и сохранёнными страницами — и один флаг снимется. Пропуск начинает серию заново.</Text>
+      <Text style={[ty.footnote, { color: T.labelSecondary }]}>Ещё {left} {word(left, 'день', 'дня', 'дней')} с часом чтения и страницами — и флаг снимется. Пропуск начнёт серию заново.</Text>
     </> : <Text style={[ty.footnote, { color: T.labelSecondary }]}>Если появится флаг, его можно снять за {recovery.requiredDays} дней чтения подряд. Списания не копятся на будущее.</Text>}
     {recovery.forgivenFlags > 0 ? <Text style={[ty.footnoteEm, { color: T.greenText }]}>Снято флагов за серии: {recovery.forgivenFlags}</Text> : null}
   </View>;

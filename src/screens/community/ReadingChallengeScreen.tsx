@@ -40,7 +40,7 @@ export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenP
       ? <Wrapper padding={16} gap={12}>
         <ReadingLocalPause onPause={reading.pauseLocally} />
       </Wrapper> : null}
-    {reading.data ? <ReadingChallengeContent data={reading.data} remainingMs={reading.remainingMs} timerState={reading.timerState}
+    {reading.data ? <ReadingChallengeContent data={reading.data} nowMs={Date.now()} remainingMs={reading.remainingMs} timerState={reading.timerState}
       protection={reading.protection} blockingMode={reading.blockingMode} busy={reading.actionBusy} error={reading.error} awaitingPages={reading.awaitingPages}
       resumableSession={reading.resumableSession} canResume={reading.canResume} onResume={reading.resume}
       sessionElapsedMs={reading.sessionElapsedMs} localBusy={reading.localBusy}

@@ -13,3 +13,9 @@ export const HistoryOnly: Story = { args: { todayMs: undefined } };
 export const RecoveringFlag: Story = { args: { member: { ...member, flagRecovery: { requiredDays: 5, progressDays: 3, daysRemaining: 2, earnedFlags: 2, forgivenFlags: 1 } } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+/** 13 часов до полуночи: серая строка с запасом, без угрозы флагом. */
+export const MorningNeutral: Story = { args: { dayLeftMs: 13 * 3_600_000 } };
+/** Запаса меньше двух часов: строка красная, с флагом. */
+export const LateUrgent: Story = { args: { dayLeftMs: 95 * 60000 } };
+export const LateUrgentDark: Story = { args: { dayLeftMs: 95 * 60000 }, parameters: { scheme: 'dark' } };
+export const LateUrgentLargeText: Story = { args: { dayLeftMs: 95 * 60000 }, parameters: { textSize: 'xl', viewport: 'compact' } };

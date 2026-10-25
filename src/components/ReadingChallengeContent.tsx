@@ -55,11 +55,14 @@ export type ReadingChallengeContentProps = {
   /** Подходы без интернета, которые сервер потом не принял. */
   rejectedApproaches?: { sessionId: string; book: string; elapsedMs?: number; pages?: number; message: string }[];
   onDismissRejected?: () => void;
+  /** Время телефона для подсказки «до 00:00». Полночь «назад» оно не двигает: берётся не раньше serverNow. */
+  nowMs?: number;
 };
 
 /** Reading challenge, индивидуальный зачёт. Не участник — вступление: компактный блок, правила, галочка,
- * «Присоединиться». Несохранённые страницы — первым обязательным шагом. Затем таймер, «Что читаете»,
- * «Сегодня», «Мой рейтинг», «Мои книги и история», свёрнутые правила. */
+ * «Присоединиться». Несохранённые страницы — первым обязательным шагом. Затем порядок iOS 97: таймер →
+ * действие → «Что читаете» → «Сегодня» → «Мой рейтинг» → «Мои книги и история»; ниже настроенные
+ * «Приложения для чтения» строкой и свёрнутые правила. */
 export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const d = p.data;
   const [agreed, setAgreed] = useState(false);
@@ -124,6 +127,13 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   // but must not be presented as newly confirmed credit before server refresh.
   const savedToday = !recording && !running && todayMs > 0 && today?.state !== 'review';
   const idleAction = todayMs > 0 ? 'next' as const : 'start' as const;
+  // До конца дня по серверу; часы телефона не могут «отодвинуть» полночь назад.
+  const dayLeftMs = Math.max(0, d.dayEnd - Math.max(d.serverNow, p.nowMs ?? d.serverNow));
+  // Исключения — настройка до чтения: во время подхода скрыты. Настроенные — одной строкой внизу,
+  // а если нужно действие (ничего не выбрано, ошибка, доступ изменился) — карточкой выше «Сегодня».
+  const allowedApps = p.allowedApps && d.phase !== 'finished' && !approachOpen
+    ? { ...p.allowedApps, editable: p.allowedApps.editable && !p.busy && !p.sessionNotice } : undefined;
+  const appsNeedAttention = !!allowedApps && (!allowedApps.count || allowedApps.needsReselection || !!allowedApps.error);
   return <Wrapper padding={16} gap={18}>
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
     {p.offline || p.pendingApproaches ? <ReadingOfflineStatus state={p.offline ? 'offline' : 'sending'} pending={p.pendingApproaches} /> : null}
@@ -188,12 +198,13 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {p.library ? <ReadingBookshelf key={`${d.id}:${member.userId}`} library={p.library} composer={p.composer}
       selectedKey={d.session?.bookKey ?? book.verified?.key} selectionLocked={approachOpen || !!p.sessionNotice || !reader}
       disabled={p.busy} /> : null}
-    {p.allowedApps && d.phase !== 'finished' && !approachOpen ? <ReadingAllowedAppsCard value={{ ...p.allowedApps,
-      editable: p.allowedApps.editable && !approachOpen && !p.busy && !p.sessionNotice }} /> : null}
+    {allowedApps && appsNeedAttention ? <ReadingAllowedAppsCard value={allowedApps} /> : null}
     {d.phase !== 'upcoming' ? <ReadingProgressSummary member={member} todayMs={d.phase === 'active' ? todayMs : undefined}
+      dayLeftMs={d.phase === 'active' ? dayLeftMs : undefined}
       books={d.phase === 'active' && d.todayBooks?.length ? d.todayBooks : undefined} /> : null}
     <ReadingRankLink place={standing?.place ?? null} pagesPlace={pagesStanding?.place ?? null} participants={participants} onPress={p.onRanking} />
     {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
+    {allowedApps && !appsNeedAttention ? <ReadingAllowedAppsCard variant="row" value={allowedApps} /> : null}
     <ReadingRules variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />
   </Wrapper>;
 }

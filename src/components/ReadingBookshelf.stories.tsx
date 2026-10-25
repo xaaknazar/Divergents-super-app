@@ -17,3 +17,5 @@ export const Empty: Story = { args: { library: { ...library, books: [] } } };
 export const OlderServer: Story = { args: { composer: { ...composer, supported: false } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+export const CurrentApproachLockedDark: Story = { args: { selectionLocked: true }, parameters: { scheme: 'dark' } };
+export const CurrentApproachLockedLargeText: Story = { args: { selectionLocked: true }, parameters: { viewport: 'compact', textSize: 'xl' } };

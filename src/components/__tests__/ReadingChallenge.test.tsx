@@ -68,10 +68,16 @@ test('legacy qualification flags cannot hide a participant’s place', async () 
   expect(view.getByRole('button', { name: 'Мой рейтинг. По среднему темпу: 4 место из 5 участников. По страницам: 4 место из 5 участников' })).toBeTruthy();
   expect(view.queryByText(/До участия в рейтинге/)).toBeNull();
 });
-test('today shows the red-flag warning until the hour is done', async () => {
+test('today warns in red only when the day is running out, until the hour is done', async () => {
   const p = { ...props(), timerState: 'ready' as const, data: withToday(18 * 60000) };
   const view = await show(p);
-  expect(view.getByText('Ещё 42 мин до 00:00, иначе красный флаг')).toBeTruthy();
+  // Fixture: 13 hours to midnight — a neutral reminder, no red flag threat.
+  expect(view.getByText('Ещё 42 мин чтения · до 00:00 13 ч')).toBeTruthy();
+  expect(view.queryByText(/иначе красный флаг/)).toBeNull();
+  const late = { ...withToday(18 * 60000) };
+  late.serverNow = late.dayEnd - 95 * 60000;
+  await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={late} /></ThemePreviewProvider>);
+  expect(view.getByText('До 00:00 — 1 ч 35 мин. Нужно ещё 42 мин, иначе красный флаг')).toBeTruthy();
   expect(view.getByText('22,3 стр/день')).toBeTruthy();
   expect(view.getByText('средний темп')).toBeTruthy();
   await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={withToday(61 * 60000, 'complete')} timerState="complete" /></ThemePreviewProvider>);
