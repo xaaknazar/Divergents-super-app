@@ -95,6 +95,10 @@ export const ShelfSavedLargeText: Story = { ...ShelfSaved, parameters: { viewpor
 export const ShelfRunning: Story = { args: { ...shelfArgs, timerState: 'running', data: { ...shelfToday, session: { ...session, bookKey: 'ol:OL1W' } } } };
 export const ShelfPages: Story = { args: { ...shelfArgs, timerState: 'paused', remainingMs: 0, awaitingPages: true,
   data: { ...shelfToday, session: { ...session, bookKey: 'ol:OL1W', status: 'awaiting_pages' as const, elapsedMs: 3_600_000 } } } };
+/** Таймер остановлен: сначала книга подхода (можно сменить, если на старте выбрали не ту), потом страницы. */
+export const ShelfPagesChooseBook: Story = { args: { ...ShelfPages.args, data: { ...ShelfPages.args!.data!, supportsReportBook: true } } };
+export const ShelfPagesChooseBookDark: Story = { ...ShelfPagesChooseBook, parameters: { scheme: 'dark' } };
+export const ShelfPagesChooseBookLargeText: Story = { ...ShelfPagesChooseBook, parameters: { viewport: 'compact', textSize: 'xl' } };
 /** Без интернета: таймер и страницы на телефоне, отправка при связи. */
 export const OfflineSaved: Story = { args: { ...shelfArgs, offline: true, pendingApproaches: 1, pendingToday: 1,
   data: { ...shelfToday, me: { ...shelfToday.me!, history: [{ day: 14, state: 'open', pages: 12, elapsedMs: 18 * 60000 }] } } } };

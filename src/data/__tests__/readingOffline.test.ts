@@ -82,3 +82,12 @@ test('a start in the last minute of a day belongs to the next day when that day 
   const view = readingLocalView(detail, localApproaches([cmd('start', 's1', { book: 'Книга', startedAt: at(4, 0) - 30_000 })], detail.id, detail), at(4, 0) - 20_000, true);
   expect(view.session).toMatchObject({ day: 4, budgetMs: 86_400_000 });
 });
+
+test('a book chosen after the timer replaces the start book in the saved approach', () => {
+  const approaches = localApproaches([cmd('start', 's1', { book: 'Не та', bookKey: 'ol:wrong', fromPage: 90, startedAt: at(3, 10) }),
+    cmd('stop', 's1', { elapsedMs: 15 * 60000 }),
+    cmd('report', 's1', { pages: 6, nextPage: 27, book: 'Нужная', author: 'Автор', bookKey: 'ol:right', fromPage: 21 })], detail.id, detail);
+  expect(approaches[0]).toEqual(expect.objectContaining({ book: 'Нужная', author: 'Автор', bookKey: 'ol:right', fromPage: 21, pages: 6, nextPage: 27 }));
+  const view = readingLocalView(detail, approaches, at(3, 11), true);
+  expect(view.todayBooks).toEqual([expect.objectContaining({ key: 'ol:right', title: 'Нужная', pages: 6, elapsedMs: 15 * 60000, nextPage: 27 })]);
+});

@@ -8,8 +8,8 @@ import { SF } from './SFIcon';
 
 /** One book, one accumulated result. Appearance is shared by today's diary and the book picker.
  * В выборе книги (onSelect) выбранная строка подсвечена и отмечена галочкой, остальные — пустым кружком. */
-export function ReadingBookSummaryRow({ book, onSelect, disabled = false, selected = false }: {
-  book: ReadingBookSummary; onSelect?: () => void; disabled?: boolean; selected?: boolean;
+export function ReadingBookSummaryRow({ book, onSelect, disabled = false, selected = false, selectHint = 'Выбрать книгу для следующего подхода' }: {
+  book: ReadingBookSummary; onSelect?: () => void; disabled?: boolean; selected?: boolean; selectHint?: string;
 }) {
   const { T, ty } = useTheme();
   const minutes = Math.floor(book.elapsedMs / 60000);
@@ -34,7 +34,7 @@ export function ReadingBookSummaryRow({ book, onSelect, disabled = false, select
   </>;
   return onSelect ? <Pressable onPress={onSelect} disabled={disabled} accessibilityRole="button"
     accessibilityLabel={`Читать «${book.title}»${book.author ? `, ${book.author}` : ''}. ${fmtInt(book.pages)} страниц, ${time}${book.nextPage != null ? `. Со страницы ${book.nextPage}` : ''}`}
-    accessibilityState={{ selected, disabled }} accessibilityHint="Выбрать книгу для следующего подхода"
+    accessibilityState={{ selected, disabled }} accessibilityHint={selectHint}
     style={({ pressed }) => [styles.row, styles.pickerRow, selected && { backgroundColor: T.brandTinted },
       { opacity: disabled && !selected ? 0.5 : pressed ? 0.65 : 1 }]}>{content}</Pressable>
     : <View style={styles.row}>{content}</View>;

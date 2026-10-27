@@ -45,6 +45,8 @@ export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(),
   flagRecoveryDays: z.number().int().positive().optional(),
   // The server accepts approaches started without internet (start.startedAt), delivered later.
   supportsOfflineStart: z.boolean().optional(),
+  /** `report` may carry the book chosen after the timer stopped. Older servers reject those fields. */
+  supportsReportBook: z.boolean().optional(),
   /** Server time for this request's nonce, signed by the server: the anchor of the phone's monotonic clock. */
   clock: z.object({ serverNow: z.number(), nonce: z.string(), token: z.string() }).optional(),
   /** The server checks App Attest: the app registers its key so past-day offline starts can be proven. */
@@ -64,6 +66,8 @@ export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(),
 });
 export type ReadingCatalogItem = z.infer<typeof catalogItem>;
 export type ReadingDetail = z.infer<typeof ReadingDetailSchema>;
+/** Книга, выбранная после остановки таймера: заменяет книгу старта (и её начальную страницу) в `report`. */
+export type ReadingReportBook = { book: string; author?: string; bookKey?: string; coverId?: number; fromPage?: number };
 export type ReadingCommand = { action: string; operationId: string; [key: string]: unknown };
 const receipt = z.object({ ok: z.literal(true), challengeId: z.string().optional(), sessionId: z.string().optional(),
   budgetMs: z.number().optional(), serverNow: z.number().optional(), dayEnd: z.number().optional(), review: z.boolean().optional(),

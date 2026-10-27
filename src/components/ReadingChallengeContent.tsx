@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-import { READING_REQUIRE_VERIFIED_BOOK, ReadingDetail, readingStandings } from '../data/reading';
+import { READING_REQUIRE_VERIFIED_BOOK, ReadingDetail, ReadingReportBook, readingStandings } from '../data/reading';
 import { ReadingBookMetadata } from '../data/readingBooks';
 import { readingDateLabel } from '../data/readingCreation';
 import { readingDayDate } from '../data/readingOffline';
@@ -35,10 +35,11 @@ export type ReadingChallengeContentProps = {
   resumableSession?: boolean; canResume?: boolean; onResume?: () => void;
   sessionElapsedMs?: number;
   onPrepare: () => void; onStart: (book: string, metadata?: ReadingBookMetadata) => void; onPause: () => void;
-  /** Закрыть отдельный подход (в том числе до дневной цели) и отправить его страницы. */
-  onSaveApproach: (pages: number, nextPage?: number) => void;
+  /** Закрыть отдельный подход (в том числе до дневной цели) и отправить его страницы.
+   * `book` — другая книга, выбранная после остановки таймера (только если сервер это поддерживает). */
+  onSaveApproach: (pages: number, nextPage?: number, book?: ReadingReportBook) => void;
   /** Страницы уже закрытого подхода. */
-  onReport: (pages: number, nextPage?: number) => void;
+  onReport: (pages: number, nextPage?: number, book?: ReadingReportBook) => void;
   book: ReadingBookInput;
   library?: ReadingBookLibrary;
   composer?: ReadingShelfComposer;
@@ -69,7 +70,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   // Ноль — допустимый результат подхода: форма сразу готова сохранить 0 страниц.
   const [pages, setPages] = useState('0');
   const [pagesRequested, setPagesRequested] = useState(false);
-  useEffect(() => { setPages('0'); setPagesRequested(false); }, [d.id, d.me?.userId, d.session?.id]);
+  // Книга, отмеченная при записи страниц (если на старте выбрали не ту). Новый подход — заново.
+  const [reportKey, setReportKey] = useState<string>();
+  useEffect(() => { setPages('0'); setPagesRequested(false); setReportKey(undefined); }, [d.id, d.me?.userId, d.session?.id]);
   useEffect(() => { if (p.timerState === 'running') setPagesRequested(false); }, [p.timerState]);
   const member = d.membership === 'approved' ? d.me : null;
   const participants = d.participants ?? d.ranking.length;
@@ -114,9 +117,24 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const closeInterrupted = () => Alert.alert('Закрыть прерванный подход?', 'Неподтверждённое время не будет начислено. Уже сохранённые подходы останутся.', [
     { text: 'Отмена', style: 'cancel' }, { text: 'Закрыть подход', onPress: p.onRecover },
   ]);
-  const nextPage = d.session?.fromPage != null && pages ? d.session.fromPage + Number(pages) : undefined;
+  // После остановки таймера книгу подхода можно сменить (если на старте выбрали не ту) — до записи страниц.
+  const rebook = !!p.library && !!d.supportsReportBook && recording && !p.sessionNotice && !!d.session;
+  const sessionBookKey = d.session?.bookKey ?? undefined;
+  const shelfBooks = (p.library?.books ?? []).filter(saved => !saved.finished);
+  const startBookOnShelf = !!sessionBookKey && shelfBooks.some(saved => saved.key === sessionBookKey);
+  // Книга старта, которой нет на полке (первый подход), остаётся в списке, чтобы её можно было оставить.
+  const reportShelf = rebook && d.session && !startBookOnShelf ? [{ key: sessionBookKey ?? `session:${d.session.id}`, title: d.session.book,
+    author: d.session.author ?? '', coverId: d.session.coverId ?? null, pages: 0, elapsedMs: 0, nextPage: d.session.fromPage ?? null }, ...shelfBooks] : shelfBooks;
+  const chosen = rebook && reportKey && reportKey !== sessionBookKey ? reportShelf.find(saved => saved.key === reportKey && saved.key !== `session:${d.session?.id}`) : undefined;
+  const reportBook: ReadingReportBook | undefined = chosen ? { book: chosen.title, author: chosen.author || undefined, bookKey: chosen.key,
+    coverId: chosen.coverId ?? undefined, fromPage: chosen.nextPage ?? undefined } : undefined;
+  const reportFromPage = chosen ? chosen.nextPage : d.session?.fromPage;
+  const nextPage = reportFromPage != null && pages ? reportFromPage + Number(pages) : undefined;
   const pagesInvalid = !/^\d+$/.test(pages) || Number(pages) > 10000 || (nextPage ?? 0) > 100000;
-  const submitPages = () => (softPaused ? p.onSaveApproach : p.onReport)(Number(pages), nextPage);
+  const submitPages = () => {
+    const save = softPaused ? p.onSaveApproach : p.onReport;
+    if (reportBook) save(Number(pages), nextPage, reportBook); else save(Number(pages), nextPage);
+  };
   const sessionElapsedMs = p.sessionElapsedMs ?? d.session?.elapsedMs;
   // The approach's day is over (midnight passed before pages were written): its pages still belong to
   // that day, and saving them opens today's timer.
@@ -145,11 +163,18 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {recording && !p.sessionNotice ? <Wrapper gap={12}>
       <ReadingPagesNotice state="required" />
       {pastDay ? <InlineNotice message={`Это подход за ${pastDay}: день закончился, но время подхода сохранено. Страницы засчитаются в ${pastDay}, а не в сегодняшний день.${reader ? ' После сохранения можно сразу начать чтение за сегодня.' : ''}`} /> : null}
+      {rebook && p.library ? <ReadingBookshelf key={`report:${d.session?.id}`} purpose="report" composer={p.composer} disabled={p.localBusy}
+        selectedKey={reportKey ?? sessionBookKey ?? `session:${d.session?.id}`}
+        library={{ ...p.library, books: reportShelf, select: saved => {
+          setReportKey(saved.key);
+          // Выбранная книга остаётся и для следующего подхода (кроме книги старта не с полки).
+          if (shelfBooks.some(b => b.key === saved.key)) p.library?.select(saved);
+        } }} /> : null}
       <ReadingPagesForm value={pages} onChange={setPages} busy={p.localBusy} invalid={pagesInvalid} onSubmit={submitPages}
         dayLabel={pastDay} submitLabel={pastDay && reader ? 'Сохранить и читать сегодня' : 'Сохранить подход'}
-        bookTitle={d.session?.book}
+        bookTitle={chosen?.title ?? d.session?.book}
         sessionMinutes={sessionElapsedMs != null ? Math.floor(sessionElapsedMs / 60000) : undefined}
-        fromPage={d.session?.fromPage} nextPage={nextPage} />
+        fromPage={reportFromPage} nextPage={nextPage} />
     </Wrapper> : null}
     {reader && !p.sessionNotice ? <Wrapper gap={16}>
       <ReadingTimer remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)}
@@ -195,9 +220,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
           suggestions={book.suggestions} onPick={book.pick} onReject={book.reject} onManual={book.manual} manual={!!book.verified?.manual}
           onChangeTitle={book.setTitle} onChangeAuthor={book.setAuthor} onCheck={book.check} onEdit={book.edit} />}
     </Wrapper> : null}
-    {p.library ? <ReadingBookshelf key={`${d.id}:${member.userId}`} library={p.library} composer={p.composer}
+    {p.library && !rebook ? <ReadingBookshelf key={`${d.id}:${member.userId}`} library={p.library} composer={p.composer}
       selectedKey={d.session?.bookKey ?? book.verified?.key} selectionLocked={approachOpen || !!p.sessionNotice || !reader}
-      disabled={p.busy} /> : null}
+      changeLater={!!d.supportsReportBook && approachOpen} disabled={p.busy} /> : null}
     {allowedApps && appsNeedAttention ? <ReadingAllowedAppsCard value={allowedApps} /> : null}
     {d.phase !== 'upcoming' ? <ReadingProgressSummary member={member} todayMs={d.phase === 'active' ? todayMs : undefined}
       dayLeftMs={d.phase === 'active' ? dayLeftMs : undefined}

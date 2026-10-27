@@ -82,6 +82,9 @@ export function localApproaches(commands: ReadingCommand[], challengeId: string,
       if (approach.phase === 'open') approach.phase = 'stopped';
     } else {
       approach.pages = num(command.pages) ?? 0; approach.nextPage = num(command.nextPage);
+      // Book chosen after the timer stopped: time and pages belong to it, not to the start's book.
+      if (str(command.book)) Object.assign(approach, { book: str(command.book), author: str(command.author),
+        bookKey: str(command.bookKey), fromPage: num(command.fromPage) });
       approach.phase = 'saved';
     }
   }

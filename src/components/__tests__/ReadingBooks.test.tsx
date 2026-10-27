@@ -218,3 +218,67 @@ test('a finished book leaves «Что читаете»: it is marked after a con
   expect(v.queryByRole('button', { name: 'Дочитал(а) эту книгу' })).toBeNull();
   alert.mockRestore();
 });
+
+describe('book chosen after the timer stopped', () => {
+  const awaiting = (supportsReportBook: boolean | undefined) => {
+    const p = props();
+    p.awaitingPages = true; p.timerState = 'paused'; p.remainingMs = 0;
+    p.data = { ...p.data, supportsReportBook, session: { id: 'wrong-book', deviceId: 'phone', day: p.data.currentDay, book: readingBookExample.title,
+      author: readingBookExample.author, bookKey: readingBookExample.key, fromPage: 40, status: 'awaiting_pages',
+      startedAt: '2026-10-22T06:00:00Z', elapsedMs: 20 * 60000, budgetMs: 36000000 } };
+    return p;
+  };
+  test('the reader picks another shelf book before writing pages; pages and bookmark go to it', async () => {
+    const p = awaiting(true);
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    const question = v.getByRole('header', { name: 'Какую книгу вы читали?' });
+    // The choice comes before the page count, and the regular shelf is not shown twice.
+    const order = (n: any): any[] => [n, ...n.children.flatMap((c: any) => typeof c === 'string' ? [] : order(c))];
+    const nodes = order(v.container);
+    expect(nodes.indexOf(question)).toBeLessThan(nodes.indexOf(v.getByLabelText('Страниц за этот подход')));
+    expect(v.queryByRole('header', { name: 'Что читаете' })).toBeNull();
+    expect(v.getByRole('button', { name: new RegExp(`Читать «${readingBookExample.title}»`) }).props.accessibilityState.selected).toBe(true);
+    await fireEvent.press(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ }));
+    expect(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ }).props.accessibilityState.selected).toBe(true);
+    expect(p.library!.select).toHaveBeenCalledWith(expect.objectContaining({ key: second.key }));
+    expect(v.getByText(/начали со страницы 21/)).toBeTruthy();
+    await fireEvent.changeText(v.getByLabelText('Страниц за этот подход'), '6');
+    await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
+    expect(p.onReport).toHaveBeenCalledWith(6, 27, { book: second.title, author: second.author, bookKey: second.key, coverId: undefined, fromPage: 21 });
+  });
+  test('keeping the start book sends no book fields', async () => {
+    const p = awaiting(true);
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    await fireEvent.press(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ }));
+    await fireEvent.press(v.getByRole('button', { name: new RegExp(`Читать «${readingBookExample.title}»`) }));
+    await fireEvent.changeText(v.getByLabelText('Страниц за этот подход'), '3');
+    await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
+    expect(p.onReport).toHaveBeenCalledWith(3, 43);
+  });
+  test('a start book that is not on the shelf stays selectable as the default', async () => {
+    const p = awaiting(true);
+    p.data = { ...p.data, session: { ...p.data.session!, book: 'Новая книга', author: 'Автор', bookKey: 'manual:новая', fromPage: null } };
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    expect(v.getByRole('button', { name: /Читать «Новая книга»/ }).props.accessibilityState.selected).toBe(true);
+    await fireEvent.press(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ }));
+    await fireEvent.press(v.getByRole('button', { name: /Читать «Новая книга»/ }));
+    expect(p.library!.select).toHaveBeenCalledTimes(1);
+    await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
+    expect(p.onReport).toHaveBeenCalledWith(0, undefined);
+  });
+  test('an older server keeps the start book: no choice is offered', async () => {
+    const p = awaiting(undefined);
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    expect(v.queryByRole('header', { name: 'Какую книгу вы читали?' })).toBeNull();
+    expect(v.getByText(/Сменить можно после сохранения страниц/)).toBeTruthy();
+    await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
+    expect(p.onReport).toHaveBeenCalledWith(0, 40);
+  });
+  test('while reading, the shelf says the book can be changed when pages are written', async () => {
+    const p = awaiting(true);
+    p.awaitingPages = false; p.timerState = 'running'; p.remainingMs = 30 * 60000;
+    p.data = { ...p.data, session: { ...p.data.session!, status: 'running', elapsedMs: null } };
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    expect(v.getByText('Книга этого подхода. Если выбрали не ту, смените её при записи страниц.')).toBeTruthy();
+  });
+});

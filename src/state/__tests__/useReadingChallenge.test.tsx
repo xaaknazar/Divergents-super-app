@@ -425,6 +425,23 @@ test('cold offline restart restores controls and saves pages before sending', as
   const writes = jest.mocked(saveJSON).mock.invocationCallOrder;
   expect(writes[writes.length - 1]).toBeLessThan(send.mock.invocationCallOrder[0]);
 });
+test.each([false, true])('pages go to a book chosen after the timer only when the server supports it (%s)', async supported => {
+  mockDisk['dvg.readingDetail.demo-reader.reading-demo'] = { ...server, supportsReportBook: supported || undefined };
+  jest.mocked(readingNative.snapshot).mockResolvedValue(local);
+  fetchDetail.mockRejectedValue(new Error('offline')); send.mockRejectedValue(new Error('offline'));
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.awaitingPages).toBe(true));
+  await act(async () => { await h.result.current.report(6, 27, { book: 'Нужная книга', author: 'Автор', bookKey: 'ol:right', fromPage: 21 }); });
+  const reports = (mockDisk[READING_OUTBOX_KEY]?.commands ?? []).filter((c: any) => c.action === 'report');
+  if (!supported) {
+    // An older server would reject the extra fields and lose the pages: nothing is queued.
+    expect(h.result.current.error).toContain('после обновления сервера');
+    expect(reports).toEqual([]);
+  } else {
+    expect(reports).toEqual([expect.objectContaining({ pages: 6, nextPage: 27, book: 'Нужная книга', author: 'Автор', bookKey: 'ol:right', fromPage: 21 })]);
+    expect(reports[0]).not.toHaveProperty('coverId');
+  }
+});
 test.each(['missing', 'corrupt'] as const)('cold offline restart with %s detail cache still offers an owner-only local pause', async cache => {
   if (cache === 'corrupt') mockDisk['dvg.readingDetail.demo-reader.reading-demo'] = { broken: true };
   fetchDetail.mockRejectedValue(new Error('offline'));
@@ -441,7 +458,7 @@ test.each(['missing', 'corrupt'] as const)('cold offline restart with %s detail 
   expect(h.result.current.sessionNotice).toBeUndefined();
   expect(send).not.toHaveBeenCalled();
   expect(readingNative.acknowledge).not.toHaveBeenCalled();
-  expect(mockDisk[READING_OUTBOX_KEY]?.commands ?? []).toEqual([]);
+  expect((mockDisk[READING_OUTBOX_KEY]?.commands ?? []).filter((c: any) => c.action === 'report')).toEqual([]);
 });
 test('cold native ownership enables emergency pause before a server request returns', async () => {
   jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, status: 'running' });
@@ -468,7 +485,7 @@ test('an emergency pause for another challenge preserves its evidence without cr
   expect(h.result.current.canPauseLocally).toBe(false);
   expect(h.result.current.sessionNotice?.kind).toBe('other-challenge');
   expect(send).not.toHaveBeenCalled(); expect(readingNative.acknowledge).not.toHaveBeenCalled();
-  expect(mockDisk[READING_OUTBOX_KEY]?.commands ?? []).toEqual([]);
+  expect((mockDisk[READING_OUTBOX_KEY]?.commands ?? []).filter((c: any) => c.action === 'report')).toEqual([]);
 });
 test('switching accounts removes emergency-pause authority and rejects the previous handler', async () => {
   fetchDetail.mockRejectedValue(new Error('offline'));
@@ -521,7 +538,7 @@ test('pause still lifts native protection when snapshot fails and the network is
   expect(h.result.current.awaitingPages).toBe(true);
   expect(send).not.toHaveBeenCalled();
   expect(readingNative.acknowledge).not.toHaveBeenCalled();
-  expect(mockDisk[READING_OUTBOX_KEY]?.commands ?? []).toEqual([]);
+  expect((mockDisk[READING_OUTBOX_KEY]?.commands ?? []).filter((c: any) => c.action === 'report')).toEqual([]);
   await act(async () => { finish(server); });
 });
 test('snapshot-failure pause retains exact native evidence for a later successful retry', async () => {
@@ -552,7 +569,7 @@ test.each(['missing', 'failed'] as const)('snapshot-failure pause with %s eviden
   expect(readingNative.pause).toHaveBeenCalledTimes(1);
   expect(send).not.toHaveBeenCalled();
   expect(readingNative.acknowledge).not.toHaveBeenCalled();
-  expect(mockDisk[READING_OUTBOX_KEY]?.commands ?? []).toEqual([]);
+  expect((mockDisk[READING_OUTBOX_KEY]?.commands ?? []).filter((c: any) => c.action === 'report')).toEqual([]);
   expect(h.result.current.error).toContain('журнал');
 });
 test.each([
@@ -570,7 +587,7 @@ test.each([
   expect(h.result.current.awaitingPages).toBe(false);
   expect(send).not.toHaveBeenCalled();
   expect(readingNative.acknowledge).not.toHaveBeenCalled();
-  expect(mockDisk[READING_OUTBOX_KEY]?.commands ?? []).toEqual([]);
+  expect((mockDisk[READING_OUTBOX_KEY]?.commands ?? []).filter((c: any) => c.action === 'report')).toEqual([]);
 });
 test('a pending pause cannot attach old evidence to the next signed-in account', async () => {
   fetchDetail.mockResolvedValue(server);
@@ -592,7 +609,7 @@ test('a pending pause cannot attach old evidence to the next signed-in account',
   expect(h.result.current.timerState).toBe('ready');
   expect(send).not.toHaveBeenCalled();
   expect(readingNative.acknowledge).not.toHaveBeenCalled();
-  expect(mockDisk[READING_OUTBOX_KEY]?.commands ?? []).toEqual([]);
+  expect((mockDisk[READING_OUTBOX_KEY]?.commands ?? []).filter((c: any) => c.action === 'report')).toEqual([]);
 });
 test('late response cannot replace a different challenge', async () => {
   let finish!: (value: typeof readingFixture) => void;

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Crypto from 'expo-crypto';
-import { fetchReadingDetail, ReadingApiError, ReadingCommand, ReadingDetail, ReadingDetailSchema, sendReadingCommand } from '../data/reading';
+import { fetchReadingDetail, ReadingApiError, ReadingCommand, ReadingDetail, ReadingDetailSchema, ReadingReportBook, sendReadingCommand } from '../data/reading';
 import { loadJSON, readJSON, saveJSON } from './persist';
 import { readingNative, NativeReadingSession, ReadingCapabilities, ReadingLiveActivityStatus, isLegacyReadingQASession } from './readingNative';
 import { ReadingOutbox, ReadingQueue, READING_OUTBOX_KEY, readingErrorMessage, hasPendingReadingClose } from './readingOutbox';
@@ -99,6 +99,11 @@ export const readingPendingStartKey = (accountId: string, challengeId: string) =
 // Starts being sent right now in this process, by pending-start key. Another screen
 // instance must not forget such an attempt while its request is still in flight.
 const startsInFlight = new Set<string>();
+/** Only defined fields: the outbox fingerprint and the server's strict schema see exactly what was chosen. */
+function readingReportBookFields(book: ReadingReportBook) {
+  return { book: book.book, ...(book.author ? { author: book.author } : {}), ...(book.bookKey ? { bookKey: book.bookKey } : {}),
+    ...(book.coverId != null ? { coverId: book.coverId } : {}), ...(book.fromPage != null ? { fromPage: book.fromPage } : {}) };
+}
 function validatePageReport(pages: number, nextPage?: number) {
   if (!Number.isInteger(pages) || pages < 0 || pages > 10_000
     || nextPage !== undefined && (!Number.isInteger(nextPage) || nextPage < 0 || nextPage > 100_000))
@@ -668,8 +673,10 @@ export function useReadingChallenge(challengeId: string) {
       }
     }
   };
-  const persistReport = async (pages: number, nextPage: number | undefined, expectedSessionId: string | undefined) => {
+  const persistReport = async (pages: number, nextPage: number | undefined, expectedSessionId: string | undefined, book?: ReadingReportBook) => {
     validatePageReport(pages, nextPage);
+    // An older server rejects the extra fields (400), and a rejected report would lose the approach's pages.
+    if (book && !serverDetailRef.current?.supportsReportBook) throw new Error('Сменить книгу подхода можно после обновления сервера. Сохраните страницы с книгой старта.');
     const local = await readingNative.snapshot();
     if (!current()) return;
     const server = dataRef.current?.session;
@@ -684,7 +691,8 @@ export function useReadingChallenge(challengeId: string) {
       commands.push({ action: 'stop', operationId: await readingOperationId(sessionId, 'stop'),
         challengeId, sessionId, deviceId: ownLocal.deviceId, elapsedMs: ownLocal.elapsedMs ?? 0, integrity: ownLocal.integrity });
     }
-    commands.push({ action: 'report', operationId: await readingOperationId(sessionId, 'report'), challengeId, sessionId, pages, ...(nextPage !== undefined ? { nextPage } : {}) });
+    commands.push({ action: 'report', operationId: await readingOperationId(sessionId, 'report'), challengeId, sessionId, pages,
+      ...(nextPage !== undefined ? { nextPage } : {}), ...(book ? readingReportBookFields(book) : {}) });
     // One durable write for both commands, independent of a stalled upload.
     await queue.enqueueMany(commands);
     // The approach is saved on the phone now: show it at once, release the journal on the next sync.
@@ -702,12 +710,13 @@ export function useReadingChallenge(challengeId: string) {
       if (current()) setSavingPages(false);
     }
   };
-  const report = (pages: number, nextPage?: number) => savePages(() => persistReport(pages, nextPage, dataRef.current?.session?.id));
+  const report = (pages: number, nextPage?: number, book?: ReadingReportBook) => savePages(() => persistReport(pages, nextPage, dataRef.current?.session?.id, book));
   /** Сохраняем отдельный подход к книге: сначала закрываем его на телефоне (finish), затем отправляем страницы.
    * Дневная цель складывается из подтверждённого времени всех подходов; обычная пауза ничего не закрывает.
    * Если закрыть не удалось, ошибка уже показана и страницы не уходят. */
-  const saveApproach = (pages: number, nextPage?: number) => savePages(async () => {
+  const saveApproach = (pages: number, nextPage?: number, book?: ReadingReportBook) => savePages(async () => {
     validatePageReport(pages, nextPage);
+    if (book && !serverDetailRef.current?.supportsReportBook) throw new Error('Сменить книгу подхода можно после обновления сервера. Сохраните страницы с книгой старта.');
     const expectedSessionId = dataRef.current?.session?.id;
     const local = await readingNative.snapshot();
     if (!current()) return;
@@ -716,7 +725,7 @@ export function useReadingChallenge(challengeId: string) {
       const closed = await readingNative.snapshot();
       if (!current() || closed?.sessionId !== local.sessionId || closed.terminal !== true) return;
     }
-    await persistReport(pages, nextPage, expectedSessionId);
+    await persistReport(pages, nextPage, expectedSessionId, book);
   });
   // Launches the native timer for a server-confirmed reservation made by THIS phone.
   // A bridge error is not proof that the native start failed: its journal may already

@@ -25,8 +25,12 @@ export type ReadingShelfComposer = {
 /** «Что читаете» — постоянная полка и выбор книги подхода в одном блоке.
  * Выбранная книга подсвечена; добавление книги не меняет выбранный подход.
  * Пока подход открыт, видна только его книга: остальные и «Добавить книгу» — под «Другие книги · N». */
-export function ReadingBookshelf({ library, composer, selectedKey, selectionLocked = false, disabled = false }: {
+export function ReadingBookshelf({ library, composer, selectedKey, selectionLocked = false, disabled = false, purpose = 'next', changeLater = false }: {
   library: ReadingBookLibrary; composer?: ReadingShelfComposer; selectedKey?: string; selectionLocked?: boolean; disabled?: boolean;
+  /** `next` — книга следующего подхода; `report` — после остановки таймера: какой книге записать этот подход. */
+  purpose?: 'next' | 'report';
+  /** Во время подхода: книгу можно будет сменить при записи страниц (сервер это поддерживает). */
+  changeLater?: boolean;
 }) {
   const { T, ty } = useTheme();
   const [editing, setEditing] = useState(false), [notice, setNotice] = useState('');
@@ -40,10 +44,12 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
   // Во время подхода выбор закреплён: показываем одну книгу, остальное свёрнуто (но доступно).
   const folded = selectionLocked && !!selected && !othersOpen && !editing;
   const others = active.length - (selected ? 1 : 0);
+  const reporting = purpose === 'report';
   const pinned = selectionLocked && !!selected;
   const row = (book: typeof active[number]) => <ReadingBookSummaryRow key={book.key} book={book} selected={book.key === selectedKey}
-    disabled={selectionLocked || disabled || !!composer?.adding} onSelect={() => library.select(book)} />;
-  const canFinish = !!library.setFinished && !!selected && selected.editable !== false && !selectionLocked && !disabled;
+    disabled={selectionLocked || disabled || !!composer?.adding} onSelect={() => library.select(book)}
+    selectHint={reporting ? 'Сохранить этот подход для этой книги' : undefined} />;
+  const canFinish = !reporting && !!library.setFinished && !!selected && selected.editable !== false && !selectionLocked && !disabled;
   const finish = (book: typeof active[number]) => Alert.alert('Книга прочитана?',
     `«${book.title}» уйдёт из «Что читаете» и отметится прочитанной в «Моих книгах» профиля. Вернуть её можно в разделе «Прочитанные».`, [
       { text: 'Отмена', style: 'cancel' },
@@ -61,9 +67,11 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
   };
   return <ContentBlock size="compact"><Wrapper gap={10}>
     <Wrapper gap={2}>
-      <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>Что читаете</Text>
-      <Text style={[ty.footnote, { color: T.labelSecondary }]}>{selectionLocked
-        ? 'Книга этого подхода. Сменить можно после сохранения страниц.'
+      <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>{reporting ? 'Какую книгу вы читали?' : 'Что читаете'}</Text>
+      <Text style={[ty.footnote, { color: T.labelSecondary }]}>{reporting
+        ? 'Если на старте выбрали не ту книгу, отметьте нужную: время и страницы этого подхода сохранятся ей.'
+        : selectionLocked ? changeLater ? 'Книга этого подхода. Если выбрали не ту, смените её при записи страниц.'
+        : 'Книга этого подхода. Сменить можно после сохранения страниц.'
         : 'Время и страницы подхода сохранятся выбранной книге.'}</Text>
     </Wrapper>
     {library.error ? <InlineNotice message={library.error} onRetry={library.retry} /> : null}
@@ -89,7 +97,7 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
       accessibilityHint={`Отметить «${selected.title}» прочитанной и убрать из «Что читаете»`} onPress={() => finish(selected)} /> : null}
     {notice ? <Text accessibilityLiveRegion="polite" style={[ty.footnoteEm, { color: T.greenText }]}>{notice}</Text> : null}
     {composer && !composer.supported && !library.busy ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>Добавление книг на полку станет доступно после обновления сервера. Сохранённую историю можно читать сейчас.</Text> : null}
-    {folded ? null : <ReadingFinishedBooks books={finished} busyKey={library.finishingKey} disabled={disabled}
+    {folded || reporting ? null : <ReadingFinishedBooks books={finished} busyKey={library.finishingKey} disabled={disabled}
       onReturn={library.setFinished ? key => { void library.setFinished?.(key, false); } : undefined} />}
     {folded ? null : composer && editing && draft ? <Wrapper gap={12}>
       <ReadingBookField purpose="add" title={draft.title} author={draft.author} status={draft.status} error={draft.error}
