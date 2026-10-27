@@ -48,7 +48,7 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
   const pinned = selectionLocked && !!selected;
   const row = (book: typeof active[number]) => <ReadingBookSummaryRow key={book.key} book={book} selected={book.key === selectedKey}
     disabled={selectionLocked || disabled || !!composer?.adding} onSelect={() => library.select(book)}
-    selectHint={reporting ? 'Сохранить этот подход для этой книги' : undefined} />;
+    selectHint={reporting ? 'Выбрать книгу для сохранения этого подхода' : undefined} />;
   const canFinish = !reporting && !!library.setFinished && !!selected && selected.editable !== false && !selectionLocked && !disabled;
   const finish = (book: typeof active[number]) => Alert.alert('Книга прочитана?',
     `«${book.title}» уйдёт из «Что читаете» и отметится прочитанной в «Моих книгах» профиля. Вернуть её можно в разделе «Прочитанные».`, [

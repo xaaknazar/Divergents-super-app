@@ -255,6 +255,47 @@ describe('book chosen after the timer stopped', () => {
     await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
     expect(p.onReport).toHaveBeenCalledWith(3, 43);
   });
+  test.each(['removed', 'finished', 'bookmark changed'] as const)('a shelf refresh (%s) cannot change the book or bookmark of an unfinished form', async change => {
+    const p = awaiting(true);
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    await fireEvent.press(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ }));
+    await fireEvent.changeText(v.getByLabelText('Страниц за этот подход'), '6');
+    const refreshed = change === 'removed' ? [readingBookExample]
+      : [readingBookExample, { ...second, nextPage: 100, finished: change === 'finished' }];
+    await v.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} library={{ ...p.library!, books: refreshed }} busy /></ThemePreviewProvider>);
+    expect(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ }).props.accessibilityState.selected).toBe(true);
+    expect(v.getByText(/начали со страницы 21/)).toBeTruthy();
+    expect(v.getByLabelText('Страниц за этот подход').props.value).toBe('6');
+    await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
+    expect(p.onReport).toHaveBeenCalledWith(6, 27, { book: second.title, author: second.author, bookKey: second.key, coverId: undefined, fromPage: 21 });
+  });
+  test('pausing before the daily goal allows choosing a book and saving only that segment', async () => {
+    const p = awaiting(true);
+    p.awaitingPages = false; p.remainingMs = 45 * 60000; p.resumableSession = true;
+    p.canResume = true; p.onResume = jest.fn(); p.sessionElapsedMs = 15 * 60000;
+    p.data = { ...p.data, session: { ...p.data.session!, status: 'running', elapsedMs: null } };
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    await fireEvent.press(v.getByRole('button', { name: 'Записать страницы' }));
+    expect(v.getByText(/Подход 15 мин/)).toBeTruthy();
+    await fireEvent.press(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ }));
+    await fireEvent.changeText(v.getByLabelText('Страниц за этот подход'), '6');
+    await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
+    expect(p.onSaveApproach).toHaveBeenCalledWith(6, 27, { book: second.title, author: second.author, bookKey: second.key, coverId: undefined, fromPage: 21 });
+    expect(p.onReport).not.toHaveBeenCalled();
+    expect(p.onStart).not.toHaveBeenCalled();
+  });
+  test('the selected report book and draft pages do not leak to a different session', async () => {
+    const p = awaiting(true);
+    const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+    await fireEvent.press(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ }));
+    await fireEvent.changeText(v.getByLabelText('Страниц за этот подход'), '6');
+    await v.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p}
+      data={{ ...p.data, session: { ...p.data.session!, id: 'next-session' } }} /></ThemePreviewProvider>);
+    expect(v.getByRole('button', { name: new RegExp(`Читать «${readingBookExample.title}»`) }).props.accessibilityState.selected).toBe(true);
+    expect(v.getByLabelText('Страниц за этот подход').props.value).toBe('0');
+    await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
+    expect(p.onReport).toHaveBeenCalledWith(0, 40);
+  });
   test('a start book that is not on the shelf stays selectable as the default', async () => {
     const p = awaiting(true);
     p.data = { ...p.data, session: { ...p.data.session!, book: 'Новая книга', author: 'Автор', bookKey: 'manual:новая', fromPage: null } };

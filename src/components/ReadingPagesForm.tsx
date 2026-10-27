@@ -41,7 +41,7 @@ export function ReadingPagesForm({ value, onChange, onSubmit, busy = false, sess
     <Text style={[ty.footnote, styles.center, { color: T.labelSecondary }]}>Укажите количество страниц, а не номер последней страницы. Не успели прочитать — можно сохранить 0.</Text>
     <Button label={submitLabel} size="large" loading={busy} disabled={n === null || invalid} onPress={onSubmit}
       accessibilityHint={dayLabel ? `Страницы засчитаются в ${dayLabel}. После сохранения можно начать чтение за сегодня`
-        : 'Сохранить страницы этой книги. После подтверждения можно выбрать другую книгу и начать новый подход'} />
+        : 'Сохранить время и страницы для указанной книги. После сохранения можно начать новый подход'} />
   </View>;
 }
 

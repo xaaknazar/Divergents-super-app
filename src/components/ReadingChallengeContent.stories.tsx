@@ -99,6 +99,10 @@ export const ShelfPages: Story = { args: { ...shelfArgs, timerState: 'paused', r
 export const ShelfPagesChooseBook: Story = { args: { ...ShelfPages.args, data: { ...ShelfPages.args!.data!, supportsReportBook: true } } };
 export const ShelfPagesChooseBookDark: Story = { ...ShelfPagesChooseBook, parameters: { scheme: 'dark' } };
 export const ShelfPagesChooseBookLargeText: Story = { ...ShelfPagesChooseBook, parameters: { viewport: 'compact', textSize: 'xl' } };
+/** После короткого подхода: «Записать страницы» открывает выбор книги, дневная цель остаётся 60 минут. */
+export const ShelfPausedChooseBook: Story = { args: { ...shelfArgs, timerState: 'paused', remainingMs: 45 * 60000,
+  resumableSession: true, canResume: true, onResume: noop, sessionElapsedMs: 15 * 60000,
+  data: { ...shelfToday, supportsReportBook: true, session: { ...session, bookKey: 'ol:OL1W' } } } };
 /** Без интернета: таймер и страницы на телефоне, отправка при связи. */
 export const OfflineSaved: Story = { args: { ...shelfArgs, offline: true, pendingApproaches: 1, pendingToday: 1,
   data: { ...shelfToday, me: { ...shelfToday.me!, history: [{ day: 14, state: 'open', pages: 12, elapsedMs: 18 * 60000 }] } } } };
