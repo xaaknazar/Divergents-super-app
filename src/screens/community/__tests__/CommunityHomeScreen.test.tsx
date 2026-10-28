@@ -1,10 +1,11 @@
 import React from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { Alert } from 'react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { CommunityHomeScreen } from '../CommunityHomeScreen';
 import { DEFAULT_CHALLENGE, fetchCommunityHome, type ChallengeListItem } from '../../../data/community';
 import { useChallenge } from '../../../state/ChallengeContext';
+import { readingCatalogCache, readingCatalogKey } from '../../../state/readingCatalogCache';
 
 jest.mock('../../../data/community', () => ({
   ...jest.requireActual('../../../data/community'),
@@ -197,4 +198,25 @@ it('opens the detail retry screen instead of denying access when participation c
   await fireEvent.press(view.getByRole('button', { name: `${active.title}. Челлендж идёт` }));
   expect(navigate).toHaveBeenCalledWith('ChallengeDetail', { challengeId: active.id });
   expect(Alert.alert).not.toHaveBeenCalled();
+});
+
+it('opens saved Reading from both home and challenges even when every community request is offline', async () => {
+  await readingCatalogCache.reset();
+  await readingCatalogCache.load(readingCatalogKey('offline-reader'), async () => ({ enabled: true, challenges: [{
+    id: 'reading-offline', title: 'Extreme reading', phase: 'active', membership: 'approved',
+    mode: 'continuous', startDate: '2026-10-20', durationDays: 1,
+  }] }));
+  jest.mocked(useAuth).mockReturnValue({ isSignedIn: true, userId: 'offline-reader', getToken: async () => null } as unknown as ReturnType<typeof useAuth>);
+  mockFetchCommunityHome.mockImplementation(() => new Promise(() => {}));
+  mockUseChallenge.mockReturnValue({ ...mockUseChallenge(), loading: true });
+  const view = await render(screen());
+  await waitFor(() => expect(view.getByText('Не удалось обновить список. Сохранённые челленджи можно открыть.')).toBeTruthy());
+  await fireEvent.press(view.getByText('Extreme reading'));
+  expect(navigate).toHaveBeenLastCalledWith('ReadingChallenge', { challengeId: 'reading-offline' });
+  navigate.mockClear();
+  await fireEvent.press(view.getByRole('tab', { name: 'sec_challenges' }));
+  await fireEvent.press(view.getByText('Extreme reading'));
+  expect(navigate).toHaveBeenLastCalledWith('ReadingChallenge', { challengeId: 'reading-offline' });
+  await view.unmount();
+  await act(async () => { await readingCatalogCache.reset(); });
 });

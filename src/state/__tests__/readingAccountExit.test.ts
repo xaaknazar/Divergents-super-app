@@ -5,6 +5,7 @@ import { readingNative, type NativeReadingSession } from '../readingNative';
 import { READING_OUTBOX_KEY, type ReadingQueue } from '../readingOutbox';
 import { clearKeys } from '../persist';
 import { unregisterPushToken } from '../usePush';
+import { readingCatalogCache, READING_CATALOG_CACHE_KEY } from '../readingCatalogCache';
 
 jest.mock('expo-notifications', () => ({
   cancelAllScheduledNotificationsAsync: jest.fn(async () => {}),
@@ -23,6 +24,10 @@ jest.mock('../resumeSync', () => ({ stopResumeSync: jest.fn(async () => {}) }));
 jest.mock('../challengeReadCache', () => ({
   CHALLENGE_READ_CACHE_KEY: 'dvg.challengeReads.v1',
   challengeReadCache: { reset: jest.fn(async () => {}) },
+}));
+jest.mock('../readingCatalogCache', () => ({
+  READING_CATALOG_CACHE_KEY: 'dvg.readingCatalog.v1',
+  readingCatalogCache: { reset: jest.fn(async () => {}) },
 }));
 jest.mock('../readingNative', () => ({
   readingNative: {
@@ -91,6 +96,7 @@ beforeEach(() => {
     [READING_OUTBOX_KEY]: JSON.parse(JSON.stringify(pendingReading)),
     'dvg.readingDevice.v1': 'phone',
     'dvg.resume': { name: 'Личные данные' },
+    [READING_CATALOG_CACHE_KEY]: ['saved-challenge'],
   };
   pause.mockReset().mockImplementation(async () => {
     events.push('pause');
@@ -130,6 +136,7 @@ test('clearAllAppData waits for the running session to pause before hiding its c
   });
 
   const clearing = clearAllAppData();
+  expect(readingCatalogCache.reset).toHaveBeenCalledTimes(1);
   expect(pause).toHaveBeenCalledTimes(1);
   expect(endCards).not.toHaveBeenCalled();
   expect(clearKeys).not.toHaveBeenCalled();
@@ -140,6 +147,7 @@ test('clearAllAppData waits for the running session to pause before hiding its c
   expect(endCards).toHaveBeenCalledTimes(1);
   expect(cardVisible).toBe(false);
   expect(disk['dvg.resume']).toBeUndefined();
+  expect(disk[READING_CATALOG_CACHE_KEY]).toBeUndefined();
   expectReadingEvidencePreserved();
   expect(deleteAsync).toHaveBeenCalledTimes(1);
   expect(deleteAsync).toHaveBeenCalledWith('file:///test-documents/downloads/', { idempotent: true });

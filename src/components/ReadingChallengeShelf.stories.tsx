@@ -11,5 +11,6 @@ export const Light: Story = {};
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
 export const Offline: Story = { args: { error: true } };
+export const OfflineDark: Story = { args: { error: true }, parameters: { scheme: 'dark' } };
 export const FirstLoadFailed: Story = { args: { error: true, items: [] } };
 export const ReleaseDisabled: Story = { args: { items: [] } };

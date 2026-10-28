@@ -10,7 +10,9 @@ type Snapshot = { data: unknown; updatedAt: number; loading: boolean; error: boo
 const EMPTY: Snapshot = { data: null, updatedAt: 0, loading: false, error: false };
 
 /** Bounded, account-scoped SWR cache. No tokens or pending marks are stored here. */
-export function createChallengeReadCache() {
+export function createChallengeReadCache({ storageKey = CHALLENGE_READ_CACHE_KEY, maxEntries = MAX_ENTRIES, maxAgeMs = MAX_AGE }: {
+  storageKey?: string; maxEntries?: number; maxAgeMs?: number;
+} = {}) {
   const entries = new Map<string, Snapshot>();
   const listeners = new Set<() => void>();
   const pending = new Map<string, Promise<void>>();
@@ -19,17 +21,17 @@ export function createChallengeReadCache() {
   const emit = () => listeners.forEach(listener => listener());
   const trim = () => {
     const oldest = [...entries].sort((a, b) => a[1].updatedAt - b[1].updatedAt);
-    for (const [key] of oldest.slice(0, Math.max(0, oldest.length - MAX_ENTRIES))) entries.delete(key);
+    for (const [key] of oldest.slice(0, Math.max(0, oldest.length - maxEntries))) entries.delete(key);
   };
   const persist = () => {
     trim();
-    const records = [...entries].filter(([, value]) => value.data && Date.now() - value.updatedAt < MAX_AGE)
+    const records = [...entries].filter(([, value]) => value.data && Date.now() - value.updatedAt < maxAgeMs)
       .map(([key, { data, updatedAt }]) => [key, { data, updatedAt }] as const);
-    void saveJSON(CHALLENGE_READ_CACHE_KEY, records).catch(() => {});
+    void saveJSON(storageKey, records).catch(() => {});
   };
   const get = (key: string): Snapshot => {
     const entry = entries.get(key);
-    return entry && (!entry.data || Date.now() - entry.updatedAt < MAX_AGE) ? entry : EMPTY;
+    return entry && (!entry.data || Date.now() - entry.updatedAt < maxAgeMs) ? entry : EMPTY;
   };
   return {
     get,
@@ -37,13 +39,13 @@ export function createChallengeReadCache() {
     hydrate() {
       if (hydration) return hydration;
       const version = generation;
-      hydration = loadJSON<unknown>(CHALLENGE_READ_CACHE_KEY, []).then(raw => {
+      hydration = loadJSON<unknown>(storageKey, []).then(raw => {
         if (version !== generation || !Array.isArray(raw)) return;
-        for (const record of raw.slice(-MAX_ENTRIES)) {
+        for (const record of raw.slice(-maxEntries)) {
           if (!Array.isArray(record) || typeof record[0] !== 'string') continue;
           const [key, item] = record as [string, Entry];
           if (!item?.data || !Number.isFinite(item.updatedAt) || item.updatedAt > Date.now()
-              || Date.now() - item.updatedAt >= MAX_AGE) continue;
+              || Date.now() - item.updatedAt >= maxAgeMs) continue;
           const current = entries.get(key);
           if (current?.updatedAt && current.updatedAt >= item.updatedAt) continue;
           entries.set(key, { data: item.data, updatedAt: item.updatedAt, loading: current?.loading ?? false, error: current?.error ?? false });
@@ -82,7 +84,7 @@ export function createChallengeReadCache() {
     },
     reset() {
       generation++; entries.clear(); pending.clear(); hydration = null; emit();
-      return clearKeys([CHALLENGE_READ_CACHE_KEY]);
+      return clearKeys([storageKey]);
     },
   };
 }

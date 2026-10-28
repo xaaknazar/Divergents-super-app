@@ -96,7 +96,7 @@ export function ReadingBookshelf({ library, composer, selectedKey, selectionLock
       loading={library.finishingKey === selected.key} disabled={!!library.finishingKey}
       accessibilityHint={`Отметить «${selected.title}» прочитанной и убрать из «Что читаете»`} onPress={() => finish(selected)} /> : null}
     {notice ? <Text accessibilityLiveRegion="polite" style={[ty.footnoteEm, { color: T.greenText }]}>{notice}</Text> : null}
-    {composer && !composer.supported && !library.busy ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>Добавление книг на полку станет доступно после обновления сервера. Сохранённую историю можно читать сейчас.</Text> : null}
+    {composer && !composer.supported && !library.busy && !library.error ? <Text style={[ty.footnote, { color: T.labelSecondary }]}>Добавление книг на полку станет доступно после обновления сервера. Сохранённую историю можно читать сейчас.</Text> : null}
     {folded || reporting ? null : <ReadingFinishedBooks books={finished} busyKey={library.finishingKey} disabled={disabled}
       onReturn={library.setFinished ? key => { void library.setFinished?.(key, false); } : undefined} />}
     {folded ? null : composer && editing && draft ? <Wrapper gap={12}>

@@ -14,12 +14,14 @@ import { stopAchievementSession } from '../data/achievementEvents';
 import { stopResumeSync } from './resumeSync';
 import { challengeReadCache, CHALLENGE_READ_CACHE_KEY } from './challengeReadCache';
 import { readingNative } from './readingNative';
+import { readingCatalogCache, READING_CATALOG_CACHE_KEY } from './readingCatalogCache';
 
 // Every user-scoped persisted key in the app. Grep the codebase for "dvg." to
 // keep this in sync when new persisted state is added.
 export // Окно итогов показывается один раз на устройство — отметка личная.
 const USER_DATA_KEYS: string[] = [
   CHALLENGE_READ_CACHE_KEY,
+  READING_CATALOG_CACHE_KEY,
   'dvg.challengeResultsSeen.v1',
   // LMS
   'dvg.completed',          // CourseContext — chapter completion / progress
@@ -81,6 +83,9 @@ const USER_DATA_DIRS: string[] = [
  * Individual key failures are swallowed by clearKeys.
  */
 export async function clearAllAppData(): Promise<void> {
+  // Invalidate pending catalog responses immediately; sign-out must not let
+  // an old response restore another account's offline entry points.
+  const readingCatalogReset = readingCatalogCache.reset();
   // Release shields offline. The account-bound native journal remains until its server receipt is confirmed.
   await readingNative.pause().catch(() => {});
   // A normal pause keeps its frozen card; account exit must not leave the
@@ -88,6 +93,7 @@ export async function clearAllAppData(): Promise<void> {
   // removed the journal or a storage failure prevented reading it.
   await readingNative.endLiveActivities().catch(() => {});
   await challengeReadCache.reset();
+  await readingCatalogReset;
   await stopResumeSync();
   // Invalidate late responses before the first await; erase only this account.
   const achievementKey = stopAchievementSession();

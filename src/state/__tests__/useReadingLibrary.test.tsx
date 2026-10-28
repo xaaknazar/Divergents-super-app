@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { addReadingBook, fetchReadingHistory, ReadingHistory } from '../../data/readingBooks';
 import { useReadingLibrary } from '../useReadingLibrary';
 import { individualReadingFixture, readingBookExample } from '../../storybook/readingFixtures';
+import { loadJSON } from '../persist';
 
 let mockUserId = 'demo-reader';
 let mockToken = jest.fn(async (): Promise<string | null> => 'token');
@@ -31,6 +32,45 @@ test('does not request another reader or a visitor library', async () => {
   expect(fetchHistory).not.toHaveBeenCalled();
   await h.rerender({ readerId: 'other-reader' });
   expect(fetchHistory).not.toHaveBeenCalled();
+  expect(h.result.current.books).toEqual([]);
+});
+
+test('restores selectable saved books before a hanging offline token and eventually stops loading', async () => {
+  jest.useFakeTimers();
+  try {
+    mockDisk['dvg.readingShelf.v1.demo-reader.ch1'] = { books: shelf().shelfBooks, supportsBookshelf: true };
+    let resolveToken!: (token: string) => void;
+    mockToken.mockImplementation(() => new Promise(resolve => { resolveToken = resolve; }));
+    const h = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+    await act(async () => {});
+    expect(h.result.current.books).toHaveLength(2);
+    expect(h.result.current.supportsBookshelf).toBe(false);
+    expect(h.result.current.error).toContain('из памяти телефона');
+    await act(async () => { await jest.advanceTimersByTimeAsync(10_001); });
+    expect(h.result.current.busy).toBe(false);
+    expect(h.result.current.books).toHaveLength(2);
+    await act(async () => { resolveToken('late-token'); });
+    expect(fetchHistory).not.toHaveBeenCalled();
+    await h.unmount();
+  } finally { jest.useRealTimers(); }
+});
+
+test('a late disk read cannot replace a fresh empty server shelf', async () => {
+  let resolveDisk!: (value: unknown) => void;
+  jest.mocked(loadJSON).mockImplementationOnce(() => new Promise(resolve => { resolveDisk = resolve; }));
+  fetchHistory.mockResolvedValue({ ...shelf(), shelfBooks: [] });
+  const h = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+  await waitFor(() => expect(h.result.current.supportsBookshelf).toBe(true));
+  await act(async () => { resolveDisk({ books: shelf().shelfBooks, supportsBookshelf: true }); });
+  expect(h.result.current.books).toEqual([]);
+  expect(h.result.current.busy).toBe(false);
+});
+
+test('does not render malformed saved book rows while offline', async () => {
+  mockDisk['dvg.readingShelf.v1.demo-reader.ch1'] = { books: [{ title: 'Broken' }] };
+  mockToken.mockRejectedValue(new TypeError('Network request failed'));
+  const h = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+  await waitFor(() => expect(h.result.current.error).toBeTruthy());
   expect(h.result.current.books).toEqual([]);
 });
 test('refreshes after a confirmed receipt and preserves the saved list on network errors', async () => {

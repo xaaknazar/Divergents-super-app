@@ -5,10 +5,12 @@ import { loadJSON, saveJSON } from './persist';
 import { sendReadingCommand } from '../data/reading';
 import { emitShelfChanged } from './shelfBus';
 import { addReadingBook, fetchReadingHistory, readingBookAddSelection, ReadingBookAddReceipt,
-  ReadingBookSelection, ReadingShelfBook } from '../data/readingBooks';
+  ReadingBookSelection, ReadingShelfBook, ReadingShelfBookSchema } from '../data/readingBooks';
 
-type LibraryState = { context: string; books: ReadingShelfBook[]; busy: boolean; supportsBookshelf: boolean; error?: string };
+type LibraryState = { context: string; books: ReadingShelfBook[]; busy: boolean; supportsBookshelf: boolean; fromCache?: boolean; error?: string };
 const libraryError = (error: unknown, fallback: string) => error instanceof Error && /[А-Яа-яЁё]/.test(error.message) ? error.message : fallback;
+const SAVED_SHELF_MESSAGE = 'Полка из памяти телефона. Новые книги можно будет добавить при связи.';
+const SHELF_READ_DEADLINE_MS = 10_000;
 
 /** Own persistent shelf and legacy reading history. Selecting a book never writes;
  * explicit add requires a server receipt. No offline placeholder is called saved.
@@ -32,11 +34,27 @@ export function useReadingLibrary(challengeId: string, readerId?: string, receip
     const request = ++sequence.current;
     if (!userId || !readerId || readerId !== userId) return;
     setState(previous => ({ context, books: previous?.context === context ? previous.books : [], busy: true,
+      fromCache: previous?.context === context && previous.fromCache,
       supportsBookshelf: previous?.context === context && previous.supportsBookshelf }));
+    let settled = false;
+    let deadline: ReturnType<typeof setTimeout> | undefined;
+    const savedShelf = loadJSON<{ books: unknown } | null>(`dvg.readingShelf.v1.${userId}.${challengeId}`, null)
+      .then(saved => ReadingShelfBookSchema.array().safeParse(saved?.books)).catch(() => null);
+    void savedShelf.then(saved => {
+      if (settled || !isCurrent() || sequence.current !== request || !saved?.success || !saved.data.length) return;
+      setState(previous => previous?.context === context && previous.books.length ? previous
+        : { context, books: saved.data, busy: true, supportsBookshelf: false, fromCache: true, error: SAVED_SHELF_MESSAGE });
+    });
     try {
-      const token = await auth.current.getToken();
-      if (!isCurrent() || sequence.current !== request) return;
-      const data = await fetchReadingHistory(token, challengeId, readerId);
+      const data = await Promise.race([
+        (async () => {
+          const token = await auth.current.getToken();
+          if (settled || !isCurrent() || sequence.current !== request) throw new Error('Reading shelf request cancelled');
+          return fetchReadingHistory(token, challengeId, readerId);
+        })(),
+        new Promise<never>((_, reject) => { deadline = setTimeout(() => reject(new Error('Reading shelf timeout')), SHELF_READ_DEADLINE_MS); }),
+      ]);
+      settled = true;
       if (!isCurrent() || sequence.current !== request) return;
       if (!data.own || data.reader.userId !== userId || data.challengeId !== challengeId) throw new Error('Не удалось загрузить ваши книги');
       const books = data.shelfBooks ?? data.books.map(book => ({ ...book, addedAt: null }));
@@ -45,19 +63,24 @@ export function useReadingLibrary(challengeId: string, readerId?: string, receip
       // A copy on the phone lets the reader pick a book and start without internet.
       void saveJSON(`dvg.readingShelf.v1.${userId}.${challengeId}`, { books, supportsBookshelf }).catch(() => {});
     } catch (error) {
+      settled = true;
       if (!isCurrent() || sequence.current !== request) return;
       const saved = stateRef.current?.context === context && stateRef.current.books.length ? null
-        : await loadJSON<{ books: ReadingShelfBook[]; supportsBookshelf: boolean } | null>(`dvg.readingShelf.v1.${userId}.${challengeId}`, null);
+        : await savedShelf;
       if (!isCurrent() || sequence.current !== request) return;
-      if (saved && Array.isArray(saved.books) && saved.books.length) {
+      if (saved?.success && saved.data.length) {
         // Offline: the last confirmed shelf. Adding books still needs the server.
-        setState({ context, books: saved.books, busy: false, supportsBookshelf: false,
-          error: 'Полка из памяти телефона. Новые книги можно будет добавить при связи.' });
+        setState({ context, books: saved.data, busy: false, supportsBookshelf: false, fromCache: true, error: SAVED_SHELF_MESSAGE });
         return;
       }
       setState(previous => ({ context, books: previous?.context === context ? previous.books : [], busy: false,
+        fromCache: previous?.context === context && previous.fromCache,
         supportsBookshelf: previous?.context === context && previous.supportsBookshelf,
-        error: libraryError(error, 'Не удалось загрузить ваши книги. Повторите попытку.') }));
+        error: previous?.context === context && previous.books.length && previous.fromCache ? SAVED_SHELF_MESSAGE
+          : libraryError(error, 'Не удалось загрузить ваши книги. Повторите попытку.') }));
+    } finally {
+      settled = true;
+      clearTimeout(deadline);
     }
   }, [context, isCurrent, userId, challengeId, readerId]);
   useEffect(() => { void load(); return () => { sequence.current++; }; }, [load, receipts]);

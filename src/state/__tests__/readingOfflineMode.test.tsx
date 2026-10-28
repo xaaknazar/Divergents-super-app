@@ -8,16 +8,21 @@ import { readingDayAt, readingDayEnd } from '../../data/readingOffline';
 import { readingClockKey, readingAttestKey } from '../useReadingChallenge';
 const READING_CLOCK_KEY = readingClockKey('demo-reader');
 import { AppState } from 'react-native';
+import { useReadingCatalog } from '../useReadingCatalog';
+import { readingCatalogCache, readingCatalogKey, READING_CATALOG_CACHE_KEY } from '../readingCatalogCache';
 
 let mockDisk: Record<string, any> = {};
 let mockUuid = 0;
 let mockClock: { uptimeMs: number; bootId: string } | null = null;
 jest.mock('@clerk/clerk-expo', () => ({ useAuth: () => ({ userId: 'demo-reader', getToken: async () => 'token' }) }));
+jest.mock('@react-navigation/native', () => ({ useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]) }));
 jest.mock('../../data/api', () => ({ API_BASE: 'https://example.test' }));
-jest.mock('../../data/reading', () => ({ ...jest.requireActual('../../data/reading'), fetchReadingDetail: jest.fn(), sendReadingCommand: jest.fn() }));
+jest.mock('../../data/reading', () => ({ ...jest.requireActual('../../data/reading'), fetchReadingDetail: jest.fn(), sendReadingCommand: jest.fn(),
+  fetchReadingCatalog: jest.fn(async () => { throw new TypeError('Network request failed'); }) }));
 jest.mock('../persist', () => ({ loadJSON: jest.fn(async (key, fallback) => mockDisk[key] ?? fallback),
   readJSON: jest.fn(async (key, fallback) => ({ ok: true, value: mockDisk[key] ?? fallback })),
-  saveJSON: jest.fn(async (key, value) => { mockDisk[key] = JSON.parse(JSON.stringify(value)); }) }));
+  saveJSON: jest.fn(async (key, value) => { mockDisk[key] = JSON.parse(JSON.stringify(value)); }),
+  clearKeys: jest.fn(async (keys: string[]) => { keys.forEach(key => { delete mockDisk[key]; }); }) }));
 jest.mock('../readingNative', () => ({ ...jest.requireActual('../readingNative'), readingNative: { capabilities: jest.fn(),
   snapshot: jest.fn(async () => null), remainingMs: jest.fn(async () => 1800000), pause: jest.fn(), start: jest.fn(), acknowledge: jest.fn(),
   authorize: jest.fn(), selectApps: jest.fn(), clock: jest.fn(async () => mockClock),
@@ -89,6 +94,26 @@ test('«Старт» in airplane mode starts the timer on the phone and queues t
   expect(queued()[0].startedAt).toBeGreaterThanOrEqual(before);
   expect(h.result.current.data?.session).toMatchObject({ id: 'session-1', status: 'running', day: today });
   expect(h.result.current.timerState).toBe('running');
+});
+
+test('cold offline entry goes from the saved community catalog to the real timer and queues its start', async () => {
+  await readingCatalogCache.reset();
+  mockDisk[READING_CATALOG_CACHE_KEY] = [[readingCatalogKey('demo-reader'), { updatedAt: Date.now() - 2 * 86400000,
+    data: { enabled: true, challenges: [{ id: cached.id, title: cached.title, startDate: cached.startDate,
+      durationDays: cached.durationDays, phase: cached.phase, membership: cached.membership, mode: cached.mode }] } }]];
+  const catalog = await renderHook(useReadingCatalog);
+  await waitFor(() => expect(catalog.result.current.items).toHaveLength(1));
+  const id = catalog.result.current.items[0].id;
+  await catalog.unmount();
+  const timer = await renderHook(() => useReadingChallenge(id));
+  await waitFor(() => expect(timer.result.current.data?.id).toBe(id));
+  await waitFor(() => expect(timer.result.current.busy).toBe(false));
+  await act(async () => { await timer.result.current.start('Книга', { author: 'Автор' }); });
+  expect(timer.result.current.error).toBeUndefined();
+  expect(timer.result.current.timerState).toBe('running');
+  expect(readingNative.start).toHaveBeenCalledTimes(1);
+  expect(queued()).toEqual([expect.objectContaining({ action: 'start', challengeId: id, book: 'Книга' })]);
+  await timer.unmount(); await readingCatalogCache.reset();
 });
 
 test('pages are saved on the phone, the journal is released and a second approach can start offline', async () => {
