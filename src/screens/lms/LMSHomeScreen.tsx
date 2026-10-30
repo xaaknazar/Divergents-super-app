@@ -173,7 +173,7 @@ return (
             <Wrapper paddingTop={shelfShown ? 8 : myLoadingShown || myErrorShown ? 0 : 16} marginBottom={18}>
               <SectionHeader title={t('recommended')} />
               <Wrapper marginHorizontal={16}>
-                <FeaturedCard course={featured} showPrice={feature('purchases')}
+                <FeaturedCard course={featured} owned={featured.id in ownedProgress} progress={ownedProgress[featured.id]} showPrice={feature('purchases')}
                   onPress={() => navigation.navigate('CourseDetail', { courseId: featured.id })} />
               </Wrapper>
             </Wrapper>

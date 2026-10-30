@@ -76,6 +76,38 @@ it('keeps local/server maximum progress and continuation ownership', async () =>
   expect(navigate).toHaveBeenCalledWith('CourseDetail', { courseId: sampleCourses[0].id });
 });
 
+it.each([0, 45, 100])('shows the same access in recommendations and catalog at %i%% progress', async (pct) => {
+  const course = { ...sampleCourses[1], source: 'live' as const };
+  mockCatalog = { ...mockCatalog, courses: [course], progress: () => pct / 100 };
+  mockOwned.courses = [{ ...course, serverProgress: 0 }];
+  const view = await render(screen());
+
+  expect(view.getByText('Рекомендуем')).toBeTruthy();
+  expect(view.queryByText('Нет доступа')).toBeNull();
+  // The recommendation, owned shelf and catalog must agree, including at 0%.
+  const cards = view.getAllByRole('button', { name: `${course.title}. 12 уроков. ${pct}% пройдено` });
+  expect(cards).toHaveLength(3);
+  expect(view.getByText(pct > 0 ? `Продолжить · ${pct}%` : 'Начать')).toBeTruthy();
+  await fireEvent.press(cards[1]);
+  expect(navigate).toHaveBeenCalledWith('CourseDetail', { courseId: course.id });
+});
+
+it('updates recommended access when the authenticated list changes without a catalog refresh', async () => {
+  const course = { ...sampleCourses[1], source: 'live' as const };
+  mockCatalog = { ...mockCatalog, courses: [course], progress: () => 0 };
+  const view = await render(screen());
+  expect(view.getAllByRole('button', { name: `${course.title}. 12 уроков. Нет доступа` })).toHaveLength(2);
+
+  mockOwned = { ...mockOwned, courses: [{ ...course, serverProgress: 0 }] };
+  await view.rerender(screen());
+  expect(view.queryByText('Нет доступа')).toBeNull();
+  expect(view.getAllByRole('button', { name: `${course.title}. 12 уроков. 0% пройдено` })).toHaveLength(3);
+
+  mockOwned = { ...mockOwned, courses: [] };
+  await view.rerender(screen());
+  expect(view.getAllByRole('button', { name: `${course.title}. 12 уроков. Нет доступа` })).toHaveLength(2);
+});
+
 it('keeps gift eligibility, downloads, library and profile routes', async () => {
   mockGift = { active: true, eligible: true, until: null, courseIds: ['storybook-gift'] };
   mockDownloads = [{ id: 'download-example' }];
