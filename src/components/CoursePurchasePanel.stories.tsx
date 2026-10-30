@@ -7,6 +7,7 @@ const meta = { title: 'Courses/Purchase', component: CoursePurchasePanel,
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Ready: Story = {};
+export const TestFlight: Story = { args: { testMode: true } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
 export const Confirming: Story = { args: { phase: 'confirming' } };

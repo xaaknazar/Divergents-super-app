@@ -8,7 +8,7 @@ const TransactionSchema = z.object({ transactionId: z.string().regex(/^\d+$/), p
   appAccountToken: z.string().uuid(), environment: z.enum(['Production', 'Sandbox']) });
 export type CourseTransaction = z.infer<typeof TransactionSchema>;
 export type StoreProduct = { id: string; title: string; displayPrice: string };
-export type PurchaseCatalog = { enabled: boolean; accountToken: string | null; products: { courseId: string; productId: string }[] };
+export type PurchaseCatalog = { enabled: boolean; testMode?: boolean; accountToken: string | null; products: { courseId: string; productId: string }[] };
 export type Store = {
   products(ids: string[]): Promise<StoreProduct[]>;
   purchase(id: string, token: string): Promise<{ status: 'purchased'; transaction: CourseTransaction } | { status: 'pending' | 'cancelled' }>;
@@ -34,7 +34,7 @@ export async function purchaseRequest(token: string, body?: object) {
   return result.json();
 }
 export async function loadPurchaseCatalog(token: string): Promise<PurchaseCatalog> {
-  return z.object({ enabled: z.boolean(), accountToken: z.string().uuid().nullable(),
+  return z.object({ enabled: z.boolean(), testMode: z.boolean().optional(), accountToken: z.string().uuid().nullable(),
     products: z.array(z.object({ courseId: z.string(), productId: z.string() })).max(100) }).parse(await purchaseRequest(token));
 }
 

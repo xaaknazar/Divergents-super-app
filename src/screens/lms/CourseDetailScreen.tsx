@@ -94,7 +94,7 @@ export function CourseDetailScreen({ route, navigation }: Props) {
     <HeaderIcon name="square.and.arrow.up" label="Поделиться" onPress={() => { Share.share({ message: course.title + ' — Divergents\n' + API_BASE + '/courses/' + courseId }); }} />
   </>} footer={!owned && (canBuy || freeLesson || (store.available && store.catalog.accountToken)) ? <BottomBar>
     {store.available && store.catalog.accountToken ? <CoursePurchasePanel priceLabel={canBuy ? product?.displayPrice : undefined}
-      phase={store.phase} message={store.message} canRestore onBuy={buy}
+      phase={store.phase} message={store.message} testMode={store.catalog.testMode} canRestore onBuy={buy}
       onRestore={async () => { await store.restore(); await onPurchased(); }} /> : null}
     {freeLesson ? <Button label={tr('Смотреть бесплатный урок')} icon="play.fill" onPress={() => openLesson(freeLesson.id)} variant={canBuy ? 'plain' : 'solid'} /> : null}
   </BottomBar> : undefined}>
