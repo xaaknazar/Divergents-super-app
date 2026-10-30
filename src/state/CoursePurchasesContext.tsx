@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { AppState } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { z } from 'zod';
+import { safeSpaces } from '../data/format';
 import { courseStore, courseAccessChanged, deliverCourseTransactions, loadPurchaseCatalog,
   purchaseRequest, type PurchaseCatalog, type StoreProduct } from './coursePurchases';
 
@@ -61,7 +62,7 @@ export function CoursePurchasesProvider({ children }: { children: React.ReactNod
       const key = next.products.map(p => p.productId).sort().join(',');
       if (next.enabled && (productsKey.current !== key || restore)) {
         try {
-          const loaded = z.array(z.object({ id: z.string(), title: z.string(), displayPrice: z.string().min(1) })).parse(
+          const loaded = z.array(z.object({ id: z.string(), title: z.string(), displayPrice: z.string().min(1).transform(safeSpaces) })).parse(
             await courseStore.products(next.products.map(p => p.productId)));
           if (!current(id)) return;
           setProducts(loaded);

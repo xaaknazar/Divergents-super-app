@@ -17,7 +17,7 @@ jest.mock('../../../state/CourseContext', () => ({ useCourses: () => ({
 }) }));
 jest.mock('../../../state/useMyCourses', () => ({ useMyCourses: () => mockMy }));
 jest.mock('../../../state/CoursePurchasesContext', () => ({ useCoursePurchases: () => ({
-  available: true, phase: 'idle', message: null, buy: mockBuy, restore: jest.fn(),
+  available: true, phase: 'idle', message: null, buy: mockBuy, restore: jest.fn(), retry: jest.fn(),
   catalog: { enabled: mockPurchases, accountToken: mockPurchases ? 'account-token' : null,
     products: mockPurchases ? [{ courseId: mockCourse.id, productId: 'apple-product' }] : [] },
   products: mockPurchases ? [{ id: 'apple-product', title: 'Курс', displayPrice: '4 990 ₸' }] : [],
@@ -84,9 +84,10 @@ it('keeps a single purchase action and refreshes real access after successful pa
   mockPurchases = true;
   const view = await render(screen());
   expect(view.getAllByRole('button', { name: /Купить курс/ })).toHaveLength(1);
+  expect(view.queryByRole('button', { name: /Восстановить/ })).toBeNull();
   await fireEvent.press(view.getByRole('button', { name: /Купить курс/ }));
   expect(mockBuy).toHaveBeenCalledWith(mockCourse.id);
-  expect(view.getByText('4 990 ₸')).toBeTruthy();
+  expect(view.getAllByText('4 990 ₸')).toHaveLength(1);
   expect(mockReload).toHaveBeenCalled();
   expect(mockLoad).toHaveBeenLastCalledWith(mockCourse.id, 'demo-token');
 });

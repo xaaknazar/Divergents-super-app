@@ -92,17 +92,17 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   return <DetailScreen onBack={goBack} backLabel="Обучение" actions={<>
     {owned ? <HeaderIcon name="arrow.down.circle" label="Загрузки" onPress={() => navigation.navigate('Downloads')} /> : null}
     <HeaderIcon name="square.and.arrow.up" label="Поделиться" onPress={() => { Share.share({ message: course.title + ' — Divergents\n' + API_BASE + '/courses/' + courseId }); }} />
-  </>} footer={!owned && (canBuy || freeLesson || (store.available && store.catalog.accountToken)) ? <BottomBar>
+  </>} footer={!owned && (canBuy || freeLesson || (store.available && store.catalog.accountToken && (store.message || store.phase === 'pending'))) ? <BottomBar>
     {store.available && store.catalog.accountToken ? <CoursePurchasePanel priceLabel={canBuy ? product?.displayPrice : undefined}
-      phase={store.phase} message={store.message} testMode={store.catalog.testMode} canRestore onBuy={buy}
-      onRestore={async () => { await store.restore(); await onPurchased(); }} /> : null}
+      phase={store.phase} message={store.message} testMode={store.catalog.testMode} onBuy={buy}
+      onRetry={async () => { await store.retry(); await onPurchased(); }} /> : null}
     {freeLesson ? <Button label={tr('Смотреть бесплатный урок')} icon="play.fill" onPress={() => openLesson(freeLesson.id)} variant={canBuy ? 'plain' : 'solid'} /> : null}
   </BottomBar> : undefined}>
     <Wrapper padding={16} gap={20}>
       <CourseOverview course={course} accessible={owned} />
       {owned ? course.lessons.length > 0 ? <CourseProgressCard progress={p} completed={allDone} lesson={currentLesson}
         onStart={currentLesson ? () => openLesson(currentLesson.id) : undefined} /> : null
-        : <CourseAccessCard gifted={gifted} canBuy={canBuy} price={price} priceLabel={product?.displayPrice} />}
+        : <CourseAccessCard gifted={gifted} canBuy={canBuy} />}
       {!owned && stripHtml(course.description) ? <TextSection title={tr('О курсе')} text={stripHtml(course.description)} /> : null}
       {!owned ? <CourseIncludes lessonCount={course.chaptersCount ?? course.lessons.length} hasMaterials={(course.attachments?.length ?? 0) > 0} /> : null}
       {chaptersLoading ? <ContentLoading /> : detailError[courseId] && course.lessons.length === 0 ?

@@ -59,3 +59,9 @@ test('explicit restore asks StoreKit to sync and confirms the restored transacti
   expect(native.finish).toHaveBeenCalledWith('12345', token);
   expect(result.current.phase).toBe('success');
 });
+test('normalizes Apple nonbreaking price spaces without changing currency or amount', async () => {
+  native.products.mockResolvedValue([{ id: productId, title: 'Курс', displayPrice: '149\u202f990\u00a0₸' }]);
+  const { result } = await renderHook(useCoursePurchases, { wrapper });
+  await waitFor(() => expect(result.current.products[0]?.displayPrice).toBe('149 990 ₸'));
+  expect(native.pending).toHaveBeenCalledWith(token, false);
+});

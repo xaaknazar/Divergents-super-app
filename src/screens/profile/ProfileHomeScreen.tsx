@@ -28,6 +28,8 @@ import { formatPace,paceTimeSec } from '../../state/ActivityContext';
 import { useCareer } from '../../state/CareerContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useCourses } from '../../state/CourseContext';
+import { useCoursePurchases } from '../../state/CoursePurchasesContext';
+import { CoursePurchaseSettings } from '../../components/CoursePurchaseSettings';
 import { useEnrollment } from '../../state/EnrollmentContext';
 import { useFitness } from '../../state/FitnessContext';
 import { tr,useLang } from '../../state/LanguageContext';
@@ -49,6 +51,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const { records, goals: fitnessGoals } = useFitness();
   const { has, statusOf } = useEnrollment();
   const { courses, progress, reload: reloadCourses } = useCourses();
+  const purchases = useCoursePurchases();
   const { applied, jobs } = useCareer();
   const { completeness: localCompleteness, answers } = useResume();
   const { profile, live, reload } = useTalentProfile();
@@ -456,6 +459,12 @@ export function ProfileHomeScreen({ navigation }: Props) {
         <ListRow leading={<IconBadge icon="arrow.down.circle" />}
           title={tr('Загрузки')} subtitle={tr('Скачанные аудио-уроки и доступные к скачиванию')} chevron onPress={() => navigation.navigate('Downloads')} />
       </ListSection></Wrapper>
+
+      {isSignedIn && purchases.available && purchases.catalog.accountToken ?
+        <Wrapper marginTop={6} marginHorizontal={16}>
+          <CoursePurchaseSettings phase={purchases.phase} message={purchases.message}
+            onRestore={() => { void purchases.restore(); }} />
+        </Wrapper> : null}
 
       {/* Appearance */}
       <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={t('appearance')}>
