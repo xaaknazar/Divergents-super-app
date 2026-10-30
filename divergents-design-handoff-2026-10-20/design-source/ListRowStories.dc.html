@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ListRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="2360" safe-top="{{false}}" hint-size="390px,2360px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,2300px">
+    <dc-import name="Text" variant="title2" heading="1" text="ListRow" hint-size="100%,28px"></dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,440px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="iconStyle=tile · iconTone (8 тонов)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" hint-size="100%,400px">
+        <dc-import name="ListRow" icon="book" icon-tone="brand" title="Мои курсы" detail="2" href="LMSHome.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="check" icon-tone="success" title="Прочитано" detail="3" separator="{{true}}" href="ProfileHome.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="bell" icon-tone="warning" title="Уведомления" separator="{{true}}" href="Notifications.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="flame" icon-tone="danger" title="Челленджи" detail="2" separator="{{true}}" href="ChallengeHistory.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="gear" icon-tone="neutral" title="Настройки" separator="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="palette" icon-tone="purple" title="Оформление" detail="Divergents" separator="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="translate" icon-tone="teal" title="Язык" detail="Русский" separator="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="trophy" icon-tone="orange" title="Достижения" detail="15/50" separator="{{true}}" href="Achievements.dc.html" hint-size="100%,48px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,330px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="Ведущий элемент: plain · none · avatar · person" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" hint-size="100%,300px">
+        <dc-import name="ListRow" icon="calendar" icon-style="plain" icon-tone="brand" title="Утренняя пробежка" subtitle="Вы записаны · 13 октября, 07:00" hint-size="100%,66px"></dc-import>
+        <dc-import name="ListRow" icon-style="none" title="Смотреть все достижения" separator="{{true}}" href="Achievements.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" avatar="/_blob/f528fbb80d712d453cd5785a9e1e06f6" title="Danday Amokachi" subtitle="Про развитие · 191 участник" separator="{{true}}" href="ServerChannel.dc.html" hint-size="100%,66px"></dc-import>
+        <dc-import name="ListRow" person="АК" title="Акназар" subtitle="Капитан команды «Vertex»" detail="1 место" detail-tone="brand" trailing="none" separator="{{true}}" hint-size="100%,66px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,450px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="trailing: chevron · toggle · check · badge · none" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" header="Уведомления" footer="Push-уведомления можно отключить в настройках телефона" hint-size="100%,420px">
+        <dc-import name="ListRow" icon="bell" title="Напоминания о челлендже" trailing="toggle" checked="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="envelope" icon-tone="neutral" title="Письма на почту" trailing="toggle" checked="{{false}}" separator="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon-style="none" title="Русский" trailing="check" checked="{{true}}" separator="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon-style="none" title="Қазақша" trailing="check" checked="{{false}}" separator="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="chat-bubbles" icon-tone="teal" title="Сообщения" trailing="badge" badge="3" separator="{{true}}" href="Channels.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="lock-locked" icon-tone="neutral" title="Версия приложения" detail="2.4.0" trailing="none" separator="{{true}}" hint-size="100%,48px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,250px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="detailTone: secondary · brand · danger · success" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" hint-size="100%,200px">
+        <dc-import name="ListRow" icon-style="none" title="Статус отклика" detail="На рассмотрении" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon-style="none" title="Прогресс курса" detail="42%" detail-tone="brand" separator="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon-style="none" title="Выйти из аккаунта" detail="Выйти" detail-tone="danger" trailing="none" separator="{{true}}" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon-style="none" title="Оплата" detail="Оплачено" detail-tone="success" trailing="none" separator="{{true}}" hint-size="100%,48px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,330px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="Новые trailing: check success · badge + chevron · icon · text" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" hint-size="100%,300px">
+        <dc-import name="ListRow" icon-style="none" title="Шаги · 10 000" subtitle="Выполнено сегодня" trailing="check" checked="{{true}}" check-tone="success" hint-size="100%,66px"></dc-import>
+        <dc-import name="ListRow" icon="chat-bubbles" icon-tone="teal" title="Сообщения" trailing="badge" badge="3" chevron="{{true}}" separator="{{true}}" href="Channels.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="shield-check" icon-tone="neutral" title="Закрытый канал" subtitle="Вступление по заявке" trailing="icon" trailing-icon="lock-locked" trailing-tone="tertiary" separator="{{true}}" hint-size="100%,66px"></dc-import>
+        <dc-import name="ListRow" icon="exclamation-triangle" icon-tone="warning" title="Анкета не заполнена" trailing="icon" trailing-icon="exclamation-circle" trailing-tone="danger" separator="{{true}}" href="ResumeForm.dc.html" hint-size="100%,48px"></dc-import>
+        <dc-import name="ListRow" icon="file-doc" title="Отчёт Gallup" subtitle="PDF · 2,4 МБ" trailing="text" action-label="Открыть" separator="{{true}}" hint-size="100%,66px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,250px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="thumb · thumbShape: book (36×48) · square · round" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" hint-size="100%,220px">
+        <dc-import name="ListRow" thumb="/_blob/ab29d7c214eb7576b59de35205483cdb" thumb-shape="book" title="Код таланта" subtitle="Дэниел Койл · Читаю" href="BookDetail.dc.html" hint-size="100%,70px"></dc-import>
+        <dc-import name="ListRow" thumb="/_blob/6c45288e0ebfca9ea993102d60703d42" thumb-shape="square" title="Медео — Шымбулак" subtitle="Поход · 14 сентября" separator="{{true}}" hint-size="100%,66px"></dc-import>
+        <dc-import name="ListRow" thumb="/_blob/f528fbb80d712d453cd5785a9e1e06f6" thumb-shape="round" title="Danday Amokachi" subtitle="Автор канала" trailing="text" action-label="Читать" separator="{{true}}" href="ServerChannel.dc.html" hint-size="100%,66px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2360}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

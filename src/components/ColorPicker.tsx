@@ -1,12 +1,12 @@
 // Выбор любого цвета: пресеты, три ползунка (тон, насыщенность, светлота) и
 // поле для hex. Без сторонних библиотек — ползунок это полоса с градиентом и
 // PanResponder поверх неё.
-import React, { useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, TextInput, PanResponder, LayoutChangeEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../theme/ThemeContext';
-import { hexToHsl, hslToHex, normalizeHex, isLight } from '../lib/color';
+import React,{ useMemo,useRef,useState } from 'react';
+import { LayoutChangeEvent,PanResponder,Pressable,Text,TextInput,View } from 'react-native';
+import { hexToHsl,hslToHex,isLight,normalizeHex } from '../lib/color';
 import { hSelect } from '../lib/haptics';
+import { useTheme } from '../theme/ThemeContext';
 
 /** Пресеты под любые фото: белый и чёрный — на всё, синие — фирменные, тёплые — на тёмное. */
 export const COLOR_PRESETS = ['#FFFFFF', '#000000', '#234088', '#3D5BDB', '#8AA0FF', '#FFD60A', '#FF9F0A', '#FF3B30', '#34C759', '#FF2D55'];

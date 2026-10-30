@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>StandingRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+<sc-if value="{{separator}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{sepCss}}"></span></sc-if>
+<sc-if value="{{showLead}}" hint-placeholder-val="{{true}}"><span style="{{leadCss}}"><sc-if value="{{leadMedal}}" hint-placeholder-val="{{false}}"><dc-import name="PodiumMedal" kind="{{medal}}" size="{{medalSize}}" hint-size="20px,20px"></dc-import></sc-if><sc-if value="{{leadRank}}" hint-placeholder-val="{{true}}"><span style="{{rankCss}}">{{rank}}</span></sc-if></span></sc-if>
+<sc-if value="{{showAvatar}}" hint-placeholder-val="{{true}}"><dc-import name="Avatar" person="{{person}}" size="{{avatarSize}}" hint-size="40px,40px"></dc-import></sc-if>
+<sc-if value="{{showGone}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{goneCss}}"><dc-import name="Icon" icon="{{goneIcon}}" variant="{{goneVariant}}" size="sm" tone="{{goneTone}}" hint-size="16px,16px"></dc-import></span></sc-if>
+<div style="flex: 1; min-width: 0">
+<div style="display: flex; align-items: center; gap: 5px; min-width: 0">
+<span style="{{titleCss}}">{{title}}<sc-if value="{{showMe}}" hint-placeholder-val="{{false}}"><span style="{{meCss}}">· {{meLabel}}</span></sc-if><sc-if value="{{showGoneSuffix}}" hint-placeholder-val="{{false}}"><span style="color: #C5221F"> · выбыл</span></sc-if></span>
+<sc-if value="{{titleMedal}}" hint-placeholder-val="{{false}}"><dc-import name="PodiumMedal" kind="{{medal}}" size="sm" hint-size="16px,16px"></dc-import></sc-if>
+</div>
+<sc-if value="{{hasSubtitle}}" hint-placeholder-val="{{true}}"><div style="{{subCss}}">{{subtitle}}<sc-if value="{{hasWhiteFlags}}" hint-placeholder-val="{{false}}"> · <span style="display: inline-flex; vertical-align: -2px"><dc-import name="Icon" icon="flag" size="xs" tone="tertiary" hint-size="12px,12px"></dc-import></span> {{whiteFlags}}</sc-if></div></sc-if>
+<sc-if value="{{isDetailed}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 6px; margin-top: 3px"><span style="font-size: 13px; line-height: 18px; font-weight: 700; color: #234088; font-variant-numeric: tabular-nums">{{points}}</span><sc-if value="{{hasPace}}" hint-placeholder-val="{{true}}"><span style="font-size: 12px; line-height: 16px; color: #5C5C60">{{pace}}</span></sc-if></div>
+<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px">
+<sc-if value="{{hasTrend}}" hint-placeholder-val="{{true}}"><span style="{{trendCss}}"><sc-if value="{{trendArrow}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="{{trendIcon}}" size="xs" tone="inherit" hint-size="12px,12px"></dc-import></sc-if>{{trendLabel}}</span></sc-if>
+<sc-if value="{{chipMedal}}" hint-placeholder-val="{{false}}"><dc-import name="PodiumMedal" kind="{{medal}}" size="sm" hint-size="16px,16px"></dc-import></sc-if>
+<sc-if value="{{chipFlags}}" hint-placeholder-val="{{false}}"><span style="{{flagChipCss}}"><dc-import name="Icon" icon="flag" variant="solid" size="xs" tone="danger" hint-size="12px,12px"></dc-import>{{flagsText}}</span></sc-if>
+</div>
+<sc-if value="{{hasCodes}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; line-height: 14px; font-weight: 700; color: #C5221F; margin-top: 5px">{{flagCodes}}</div></sc-if>
+</sc-if>
+</div>
+<sc-if value="{{badgeFlags}}" hint-placeholder-val="{{false}}"><dc-import name="StatusBadge" label="{{flags}}" icon="flag" tone="danger" hint-size="40px,22px"></dc-import></sc-if>
+<sc-if value="{{trailMedal}}" hint-placeholder-val="{{false}}"><dc-import name="PodiumMedal" kind="{{medal}}" size="md" hint-size="20px,20px"></dc-import></sc-if>
+<sc-if value="{{showPoints}}" hint-placeholder-val="{{true}}"><span style="{{pointsCss}}">{{points}}</span></sc-if>
+<sc-if value="{{showStreak}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="flame" variant="solid" size="sm" tone="warning" hint-size="16px,16px"></dc-import></sc-if>
+<sc-if value="{{trailGone}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="x-circle" variant="solid" size="sm" tone="danger" hint-size="16px,16px"></dc-import></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"regular","options":["regular","detailed","team","mini"]},"rank":{"editor":"int","default":1,"min":0,"max":999},"medal":{"editor":"enum","default":"none","options":["none","crown","gold","silver","bronze","trophy"]},"person":{"editor":"text","default":"Айгерим"},"title":{"editor":"text","default":"Айгерим"},"subtitle":{"editor":"text","default":"Divergents team"},"points":{"editor":"text","default":"412 pts"},"flags":{"editor":"int","default":0,"min":0,"max":99},"me":{"editor":"boolean","default":false},"meLabel":{"editor":"text","default":"вы"},"status":{"editor":"enum","default":"active","options":["active","eliminated","left"]},"trend":{"editor":"enum","default":"none","options":["none","up","down","same"]},"trendLabel":{"editor":"text","default":""},"pace":{"editor":"text","default":""},"flagCodes":{"editor":"text","default":""},"whiteFlags":{"editor":"int","default":0,"min":0,"max":99},"streak":{"editor":"boolean","default":false},"separator":{"editor":"boolean","default":false},"$preview":{"width":358,"height":64}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var on = function (v) { return v === true || v === 'true'; };
+    var demo = p.title === undefined && p.person === undefined;
+    var v = { detailed: 'detailed', team: 'team', mini: 'mini' }[p.variant] || 'regular';
+    var rank = Number(p.rank ?? (demo ? 1 : 0));
+    var medal = p.medal && p.medal !== 'none' ? p.medal : (demo ? 'crown' : 'none');
+    var hasMedal = medal !== 'none';
+    var status = p.status || 'active';
+    var gone = status !== 'active';
+    var person = p.person ?? (demo ? 'Айгерим' : '');
+    var me = on(p.me);
+    var flags = Number(p.flags || 0);
+    var points = p.points ?? (demo ? '412 pts' : '');
+    var subtitle = p.subtitle ?? (demo ? 'Divergents team' : '');
+    // layout metrics per variant: [padY, padX, gap, leadW, avatar size key, avatar px, align]
+    var L = { regular: [11, 16, 10, 28, 'md', 40], detailed: [12, 12, 9, 22, 'sm', 32], team: [13, 16, 12, 30, '', 0], mini: [10, 14, 10, 16, 'sm', 32] }[v];
+    var showLead = rank > 0 || (hasMedal && v === 'team');
+    var leadMedal = hasMedal && (v === 'regular' || v === 'team') && showLead;
+    var hasAvatarSlot = v !== 'team' && (!!person || gone);
+    var inset = L[1] + (showLead ? L[3] + L[2] : 0) + (hasAvatarSlot ? L[5] + L[2] : 0);
+    var plural = function (n) { var a = n % 10, b = n % 100; return (a === 1 && b !== 11) ? 'флаг' : (a >= 2 && a <= 4 && (b < 12 || b > 14)) ? 'флага' : 'флагов'; };
+    var trend = p.trend || 'none';
+    var TR = { up: ['rgba(52,199,89,0.13)', '#187A32', 'arrow-up'], down: ['rgba(255,149,0,0.14)', '#934900', 'arrow-down'], same: ['rgba(118,118,128,0.12)', '#5C5C60', ''] };
+    var tr = TR[trend] || TR.same;
+    var titleSize = v === 'detailed' ? 'font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: 0' : 'font-size: 17px; line-height: 24px; font-weight: 400; letter-spacing: -0.2px';
+    var dim = gone && (v === 'regular' || v === 'team');
+    return {
+      rootCss: ['position: relative', 'display: flex', 'align-items: ' + (v === 'detailed' ? 'flex-start' : 'center'), 'gap: ' + L[2] + 'px', 'padding: ' + L[0] + 'px ' + L[1] + 'px',
+        'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'color: #000000', 'background: ' + (me ? 'rgba(61,91,219,0.13)' : 'transparent'), 'opacity: ' + (dim ? 0.6 : 1), FF].join('; '),
+      separator: on(p.separator), sepCss: 'position: absolute; top: 0; right: 0; height: 0.5px; background: rgba(60,60,67,0.18); left: ' + inset + 'px',
+      showLead: showLead, leadMedal: leadMedal, leadRank: showLead && !leadMedal,
+      leadCss: 'width: ' + L[3] + 'px; flex-shrink: 0; display: flex; align-items: center; justify-content: center' + (v === 'detailed' ? '; min-height: 32px' : ''),
+      rankCss: 'font-weight: 700; font-variant-numeric: tabular-nums; ' + (v === 'team' ? 'font-size: 17px; line-height: 22px' : 'font-size: 13px; line-height: 18px') + '; color: ' + (v === 'detailed' && rank <= 3 ? '#234088' : '#5C5C60'),
+      rank: String(rank), medal: medal, medalSize: v === 'team' ? 'lg' : 'md',
+      showAvatar: hasAvatarSlot && !gone, person: person, avatarSize: L[4] || 'md',
+      showGone: hasAvatarSlot && gone,
+      goneCss: 'width: ' + L[5] + 'px; height: ' + L[5] + 'px; border-radius: 50%; flex-shrink: 0; background: rgba(120,120,128,0.16); display: flex; align-items: center; justify-content: center',
+      goneIcon: status === 'left' ? 'flag' : 'x-circle', goneVariant: status === 'left' ? 'line' : 'solid', goneTone: status === 'left' ? 'tertiary' : 'danger',
+      title: p.title ?? (demo ? 'Айгерим' : ''),
+      titleCss: 'min-width: 0; ' + titleSize + '; color: ' + (gone && v === 'detailed' ? '#5C5C60' : '#000000'),
+      showMe: me && !!(p.meLabel ?? 'вы'), meLabel: p.meLabel ?? 'вы', meCss: 'margin-left: 6px; font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: 0; color: #234088',
+      showGoneSuffix: v === 'detailed' && status === 'eliminated',
+      titleMedal: v === 'mini' && hasMedal,
+      subtitle: subtitle, hasSubtitle: !!subtitle && v !== 'detailed',
+      subCss: 'font-size: 12px; line-height: 16px; color: #5C5C60; margin-top: ' + (v === 'mini' ? 0 : 1) + 'px',
+      whiteFlags: String(p.whiteFlags || 0), hasWhiteFlags: Number(p.whiteFlags || 0) > 0,
+      isDetailed: v === 'detailed', pace: p.pace || '', hasPace: !!p.pace,
+      hasTrend: v === 'detailed' && trend !== 'none', trendArrow: !!tr[2], trendIcon: tr[2] || 'arrow-up',
+      trendLabel: p.trendLabel || (trend === 'same' ? 'Без изменений' : ''),
+      trendCss: 'min-height: 24px; padding: 0 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 3px; font-size: 11px; line-height: 14px; font-weight: 700; background: ' + tr[0] + '; color: ' + tr[1],
+      chipMedal: v === 'detailed' && hasMedal, chipFlags: v === 'detailed' && flags > 0, flagsText: flags + ' ' + plural(flags),
+      flagChipCss: 'min-height: 24px; padding: 0 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,59,48,0.10); font-size: 11px; line-height: 14px; font-weight: 700; color: #C5221F',
+      flagCodes: p.flagCodes || '', hasCodes: !!p.flagCodes,
+      badgeFlags: v !== 'detailed' && v !== 'mini' && flags > 0, flags: String(flags),
+      trailMedal: v === 'regular' && hasMedal && !showLead,
+      points: points, showPoints: v !== 'detailed' && !!points,
+      pointsCss: 'flex-shrink: 0; font-weight: 700; font-variant-numeric: tabular-nums; ' + (v === 'team' ? 'font-size: 17px; line-height: 22px; letter-spacing: -0.2px' : v === 'mini' ? 'font-size: 13px; line-height: 18px' : 'font-size: 15px; line-height: 20px') + '; color: ' + (me || v === 'mini' ? '#234088' : '#000000'),
+      showStreak: v === 'detailed' && on(p.streak),
+      trailGone: v === 'detailed' && status === 'eliminated'
+    };
+  }
+}
+</script>
+</body>
+</html>

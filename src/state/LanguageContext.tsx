@@ -88,7 +88,7 @@ export const STR: Record<string, Pair> = {
   language: { ru: 'Язык', en: 'Language' },
 
   community: { ru: 'Сообщество', en: 'Community' },
-  community_tagline: { ru: 'Divergents · сообщество', en: 'Divergents · community' },
+  community_tagline: { ru: 'Челленджи, поездки и встречи', en: 'Challenges, trips and meetups' },
   sec_home: { ru: 'Главная', en: 'Home' },
   sec_channels: { ru: 'Каналы', en: 'Channels' },
   sec_challenges: { ru: 'Челленджи', en: 'Challenges' },

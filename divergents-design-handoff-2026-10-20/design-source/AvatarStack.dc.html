@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AvatarStack</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<span role="img" aria-label="{{aria}}" style="{{rootCss}}"><sc-for list="{{shown}}" as="a" hint-placeholder-count="3"><span aria-hidden="true" style="{{a.css}}"><dc-import name="Avatar" person="{{a.person}}" src="{{a.src}}" size="{{avSize}}" stacked="{{true}}" hint-size="32px,32px"></dc-import></span></sc-for><sc-if value="{{hasMore}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="{{moreCss}}">{{moreText}}</span></sc-if></span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"people":{"editor":null},"max":{"editor":"int","default":4,"min":1,"max":10},"size":{"editor":"enum","default":"md","options":["sm","md"]},"more":{"editor":"int","default":0,"min":0,"max":9999},"$preview":{"width":150,"height":36}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var DEMO = [
+      { person: 'Danday Amokachi', src: '/_blob/f528fbb80d712d453cd5785a9e1e06f6' }, { person: 'Дильяра Сейтова' }, { person: 'Нурдаулет Касымов' },
+      { person: 'Асия Нурланова' }, { person: 'Серик Ахметов' }, { person: 'Акжан Темирова' }
+    ];
+    var people = Array.isArray(p.people) && p.people.length ? p.people : DEMO;
+    var max = Math.max(1, Number(p.max || 4));
+    var md = p.size !== 'sm';
+    var d = md ? 32 : 24;
+    var overlap = md ? 8 : 6;
+    var shownList = people.slice(0, max);
+    var more = Number(p.more || 0) || Math.max(0, people.length - max);
+    var names = shownList.map(function (x) { return x.person; }).join(', ');
+    return {
+      avSize: md ? 'sm' : 'xs',
+      aria: names + (more ? ' и ещё ' + more : ''),
+      shown: shownList.map(function (x, i) {
+        return { person: x.person || '', src: x.src || '', css: 'display: flex; position: relative; z-index: ' + (20 - i) + '; margin-left: ' + (i ? -overlap : 0) + 'px' };
+      }),
+      hasMore: more > 0,
+      moreText: '+' + more,
+      rootCss: 'display: inline-flex; align-items: center; padding: 2px; ' + F,
+      moreCss: ['position: relative', 'margin-left: ' + (-overlap) + 'px', 'min-width: ' + d + 'px', 'height: ' + d + 'px', 'padding: 0 ' + (md ? 7 : 5) + 'px',
+        'box-sizing: border-box', 'border-radius: 999px', 'background: #E5E5EA', 'color: #5C5C60', 'box-shadow: 0 0 0 2px #FFFFFF',
+        'display: flex', 'align-items: center', 'justify-content: center', 'font-size: ' + (md ? 12 : 11) + 'px', 'line-height: 1', 'font-weight: 700',
+        'font-variant-numeric: tabular-nums'].join('; ')
+    };
+  }
+}
+</script>
+</body>
+</html>

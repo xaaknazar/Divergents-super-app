@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MetricRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}">
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+    <dc-import name="Text" variant="subhead" text="{{label}}" hint-size="100%,20px"></dc-import>
+    <sc-if value="{{hasHint}}" hint-placeholder-val="{{false}}"><dc-import name="Text" variant="caption2" tone="tertiary" text="{{hint}}" hint-size="100%,14px"></dc-import></sc-if>
+  </div>
+  <dc-import name="Text" variant="subheadEm" numeric="{{true}}" align="end" text="{{value}}" hint-size="60px,20px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Общее время"},"hint":{"editor":"text","default":""},"value":{"editor":"text","default":"28:34"},"separator":{"editor":"boolean","default":false},"$preview":{"width":358,"height":44}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    return {
+      css: ['box-sizing: border-box', 'width: 100%', 'display: flex', 'align-items: center', 'gap: 12px', 'padding: 10px 14px',
+        'border-top: ' + (p.separator ? '0.5px solid rgba(60,60,67,0.18)' : '0')].join('; '),
+      label: p.label ?? 'Общее время',
+      value: p.value ?? '28:34',
+      hint: p.hint || '', hasHint: !!p.hint
+    };
+  }
+}
+</script>
+</body>
+</html>

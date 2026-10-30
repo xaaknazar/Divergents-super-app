@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingTimer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<section aria-label="{{aria}}" style="{{rootCss}}">
+  <div style="position: relative; width: 248px; height: 248px">
+    <svg width="248" height="248" viewBox="0 0 248 248" aria-hidden="true" style="position: absolute; top: 0; left: 0; transform: rotate(-90deg)">
+      <circle cx="124" cy="124" r="112" fill="none" stroke="{{trackColor}}" stroke-width="10"></circle>
+      <sc-if value="{{hasRing}}" hint-placeholder-val="{{true}}"><circle cx="124" cy="124" r="112" fill="none" stroke="{{ringColor}}" stroke-width="10" stroke-linecap="round" stroke-dasharray="{{dash}}"></circle></sc-if>
+      <sc-if value="{{hasExtraRing}}" hint-placeholder-val="{{false}}"><circle cx="124" cy="124" r="112" fill="none" stroke="{{extraColor}}" stroke-width="10" stroke-linecap="round" stroke-dasharray="{{extraDash}}"></circle></sc-if>
+    </svg>
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+      <span style="{{overCss}}">{{over}}</span>
+      <span role="timer" style="{{timeCss}}">{{time}}</span>
+      <span style="{{underCss}}">{{under}}</span>
+    </div>
+  </div>
+  <span style="{{pillCss}}"><dc-import name="Icon" icon="{{pillIcon}}" variant="solid" size="sm" tone="inherit" hint-size="16px,16px"></dc-import>{{pill}}</span>
+  <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 22px">
+    <sc-for list="{{actions}}" as="a" hint-placeholder-count="1">
+      <dc-import name="Button" label="{{a.label}}" icon="{{a.icon}}" variant="{{a.variant}}" size="large" full-width="{{true}}" loading="{{a.loading}}" disabled="{{a.disabled}}" href="{{a.href}}" hint-size="100%,56px"></dc-import>
+    </sc-for>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state": {"editor": "enum", "default": "running", "options": ["ready", "running", "paused", "recording", "saving", "overtime", "done"]}, "scheme": {"editor": "enum", "default": "light", "options": ["light", "dark"]}, "time": {"editor": "text", "default": "42:18"}, "extra": {"editor": "text", "default": "+12:34"}, "progress": {"editor": "range", "default": 30, "min": 0, "max": 100, "step": 1}, "apps": {"editor": "int", "default": 4, "min": 0, "max": 20}, "$preview": {"width": 358, "height": 376}}'>
+class Component extends DCLogic {
+  static PAL = {
+    light: { card: '#FFFFFF', border: '#E4E7EF', sep: 'rgba(60,60,67,0.12)', ink: '#0B0E16', ink2: '#5C5C60', ink3: '#6B6B70', brand: '#234088', accent: '#3D5BDB', tint: 'rgba(35,64,136,0.07)', track: '#E9ECF5', ok: '#187A32', okTint: 'rgba(24,122,50,0.09)', warn: '#934900', warnTint: 'rgba(255,149,0,0.12)', shadow: '0 1px 2px rgba(16,24,40,0.05), 0 10px 24px -14px rgba(16,24,40,0.22)', book: '/_blob/534c3a5937de37a34afa6a6ebd91be4b' },
+    dark: { card: '#161B26', border: 'rgba(255,255,255,0.08)', sep: 'rgba(255,255,255,0.10)', ink: '#F5F6FA', ink2: 'rgba(235,235,245,0.64)', ink3: 'rgba(235,235,245,0.5)', brand: '#8AA0FF', accent: '#8AA0FF', tint: 'rgba(138,160,255,0.12)', track: 'rgba(255,255,255,0.10)', ok: '#6FD39A', okTint: 'rgba(111,211,154,0.12)', warn: '#FFB35C', warnTint: 'rgba(255,179,92,0.14)', shadow: 'none', book: '/_blob/402f38a271f02261a3be20e630746183' }
+  };
+  static FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+
+  // Focus timer: ring for the mandatory hour, tabular digits, lock status and the actions allowed in this state
+  renderVals() {
+    var p = this.props;
+    var dark = p.scheme === 'dark';
+    var C = Component.PAL[dark ? 'dark' : 'light'];
+    var st = p.state || 'running';
+    var circ = 2 * Math.PI * 112, circ2 = 2 * Math.PI * 96;
+    var prog = st === 'ready' && !p.time ? 0 : (st === 'overtime' || st === 'done') ? 100 : Math.max(0, Math.min(100, Number(p.progress ?? 30)));
+    var apps = Number(p.apps ?? 4);
+    var S = {
+      ready: { over: p.time ? 'Осталось сегодня' : 'Цель на сегодня', time: p.time || '60:00', under: p.time ? 'из 60 минут' : 'минут чтения', pill: 'Ограничим ' + apps + ' выбранных приложения', icon: 'lock-locked', tone: 'neutral',
+        actions: [{ label: p.time ? 'Продолжить чтение' : 'Начать чтение', icon: 'play', variant: 'solid' }] },
+      running: { over: 'Осталось', time: p.time || '42:18', under: 'из 60 минут', pill: 'Выбранные приложения ограничены', icon: 'lock-locked', tone: 'brand',
+        actions: [{ label: 'Пауза и запись страниц', icon: 'pause', variant: 'solid' }] },
+      paused: { over: 'Пауза', time: p.time || '42:18', under: 'время не идёт', pill: 'Пауза — приложения доступны', icon: 'lock-unlocked', tone: 'warn',
+        actions: [{ label: 'Продолжить чтение', icon: 'play', variant: 'solid' }] },
+      recording: { over: 'Пауза', time: p.time || '42:18', under: 'запишите страницы', pill: 'Пауза — приложения доступны', icon: 'lock-unlocked', tone: 'warn', actions: [] },
+      saving: { over: 'Пауза', time: p.time || '42:18', under: 'отправляем подход', pill: 'Ждём подтверждения сервера', icon: 'clock-3h', tone: 'neutral',
+        actions: [{ label: 'Сохраняем подход…', icon: '', variant: 'solid', loading: true, disabled: true }] },
+      overtime: { over: 'Час выполнен', time: p.extra || '+12:34', under: 'дополнительное время', pill: 'Выбранные приложения ограничены', icon: 'lock-locked', tone: 'brand',
+        actions: [{ label: 'Завершить чтение', icon: 'check', variant: 'solid' }, { label: 'Пауза', icon: 'pause', variant: 'tinted' }] },
+      done: { over: 'Цель дня выполнена', time: '60:00', under: p.extra ? 'и ещё ' + p.extra.replace('+', '') + ' сверху' : 'подтверждено', pill: 'Ограничения сняты', icon: 'check-circle', tone: 'ok',
+        actions: [{ label: 'Почитать ещё', icon: 'book-open', variant: 'tinted' }] }
+    }[st] || {};
+    var PILL = { neutral: [C.tint, C.ink2], brand: [C.tint, C.brand], warn: [C.warnTint, C.warn], ok: [C.okTint, C.ok] }[S.tone];
+    var ringColor = st === 'paused' || st === 'recording' || st === 'saving' ? (dark ? 'rgba(138,160,255,0.55)' : 'rgba(35,64,136,0.45)') : st === 'done' ? C.ok : C.brand;
+    var extraMin = 12.5;
+    return {
+      aria: 'Таймер чтения: ' + S.over + ' ' + S.time,
+      over: S.over, time: S.time, under: S.under, pill: S.pill, pillIcon: S.icon,
+      trackColor: C.track, ringColor: ringColor, hasRing: prog > 0,
+      dash: (circ * prog / 100).toFixed(1) + ' ' + circ.toFixed(1),
+      hasExtraRing: st === 'overtime', extraColor: dark ? '#FFB35C' : '#E8590C',
+      extraDash: (circ * extraMin / 60).toFixed(1) + ' ' + circ.toFixed(1),
+      actions: (S.actions || []).map(function (a) { return { label: a.label, icon: a.icon || '', variant: a.variant, loading: !!a.loading, disabled: !!a.disabled, href: '' }; }),
+      rootCss: ['display: flex', 'flex-direction: column', 'align-items: center', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'color: ' + C.ink, Component.FF].join('; '),
+      overCss: 'font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: 0.2px; color: ' + (st === 'overtime' ? (dark ? '#FFB35C' : '#C2410C') : st === 'done' ? C.ok : C.ink2),
+      timeCss: 'font-size: 56px; line-height: 60px; font-weight: 700; letter-spacing: -1px; font-variant-numeric: tabular-nums; color: ' + (st === 'paused' || st === 'recording' || st === 'saving' ? C.ink2 : C.ink),
+      underCss: 'font-size: 13px; line-height: 18px; color: ' + C.ink2,
+      pillCss: 'display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; padding: 7px 12px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 500; background: ' + PILL[0] + '; color: ' + PILL[1]
+    };
+  }
+}
+</script>
+</body>
+</html>

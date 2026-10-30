@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AchievementBadge</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div aria-hidden="true" style="{{ringCss}}"><div style="{{discCss}}"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="{{iconSize}}" tone="{{iconTone}}" hint-size="28px,28px"></dc-import></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tier":{"editor":"enum","default":"bronze","options":["bronze","silver","gold"]},"category":{"editor":"enum","default":"learning","options":["learning","materials","books","challenge","events","map","fitness"]},"icon":{"editor":"enum","default":"play-circle","options":["play-circle","graduation-cap","bookmark","file-doc","book-open","quote-left","flame","seal-check","trophy","medal-sport","people","calendar","plane","ball-soccer","pin","star","weight","check-circle","bolt-vertical","flag","body-standing","bullseye","map"]},"earned":{"editor":"boolean","default":true},"size":{"editor":"enum","default":"md","options":["sm","md","lg"]},"$preview":{"width":66,"height":66}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var METAL = { bronze: ['#EEE0D4', '#A96D49'], silver: ['#F0F3F6', '#7F929F'], gold: ['#FFF0BE', '#C49539'] };
+    var CAT = { learning: '#3559AF', materials: '#507087', books: '#885638', challenge: '#BA4B30', events: '#7860A2', map: '#31736C', fitness: '#397346' };
+    var SIZE = { sm: [48, 3, 'md'], md: [66, 4, 'xl'], lg: [88, 5, 'xxl'] };
+    var earned = !(p.earned === false || p.earned === 'false');
+    var m = METAL[p.tier] || METAL.bronze;
+    var s = SIZE[p.size] || SIZE.md;
+    var ring = ['width: ' + s[0] + 'px', 'height: ' + s[0] + 'px', 'border-radius: 50%', 'padding: ' + s[1] + 'px', 'box-sizing: border-box', 'display: flex', 'flex-shrink: 0',
+      'background: ' + (earned ? 'linear-gradient(135deg, ' + m[0] + ', ' + m[1] + ')' : 'rgba(118,118,128,0.12)')].join('; ');
+    var disc = ['flex: 1', 'border-radius: 50%', 'display: flex', 'align-items: center', 'justify-content: center',
+      'border: 1px solid ' + (earned ? 'rgba(255,255,255,0.53)' : 'rgba(60,60,67,0.18)'),
+      'background: ' + (earned ? (CAT[p.category] || CAT.learning) : '#FFFFFF')].join('; ');
+    return { ringCss: ring, discCss: disc, icon: p.icon || 'play-circle', iconSize: s[2], iconTone: earned ? 'white' : 'secondary' };
+  }
+}
+</script>
+</body>
+</html>

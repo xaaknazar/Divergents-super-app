@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Дни челленджа</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1340" safe-top="{{false}}" hint-size="390px,1340px">
+<dc-import name="NavHeader" variant="inline" title="Дни челленджа" large-title="{{true}}" subtitle="Divergents challenge: 2 season · день 9 из 15" back-label="Челлендж" back-href="ChallengeDetail.dc.html" hint-size="100%,200px"></dc-import>
+<dc-import name="Wrapper" pad-x="16" pad-top="12" gap="14" hint-size="100%,1150px">
+<dc-import name="Segmented" items="{{scopes}}" value="{{0}}" hint-size="100%,48px"></dc-import>
+<dc-import name="Card" size="compact" hint-size="100%,210px">
+<dc-import name="DayCalendar" variant="status" days="{{calendarDays}}" legend="{{legend}}" hint-size="100%,180px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" cols="4" gap="0" hint-size="100%,44px">
+<sc-for list="{{summary}}" as="s" hint-placeholder-count="4">
+<dc-import name="StatTile" variant="plain" icon="" value="{{s.value}}" label="{{s.label}}" hint-size="100%,40px"></dc-import>
+</sc-for>
+</dc-import>
+<dc-import name="Wrapper2" hint-size="100%,700px">
+<dc-import name="ListSection" header="По дням" hint-size="100%,620px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+<dc-import name="DayRow" day="{{r.day}}" date="{{r.date}}" detail="{{r.detail}}" points="{{r.points}}" penalty="{{r.penalty}}" flags="{{r.flags}}" today="{{r.today}}" separator="{{r.separator}}" hint-size="100%,64px"></dc-import>
+</sc-for>
+</dc-import>
+<dc-import name="ScoreLegend" items="{{legendNote}}" hint-size="100%,42px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1340}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var days = [];
+    for (var i = 1; i <= 15; i++) days.push({ label: String(i), state: i === 3 ? 'flagged' : i < 9 ? 'done' : i === 9 ? 'today' : 'upcoming' });
+    var r = function (day, date, detail, pts, extra) {
+      var o = { day: String(day), date: date, detail: detail, points: pts, penalty: '', flags: 0, today: false, separator: day !== 9 };
+      for (var k in (extra || {})) o[k] = extra[k];
+      return o;
+    };
+    return {
+      scopes: ['Я', 'Команда'],
+      calendarDays: days,
+      legend: [{ state: 'done', label: 'норма закрыта' }, { state: 'flagged', label: 'есть флаг' }, { state: 'missed', label: 'не отмечался' }, { state: 'today', label: 'сегодня' }],
+      summary: [{ value: '7', label: 'чисто' }, { value: '1', label: 'с флагом' }, { value: '+436', label: 'баллов' }, { value: '−100', label: 'штрафов' }],
+      rows: [
+        r(9, '12 октября · идёт', '22 стр. · без сахара · 7 400 шагов', '+40', { today: true }),
+        r(8, '11 октября', '24 стр. · без сахара · 10 400 шагов', '+50'),
+        r(7, '10 октября', '21 стр. · без сахара · 10 800 шагов', '+48'),
+        r(6, '9 октября', '20 стр. · без сахара · 13 200 шагов', '+53'),
+        r(5, '8 октября', '30 стр. · без сахара · 10 000 шагов', '+55'),
+        r(4, '7 октября', '22 стр. · без сахара · 11 000 шагов', '+49'),
+        r(3, '6 октября', '20 стр. · без сахара · 8 200 шагов', '+40', { penalty: '−100', flags: 1 }),
+        r(2, '5 октября', '25 стр. · без сахара · 12 000 шагов', '+55'),
+        r(1, '4 октября', '20 стр. · без сахара · 10 400 шагов', '+46')
+      ],
+      legendNote: [{ mark: 'flag', text: '— флаг за пропуск дневной нормы. 3 в одной категории → вылет.' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

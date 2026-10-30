@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PlayerVideo — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="760" safe-top="{{false}}" hint-size="390px,760px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,700px">
+    <dc-import name="Text" variant="title2" heading="1" text="PlayerVideo" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,320px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="playing=true · safeArea" hint-size="100%,18px"></dc-import>
+      <dc-import name="PlayerVideo" lesson-label="Урок 15" lesson-title="Significance" elapsed="4:12" remaining="-14:28" progress="23" hint-size="100%,294px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,266px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="playing=false · safeArea=false" hint-size="100%,18px"></dc-import>
+      <dc-import name="PlayerVideo" lesson-label="Урок 3" lesson-title="Самый длинный заголовок урока, который не помещается в одну строку" elapsed="0:00" remaining="-18:40" progress="0" playing="{{false}}" safe-area="{{false}}" hint-size="100%,240px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

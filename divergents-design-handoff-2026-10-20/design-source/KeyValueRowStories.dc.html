@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>KeyValueRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="640" safe-top="{{false}}" hint-size="390px,640px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,580px">
+    <dc-import name="Text" variant="title2" heading="1" text="KeyValueRow" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,200px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="чек оплаты · emphasis на итоге" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,180px">
+        <dc-import name="Wrapper3" gap="10" hint-size="100%,144px">
+          <dc-import name="KeyValueRow" label="Курс" value="Курс «Лидерства»" hint-size="100%,20px"></dc-import>
+          <dc-import name="KeyValueRow" label="Уроков" value="6" hint-size="100%,20px"></dc-import>
+          <dc-import name="KeyValueRow" label="Доступ" value="Навсегда" hint-size="100%,20px"></dc-import>
+          <dc-import name="Divider" hint-size="100%,1px"></dc-import>
+          <dc-import name="KeyValueRow" label="Итого" value="150 000 ₸" emphasis="{{true}}" hint-size="100%,22px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,200px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="с иконкой (детали встречи)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,170px">
+        <dc-import name="Wrapper3" gap="12" hint-size="100%,134px">
+          <dc-import name="KeyValueRow" icon="calendar" label="Дата" value="14 октября, суббота" hint-size="100%,20px"></dc-import>
+          <dc-import name="KeyValueRow" icon="clock-3h" label="Время" value="19:00–21:00" hint-size="100%,20px"></dc-import>
+          <dc-import name="KeyValueRow" icon="pin" label="Место" value="Кофейня, ул. Панфилова 98" hint-size="100%,20px"></dc-import>
+          <dc-import name="KeyValueRow" icon="wallet" label="Стоимость" value="Бесплатно" hint-size="100%,20px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":640}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

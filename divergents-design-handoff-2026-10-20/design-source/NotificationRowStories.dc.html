@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>NotificationRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1040" safe-top="{{false}}" hint-size="390px,1040px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,1000px">
+    <dc-import name="Text" variant="title2" heading="1" text="NotificationRow" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,130px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="kind=career · unread · href" hint-size="100%,18px"></dc-import>
+      <dc-import name="NotificationRow" kind="career" title="Ответ по вашему отклику" text="Работодатель ответил на ваш отклик на вакансию «HR бизнес-партнёр»." time="15 мин назад" unread="{{true}}" href="VacancyDetail.dc.html" hint-size="100%,112px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,130px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="kind=challenge · unread" hint-size="100%,18px"></dc-import>
+      <dc-import name="NotificationRow" kind="challenge" title="День 12 челленджа" text="Не забудьте отметить сегодняшние задания." time="2 ч назад" unread="{{true}}" href="CommunityHome.dc.html" hint-size="100%,112px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="kind=course" hint-size="100%,18px"></dc-import>
+      <dc-import name="NotificationRow" kind="course" title="Новый урок в курсе" text="В курсе вышел новый урок." time="5 ч назад" unread="{{false}}" href="LMSHome.dc.html" hint-size="100%,92px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="kind=community" hint-size="100%,18px"></dc-import>
+      <dc-import name="NotificationRow" kind="community" title="Новая встреча в сообществе" text="[Название встречи] · [дата и место]." time="1 дн назад" unread="{{false}}" href="CommunityHome.dc.html" hint-size="100%,92px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="kind=map" hint-size="100%,18px"></dc-import>
+      <dc-import name="NotificationRow" kind="map" title="Новое место на карте" text="[Название места] добавлено на карту сообщества." time="3 дн назад" unread="{{false}}" href="MapHome.dc.html" hint-size="100%,92px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="kind=system · без ссылки · без разделителя" hint-size="100%,18px"></dc-import>
+      <dc-import name="NotificationRow" kind="system" title="Обновление приложения" text="Добавили скачивание уроков." time="5 окт." unread="{{false}}" separator="{{false}}" hint-size="100%,92px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

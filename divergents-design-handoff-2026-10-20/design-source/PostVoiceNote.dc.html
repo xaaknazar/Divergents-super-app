@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PostVoiceNote</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<button type="button" aria-label="{{aria}}" style="{{css}}"><span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 22px; background: #234088; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><dc-import name="Icon" icon="{{playIcon}}" variant="solid" size="md" tone="white" hint-size="20px,20px"></dc-import></span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span aria-hidden="true" style="display: flex; align-items: center; gap: 3px; height: 22px; overflow: hidden"><sc-for list="{{bars}}" as="b" hint-placeholder-count="22"><span style="{{b.css}}"></span></sc-for></span><span style="font-size: 11px; line-height: 14px; font-weight: 500; color: #6B6B70">{{label}}</span></span></button>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Голосовое сообщение"},"playing":{"editor":"boolean","default":false},"bars":{"editor":null},"$preview":{"width":320,"height":64}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var H = p.bars || [10, 7, 11, 15, 5, 6, 18, 13, 6, 10, 14, 5, 19, 13, 8, 5, 6, 11, 11, 6, 8, 6];
+    var playing = p.playing === true || p.playing === 'true';
+    var ink = playing ? '#234088' : '#6B6B70';
+    return {
+      css: ['display: flex', 'align-items: center', 'gap: 12px', 'width: 100%', 'box-sizing: border-box', 'margin: 0', 'padding: 10px', 'border: 0', 'border-radius: 14px',
+        'background: rgba(120,120,128,0.16)', 'text-align: left', 'cursor: pointer', FF].join('; '),
+      bars: H.map(function (h) { return { css: 'width: 3px; height: ' + h + 'px; border-radius: 2px; background: ' + ink + '; flex-shrink: 0' }; }),
+      label: p.label || 'Голосовое сообщение',
+      playIcon: playing ? 'pause' : 'play',
+      aria: (playing ? 'Пауза: ' : 'Воспроизвести: ') + (p.label || 'Голосовое сообщение')
+    };
+  }
+}
+</script>
+</body>
+</html>

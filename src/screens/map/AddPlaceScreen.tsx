@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { PrimaryButton, Chip } from '../../components/ui';
+import { Button, Chip } from '../../components/ui';
 import { usePlaces } from '../../state/PlacesContext';
 import { Place, postPlace } from '../../data/places';
 import { uploadFile } from '../../data/api';
@@ -192,7 +192,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
             {tr('Осталось заполнить:')} {missing.join(', ')}
           </Text>
         ) : null}
-        <PrimaryButton label={editing ? 'Сохранить' : 'Добавить место'} icon="checkmark" loading={submitting} disabled={!ok || submitting} onPress={submit} />
+        <Button label={editing ? 'Сохранить' : 'Добавить место'} icon="checkmark" loading={submitting} disabled={!ok || submitting} onPress={submit} />
       </View>
     </View>
   );

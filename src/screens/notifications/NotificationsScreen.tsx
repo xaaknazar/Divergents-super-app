@@ -7,11 +7,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
 import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
+import { Wrapper } from '../../components/Wrapper';
 import { minTouch } from '../../theme/tokens';
 import { useNotifications } from '../../state/NotificationsContext';
 import { NotifTarget } from '../../data/notifications';
 import { RootStackParams } from '../../navigation/types';
 import { navigationRef, normalizeTabTarget } from '../../navigation/ref';
+import { fmtDate as formatDate } from '../../data/format';
 
 function fmtDate(iso: string, ru: boolean): string {
   if (!iso) return '';
@@ -23,7 +25,7 @@ function fmtDate(iso: string, ru: boolean): string {
   if (m < 60) return ru ? `${m} мин назад` : `${m} min ago`;
   if (h < 24) return ru ? `${h} ч назад` : `${h}h ago`;
   if (days < 7) return ru ? `${days} дн назад` : `${days}d ago`;
-  return d.toLocaleDateString(ru ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short' });
+  return formatDate(d, { day: 'numeric', month: 'short' }, ru ? 'ru-RU' : 'en-US');
 }
 
 type Props = NativeStackScreenProps<RootStackParams, 'Notifications'>;
@@ -87,25 +89,18 @@ export function NotificationsScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Shared header: modal «Закрыть» on the left, «Прочитать все» as the trailing
           text action (a bare icon would hide what it does). */}
-      <NavHeader
-        title={tr('Уведомления')}
-        backLabel={tr('Закрыть')}
-        hideBackLabel={false}
-        onBack={() => navigation.goBack()}
-        hairline
-        trailing={(
+      <NavHeader title={tr('Уведомления')} backLabel={tr('Закрыть')} hideBackLabel={false} onBack={() => navigation.goBack()} trailing={(
           <Pressable onPress={markAllRead} disabled={unread === 0} accessibilityRole="button"
             accessibilityLabel={lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
             accessibilityState={{ disabled: unread === 0 }}
             style={({ pressed }) => ({ minHeight: minTouch, minWidth: minTouch, justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 4, opacity: pressed ? 0.5 : 1 })}>
             <Text style={[ty.subhead, { color: unread ? T.brandText : T.labelTertiary, textAlign: 'right' }]} numberOfLines={1}>{lang === 'ru' ? 'Прочитать все' : 'Mark all read'}</Text>
           </Pressable>
-        )}
-      />
+        )} />
 
       {showSkeleton ? (
         <View style={{ paddingTop: 12 }}>
-          <ListSkeleton rows={6} />
+          <Wrapper marginHorizontal={16}><ListSkeleton rows={6} /></Wrapper>
         </View>
       ) : (
         <FlatList

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { AppState } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { useAuth } from '@clerk/clerk-expo';
 import { AppNotification, fetchNotifications, markNotificationsRead } from '../data/notifications';
 import { loadJSON, saveJSON } from './persist';
@@ -23,11 +25,14 @@ const Ctx = createContext<NotifState | null>(null);
 const KEY = 'dvg.readNotifs';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
   // Clerk hands back a NEW getToken function every render. Keep it in a ref so
   // `refresh` (and the effects that depend on it) stay stable — otherwise the
   // mount effect re-runs on every render → an endless refetch loop that made the
   // notifications screen flicker between empty/list and freeze.
+  const key = `${KEY}:${userId ?? 'guest'}`;
+  const accountRef = useRef(userId);
+  accountRef.current = userId;
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
   const [list, setList] = useState<AppNotification[]>([]);
@@ -39,11 +44,15 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   // that fired before this load resolved used to be thrown away and the row
   // popped back to unread.
   useEffect(() => {
-    loadJSON<string[]>(KEY, []).then((saved) => {
+    let alive = true;
+    setList([]); setReadIds([]);
+    loadJSON<string[]>(key, []).then((saved) => {
+      if (!alive) return;
       if (!Array.isArray(saved) || !saved.length) return;
       setReadIds((p) => (p.length ? Array.from(new Set([...saved, ...p])) : saved));
     });
-  }, []);
+    return () => { alive = false; };
+  }, [key]);
 
   // `silent` skips the global `loading` toggle. The bell badge lives on several
   // screens via useNotifications, so toggling `loading` re-renders all of them —
@@ -55,6 +64,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     try {
       const token = isSignedIn ? await getTokenRef.current() : null;
       const feed = await fetchNotifications(token);
+      if (accountRef.current !== userId) return;
       setList(feed.items);
       // Prune the local set to the window the server just returned: it exists
       // only to cover the gap before the next fetch, and would otherwise grow
@@ -63,20 +73,26 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         const live = new Set(feed.items.map((x) => x.id));
         setReadIds((p) => {
           const next = p.filter((id) => live.has(id)).slice(-MAX_READ_IDS);
-          if (next.length !== p.length) saveJSON(KEY, next);
+          if (next.length !== p.length) saveJSON(key, next);
           return next.length === p.length ? p : next;
         });
       }
     } catch {
       // Keep any already-loaded notifications on a transient refresh failure
       // (this same fn backs pull-to-refresh) — only flag the error state.
-      setError(true);
+      if (accountRef.current === userId) setError(true);
     } finally {
-      if (!silent) setLoading(false);
+      if (!silent && accountRef.current === userId) setLoading(false);
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, userId, key]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    void refresh();
+    const foreground = AppState.addEventListener('change', state => { if (state === 'active') void refresh(true); });
+    const push = Notifications.addNotificationReceivedListener(() => { void refresh(true); });
+    const timer = setInterval(() => { if (AppState.currentState === 'active') void refresh(true); }, 60000);
+    return () => { foreground.remove(); push.remove(); clearInterval(timer); };
+  }, [refresh]);
 
   // Persist the read marks on the SERVER (per user) — the local set below only
   // keeps the UI right until the next fetch and while offline.
@@ -87,7 +103,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       const ok = await markNotificationsRead(token, ids);
       // Reflect the server state immediately so a later refresh (or another
       // device) agrees without waiting for a round trip.
-      if (ok) setList((p) => p.map((x) => (ids.includes(x.id) ? { ...x, read: true } : x)));
+      if (ok && accountRef.current === userId) setList((p) => p.map((x) => (ids.includes(x.id) ? { ...x, read: true } : x)));
     } catch {}
   }, [isSignedIn]);
 
@@ -99,7 +115,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       return n;
     });
     void pushRead([id]);
-  }, [pushRead]);
+  }, [pushRead, key]);
 
   // Mark every currently-loaded notification as read (explicit user action).
   const markAllRead = useCallback(() => {
@@ -110,7 +126,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       return next;
     });
     void pushRead(ids);
-  }, [list, pushRead]);
+  }, [list, pushRead, key]);
 
   // Read = what the server knows OR what this device marked since the last
   // fetch. The count therefore comes from the server (and survives reinstall /
@@ -126,6 +142,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     [items, unread, loading, error, refresh, markRead, markAllRead],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+/** Без провайдера (Storybook, изолированные тесты) — null вместо исключения. */
+export function useOptionalNotifications() {
+  return useContext(Ctx);
 }
 
 export function useNotifications() {

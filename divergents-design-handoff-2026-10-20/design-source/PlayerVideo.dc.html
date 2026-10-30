@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PlayerVideo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <div aria-label="Видео урока" role="img" style="{{frameCss}}">
+    <span aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 70% 40%, rgba(61,91,219,0.45) 0, rgba(61,91,219,0) 160px)"></span>
+    <span aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.28)"></span>
+    <div style="position: absolute; left: 0; right: 0; top: 84px; display: flex; align-items: center; justify-content: center; gap: 44px">
+      <button type="button" aria-label="Назад на 15 секунд" style="width: 48px; height: 48px; border: 0; padding: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><dc-import name="Icon" icon="skip-backward" variant="solid" size="xl" tone="white" hint-size="28px,28px"></dc-import></button>
+      <button type="button" aria-label="{{toggleLabel}}" style="width: 48px; height: 48px; border: 0; padding: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><dc-import name="Icon" icon="{{toggleIcon}}" variant="solid" size="xxl" tone="white" hint-size="36px,36px"></dc-import></button>
+      <button type="button" aria-label="Вперёд на 15 секунд" style="width: 48px; height: 48px; border: 0; padding: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><dc-import name="Icon" icon="skip-forward" variant="solid" size="xl" tone="white" hint-size="28px,28px"></dc-import></button>
+    </div>
+    <div style="position: absolute; left: 14px; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 10px">
+      <span style="font-size: 11px; line-height: 14px; font-weight: 500; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums">{{elapsed}}</span>
+      <div role="progressbar" aria-label="Позиция воспроизведения" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pct}}" style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.3); overflow: hidden"><div style="{{fillCss}}"></div></div>
+      <span style="font-size: 11px; line-height: 14px; font-weight: 500; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums">{{remaining}}</span>
+    </div>
+  </div>
+  <div style="{{barCss}}">
+    <dc-import name="IconButton" icon="chevron-down" label="Свернуть урок" href="{{backHref}}" variant="overlayDark" hint-size="48px,48px"></dc-import>
+    <div style="flex: 1; min-width: 0; padding: 0 8px; display: flex; flex-direction: column; align-items: center">
+      <span style="font-size: 15px; line-height: 20px; font-weight: 700; color: #FFFFFF; white-space: nowrap">{{lessonLabel}}</span>
+      <span style="max-width: 100%; font-size: 11px; line-height: 14px; font-weight: 500; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{lessonTitle}}</span>
+    </div>
+    <dc-import name="IconButton" icon="arrow-from-square-up-right" label="Полноэкранный режим" variant="overlayDark" hint-size="48px,48px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lessonLabel":{"editor":"text","default":"Урок 15"},"lessonTitle":{"editor":"text","default":"Significance"},"elapsed":{"editor":"text","default":"4:12"},"remaining":{"editor":"text","default":"-14:28"},"progress":{"editor":"int","default":23,"min":0,"max":100},"playing":{"editor":"boolean","default":true},"backHref":{"editor":"text","default":"CourseDetail.dc.html"},"safeArea":{"editor":"boolean","default":true},"$preview":{"width":390,"height":294}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var safe = !(p.safeArea === false || p.safeArea === 'false');
+    var top = safe ? 54 : 0;
+    var pct = Math.max(0, Math.min(100, Number(p.progress ?? 23)));
+    var playing = p.playing !== false && p.playing !== 'false';
+    return {
+      rootCss: ['position: relative', 'box-sizing: border-box', 'width: 100%', 'height: ' + (240 + top) + 'px', 'background: #0E1729', 'overflow: hidden', 'color: #FFFFFF',
+        "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased'].join('; '),
+      frameCss: 'position: absolute; left: 0; right: 0; top: ' + (top + 10) + 'px; height: 219px; background: linear-gradient(160deg, #2C4EA6 0%, #1B2F63 55%, #0E1729 100%); overflow: hidden',
+      barCss: 'position: absolute; top: ' + (top + 12) + 'px; left: 12px; right: 12px; z-index: 5; display: flex; justify-content: space-between; align-items: center',
+      pct: String(pct),
+      fillCss: 'width: ' + pct + '%; height: 100%; background: #FFFFFF',
+      elapsed: p.elapsed ?? '4:12', remaining: p.remaining ?? '-14:28',
+      toggleIcon: playing ? 'pause' : 'play', toggleLabel: playing ? 'Пауза' : 'Воспроизвести',
+      lessonLabel: p.lessonLabel ?? 'Урок 15', lessonTitle: p.lessonTitle ?? 'Significance',
+      backHref: p.backHref ?? 'CourseDetail.dc.html'
+    };
+  }
+}
+</script>
+</body>
+</html>

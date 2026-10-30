@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Text</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<sc-if value="{{isHeading}}" hint-placeholder-val="{{false}}"><p role="heading" aria-level="{{heading}}" style="{{css}}">{{content}}</p></sc-if><sc-if value="{{isPlain}}" hint-placeholder-val="{{true}}"><p style="{{css}}">{{content}}</p></sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"text":{"editor":"text","default":"Текст"},"variant":{"editor":"enum","default":"body","options":["largeTitle","title1","title2","title3","headline","body","callout","subhead","subheadEm","footnote","footnoteEm","caption1","caption2","caption2Em","display"]},"tone":{"editor":"enum","default":"primary","options":["primary","secondary","tertiary","brand","onBrand","success","warning","danger","white","whiteMuted"]},"align":{"editor":"enum","default":"start","options":["start","center","end"]},"lines":{"editor":"enum","default":"0","options":["0","1","2","3"]},"heading":{"editor":"enum","default":"0","options":["0","1","2","3"]},"numeric":{"editor":"boolean","default":false},"$preview":{"width":320,"height":40}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var V = {
+      display: [44, 50, 700, -0.5], largeTitle: [34, 41, 700, 0], title1: [28, 34, 700, 0], title2: [22, 28, 700, 0], title3: [20, 25, 700, 0],
+      headline: [17, 22, 700, -0.2], body: [17, 24, 400, -0.2], callout: [16, 22, 400, -0.2], subhead: [15, 20, 400, -0.1],
+      subheadEm: [15, 20, 700, -0.1], footnote: [13, 18, 400, 0], footnoteEm: [13, 18, 700, 0], caption1: [12, 16, 400, 0],
+      caption2: [11, 14, 500, 0], caption2Em: [11, 14, 700, 0]
+    };
+    var T = { primary: '#000000', secondary: '#5C5C60', tertiary: '#6B6B70', brand: '#234088', onBrand: '#FFFFFF', success: '#187A32', warning: '#934900', danger: '#C5221F', white: '#FFFFFF', whiteMuted: 'rgba(255,255,255,0.82)' };
+    var v = V[p.variant] || V.body;
+    var lines = Number(p.lines || 0);
+    var css = [
+      'margin: 0', "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased',
+      'font-size: ' + v[0] + 'px', 'line-height: ' + v[1] + 'px', 'font-weight: ' + v[2], 'letter-spacing: ' + v[3] + 'px',
+      'color: ' + (T[p.tone] || T.primary), 'text-align: ' + (p.align === 'center' ? 'center' : p.align === 'end' ? 'right' : 'left'),
+      'min-width: 0', 'overflow-wrap: anywhere'
+    ];
+    if (p.numeric) css.push('font-variant-numeric: tabular-nums');
+    if (lines > 0) css.push('display: -webkit-box', '-webkit-box-orient: vertical', '-webkit-line-clamp: ' + lines, 'overflow: hidden');
+    var level = Number(p.heading || 0);
+    return {
+      css: css.join('; '),
+      content: (p.text !== undefined && p.text !== null && p.text !== '') ? p.text : p.children,
+      heading: String(level),
+      isHeading: level > 0,
+      isPlain: level === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

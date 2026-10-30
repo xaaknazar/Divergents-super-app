@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Новая вакансия</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="2460" safe-top="{{false}}" hint-size="390px,2460px">
+  <dc-import name="NavHeader" variant="inline" title="Новая вакансия" back-label="Отмена" back-href="CareerHome.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" pad-bottom="64" gap="14" hint-size="100%,2260px">
+    <dc-import name="TextField" label="Должность" required="{{true}}" value="HR бизнес-партнёр" placeholder="Например: Продуктовый дизайнер" hint-size="100%,80px"></dc-import>
+    <dc-import name="Text" variant="headline" heading="2" text="О компании" hint-size="100%,22px"></dc-import>
+    <dc-import name="TextField" label="Название компании" value="[Компания]" placeholder="Компания" hint-size="100%,80px"></dc-import>
+    <dc-import name="CareerUploadField" label="Логотип компании" action-label="Загрузить логотип" hint="" icon="image" size="md" hint-size="100%,84px"></dc-import>
+    <dc-import name="TextField" label="Город" value="Алматы" placeholder="Город" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Адрес офиса" value="" placeholder="Город, улица, номер здания" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Ценности компании" multiline="{{true}}" rows="{{2}}" value="" placeholder="{{ph.values}}" helper="Одна ценность на строку" hint-size="100%,128px"></dc-import>
+    <dc-import name="Text" variant="headline" heading="2" text="Об условиях" hint-size="100%,22px"></dc-import>
+    <dc-import name="CareerChoiceGroup" label="Формат" options="{{formats}}" selected="{{formatSel}}" layout="equal" variant="solid" hint-size="100%,72px"></dc-import>
+    <dc-import name="TextField" label="Зарплата" value="от 600 000 ₸" placeholder="Например: от 500 000 ₸" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Другие условия" multiline="{{true}}" rows="{{2}}" value="" placeholder="График 5/2, оформление по ТК, испытательный срок…" hint-size="100%,104px"></dc-import>
+    <dc-import name="TextField" label="Преимущества" multiline="{{true}}" rows="{{3}}" value="" placeholder="{{ph.benefits}}" helper="Одно преимущество на строку" hint-size="100%,152px"></dc-import>
+    <dc-import name="Text" variant="headline" heading="2" text="О требованиях" hint-size="100%,22px"></dc-import>
+    <dc-import name="CareerChoiceGroup" label="Опыт работы" options="{{experience}}" selected="{{experienceSel}}" multiple="{{true}}" variant="solid" helper="Можно выбрать несколько" hint-size="100%,84px"></dc-import>
+    <dc-import name="CareerChoiceGroup" label="Обязателен ли диплом по специальности?" options="{{yesno}}" selected="{{noneSel}}" layout="equal" variant="solid" hint-size="100%,72px"></dc-import>
+    <dc-import name="TextField" label="Смежные сферы" value="" placeholder="Например: маркетинг, продажи" helper="Допустимый опыт в смежных сферах, который готов рассматривать работодатель" hint-size="100%,120px"></dc-import>
+    <dc-import name="TextField" label="Другие требования" multiline="{{true}}" rows="{{2}}" value="" placeholder="Необязательно" hint-size="100%,104px"></dc-import>
+    <dc-import name="TextField" label="Ключевые таланты Gallup для роли" multiline="{{true}}" rows="{{2}}" value="" placeholder="Например: Стратег, Организатор, Коммуникация" helper="Через запятую · используются для подбора кандидатов по талантам" hint-size="100%,128px"></dc-import>
+    <dc-import name="CareerUploadField" label="Примерный Gallup вакансии" action-label="Загрузить файл" hint="По желанию · изображение/скрин (PDF — на сайте)" icon="file" size="md" hint-size="100%,84px"></dc-import>
+    <dc-import name="Text" variant="headline" heading="2" text="Дополнительно" hint-size="100%,22px"></dc-import>
+    <dc-import name="TextField" label="Описание (необязательно)" multiline="{{true}}" rows="{{3}}" value="" placeholder="Подробное описание роли" hint-size="100%,128px"></dc-import>
+    <dc-import name="Card" size="compact" hint-size="100%,76px">
+      <dc-import name="Wrapper2" dir="row" fill="last" gap="12" hint-size="100%,48px">
+        <dc-import name="Toggle" checked="{{true}}" label="Опубликовано" hint-size="51px,48px"></dc-import>
+        <dc-import name="Wrapper3" gap="2" hint-size="100%,36px">
+          <dc-import name="Text" variant="subheadEm" text="Опубликовано" hint-size="100%,20px"></dc-import>
+          <dc-import name="Text" variant="caption2" tone="tertiary" text="Опубликованная вакансия видна всем в приложении" hint-size="100%,14px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Button" label="Создать вакансию" icon="check" variant="solid" tone="brand" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2460}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "ph": {
+        "values": "Забота о клиенте\nОткрытость",
+        "benefits": "карьерный рост\nобучение\nабонемент в спортзал"
+      },
+      "formats": [
+        "Гибрид",
+        "Офис",
+        "Удалёнка"
+      ],
+      "formatSel": [
+        0
+      ],
+      "experience": [
+        "Опыт 1-3 года",
+        "Опыт 3-6 лет",
+        "Без опыта"
+      ],
+      "experienceSel": [
+        1
+      ],
+      "yesno": [
+        "Да",
+        "Нет"
+      ],
+      "noneSel": []
+    };
+  }
+}
+</script>
+</body>
+</html>

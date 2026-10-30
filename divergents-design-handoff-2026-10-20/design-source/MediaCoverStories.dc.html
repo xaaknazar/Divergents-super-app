@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MediaCover — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1880" safe-top="{{false}}" hint-size="390px,1880px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="24" hint-size="100%,1820px">
+    <dc-import name="Text" variant="title2" heading="1" text="MediaCover" hint-size="100%,28px"></dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,230px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="aspect=16x9 · radius=lg · badge brand" hint-size="100%,18px"></dc-import>
+      <dc-import name="MediaCover" src="/_blob/d2748e25aa43564a123b0f02c16ddc18" aspect="16x9" radius="lg" badge="42%" hint-size="100%,201px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,200px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="4x3 · 1x1 · 3x4 (сетка из 3 колонок)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" cols="3" gap="10" align="start" hint-size="100%,150px">
+        <dc-import name="MediaCover" src="/_blob/6c45288e0ebfca9ea993102d60703d42" aspect="4x3" radius="md" hint-size="100%,84px"></dc-import>
+        <dc-import name="MediaCover" src="/_blob/e6df523734555831ec934c72eaa98eca" aspect="1x1" radius="md" hint-size="100%,112px"></dc-import>
+        <dc-import name="MediaCover" src="/_blob/ab29d7c214eb7576b59de35205483cdb" aspect="3x4" radius="md" hint-size="100%,150px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,250px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="aspect=hero · radius=none · overlay=bottom + children" hint-size="100%,18px"></dc-import>
+      <dc-import name="MediaCover" src="/_blob/47ec25e63ff159ffb263212f6c1f5044" aspect="hero" radius="none" overlay="bottom" badge="Ресторан" badge-tone="light" hint-size="100%,220px">
+        <dc-import name="Wrapper3" pad="20" gap="2" hint-size="100%,70px">
+          <dc-import name="Text" variant="title1" tone="white" heading="2" text="Pick Chick" hint-size="100%,34px"></dc-import>
+          <dc-import name="Text" variant="subhead" tone="whiteMuted" text="Алматы · добавил Danday" hint-size="100%,20px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,210px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="aspect=banner · radius=xl · overlay=full · badge dark" hint-size="100%,18px"></dc-import>
+      <dc-import name="MediaCover" src="/_blob/ab054174aa7ef3746ac5915e36e578b7" aspect="banner" radius="xl" overlay="full" badge="Туризм" badge-tone="dark" hint-size="100%,180px">
+        <dc-import name="Wrapper3" pad="16" gap="2" hint-size="100%,62px">
+          <dc-import name="Text" variant="title3" tone="white" text="Мечеть (с Джумой)" hint-size="100%,25px"></dc-import>
+          <dc-import name="Text" variant="footnote" tone="whiteMuted" text="Астана" hint-size="100%,18px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,230px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="без src → placeholderIcon · badge success" hint-size="100%,18px"></dc-import>
+      <dc-import name="MediaCover" aspect="16x9" radius="lg" placeholder-icon="play-circle" badge="Пройден" badge-tone="success" hint-size="100%,201px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,140px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="placeholderIcon (2 колонки)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" cols="2" gap="10" hint-size="100%,100px">
+        <dc-import name="MediaCover" aspect="16x9" radius="md" placeholder-icon="mountains" hint-size="100%,97px"></dc-import>
+        <dc-import name="MediaCover" aspect="16x9" radius="md" placeholder-icon="people" hint-size="100%,97px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1880}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

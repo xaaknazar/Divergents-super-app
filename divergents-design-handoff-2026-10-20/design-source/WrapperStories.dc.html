@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Wrapper — раскладки</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="2060" safe-top="{{false}}" hint-size="390px,2060px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="24" hint-size="100%,2000px">
+    <dc-import name="Wrapper2" gap="6" hint-size="100%,60px">
+      <dc-import name="Text" variant="title2" heading="1" text="Wrapper" hint-size="100%,28px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Только раскладка: направление, отступы, выравнивание, сетка, слои. Плашки ниже — Card tinted + Text." hint-size="100%,36px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,200px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="dir=column · gap=8" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="column" gap="8" hint-size="100%,170px">
+        <sc-for list="{{three}}" as="b" hint-placeholder-count="3">
+          <dc-import name="Card" variant="tinted" size="compact" hint-size="100%,46px"><dc-import name="Text" variant="footnoteEm" tone="brand" text="{{b}}" hint-size="100%,18px"></dc-import></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="dir=row · gap=8 (по содержимому)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="8" hint-size="100%,46px">
+        <sc-for list="{{three}}" as="b" hint-placeholder-count="3">
+          <dc-import name="Card" variant="tinted" size="compact" hint-size="90px,46px"><dc-import name="Text" variant="footnoteEm" tone="brand" text="{{b}}" hint-size="60px,18px"></dc-import></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="dir=row · fill=first (первый занимает остаток)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" fill="first" gap="8" hint-size="100%,46px">
+        <dc-import name="Card" variant="tinted" size="compact" hint-size="100%,46px"><dc-import name="Text" variant="footnoteEm" tone="brand" text="Тянется" hint-size="100%,18px"></dc-import></dc-import>
+        <dc-import name="Card" size="compact" hint-size="80px,46px"><dc-import name="Text" variant="footnoteEm" text="Авто" hint-size="40px,18px"></dc-import></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="dir=row · fill=middle" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" fill="middle" gap="8" hint-size="100%,46px">
+        <dc-import name="Card" size="compact" hint-size="70px,46px"><dc-import name="Text" variant="footnoteEm" text="Авто" hint-size="40px,18px"></dc-import></dc-import>
+        <dc-import name="Card" variant="tinted" size="compact" hint-size="100%,46px"><dc-import name="Text" variant="footnoteEm" tone="brand" text="Тянется" hint-size="100%,18px"></dc-import></dc-import>
+        <dc-import name="Card" size="compact" hint-size="70px,46px"><dc-import name="Text" variant="footnoteEm" text="Авто" hint-size="40px,18px"></dc-import></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="dir=row · fill=equal (равные колонки)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" fill="equal" gap="8" hint-size="100%,46px">
+        <sc-for list="{{three}}" as="b" hint-placeholder-count="3">
+          <dc-import name="Card" variant="tinted" size="compact" hint-size="100%,46px"><dc-import name="Text" variant="footnoteEm" tone="brand" align="center" text="{{b}}" hint-size="100%,18px"></dc-import></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,140px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="cols=2 · gap=10 (сетка)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" cols="2" gap="10" hint-size="100%,102px">
+        <sc-for list="{{four}}" as="b" hint-placeholder-count="4">
+          <dc-import name="Card" variant="tinted" size="compact" hint-size="100%,46px"><dc-import name="Text" variant="footnoteEm" tone="brand" text="{{b}}" hint-size="100%,18px"></dc-import></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,140px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="cols=3 · gap=8 (StatTile)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" cols="3" gap="8" hint-size="100%,104px">
+        <dc-import name="StatTile" icon="book" value="2" label="Курсов" hint-size="100%,104px"></dc-import>
+        <dc-import name="StatTile" icon="trophy" value="15" label="Достижений" tone="warning" hint-size="100%,104px"></dc-import>
+        <dc-import name="StatTile" icon="flame" value="2" label="Челленджи" tone="danger" hint-size="100%,104px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="dir=row · justify=between · align=end" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,80px">
+        <dc-import name="Wrapper3" dir="row" justify="between" align="end" hint-size="100%,44px">
+          <dc-import name="Wrapper4" gap="2" hint-size="160px,44px">
+            <dc-import name="Text" variant="caption1" tone="secondary" text="Стоимость курса" hint-size="100%,16px"></dc-import>
+            <dc-import name="Text" variant="title3" text="30 000 ₸" hint-size="100%,25px"></dc-import>
+          </dc-import>
+          <dc-import name="Text" variant="subheadEm" tone="brand" text="34 урока" hint-size="70px,20px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,130px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="dir=row · wrap · gap=8" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" wrap="{{true}}" gap="8" hint-size="100%,100px">
+        <sc-for list="{{strengths}}" as="b" hint-placeholder-count="7">
+          <dc-import name="Card" variant="tinted" size="compact" hint-size="110px,46px"><dc-import name="Text" variant="footnoteEm" text="{{b}}" hint-size="80px,18px"></dc-import></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="dir=row · scroll=x (горизонтальная прокрутка)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" scroll="x" gap="8" hint-size="100%,46px">
+        <sc-for list="{{scrollItems}}" as="b" hint-placeholder-count="6">
+          <dc-import name="Card" size="compact" hint-size="120px,46px"><dc-import name="Text" variant="footnoteEm" lines="1" text="{{b}}" hint-size="100px,18px"></dc-import></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,230px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="layer=anchor + overlay-top / overlay-bottom" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" layer="anchor" hint-size="100%,201px">
+        <dc-import name="MediaCover" src="/_blob/581d5fcf4fdc39fe70842c258ef6ed3e" aspect="16x9" radius="xl" overlay="full" hint-size="100%,201px"></dc-import>
+        <dc-import name="Wrapper4" layer="overlay-top" pad="14" hint-size="100%,46px">
+          <dc-import name="Text" variant="caption2Em" tone="white" text="OVERLAY-TOP" hint-size="100%,14px"></dc-import>
+        </dc-import>
+        <dc-import name="Wrapper4" layer="overlay-bottom" pad="16" gap="2" hint-size="100%,80px">
+          <dc-import name="Text" variant="title3" tone="white" text="Basic Development Program" hint-size="100%,25px"></dc-import>
+          <dc-import name="Text" variant="footnote" tone="whiteMuted" text="overlay-bottom · Саморазвитие · 27 уроков" hint-size="100%,18px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="pad=16 / pad-x=24 pad-y=8 (внутри Card size=flush)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" fill="equal" gap="8" hint-size="100%,80px">
+        <dc-import name="Card" size="flush" hint-size="100%,52px">
+          <dc-import name="Wrapper4" pad="16" hint-size="100%,50px"><dc-import name="Text" variant="footnoteEm" tone="brand" text="pad=16" hint-size="100%,18px"></dc-import></dc-import>
+        </dc-import>
+        <dc-import name="Card" size="flush" hint-size="100%,36px">
+          <dc-import name="Wrapper4" pad-x="24" pad-y="8" hint-size="100%,34px"><dc-import name="Text" variant="footnoteEm" tone="brand" text="pad-x=24 pad-y=8" hint-size="100%,18px"></dc-import></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      three: ['Блок 1', 'Блок 2', 'Блок 3'],
+      four: ['Саморазвитие', 'Менеджмент', 'Лидерство', 'Мышление'],
+      strengths: ['Достижение', 'Командование', 'Стратегия', 'Активатор', 'Индивидуализация', 'Ответственность', 'Эмпатия'],
+      scrollItems: ['Важность знания себя', '4 параметра руководителя', '5 уровней лидерства', 'Уровни мышления', 'Метапрограммы', 'Психотипы']
+    };
+  }
+}
+</script>
+</body>
+</html>

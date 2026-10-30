@@ -1,0 +1,24 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingBookshelf } from './ReadingBookshelf';
+import { readingBookExample } from '../storybook/readingFixtures';
+const noop = () => {};
+const library = { busy: false, books: [readingBookExample, { ...readingBookExample, key: 'b', title: 'Пять уровней лидерства', author: 'Джон Максвелл', pages: 0, elapsedMs: 0 }],
+  retry: noop, select: noop };
+const composer = { supported: true, adding: false, reset: noop, save: async () => true,
+  draft: { title: '', author: '', status: 'empty' as const, verified: null, suggestions: [],
+    pick: noop, reject: noop, manual: noop, setTitle: noop, setAuthor: noop, check: noop, edit: noop } };
+const meta = { title: 'Reading/Bookshelf', component: ReadingBookshelf, args: { library, composer, selectedKey: readingBookExample.key } } satisfies Meta<typeof ReadingBookshelf>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Default: Story = {};
+export const CurrentApproachLocked: Story = { args: { selectionLocked: true } };
+export const Loading: Story = { args: { library: { ...library, books: [], busy: true } } };
+export const Empty: Story = { args: { library: { ...library, books: [] } } };
+export const FinishedBooksHidden: Story = { args: { library: { ...library, books: [...library.books,
+  { ...readingBookExample, key: 'finished', title: 'Netflix. Инсайдерская история компании, завоевавшей мир', finished: true }] } } };
+export const AllFinished: Story = { args: { library: { ...library, books: library.books.map(book => ({ ...book, finished: true })) } } };
+export const OlderServer: Story = { args: { composer: { ...composer, supported: false } } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+export const CurrentApproachLockedDark: Story = { args: { selectionLocked: true }, parameters: { scheme: 'dark' } };
+export const CurrentApproachLockedLargeText: Story = { args: { selectionLocked: true }, parameters: { viewport: 'compact', textSize: 'xl' } };

@@ -1,46 +1,54 @@
 import React, { useMemo, useState } from 'react';
-import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { PageIntro } from '../../components/PageIntro';
 import { NavBarLarge } from '../../components/headers';
 import { ResumeCallout } from '../../components/ResumeCallout';
-import { SF } from '../../components/SFIcon';
-import { Chip, SectionHeader } from '../../components/ui';
-import { CourseCardPremium, FeaturedCard } from '../../components/CourseCardPremium';
+import { SectionHeader } from '../../components/ui';
+import { SearchField } from '../../components/SearchField';
+import { ChipRail } from '../../components/ChipRail';
+import { FeaturedCard } from '../../components/FeaturedCard';
+import { CourseCatalogGrid } from '../../components/CourseCatalogGrid';
+import { OwnedCourseShelf } from '../../components/OwnedCourseShelf';
+import { LearningResumeCard } from '../../components/LearningResumeCard';
+import { ShortcutTile } from '../../components/ShortcutTile';
+import { LearningShortcut } from '../../components/LearningShortcut';
+import { Wrapper } from '../../components/Wrapper';
+import { StatusBadge } from '../../components/StatusBadge';
 import { CourseGridSkeleton, ListSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
-import { minTouch } from '../../theme/tokens';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
-import { useNotifications } from '../../state/NotificationsContext';
 import { useRole } from '../../state/useRole';
-import { useLang, tr } from '../../state/LanguageContext';
+import { useLang } from '../../state/LanguageContext';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useDownloads } from '../../state/downloads';
 import { useUser } from '@clerk/clerk-expo';
-import { Logo } from '../../components/Logo';
-import { LinearGradient } from 'expo-linear-gradient';
 import { coursesWord, formatGiftDate } from '../../data/api';
+import { lessons as lessonsWord } from '../../data/plural';
 import { LMSStackParams } from '../../navigation/types';
 import { ProfileAvatarButton } from '../../components/ProfileAvatarButton';
+import { useProfileButton } from '../../state/useProfileButton';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'LMSHome'>;
 
 export function LMSHomeScreen({ navigation }: Props) {
-  const { T, ty } = useTheme();
-  const { courses, loading, error, reload, source, progress } = useCourses();
+  const { courses, loading, error, reload, source, progress, currentLessonIndex } = useCourses();
   const my = useMyCourses();
-  const { unread } = useNotifications();
   const { t } = useLang();
   const { feature, gift } = useRole();
   const { user } = useUser();
   const { profile, live } = useTalentProfile();
   const downloads = useDownloads();
+  const profileButton = useProfileButton();
   // Prefer a real name (Clerk → anketa full_name); email prefix only as a last resort.
   const displayName = user?.firstName || user?.fullName
     || (live && profile?.fullName ? profile.fullName.split(' ')[0] : null)
     || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || null;
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    const hello = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
+    return displayName ? `${hello}, ${displayName}` : hello;
+  }, [displayName]);
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('Все');
 
@@ -70,6 +78,17 @@ export function LMSHomeScreen({ navigation }: Props) {
     return inProgress[0] ?? null;
   }, [my.courses]);
 
+  // «Урок 15 из 34 · Название» — только если текущий урок известен из каталога; иначе категория.
+  const continueCaption = useMemo(() => {
+    if (!continueCourse) return null;
+    const lessons = courses.find((c) => c.id === continueCourse.id)?.lessons ?? continueCourse.lessons;
+    const index = currentLessonIndex?.(continueCourse.id) ?? -1;
+    const lesson = index >= 0 ? lessons[index] : undefined;
+    if (lesson) return `Урок ${index + 1} из ${lessons.length} · ${lesson.title}`;
+    const count = continueCourse.chaptersCount ?? continueCourse.lessons.length;
+    return [continueCourse.category, count ? lessonsWord(count) : null].filter(Boolean).join(' · ');
+  }, [continueCourse, courses, currentLessonIndex]);
+
   // Featured (when there's nothing to continue): a catalog course with a cover
   const featured = useMemo(
     () => (continueCourse ? null : courses.find((c) => c.imageUrl) ?? courses[0] ?? null),
@@ -77,6 +96,13 @@ export function LMSHomeScreen({ navigation }: Props) {
   );
 
   const showSearch = !query && cat === 'Все';
+  // Отступы разделов по макету: «Мои курсы» — 28 под верхним блоком, у ленты свой запас 24 под тень,
+  // «Все курсы» — ещё 8 после ленты. Верхний блок даёт 12, раздел добавляет остальное.
+  const myLoadingShown = showSearch && my.isSignedIn && my.loading && !my.ready;
+  const shelfShown = showSearch && my.isSignedIn && my.courses.length > 0;
+  const myErrorShown = !shelfShown && showSearch && my.isSignedIn && !!my.error && my.courses.length === 0;
+  const featuredShown = showSearch && !!featured;
+  const allCoursesTop = featuredShown || myLoadingShown || myErrorShown ? 0 : shelfShown ? 8 : 16;
 
   // Стартовая акция: показываем, только если она идёт и этот аккаунт под неё
   // подходит. Нажатие ведёт в первый подаренный курс.
@@ -88,197 +114,87 @@ export function LMSHomeScreen({ navigation }: Props) {
     return date ? `${line} — до ${date}` : line;
   }, [gift.courseIds.length, gift.until]);
 
-  return (
-    <Screen largeTitle={t('tab_learn')} onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
+return (
+    <Screen largeTitle={t('tab_learn')} backdrop="learn" onRefresh={async () => { await Promise.all([reload(), my.reload()]); }}>
       <PageIntro page="lms" />
-      <NavBarLarge title={t('tab_learn')} trailing={<ProfileAvatarButton onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
-
-      <View style={{ paddingHorizontal: 16 }}>
+      <NavBarLarge title={t('tab_learn')} subtitle={greeting} trailing={<ProfileAvatarButton {...profileButton} onPress={() => navigation.getParent()?.navigate('ProfileTab' as never)} />} />
+      <Wrapper paddingHorizontal={16} paddingTop={8} paddingBottom={12} gap={16}>
+        {/* Поиск один на странице: каталог ниже фильтруется этим же полем. */}
+        <SearchField surface="raised" value={query} onChangeText={setQuery} placeholder={t('search_course')} />
+        {!loading && !(error && courses.length === 0) && showSearch && continueCourse ? (
+          <LearningResumeCard title={continueCourse.title} caption={continueCaption} imageUrl={continueCourse.imageUrl} icon={continueCourse.icon}
+            progress={Math.max(Math.round(continueCourse.serverProgress ?? 0), Math.round(progress(continueCourse.id) * 100))}
+            onPress={() => navigation.navigate('CourseDetail', { courseId: continueCourse.id })} />
+        ) : null}
+        <Wrapper dir="row" gap={12} align="stretch">
+          <Wrapper flex={1}>
+            <ShortcutTile icon="arrow.down.circle.fill" title="Скачанные" caption="Уроки без интернета"
+              count={downloads.items.length > 0 ? downloads.items.length : null} onPress={() => navigation.navigate('Downloads')} />
+          </Wrapper>
+          {feature('books') ? <Wrapper flex={1}>
+            <ShortcutTile icon="books.vertical.fill" tone="violet" title="Библиотека" caption="Книги и ИИ-советник" onPress={() => navigation.navigate('Books')} />
+          </Wrapper> : null}
+        </Wrapper>
+        {giftCourseId ? (
+          <LearningShortcut kind="gift" subtitle={giftSubtitle} onPress={() => navigation.navigate('CourseDetail', { courseId: giftCourseId })} />
+        ) : null}
         <ResumeCallout />
-      </View>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 16 }}>
-        <Logo size={36} />
-        <View style={{ flex: 1 }}>
-          <Text style={[ty.footnote, { color: T.labelSecondary, letterSpacing: 0.2 }]} numberOfLines={1}>
-            {displayName ? `Привет, ${displayName}` : 'Divergents'}
-          </Text>
-          <Text style={[ty.headline, { color: T.label, marginTop: 2 }]} numberOfLines={1}>
-            {/* «non-stop development» — часть логотипа (она же на заставке),
-                поэтому не переводится и не склоняется. */}
-            {courses.length ? `${coursesWord(courses.length)} · non-stop development` : 'Non-stop development'}
-          </Text>
-        </View>
-      </View>
-
-      {downloads.items.length > 0 ? (
-        <Pressable
-          onPress={() => navigation.navigate('Downloads')}
-          style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 14, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1 })}>
-          <View style={{ width: 42, height: 42, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="arrow.down.circle" size={21} color="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]}>{tr('Скачанные уроки')}</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]}>{downloads.items.length} · {tr('доступны без интернета')}</Text>
-          </View>
-          <SF name="chevron.right" size={15} color={T.labelTertiary} />
-        </Pressable>
-      ) : null}
-
-      {/* Search (iOS fill style) */}
-      <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingLeft: 12, paddingRight: query ? 0 : 12, minHeight: minTouch }}>
-          <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t('search_course')}
-            placeholderTextColor={T.labelTertiary}
-            accessibilityLabel={t('search_course')}
-            style={[ty.body, { flex: 1, color: T.label, paddingVertical: 0, minHeight: minTouch }]}
-          />
-          {query ? (
-            <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Очистить поиск"
-              style={({ pressed }) => ({ width: minTouch, height: minTouch, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1 })}>
-              <SF name="xmark.circle.fill" size={17} color={T.labelTertiary} />
-            </Pressable>
-          ) : null}
-        </View>
-      </View>
-
-      {/* Categories */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 16 }}>
-        {categories.map((c) => <Chip key={c} label={c} active={cat === c} onPress={() => setCat(c)} />)}
-      </ScrollView>
-
-      {/* Подарочные курсы стартовой акции. Отдельного фича-флага у баннера нет:
-          он часть «Обучения» и исчезает вместе с разделом. */}
-      {giftCourseId ? (
-      <Pressable onPress={() => navigation.navigate('CourseDetail', { courseId: giftCourseId })}
-        accessibilityRole="button" accessibilityLabel={`Подарок новым участникам. ${giftSubtitle}`}
-        style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
-        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="gift.fill" size={23} color="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Подарок новым участникам</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>{giftSubtitle}</Text>
-          </View>
-          <SF name="chevron.right" size={15} color={T.labelTertiary} />
-        </LinearGradient>
-      </Pressable>
-      ) : null}
-
-      {/* Books library entry — compact card with a gradient background.
-          Раздел можно выключить в админ-панели сайта. */}
-      {feature('books') ? (
-      <Pressable onPress={() => navigation.navigate('Books')}
-        accessibilityRole="button" accessibilityLabel="Библиотека книг" accessibilityHint="Каталог, рецензии и ИИ-советник по книгам"
-        style={({ pressed }) => ({ marginHorizontal: 16, marginBottom: 18, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
-        <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="book.fill" size={23} color="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>Библиотека книг</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={2}>Каталог, рецензии и ИИ-советник по книгам под ваш профиль</Text>
-          </View>
-          <SF name="chevron.right" size={15} color={T.labelTertiary} />
-        </LinearGradient>
-      </Pressable>
-      ) : null}
-
+      </Wrapper>
       {loading ? (
-        <View style={{ paddingTop: 8 }}><CourseGridSkeleton count={4} /></View>
+        <Wrapper paddingTop={8}><CourseGridSkeleton count={4} /></Wrapper>
       ) : error && courses.length === 0 ? (
         <ErrorState onRetry={reload} />
       ) : (
         <>
           {source === 'mock' ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginHorizontal: 20, marginBottom: 12, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, borderCurve: 'continuous', backgroundColor: 'rgba(255,149,0,0.12)' }}>
-              <SF name="wifi.slash" size={11} color={T.orangeText} />
-              <Text style={[ty.caption2Em, { color: T.orangeText }]} numberOfLines={1}>{t('demo_mode')}</Text>
-            </View>
+            <Wrapper marginHorizontal={20} marginBottom={12} alignSelf="flex-start">
+              <StatusBadge label={t('demo_mode')} icon="wifi.slash" tone="warning" size="compact" />
+            </Wrapper>
           ) : null}
-
-          {/* «Мои курсы» still loading: hold the space with a skeleton so the
-              catalog below doesn't jump down once the owned list arrives. */}
-          {showSearch && my.isSignedIn && my.loading && !my.ready ? (
-            <View style={{ marginBottom: 18 }}>
+          {myLoadingShown ? (
+            <Wrapper paddingTop={16} marginBottom={18}>
               <SectionHeader title={t('my_courses')} />
-              <ListSkeleton rows={2} />
-            </View>
+              <Wrapper marginHorizontal={16}><ListSkeleton rows={2} /></Wrapper>
+            </Wrapper>
           ) : null}
-
-          {/* Continue (owned, in progress) */}
-          {showSearch && continueCourse ? (
-            <View style={{ marginBottom: 18 }}>
-              <SectionHeader title={t('continue_')} />
-              <FeaturedCard
-                course={continueCourse}
-                owned
-                progress={Math.max(Math.round(continueCourse.serverProgress ?? 0), Math.round(progress(continueCourse.id) * 100))}
-                eyebrow={tr('Продолжить')}
-                onPress={() => navigation.navigate('CourseDetail', { courseId: continueCourse.id })}
-              />
-            </View>
-          ) : null}
-
-          {/* My courses */}
-          {showSearch && my.isSignedIn && my.courses.length > 0 ? (
-            <View style={{ marginBottom: 18 }}>
+          {shelfShown ? (
+            <Wrapper paddingTop={16}>
               <SectionHeader title={t('my_courses')} />
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                {my.courses.map((c) => (
-                  <CourseCardPremium key={c.id} course={c} owned progress={Math.max(Math.round(c.serverProgress ?? 0), Math.round(progress(c.id) * 100))} width={250}
-                    onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })} />
-                ))}
-              </ScrollView>
-            </View>
-          ) : showSearch && my.isSignedIn && my.error && my.courses.length === 0 ? (
-            <View style={{ marginBottom: 18 }}>
+              <OwnedCourseShelf courses={my.courses} progress={ownedProgress}
+                onCoursePress={courseId => navigation.navigate('CourseDetail', { courseId })} />
+            </Wrapper>
+          ) : myErrorShown ? (
+            <Wrapper paddingTop={16} marginBottom={18}>
               <SectionHeader title={t('my_courses')} />
               <ErrorState message="Не удалось загрузить ваши курсы. Проверьте подключение." onRetry={my.reload} />
-            </View>
+            </Wrapper>
           ) : null}
-
-          {/* Featured (when nothing to continue) */}
-          {showSearch && featured ? (
-            <View style={{ marginBottom: 18 }}>
+          {featuredShown && featured ? (
+            <Wrapper paddingTop={shelfShown ? 8 : myLoadingShown || myErrorShown ? 0 : 16} marginBottom={18}>
               <SectionHeader title={t('recommended')} />
-              <FeaturedCard
-                course={featured}
-                showPrice={feature('purchases')}
-                onPress={() => navigation.navigate('CourseDetail', { courseId: featured.id })}
-              />
-            </View>
+              <Wrapper marginHorizontal={16}>
+                <FeaturedCard course={featured} owned={featured.id in ownedProgress} progress={ownedProgress[featured.id]} showPrice={feature('purchases')}
+                  onPress={() => navigation.navigate('CourseDetail', { courseId: featured.id })} />
+              </Wrapper>
+            </Wrapper>
           ) : null}
-
-{/* All courses grid */}
-          <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16 }}>
-            {filtered.map((c) => (
-              <View key={c.id} style={{ width: '48.5%', marginBottom: 14 }}>
-                <CourseCardPremium
-                  course={c}
-                  owned={c.id in ownedProgress}
-                  progress={ownedProgress[c.id]}
-                  showPrice={feature('purchases')}
-                  onPress={() => navigation.navigate('CourseDetail', { courseId: c.id })}
-                />
-              </View>
-            ))}
-          </View>
+          <Wrapper paddingTop={allCoursesTop}>
+            <SectionHeader title={cat === 'Все' && !query ? 'Все курсы' : `Найдено: ${filtered.length}`} />
+          </Wrapper>
+          {categories.length > 1 ? (
+            <ChipRail items={categories.map((c) => ({ key: c, label: c, active: c === cat, onPress: () => setCat(c) }))} />
+          ) : null}
+          <Wrapper paddingTop={16} />
+          <CourseCatalogGrid courses={filtered} ownedProgress={ownedProgress} showPrice={feature('purchases')}
+            onCoursePress={courseId => navigation.navigate('CourseDetail', { courseId })} />
           {filtered.length === 0 ? (
             courses.length === 0 ? (
               <EmptyState icon="book" title="Курсы скоро появятся" subtitle="Каталог обновляется — загляните чуть позже." />
             ) : (
-              <EmptyState icon="magnifyingglass" title={t('not_found_title')} subtitle={t('not_found_sub')} />
+              <EmptyState icon="magnifyingglass" title={t('not_found_title')} subtitle={t('not_found_sub')} actionLabel="Сбросить поиск и фильтр" onAction={() => { setQuery(''); setCat('Все'); }} />
             )
           ) : null}
-          <View style={{ height: 16 }} />
+          <Wrapper paddingTop={24} />
         </>
       )}
     </Screen>

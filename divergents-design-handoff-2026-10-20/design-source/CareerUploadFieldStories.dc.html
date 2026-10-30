@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CareerUploadField — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="460" safe-top="{{false}}" hint-size="390px,460px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,420px">
+    <dc-import name="Text" variant="title2" heading="1" text="CareerUploadField" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=lg · hint (фото профиля)" hint-size="100%,18px"></dc-import>
+      <dc-import name="CareerUploadField" label="Фото профиля" action-label="Загрузить фото" hint="JPG, PNG или WebP, до 8 МБ" icon="person-circle" size="lg" hint-size="100%,100px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=md (логотип компании)" hint-size="100%,18px"></dc-import>
+      <dc-import name="CareerUploadField" label="Логотип компании" action-label="Загрузить логотип" hint="" icon="image" size="md" hint-size="100%,84px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=md · hint (файл)" hint-size="100%,18px"></dc-import>
+      <dc-import name="CareerUploadField" label="Примерный Gallup вакансии" action-label="Загрузить файл" hint="По желанию · изображение/скрин (PDF — на сайте)" icon="file" size="md" hint-size="100%,84px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":460}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>LessonRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="520" safe-top="{{false}}" hint-size="390px,520px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,460px">
+    <dc-import name="Text" variant="title2" heading="1" text="LessonRow" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,380px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="state: done · current · upcoming · locked (в ListSection)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" header="Программа курса" hint-size="100%,340px"><dc-import name="LessonRow" number="14" title="Communication" state="done" hint-size="100%,76px"></dc-import><dc-import name="LessonRow" number="15" title="Significance" state="current" hint-size="100%,76px"></dc-import><dc-import name="LessonRow" number="16" title="Competition" state="upcoming" hint-size="100%,76px"></dc-import><dc-import name="LessonRow" number="17" title="Woo" state="locked" separator="{{true}}" hint-size="100%,76px"></dc-import></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":520}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

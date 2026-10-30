@@ -1,0 +1,121 @@
+{
+  "tool": "build-phase",
+  "version": 2,
+  "startedAt": "2026-10-19T19:47:12.029Z",
+  "comp": "/Users/xaknazar/.codex/visualizations/2026/09/01/01a05b3e-1214-7a50-8d56-42161f3a2616/reading-directions-2026-10-20/variant-1-v2.png",
+  "direction": null,
+  "breakpoint": "1024x1536",
+  "artifact": null,
+  "phase": "hero",
+  "phases": {
+    "comps": {
+      "status": "skipped",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [
+        {
+          "at": "2026-10-19T19:47:12.029Z",
+          "text": "started with an approved comp; the comp round happened before this state (surface round or manual)"
+        }
+      ],
+      "gate": null,
+      "forced": null
+    },
+    "spec": {
+      "status": "closed",
+      "openedAt": "2026-10-19T19:47:12.029Z",
+      "closedAt": "2026-10-19T21:57:59.213Z",
+      "attempts": 4,
+      "notes": [],
+      "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "12 regions, 2 plates, 6 text regions measured",
+        "at": "2026-10-19T21:57:59.213Z"
+      },
+      "forced": null
+    },
+    "plates": {
+      "status": "closed",
+      "openedAt": "2026-10-19T21:57:59.213Z",
+      "closedAt": "2026-10-19T21:58:06.502Z",
+      "attempts": 1,
+      "notes": [],
+      "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "2/2 plates",
+        "at": "2026-10-19T21:58:06.502Z"
+      },
+      "forced": null
+    },
+    "hero": {
+      "status": "open",
+      "openedAt": "2026-10-19T21:58:06.502Z",
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [
+        {
+          "at": "2026-10-20T04:05:02.961Z",
+          "text": "Native adaptation evidence: the approved reference is a two-component 1024x1536 board, not a full app viewport. Production uses native Gotham Rounded, real membership/status/actions, wrapping text and 320pt XL reflow. Web CSS scaffold and full-board pixel diff are not an appropriate native gate and were not reported as passed. Direct native component captures in .impeccable/review/reading92 are submitted to an independent finish reviewer. No claim of exact pixel reproduction or full physical-device E2E."
+        },
+        {
+          "at": "2026-10-20T04:30:53.083Z",
+          "text": "Independent native finish reviewer returned disposition: ship for four complete phone component captures with no material UI fixes. The automatic web-board hero pipeline remains incomplete; finish command correctly refuses a whole-pipeline ship. Retain this state as an explicit limitation; do not force or invent a numerical fidelity score. Release gate uses native rendering, tests, signed archive and server verification, not a claim that this web pipeline passed."
+        }
+      ],
+      "gate": null,
+      "forced": null
+    },
+    "sections": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "motion": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "responsive": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "review": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    }
+  },
+  "finish": null,
+  "plates": {
+    "light-book": {
+      "status": "ok",
+      "score": 0.7098,
+      "size": "1536x1024"
+    },
+    "dark-book": {
+      "status": "ok",
+      "score": 0.6304,
+      "size": "1536x1024"
+    }
+  }
+}

@@ -1,3 +1,5 @@
+import { ContentBlock } from '../../components/ContentBlock';
+import { Wrapper } from '../../components/Wrapper';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
@@ -7,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { PrimaryButton } from '../../components/ui';
+import { Button } from '../../components/ui';
 import { ErrorState } from '../../components/StateViews';
 import {
   fetchChallengesAndTeams, getChallengeMeta, ChallengeListItem, ChallengeTeam, CHALLENGE_RULES,
@@ -15,6 +17,7 @@ import {
 import { applyToChallenge, challengeApplyFailureMessage } from '../../data/api';
 import { useTalentProfile } from '../../state/useTalentProfile';
 import { useResumeAccess } from '../../state/useResumeAccess';
+import { applicationProfile } from '../../data/resumeSync';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
 
@@ -47,9 +50,9 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   const { getToken } = useAuth();
   // The applicant's own анкета — attached to the application so the captain/admin
   // reliably sees it (independent of the server→Talentslab by-email lookup).
-  const { profile, live } = useTalentProfile();
+  const { profile } = useTalentProfile();
   const challengeId = route.params?.challengeId ?? '';
-  const { require: requireResume } = useResumeAccess();
+  const { require: requireResume, mergedAnswers } = useResumeAccess();
 
   const load = useCallback(() => {
     let alive = true;
@@ -94,7 +97,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
     setSubmitting(true);
     try {
       const token = await getToken();
-      const r = await applyToChallenge(token, challengeId, teamId, live ? profile : undefined, tgHandle);
+      const r = await applyToChallenge(token, challengeId, teamId, applicationProfile(profile, mergedAnswers), tgHandle);
       if (r.ok) {
         setSubmitted(true);
       } else {
@@ -121,7 +124,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         <Text style={[ty.body, { color: T.labelSecondary, marginTop: 8, textAlign: 'center' }]}>
           Капитан команды «{team?.name}» рассмотрит вашу заявку на «{meta?.title}». С вами свяжутся в Telegram перед стартом {meta?.startLabel}.
         </Text>
-        <PrimaryButton label={tr('Готово')} style={{ marginTop: 24, alignSelf: 'stretch' }} onPress={() => navigation.goBack()} />
+        <Wrapper marginTop={24} alignSelf={'stretch'}><Button label={tr('Готово')} onPress={() => navigation.goBack()} /></Wrapper>
       </View>
     );
   }
@@ -137,7 +140,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
         {/* Псевдоним — только для сведения: он берётся из анкеты профиля, и
             именно его команда видит в рейтинге. Отдельного поля здесь нет. */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>{tr('ПСЕВДОНИМ В РЕЙТИНГЕ')}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', padding: 14 }}>
+        <ContentBlock size="compact"><Wrapper dir={'row'} align={'center'} gap={12}>
           <View style={{ width: 38, height: 38, borderRadius: 19, borderCurve: 'continuous', backgroundColor: nick ? T.brand : T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}>
             {nick
               ? <Text style={[ty.subheadEm, { color: '#fff' }]}>{nick.charAt(0).toUpperCase()}</Text>
@@ -153,7 +156,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
                 : tr('Пока в рейтинге будет ваше имя. Псевдоним задаётся в анкете профиля.')}
             </Text>
           </View>
-        </View>
+        </Wrapper></ContentBlock>
 
         {/* Telegram username — how the captain reaches you */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('USERNAME В TELEGRAM')}</Text>
@@ -178,7 +181,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
 
         {/* Team */}
         <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 20, marginBottom: 6, marginLeft: 4 }]}>{tr('ВЫБЕРИТЕ КОМАНДУ')}</Text>
-        <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', overflow: 'hidden' }}>
+        <ContentBlock size="flush">
           {loading ? (
             <View style={{ padding: 24, alignItems: 'center' }}><ActivityIndicator color={T.brand} /></View>
           ) : error && teams.length === 0 ? (
@@ -203,7 +206,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
               </Pressable>
             );
           })}
-        </View>
+        </ContentBlock>
 
         {/* Activity tracking consent — describes what the app actually does:
             GPS-запись бега/ходьбы внутри приложения + ручной ввод. Шагомера и
@@ -232,14 +235,14 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
           </View>
         </Pressable>
         {showRules ? (
-          <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', padding: 14, gap: 9 }}>
+          <ContentBlock size="compact"><Wrapper gap={9}>
             {CHALLENGE_RULES.map((r, i) => (
               <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
                 <Text style={[ty.subheadEm, { color: T.brand, width: 16 }]}>{i + 1}</Text>
                 <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{r}</Text>
               </View>
             ))}
-          </View>
+          </Wrapper></ContentBlock>
         ) : null}
 
         {/* Mandatory acknowledgment */}
@@ -250,7 +253,7 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-        <PrimaryButton label={tr('Отправить заявку')} icon="paperplane.fill" loading={submitting} disabled={!canSubmit} onPress={submit} />
+        <Button label={tr('Отправить заявку')} icon="paperplane.fill" loading={submitting} disabled={!canSubmit} onPress={submit} />
         {missingHint ? (
           <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginTop: 8 }]} numberOfLines={2}>{missingHint}</Text>
         ) : null}

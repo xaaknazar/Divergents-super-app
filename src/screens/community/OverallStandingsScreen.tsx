@@ -1,9 +1,11 @@
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Рейтинг всех участников челленджа — не только своей команды.
 //
 // Данные приходят тем же ответом, что и трекер (challenge.overall): очки всех
 // участников сервер уже посчитал ради командного зачёта, и второй запрос ради
 // того же результата был бы напрасным. Поэтому экран открывается мгновенно.
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
@@ -11,14 +13,14 @@ import { nums } from '../../theme/tokens';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection } from '../../components/ui';
-import { EmptyState } from '../../components/StateViews';
+import { ListSection } from '../../components/ui';
+import { EmptyState, ErrorState, ListSkeleton } from '../../components/StateViews';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { AwardBadge } from '../../components/AwardBadge';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
-import { useAuth } from '@clerk/clerk-expo';
-import { MEDAL_FOR_RANK, totalFlags, fetchChallengeResults, OverallStanding, ChallengeResults } from '../../data/community';
+import { useChallengeResults } from '../../state/useChallengeResults';
+import { MEDAL_FOR_RANK, totalFlags, OverallStanding } from '../../data/community';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
 
@@ -26,8 +28,7 @@ type Props = NativeStackScreenProps<CommunityStackParams, 'OverallStandings'>;
 
 export function OverallStandingsScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
-  const { challenge } = useChallenge();
-  const { getToken, isSignedIn } = useAuth();
+  const { challenge } = useChallenge(route.params?.challengeId);
   const challengeId = route.params?.challengeId ?? challenge.id;
 
   // Живой челлендж или завершённый — экран один.
@@ -37,25 +38,7 @@ export function OverallStandingsScreen({ route, navigation }: Props) {
   // на пустой экран. Поэтому если в контексте не тот челлендж или список пуст
   // — дочитываем рейтинг из итогов.
   const live = challenge.id === challengeId ? challenge.overall ?? [] : [];
-  const [results, setResults] = useState<ChallengeResults | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (live.length) return;
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const token = isSignedIn ? await getToken() : null;
-        const res = await fetchChallengeResults(challengeId, token);
-        if (alive) setResults(res);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [challengeId, live.length, isSignedIn]);
+  const { data: results, loading, error, reload } = useChallengeResults(challengeId, 'summary', !live.length);
 
   const all = live.length ? live : results?.overall ?? [];
   // Название челленджа у живого — в контексте, у завершённого — в итогах.
@@ -133,21 +116,21 @@ export function OverallStandingsScreen({ route, navigation }: Props) {
           </View>
         ) : null}
 
-        {rows.length === 0 ? (
+        {!live.length && !results && loading ? <ListSkeleton /> : !live.length && !results && error ? <ErrorState onRetry={reload} /> : rows.length === 0 ? (
           <EmptyState
             icon="list.number"
             title={tr('Рейтинг ещё пуст')}
             subtitle={tr('Участники появятся здесь, когда наберут очки.')}
           />
         ) : (
-          <ListSection
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection
             header={mineOnly ? tr('Моя команда') : tr('Все участники')}
             footer={tr('🚩 — флаги за пропуск дневной нормы. ⛔ — участник выбыл, очки заморожены. 🏳️ — вышел по белому флагу капитана.')}
           >
             {rows.map((r, i) => (
               <Row key={r.id} row={r} last={i === rows.length - 1} />
             ))}
-          </ListSection>
+          </ListSection></Wrapper>
         )}
 
         <View style={{ height: 30 }} />
@@ -192,7 +175,7 @@ function Row({ row, last }: { row: OverallStanding; last: boolean }) {
           </Text>
         </View>
 
-        {flags > 0 ? <Capsule bg="rgba(255,59,48,0.14)" color={T.red}>🚩 {flags}</Capsule> : null}
+        {flags > 0 ? <StatusBadge label={["🚩 ", (flags)].join('')} tone="danger" /> : null}
 
         <Text style={[ty.subheadEm, { color: row.isMe ? T.brand : T.label }]} numberOfLines={1}>
           {row.points} pts

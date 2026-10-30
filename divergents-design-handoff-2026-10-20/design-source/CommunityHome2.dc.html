@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Сообщество — мероприятия</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="844" tab="community" hint-size="390px,844px">
+  <dc-import name="NavBarLarge" title="Сообщество" subtitle="Челленджи, поездки и встречи" avatar="{{true}}" avatar-href="ProfileHome.dc.html" actions="{{navActions}}" hint-size="100%,81px"></dc-import>
+  <dc-import name="Wrapper" dir="row" scroll="x" gap="8" pad-x="16" pad-top="8" hint-size="100%,56px">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+      <dc-import name="Chip" label="{{t.label}}" active="{{t.active}}" href="{{t.href}}" hint-size="100px,48px"></dc-import>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="20" pad-bottom="16" hint-size="100%,400px">
+    <dc-import name="ListSection" header="Все мероприятия" hint-size="100%,380px">
+      <sc-for list="{{meetups}}" as="m" hint-placeholder-count="4">
+        <dc-import name="EventRow" variant="grouped" icon="calendar" title="{{m.title}}" meta="{{m.place}}" meta2="{{m.when}}" separator="{{m.separator}}" href="MeetupDetail.dc.html" hint-size="100%,88px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var TABS = [['Главная', 'CommunityHome.dc.html'], ['Каналы', 'Channels.dc.html'], ['Челленджи', 'CommunityHome.dc.html'], ['Поездки', 'CommunityHome.dc.html'], ['Мероприятия', 'CommunityHome2.dc.html'], ['Спорт', 'CommunityHome.dc.html']];
+    var tabs = TABS.map(function (t) { return { label: t[0], href: t[1], active: t[0] === 'Мероприятия' }; });
+    var navActions = [{ icon: 'plus', label: 'Создать', href: 'CreateContent.dc.html' }];
+
+    var meetups = [
+      { title: 'Книжный клуб', place: 'Алматы · Кофейня', when: '16 октября, 18:00 · Бесплатно' },
+      { title: 'Кинопоказ и разбор', place: 'Алматы · [Место]', when: '19 октября, 19:00 · Бесплатно' },
+      { title: 'Лекция о привычках', place: 'Астана · [Место]', when: '24 октября, 18:30 · Бесплатно' },
+      { title: 'Мастер-класс по целям', place: 'Алматы · [Место]', when: '2 ноября, 12:00 · Бесплатно' }
+    ];
+    return {
+      tabs: tabs, navActions: navActions,
+      meetups: meetups.map(function (m, i) { return { title: m.title, place: m.place, when: m.when, separator: i > 0 }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

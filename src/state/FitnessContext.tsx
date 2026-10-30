@@ -6,6 +6,7 @@ import { loadJSON, saveJSON } from './persist';
 import { useActivities } from './ActivityContext';
 import { FitnessGoal, FitnessMetric, FitnessProgram, Records, computeRecords, goalProgress, dayKey, programStats } from '../data/fitness';
 import { scheduleProgramReminder, cancelProgramReminder } from './programReminders';
+import { useLocalDay } from './useLocalDay';
 
 const KEY = 'dvg.fitness.v1';
 
@@ -34,6 +35,7 @@ const Ctx = createContext<FitnessState | null>(null);
 const newId = () => `${Date.now()}_${Math.round(Math.random() * 1e6)}`;
 
 export function FitnessProvider({ children }: { children: React.ReactNode }) {
+  const today = useLocalDay();
   const { workouts } = useActivities();
   const [data, setData] = useState<Stored>({ goals: [], metrics: [], programs: [] });
   const [loaded, setLoaded] = useState(false);
@@ -119,7 +121,12 @@ export function FitnessProvider({ children }: { children: React.ReactNode }) {
 
   const logProgram = useCallback((id: string, value: number, key = dayKey(new Date())) => commit((prev) => ({
     ...prev,
-    programs: prev.programs.map((p) => (p.id === id ? { ...p, log: { ...p.log, [key]: Math.max(0, value) } } : p)),
+    programs: prev.programs.map((p) => {
+      const s = programStats(p);
+      if (p.id !== id || !Number.isFinite(value) || value < 0 || key > dayKey(new Date()) ||
+        !s.grid.some(g => g.key === key) || s.finished) return p;
+      return { ...p, log: { ...p.log, [key]: value } };
+    }),
   })), [commit]);
 
   const setProgramReminder = useCallback(async (id: string, remindAt: FitnessProgram['remindAt']) => {
@@ -139,7 +146,7 @@ export function FitnessProvider({ children }: { children: React.ReactNode }) {
         commit((prev) => ({ ...prev, programs: prev.programs.map((x) => (x.id === p.id ? { ...x, notificationId: null } : x)) }));
       }
     }
-  }, [loaded, data.programs, commit]);
+  }, [loaded, data.programs, commit, today]);
 
   const value = useMemo<FitnessState>(() => ({
     loaded, goals: data.goals, metrics: data.metrics, programs: data.programs, records,

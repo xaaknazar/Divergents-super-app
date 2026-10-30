@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PodiumMedal — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="260" safe-top="{{false}}" hint-size="390px,260px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,220px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">PodiumMedal</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Медаль/корона призового места: kind · size</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">KIND · CROWN / GOLD / SILVER / BRONZE / TROPHY</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" hint-size="100%,24px">
+<dc-import name="PodiumMedal" kind="crown" size="md" hint-size="20px,20px"></dc-import>
+<dc-import name="PodiumMedal" kind="gold" size="md" hint-size="20px,20px"></dc-import>
+<dc-import name="PodiumMedal" kind="silver" size="md" hint-size="20px,20px"></dc-import>
+<dc-import name="PodiumMedal" kind="bronze" size="md" hint-size="20px,20px"></dc-import>
+<dc-import name="PodiumMedal" kind="trophy" size="md" hint-size="20px,20px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">SIZE · SM / MD / LG</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" align="center" hint-size="100%,24px">
+<dc-import name="PodiumMedal" kind="gold" size="sm" hint-size="16px,16px"></dc-import>
+<dc-import name="PodiumMedal" kind="gold" size="md" hint-size="20px,20px"></dc-import>
+<dc-import name="PodiumMedal" kind="gold" size="lg" hint-size="24px,24px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":260}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

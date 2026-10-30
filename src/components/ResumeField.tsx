@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import { BirthDateField } from './BirthDateField';
+import { FieldLabel } from './FieldLabel';
+import { FieldError } from './FieldError';
+import React,{ useState } from 'react';
+import { Platform,Pressable,Text,TextInput,TextInputProps,View } from 'react-native';
+import { formatPhone } from '../data/phone';
+import { ResumeField } from '../data/resumeSchema';
 import { useTheme } from '../theme/ThemeContext';
-import { View, Text, Pressable, TextInput, Modal, Platform, TextInputProps } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { minTouch } from '../theme/tokens';
+import { CountryPickerField } from './CountryPickerField';
 import { SF } from './SFIcon';
 import { Segmented } from './ui';
-import { minTouch } from '../theme/tokens';
-import { ResumeField } from '../data/resumeSchema';
-import { parseBirthDate, formatBirthDate, defaultBirthDate, MIN_BIRTH_DATE } from '../data/birthDate';
-import { formatPhone } from '../data/phone';
-import { CountryPickerField } from './CountryPickerField';
 
 /**
  * Автозаполнение iOS/Android по смыслу поля: имя, фамилия, телефон, почта,
@@ -53,18 +54,11 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
   const [tag, setTag] = useState('');
   const labelId = `resume-field-${field.key}`;
   const accessibilityLabel = `${field.label}${field.optional ? '' : ', обязательное поле'}${error ? `. Ошибка: ${error}` : ''}`;
-  const labelEl = (
-    <Text nativeID={labelId} style={[ty.footnote, { color: error ? T.redText : T.labelSecondary, marginBottom: 6, marginLeft: 4 }]}>
-      {field.label.toUpperCase()}{field.optional ? '' : ' *'}
-    </Text>
-  );
-  // Ошибка — под полем, тем же шрифтом, что и подпись; рамка становится красной.
-  const errorEl = error ? (
-    <Text accessibilityLiveRegion="polite" style={[ty.footnote, { color: T.redText, marginTop: 6, marginLeft: 4 }]}>{error}</Text>
-  ) : null;
+  const labelEl = <FieldLabel nativeID={labelId} label={field.label} required={!field.optional} invalid={!!error} />;
+  const errorEl = <FieldError message={error} />;
   const inputStyle = {
-    backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous' as const, paddingVertical: 12, paddingHorizontal: 14, color: T.label,
-    borderWidth: error ? 1 : 0, borderColor: error ? T.red : 'transparent',
+    backgroundColor: T.cardBg, borderRadius: 16, minHeight: 52, borderCurve: 'continuous' as const, paddingVertical: 12, paddingHorizontal: 14, color: T.label,
+    borderWidth: 1, borderColor: error ? T.redText : T.cardBorder,
   };
 
   if (field.type === 'bool') {
@@ -80,8 +74,8 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
             const on = value === val;
             return (
               <Pressable key={lbl} onPress={() => onChange(val)} accessibilityRole="radio" accessibilityLabel={lbl} accessibilityState={{ checked: on }}
-                style={{ flex: 1, minHeight: minTouch, paddingVertical: 11, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: on ? T.brand : T.cardBg, borderWidth: error ? 1 : 0.5, borderColor: on ? 'transparent' : error ? T.red : T.separator }}>
-                <Text style={[ty.footnoteEm, { color: on ? T.onBrand : T.label }]}>{lbl}</Text>
+                style={{ flex: 1, minHeight: minTouch, paddingVertical: 11, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: on ? T.brandTinted : T.cardBg, borderWidth: 1, borderColor: error ? T.redText : on ? T.brandText : T.cardBorder }}>
+                <Text style={[ty.footnoteEm, { color: on ? T.brandText : T.label }]}>{lbl}</Text>
               </Pressable>
             );
           })}
@@ -110,14 +104,14 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
 
   if (field.type === 'date') {
     return (
-      <DateFieldRow
+      <BirthDateField
         value={value != null ? String(value) : ''}
         onChange={onChange}
         placeholder={field.placeholder ?? 'ДД.ММ.ГГГГ'}
         accessibilityLabel={accessibilityLabel}
-        labelEl={labelEl}
-        inputStyle={inputStyle}
-        errorEl={errorEl}
+        label={field.label}
+        required={!field.optional}
+        error={error}
       />
     );
   }
@@ -146,8 +140,8 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
             const on = current === opt;
             return (
               <Pressable key={opt} onPress={() => onChange(opt)} accessibilityRole="radio" accessibilityLabel={`${field.label}: ${opt}`} accessibilityState={{ checked: on }}
-                style={{ minHeight: minTouch, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18, borderCurve: 'continuous', backgroundColor: on ? T.brand : T.cardBg, borderWidth: error ? 1 : 0.5, borderColor: on ? 'transparent' : error ? T.red : T.separator }}>
-                <Text style={[ty.footnoteEm, { color: on ? T.onBrand : T.label }]}>{opt}</Text>
+                style={{ minHeight: minTouch, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18, borderCurve: 'continuous', backgroundColor: on ? T.brandTinted : T.cardBg, borderWidth: 1, borderColor: error ? T.redText : on ? T.brandText : T.cardBorder }}>
+                <Text style={[ty.footnoteEm, { color: on ? T.brandText : T.label }]}>{opt}</Text>
               </Pressable>
             );
           })}
@@ -162,9 +156,9 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
       <CountryPickerField
         value={Array.isArray(value) ? value : []}
         onChange={onChange}
-        labelEl={labelEl}
-        inputStyle={inputStyle}
-        errorEl={errorEl}
+        label={field.label}
+        required={!field.optional}
+        error={error}
         accessibilityLabel={accessibilityLabel}
       />
     );
@@ -247,94 +241,6 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
         style={[ty.body, inputStyle, isTextarea ? { minHeight: 90, textAlignVertical: 'top' } : null]}
       />
       {errorEl}
-    </View>
-  );
-}
-
-/**
- * Дата рождения выбирается пикером, а не набирается руками: набор «ДД.ММ.ГГГГ»
- * порождал недописанные значения вроде «28.10.», которые сервер отбрасывал молча.
- * Наружу поле по-прежнему отдаёт строку «ДД.ММ.ГГГГ» — формат хранения не менялся.
- */
-function DateFieldRow({
-  value, onChange, placeholder, accessibilityLabel, labelEl, inputStyle, errorEl,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  accessibilityLabel: string;
-  labelEl: React.ReactNode;
-  inputStyle: object;
-  errorEl?: React.ReactNode;
-}) {
-  const { T, ty, isDark } = useTheme();
-  const [open, setOpen] = useState(false);
-  const selected = parseBirthDate(value) ?? defaultBirthDate();
-  // Черновик нужен только на iOS: там колесо крутят, а применяют по «Готово».
-  const [draft, setDraft] = useState(selected);
-  const today = new Date();
-
-  const openPicker = () => { setDraft(parseBirthDate(value) ?? defaultBirthDate()); setOpen(true); };
-
-  return (
-    <View style={{ marginBottom: 14 }}>
-      {labelEl}
-      <Pressable
-        onPress={openPicker}
-        accessibilityRole="button"
-        accessibilityLabel={`${accessibilityLabel}${value ? `, выбрано ${value}` : ', не выбрано'}`}
-        style={[inputStyle, { minHeight: minTouch, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
-      >
-        <Text style={[ty.body, { color: value ? T.label : T.labelTertiary }]}>{value || placeholder}</Text>
-        <SF name="calendar" size={18} color={T.labelSecondary} />
-      </Pressable>
-      {errorEl}
-
-      {open && Platform.OS === 'android' ? (
-        <DateTimePicker
-          value={selected}
-          mode="date"
-          display="spinner"
-          minimumDate={MIN_BIRTH_DATE}
-          maximumDate={today}
-          onChange={(event, picked) => {
-            setOpen(false);
-            if (event.type === 'set' && picked) onChange(formatBirthDate(picked));
-          }}
-        />
-      ) : null}
-
-      {Platform.OS !== 'android' ? (
-        <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setOpen(false)} />
-          <View style={{ backgroundColor: T.systemBg, paddingBottom: 28 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
-              <Pressable onPress={() => setOpen(false)} accessibilityRole="button" style={{ minHeight: minTouch, justifyContent: 'center', paddingHorizontal: 8 }}>
-                <Text style={[ty.body, { color: T.labelSecondary }]}>Отмена</Text>
-              </Pressable>
-              <Text style={[ty.footnoteEm, { color: T.labelSecondary }]}>ДАТА РОЖДЕНИЯ</Text>
-              <Pressable
-                onPress={() => { onChange(formatBirthDate(draft)); setOpen(false); }}
-                accessibilityRole="button"
-                style={{ minHeight: minTouch, justifyContent: 'center', paddingHorizontal: 8 }}
-              >
-                <Text style={[ty.body, { color: T.brand, fontWeight: '600' }]}>Готово</Text>
-              </Pressable>
-            </View>
-            <DateTimePicker
-              value={draft}
-              mode="date"
-              display="spinner"
-              locale="ru-RU"
-              themeVariant={isDark ? 'dark' : 'light'}
-              minimumDate={MIN_BIRTH_DATE}
-              maximumDate={today}
-              onChange={(_e, picked) => { if (picked) setDraft(picked); }}
-              style={{ height: 200 }}
-            />
-          </View>
-        </Modal>
-      ) : null}
     </View>
   );
 }

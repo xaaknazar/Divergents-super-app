@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Мои челленджи</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="844" safe-top="{{false}}" hint-size="390px,844px">
+<dc-import name="NavHeader" title="Мои челленджи" back-label="Назад" back-href="ProfileHome.dc.html" hint-size="100%,124px"></dc-import>
+  <dc-import name="Wrapper" pad-top="10" gap="10" hint-size="100%,420px">
+    <dc-import name="SectionHeader" title="Текущие · 1" action="" size="small" hint-size="100%,32px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,72px">
+      <dc-import name="HistoryChallengeCard" status="active" title="Divergents challenge: 2 season" subtitle="2-й челлендж · Команда «KEX group» · 15 дней · 4 октября 2026 г." status-label="Участвую" href="CommunityHome.dc.html" hint-size="100%,72px"></dc-import>
+    </dc-import>
+    <dc-import name="SectionHeader" title="Завершённые · 1" action="" size="small" hint-size="100%,32px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,124px">
+      <dc-import name="HistoryChallengeCard" status="finished" winner="{{true}}" title="Divergents challenge: 1 season" subtitle="1-й челлендж · Команда «KEX group» · 15 дней · 5 сентября 2026 г." place="1 место" points="650 pts" stats="{{finishedStats}}" href="CommunityHome.dc.html" hint-size="100%,124px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      finishedStats: [
+        { value: '420', label: 'страниц' },
+        { value: '210 000', label: 'шагов' },
+        { value: '18', label: 'дней без сахара' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

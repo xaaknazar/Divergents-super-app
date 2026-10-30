@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AuthField — stories</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="820" surface="grouped" safe-top="{{false}}" hint-size="390px,820px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,760px">
+    <dc-import name="Text" variant="title2" heading="1" text="AuthField" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,101px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=filled · icon · clearable (на белом)" hint-size="100%,18px"></dc-import>
+      <dc-import name="AuthField" variant="filled" label="Почта" type="email" icon="envelope" value="aknazar@example.com" placeholder="you@example.com" hint-size="100%,75px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,101px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=filled · пусто (placeholder)" hint-size="100%,18px"></dc-import>
+      <dc-import name="AuthField" variant="filled" label="Почта" type="email" icon="envelope" value="" placeholder="you@example.com" hint-size="100%,75px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,125px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=filled · status=error" hint-size="100%,18px"></dc-import>
+      <dc-import name="AuthField" variant="filled" label="Почта" type="email" icon="envelope" value="aknazar@" status="error" message="Проверьте адрес почты" hint-size="100%,99px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,125px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=white · counter · status=success (на сером)" hint-size="100%,18px"></dc-import>
+      <dc-import name="AuthField" variant="white" label="Псевдоним" type="text" icon="" clearable="{{false}}" counter="{{true}}" value="Aknazar" status="success" message="Псевдоним свободен" max-length="13" hint-size="100%,99px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,125px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=white · status=error" hint-size="100%,18px"></dc-import>
+      <dc-import name="AuthField" variant="white" label="Псевдоним" type="text" icon="" clearable="{{false}}" value="Admin" status="error" message="Этот псевдоним уже занят. Выберите другой." max-length="13" hint-size="100%,99px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":820}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

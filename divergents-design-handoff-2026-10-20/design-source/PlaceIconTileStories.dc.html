@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PlaceIconTile — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="320" safe-top="{{false}}" hint-size="390px,320px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,286px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" text="PlaceIconTile" hint-size="100%,34px"></dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" text="Плитка категории места: category · size" hint-size="100%,18px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="SIZE=LARGE (60)" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" gap="12" align="center" wrap="{{true}}" hint-size="100%,60px"><dc-import name="PlaceIconTile" category="cafe" hint-size="60px,60px"></dc-import><dc-import name="PlaceIconTile" category="restaurant" hint-size="60px,60px"></dc-import><dc-import name="PlaceIconTile" category="hotel" hint-size="60px,60px"></dc-import><dc-import name="PlaceIconTile" category="guesthouse" hint-size="60px,60px"></dc-import><dc-import name="PlaceIconTile" category="base" hint-size="60px,60px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="SIZE=MEDIUM (40)" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" gap="12" align="center" wrap="{{true}}" hint-size="100%,60px"><dc-import name="PlaceIconTile" category="cafe" size="medium" hint-size="40px,40px"></dc-import><dc-import name="PlaceIconTile" category="restaurant" size="medium" hint-size="40px,40px"></dc-import><dc-import name="PlaceIconTile" category="hotel" size="medium" hint-size="40px,40px"></dc-import><dc-import name="PlaceIconTile" category="guesthouse" size="medium" hint-size="40px,40px"></dc-import><dc-import name="PlaceIconTile" category="base" size="medium" hint-size="40px,40px"></dc-import><dc-import name="PlaceIconTile" category="park" size="medium" hint-size="40px,40px"></dc-import><dc-import name="PlaceIconTile" category="gym" size="medium" hint-size="40px,40px"></dc-import><dc-import name="PlaceIconTile" category="picnic" size="medium" hint-size="40px,40px"></dc-import><dc-import name="PlaceIconTile" category="tourism" size="medium" hint-size="40px,40px"></dc-import></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

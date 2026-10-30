@@ -1,13 +1,15 @@
+import { StatusBadge } from './StatusBadge';
+import { Wrapper } from './Wrapper';
 // Interactive challenge task row. Metric tasks (steps, pages) have steppers and
 // fill past 100% to show the over-goal bonus that rolls up to the team. Binary
 // tasks toggle on tap. Mirrors the mechanic refined in the design.
 import React from 'react';
+import { Pressable,Text,View } from 'react-native';
+import { ChallengeTask,taskDone,taskPoints } from '../data/community';
 import { useTheme } from '../theme/ThemeContext';
 import { nums } from '../theme/tokens';
-import { View, Text, Pressable } from 'react-native';
 import { SF } from './SFIcon';
-import { Capsule } from './ui';
-import { ChallengeTask, taskDone, taskPoints } from '../data/community';
+import { } from './ui';
 
 import { groupNum } from '../data/api';
 const fmt = (n: number) => groupNum(n);
@@ -37,10 +39,10 @@ export function ChallengeTaskRow({
         <Text style={[ty.subheadEm, { flex: 1, color: done ? T.labelSecondary : T.label, textDecorationLine: done ? 'line-through' : 'none' }]} numberOfLines={1}>{task.title}</Text>
         {isGate
           ? (done
-            ? <Capsule bg="rgba(52,199,89,0.14)" color={T.green} style={{ alignSelf: 'center' }}>Готово</Capsule>
+            ? <Wrapper alignSelf="center"><StatusBadge label={String("Готово")} tone="success" /></Wrapper>
             : <Text style={[ty.caption2, { color: T.labelTertiary }]}>условие</Text>)
           : (done
-            ? <Capsule bg={T.brandTinted} color={T.brand} style={{ alignSelf: 'center' }}>{`+${pts} pts`}</Capsule>
+            ? <Wrapper alignSelf="center"><StatusBadge label={String((`+${pts} pts`))} tone="brand" /></Wrapper>
             : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{task.basePts}</Text>)}
       </Pressable>
     );
@@ -56,7 +58,7 @@ export function ChallengeTaskRow({
         {/* Баллы начисляются за каждую единицу, а не только при норме: ниже
             нормы показываем уже заработанное, а не награду за норму. */}
         {done
-          ? <Capsule bg={over ? 'rgba(52,199,89,0.18)' : T.brandTinted} color={over ? T.green : T.brand} style={{ alignSelf: 'center' }}>{`+${pts} pts`}</Capsule>
+          ? <Wrapper alignSelf="center"><StatusBadge label={String((`+${pts} pts`))} tone={over ? 'success' : 'brand'} /></Wrapper>
           : <Text style={[ty.caption1, { color: T.labelTertiary }]}>+{pts}</Text>}
       </View>
 
@@ -90,4 +92,3 @@ export function ChallengeTaskRow({
     </View>
   );
 }
-

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CourseCard — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1060" safe-top="{{false}}" hint-size="390px,1060px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,1026px">
+    <dc-import name="Text" variant="title2" heading="1" text="CourseCard" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,270px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=shelf · белый блок · 42% / пройден" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" scroll="x" gap="16" align="start" hint-size="100%,226px"><dc-import name="CourseCard" variant="shelf" title="Максимизация талантов Gallup" category="Саморазвитие" progress="42" src="/_blob/d2748e25aa43564a123b0f02c16ddc18" hint-size="220px,226px"></dc-import><dc-import name="CourseCard" variant="shelf" title="Психотипы" category="Саморазвитие" progress="100" src="/_blob/6e8f6f5cdd95ebf7eace39d453d17f81" hint-size="220px,226px"></dc-import></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,220px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=grid · cols 2 · белый блок, цена внизу (с фото / без фото)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" cols="2" gap="16" hint-size="100%,186px"><dc-import name="CourseCard" variant="grid" title="Психотипы" category="Саморазвитие" lessons="1 урок" price="5 000 ₸" src="/_blob/6e8f6f5cdd95ebf7eace39d453d17f81" hint-size="100%,186px"></dc-import><dc-import name="CourseCard" variant="grid" title="Курс «Лидерства»" category="Лидерство" lessons="6 уроков" price="150 000 ₸" src="" hint-size="100%,186px"></dc-import></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,320px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=featured · широкий белый блок" hint-size="100%,18px"></dc-import>
+      <dc-import name="CourseCard" variant="featured" title="Максимизация талантов Gallup" category="Саморазвитие" lessons="34 урока" progress="42" src="/_blob/d2748e25aa43564a123b0f02c16ddc18" hint-size="100%,290px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1060}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

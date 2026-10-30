@@ -1,3 +1,6 @@
+import { ContentBlock } from '../../components/ContentBlock';
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
@@ -9,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { AwardBadge } from '../../components/AwardBadge';
-import { Capsule, PrimaryButton } from '../../components/ui';
+import { Button } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { NavHeader } from '../../components/NavHeader';
 import { usePlaces, ratingOf } from '../../state/PlacesContext';
@@ -180,7 +183,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </View>
           {place.approved ? (
             <View style={{ marginTop: 10 }}>
-              <Capsule bg={T.skyBadgeBg} color={T.sky}><SF name="checkmark.seal.fill" size={11} color={T.sky} />{tr('Одобрено Divergents')}</Capsule>
+              <StatusBadge label={String((tr('Одобрено Divergents')))} tone="info" icon="checkmark.seal.fill" />
             </View>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
@@ -194,16 +197,16 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         {place.tags.length > 0 ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingBottom: 14 }}>
             {place.tags.map((t) => (
-              <Capsule key={t} bg={T.brandTinted} color={T.brand}><SF name={TAG_META[t].icon} size={11} color={T.brand} />{TAG_META[t].label}</Capsule>
+              <StatusBadge key={t} label={String((TAG_META[t].label))} tone="brand" icon={TAG_META[t].icon} />
             ))}
           </View>
         ) : null}
 
         {/* Highlights */}
-        <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <Wrapper marginHorizontal={16} marginBottom={14}><ContentBlock size="regular" elevated>
           <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 6 }]} numberOfLines={1}>{tr('Чем хорошо')}</Text>
           <Text style={[ty.body, { color: T.label }]}>{place.highlights}</Text>
-        </View>
+        </ContentBlock></Wrapper>
 
         {/* Map */}
         <View style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', height: 150 }}>
@@ -226,7 +229,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             <>
               <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Отзывы')} · {visibleReviews.length}</Text>
               {visibleReviews.map((rev) => (
-                <View key={rev.id} style={{ marginHorizontal: 16, marginBottom: 10, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', padding: 14, borderWidth: 0.5, borderColor: T.cardBorder }}>
+                <Wrapper marginHorizontal={16} marginBottom={10} key={rev.id}><ContentBlock size="compact" elevated>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
                       <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
@@ -255,7 +258,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                       </Pressable>
                     </View>
                   ) : null}
-                </View>
+                </ContentBlock></Wrapper>
               ))}
               {visibleReviews.length === 0 ? (
                 <Text style={[ty.subhead, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8 }]}>{tr('Пока нет отзывов — оставьте первый.')}</Text>
@@ -266,7 +269,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
         {/* Add review */}
         {isSignedIn ? (
-          <View style={{ marginHorizontal: 16, marginTop: 8, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16, borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <Wrapper marginHorizontal={16} marginTop={8}><ContentBlock size="regular" elevated>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{editingReview ? tr('Изменить отзыв') : tr('Ваш отзыв')}</Text>
               {editingReview ? (
@@ -280,8 +283,8 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             <TextInput value={text} onChangeText={setText} placeholder={tr('Чем понравилось / что улучшить')} placeholderTextColor={T.labelTertiary} multiline
               accessibilityLabel={tr('Текст отзыва')}
               style={[ty.body, { backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', padding: 12, color: T.label, minHeight: 70, textAlignVertical: 'top', marginTop: 12 }]} />
-            <PrimaryButton label={editingReview ? tr('Сохранить отзыв') : tr('Отправить отзыв')} icon={editingReview ? 'checkmark' : 'paperplane.fill'} style={{ marginTop: 12 }} disabled={!stars} onPress={submit} />
-          </View>
+            <Wrapper marginTop={12}><Button label={editingReview ? tr('Сохранить отзыв') : tr('Отправить отзыв')} icon={editingReview ? 'checkmark' : 'paperplane.fill'} disabled={!stars} onPress={submit} /></Wrapper>
+          </ContentBlock></Wrapper>
         ) : null}
       </ScrollView>
     </View>

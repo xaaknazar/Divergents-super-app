@@ -1,0 +1,28 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingTimer } from './ReadingTimer';
+const meta = { title: 'Reading/Timer', component: ReadingTimer,
+  args: { remainingMs: 2400000, state: 'running' },
+} satisfies Meta<typeof ReadingTimer>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Running: Story = { parameters: { reduceMotion: false } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+export const ReducedMotion: Story = { parameters: { reduceMotion: true } };
+export const Ready: Story = { args: { state: 'ready', remainingMs: 3600000 } };
+export const Paused: Story = { args: { state: 'paused' } };
+export const PausedOvertime: Story = { args: { state: 'paused', remainingMs: -754000 } };
+export const Complete: Story = { args: { state: 'complete', remainingMs: 0 } };
+export const Overtime: Story = { args: { state: 'running', remainingMs: -925000 } };
+export const Resumed: Story = { args: { state: 'ready', remainingMs: 2520000 } };
+export const Recording: Story = { args: { state: 'recording' } };
+export const Saving: Story = { args: { state: 'saving' } };
+export const OvertimeDark: Story = { args: { state: 'overtime', remainingMs: -754000 }, parameters: { scheme: 'dark' } };
+export const Done: Story = { args: { state: 'done', remainingMs: 0, extraMs: 754000 } };
+export const DoneDark: Story = { args: { state: 'done', remainingMs: 0, extraMs: 754000 }, parameters: { scheme: 'dark' } };
+export const StrictRunning: Story = { args: { blockingMode: 'all-apps' } };
+export const StrictOvertime: Story = { args: { blockingMode: 'all-apps', remainingMs: -925000 }, parameters: { scheme: 'dark' } };
+/** Ввод страниц — главный шаг: таймер уменьшен, кольцо 148. */
+export const RecordingCompact: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' } };
+export const RecordingCompactDark: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' }, parameters: { scheme: 'dark' } };
+export const RecordingCompactLargeText: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' }, parameters: { viewport: 'compact', textSize: 'xl' } };

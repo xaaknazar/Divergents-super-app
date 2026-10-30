@@ -7,6 +7,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { Place, Review, PlaceTag, fetchPlaces, postPlace, patchPlace, postReview, isKnownCity } from '../data/places';
 import { updateMyLocation } from '../data/api';
 import { loadJSON, saveJSON } from './persist';
+import { captureAchievementRecorder } from '../data/achievementEvents';
 
 interface SavedLoc { country: string; city: string; manual: boolean }
 
@@ -64,9 +65,10 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const record = captureAchievementRecorder();
     loadJSON<Place[]>('dvg.userPlaces', []).then(setUserPlaces);
     loadJSON<Record<string, Review[]>>('dvg.placeReviews', {}).then(setUserReviews);
-    loadJSON<string[]>('dvg.placeFavs', []).then(setFavs);
+    loadJSON<string[]>('dvg.placeFavs', []).then(ids => { setFavs(ids); record({ silent: true, facts: { placesSaved: ids } }); });
     loadJSON<SavedLoc | null>('dvg.placeLoc', null).then((saved) => {
       // Ignore stale/invalid persisted filters (e.g. a city removed from the
       // catalog) so the rest of the UI can rely on a real city center.
@@ -148,8 +150,9 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
   }, [remotePlaces, reloadPlaces]);
 
   const toggleFav = useCallback((id: string) => {
+    if (!favs.includes(id)) captureAchievementRecorder()({ facts: { placesSaved: [id] } });
     setFavs((prev) => { const n = prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]; saveJSON('dvg.placeFavs', n); return n; });
-  }, []);
+  }, [favs]);
 
   const addReview = useCallback((placeId: string, r: Omit<Review, 'id' | 'date'>) => {
     const localId = `ur_${Date.now()}`;

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingRules — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="660" safe-top="{{false}}" hint-size="390px,660px">
+  <dc-import name="Wrapper" pad="16" gap="20" hint-size="100%,580px">
+    <dc-import name="Wrapper2" pad-x="4" gap="4" hint-size="100%,56px">
+      <dc-import name="Text" variant="title1" heading="1" text="ReadingRules" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Краткое резюме и раскрываемые пункты правил" hint-size="100%,36px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="DEFAULT" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingRules" hint-size="100%,480px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":660}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

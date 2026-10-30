@@ -1,3 +1,5 @@
+import { NavHeader } from '../../components/NavHeader';
+import { Wrapper } from '../../components/Wrapper';
 // Трекер пробежки и ходьбы: маршрут на карте, дистанция, время, темп, а по
 // завершении — сохранение тренировки и предложение засчитать её шаги в
 // челлендж.
@@ -15,11 +17,11 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { usePreventRemove } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { nums } from '../../theme/tokens';
-import { BackNav } from '../../components/headers';
 import { SF } from '../../components/SFIcon';
 import { hTap, hSuccess } from '../../lib/haptics';
 import { useActivities, distanceToSteps, stepsPlausible, WorkoutType, WorkoutCoord, Workout } from '../../state/ActivityContext';
 import { useChallenge } from '../../state/ChallengeContext';
+import { ChallengePicker } from '../../components/ChallengePicker';
 import * as tracker from '../../state/workoutTracker';
 import type { WorkoutSession } from '../../state/workoutTracker';
 import { CommunityStackParams } from '../../navigation/types';
@@ -47,7 +49,9 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   const { T, ty } = useTheme();
   const insets = useSafeAreaInsets();
   const { addWorkout, markAdded } = useActivities();
-  const { challenge, setMetric, isParticipant, dayLocked, canMark } = useChallenge();
+  const memberships = useChallenge();
+  const [selectedChallengeId, selectChallenge] = useState(route.params?.challengeId);
+  const { challenge, setMetric, isParticipant, dayLocked, canMark } = useChallenge(selectedChallengeId ?? memberships.challenge.id);
 
   // Маршрут живёт НЕ в этом экране, а в модуле workoutTracker: система
   // доставляет координаты в фоновую задачу, которая работает и при закрытом
@@ -229,7 +233,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
       const note = w.stepsMeasured && challengeSteps !== finalSteps
         ? `\n\nВ челлендж пойдёт ${pl.steps(challengeSteps)} — по правилу зачёта${result.type === 'run' ? ' (1 км бега = 2000 шагов)' : ''}.`
         : '';
-      Alert.alert('Активность записана', `${body}${note}\n\nДобавить в челлендж?`, [
+      Alert.alert('Активность записана', `${body}${note}\n\nДобавить в «${challenge.title}»?`, [
         { text: 'Не сейчас', style: 'cancel', onPress: () => navigation.goBack() },
         { text: `+${pl.steps(challengeSteps)}`, onPress: () => { setMetric(act.id, act.current + challengeSteps); markAdded(w.id); navigation.goBack(); } },
       ]);
@@ -276,7 +280,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <BackNav back={route.params?.challengeId ? "Челлендж" : "Назад"} onBack={confirmDiscard} trailing={(
+      <NavHeader backLabel={route.params?.challengeId ? "Челлендж" : "Назад"} onBack={confirmDiscard} trailing={(
         <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 10, borderCurve: 'continuous', padding: 2 }}>
           {(['run', 'walk'] as const).map((k) => (
             <Pressable key={k} onPress={() => status === 'idle' && setType(k)} disabled={status !== 'idle'}
@@ -288,6 +292,9 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
         </View>
       )} />
 
+      {(memberships.activeChallenges?.length ?? 0) > 1 ? <Wrapper paddingHorizontal={16} paddingVertical={8}>
+        <ChallengePicker challenges={memberships.activeChallenges!} selectedId={challenge.id} onChange={selectChallenge} disabled={status !== 'idle'} />
+      </Wrapper> : null}
       {/* Разрешения «всегда» нет — запись оборвётся при сворачивании. Полоска
           висит всю тренировку, а не только в момент старта: человек мог
           пропустить окно и уйти бегать в уверенности, что всё пишется. */}

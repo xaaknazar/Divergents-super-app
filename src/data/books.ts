@@ -2,6 +2,7 @@
 // Catalog, detail, comments/reviews, rating, and a personal reading shelf
 // (Хочу прочитать / Читаю / Прочитал + progress).
 import { API_BASE } from './api';
+import { captureAchievementRecorder } from './achievementEvents';
 
 export type ShelfStatus = 'want' | 'reading' | 'read';
 export interface ShelfState { status: ShelfStatus; progress: number }
@@ -95,17 +96,29 @@ async function authedPost(path: string, token: string | null, body: any): Promis
 }
 
 export async function fetchBooks(token: string | null): Promise<BookListItem[]> {
-  const d = await authedGet<{ books?: BookListItem[] }>('/api/mobile/books', token, {});
-  return Array.isArray(d?.books) ? d.books : [];
+  // The catalog screen catches failures and keeps its previous list. Returning
+  // [] here falsely turned an unavailable server into "Книги скоро появятся".
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const r = await timedFetch(`${API_BASE}/api/mobile/books`, { headers });
+  if (!r.ok) throw new Error('Не удалось загрузить библиотеку');
+  const d = await r.json();
+  if (!Array.isArray(d?.books)) throw new Error('Не удалось прочитать каталог книг');
+  return d.books;
 }
 
 export async function fetchBook(id: string, token: string | null): Promise<BookDetailResponse | null> {
+  const record = captureAchievementRecorder(token ?? null);
   const d = await authedGet<BookDetailResponse | null>(`/api/mobile/books/${id}`, token, null);
+  if (token && d?.book && d.comments?.some(c => c.mine && c.kind === 'review')) record({ silent: true, facts: { bookReviews: [id] } });
   return d && (d as any).book ? d : null;
 }
 
 export async function postBookComment(id: string, token: string | null, content: string, kind: 'comment' | 'review') {
-  return authedPost(`/api/mobile/books/${id}/comment`, token, { content, kind });
+  const record = captureAchievementRecorder(token ?? null);
+  const result = await authedPost(`/api/mobile/books/${id}/comment`, token, { content, kind });
+  if (result && kind === 'review') record({ facts: { bookReviews: [id] } });
+  return result;
 }
 
 export async function rateBook(id: string, token: string | null, rating: number) {
@@ -115,12 +128,41 @@ export async function rateBook(id: string, token: string | null, rating: number)
 // `progress` отправляется только когда его действительно задали: без этого
 // смена статуса обнуляла бы прочитанный процент на сервере.
 export async function setBookShelf(id: string, token: string | null, status: ShelfStatus | 'none', progress?: number) {
-  return authedPost(`/api/mobile/books/${id}/shelf`, token, progress == null ? { status } : { status, progress });
+  const record = captureAchievementRecorder(token ?? null);
+  const result = await authedPost(`/api/mobile/books/${id}/shelf`, token, progress == null ? { status } : { status, progress });
+  const saved = result?.shelf?.status;
+  if (saved === 'reading' || saved === 'read') record({ facts: { booksStarted: [id], booksRead: saved === 'read' ? [id] : [] } });
+  return result;
+}
+
+/** Книга из Reading-челленджей читателя: один статус «Прочитана» на все челленджи. */
+export interface MyReadingBook {
+  key: string; title: string; author: string; coverId: number | null; pages: number; elapsedMs: number;
+  lastReadAt: string | null; addedAt: string | null; finished: boolean; challengeIds: string[];
+  /** Та же книга в библиотеке Divergents (если найдена по названию и автору). */
+  catalogBookId: string | null;
+}
+
+/** Полка библиотеки и книги Reading-челленджей одним запросом. Старый сервер readingBooks не отдаёт. */
+export async function fetchMyBooks(token: string | null): Promise<{ shelf: ShelfEntry[]; readingBooks: MyReadingBook[] }> {
+  const record = captureAchievementRecorder(token ?? null);
+  const d = await authedGet<{ shelf?: ShelfEntry[]; readingBooks?: MyReadingBook[] }>('/api/mobile/me/books', token, {});
+  const shelf = Array.isArray(d?.shelf) ? d.shelf : [];
+  const readingBooks = Array.isArray(d?.readingBooks) ? d.readingBooks.filter(b => b && typeof b.key === 'string' && typeof b.title === 'string'
+    && Array.isArray(b.challengeIds) && b.challengeIds.length > 0) : [];
+  recordShelfAchievements(record, token, shelf);
+  return { shelf, readingBooks };
+}
+
+function recordShelfAchievements(record: ReturnType<typeof captureAchievementRecorder>, token: string | null, shelf: ShelfEntry[]) {
+  if (token) record({ silent: true, source: 'books', facts: {
+    booksStarted: shelf.filter(s => s.status === 'reading' || s.status === 'read').map(s => s.book.id),
+    booksRead: shelf.filter(s => s.status === 'read').map(s => s.book.id),
+  } });
 }
 
 export async function fetchMyShelf(token: string | null): Promise<ShelfEntry[]> {
-  const d = await authedGet<{ shelf?: ShelfEntry[] }>('/api/mobile/me/books', token, {});
-  return Array.isArray(d?.shelf) ? d.shelf : [];
+  return (await fetchMyBooks(token)).shelf;
 }
 
 /** PATCH /api/mobile/books/:id/comment/:commentId — edit your own comment/review. */

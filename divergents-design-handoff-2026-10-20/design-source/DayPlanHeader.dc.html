@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>DayPlanHeader</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="flex: 1; min-width: 0"><dc-import name="Text" variant="headline" heading="2" text="{{title}}" hint-size="100%,22px"></dc-import></div>
+<dc-import name="StatusBadge" label="{{ratio}}" icon="bullseye" tone="brand" hint-size="52px,22px"></dc-import>
+</div>
+<sc-if value="{{hasCaption}}" hint-placeholder-val="{{true}}"><dc-import name="Text" variant="caption1" tone="secondary" text="{{caption}}" hint-size="100%,16px"></dc-import></sc-if>
+<div style="padding-top: 7px"><dc-import name="ProgressBar" value="{{pct}}" size="thin" tone="brand" label="" hint-size="100%,4px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"План на сегодня"},"done":{"editor":"int","default":2,"min":0,"max":20},"total":{"editor":"int","default":3,"min":1,"max":20},"caption":{"editor":"text","default":"2 из 3 выполнено · +2 бонус"},"$preview":{"width":330,"height":70}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var done = Number(p.done ?? 2), total = Math.max(1, Number(p.total ?? 3));
+    var caption = p.caption ?? '2 из 3 выполнено · +2 бонус';
+    return {
+      css: "display: flex; flex-direction: column; gap: 2px; padding-bottom: 4px; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif",
+      title: p.title ?? 'План на сегодня', ratio: done + '/' + total, pct: Math.round(done / total * 100),
+      caption: caption, hasCaption: !!caption
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Итоги челленджа</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1140" safe-top="{{false}}" hint-size="390px,1140px">
+<dc-import name="NavHeader" variant="inline" title="Итоги" back-label="Назад" back-href="CommunityHome.dc.html" hint-size="100%,118px"></dc-import>
+<dc-import name="Wrapper" pad-top="16" hint-size="100%,980px">
+
+<dc-import name="Wrapper2" pad-x="16" hint-size="100%,200px">
+<dc-import name="ChallengeHero" variant="winner" eyebrow="Divergents challenge: 1 season" title="1 место!" subtitle="Команда «KEX group» победила." action-label="Получить награду" hint-size="100%,200px"></dc-import>
+</dc-import>
+<dc-import name="SectionHeader" title="Ваш результат" action="" hint-size="100%,37px"></dc-import>
+<dc-import name="Wrapper2" pad-x="16" cols="3" gap="10" hint-size="100%,110px">
+<sc-for list="{{myStats}}" as="s" hint-placeholder-count="3">
+<dc-import name="StatTile" variant="compact" icon="{{s.icon}}" tone="{{s.tone}}" value="{{s.value}}" label="{{s.label}}" hint-size="100%,110px"></dc-import>
+</sc-for>
+</dc-import>
+<dc-import name="Wrapper2" pad-x="16" pad-top="8" pad-bottom="4" hint-size="100%,90px">
+<dc-import name="Card" size="compact" hint-size="100%,78px">
+<dc-import name="ScoreSummary" items="{{myScore}}" hint-size="100%,50px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="SectionHeader" title="Команда" action="" hint-size="100%,37px"></dc-import>
+<dc-import name="Wrapper2" pad-x="16" hint-size="100%,150px">
+<dc-import name="TeamResultCard" tone="winner" title="KEX group" subtitle="1 место из 8 · 4 200 pts · 20 человек" stats="{{teamStats}}" hint-size="100%,150px"></dc-import>
+</dc-import>
+<dc-import name="SectionHeader" title="Лучшие в общем зачёте" action="" hint-size="100%,37px"></dc-import>
+<dc-import name="Wrapper2" pad-x="16" hint-size="100%,180px">
+<dc-import name="Card" size="flush" hint-size="100%,180px">
+<sc-for list="{{leaders}}" as="l" hint-placeholder-count="3">
+<dc-import name="StandingRow" variant="mini" rank="{{l.rank}}" medal="{{l.medal}}" person="{{l.name}}" title="{{l.name}}" subtitle="{{l.team}}" points="{{l.points}}" separator="{{l.separator}}" hint-size="100%,60px"></dc-import>
+</sc-for>
+</dc-import>
+</dc-import>
+
+<dc-import name="Wrapper2" dir="row" fill="equal" gap="10" pad-x="16" pad-top="16" hint-size="100%,66px">
+<dc-import name="Button" label="По дням" icon="calendar" variant="outline" full-width="{{true}}" href="ChallengeDays.dc.html" hint-size="100%,50px"></dc-import>
+<dc-import name="Button" label="Общий рейтинг" icon="list" variant="outline" full-width="{{true}}" href="OverallStandings.dc.html" hint-size="100%,50px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1140}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      myStats: [
+        { icon: 'book-open', tone: 'brand', value: '420', label: 'страниц' },
+        { icon: 'body-standing', tone: 'brand', value: '210 000', label: 'шагов' },
+        { icon: 'utensils', tone: 'danger', value: '18', label: 'дней без сахара' }
+      ],
+      myScore: [{ label: 'Очки', value: '650' }, { label: 'Среди всех', value: '4 место из 160' }],
+      teamStats: [{ value: '3 600', label: 'страниц' }, { value: '1 600 000', label: 'шагов' }, { value: '120', label: 'дней без сахара' }],
+      leaders: [
+        { rank: 1, medal: 'trophy', name: 'Арман', team: 'KEX group', points: '742', separator: false },
+        { rank: 2, medal: 'none', name: 'Dana_fit', team: 'Qarasu', points: '701', separator: true },
+        { rank: 3, medal: 'none', name: 'Мадина', team: 'KEX group', points: '688', separator: true }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

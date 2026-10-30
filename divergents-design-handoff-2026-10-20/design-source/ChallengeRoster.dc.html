@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Состав команды</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1680" safe-top="{{false}}" hint-size="390px,1680px">
+<dc-import name="NavHeader" variant="inline" title="Состав команды" large-title="{{true}}" subtitle="«KEX group» · 20 участников" back-label="Челлендж" back-href="ChallengeDetail.dc.html" hint-size="100%,200px"></dc-import>
+<dc-import name="Wrapper" pad-x="16" pad-top="8" hint-size="100%,1400px">
+<dc-import name="ListSection" header="Участники" hint-size="100%,1270px">
+<sc-for list="{{members}}" as="m" hint-placeholder-count="20">
+<dc-import name="StandingRow" variant="regular" rank="{{0}}" medal="{{m.medal}}" person="{{m.name}}" title="{{m.name}}" subtitle="{{m.subtitle}}" points="" flags="{{m.flags}}" me="{{m.me}}" me-label="вы" status="{{m.status}}" separator="{{m.separator}}" hint-size="100%,62px"></dc-import>
+</sc-for>
+</dc-import>
+<dc-import name="ScoreLegend" items="{{legend}}" hint-size="100%,60px"></dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1680}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var i = 0;
+    var m = function (name, today, total, flags, extra) {
+      var o = { name: name, subtitle: 'Сегодня ' + today + ' · всего ' + total + ' pts', flags: flags, medal: 'none', me: false, status: 'active', separator: i++ > 0 };
+      for (var k in (extra || {})) o[k] = extra[k];
+      return o;
+    };
+    return {
+      members: [
+        m('Арман', 47, 388, 0, { medal: 'crown' }), m('Dana_fit', 52, 349, 0, { medal: 'silver' }), m('Акназар', 40, 336, 1, { me: true }),
+        m('Мадина', 45, 310, 1), m('Ерлан', 25, 296, 0), m('Sabi', 20, 254, 2), m('Nurlan_k', 38, 247, 0), m('Асем', 41, 238, 1),
+        m('Dauren', 30, 229, 0), m('Ainur', 22, 221, 0), m('Рамиль', 35, 214, 1), m('Zhaina', 28, 205, 0), m('Almas', 0, 196, 2),
+        m('Мирас', 33, 188, 0), m('Kamila_s', 27, 176, 1), m('Бауржан', 18, 165, 0), m('Aigul', 24, 158, 0), m('Ruslan', 15, 147, 2),
+        m('Dinara', 20, 135, 1), m('Тимур', 0, 120, 3, { status: 'eliminated', subtitle: 'Сегодня 0 · всего 120 pts · выбыл' })
+      ],
+      legend: [
+        { mark: 'flag', text: '— флаги за пропуск дневной нормы (чтение / без сахара / активность). 3 в одной категории →' },
+        { mark: 'eliminated', text: 'вылет.' },
+        { mark: 'left', text: '— вышел по белому флагу капитана.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

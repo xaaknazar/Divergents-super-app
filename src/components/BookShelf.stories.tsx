@@ -1,0 +1,11 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { BookShelf } from './BookShelf';
+import { demoDetailBook } from '../storybook/detailFixtures';
+const meta = { title: 'Liven/Details/BookShelf', component: BookShelf, args: { title: 'Продолжить чтение', entries: [{ book: demoDetailBook, status: 'reading', progress: 35 }], onBookPress: () => {} },  } satisfies Meta<typeof BookShelf>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Tablet: Story = { parameters: { viewport: 'tablet' } };

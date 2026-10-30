@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CourseHero — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="960" safe-top="{{false}}" hint-size="390px,960px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,926px">
+    <dc-import name="Text" variant="title2" heading="1" text="CourseHero" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,400px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="default · обложка, мета, «Курс открыт», прогресс" hint-size="100%,18px"></dc-import>
+      <dc-import name="CourseHero" title="Максимизация талантов Gallup" author="Divergents" category="Саморазвитие" lessons="34 урока" src="/_blob/d2748e25aa43564a123b0f02c16ddc18" badge="Курс открыт" badge-tone="success" progress="42" progress-label="Урок 15 — Significance" hint-size="100%,375px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,380px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="не начат (progress=-1) · badge-tone=neutral · без фото" hint-size="100%,18px"></dc-import>
+      <dc-import name="CourseHero" title="Курс «Лидерства»" author="Divergents" category="Лидерство" lessons="6 уроков" src="" badge="150 000 ₸" badge-tone="neutral" progress="-1" hint-size="100%%,320px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":960}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

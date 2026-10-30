@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ProgramCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<sc-if value="{{isActive}}" hint-placeholder-val="{{true}}">
+  <div style="{{activeCss}}">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <dc-import name="IconTile" icon="{{icon}}" tone="brand" variant="solid" size="sm" hint-size="36px,36px"></dc-import>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+        <dc-import name="Text" variant="headline" lines="1" text="{{title}}" hint-size="100%,22px"></dc-import>
+        <span style="display: flex; align-items: center; gap: 3px; font-size: 12px; line-height: 16px; color: #5C5C60; white-space: nowrap">{{caption}}<sc-if value="{{hasReminder}}" hint-placeholder-val="{{true}}"><span aria-hidden="true">·</span><dc-import name="Icon" icon="clock-3h" size="xs" tone="secondary" hint-size="12px,12px"></dc-import><span>{{reminder}}</span></sc-if></span>
+      </span>
+      <button type="button" aria-label="{{doneAria}}" style="min-height: 48px; padding: 0 14px; margin: 0; border: 0; border-radius: 12px; background: #234088; display: flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; color: #FFFFFF; font: inherit; font-size: 15px; line-height: 20px; font-weight: 700"><dc-import name="Icon" icon="check" size="sm" tone="white" hint-size="16px,16px"></dc-import><span>{{actionLabel}}</span></button>
+    </div>
+    <div role="img" aria-label="{{stripAria}}" style="display: flex; gap: 3px">
+      <sc-for list="{{days}}" as="d" hint-placeholder-count="30"><span style="{{d.css}}"></span></sc-for>
+    </div>
+    <div style="display: flex; justify-content: space-between; gap: 8px; font-size: 12px; line-height: 16px; color: #5C5C60">
+      <span>сделано {{doneCount}} · пропущено <span style="color: #C5221F">{{missedCount}}</span></span>
+      <span style="display: flex; align-items: center; gap: 3px"><dc-import name="Icon" icon="flame" variant="solid" size="xs" tone="secondary" hint-size="12px,12px"></dc-import>{{streak}}</span>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{isHistory}}" hint-placeholder-val="{{false}}">
+  <a href="{{href}}" aria-label="{{historyAria}}" style="{{historyCss}}">
+    <dc-import name="Text" variant="footnote" tone="secondary" text="{{caption}}" hint-size="100%,18px"></dc-import>
+    <span style="display: flex; align-items: center; gap: 12px">
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+        <dc-import name="Text" variant="headline" text="{{title}}" hint-size="100%,22px"></dc-import>
+        <dc-import name="Text" variant="title2" tone="brand" numeric="{{true}}" text="{{total}}" hint-size="100%,28px"></dc-import>
+      </span>
+      <sc-if value="{{perfect}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="display: flex"><dc-import name="Icon" icon="seal-check" variant="solid" size="lg" tone="success" hint-size="24px,24px"></dc-import></span></sc-if>
+    </span>
+    <dc-import name="ProgressBar" value="{{value}}" size="thin" label="" hint-size="100%,4px"></dc-import>
+    <dc-import name="Text" variant="subhead" tone="secondary" text="{{summary}}" hint-size="100%,20px"></dc-import>
+    <sc-if value="{{perfect}}" hint-placeholder-val="{{false}}"><dc-import name="Text" variant="footnote" tone="success" text="Все дни с выполненной нормой" hint-size="100%,18px"></dc-import></sc-if>
+  </a>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"active","options":["active","history"]},"title":{"editor":"text","default":"Приседания · 50 раз"},"caption":{"editor":"text","default":"День 5 из 30"},"icon":{"editor":"enum","default":"body-standing","options":["body-standing","weight","stopwatch","pulse","flame"]},"reminder":{"editor":"text","default":"07:00"},"streak":{"editor":"text","default":"1 день подряд"},"actionLabel":{"editor":"text","default":"Сделал"},"total":{"editor":"text","default":""},"value":{"editor":"int","default":0,"min":0,"max":100},"summary":{"editor":"text","default":""},"perfect":{"editor":"boolean","default":false},"href":{"editor":"text","default":""},"days":{"editor":null},"$preview":{"width":358,"height":118}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var history = p.variant === 'history';
+    var DEMO = ['done', 'done', 'missed', 'done', 'today'];
+    for (var i = 0; i < 25; i++) DEMO.push('future');
+    var raw = Array.isArray(p.days) && p.days.length ? p.days : DEMO;
+    var BG = { done: 'background: #34C759', missed: 'background: #FF3B30', today: 'background: #234088; opacity: 0.55', future: 'background: rgba(118,118,128,0.12)' };
+    var done = raw.filter(function (d) { return d === 'done'; }).length;
+    var missed = raw.filter(function (d) { return d === 'missed'; }).length;
+    var title = p.title ?? (history ? 'Отжимания' : 'Приседания · 50 раз');
+    var caption = p.caption ?? (history ? '12 сент. 2026 г. — 2 окт. 2026 г.' : 'День 5 из 30');
+    var total = p.total || (history ? '612 раз' : '');
+    var summary = p.summary || (history ? 'Норма: 19 из 21 дней · лучшая серия: 12 дней' : '');
+    var reminder = p.reminder ?? '07:00';
+    var card = ['display: flex', 'flex-direction: column', 'box-sizing: border-box', 'width: 100%', 'background: #FFFFFF', 'border-radius: 14px', 'color: #000000', 'text-decoration: none', F];
+    return {
+      isActive: !history, isHistory: history,
+      activeCss: card.concat(['padding: 14px', 'gap: 10px']).join('; '),
+      historyCss: card.concat(['padding: 18px', 'gap: 12px']).join('; '),
+      title: title, caption: caption, icon: p.icon || 'body-standing',
+      reminder: reminder, hasReminder: !!reminder,
+      actionLabel: p.actionLabel ?? 'Сделал', doneAria: (p.actionLabel ?? 'Сделал') + ': ' + title,
+      days: raw.map(function (d) { return { css: 'flex: 1 1 0; height: 8px; border-radius: 3px; ' + (BG[d] || BG.future) }; }),
+      doneCount: String(done), missedCount: String(missed), streak: p.streak ?? '1 день подряд',
+      stripAria: 'Сделано ' + done + ', пропущено ' + missed + ' из ' + raw.length + ' дней',
+      total: total, value: Number(p.value ?? (history ? 90 : 0)), summary: summary,
+      perfect: p.perfect === true || p.perfect === 'true',
+      href: p.href || 'ProgramResult.dc.html',
+      historyAria: title + ', ' + caption + ', всего ' + total + '. Открыть результаты'
+    };
+  }
+}
+</script>
+</body>
+</html>

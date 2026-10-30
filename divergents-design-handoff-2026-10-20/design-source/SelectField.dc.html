@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>SelectField</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+<span id="{{labelId}}" style="{{labelCss}}">{{label}}</span>
+<button type="button" aria-haspopup="listbox" aria-labelledby="{{labelledby}}" aria-invalid="{{invalid}}" aria-describedby="{{msgId}}" style="{{triggerCss}}">
+<sc-if value="{{hasIcon}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="{{icon}}" size="md" tone="brand" hint-size="20px,20px"></dc-import></sc-if>
+<span id="{{valueId}}" style="{{valueCss}}">{{shown}}</span>
+<dc-import name="Icon" icon="chevron-down" size="md" tone="secondary" hint-size="20px,20px"></dc-import>
+</button>
+<sc-if value="{{hasError}}" hint-placeholder-val="{{false}}"><p id="{{msgId}}" aria-live="polite" style="{{errCss}}">{{error}}</p></sc-if>
+<sc-if value="{{hasHelper}}" hint-placeholder-val="{{false}}"><p id="{{msgId}}" style="{{helpCss}}">{{helper}}</p></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"label":{"editor":"text","default":"Город"},"value":{"editor":"text","default":"Алматы"},"placeholder":{"editor":"text","default":"Выберите город"},"icon":{"editor":"enum","default":"pin","options":["","arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"error":{"editor":"text","default":""},"helper":{"editor":"text","default":""},"$preview":{"width":390,"height":80}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    if (!this._uid) this._uid = 'sf-' + Math.random().toString(36).slice(2, 9);
+    var err = p.error || '';
+    var icon = p.icon ?? 'pin';
+    var value = p.value ?? 'Алматы';
+    return {
+      labelId: this._uid + '-l', valueId: this._uid + '-v', msgId: this._uid + '-msg',
+      labelledby: this._uid + '-l ' + this._uid + '-v',
+      label: p.label ?? 'Город',
+      shown: value || p.placeholder || 'Выберите',
+      icon: icon,
+      hasIcon: !!icon,
+      invalid: err ? 'true' : 'false',
+      error: err, helper: p.helper || '', hasError: !!err, hasHelper: !err && !!p.helper,
+      rootCss: 'display: flex; flex-direction: column; width: 100%; ' + F,
+      labelCss: 'display: block; margin: 0 0 8px; font-size: 15px; line-height: 20px; font-weight: 700; letter-spacing: -0.1px; color: ' + (err ? '#C5221F' : '#000000'),
+      triggerCss: ['display: flex', 'align-items: center', 'gap: 12px', 'width: 100%', 'box-sizing: border-box', 'margin: 0', 'min-height: 52px', 'padding: 13px 14px',
+        'border-radius: 16px', 'border: 1px solid ' + (err ? '#C5221F' : 'rgba(0,0,0,0.08)'), 'background: #FFFFFF', 'text-align: left', 'cursor: pointer', F].join('; '),
+      valueCss: 'flex: 1; min-width: 0; font-size: 17px; line-height: 24px; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: ' + (value ? '#000000' : '#6B6B70'),
+      errCss: 'margin: 6px 0 0; font-size: 13px; line-height: 18px; color: #C5221F',
+      helpCss: 'margin: 6px 0 0; font-size: 13px; line-height: 18px; color: #5C5C60'
+    };
+  }
+}
+</script>
+</body>
+</html>

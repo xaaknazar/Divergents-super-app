@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Курс — Максимизация талантов Gallup</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="2160" safe-top="{{false}}" hint-size="390px,2160px">
+  <dc-import name="NavHeader" variant="plain" back-label="Обучение" back-href="LMSHome.dc.html" actions="{{actions}}" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="4" pad-bottom="40" gap="28" hint-size="100%,1850px">
+    <dc-import name="Wrapper2" gap="20" hint-size="100%,450px">
+      <dc-import name="CourseHero" title="Максимизация талантов Gallup" author="Divergents" category="Саморазвитие" lessons="34 урока" src="/_blob/d2748e25aa43564a123b0f02c16ddc18" badge="Курс открыт" badge-tone="success" progress="42" progress-label="Урок 15 — Significance" hint-size="100%,375px"></dc-import>
+      <dc-import name="Button" label="Продолжить урок 15" icon="play" variant="solid" size="large" full-width="{{true}}" href="Video.dc.html" hint-size="100%,56px"></dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="Программа курса" hint-size="100%,944px">
+      <sc-for list="{{doneRows}}" as="l" hint-placeholder-count="5">
+        <dc-import name="LessonRow" number="{{l.n}}" title="{{l.title}}" state="done" separator="{{l.sep}}" href="Video.dc.html" hint-size="100%,76px"></dc-import>
+      </sc-for>
+      <dc-import name="LessonRow" number="15" title="Significance" subtitle="Аудио" state="current" separator="{{true}}" href="Video.dc.html" hint-size="100%,76px"></dc-import>
+      <sc-for list="{{next}}" as="l" hint-placeholder-count="6">
+        <dc-import name="LessonRow" number="{{l.n}}" title="{{l.title}}" subtitle="Аудио" state="upcoming" separator="{{true}}" href="Video.dc.html" hint-size="100%,76px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="ListSection" header="О курсе" hint-size="100%,472px">
+      <dc-import name="Wrapper2" pad="16" hint-size="100%,440px">
+        <dc-import name="Text" variant="body" text="{{about}}" hint-size="100%,408px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "actions": [
+        {
+          "icon": "cloud-arrow-down",
+          "label": "Загрузки",
+          "href": "Downloads.dc.html"
+        },
+        {
+          "icon": "share-network",
+          "label": "Поделиться"
+        }
+      ],
+      "tags": [
+        {
+          "label": "Саморазвитие"
+        },
+        {
+          "label": "34 урока"
+        },
+        {
+          "label": "Курс открыт",
+          "tone": "success",
+          "icon": "seal-check"
+        }
+      ],
+      "next": [
+        {
+          "n": "16",
+          "title": "Competition"
+        },
+        {
+          "n": "17",
+          "title": "Woo"
+        },
+        {
+          "n": "18",
+          "title": "Adaptability"
+        },
+        {
+          "n": "19",
+          "title": "Includer"
+        },
+        {
+          "n": "20",
+          "title": "Connectedness"
+        },
+        {
+          "n": "21",
+          "title": "Individualization"
+        }
+      ],
+      "doneRows": [ { "n": "10", "title": "Activator", "sep": false }, { "n": "11", "title": "Maximizer", "sep": true }, { "n": "12", "title": "Command", "sep": true }, { "n": "13", "title": "Self-assurance", "sep": true }, { "n": "14", "title": "Communication", "sep": true } ],
+      "about": "Курс создан для глубокого изучения 34 талантов теста Gallup. В каждой аудио лекции подробно раскрываются особенности каждого таланта, приводятся практические примеры его проявления и эффективные способы использования. Вы научитесь понимать свои сильные стороны и развивать их, распознавать таланты других людей и эффективно взаимодействовать с ними, а также комбинировать таланты для достижения максимальных результатов. Курс подходит для всех, кто стремится раскрыть свой потенциал и использовать свои сильные стороны в жизни и карьере."
+    };
+  }
+}
+</script>
+</body>
+</html>

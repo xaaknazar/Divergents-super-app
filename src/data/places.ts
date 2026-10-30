@@ -6,6 +6,8 @@
 // returns [] and screens render a Russian empty state — never fake data.
 import { SFName } from '../components/SFIcon';
 import { API_BASE } from '../config';
+import { captureAchievementRecorder } from './achievementEvents';
+import { fmtDate } from './format';
 
 export type PlaceCategory =
   | 'cafe' | 'restaurant' | 'hotel' | 'guesthouse' | 'resort' | 'park' | 'gym' | 'picnic' | 'tourism';
@@ -141,7 +143,7 @@ function fmtReviewDate(raw: unknown): string {
   if (mins < 60) return `${mins} мин назад`;
   const hours = Math.floor(diff / 3600000);
   if (hours < 24) return `${hours} ч назад`;
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+  return fmtDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function mapReview(r: ApiReview, i: number): Review {
@@ -209,6 +211,7 @@ export async function postPlace(
   token?: string | null,
   timeoutMs = 12000,
 ): Promise<string | null> {
+  const record = captureAchievementRecorder(token ?? null);
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -224,6 +227,7 @@ export async function postPlace(
     });
     if (!res.ok) return null;
     const data = await res.json().catch(() => null);
+    if (token && data?.id) record({ facts: { placesSubmitted: [String(data.id)] } });
     return data?.id ? String(data.id) : null;
   } catch {
     return null;
@@ -269,6 +273,7 @@ export async function postReview(
   token?: string | null,
   timeoutMs = 12000,
 ): Promise<boolean> {
+  const record = captureAchievementRecorder(token ?? null);
   if (!placeId) return false;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -283,6 +288,7 @@ export async function postReview(
       },
       body: JSON.stringify(body),
     });
+    if (token && res.ok) record({ facts: { placeReviews: [placeId] } });
     return res.ok;
   } catch {
     return false;

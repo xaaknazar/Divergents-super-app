@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Card — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1560" safe-top="{{false}}" hint-size="390px,1560px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="24" hint-size="100%,1500px">
+    <dc-import name="Text" variant="title2" heading="1" text="Card" hint-size="100%,28px"></dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=outlined (по умолчанию) · плоская белая группа r14, без обводки и тени" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,100px">
+        <dc-import name="Wrapper3" gap="6" hint-size="100%,64px">
+          <dc-import name="Text" variant="title3" heading="2" text="Сильные стороны" hint-size="100%,25px"></dc-import>
+          <dc-import name="Text" variant="subhead" tone="secondary" text="Достижение · Командование · Стратегия · Активатор · Индивидуализация" hint-size="100%,40px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=compact" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" size="compact" hint-size="100%,90px">
+        <dc-import name="Wrapper3" gap="4" hint-size="100%,60px">
+          <dc-import name="Text" variant="headline" text="Divergents challenge: 2 season" hint-size="100%,22px"></dc-import>
+          <dc-import name="Text" variant="footnote" tone="secondary" text="День 9 из 15 · команда «Vertex»" hint-size="100%,18px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=elevated · только для плавающих поверх фото / карты" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" variant="elevated" hint-size="100%,100px">
+        <dc-import name="Wrapper3" gap="6" hint-size="100%,64px">
+          <dc-import name="Text" variant="title3" heading="2" text="Ваш результат" hint-size="100%,25px"></dc-import>
+          <dc-import name="Text" variant="subhead" tone="secondary" text="420 страниц, 210 000 шагов и 15 дней без сахара" hint-size="100%,40px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=tinted" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" variant="tinted" hint-size="100%,100px">
+        <dc-import name="Wrapper3" gap="6" hint-size="100%,64px">
+          <dc-import name="Text" variant="headline" tone="brand" text="Совет ассистента" hint-size="100%,22px"></dc-import>
+          <dc-import name="Text" variant="subhead" text="Проходите по одному уроку в день — так материал лучше запоминается." hint-size="100%,40px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,300px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=flush · href (вся карточка — ссылка)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" size="flush" href="CourseDetail.dc.html" hint-size="100%,280px">
+        <dc-import name="MediaCover" src="/_blob/d2748e25aa43564a123b0f02c16ddc18" aspect="16x9" radius="none" badge="42%" hint-size="100%,201px"></dc-import>
+        <dc-import name="Wrapper3" pad="14" gap="4" hint-size="100%,72px">
+          <dc-import name="Text" variant="title3" text="Максимизация талантов Gallup" hint-size="100%,25px"></dc-import>
+          <dc-import name="Text" variant="subhead" tone="secondary" text="Саморазвитие · 34 урока" hint-size="100%,20px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,170px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="Card + KeyValueRow + Divider (чек)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" hint-size="100%,150px">
+        <dc-import name="Wrapper3" gap="10" hint-size="100%,114px">
+          <dc-import name="KeyValueRow" label="Курс" value="Divergents Human Resources" hint-size="100%,20px"></dc-import>
+          <dc-import name="KeyValueRow" label="Уроков" value="33" hint-size="100%,20px"></dc-import>
+          <dc-import name="Divider" hint-size="100%,1px"></dc-import>
+          <dc-import name="KeyValueRow" label="Итого" value="40 000 ₸" emphasis="{{true}}" hint-size="100%,22px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1560}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

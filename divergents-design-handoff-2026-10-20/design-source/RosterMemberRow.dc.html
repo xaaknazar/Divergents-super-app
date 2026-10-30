@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>RosterMemberRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<button type="button" style="{{css}}">
+<sc-if value="{{separator}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="position: absolute; top: 0; left: 60px; right: 0; height: 0.5px; background: rgba(60,60,67,0.18)"></span></sc-if>
+<dc-import name="Avatar" person="{{person}}" size="sm" tone="tinted" hint-size="32px,32px"></dc-import>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="display: flex; align-items: center; gap: 6px; min-width: 0"><span style="font-size: 17px; line-height: 24px; letter-spacing: -0.2px; color: #000000">{{title}}</span><sc-if value="{{captain}}" hint-placeholder-val="{{false}}"><dc-import name="PodiumMedal" kind="crown" size="sm" hint-size="16px,16px"></dc-import></sc-if></span>
+<span style="font-size: 12px; line-height: 16px; color: #5C5C60; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{subtitle}}</span>
+</span>
+<sc-if value="{{hasBadge}}" hint-placeholder-val="{{false}}"><dc-import name="StatusBadge" label="{{badge}}" tone="neutral" hint-size="60px,22px"></dc-import></sc-if>
+<dc-import name="Icon" icon="dots-three-horizontal" size="md" tone="tertiary" hint-size="20px,20px"></dc-import>
+</button>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"person":{"editor":"text","default":"AbzalAbdr"},"title":{"editor":"text","default":"AbzalAbdr"},"subtitle":{"editor":"text","default":"abzalabdr@example.com"},"captain":{"editor":"boolean","default":true},"badge":{"editor":"text","default":""},"separator":{"editor":"boolean","default":false},"$preview":{"width":358,"height":60}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var on = function (v) { return v === true || v === 'true'; };
+    var demo = p.title === undefined;
+    return {
+      person: p.person ?? p.title ?? 'AbzalAbdr', title: p.title ?? 'AbzalAbdr', subtitle: p.subtitle ?? 'abzalabdr@example.com',
+      captain: p.captain === undefined ? demo : on(p.captain), badge: p.badge || '', hasBadge: !!p.badge, separator: on(p.separator),
+      css: "position: relative; width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 10px 16px; margin: 0; border: 0; background: transparent; cursor: pointer; text-align: left; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased"
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PlayerSheet — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="800" safe-top="{{false}}" hint-size="390px,800px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,740px">
+    <dc-import name="Text" variant="title2" heading="1" text="PlayerSheet" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="detent=content (контент урока в листе)" hint-size="100%,18px"></dc-import>
+      <dc-import name="PlayerSheet" detent="content" hint-size="100%,200px"><dc-import name="Wrapper3" pad-x="20" pad-bottom="16" gap="2" hint-size="100%,60px"><dc-import name="Text" variant="title3" text="Significance" hint-size="100%,25px"></dc-import><dc-import name="Text" variant="subhead" tone="secondary" text="Урок 15 из 34 · Максимизация талантов Gallup" hint-size="100%,20px"></dc-import></dc-import></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,580px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="detent=fill (заполняет экран под плеером, 552)" hint-size="100%,18px"></dc-import>
+      <dc-import name="PlayerSheet" detent="fill" hint-size="100%,552px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":800}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

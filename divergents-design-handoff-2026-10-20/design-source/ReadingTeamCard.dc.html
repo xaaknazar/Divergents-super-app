@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingTeamCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<article aria-label="{{aria}}" style="{{rootCss}}">
+  <div style="display: flex; gap: 12px; align-items: center">
+    <span aria-hidden="true" style="{{monoCss}}">{{initial}}</span>
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+      <span style="{{nameCss}}">{{name}}<sc-if value="{{mine}}" hint-placeholder-val="{{false}}"><span style="{{mineCss}}">Ваша команда</span></sc-if></span>
+      <span style="{{metaCss}}">{{meta}}</span>
+    </div>
+    <span style="{{seatsCss}}">{{filled}}<span style="{{capCss}}">/{{capacity}}</span></span>
+  </div>
+  <div role="progressbar" aria-label="Занято мест" aria-valuemin="0" aria-valuemax="{{capacity}}" aria-valuenow="{{filled}}" style="{{trackCss}}"><div style="{{fillCss}}"></div></div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px">
+    <a href="{{rosterHref}}" style="{{linkCss}}">Состав команды<dc-import name="Icon" icon="chevron-right" size="xs" tone="inherit" hint-size="12px,12px"></dc-import></a>
+    <dc-import name="Button" label="{{actionLabel}}" variant="{{actionVariant}}" size="compact" disabled="{{actionDisabled}}" href="{{actionHref}}" hint-size="140px,40px"></dc-import>
+  </div>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"team": {"editor": "text", "default": "Vertex"}, "filled": {"editor": "int", "default": 18, "min": 0, "max": 100}, "capacity": {"editor": "int", "default": 22, "min": 1, "max": 100}, "captain": {"editor": "text", "default": "Аружан"}, "state": {"editor": "enum", "default": "open", "options": ["open", "full", "mine", "pending", "closed"]}, "scheme": {"editor": "enum", "default": "light", "options": ["light", "dark"]}, "rosterHref": {"editor": "text", "default": "#"}, "actionHref": {"editor": "text", "default": "#"}, "$preview": {"width": 358, "height": 166}}'>
+class Component extends DCLogic {
+  static PAL = {
+    light: { card: '#FFFFFF', border: '#E4E7EF', sep: 'rgba(60,60,67,0.12)', ink: '#0B0E16', ink2: '#5C5C60', ink3: '#6B6B70', brand: '#234088', accent: '#3D5BDB', tint: 'rgba(35,64,136,0.07)', track: '#E9ECF5', ok: '#187A32', okTint: 'rgba(24,122,50,0.09)', warn: '#934900', warnTint: 'rgba(255,149,0,0.12)', shadow: '0 1px 2px rgba(16,24,40,0.05), 0 10px 24px -14px rgba(16,24,40,0.22)', book: '/_blob/534c3a5937de37a34afa6a6ebd91be4b' },
+    dark: { card: '#161B26', border: 'rgba(255,255,255,0.08)', sep: 'rgba(255,255,255,0.10)', ink: '#F5F6FA', ink2: 'rgba(235,235,245,0.64)', ink3: 'rgba(235,235,245,0.5)', brand: '#8AA0FF', accent: '#8AA0FF', tint: 'rgba(138,160,255,0.12)', track: 'rgba(255,255,255,0.10)', ok: '#6FD39A', okTint: 'rgba(111,211,154,0.12)', warn: '#FFB35C', warnTint: 'rgba(255,179,92,0.14)', shadow: 'none', book: '/_blob/402f38a271f02261a3be20e630746183' }
+  };
+  static FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+
+  // Team in the join list: seats taken (captain counts), roster link and one clear action
+  renderVals() {
+    var p = this.props;
+    var C = Component.PAL[p.scheme === 'dark' ? 'dark' : 'light'];
+    var name = p.team || 'Vertex';
+    var cap = Math.max(1, Number(p.capacity ?? 22)), filled = Math.min(cap, Number(p.filled ?? 18));
+    var st = p.state || (filled >= cap ? 'full' : 'open');
+    var A = { open: ['Подать заявку', 'solid', false], full: ['Мест нет', 'tinted', true], mine: ['Вы в команде', 'tinted', true], pending: ['Заявка отправлена', 'tinted', true], closed: ['Набор закрыт', 'tinted', true] }[st] || ['Подать заявку', 'solid', false];
+    var captain = p.captain ?? 'Аружан';
+    var free = cap - filled;
+    var meta = (captain ? 'Капитан ' + captain + ' · ' : '') + (st === 'full' ? 'мест нет' : free + ' ' + (free % 10 === 1 && free % 100 !== 11 ? 'место' : (free % 10 >= 2 && free % 10 <= 4 && (free % 100 < 12 || free % 100 > 14)) ? 'места' : 'мест') + ' свободно');
+    return {
+      name: name, initial: name.trim().charAt(0).toUpperCase(), meta: meta,
+      filled: String(filled), capacity: String(cap), mine: st === 'mine' || st === 'pending',
+      rosterHref: p.rosterHref || '#', actionHref: p.actionHref || '#',
+      actionLabel: A[0], actionVariant: A[1], actionDisabled: A[2],
+      aria: 'Команда ' + name + ', занято ' + filled + ' из ' + cap,
+      rootCss: ['box-sizing: border-box', 'width: 100%', 'min-width: 0', 'padding: 16px', 'border-radius: 16px', 'background: ' + C.card,
+        'border: 1px solid ' + (st === 'mine' || st === 'pending' ? C.brand : C.border), 'color: ' + C.ink, Component.FF].join('; '),
+      monoCss: 'width: 42px; height: 42px; border-radius: 21px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; background: ' + C.tint + '; color: ' + C.brand,
+      nameCss: 'display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 17px; line-height: 22px; font-weight: 700; color: ' + C.ink,
+      mineCss: 'font-size: 11px; line-height: 14px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: ' + C.tint + '; color: ' + C.brand,
+      metaCss: 'font-size: 13px; line-height: 18px; color: ' + C.ink2,
+      seatsCss: 'font-size: 20px; line-height: 24px; font-weight: 700; font-variant-numeric: tabular-nums; color: ' + (st === 'full' ? C.ink3 : C.ink),
+      capCss: 'font-size: 13px; font-weight: 500; color: ' + C.ink3,
+      trackCss: 'height: 4px; border-radius: 2px; margin-top: 12px; overflow: hidden; background: ' + C.track,
+      fillCss: 'height: 100%; border-radius: 2px; width: ' + Math.round(filled / cap * 100) + '%; background: ' + (st === 'full' ? C.ink3 : C.brand),
+      linkCss: 'display: flex; align-items: center; gap: 4px; min-height: 44px; font-size: 15px; line-height: 20px; font-weight: 700; text-decoration: none; color: ' + C.brand
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,4243 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "IntroSplash.dc.html": {
+      "x": 0,
+      "y": 240,
+      "w": 390,
+      "h": 844,
+      "title": "Заставка",
+      "page": "screens"
+    },
+    "Onboarding.dc.html": {
+      "x": 470,
+      "y": 240,
+      "w": 390,
+      "h": 844,
+      "title": "Онбординг 1/4",
+      "page": "screens"
+    },
+    "Onboarding2.dc.html": {
+      "x": 940,
+      "y": 240,
+      "w": 390,
+      "h": 844,
+      "title": "Онбординг 2/4",
+      "page": "screens"
+    },
+    "Onboarding3.dc.html": {
+      "x": 1880,
+      "y": 240,
+      "w": 390,
+      "h": 844,
+      "title": "Онбординг 4/4",
+      "page": "screens"
+    },
+    "Auth.dc.html": {
+      "x": 2350,
+      "y": 240,
+      "w": 390,
+      "h": 844,
+      "title": "Вход",
+      "page": "screens"
+    },
+    "NicknameGate.dc.html": {
+      "x": 2820,
+      "y": 240,
+      "w": 390,
+      "h": 844,
+      "title": "Псевдоним",
+      "page": "screens"
+    },
+    "LMSHome.dc.html": {
+      "x": 0,
+      "y": 1630,
+      "w": 390,
+      "h": 3560,
+      "title": "Обучение — главная",
+      "page": "screens"
+    },
+    "CourseDetail.dc.html": {
+      "x": 470,
+      "y": 1630,
+      "w": 390,
+      "h": 2160,
+      "title": "Курс",
+      "page": "screens"
+    },
+    "Video.dc.html": {
+      "x": 940,
+      "y": 1630,
+      "w": 390,
+      "h": 844,
+      "title": "Урок — плеер",
+      "page": "screens"
+    },
+    "Downloads.dc.html": {
+      "x": 1410,
+      "y": 1630,
+      "w": 390,
+      "h": 1060,
+      "title": "Загрузки",
+      "page": "screens"
+    },
+    "BooksCatalog.dc.html": {
+      "x": 1880,
+      "y": 1630,
+      "w": 390,
+      "h": 2920,
+      "title": "Библиотека книг",
+      "page": "screens"
+    },
+    "BookDetail.dc.html": {
+      "x": 2350,
+      "y": 1630,
+      "w": 390,
+      "h": 1760,
+      "title": "Книга",
+      "page": "screens"
+    },
+    "BookAI.dc.html": {
+      "x": 2820,
+      "y": 1630,
+      "w": 390,
+      "h": 844,
+      "title": "Книжный советник",
+      "page": "screens"
+    },
+    "AIChat.dc.html": {
+      "x": 0,
+      "y": 5490,
+      "w": 390,
+      "h": 980,
+      "title": "AI — чат",
+      "page": "screens"
+    },
+    "AIChatIntro.dc.html": {
+      "x": 470,
+      "y": 5490,
+      "w": 390,
+      "h": 844,
+      "title": "AI — пустой чат",
+      "page": "screens"
+    },
+    "CommunityHome.dc.html": {
+      "x": 0,
+      "y": 6870,
+      "w": 390,
+      "h": 1880,
+      "title": "Сообщество — главная",
+      "page": "screens"
+    },
+    "CommunityHome2.dc.html": {
+      "x": 470,
+      "y": 6870,
+      "w": 390,
+      "h": 844,
+      "title": "Сообщество — мероприятия",
+      "page": "screens"
+    },
+    "Channels.dc.html": {
+      "x": 940,
+      "y": 6870,
+      "w": 390,
+      "h": 844,
+      "title": "Каналы",
+      "page": "screens"
+    },
+    "ServerChannel.dc.html": {
+      "x": 1410,
+      "y": 6870,
+      "w": 390,
+      "h": 1440,
+      "title": "Канал",
+      "page": "screens"
+    },
+    "CreateContent.dc.html": {
+      "x": 1880,
+      "y": 6870,
+      "w": 390,
+      "h": 1720,
+      "title": "Создать мероприятие",
+      "page": "screens"
+    },
+    "MeetupDetail.dc.html": {
+      "x": 2350,
+      "y": 6870,
+      "w": 390,
+      "h": 1300,
+      "title": "Мероприятие",
+      "page": "screens"
+    },
+    "SportDetail.dc.html": {
+      "x": 2820,
+      "y": 6870,
+      "w": 390,
+      "h": 1320,
+      "title": "Спорт",
+      "page": "screens"
+    },
+    "TripDetail.dc.html": {
+      "x": 3290,
+      "y": 6870,
+      "w": 390,
+      "h": 2020,
+      "title": "Поездка",
+      "page": "screens"
+    },
+    "EventApplicants.dc.html": {
+      "x": 3760,
+      "y": 6870,
+      "w": 390,
+      "h": 844,
+      "title": "Заявки на событие",
+      "page": "screens"
+    },
+    "ChallengeDetail.dc.html": {
+      "x": 0,
+      "y": 9470,
+      "w": 390,
+      "h": 2300,
+      "title": "Челлендж — трекер дня",
+      "page": "screens"
+    },
+    "JoinChallenge.dc.html": {
+      "x": 470,
+      "y": 9470,
+      "w": 390,
+      "h": 1340,
+      "title": "Заявка в челлендж",
+      "page": "screens"
+    },
+    "ChallengeDays.dc.html": {
+      "x": 940,
+      "y": 9470,
+      "w": 390,
+      "h": 1340,
+      "title": "Дни челленджа",
+      "page": "screens"
+    },
+    "ChallengeRoster.dc.html": {
+      "x": 1410,
+      "y": 9470,
+      "w": 390,
+      "h": 1680,
+      "title": "Состав команды",
+      "page": "screens"
+    },
+    "TeamStandings.dc.html": {
+      "x": 1880,
+      "y": 9470,
+      "w": 390,
+      "h": 900,
+      "title": "Рейтинг команд",
+      "page": "screens"
+    },
+    "OverallStandings.dc.html": {
+      "x": 2350,
+      "y": 9470,
+      "w": 390,
+      "h": 2360,
+      "title": "Рейтинг участников",
+      "page": "screens"
+    },
+    "ChallengeResults.dc.html": {
+      "x": 2820,
+      "y": 9470,
+      "w": 390,
+      "h": 1140,
+      "title": "Итоги челленджа",
+      "page": "screens"
+    },
+    "ChallengeResultsModal.dc.html": {
+      "x": 3290,
+      "y": 9470,
+      "w": 390,
+      "h": 1120,
+      "title": "Окно итогов",
+      "page": "screens"
+    },
+    "ChallengeApplicants.dc.html": {
+      "x": 3760,
+      "y": 9470,
+      "w": 390,
+      "h": 844,
+      "title": "Заявки в челлендж",
+      "page": "screens"
+    },
+    "ManageChallenge.dc.html": {
+      "x": 4230,
+      "y": 9470,
+      "w": 390,
+      "h": 2900,
+      "title": "Управление челленджем",
+      "page": "screens"
+    },
+    "WorkoutTrack.dc.html": {
+      "x": 0,
+      "y": 12770,
+      "w": 390,
+      "h": 844,
+      "title": "Запись тренировки",
+      "page": "screens"
+    },
+    "WorkoutHistory.dc.html": {
+      "x": 470,
+      "y": 12770,
+      "w": 390,
+      "h": 1080,
+      "title": "История тренировок",
+      "page": "screens"
+    },
+    "WorkoutDetail.dc.html": {
+      "x": 940,
+      "y": 12770,
+      "w": 390,
+      "h": 1040,
+      "title": "Тренировка",
+      "page": "screens"
+    },
+    "WorkoutShare.dc.html": {
+      "x": 1410,
+      "y": 12770,
+      "w": 390,
+      "h": 880,
+      "title": "Поделиться",
+      "page": "screens"
+    },
+    "MapHome.dc.html": {
+      "x": 0,
+      "y": 14250,
+      "w": 390,
+      "h": 844,
+      "title": "Карта мест",
+      "page": "screens"
+    },
+    "PlaceDetail.dc.html": {
+      "x": 470,
+      "y": 14250,
+      "w": 390,
+      "h": 1380,
+      "title": "Место",
+      "page": "screens"
+    },
+    "AddPlace.dc.html": {
+      "x": 940,
+      "y": 14250,
+      "w": 390,
+      "h": 1760,
+      "title": "Новое место",
+      "page": "screens"
+    },
+    "OfflineMap.dc.html": {
+      "x": 1410,
+      "y": 14250,
+      "w": 390,
+      "h": 844,
+      "title": "Офлайн-карта",
+      "page": "screens"
+    },
+    "AdminPlaces.dc.html": {
+      "x": 1880,
+      "y": 14250,
+      "w": 390,
+      "h": 1420,
+      "title": "Заявки на метки",
+      "page": "screens"
+    },
+    "CareerHome.dc.html": {
+      "x": 0,
+      "y": 16410,
+      "w": 390,
+      "h": 844,
+      "title": "Карьера — скоро",
+      "page": "screens"
+    },
+    "CareerHome2.dc.html": {
+      "x": 470,
+      "y": 16410,
+      "w": 390,
+      "h": 1500,
+      "title": "Карьера — вакансии",
+      "page": "screens"
+    },
+    "VacancyDetail.dc.html": {
+      "x": 940,
+      "y": 16410,
+      "w": 390,
+      "h": 1500,
+      "title": "Вакансия",
+      "page": "screens"
+    },
+    "ResumeForm.dc.html": {
+      "x": 1410,
+      "y": 16410,
+      "w": 390,
+      "h": 1960,
+      "title": "Анкета",
+      "page": "screens"
+    },
+    "TalentProfile.dc.html": {
+      "x": 1880,
+      "y": 16410,
+      "w": 390,
+      "h": 3120,
+      "title": "Моя анкета",
+      "page": "screens"
+    },
+    "CreateVacancy.dc.html": {
+      "x": 2350,
+      "y": 16410,
+      "w": 390,
+      "h": 2460,
+      "title": "Новая вакансия",
+      "page": "screens"
+    },
+    "VacancyApplicants.dc.html": {
+      "x": 2820,
+      "y": 16410,
+      "w": 390,
+      "h": 844,
+      "title": "Отклики",
+      "page": "screens"
+    },
+    "ProfileHome.dc.html": {
+      "x": 0,
+      "y": 19930,
+      "w": 390,
+      "h": 3300,
+      "title": "Профиль",
+      "page": "screens"
+    },
+    "Personalize.dc.html": {
+      "x": 470,
+      "y": 19930,
+      "w": 390,
+      "h": 1900,
+      "title": "Персонализация",
+      "page": "screens"
+    },
+    "MyFitness.dc.html": {
+      "x": 940,
+      "y": 19930,
+      "w": 390,
+      "h": 1880,
+      "title": "Мои тренировки",
+      "page": "screens"
+    },
+    "ProgramHistory.dc.html": {
+      "x": 1410,
+      "y": 19930,
+      "w": 390,
+      "h": 900,
+      "title": "История программ",
+      "page": "screens"
+    },
+    "ProgramResult.dc.html": {
+      "x": 1880,
+      "y": 19930,
+      "w": 390,
+      "h": 1440,
+      "title": "Итоги программы",
+      "page": "screens"
+    },
+    "ChallengeHistory.dc.html": {
+      "x": 2350,
+      "y": 19930,
+      "w": 390,
+      "h": 844,
+      "title": "Мои челленджи",
+      "page": "screens"
+    },
+    "Notifications.dc.html": {
+      "x": 2820,
+      "y": 19930,
+      "w": 390,
+      "h": 1000,
+      "title": "Уведомления",
+      "page": "screens"
+    },
+    "Achievements.dc.html": {
+      "x": 3290,
+      "y": 19930,
+      "w": 390,
+      "h": 8600,
+      "title": "Достижения",
+      "page": "screens"
+    },
+    "Icon.dc.html": {
+      "x": 0,
+      "y": 240,
+      "w": 48,
+      "h": 48,
+      "title": "Icon",
+      "page": "library"
+    },
+    "IconStories.dc.html": {
+      "x": 0,
+      "y": 368,
+      "w": 820,
+      "h": 3240,
+      "title": "Icon — набор",
+      "page": "library"
+    },
+    "Screen.dc.html": {
+      "x": 900,
+      "y": 240,
+      "w": 390,
+      "h": 844,
+      "title": "Screen",
+      "page": "library"
+    },
+    "TabDock.dc.html": {
+      "x": 1370,
+      "y": 240,
+      "w": 390,
+      "h": 120,
+      "title": "TabDock",
+      "page": "library"
+    },
+    "Text.dc.html": {
+      "x": 1840,
+      "y": 240,
+      "w": 320,
+      "h": 40,
+      "title": "Text",
+      "page": "library"
+    },
+    "TextStories.dc.html": {
+      "x": 1840,
+      "y": 360,
+      "w": 390,
+      "h": 2100,
+      "title": "Text — типографика",
+      "page": "library"
+    },
+    "Wrapper.dc.html": {
+      "x": 2310,
+      "y": 240,
+      "w": 390,
+      "h": 120,
+      "title": "Wrapper",
+      "page": "library"
+    },
+    "WrapperStories.dc.html": {
+      "x": 2310,
+      "y": 440,
+      "w": 390,
+      "h": 2060,
+      "title": "Wrapper — раскладки",
+      "page": "library"
+    },
+    "Avatar.dc.html": {
+      "x": 0,
+      "y": 4048,
+      "w": 40,
+      "h": 40,
+      "title": "Avatar",
+      "page": "library"
+    },
+    "AvatarStories.dc.html": {
+      "x": 0,
+      "y": 4168,
+      "w": 390,
+      "h": 840,
+      "title": "Avatar — варианты",
+      "page": "library"
+    },
+    "AvatarStack.dc.html": {
+      "x": 470,
+      "y": 4048,
+      "w": 150,
+      "h": 36,
+      "title": "AvatarStack",
+      "page": "library"
+    },
+    "AvatarStackStories.dc.html": {
+      "x": 470,
+      "y": 4164,
+      "w": 390,
+      "h": 480,
+      "title": "AvatarStack — варианты",
+      "page": "library"
+    },
+    "Button.dc.html": {
+      "x": 940,
+      "y": 4048,
+      "w": 240,
+      "h": 50,
+      "title": "Button",
+      "page": "library"
+    },
+    "ButtonStories.dc.html": {
+      "x": 940,
+      "y": 4178,
+      "w": 390,
+      "h": 1620,
+      "title": "Button — варианты",
+      "page": "library"
+    },
+    "Checkbox.dc.html": {
+      "x": 1410,
+      "y": 4048,
+      "w": 320,
+      "h": 48,
+      "title": "Checkbox",
+      "page": "library"
+    },
+    "CheckboxStories.dc.html": {
+      "x": 1410,
+      "y": 4176,
+      "w": 390,
+      "h": 560,
+      "title": "Checkbox — варианты",
+      "page": "library"
+    },
+    "Chip.dc.html": {
+      "x": 1880,
+      "y": 4048,
+      "w": 160,
+      "h": 48,
+      "title": "Chip",
+      "page": "library"
+    },
+    "ChipStories.dc.html": {
+      "x": 1880,
+      "y": 4176,
+      "w": 390,
+      "h": 600,
+      "title": "Chip — варианты",
+      "page": "library"
+    },
+    "IconButton.dc.html": {
+      "x": 2350,
+      "y": 4048,
+      "w": 48,
+      "h": 48,
+      "title": "IconButton",
+      "page": "library"
+    },
+    "IconButtonStories.dc.html": {
+      "x": 2350,
+      "y": 4176,
+      "w": 390,
+      "h": 1120,
+      "title": "IconButton — варианты",
+      "page": "library"
+    },
+    "PageDots.dc.html": {
+      "x": 2820,
+      "y": 4048,
+      "w": 120,
+      "h": 6,
+      "title": "PageDots",
+      "page": "library"
+    },
+    "PageDotsStories.dc.html": {
+      "x": 2820,
+      "y": 4134,
+      "w": 390,
+      "h": 340,
+      "title": "PageDots — варианты",
+      "page": "library"
+    },
+    "ProgressBar.dc.html": {
+      "x": 3290,
+      "y": 4048,
+      "w": 390,
+      "h": 30,
+      "title": "ProgressBar",
+      "page": "library"
+    },
+    "ProgressBarStories.dc.html": {
+      "x": 3290,
+      "y": 4158,
+      "w": 390,
+      "h": 480,
+      "title": "ProgressBar — варианты",
+      "page": "library"
+    },
+    "ProgressRing.dc.html": {
+      "x": 3760,
+      "y": 4048,
+      "w": 80,
+      "h": 80,
+      "title": "ProgressRing",
+      "page": "library"
+    },
+    "ProgressRingStories.dc.html": {
+      "x": 3760,
+      "y": 4208,
+      "w": 390,
+      "h": 700,
+      "title": "ProgressRing — варианты",
+      "page": "library"
+    },
+    "RadioOption.dc.html": {
+      "x": 4230,
+      "y": 4048,
+      "w": 390,
+      "h": 66,
+      "title": "RadioOption",
+      "page": "library"
+    },
+    "RadioOptionStories.dc.html": {
+      "x": 4230,
+      "y": 4194,
+      "w": 390,
+      "h": 760,
+      "title": "RadioOption — варианты",
+      "page": "library"
+    },
+    "SearchField.dc.html": {
+      "x": 4700,
+      "y": 4048,
+      "w": 390,
+      "h": 48,
+      "title": "SearchField",
+      "page": "library"
+    },
+    "SearchFieldStories.dc.html": {
+      "x": 4700,
+      "y": 4176,
+      "w": 390,
+      "h": 600,
+      "title": "SearchField — варианты",
+      "page": "library"
+    },
+    "Segmented.dc.html": {
+      "x": 0,
+      "y": 5958,
+      "w": 390,
+      "h": 48,
+      "title": "Segmented",
+      "page": "library"
+    },
+    "SegmentedStories.dc.html": {
+      "x": 0,
+      "y": 6086,
+      "w": 390,
+      "h": 700,
+      "title": "Segmented — варианты",
+      "page": "library"
+    },
+    "SelectField.dc.html": {
+      "x": 470,
+      "y": 5958,
+      "w": 390,
+      "h": 80,
+      "title": "SelectField",
+      "page": "library"
+    },
+    "SelectFieldStories.dc.html": {
+      "x": 470,
+      "y": 6118,
+      "w": 390,
+      "h": 720,
+      "title": "SelectField — варианты",
+      "page": "library"
+    },
+    "Stars.dc.html": {
+      "x": 940,
+      "y": 5958,
+      "w": 140,
+      "h": 24,
+      "title": "Stars",
+      "page": "library"
+    },
+    "StarsStories.dc.html": {
+      "x": 940,
+      "y": 6062,
+      "w": 390,
+      "h": 580,
+      "title": "Stars — варианты",
+      "page": "library"
+    },
+    "StatusBadge.dc.html": {
+      "x": 1410,
+      "y": 5958,
+      "w": 100,
+      "h": 22,
+      "title": "StatusBadge",
+      "page": "library"
+    },
+    "StatusBadgeStories.dc.html": {
+      "x": 1410,
+      "y": 6060,
+      "w": 390,
+      "h": 740,
+      "title": "StatusBadge — варианты",
+      "page": "library"
+    },
+    "StoryBackdrop.dc.html": {
+      "x": 1880,
+      "y": 5958,
+      "w": 358,
+      "h": 120,
+      "title": "StoryBackdrop",
+      "page": "library"
+    },
+    "StoryBackdropStories.dc.html": {
+      "x": 1880,
+      "y": 6158,
+      "w": 390,
+      "h": 660,
+      "title": "StoryBackdrop — варианты",
+      "page": "library"
+    },
+    "TextField.dc.html": {
+      "x": 2350,
+      "y": 5958,
+      "w": 390,
+      "h": 80,
+      "title": "TextField",
+      "page": "library"
+    },
+    "TextFieldStories.dc.html": {
+      "x": 2350,
+      "y": 6118,
+      "w": 390,
+      "h": 1560,
+      "title": "TextField — варианты",
+      "page": "library"
+    },
+    "Toggle.dc.html": {
+      "x": 2820,
+      "y": 5958,
+      "w": 51,
+      "h": 48,
+      "title": "Toggle",
+      "page": "library"
+    },
+    "ToggleStories.dc.html": {
+      "x": 2820,
+      "y": 6086,
+      "w": 390,
+      "h": 420,
+      "title": "Toggle — варианты",
+      "page": "library"
+    },
+    "BottomBar.dc.html": {
+      "x": 0,
+      "y": 8118,
+      "w": 390,
+      "h": 108,
+      "title": "BottomBar",
+      "page": "library"
+    },
+    "BottomBarStories.dc.html": {
+      "x": 0,
+      "y": 8306,
+      "w": 390,
+      "h": 1080,
+      "title": "BottomBar — варианты",
+      "page": "library"
+    },
+    "Callout.dc.html": {
+      "x": 470,
+      "y": 8118,
+      "w": 358,
+      "h": 76,
+      "title": "Callout",
+      "page": "library"
+    },
+    "CalloutStories.dc.html": {
+      "x": 470,
+      "y": 8274,
+      "w": 390,
+      "h": 1380,
+      "title": "Callout — варианты",
+      "page": "library"
+    },
+    "Card.dc.html": {
+      "x": 940,
+      "y": 8118,
+      "w": 358,
+      "h": 110,
+      "title": "Card",
+      "page": "library"
+    },
+    "CardStories.dc.html": {
+      "x": 940,
+      "y": 8308,
+      "w": 390,
+      "h": 1560,
+      "title": "Card — варианты",
+      "page": "library"
+    },
+    "ChatBubble.dc.html": {
+      "x": 1410,
+      "y": 8118,
+      "w": 358,
+      "h": 150,
+      "title": "ChatBubble",
+      "page": "library"
+    },
+    "ChatBubbleStories.dc.html": {
+      "x": 1410,
+      "y": 8348,
+      "w": 390,
+      "h": 1100,
+      "title": "ChatBubble — варианты",
+      "page": "library"
+    },
+    "ChatComposer.dc.html": {
+      "x": 1880,
+      "y": 8118,
+      "w": 358,
+      "h": 48,
+      "title": "ChatComposer",
+      "page": "library"
+    },
+    "ChatComposerStories.dc.html": {
+      "x": 1880,
+      "y": 8246,
+      "w": 390,
+      "h": 420,
+      "title": "ChatComposer — варианты",
+      "page": "library"
+    },
+    "Divider.dc.html": {
+      "x": 2350,
+      "y": 8118,
+      "w": 358,
+      "h": 17,
+      "title": "Divider",
+      "page": "library"
+    },
+    "DividerStories.dc.html": {
+      "x": 2350,
+      "y": 8215,
+      "w": 390,
+      "h": 560,
+      "title": "Divider — варианты",
+      "page": "library"
+    },
+    "EmptyState.dc.html": {
+      "x": 2820,
+      "y": 8118,
+      "w": 358,
+      "h": 300,
+      "title": "EmptyState",
+      "page": "library"
+    },
+    "EmptyStateStories.dc.html": {
+      "x": 2820,
+      "y": 8498,
+      "w": 390,
+      "h": 1420,
+      "title": "EmptyState — варианты",
+      "page": "library"
+    },
+    "Illustration.dc.html": {
+      "x": 3290,
+      "y": 8118,
+      "w": 112,
+      "h": 112,
+      "title": "Illustration",
+      "page": "library"
+    },
+    "IllustrationStories.dc.html": {
+      "x": 3290,
+      "y": 8310,
+      "w": 820,
+      "h": 860,
+      "title": "Illustration — варианты",
+      "page": "library"
+    },
+    "KeyValueRow.dc.html": {
+      "x": 4190,
+      "y": 8118,
+      "w": 322,
+      "h": 24,
+      "title": "KeyValueRow",
+      "page": "library"
+    },
+    "KeyValueRowStories.dc.html": {
+      "x": 4190,
+      "y": 8222,
+      "w": 390,
+      "h": 640,
+      "title": "KeyValueRow — варианты",
+      "page": "library"
+    },
+    "ListRow.dc.html": {
+      "x": 4660,
+      "y": 8118,
+      "w": 358,
+      "h": 56,
+      "title": "ListRow",
+      "page": "library"
+    },
+    "ListRowStories.dc.html": {
+      "x": 4660,
+      "y": 8254,
+      "w": 390,
+      "h": 2360,
+      "title": "ListRow — варианты",
+      "page": "library"
+    },
+    "ListSection.dc.html": {
+      "x": 0,
+      "y": 10774,
+      "w": 358,
+      "h": 200,
+      "title": "ListSection",
+      "page": "library"
+    },
+    "ListSectionStories.dc.html": {
+      "x": 0,
+      "y": 11054,
+      "w": 390,
+      "h": 1040,
+      "title": "ListSection — варианты",
+      "page": "library"
+    },
+    "Logo.dc.html": {
+      "x": 470,
+      "y": 10774,
+      "w": 40,
+      "h": 40,
+      "title": "Logo",
+      "page": "library"
+    },
+    "LogoStories.dc.html": {
+      "x": 470,
+      "y": 10894,
+      "w": 390,
+      "h": 700,
+      "title": "Logo — варианты",
+      "page": "library"
+    },
+    "MediaCover.dc.html": {
+      "x": 940,
+      "y": 10774,
+      "w": 358,
+      "h": 202,
+      "title": "MediaCover",
+      "page": "library"
+    },
+    "MediaCoverStories.dc.html": {
+      "x": 940,
+      "y": 11056,
+      "w": 390,
+      "h": 1880,
+      "title": "MediaCover — варианты",
+      "page": "library"
+    },
+    "NavBarLarge.dc.html": {
+      "x": 1410,
+      "y": 10774,
+      "w": 390,
+      "h": 68,
+      "title": "NavBarLarge",
+      "page": "library"
+    },
+    "NavBarLargeStories.dc.html": {
+      "x": 1410,
+      "y": 10922,
+      "w": 390,
+      "h": 640,
+      "title": "NavBarLarge — варианты",
+      "page": "library"
+    },
+    "NavHeader.dc.html": {
+      "x": 1880,
+      "y": 10774,
+      "w": 390,
+      "h": 124,
+      "title": "NavHeader",
+      "page": "library"
+    },
+    "NavHeaderStories.dc.html": {
+      "x": 1880,
+      "y": 10978,
+      "w": 390,
+      "h": 2080,
+      "title": "NavHeader — варианты",
+      "page": "library"
+    },
+    "PageHeading.dc.html": {
+      "x": 2350,
+      "y": 10774,
+      "w": 358,
+      "h": 120,
+      "title": "PageHeading",
+      "page": "library"
+    },
+    "PageHeadingStories.dc.html": {
+      "x": 2350,
+      "y": 10974,
+      "w": 390,
+      "h": 760,
+      "title": "PageHeading — варианты",
+      "page": "library"
+    },
+    "SectionHeader.dc.html": {
+      "x": 2820,
+      "y": 10774,
+      "w": 390,
+      "h": 40,
+      "title": "SectionHeader",
+      "page": "library"
+    },
+    "SectionHeaderStories.dc.html": {
+      "x": 2820,
+      "y": 10894,
+      "w": 390,
+      "h": 660,
+      "title": "SectionHeader — варианты",
+      "page": "library"
+    },
+    "ShortcutCard.dc.html": {
+      "x": 3290,
+      "y": 10774,
+      "w": 358,
+      "h": 80,
+      "title": "ShortcutCard",
+      "page": "library"
+    },
+    "ShortcutCardStories.dc.html": {
+      "x": 3290,
+      "y": 10934,
+      "w": 390,
+      "h": 1160,
+      "title": "ShortcutCard — варианты",
+      "page": "library"
+    },
+    "StatTile.dc.html": {
+      "x": 3760,
+      "y": 10774,
+      "w": 112,
+      "h": 104,
+      "title": "StatTile",
+      "page": "library"
+    },
+    "StatTileStories.dc.html": {
+      "x": 3760,
+      "y": 10958,
+      "w": 390,
+      "h": 760,
+      "title": "StatTile — варианты",
+      "page": "library"
+    },
+    "AuthActionButton.dc.html": {
+      "x": 0,
+      "y": 13498,
+      "w": 322,
+      "h": 54,
+      "title": "AuthActionButton",
+      "page": "library"
+    },
+    "AuthActionButtonStories.dc.html": {
+      "x": 0,
+      "y": 13632,
+      "w": 390,
+      "h": 380,
+      "title": "AuthActionButton — варианты",
+      "page": "library"
+    },
+    "AuthDivider.dc.html": {
+      "x": 470,
+      "y": 13498,
+      "w": 322,
+      "h": 16,
+      "title": "AuthDivider",
+      "page": "library"
+    },
+    "AuthDividerStories.dc.html": {
+      "x": 470,
+      "y": 13594,
+      "w": 390,
+      "h": 200,
+      "title": "AuthDivider — варианты",
+      "page": "library"
+    },
+    "AuthField.dc.html": {
+      "x": 940,
+      "y": 13498,
+      "w": 322,
+      "h": 80,
+      "title": "AuthField",
+      "page": "library"
+    },
+    "AuthFieldStories.dc.html": {
+      "x": 940,
+      "y": 13658,
+      "w": 390,
+      "h": 760,
+      "title": "AuthField — варианты",
+      "page": "library"
+    },
+    "AuthHero.dc.html": {
+      "x": 1410,
+      "y": 13498,
+      "w": 390,
+      "h": 290,
+      "title": "AuthHero",
+      "page": "library"
+    },
+    "AuthHeroStories.dc.html": {
+      "x": 1410,
+      "y": 13868,
+      "w": 390,
+      "h": 620,
+      "title": "AuthHero — варианты",
+      "page": "library"
+    },
+    "AuthSegmented.dc.html": {
+      "x": 1880,
+      "y": 13498,
+      "w": 322,
+      "h": 56,
+      "title": "AuthSegmented",
+      "page": "library"
+    },
+    "AuthSegmentedStories.dc.html": {
+      "x": 1880,
+      "y": 13634,
+      "w": 390,
+      "h": 320,
+      "title": "AuthSegmented — варианты",
+      "page": "library"
+    },
+    "AuthTextLink.dc.html": {
+      "x": 2350,
+      "y": 13498,
+      "w": 322,
+      "h": 48,
+      "title": "AuthTextLink",
+      "page": "library"
+    },
+    "AuthTextLinkStories.dc.html": {
+      "x": 2350,
+      "y": 13626,
+      "w": 390,
+      "h": 300,
+      "title": "AuthTextLink — варианты",
+      "page": "library"
+    },
+    "BookCard.dc.html": {
+      "x": 2820,
+      "y": 13498,
+      "w": 173,
+      "h": 400,
+      "title": "BookCard",
+      "page": "library"
+    },
+    "BookCardStories.dc.html": {
+      "x": 2820,
+      "y": 13978,
+      "w": 390,
+      "h": 1440,
+      "title": "BookCard — варианты",
+      "page": "library"
+    },
+    "BookComposer.dc.html": {
+      "x": 3290,
+      "y": 13498,
+      "w": 358,
+      "h": 104,
+      "title": "BookComposer",
+      "page": "library"
+    },
+    "BookComposerStories.dc.html": {
+      "x": 3290,
+      "y": 13682,
+      "w": 390,
+      "h": 560,
+      "title": "BookComposer — варианты",
+      "page": "library"
+    },
+    "BookCover.dc.html": {
+      "x": 3760,
+      "y": 13498,
+      "w": 120,
+      "h": 176,
+      "title": "BookCover",
+      "page": "library"
+    },
+    "BookCoverStories.dc.html": {
+      "x": 3760,
+      "y": 13754,
+      "w": 390,
+      "h": 560,
+      "title": "BookCover — варианты",
+      "page": "library"
+    },
+    "BookProgressSteps.dc.html": {
+      "x": 4230,
+      "y": 13498,
+      "w": 326,
+      "h": 48,
+      "title": "BookProgressSteps",
+      "page": "library"
+    },
+    "BookProgressStepsStories.dc.html": {
+      "x": 4230,
+      "y": 13626,
+      "w": 390,
+      "h": 320,
+      "title": "BookProgressSteps — варианты",
+      "page": "library"
+    },
+    "BookRatingInput.dc.html": {
+      "x": 4700,
+      "y": 13498,
+      "w": 326,
+      "h": 72,
+      "title": "BookRatingInput",
+      "page": "library"
+    },
+    "BookRatingInputStories.dc.html": {
+      "x": 4700,
+      "y": 13650,
+      "w": 390,
+      "h": 330,
+      "title": "BookRatingInput — варианты",
+      "page": "library"
+    },
+    "CourseCard.dc.html": {
+      "x": 0,
+      "y": 15578,
+      "w": 171,
+      "h": 190,
+      "title": "CourseCard",
+      "page": "library"
+    },
+    "CourseCardStories.dc.html": {
+      "x": 0,
+      "y": 15848,
+      "w": 390,
+      "h": 1060,
+      "title": "CourseCard — варианты",
+      "page": "library"
+    },
+    "DownloadRow.dc.html": {
+      "x": 470,
+      "y": 15578,
+      "w": 358,
+      "h": 76,
+      "title": "DownloadRow",
+      "page": "library"
+    },
+    "DownloadRowStories.dc.html": {
+      "x": 470,
+      "y": 15734,
+      "w": 390,
+      "h": 420,
+      "title": "DownloadRow — варианты",
+      "page": "library"
+    },
+    "LearningModalSheet.dc.html": {
+      "x": 940,
+      "y": 15578,
+      "w": 390,
+      "h": 844,
+      "title": "LearningModalSheet",
+      "page": "library"
+    },
+    "LearningModalSheetStories.dc.html": {
+      "x": 940,
+      "y": 16502,
+      "w": 390,
+      "h": 844,
+      "title": "LearningModalSheet — варианты",
+      "page": "library"
+    },
+    "LessonDownloadButton.dc.html": {
+      "x": 1410,
+      "y": 15578,
+      "w": 230,
+      "h": 44,
+      "title": "LessonDownloadButton",
+      "page": "library"
+    },
+    "LessonDownloadButtonStories.dc.html": {
+      "x": 1410,
+      "y": 15702,
+      "w": 390,
+      "h": 480,
+      "title": "LessonDownloadButton — варианты",
+      "page": "library"
+    },
+    "LessonRow.dc.html": {
+      "x": 1880,
+      "y": 15578,
+      "w": 358,
+      "h": 76,
+      "title": "LessonRow",
+      "page": "library"
+    },
+    "LessonRowStories.dc.html": {
+      "x": 1880,
+      "y": 15734,
+      "w": 390,
+      "h": 520,
+      "title": "LessonRow — варианты",
+      "page": "library"
+    },
+    "OnboardingIllustration.dc.html": {
+      "x": 2350,
+      "y": 15578,
+      "w": 240,
+      "h": 240,
+      "title": "OnboardingIllustration",
+      "page": "library"
+    },
+    "OnboardingIllustrationStories.dc.html": {
+      "x": 2350,
+      "y": 15898,
+      "w": 390,
+      "h": 900,
+      "title": "OnboardingIllustration — варианты",
+      "page": "library"
+    },
+    "PlayerNowPlaying.dc.html": {
+      "x": 2820,
+      "y": 15578,
+      "w": 358,
+      "h": 132,
+      "title": "PlayerNowPlaying",
+      "page": "library"
+    },
+    "PlayerNowPlayingStories.dc.html": {
+      "x": 2820,
+      "y": 15790,
+      "w": 390,
+      "h": 560,
+      "title": "PlayerNowPlaying — варианты",
+      "page": "library"
+    },
+    "PlayerSheet.dc.html": {
+      "x": 3290,
+      "y": 15578,
+      "w": 390,
+      "h": 552,
+      "title": "PlayerSheet",
+      "page": "library"
+    },
+    "PlayerSheetStories.dc.html": {
+      "x": 3290,
+      "y": 16210,
+      "w": 390,
+      "h": 800,
+      "title": "PlayerSheet — варианты",
+      "page": "library"
+    },
+    "PlayerVideo.dc.html": {
+      "x": 3760,
+      "y": 15578,
+      "w": 390,
+      "h": 294,
+      "title": "PlayerVideo",
+      "page": "library"
+    },
+    "PlayerVideoStories.dc.html": {
+      "x": 3760,
+      "y": 15952,
+      "w": 390,
+      "h": 760,
+      "title": "PlayerVideo — варианты",
+      "page": "library"
+    },
+    "SplashHero.dc.html": {
+      "x": 4230,
+      "y": 15578,
+      "w": 390,
+      "h": 844,
+      "title": "SplashHero",
+      "page": "library"
+    },
+    "SplashHeroStories.dc.html": {
+      "x": 4230,
+      "y": 16502,
+      "w": 390,
+      "h": 940,
+      "title": "SplashHero — варианты",
+      "page": "library"
+    },
+    "AIAnswer.dc.html": {
+      "x": 0,
+      "y": 19462,
+      "w": 358,
+      "h": 240,
+      "title": "AIAnswer",
+      "page": "library"
+    },
+    "AIAnswerStories.dc.html": {
+      "x": 0,
+      "y": 19782,
+      "w": 390,
+      "h": 720,
+      "title": "AIAnswer — варианты",
+      "page": "library"
+    },
+    "AISuggestionChip.dc.html": {
+      "x": 470,
+      "y": 19462,
+      "w": 260,
+      "h": 44,
+      "title": "AISuggestionChip",
+      "page": "library"
+    },
+    "AISuggestionChipStories.dc.html": {
+      "x": 470,
+      "y": 19586,
+      "w": 390,
+      "h": 300,
+      "title": "AISuggestionChip — варианты",
+      "page": "library"
+    },
+    "ChannelCard.dc.html": {
+      "x": 940,
+      "y": 19462,
+      "w": 358,
+      "h": 96,
+      "title": "ChannelCard",
+      "page": "library"
+    },
+    "ChannelCardStories.dc.html": {
+      "x": 940,
+      "y": 19638,
+      "w": 390,
+      "h": 630,
+      "title": "ChannelCard — варианты",
+      "page": "library"
+    },
+    "ChannelHero.dc.html": {
+      "x": 1410,
+      "y": 19462,
+      "w": 358,
+      "h": 214,
+      "title": "ChannelHero",
+      "page": "library"
+    },
+    "ChannelHeroStories.dc.html": {
+      "x": 1410,
+      "y": 19756,
+      "w": 390,
+      "h": 640,
+      "title": "ChannelHero — варианты",
+      "page": "library"
+    },
+    "CommunityActivityCard.dc.html": {
+      "x": 1880,
+      "y": 19462,
+      "w": 358,
+      "h": 72,
+      "title": "CommunityActivityCard",
+      "page": "library"
+    },
+    "CommunityActivityCardStories.dc.html": {
+      "x": 1880,
+      "y": 19614,
+      "w": 390,
+      "h": 370,
+      "title": "CommunityActivityCard — варианты",
+      "page": "library"
+    },
+    "CommunityChallengeProgress.dc.html": {
+      "x": 2350,
+      "y": 19462,
+      "w": 358,
+      "h": 200,
+      "title": "CommunityChallengeProgress",
+      "page": "library"
+    },
+    "CommunityChallengeProgressStories.dc.html": {
+      "x": 2350,
+      "y": 19838,
+      "w": 390,
+      "h": 760,
+      "title": "CommunityChallengeProgress — варианты",
+      "page": "library"
+    },
+    "CreateDateTimeField.dc.html": {
+      "x": 2820,
+      "y": 19462,
+      "w": 358,
+      "h": 80,
+      "title": "CreateDateTimeField",
+      "page": "library"
+    },
+    "CreateDateTimeFieldStories.dc.html": {
+      "x": 2820,
+      "y": 19622,
+      "w": 390,
+      "h": 300,
+      "title": "CreateDateTimeField — варианты",
+      "page": "library"
+    },
+    "CreateLocationPicker.dc.html": {
+      "x": 3290,
+      "y": 19462,
+      "w": 358,
+      "h": 274,
+      "title": "CreateLocationPicker",
+      "page": "library"
+    },
+    "CreateLocationPickerStories.dc.html": {
+      "x": 3290,
+      "y": 19816,
+      "w": 390,
+      "h": 760,
+      "title": "CreateLocationPicker — варианты",
+      "page": "library"
+    },
+    "EventApplicantRow.dc.html": {
+      "x": 3760,
+      "y": 19462,
+      "w": 358,
+      "h": 72,
+      "title": "EventApplicantRow",
+      "page": "library"
+    },
+    "EventApplicantRowStories.dc.html": {
+      "x": 3760,
+      "y": 19614,
+      "w": 390,
+      "h": 680,
+      "title": "EventApplicantRow — варианты",
+      "page": "library"
+    },
+    "EventAttendees.dc.html": {
+      "x": 4230,
+      "y": 19462,
+      "w": 358,
+      "h": 108,
+      "title": "EventAttendees",
+      "page": "library"
+    },
+    "EventAttendeesStories.dc.html": {
+      "x": 4230,
+      "y": 19650,
+      "w": 390,
+      "h": 420,
+      "title": "EventAttendees — варианты",
+      "page": "library"
+    },
+    "EventCard.dc.html": {
+      "x": 4700,
+      "y": 19462,
+      "w": 358,
+      "h": 236,
+      "title": "EventCard",
+      "page": "library"
+    },
+    "EventCardStories.dc.html": {
+      "x": 4700,
+      "y": 19778,
+      "w": 390,
+      "h": 1730,
+      "title": "EventCard — варианты",
+      "page": "library"
+    },
+    "EventHero.dc.html": {
+      "x": 0,
+      "y": 20838,
+      "w": 390,
+      "h": 240,
+      "title": "EventHero",
+      "page": "library"
+    },
+    "EventHeroStories.dc.html": {
+      "x": 0,
+      "y": 21158,
+      "w": 390,
+      "h": 640,
+      "title": "EventHero — варианты",
+      "page": "library"
+    },
+    "EventRow.dc.html": {
+      "x": 470,
+      "y": 20838,
+      "w": 358,
+      "h": 88,
+      "title": "EventRow",
+      "page": "library"
+    },
+    "EventRowStories.dc.html": {
+      "x": 470,
+      "y": 21006,
+      "w": 390,
+      "h": 670,
+      "title": "EventRow — варианты",
+      "page": "library"
+    },
+    "PostCard.dc.html": {
+      "x": 940,
+      "y": 20838,
+      "w": 358,
+      "h": 330,
+      "title": "PostCard",
+      "page": "library"
+    },
+    "PostCardStories.dc.html": {
+      "x": 940,
+      "y": 21248,
+      "w": 390,
+      "h": 1060,
+      "title": "PostCard — варианты",
+      "page": "library"
+    },
+    "PostFeedHeader.dc.html": {
+      "x": 1410,
+      "y": 20838,
+      "w": 358,
+      "h": 80,
+      "title": "PostFeedHeader",
+      "page": "library"
+    },
+    "PostFeedHeaderStories.dc.html": {
+      "x": 1410,
+      "y": 20998,
+      "w": 390,
+      "h": 300,
+      "title": "PostFeedHeader — варианты",
+      "page": "library"
+    },
+    "PostVoiceNote.dc.html": {
+      "x": 1880,
+      "y": 20838,
+      "w": 320,
+      "h": 64,
+      "title": "PostVoiceNote",
+      "page": "library"
+    },
+    "PostVoiceNoteStories.dc.html": {
+      "x": 1880,
+      "y": 20982,
+      "w": 390,
+      "h": 340,
+      "title": "PostVoiceNote — варианты",
+      "page": "library"
+    },
+    "ReactionChip.dc.html": {
+      "x": 2350,
+      "y": 20838,
+      "w": 64,
+      "h": 26,
+      "title": "ReactionChip",
+      "page": "library"
+    },
+    "ReactionChipStories.dc.html": {
+      "x": 2350,
+      "y": 20944,
+      "w": 390,
+      "h": 420,
+      "title": "ReactionChip — варианты",
+      "page": "library"
+    },
+    "TripRouteStep.dc.html": {
+      "x": 2820,
+      "y": 20838,
+      "w": 358,
+      "h": 82,
+      "title": "TripRouteStep",
+      "page": "library"
+    },
+    "TripRouteStepStories.dc.html": {
+      "x": 2820,
+      "y": 21000,
+      "w": 390,
+      "h": 400,
+      "title": "TripRouteStep — варианты",
+      "page": "library"
+    },
+    "ChallengeConsentCard.dc.html": {
+      "x": 0,
+      "y": 22748,
+      "w": 358,
+      "h": 110,
+      "title": "ChallengeConsentCard",
+      "page": "library"
+    },
+    "ChallengeConsentCardStories.dc.html": {
+      "x": 0,
+      "y": 22938,
+      "w": 390,
+      "h": 440,
+      "title": "ChallengeConsentCard — варианты",
+      "page": "library"
+    },
+    "ChallengeHero.dc.html": {
+      "x": 470,
+      "y": 22748,
+      "w": 358,
+      "h": 170,
+      "title": "ChallengeHero",
+      "page": "library"
+    },
+    "ChallengeHeroStories.dc.html": {
+      "x": 470,
+      "y": 22998,
+      "w": 390,
+      "h": 580,
+      "title": "ChallengeHero — варианты",
+      "page": "library"
+    },
+    "DayCalendar.dc.html": {
+      "x": 940,
+      "y": 22748,
+      "w": 358,
+      "h": 190,
+      "title": "DayCalendar",
+      "page": "library"
+    },
+    "DayCalendarStories.dc.html": {
+      "x": 940,
+      "y": 23018,
+      "w": 390,
+      "h": 680,
+      "title": "DayCalendar — варианты",
+      "page": "library"
+    },
+    "DayCell.dc.html": {
+      "x": 1410,
+      "y": 22748,
+      "w": 52,
+      "h": 44,
+      "title": "DayCell",
+      "page": "library"
+    },
+    "DayCellStories.dc.html": {
+      "x": 1410,
+      "y": 22872,
+      "w": 390,
+      "h": 360,
+      "title": "DayCell — варианты",
+      "page": "library"
+    },
+    "DayPlanHeader.dc.html": {
+      "x": 1880,
+      "y": 22748,
+      "w": 330,
+      "h": 70,
+      "title": "DayPlanHeader",
+      "page": "library"
+    },
+    "DayPlanHeaderStories.dc.html": {
+      "x": 1880,
+      "y": 22898,
+      "w": 390,
+      "h": 380,
+      "title": "DayPlanHeader — варианты",
+      "page": "library"
+    },
+    "DayRow.dc.html": {
+      "x": 2350,
+      "y": 22748,
+      "w": 358,
+      "h": 64,
+      "title": "DayRow",
+      "page": "library"
+    },
+    "DayRowStories.dc.html": {
+      "x": 2350,
+      "y": 22892,
+      "w": 390,
+      "h": 380,
+      "title": "DayRow — варианты",
+      "page": "library"
+    },
+    "DaySyncStatus.dc.html": {
+      "x": 2820,
+      "y": 22748,
+      "w": 330,
+      "h": 38,
+      "title": "DaySyncStatus",
+      "page": "library"
+    },
+    "DaySyncStatusStories.dc.html": {
+      "x": 2820,
+      "y": 22866,
+      "w": 390,
+      "h": 260,
+      "title": "DaySyncStatus — варианты",
+      "page": "library"
+    },
+    "PodiumMedal.dc.html": {
+      "x": 3290,
+      "y": 22748,
+      "w": 24,
+      "h": 24,
+      "title": "PodiumMedal",
+      "page": "library"
+    },
+    "PodiumMedalStories.dc.html": {
+      "x": 3290,
+      "y": 22852,
+      "w": 390,
+      "h": 260,
+      "title": "PodiumMedal — варианты",
+      "page": "library"
+    },
+    "RosterGroupHeader.dc.html": {
+      "x": 3760,
+      "y": 22748,
+      "w": 358,
+      "h": 34,
+      "title": "RosterGroupHeader",
+      "page": "library"
+    },
+    "RosterGroupHeaderStories.dc.html": {
+      "x": 3760,
+      "y": 22862,
+      "w": 390,
+      "h": 200,
+      "title": "RosterGroupHeader — варианты",
+      "page": "library"
+    },
+    "RosterMemberRow.dc.html": {
+      "x": 4230,
+      "y": 22748,
+      "w": 358,
+      "h": 60,
+      "title": "RosterMemberRow",
+      "page": "library"
+    },
+    "RosterMemberRowStories.dc.html": {
+      "x": 4230,
+      "y": 22888,
+      "w": 390,
+      "h": 400,
+      "title": "RosterMemberRow — варианты",
+      "page": "library"
+    },
+    "ScoreFlagSummary.dc.html": {
+      "x": 4700,
+      "y": 22748,
+      "w": 330,
+      "h": 120,
+      "title": "ScoreFlagSummary",
+      "page": "library"
+    },
+    "ScoreFlagSummaryStories.dc.html": {
+      "x": 4700,
+      "y": 22948,
+      "w": 390,
+      "h": 320,
+      "title": "ScoreFlagSummary — варианты",
+      "page": "library"
+    },
+    "ScoreLegend.dc.html": {
+      "x": 0,
+      "y": 23858,
+      "w": 358,
+      "h": 60,
+      "title": "ScoreLegend",
+      "page": "library"
+    },
+    "ScoreLegendStories.dc.html": {
+      "x": 0,
+      "y": 23998,
+      "w": 390,
+      "h": 300,
+      "title": "ScoreLegend — варианты",
+      "page": "library"
+    },
+    "ScoreSummary.dc.html": {
+      "x": 470,
+      "y": 23858,
+      "w": 330,
+      "h": 50,
+      "title": "ScoreSummary",
+      "page": "library"
+    },
+    "ScoreSummaryStories.dc.html": {
+      "x": 470,
+      "y": 23988,
+      "w": 390,
+      "h": 240,
+      "title": "ScoreSummary — варианты",
+      "page": "library"
+    },
+    "StandingMyPlace.dc.html": {
+      "x": 940,
+      "y": 23858,
+      "w": 358,
+      "h": 70,
+      "title": "StandingMyPlace",
+      "page": "library"
+    },
+    "StandingMyPlaceStories.dc.html": {
+      "x": 940,
+      "y": 24008,
+      "w": 390,
+      "h": 240,
+      "title": "StandingMyPlace — варианты",
+      "page": "library"
+    },
+    "StandingRow.dc.html": {
+      "x": 1410,
+      "y": 23858,
+      "w": 358,
+      "h": 64,
+      "title": "StandingRow",
+      "page": "library"
+    },
+    "StandingRowStories.dc.html": {
+      "x": 1410,
+      "y": 24002,
+      "w": 390,
+      "h": 1600,
+      "title": "StandingRow — варианты",
+      "page": "library"
+    },
+    "TaskCheck.dc.html": {
+      "x": 1880,
+      "y": 23858,
+      "w": 24,
+      "h": 24,
+      "title": "TaskCheck",
+      "page": "library"
+    },
+    "TaskCheckStories.dc.html": {
+      "x": 1880,
+      "y": 23962,
+      "w": 390,
+      "h": 230,
+      "title": "TaskCheck — варианты",
+      "page": "library"
+    },
+    "TaskLink.dc.html": {
+      "x": 2350,
+      "y": 23858,
+      "w": 330,
+      "h": 48,
+      "title": "TaskLink",
+      "page": "library"
+    },
+    "TaskLinkStories.dc.html": {
+      "x": 2350,
+      "y": 23986,
+      "w": 390,
+      "h": 360,
+      "title": "TaskLink — варианты",
+      "page": "library"
+    },
+    "TaskRow.dc.html": {
+      "x": 2820,
+      "y": 23858,
+      "w": 330,
+      "h": 100,
+      "title": "TaskRow",
+      "page": "library"
+    },
+    "TaskRowStories.dc.html": {
+      "x": 2820,
+      "y": 24038,
+      "w": 390,
+      "h": 680,
+      "title": "TaskRow — варианты",
+      "page": "library"
+    },
+    "TeamEditorRow.dc.html": {
+      "x": 3290,
+      "y": 23858,
+      "w": 358,
+      "h": 240,
+      "title": "TeamEditorRow",
+      "page": "library"
+    },
+    "TeamEditorRowStories.dc.html": {
+      "x": 3290,
+      "y": 24178,
+      "w": 390,
+      "h": 640,
+      "title": "TeamEditorRow — варианты",
+      "page": "library"
+    },
+    "TeamPickRow.dc.html": {
+      "x": 3760,
+      "y": 23858,
+      "w": 358,
+      "h": 70,
+      "title": "TeamPickRow",
+      "page": "library"
+    },
+    "TeamPickRowStories.dc.html": {
+      "x": 3760,
+      "y": 24008,
+      "w": 390,
+      "h": 330,
+      "title": "TeamPickRow — варианты",
+      "page": "library"
+    },
+    "TeamResultCard.dc.html": {
+      "x": 4230,
+      "y": 23858,
+      "w": 358,
+      "h": 150,
+      "title": "TeamResultCard",
+      "page": "library"
+    },
+    "TeamResultCardStories.dc.html": {
+      "x": 4230,
+      "y": 24088,
+      "w": 390,
+      "h": 520,
+      "title": "TeamResultCard — варианты",
+      "page": "library"
+    },
+    "TeamScoreHeader.dc.html": {
+      "x": 4700,
+      "y": 23858,
+      "w": 358,
+      "h": 92,
+      "title": "TeamScoreHeader",
+      "page": "library"
+    },
+    "TeamScoreHeaderStories.dc.html": {
+      "x": 4700,
+      "y": 24030,
+      "w": 390,
+      "h": 260,
+      "title": "TeamScoreHeader — варианты",
+      "page": "library"
+    },
+    "TeamStepper.dc.html": {
+      "x": 0,
+      "y": 25762,
+      "w": 170,
+      "h": 56,
+      "title": "TeamStepper",
+      "page": "library"
+    },
+    "TeamStepperStories.dc.html": {
+      "x": 0,
+      "y": 25898,
+      "w": 390,
+      "h": 220,
+      "title": "TeamStepper — варианты",
+      "page": "library"
+    },
+    "MapBanner.dc.html": {
+      "x": 0,
+      "y": 26558,
+      "w": 366,
+      "h": 60,
+      "title": "MapBanner",
+      "page": "library"
+    },
+    "MapBannerStories.dc.html": {
+      "x": 0,
+      "y": 26698,
+      "w": 390,
+      "h": 340,
+      "title": "MapBanner — варианты",
+      "page": "library"
+    },
+    "MapCanvas.dc.html": {
+      "x": 470,
+      "y": 26558,
+      "w": 358,
+      "h": 300,
+      "title": "MapCanvas",
+      "page": "library"
+    },
+    "MapCanvasStories.dc.html": {
+      "x": 470,
+      "y": 26938,
+      "w": 820,
+      "h": 1000,
+      "title": "MapCanvas — варианты",
+      "page": "library"
+    },
+    "MapControl.dc.html": {
+      "x": 1370,
+      "y": 26558,
+      "w": 64,
+      "h": 64,
+      "title": "MapControl",
+      "page": "library"
+    },
+    "MapControlStories.dc.html": {
+      "x": 1370,
+      "y": 26702,
+      "w": 390,
+      "h": 300,
+      "title": "MapControl — варианты",
+      "page": "library"
+    },
+    "MapDropPin.dc.html": {
+      "x": 1840,
+      "y": 26558,
+      "w": 40,
+      "h": 44,
+      "title": "MapDropPin",
+      "page": "library"
+    },
+    "MapDropPinStories.dc.html": {
+      "x": 1840,
+      "y": 26682,
+      "w": 390,
+      "h": 360,
+      "title": "MapDropPin — варианты",
+      "page": "library"
+    },
+    "MapEventTag.dc.html": {
+      "x": 2310,
+      "y": 26558,
+      "w": 80,
+      "h": 32,
+      "title": "MapEventTag",
+      "page": "library"
+    },
+    "MapEventTagStories.dc.html": {
+      "x": 2310,
+      "y": 26670,
+      "w": 390,
+      "h": 220,
+      "title": "MapEventTag — варианты",
+      "page": "library"
+    },
+    "MapPin.dc.html": {
+      "x": 2780,
+      "y": 26558,
+      "w": 48,
+      "h": 48,
+      "title": "MapPin",
+      "page": "library"
+    },
+    "MapPinStories.dc.html": {
+      "x": 2780,
+      "y": 26686,
+      "w": 390,
+      "h": 360,
+      "title": "MapPin — варианты",
+      "page": "library"
+    },
+    "MapSheet.dc.html": {
+      "x": 3250,
+      "y": 26558,
+      "w": 390,
+      "h": 120,
+      "title": "MapSheet",
+      "page": "library"
+    },
+    "MapSheetStories.dc.html": {
+      "x": 3250,
+      "y": 26758,
+      "w": 390,
+      "h": 460,
+      "title": "MapSheet — варианты",
+      "page": "library"
+    },
+    "MapUserDot.dc.html": {
+      "x": 3720,
+      "y": 26558,
+      "w": 40,
+      "h": 40,
+      "title": "MapUserDot",
+      "page": "library"
+    },
+    "MapUserDotStories.dc.html": {
+      "x": 3720,
+      "y": 26678,
+      "w": 390,
+      "h": 200,
+      "title": "MapUserDot — варианты",
+      "page": "library"
+    },
+    "MapWatermark.dc.html": {
+      "x": 4190,
+      "y": 26558,
+      "w": 140,
+      "h": 44,
+      "title": "MapWatermark",
+      "page": "library"
+    },
+    "MapWatermarkStories.dc.html": {
+      "x": 4190,
+      "y": 26682,
+      "w": 390,
+      "h": 200,
+      "title": "MapWatermark — варианты",
+      "page": "library"
+    },
+    "MetricRow.dc.html": {
+      "x": 4660,
+      "y": 26558,
+      "w": 358,
+      "h": 44,
+      "title": "MetricRow",
+      "page": "library"
+    },
+    "MetricRowStories.dc.html": {
+      "x": 4660,
+      "y": 26682,
+      "w": 390,
+      "h": 300,
+      "title": "MetricRow — варианты",
+      "page": "library"
+    },
+    "MetricValue.dc.html": {
+      "x": 0,
+      "y": 28098,
+      "w": 180,
+      "h": 72,
+      "title": "MetricValue",
+      "page": "library"
+    },
+    "MetricValueStories.dc.html": {
+      "x": 0,
+      "y": 28250,
+      "w": 390,
+      "h": 760,
+      "title": "MetricValue — варианты",
+      "page": "library"
+    },
+    "ModerationCard.dc.html": {
+      "x": 470,
+      "y": 28098,
+      "w": 358,
+      "h": 380,
+      "title": "ModerationCard",
+      "page": "library"
+    },
+    "ModerationCardStories.dc.html": {
+      "x": 470,
+      "y": 28558,
+      "w": 390,
+      "h": 800,
+      "title": "ModerationCard — варианты",
+      "page": "library"
+    },
+    "PlaceActionButton.dc.html": {
+      "x": 940,
+      "y": 28098,
+      "w": 112,
+      "h": 62,
+      "title": "PlaceActionButton",
+      "page": "library"
+    },
+    "PlaceActionButtonStories.dc.html": {
+      "x": 940,
+      "y": 28240,
+      "w": 390,
+      "h": 320,
+      "title": "PlaceActionButton — варианты",
+      "page": "library"
+    },
+    "PlaceHero.dc.html": {
+      "x": 1410,
+      "y": 28098,
+      "w": 350,
+      "h": 64,
+      "title": "PlaceHero",
+      "page": "library"
+    },
+    "PlaceHeroStories.dc.html": {
+      "x": 1410,
+      "y": 28242,
+      "w": 390,
+      "h": 300,
+      "title": "PlaceHero — варианты",
+      "page": "library"
+    },
+    "PlaceHighlight.dc.html": {
+      "x": 1880,
+      "y": 28098,
+      "w": 358,
+      "h": 110,
+      "title": "PlaceHighlight",
+      "page": "library"
+    },
+    "PlaceHighlightStories.dc.html": {
+      "x": 1880,
+      "y": 28288,
+      "w": 390,
+      "h": 240,
+      "title": "PlaceHighlight — варианты",
+      "page": "library"
+    },
+    "PlaceIconTile.dc.html": {
+      "x": 2350,
+      "y": 28098,
+      "w": 72,
+      "h": 72,
+      "title": "PlaceIconTile",
+      "page": "library"
+    },
+    "PlaceIconTileStories.dc.html": {
+      "x": 2350,
+      "y": 28250,
+      "w": 390,
+      "h": 320,
+      "title": "PlaceIconTile — варианты",
+      "page": "library"
+    },
+    "PlaceReviewForm.dc.html": {
+      "x": 2820,
+      "y": 28098,
+      "w": 358,
+      "h": 252,
+      "title": "PlaceReviewForm",
+      "page": "library"
+    },
+    "PlaceReviewFormStories.dc.html": {
+      "x": 2820,
+      "y": 28430,
+      "w": 390,
+      "h": 680,
+      "title": "PlaceReviewForm — варианты",
+      "page": "library"
+    },
+    "RouteThumb.dc.html": {
+      "x": 3290,
+      "y": 28098,
+      "w": 72,
+      "h": 72,
+      "title": "RouteThumb",
+      "page": "library"
+    },
+    "RouteThumbStories.dc.html": {
+      "x": 3290,
+      "y": 28250,
+      "w": 390,
+      "h": 420,
+      "title": "RouteThumb — варианты",
+      "page": "library"
+    },
+    "WorkoutModeSwitch.dc.html": {
+      "x": 3760,
+      "y": 28098,
+      "w": 180,
+      "h": 40,
+      "title": "WorkoutModeSwitch",
+      "page": "library"
+    },
+    "WorkoutModeSwitchStories.dc.html": {
+      "x": 3760,
+      "y": 28218,
+      "w": 390,
+      "h": 280,
+      "title": "WorkoutModeSwitch — варианты",
+      "page": "library"
+    },
+    "WorkoutRow.dc.html": {
+      "x": 4230,
+      "y": 28098,
+      "w": 358,
+      "h": 96,
+      "title": "WorkoutRow",
+      "page": "library"
+    },
+    "WorkoutRowStories.dc.html": {
+      "x": 4230,
+      "y": 28274,
+      "w": 390,
+      "h": 340,
+      "title": "WorkoutRow — варианты",
+      "page": "library"
+    },
+    "WorkoutShareAction.dc.html": {
+      "x": 4700,
+      "y": 28098,
+      "w": 80,
+      "h": 76,
+      "title": "WorkoutShareAction",
+      "page": "library"
+    },
+    "WorkoutShareActionStories.dc.html": {
+      "x": 4700,
+      "y": 28254,
+      "w": 390,
+      "h": 220,
+      "title": "WorkoutShareAction — варианты",
+      "page": "library"
+    },
+    "WorkoutStoryCard.dc.html": {
+      "x": 0,
+      "y": 29518,
+      "w": 300,
+      "h": 533,
+      "title": "WorkoutStoryCard",
+      "page": "library"
+    },
+    "WorkoutStoryCardStories.dc.html": {
+      "x": 0,
+      "y": 30131,
+      "w": 390,
+      "h": 680,
+      "title": "WorkoutStoryCard — варианты",
+      "page": "library"
+    },
+    "CareerChoiceGroup.dc.html": {
+      "x": 0,
+      "y": 31251,
+      "w": 358,
+      "h": 84,
+      "title": "CareerChoiceGroup",
+      "page": "library"
+    },
+    "CareerChoiceGroupStories.dc.html": {
+      "x": 0,
+      "y": 31415,
+      "w": 390,
+      "h": 760,
+      "title": "CareerChoiceGroup — варианты",
+      "page": "library"
+    },
+    "CareerComingSoon.dc.html": {
+      "x": 470,
+      "y": 31251,
+      "w": 358,
+      "h": 300,
+      "title": "CareerComingSoon",
+      "page": "library"
+    },
+    "CareerComingSoonStories.dc.html": {
+      "x": 470,
+      "y": 31631,
+      "w": 390,
+      "h": 760,
+      "title": "CareerComingSoon — варианты",
+      "page": "library"
+    },
+    "CareerOffersCard.dc.html": {
+      "x": 940,
+      "y": 31251,
+      "w": 358,
+      "h": 100,
+      "title": "CareerOffersCard",
+      "page": "library"
+    },
+    "CareerOffersCardStories.dc.html": {
+      "x": 940,
+      "y": 31431,
+      "w": 390,
+      "h": 380,
+      "title": "CareerOffersCard — варианты",
+      "page": "library"
+    },
+    "CareerUploadField.dc.html": {
+      "x": 1410,
+      "y": 31251,
+      "w": 358,
+      "h": 100,
+      "title": "CareerUploadField",
+      "page": "library"
+    },
+    "CareerUploadFieldStories.dc.html": {
+      "x": 1410,
+      "y": 31431,
+      "w": 390,
+      "h": 460,
+      "title": "CareerUploadField — варианты",
+      "page": "library"
+    },
+    "CompanyLogo.dc.html": {
+      "x": 1880,
+      "y": 31251,
+      "w": 52,
+      "h": 52,
+      "title": "CompanyLogo",
+      "page": "library"
+    },
+    "CompanyLogoStories.dc.html": {
+      "x": 1880,
+      "y": 31383,
+      "w": 390,
+      "h": 560,
+      "title": "CompanyLogo — варианты",
+      "page": "library"
+    },
+    "GardnerChart.dc.html": {
+      "x": 2350,
+      "y": 31251,
+      "w": 358,
+      "h": 200,
+      "title": "GardnerChart",
+      "page": "library"
+    },
+    "GardnerChartStories.dc.html": {
+      "x": 2350,
+      "y": 31531,
+      "w": 390,
+      "h": 520,
+      "title": "GardnerChart — варианты",
+      "page": "library"
+    },
+    "NotificationRow.dc.html": {
+      "x": 2820,
+      "y": 31251,
+      "w": 390,
+      "h": 132,
+      "title": "NotificationRow",
+      "page": "library"
+    },
+    "NotificationRowStories.dc.html": {
+      "x": 2820,
+      "y": 31463,
+      "w": 390,
+      "h": 1040,
+      "title": "NotificationRow — варианты",
+      "page": "library"
+    },
+    "ResumeStepHeader.dc.html": {
+      "x": 3290,
+      "y": 31251,
+      "w": 358,
+      "h": 40,
+      "title": "ResumeStepHeader",
+      "page": "library"
+    },
+    "ResumeStepHeaderStories.dc.html": {
+      "x": 3290,
+      "y": 31371,
+      "w": 390,
+      "h": 300,
+      "title": "ResumeStepHeader — варианты",
+      "page": "library"
+    },
+    "ResumeStepper.dc.html": {
+      "x": 3760,
+      "y": 31251,
+      "w": 358,
+      "h": 44,
+      "title": "ResumeStepper",
+      "page": "library"
+    },
+    "ResumeStepperStories.dc.html": {
+      "x": 3760,
+      "y": 31375,
+      "w": 390,
+      "h": 360,
+      "title": "ResumeStepper — варианты",
+      "page": "library"
+    },
+    "TalentHero.dc.html": {
+      "x": 4230,
+      "y": 31251,
+      "w": 350,
+      "h": 160,
+      "title": "TalentHero",
+      "page": "library"
+    },
+    "TalentHeroStories.dc.html": {
+      "x": 4230,
+      "y": 31491,
+      "w": 390,
+      "h": 440,
+      "title": "TalentHero — варианты",
+      "page": "library"
+    },
+    "TalentRankRow.dc.html": {
+      "x": 4700,
+      "y": 31251,
+      "w": 358,
+      "h": 68,
+      "title": "TalentRankRow",
+      "page": "library"
+    },
+    "TalentRankRowStories.dc.html": {
+      "x": 4700,
+      "y": 31399,
+      "w": 390,
+      "h": 400,
+      "title": "TalentRankRow — варианты",
+      "page": "library"
+    },
+    "VacancyBulletList.dc.html": {
+      "x": 0,
+      "y": 32663,
+      "w": 330,
+      "h": 100,
+      "title": "VacancyBulletList",
+      "page": "library"
+    },
+    "VacancyBulletListStories.dc.html": {
+      "x": 0,
+      "y": 32843,
+      "w": 390,
+      "h": 420,
+      "title": "VacancyBulletList — варианты",
+      "page": "library"
+    },
+    "VacancyCard.dc.html": {
+      "x": 470,
+      "y": 32663,
+      "w": 358,
+      "h": 168,
+      "title": "VacancyCard",
+      "page": "library"
+    },
+    "VacancyCardStories.dc.html": {
+      "x": 470,
+      "y": 32911,
+      "w": 390,
+      "h": 760,
+      "title": "VacancyCard — варианты",
+      "page": "library"
+    },
+    "VacancyFact.dc.html": {
+      "x": 940,
+      "y": 32663,
+      "w": 330,
+      "h": 24,
+      "title": "VacancyFact",
+      "page": "library"
+    },
+    "VacancyFactStories.dc.html": {
+      "x": 940,
+      "y": 32767,
+      "w": 390,
+      "h": 440,
+      "title": "VacancyFact — варианты",
+      "page": "library"
+    },
+    "VacancyHero.dc.html": {
+      "x": 1410,
+      "y": 32663,
+      "w": 350,
+      "h": 100,
+      "title": "VacancyHero",
+      "page": "library"
+    },
+    "VacancyHeroStories.dc.html": {
+      "x": 1410,
+      "y": 32843,
+      "w": 390,
+      "h": 380,
+      "title": "VacancyHero — варианты",
+      "page": "library"
+    },
+    "VacancyRow.dc.html": {
+      "x": 1880,
+      "y": 32663,
+      "w": 358,
+      "h": 64,
+      "title": "VacancyRow",
+      "page": "library"
+    },
+    "VacancyRowStories.dc.html": {
+      "x": 1880,
+      "y": 32807,
+      "w": 390,
+      "h": 520,
+      "title": "VacancyRow — варианты",
+      "page": "library"
+    },
+    "AccentSwatch.dc.html": {
+      "x": 0,
+      "y": 34111,
+      "w": 84,
+      "h": 90,
+      "title": "AccentSwatch",
+      "page": "library"
+    },
+    "AccentSwatchStories.dc.html": {
+      "x": 0,
+      "y": 34281,
+      "w": 390,
+      "h": 440,
+      "title": "AccentSwatch — варианты",
+      "page": "library"
+    },
+    "AchievementBadge.dc.html": {
+      "x": 470,
+      "y": 34111,
+      "w": 66,
+      "h": 66,
+      "title": "AchievementBadge",
+      "page": "library"
+    },
+    "AchievementBadgeStories.dc.html": {
+      "x": 470,
+      "y": 34257,
+      "w": 390,
+      "h": 600,
+      "title": "AchievementBadge — варианты",
+      "page": "library"
+    },
+    "AchievementFilter.dc.html": {
+      "x": 940,
+      "y": 34111,
+      "w": 358,
+      "h": 124,
+      "title": "AchievementFilter",
+      "page": "library"
+    },
+    "AchievementFilterStories.dc.html": {
+      "x": 940,
+      "y": 34315,
+      "w": 390,
+      "h": 450,
+      "title": "AchievementFilter — варианты",
+      "page": "library"
+    },
+    "AchievementTile.dc.html": {
+      "x": 1410,
+      "y": 34111,
+      "w": 173,
+      "h": 290,
+      "title": "AchievementTile",
+      "page": "library"
+    },
+    "AchievementTileStories.dc.html": {
+      "x": 1410,
+      "y": 34481,
+      "w": 390,
+      "h": 980,
+      "title": "AchievementTile — варианты",
+      "page": "library"
+    },
+    "FitnessGoalRow.dc.html": {
+      "x": 1880,
+      "y": 34111,
+      "w": 358,
+      "h": 86,
+      "title": "FitnessGoalRow",
+      "page": "library"
+    },
+    "FitnessGoalRowStories.dc.html": {
+      "x": 1880,
+      "y": 34277,
+      "w": 390,
+      "h": 360,
+      "title": "FitnessGoalRow — варианты",
+      "page": "library"
+    },
+    "FitnessHero.dc.html": {
+      "x": 2350,
+      "y": 34111,
+      "w": 390,
+      "h": 300,
+      "title": "FitnessHero",
+      "page": "library"
+    },
+    "FitnessHeroStories.dc.html": {
+      "x": 2350,
+      "y": 34491,
+      "w": 390,
+      "h": 810,
+      "title": "FitnessHero — варианты",
+      "page": "library"
+    },
+    "FitnessMetricRow.dc.html": {
+      "x": 2820,
+      "y": 34111,
+      "w": 358,
+      "h": 64,
+      "title": "FitnessMetricRow",
+      "page": "library"
+    },
+    "FitnessMetricRowStories.dc.html": {
+      "x": 2820,
+      "y": 34255,
+      "w": 390,
+      "h": 300,
+      "title": "FitnessMetricRow — варианты",
+      "page": "library"
+    },
+    "FitnessRecordTile.dc.html": {
+      "x": 3290,
+      "y": 34111,
+      "w": 174,
+      "h": 124,
+      "title": "FitnessRecordTile",
+      "page": "library"
+    },
+    "FitnessRecordTileStories.dc.html": {
+      "x": 3290,
+      "y": 34315,
+      "w": 390,
+      "h": 450,
+      "title": "FitnessRecordTile — варианты",
+      "page": "library"
+    },
+    "FitnessSectionHeader.dc.html": {
+      "x": 3760,
+      "y": 34111,
+      "w": 390,
+      "h": 32,
+      "title": "FitnessSectionHeader",
+      "page": "library"
+    },
+    "FitnessSectionHeaderStories.dc.html": {
+      "x": 3760,
+      "y": 34223,
+      "w": 390,
+      "h": 340,
+      "title": "FitnessSectionHeader — варианты",
+      "page": "library"
+    },
+    "FitnessSummary.dc.html": {
+      "x": 4230,
+      "y": 34111,
+      "w": 358,
+      "h": 176,
+      "title": "FitnessSummary",
+      "page": "library"
+    },
+    "FitnessSummaryStories.dc.html": {
+      "x": 4230,
+      "y": 34367,
+      "w": 390,
+      "h": 380,
+      "title": "FitnessSummary — варианты",
+      "page": "library"
+    },
+    "FitnessWorkoutRow.dc.html": {
+      "x": 4700,
+      "y": 34111,
+      "w": 358,
+      "h": 74,
+      "title": "FitnessWorkoutRow",
+      "page": "library"
+    },
+    "FitnessWorkoutRowStories.dc.html": {
+      "x": 4700,
+      "y": 34265,
+      "w": 390,
+      "h": 400,
+      "title": "FitnessWorkoutRow — варианты",
+      "page": "library"
+    },
+    "HistoryChallengeCard.dc.html": {
+      "x": 0,
+      "y": 35621,
+      "w": 358,
+      "h": 120,
+      "title": "HistoryChallengeCard",
+      "page": "library"
+    },
+    "HistoryChallengeCardStories.dc.html": {
+      "x": 0,
+      "y": 35821,
+      "w": 390,
+      "h": 540,
+      "title": "HistoryChallengeCard — варианты",
+      "page": "library"
+    },
+    "PersonalizeSection.dc.html": {
+      "x": 470,
+      "y": 35621,
+      "w": 358,
+      "h": 126,
+      "title": "PersonalizeSection",
+      "page": "library"
+    },
+    "PersonalizeSectionStories.dc.html": {
+      "x": 470,
+      "y": 35827,
+      "w": 390,
+      "h": 420,
+      "title": "PersonalizeSection — варианты",
+      "page": "library"
+    },
+    "ProfileIntelligenceChart.dc.html": {
+      "x": 940,
+      "y": 35621,
+      "w": 358,
+      "h": 170,
+      "title": "ProfileIntelligenceChart",
+      "page": "library"
+    },
+    "ProfileIntelligenceChartStories.dc.html": {
+      "x": 940,
+      "y": 35871,
+      "w": 390,
+      "h": 330,
+      "title": "ProfileIntelligenceChart — варианты",
+      "page": "library"
+    },
+    "ProfileStrengthChip.dc.html": {
+      "x": 1410,
+      "y": 35621,
+      "w": 140,
+      "h": 32,
+      "title": "ProfileStrengthChip",
+      "page": "library"
+    },
+    "ProfileStrengthChipStories.dc.html": {
+      "x": 1410,
+      "y": 35733,
+      "w": 390,
+      "h": 300,
+      "title": "ProfileStrengthChip — варианты",
+      "page": "library"
+    },
+    "ProfileSummaryCard.dc.html": {
+      "x": 1880,
+      "y": 35621,
+      "w": 358,
+      "h": 160,
+      "title": "ProfileSummaryCard",
+      "page": "library"
+    },
+    "ProfileSummaryCardStories.dc.html": {
+      "x": 1880,
+      "y": 35861,
+      "w": 390,
+      "h": 520,
+      "title": "ProfileSummaryCard — варианты",
+      "page": "library"
+    },
+    "ProgramCard.dc.html": {
+      "x": 2350,
+      "y": 35621,
+      "w": 358,
+      "h": 118,
+      "title": "ProgramCard",
+      "page": "library"
+    },
+    "ProgramCardStories.dc.html": {
+      "x": 2350,
+      "y": 35819,
+      "w": 390,
+      "h": 800,
+      "title": "ProgramCard — варианты",
+      "page": "library"
+    },
+    "ProgramDisclosure.dc.html": {
+      "x": 2820,
+      "y": 35621,
+      "w": 358,
+      "h": 76,
+      "title": "ProgramDisclosure",
+      "page": "library"
+    },
+    "ProgramDisclosureStories.dc.html": {
+      "x": 2820,
+      "y": 35777,
+      "w": 390,
+      "h": 400,
+      "title": "ProgramDisclosure — варианты",
+      "page": "library"
+    },
+    "ProgramHighlight.dc.html": {
+      "x": 3290,
+      "y": 35621,
+      "w": 358,
+      "h": 80,
+      "title": "ProgramHighlight",
+      "page": "library"
+    },
+    "ProgramHighlightStories.dc.html": {
+      "x": 3290,
+      "y": 35781,
+      "w": 390,
+      "h": 320,
+      "title": "ProgramHighlight — варианты",
+      "page": "library"
+    },
+    "ProgramMetricTile.dc.html": {
+      "x": 3760,
+      "y": 35621,
+      "w": 173,
+      "h": 104,
+      "title": "ProgramMetricTile",
+      "page": "library"
+    },
+    "ProgramMetricTileStories.dc.html": {
+      "x": 3760,
+      "y": 35805,
+      "w": 390,
+      "h": 400,
+      "title": "ProgramMetricTile — варианты",
+      "page": "library"
+    },
+    "ProgramResultHero.dc.html": {
+      "x": 4230,
+      "y": 35621,
+      "w": 358,
+      "h": 350,
+      "title": "ProgramResultHero",
+      "page": "library"
+    },
+    "ProgramResultHeroStories.dc.html": {
+      "x": 4230,
+      "y": 36051,
+      "w": 390,
+      "h": 520,
+      "title": "ProgramResultHero — варианты",
+      "page": "library"
+    },
+    "ThemeBackdropSwatch.dc.html": {
+      "x": 4700,
+      "y": 35621,
+      "w": 116,
+      "h": 96,
+      "title": "ThemeBackdropSwatch",
+      "page": "library"
+    },
+    "ThemeBackdropSwatchStories.dc.html": {
+      "x": 4700,
+      "y": 35797,
+      "w": 390,
+      "h": 680,
+      "title": "ThemeBackdropSwatch — варианты",
+      "page": "library"
+    },
+    "ThemePreviewCard.dc.html": {
+      "x": 0,
+      "y": 36759,
+      "w": 358,
+      "h": 250,
+      "title": "ThemePreviewCard",
+      "page": "library"
+    },
+    "ThemePreviewCardStories.dc.html": {
+      "x": 0,
+      "y": 37089,
+      "w": 390,
+      "h": 400,
+      "title": "ThemePreviewCard — варианты",
+      "page": "library"
+    },
+    "ProfileButton.dc.html": {
+      "x": 2780,
+      "y": 240,
+      "w": 52,
+      "h": 52,
+      "title": "ProfileButton",
+      "page": "library"
+    },
+    "ProfileButtonStories.dc.html": {
+      "x": 2780,
+      "y": 372,
+      "w": 390,
+      "h": 520,
+      "title": "ProfileButton — варианты",
+      "page": "library"
+    },
+    "LearningResumeCard.dc.html": {
+      "x": 4700,
+      "y": 15578,
+      "w": 358,
+      "h": 120,
+      "title": "LearningResumeCard",
+      "page": "library"
+    },
+    "LearningResumeCardStories.dc.html": {
+      "x": 4700,
+      "y": 15832,
+      "w": 390,
+      "h": 480,
+      "title": "LearningResumeCardStories",
+      "page": "library"
+    },
+    "CourseHero.dc.html": {
+      "x": 0,
+      "y": 17622,
+      "w": 358,
+      "h": 360,
+      "title": "CourseHero",
+      "page": "library"
+    },
+    "CourseHeroStories.dc.html": {
+      "x": 0,
+      "y": 18062,
+      "w": 390,
+      "h": 960,
+      "title": "CourseHeroStories",
+      "page": "library"
+    },
+    "BookHero.dc.html": {
+      "x": 470,
+      "y": 17622,
+      "w": 358,
+      "h": 340,
+      "title": "BookHero",
+      "page": "library"
+    },
+    "BookHeroStories.dc.html": {
+      "x": 470,
+      "y": 18042,
+      "w": 390,
+      "h": 900,
+      "title": "BookHeroStories",
+      "page": "library"
+    },
+    "BookPromptRow.dc.html": {
+      "x": 940,
+      "y": 17622,
+      "w": 358,
+      "h": 48,
+      "title": "BookPromptRow",
+      "page": "library"
+    },
+    "BookPromptRowStories.dc.html": {
+      "x": 940,
+      "y": 17750,
+      "w": 390,
+      "h": 420,
+      "title": "BookPromptRowStories",
+      "page": "library"
+    },
+    "OnboardingStep3.dc.html": {
+      "x": 1410,
+      "y": 240,
+      "w": 390,
+      "h": 844,
+      "title": "Онбординг 3/4",
+      "page": "screens"
+    },
+    "Wrapper2.dc.html": {
+      "x": 3250,
+      "y": 240,
+      "w": 390,
+      "h": 120,
+      "title": "Wrapper2 — уровень вложенности 2 (копия Wrapper)",
+      "page": "library"
+    },
+    "Wrapper3.dc.html": {
+      "x": 3720,
+      "y": 240,
+      "w": 390,
+      "h": 120,
+      "title": "Wrapper3 — уровень вложенности 3 (копия Wrapper)",
+      "page": "library"
+    },
+    "Wrapper4.dc.html": {
+      "x": 4190,
+      "y": 240,
+      "w": 390,
+      "h": 120,
+      "title": "Wrapper4 — уровень вложенности 4 (копия Wrapper)",
+      "page": "library"
+    },
+    "AuthSheet.dc.html": {
+      "x": 5170,
+      "y": 13498,
+      "w": 390,
+      "h": 160,
+      "title": "AuthSheet",
+      "page": "library"
+    },
+    "AuthSheetStories.dc.html": {
+      "x": 5170,
+      "y": 13738,
+      "w": 390,
+      "h": 630,
+      "title": "AuthSheet — варианты",
+      "page": "library"
+    },
+    "AuthLegal.dc.html": {
+      "x": 5640,
+      "y": 13498,
+      "w": 342,
+      "h": 48,
+      "title": "AuthLegal",
+      "page": "library"
+    },
+    "AuthLegalStories.dc.html": {
+      "x": 5640,
+      "y": 13626,
+      "w": 390,
+      "h": 220,
+      "title": "AuthLegal — варианты",
+      "page": "library"
+    },
+    "NicknamePreview.dc.html": {
+      "x": 6110,
+      "y": 13498,
+      "w": 342,
+      "h": 68,
+      "title": "NicknamePreview",
+      "page": "library"
+    },
+    "NicknamePreviewStories.dc.html": {
+      "x": 6110,
+      "y": 13646,
+      "w": 390,
+      "h": 330,
+      "title": "NicknamePreview — варианты",
+      "page": "library"
+    },
+    "HeaderBackdrop.dc.html": {
+      "x": 4660,
+      "y": 240,
+      "w": 390,
+      "h": 360,
+      "title": "HeaderBackdrop",
+      "page": "library"
+    },
+    "HeaderBackdropStories.dc.html": {
+      "x": 4660,
+      "y": 680,
+      "w": 390,
+      "h": 1000,
+      "title": "HeaderBackdrop — мотивы",
+      "page": "library"
+    },
+    "ShortcutTile.dc.html": {
+      "x": 4230,
+      "y": 10774,
+      "w": 171,
+      "h": 112,
+      "title": "ShortcutTile",
+      "page": "library"
+    },
+    "ShortcutTileStories.dc.html": {
+      "x": 4230,
+      "y": 10966,
+      "w": 390,
+      "h": 410,
+      "title": "ShortcutTile — варианты",
+      "page": "library"
+    },
+    "CardMotif.dc.html": {
+      "x": 5170,
+      "y": 19462,
+      "w": 358,
+      "h": 170,
+      "title": "CardMotif",
+      "page": "library"
+    },
+    "CardMotifStories.dc.html": {
+      "x": 5170,
+      "y": 19712,
+      "w": 390,
+      "h": 900,
+      "title": "CardMotif — виды",
+      "page": "library"
+    },
+    "IconTile.dc.html": {
+      "x": 5170,
+      "y": 4048,
+      "w": 48,
+      "h": 48,
+      "title": "IconTile",
+      "page": "library"
+    },
+    "IconTileStories.dc.html": {
+      "x": 5170,
+      "y": 4176,
+      "w": 390,
+      "h": 510,
+      "title": "IconTile — варианты",
+      "page": "library"
+    },
+    "ReadingCommunityChallenges.dc.html": {
+      "x": 0,
+      "y": 120,
+      "w": 390,
+      "h": 1130,
+      "title": "A · Сообщество → Челленджи",
+      "page": "reading"
+    },
+    "ReadingCommunityMain.dc.html": {
+      "x": 470,
+      "y": 120,
+      "w": 390,
+      "h": 2060,
+      "title": "A · Сообщество → Главное (компактная)",
+      "page": "reading"
+    },
+    "ReadingBefore.dc.html": {
+      "x": 940,
+      "y": 120,
+      "w": 390,
+      "h": 2320,
+      "title": "B · До вступления",
+      "page": "reading"
+    },
+    "ReadingActive.dc.html": {
+      "x": 1410,
+      "y": 120,
+      "w": 390,
+      "h": 1920,
+      "title": "D · Участник",
+      "page": "reading"
+    },
+    "ReadingActiveCaptain.dc.html": {
+      "x": 1880,
+      "y": 120,
+      "w": 390,
+      "h": 2000,
+      "title": "D · Капитан",
+      "page": "reading"
+    },
+    "ReadingSessionReady.dc.html": {
+      "x": 0,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "title": "F1 · Готов к запуску",
+      "page": "reading"
+    },
+    "ReadingSessionRunning.dc.html": {
+      "x": 470,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "title": "F2 · Идёт обязательный час",
+      "page": "reading"
+    },
+    "ReadingSessionPages.dc.html": {
+      "x": 940,
+      "y": 2640,
+      "w": 390,
+      "h": 950,
+      "title": "F3 · Пауза → страницы за подход",
+      "page": "reading"
+    },
+    "ReadingSessionSaving.dc.html": {
+      "x": 1410,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "title": "F4 · Отправка подхода",
+      "page": "reading"
+    },
+    "ReadingSessionSaved.dc.html": {
+      "x": 1880,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "title": "F5 · Подход сохранён",
+      "page": "reading"
+    },
+    "ReadingSessionOvertime.dc.html": {
+      "x": 2350,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "title": "F6 · Дополнительное время",
+      "page": "reading"
+    },
+    "ReadingSessionDone.dc.html": {
+      "x": 2820,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "title": "F7 · День выполнен",
+      "page": "reading"
+    },
+    "ReadingSessionRunningDark.dc.html": {
+      "x": 3290,
+      "y": 2640,
+      "w": 390,
+      "h": 844,
+      "title": "F2 · Тёмная тема",
+      "page": "reading"
+    },
+    "ReadingChallengeCard.dc.html": {
+      "x": 0,
+      "y": 3830,
+      "w": 358,
+      "h": 175,
+      "title": "ReadingChallengeCard",
+      "page": "reading"
+    },
+    "ReadingChallengeCardStories.dc.html": {
+      "x": 0,
+      "y": 4085,
+      "w": 390,
+      "h": 1840,
+      "title": "ReadingChallengeCard — варианты",
+      "page": "reading"
+    },
+    "ReadingHeader.dc.html": {
+      "x": 470,
+      "y": 3830,
+      "w": 358,
+      "h": 370,
+      "title": "ReadingHeader",
+      "page": "reading"
+    },
+    "ReadingHeaderStories.dc.html": {
+      "x": 470,
+      "y": 4280,
+      "w": 390,
+      "h": 1190,
+      "title": "ReadingHeader — варианты",
+      "page": "reading"
+    },
+    "ReadingJoinGuide.dc.html": {
+      "x": 940,
+      "y": 3830,
+      "w": 358,
+      "h": 322,
+      "title": "ReadingJoinGuide",
+      "page": "reading"
+    },
+    "ReadingJoinGuideStories.dc.html": {
+      "x": 940,
+      "y": 4232,
+      "w": 390,
+      "h": 1120,
+      "title": "ReadingJoinGuide — варианты",
+      "page": "reading"
+    },
+    "ReadingTeamCard.dc.html": {
+      "x": 1410,
+      "y": 3830,
+      "w": 358,
+      "h": 166,
+      "title": "ReadingTeamCard",
+      "page": "reading"
+    },
+    "ReadingTeamCardStories.dc.html": {
+      "x": 1410,
+      "y": 4076,
+      "w": 390,
+      "h": 1240,
+      "title": "ReadingTeamCard — варианты",
+      "page": "reading"
+    },
+    "ReadingRules.dc.html": {
+      "x": 1880,
+      "y": 3830,
+      "w": 358,
+      "h": 490,
+      "title": "ReadingRules",
+      "page": "reading"
+    },
+    "ReadingRulesStories.dc.html": {
+      "x": 1880,
+      "y": 4400,
+      "w": 390,
+      "h": 660,
+      "title": "ReadingRules — варианты",
+      "page": "reading"
+    },
+    "ReadingTimer.dc.html": {
+      "x": 2350,
+      "y": 3830,
+      "w": 358,
+      "h": 376,
+      "title": "ReadingTimer",
+      "page": "reading"
+    },
+    "ReadingTimerStories.dc.html": {
+      "x": 2350,
+      "y": 4286,
+      "w": 390,
+      "h": 3530,
+      "title": "ReadingTimer — варианты",
+      "page": "reading"
+    },
+    "ReadingBookRow.dc.html": {
+      "x": 2820,
+      "y": 3830,
+      "w": 358,
+      "h": 72,
+      "title": "ReadingBookRow",
+      "page": "reading"
+    },
+    "ReadingBookRowStories.dc.html": {
+      "x": 2820,
+      "y": 3982,
+      "w": 390,
+      "h": 540,
+      "title": "ReadingBookRow — варианты",
+      "page": "reading"
+    },
+    "ReadingProgressSummary.dc.html": {
+      "x": 3290,
+      "y": 3830,
+      "w": 358,
+      "h": 180,
+      "title": "ReadingProgressSummary",
+      "page": "reading"
+    },
+    "ReadingProgressSummaryStories.dc.html": {
+      "x": 3290,
+      "y": 4090,
+      "w": 390,
+      "h": 880,
+      "title": "ReadingProgressSummary — варианты",
+      "page": "reading"
+    },
+    "ReadingSaveStatus.dc.html": {
+      "x": 3760,
+      "y": 3830,
+      "w": 358,
+      "h": 64,
+      "title": "ReadingSaveStatus",
+      "page": "reading"
+    },
+    "ReadingSaveStatusStories.dc.html": {
+      "x": 3760,
+      "y": 3974,
+      "w": 390,
+      "h": 620,
+      "title": "ReadingSaveStatus — варианты",
+      "page": "reading"
+    },
+    "ReadingRankRow.dc.html": {
+      "x": 4230,
+      "y": 3830,
+      "w": 358,
+      "h": 60,
+      "title": "ReadingRankRow",
+      "page": "reading"
+    },
+    "ReadingRankRowStories.dc.html": {
+      "x": 4230,
+      "y": 3970,
+      "w": 390,
+      "h": 520,
+      "title": "ReadingRankRow — варианты",
+      "page": "reading"
+    },
+    "ReadingPagesForm.dc.html": {
+      "x": 4700,
+      "y": 3830,
+      "w": 358,
+      "h": 294,
+      "title": "ReadingPagesForm",
+      "page": "reading"
+    },
+    "ReadingPagesFormStories.dc.html": {
+      "x": 4700,
+      "y": 4204,
+      "w": 390,
+      "h": 820,
+      "title": "ReadingPagesForm — варианты",
+      "page": "reading"
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-11T18:45:45.417Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas",
+    "page": "screens"
+  },
+  "notes": {
+    "t_auth": {
+      "x": 0,
+      "y": 0,
+      "text": "Вход и онбординг",
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "screens"
+    },
+    "t_lms": {
+      "x": 0,
+      "y": 1390,
+      "text": "Обучение",
+      "kind": "title1",
+      "maxW": 3290,
+      "page": "screens"
+    },
+    "t_ai": {
+      "x": 0,
+      "y": 5250,
+      "text": "AI",
+      "kind": "title1",
+      "maxW": 940,
+      "page": "screens"
+    },
+    "t_comm": {
+      "x": 0,
+      "y": 6630,
+      "text": "Сообщество",
+      "kind": "title1",
+      "maxW": 4230,
+      "page": "screens"
+    },
+    "t_chal": {
+      "x": 0,
+      "y": 9230,
+      "text": "Челленджи",
+      "kind": "title1",
+      "maxW": 4700,
+      "page": "screens"
+    },
+    "t_work": {
+      "x": 0,
+      "y": 12530,
+      "text": "Тренировки",
+      "kind": "title1",
+      "maxW": 1880,
+      "page": "screens"
+    },
+    "t_map": {
+      "x": 0,
+      "y": 14010,
+      "text": "Карта",
+      "kind": "title1",
+      "maxW": 2350,
+      "page": "screens"
+    },
+    "t_career": {
+      "x": 0,
+      "y": 16170,
+      "text": "Карьера",
+      "kind": "title1",
+      "maxW": 3290,
+      "page": "screens"
+    },
+    "t_prof": {
+      "x": 0,
+      "y": 19690,
+      "text": "Профиль и уведомления",
+      "kind": "title1",
+      "maxW": 3760,
+      "page": "screens"
+    },
+    "lib_lead": {
+      "x": 0,
+      "y": 0,
+      "text": "Фундамент: Screen · Wrapper · Text · Icon · TabDock",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "lib_lib_controls": {
+      "x": 0,
+      "y": 3808,
+      "text": "Контролы",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "lib_lib_blocks": {
+      "x": 0,
+      "y": 7878,
+      "text": "Блоки и раскладка",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "lib_learning": {
+      "x": 0,
+      "y": 13258,
+      "text": "Обучение и вход",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "lib_community": {
+      "x": 0,
+      "y": 19222,
+      "text": "AI и сообщество",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "lib_challenges": {
+      "x": 0,
+      "y": 22508,
+      "text": "Челленджи",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "lib_workout_map": {
+      "x": 0,
+      "y": 26318,
+      "text": "Тренировки и карта",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "lib_career": {
+      "x": 0,
+      "y": 31011,
+      "text": "Карьера и уведомления",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "lib_profile": {
+      "x": 0,
+      "y": 33871,
+      "text": "Профиль",
+      "kind": "title1",
+      "maxW": 4000,
+      "page": "library"
+    },
+    "rd_screens": {
+      "x": 0,
+      "y": 0,
+      "text": "Reading challenge · фаза 1: карточка, до вступления, активная страница",
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "reading"
+    },
+    "rd_timer": {
+      "x": 0,
+      "y": 2520,
+      "text": "F · Чтение: запуск, пауза и страницы, сохранение, доп. время, итог дня",
+      "kind": "title1",
+      "maxW": 3680,
+      "page": "reading"
+    },
+    "rd_lib": {
+      "x": 0,
+      "y": 3710,
+      "text": "Компоненты Reading «Тишина и бумага» + Storybook",
+      "kind": "title1",
+      "maxW": 5090,
+      "page": "reading"
+    }
+  },
+  "order": [
+    "IntroSplash.dc.html",
+    "Onboarding.dc.html",
+    "Onboarding2.dc.html",
+    "OnboardingStep3.dc.html",
+    "Onboarding3.dc.html",
+    "Auth.dc.html",
+    "NicknameGate.dc.html",
+    "LMSHome.dc.html",
+    "CourseDetail.dc.html",
+    "Video.dc.html",
+    "Downloads.dc.html",
+    "BooksCatalog.dc.html",
+    "BookDetail.dc.html",
+    "BookAI.dc.html",
+    "AIChat.dc.html",
+    "AIChatIntro.dc.html",
+    "CommunityHome.dc.html",
+    "CommunityHome2.dc.html",
+    "Channels.dc.html",
+    "ServerChannel.dc.html",
+    "CreateContent.dc.html",
+    "MeetupDetail.dc.html",
+    "SportDetail.dc.html",
+    "TripDetail.dc.html",
+    "EventApplicants.dc.html",
+    "ChallengeDetail.dc.html",
+    "JoinChallenge.dc.html",
+    "ChallengeDays.dc.html",
+    "ChallengeRoster.dc.html",
+    "TeamStandings.dc.html",
+    "OverallStandings.dc.html",
+    "ChallengeResults.dc.html",
+    "ChallengeResultsModal.dc.html",
+    "ChallengeApplicants.dc.html",
+    "ManageChallenge.dc.html",
+    "WorkoutTrack.dc.html",
+    "WorkoutHistory.dc.html",
+    "WorkoutDetail.dc.html",
+    "WorkoutShare.dc.html",
+    "MapHome.dc.html",
+    "PlaceDetail.dc.html",
+    "AddPlace.dc.html",
+    "OfflineMap.dc.html",
+    "AdminPlaces.dc.html",
+    "CareerHome.dc.html",
+    "CareerHome2.dc.html",
+    "VacancyDetail.dc.html",
+    "ResumeForm.dc.html",
+    "TalentProfile.dc.html",
+    "CreateVacancy.dc.html",
+    "VacancyApplicants.dc.html",
+    "ProfileHome.dc.html",
+    "Personalize.dc.html",
+    "MyFitness.dc.html",
+    "ProgramHistory.dc.html",
+    "ProgramResult.dc.html",
+    "ChallengeHistory.dc.html",
+    "Notifications.dc.html",
+    "Achievements.dc.html",
+    "Icon.dc.html",
+    "IconStories.dc.html",
+    "Screen.dc.html",
+    "TabDock.dc.html",
+    "Text.dc.html",
+    "TextStories.dc.html",
+    "Wrapper.dc.html",
+    "WrapperStories.dc.html",
+    "Avatar.dc.html",
+    "AvatarStories.dc.html",
+    "AvatarStack.dc.html",
+    "AvatarStackStories.dc.html",
+    "Button.dc.html",
+    "ButtonStories.dc.html",
+    "Checkbox.dc.html",
+    "CheckboxStories.dc.html",
+    "Chip.dc.html",
+    "ChipStories.dc.html",
+    "IconButton.dc.html",
+    "IconButtonStories.dc.html",
+    "PageDots.dc.html",
+    "PageDotsStories.dc.html",
+    "ProgressBar.dc.html",
+    "ProgressBarStories.dc.html",
+    "ProgressRing.dc.html",
+    "ProgressRingStories.dc.html",
+    "RadioOption.dc.html",
+    "RadioOptionStories.dc.html",
+    "SearchField.dc.html",
+    "SearchFieldStories.dc.html",
+    "Segmented.dc.html",
+    "SegmentedStories.dc.html",
+    "SelectField.dc.html",
+    "SelectFieldStories.dc.html",
+    "Stars.dc.html",
+    "StarsStories.dc.html",
+    "StatusBadge.dc.html",
+    "StatusBadgeStories.dc.html",
+    "StoryBackdrop.dc.html",
+    "StoryBackdropStories.dc.html",
+    "TextField.dc.html",
+    "TextFieldStories.dc.html",
+    "Toggle.dc.html",
+    "ToggleStories.dc.html",
+    "BottomBar.dc.html",
+    "BottomBarStories.dc.html",
+    "Callout.dc.html",
+    "CalloutStories.dc.html",
+    "Card.dc.html",
+    "CardStories.dc.html",
+    "ChatBubble.dc.html",
+    "ChatBubbleStories.dc.html",
+    "ChatComposer.dc.html",
+    "ChatComposerStories.dc.html",
+    "Divider.dc.html",
+    "DividerStories.dc.html",
+    "EmptyState.dc.html",
+    "EmptyStateStories.dc.html",
+    "Illustration.dc.html",
+    "IllustrationStories.dc.html",
+    "KeyValueRow.dc.html",
+    "KeyValueRowStories.dc.html",
+    "ListRow.dc.html",
+    "ListRowStories.dc.html",
+    "ListSection.dc.html",
+    "ListSectionStories.dc.html",
+    "Logo.dc.html",
+    "LogoStories.dc.html",
+    "MediaCover.dc.html",
+    "MediaCoverStories.dc.html",
+    "NavBarLarge.dc.html",
+    "NavBarLargeStories.dc.html",
+    "NavHeader.dc.html",
+    "NavHeaderStories.dc.html",
+    "PageHeading.dc.html",
+    "PageHeadingStories.dc.html",
+    "SectionHeader.dc.html",
+    "SectionHeaderStories.dc.html",
+    "ShortcutCard.dc.html",
+    "ShortcutCardStories.dc.html",
+    "StatTile.dc.html",
+    "StatTileStories.dc.html",
+    "AuthActionButton.dc.html",
+    "AuthActionButtonStories.dc.html",
+    "AuthDivider.dc.html",
+    "AuthDividerStories.dc.html",
+    "AuthField.dc.html",
+    "AuthFieldStories.dc.html",
+    "AuthHero.dc.html",
+    "AuthHeroStories.dc.html",
+    "AuthSegmented.dc.html",
+    "AuthSegmentedStories.dc.html",
+    "AuthTextLink.dc.html",
+    "AuthTextLinkStories.dc.html",
+    "BookCard.dc.html",
+    "BookCardStories.dc.html",
+    "BookComposer.dc.html",
+    "BookComposerStories.dc.html",
+    "BookCover.dc.html",
+    "BookCoverStories.dc.html",
+    "BookProgressSteps.dc.html",
+    "BookProgressStepsStories.dc.html",
+    "BookRatingInput.dc.html",
+    "BookRatingInputStories.dc.html",
+    "CourseCard.dc.html",
+    "CourseCardStories.dc.html",
+    "DownloadRow.dc.html",
+    "DownloadRowStories.dc.html",
+    "LearningModalSheet.dc.html",
+    "LearningModalSheetStories.dc.html",
+    "LessonDownloadButton.dc.html",
+    "LessonDownloadButtonStories.dc.html",
+    "LessonRow.dc.html",
+    "LessonRowStories.dc.html",
+    "OnboardingIllustration.dc.html",
+    "OnboardingIllustrationStories.dc.html",
+    "PlayerNowPlaying.dc.html",
+    "PlayerNowPlayingStories.dc.html",
+    "PlayerSheet.dc.html",
+    "PlayerSheetStories.dc.html",
+    "PlayerVideo.dc.html",
+    "PlayerVideoStories.dc.html",
+    "SplashHero.dc.html",
+    "SplashHeroStories.dc.html",
+    "AIAnswer.dc.html",
+    "AIAnswerStories.dc.html",
+    "AISuggestionChip.dc.html",
+    "AISuggestionChipStories.dc.html",
+    "ChannelCard.dc.html",
+    "ChannelCardStories.dc.html",
+    "ChannelHero.dc.html",
+    "ChannelHeroStories.dc.html",
+    "CommunityActivityCard.dc.html",
+    "CommunityActivityCardStories.dc.html",
+    "CommunityChallengeProgress.dc.html",
+    "CommunityChallengeProgressStories.dc.html",
+    "CreateDateTimeField.dc.html",
+    "CreateDateTimeFieldStories.dc.html",
+    "CreateLocationPicker.dc.html",
+    "CreateLocationPickerStories.dc.html",
+    "EventApplicantRow.dc.html",
+    "EventApplicantRowStories.dc.html",
+    "EventAttendees.dc.html",
+    "EventAttendeesStories.dc.html",
+    "EventCard.dc.html",
+    "EventCardStories.dc.html",
+    "EventHero.dc.html",
+    "EventHeroStories.dc.html",
+    "EventRow.dc.html",
+    "EventRowStories.dc.html",
+    "PostCard.dc.html",
+    "PostCardStories.dc.html",
+    "PostFeedHeader.dc.html",
+    "PostFeedHeaderStories.dc.html",
+    "PostVoiceNote.dc.html",
+    "PostVoiceNoteStories.dc.html",
+    "ReactionChip.dc.html",
+    "ReactionChipStories.dc.html",
+    "TripRouteStep.dc.html",
+    "TripRouteStepStories.dc.html",
+    "ChallengeConsentCard.dc.html",
+    "ChallengeConsentCardStories.dc.html",
+    "ChallengeHero.dc.html",
+    "ChallengeHeroStories.dc.html",
+    "DayCalendar.dc.html",
+    "DayCalendarStories.dc.html",
+    "DayCell.dc.html",
+    "DayCellStories.dc.html",
+    "DayPlanHeader.dc.html",
+    "DayPlanHeaderStories.dc.html",
+    "DayRow.dc.html",
+    "DayRowStories.dc.html",
+    "DaySyncStatus.dc.html",
+    "DaySyncStatusStories.dc.html",
+    "PodiumMedal.dc.html",
+    "PodiumMedalStories.dc.html",
+    "RosterGroupHeader.dc.html",
+    "RosterGroupHeaderStories.dc.html",
+    "RosterMemberRow.dc.html",
+    "RosterMemberRowStories.dc.html",
+    "ScoreFlagSummary.dc.html",
+    "ScoreFlagSummaryStories.dc.html",
+    "ScoreLegend.dc.html",
+    "ScoreLegendStories.dc.html",
+    "ScoreSummary.dc.html",
+    "ScoreSummaryStories.dc.html",
+    "StandingMyPlace.dc.html",
+    "StandingMyPlaceStories.dc.html",
+    "StandingRow.dc.html",
+    "StandingRowStories.dc.html",
+    "TaskCheck.dc.html",
+    "TaskCheckStories.dc.html",
+    "TaskLink.dc.html",
+    "TaskLinkStories.dc.html",
+    "TaskRow.dc.html",
+    "TaskRowStories.dc.html",
+    "TeamEditorRow.dc.html",
+    "TeamEditorRowStories.dc.html",
+    "TeamPickRow.dc.html",
+    "TeamPickRowStories.dc.html",
+    "TeamResultCard.dc.html",
+    "TeamResultCardStories.dc.html",
+    "TeamScoreHeader.dc.html",
+    "TeamScoreHeaderStories.dc.html",
+    "TeamStepper.dc.html",
+    "TeamStepperStories.dc.html",
+    "MapBanner.dc.html",
+    "MapBannerStories.dc.html",
+    "MapCanvas.dc.html",
+    "MapCanvasStories.dc.html",
+    "MapControl.dc.html",
+    "MapControlStories.dc.html",
+    "MapDropPin.dc.html",
+    "MapDropPinStories.dc.html",
+    "MapEventTag.dc.html",
+    "MapEventTagStories.dc.html",
+    "MapPin.dc.html",
+    "MapPinStories.dc.html",
+    "MapSheet.dc.html",
+    "MapSheetStories.dc.html",
+    "MapUserDot.dc.html",
+    "MapUserDotStories.dc.html",
+    "MapWatermark.dc.html",
+    "MapWatermarkStories.dc.html",
+    "MetricRow.dc.html",
+    "MetricRowStories.dc.html",
+    "MetricValue.dc.html",
+    "MetricValueStories.dc.html",
+    "ModerationCard.dc.html",
+    "ModerationCardStories.dc.html",
+    "PlaceActionButton.dc.html",
+    "PlaceActionButtonStories.dc.html",
+    "PlaceHero.dc.html",
+    "PlaceHeroStories.dc.html",
+    "PlaceHighlight.dc.html",
+    "PlaceHighlightStories.dc.html",
+    "PlaceIconTile.dc.html",
+    "PlaceIconTileStories.dc.html",
+    "PlaceReviewForm.dc.html",
+    "PlaceReviewFormStories.dc.html",
+    "RouteThumb.dc.html",
+    "RouteThumbStories.dc.html",
+    "WorkoutModeSwitch.dc.html",
+    "WorkoutModeSwitchStories.dc.html",
+    "WorkoutRow.dc.html",
+    "WorkoutRowStories.dc.html",
+    "WorkoutShareAction.dc.html",
+    "WorkoutShareActionStories.dc.html",
+    "WorkoutStoryCard.dc.html",
+    "WorkoutStoryCardStories.dc.html",
+    "CareerChoiceGroup.dc.html",
+    "CareerChoiceGroupStories.dc.html",
+    "CareerComingSoon.dc.html",
+    "CareerComingSoonStories.dc.html",
+    "CareerOffersCard.dc.html",
+    "CareerOffersCardStories.dc.html",
+    "CareerUploadField.dc.html",
+    "CareerUploadFieldStories.dc.html",
+    "CompanyLogo.dc.html",
+    "CompanyLogoStories.dc.html",
+    "GardnerChart.dc.html",
+    "GardnerChartStories.dc.html",
+    "NotificationRow.dc.html",
+    "NotificationRowStories.dc.html",
+    "ResumeStepHeader.dc.html",
+    "ResumeStepHeaderStories.dc.html",
+    "ResumeStepper.dc.html",
+    "ResumeStepperStories.dc.html",
+    "TalentHero.dc.html",
+    "TalentHeroStories.dc.html",
+    "TalentRankRow.dc.html",
+    "TalentRankRowStories.dc.html",
+    "VacancyBulletList.dc.html",
+    "VacancyBulletListStories.dc.html",
+    "VacancyCard.dc.html",
+    "VacancyCardStories.dc.html",
+    "VacancyFact.dc.html",
+    "VacancyFactStories.dc.html",
+    "VacancyHero.dc.html",
+    "VacancyHeroStories.dc.html",
+    "VacancyRow.dc.html",
+    "VacancyRowStories.dc.html",
+    "AccentSwatch.dc.html",
+    "AccentSwatchStories.dc.html",
+    "AchievementBadge.dc.html",
+    "AchievementBadgeStories.dc.html",
+    "AchievementFilter.dc.html",
+    "AchievementFilterStories.dc.html",
+    "AchievementTile.dc.html",
+    "AchievementTileStories.dc.html",
+    "FitnessGoalRow.dc.html",
+    "FitnessGoalRowStories.dc.html",
+    "FitnessHero.dc.html",
+    "FitnessHeroStories.dc.html",
+    "FitnessMetricRow.dc.html",
+    "FitnessMetricRowStories.dc.html",
+    "FitnessRecordTile.dc.html",
+    "FitnessRecordTileStories.dc.html",
+    "FitnessSectionHeader.dc.html",
+    "FitnessSectionHeaderStories.dc.html",
+    "FitnessSummary.dc.html",
+    "FitnessSummaryStories.dc.html",
+    "FitnessWorkoutRow.dc.html",
+    "FitnessWorkoutRowStories.dc.html",
+    "HistoryChallengeCard.dc.html",
+    "HistoryChallengeCardStories.dc.html",
+    "PersonalizeSection.dc.html",
+    "PersonalizeSectionStories.dc.html",
+    "ProfileIntelligenceChart.dc.html",
+    "ProfileIntelligenceChartStories.dc.html",
+    "ProfileStrengthChip.dc.html",
+    "ProfileStrengthChipStories.dc.html",
+    "ProfileSummaryCard.dc.html",
+    "ProfileSummaryCardStories.dc.html",
+    "ProgramCard.dc.html",
+    "ProgramCardStories.dc.html",
+    "ProgramDisclosure.dc.html",
+    "ProgramDisclosureStories.dc.html",
+    "ProgramHighlight.dc.html",
+    "ProgramHighlightStories.dc.html",
+    "ProgramMetricTile.dc.html",
+    "ProgramMetricTileStories.dc.html",
+    "ProgramResultHero.dc.html",
+    "ProgramResultHeroStories.dc.html",
+    "ThemeBackdropSwatch.dc.html",
+    "ThemeBackdropSwatchStories.dc.html",
+    "ThemePreviewCard.dc.html",
+    "ThemePreviewCardStories.dc.html",
+    "ProfileButton.dc.html",
+    "ProfileButtonStories.dc.html",
+    "LearningResumeCard.dc.html",
+    "LearningResumeCardStories.dc.html",
+    "CourseHero.dc.html",
+    "CourseHeroStories.dc.html",
+    "BookHero.dc.html",
+    "BookHeroStories.dc.html",
+    "BookPromptRow.dc.html",
+    "BookPromptRowStories.dc.html",
+    "Wrapper2.dc.html",
+    "Wrapper3.dc.html",
+    "Wrapper4.dc.html",
+    "AuthSheet.dc.html",
+    "AuthSheetStories.dc.html",
+    "AuthLegal.dc.html",
+    "AuthLegalStories.dc.html",
+    "NicknamePreview.dc.html",
+    "NicknamePreviewStories.dc.html",
+    "HeaderBackdrop.dc.html",
+    "HeaderBackdropStories.dc.html",
+    "ShortcutTile.dc.html",
+    "ShortcutTileStories.dc.html",
+    "CardMotif.dc.html",
+    "CardMotifStories.dc.html",
+    "IconTile.dc.html",
+    "IconTileStories.dc.html",
+    "ReadingCommunityChallenges.dc.html",
+    "ReadingCommunityMain.dc.html",
+    "ReadingBefore.dc.html",
+    "ReadingActive.dc.html",
+    "ReadingActiveCaptain.dc.html",
+    "ReadingSessionReady.dc.html",
+    "ReadingSessionRunning.dc.html",
+    "ReadingSessionPages.dc.html",
+    "ReadingSessionSaving.dc.html",
+    "ReadingSessionSaved.dc.html",
+    "ReadingSessionOvertime.dc.html",
+    "ReadingSessionDone.dc.html",
+    "ReadingSessionRunningDark.dc.html",
+    "ReadingChallengeCard.dc.html",
+    "ReadingChallengeCardStories.dc.html",
+    "ReadingHeader.dc.html",
+    "ReadingHeaderStories.dc.html",
+    "ReadingJoinGuide.dc.html",
+    "ReadingJoinGuideStories.dc.html",
+    "ReadingTeamCard.dc.html",
+    "ReadingTeamCardStories.dc.html",
+    "ReadingRules.dc.html",
+    "ReadingRulesStories.dc.html",
+    "ReadingTimer.dc.html",
+    "ReadingTimerStories.dc.html",
+    "ReadingBookRow.dc.html",
+    "ReadingBookRowStories.dc.html",
+    "ReadingProgressSummary.dc.html",
+    "ReadingProgressSummaryStories.dc.html",
+    "ReadingSaveStatus.dc.html",
+    "ReadingSaveStatusStories.dc.html",
+    "ReadingRankRow.dc.html",
+    "ReadingRankRowStories.dc.html",
+    "ReadingPagesForm.dc.html",
+    "ReadingPagesFormStories.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "screens",
+      "name": "Экраны"
+    },
+    {
+      "id": "library",
+      "name": "Компоненты (Storybook)"
+    },
+    {
+      "id": "reading",
+      "name": "Reading challenge"
+    }
+  ],
+  "title": "Divergents SuperApp — все экраны"
+}

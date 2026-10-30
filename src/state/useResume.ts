@@ -1,31 +1,31 @@
 // Local resume answers (persisted) + submit to Talentslab.
-// Hydration order (never clobbers what the user has typed):
-//   1. persisted local answers (dvg.resume)
-//   2. Clerk email / full name
-//   3. the user's EXISTING Talentslab profile (so opening the form doesn't show
-//      blanks and a save can't wipe data already entered on the website — #6)
-// A failed submit is remembered (dvg.resumePending) and retried once on the next
-// mount, so an offline save still reaches HR when connectivity returns (#4).
+// Persisted answers hydrate immediately. Fresh website values replace stale
+// local fields except active edits and queued saved changes. Explicit saves go
+// through an account-bound outbox, retried on launch/foreground and every minute.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { loadJSON, saveJSON } from './persist';
 import { emitProfileChanged, onProfileChanged } from './profileBus';
-import { submitResume, getTalentslabToken, ResumeAnswers, effectiveResumeCompleteness, resumeListValues } from '../data/talentslab';
+import { ResumeAnswers, effectiveResumeCompleteness } from '../data/talentslab';
+import { mergeResumeFromServer, resumeChanges, resumeFormValues } from '../data/resumeSync';
+import { enqueueResume, flushResume, pendingResume, RESUME_OUTBOX } from './resumeSync';
 import { REQUIRED_KEYS, RESUME_STEPS } from '../data/resumeSchema';
 import { useTalentProfile } from './useTalentProfile';
+import { NicknameTakenError } from '../data/nickname';
+
+export type ResumeSaveResult = { ok: true } | { ok: false; reason: 'nickname_taken' | 'sync_unavailable' };
 
 const KEY = 'dvg.resume';
 const PENDING = 'dvg.resumePending';
 const ALL_KEYS = RESUME_STEPS.flatMap((s) => s.fields.map((f) => f.key));
-const FIELD_TYPE: Record<string, string> = Object.fromEntries(
-  RESUME_STEPS.flatMap((s) => s.fields.map((f) => [f.key, f.type] as [string, string])),
-);
 
 const isEmpty = (v: any) => v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
 
 export function useResume() {
   const { getToken } = useAuth();
   const { user } = useUser();
+  const owner = user?.id ?? null;
   const { profile, live } = useTalentProfile();
   const [answers, setAnswers] = useState<ResumeAnswers>({});
   const [hydrated, setHydrated] = useState(false);
@@ -37,18 +37,21 @@ export function useResume() {
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
   const answersRef = useRef(answers);
-  answersRef.current = answers;
+  const editedKeys = useRef(new Set<string>());
+  const baseline = useRef<ResumeAnswers | null>(null);
 
   useEffect(() => {
     loadJSON<ResumeAnswers>(KEY, {}).then((v) => {
       // prefill email/full name from Clerk if empty AND already available
       const email = user?.primaryEmailAddress?.emailAddress;
-      setAnswers({
+      const next = {
         ...(email && !v.email ? { email } : {}),
         ...(user?.firstName && !v.first_name ? { first_name: user.firstName } : {}),
         ...(user?.lastName && !v.last_name ? { last_name: user.lastName } : {}),
         ...v,
-      });
+      };
+      answersRef.current = next;
+      setAnswers(next);
       setHydrated(true);
     });
   }, []);
@@ -64,50 +67,38 @@ export function useResume() {
       if (email && !p.email) next.email = email;
       if (user.firstName && !p.first_name) next.first_name = user.firstName;
       if (user.lastName && !p.last_name) next.last_name = user.lastName;
+      answersRef.current = next;
       return next;
     });
   }, [hydrated, user]);
 
-  // #6: hydrate empty fields from the EXISTING Talentslab profile once it loads.
-  // Only fills fields the user hasn't provided, and only safe value shapes
-  // (scalars + string arrays), so nothing typed is overwritten and messy
-  // object-arrays are skipped rather than corrupting the form.
-  const profileHydrated = useRef(false);
   useEffect(() => {
-    if (!hydrated || profileHydrated.current) return;
+    if (!hydrated || !owner) return;
     if (!live || !profile?.resume) return;
-    profileHydrated.current = true;
-    const src: any = profile.resume;
-    // Вузы, опыт, языки, награды: берём с СЕРВЕРА, даже если локально что-то
-    // есть. Сайт хранит их структурно и мог обновить их после того, как здесь
-    // сохранили старый текст; отправив устаревший текст, приложение удалило
-    // бы записи, добавленные на сайте. Исключение — неотправленные локальные
-    // правки (dvg.resumePending): их не трогаем, они уйдут на сервер.
-    const lists = resumeListValues(src, (k) => FIELD_TYPE[k]);
-    loadJSON<boolean>(PENDING, false).then((pending) => {
-      setAnswers((p) => {
-        const next = { ...p };
-        if (!pending) Object.assign(next, lists);
-        for (const k of ALL_KEYS) {
-          if (!isEmpty(next[k])) continue;
-          const v = src[k];
-          if (isEmpty(v)) continue;
-          if (Array.isArray(v)) { const strs = v.filter((x) => typeof x === 'string'); if (strs.length) next[k] = strs; continue; }
-          if (typeof v === 'object') continue;
-          next[k] = v;
-        }
-        saveJSON(KEY, next);
-        return next;
-      });
-    });
-  }, [hydrated, live, profile]);
+    let active = true;
+    const remote = resumeFormValues(profile.resume);
+    Promise.all([pendingResume(owner), loadJSON<boolean>(PENDING, false)]).then(([pending, legacyPending]) => {
+      if (!active) return;
+      const pendingKeys = pending ? Object.keys(pending.answers) : legacyPending ? Object.keys(answersRef.current) : [];
+      const next = mergeResumeFromServer(answersRef.current, remote, [...editedKeys.current, ...pendingKeys]);
+      baseline.current = remote;
+      answersRef.current = next;
+      setAnswers(next);
+      void saveJSON(KEY, next);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [hydrated, live, profile, owner]);
 
   // Анкету изменили на другом экране — перечитываем сохранённые ответы, чтобы
   // не ждать перезапуска приложения. В хранилище всегда самая свежая версия:
   // setField пишет туда синхронно с каждым изменением поля.
   useEffect(() => onProfileChanged(() => {
     loadJSON<ResumeAnswers>(KEY, {}).then((v) => {
-      if (v && Object.keys(v).length) setAnswers((p) => ({ ...p, ...v }));
+      if (v && Object.keys(v).length) {
+        const next = mergeResumeFromServer(answersRef.current, v, editedKeys.current);
+        answersRef.current = next;
+        setAnswers(next);
+      }
     });
   }), []);
 
@@ -116,8 +107,11 @@ export function useResume() {
    * Clerk), а не правка человека: она не должна делать анкету «несохранённой».
    */
   const setField = useCallback((key: string, value: any, opts?: { silent?: boolean }) => {
-    setAnswers((p) => { const n = { ...p, [key]: value }; saveJSON(KEY, n); return n; });
-    if (!opts?.silent) setDirty(true);
+    const next = { ...answersRef.current, [key]: value };
+    answersRef.current = next;
+    setAnswers(next);
+    void saveJSON(KEY, next);
+    if (!opts?.silent) { editedKeys.current.add(key); setDirty(true); }
   }, []);
 
   // Ответы человека вместе с тем, что уже лежит на сервере. Проверять доступ
@@ -142,16 +136,10 @@ export function useResume() {
     return effectiveResumeCompleteness(profile, localAndFields);
   })();
 
-  // Send to Talentslab (retry once). Records success/failure in `dvg.resumePending`
-  // so a failed send can be auto-retried on the next mount. Idempotent server-side.
-  const send = useCallback(async (a: ResumeAnswers): Promise<boolean> => {
-    const token = await getTalentslabToken(getTokenRef.current);
-    const email = user?.primaryEmailAddress?.emailAddress ?? null;
-    let ok = await submitResume(token, a, email);
-    if (!ok) { await new Promise((r) => setTimeout(r, 1200)); ok = await submitResume(token, a, email); }
-    saveJSON(PENDING, !ok);
-    return ok;
-  }, [user]);
+  // Enqueue before sending, so interruption cannot lose an explicit save.
+  const send = useCallback((a: ResumeAnswers, snapshot = a): Promise<boolean> => owner
+    ? enqueueResume(owner, a, (opts) => getTokenRef.current(opts), snapshot)
+    : Promise.resolve(false), [owner]);
 
   /**
    * Отправить анкету на Talentslab.
@@ -164,15 +152,23 @@ export function useResume() {
    *
    * Берём ответы из рефа, а не из замыкания, по той же причине.
    */
-  const submit = useCallback(async (patch?: ResumeAnswers) => {
+  const submitResult = useCallback(async (patch?: ResumeAnswers): Promise<ResumeSaveResult> => {
     setSubmitting(true);
     try {
       const answers = patch ? { ...answersRef.current, ...patch } : answersRef.current;
-      saveJSON(KEY, answers);
-      const ok = await send(answers);
+      answersRef.current = answers;
+      setAnswers(answers);
+      await saveJSON(KEY, answers);
+      const ok = await send(resumeChanges(answers, baseline.current), answers);
       // The Talentslab profile is cached on-device; drop it so the next read
       // fetches the freshly saved anketa instead of showing stale values.
-      if (ok) { setDirty(false); try { await saveJSON('dvg.talentProfileCache.v1', null); } catch {} }
+      if (ok) {
+        baseline.current = answers;
+        for (const key of editedKeys.current) {
+          if (JSON.stringify(answersRef.current[key]) === JSON.stringify(answers[key])) editedKeys.current.delete(key);
+        }
+        setDirty(editedKeys.current.size > 0);
+      }
       // Сообщаем всем экранам, что анкета изменилась — они обновятся сразу,
       // без перезапуска приложения.
       emitProfileChanged();
@@ -186,21 +182,38 @@ export function useResume() {
         if (ln) params.lastName = ln;
         if (user && Object.keys(params).length) await user.update(params);
       } catch {}
-      return ok;
-    } catch { saveJSON(PENDING, true); return false; }
+      return ok ? { ok: true } : { ok: false, reason: 'sync_unavailable' };
+    } catch (error) {
+      return { ok: false, reason: error instanceof NicknameTakenError ? 'nickname_taken' : 'sync_unavailable' };
+    }
     finally { setSubmitting(false); }
   }, [send, user]);
+  // Compatibility for callers that only need a success flag.
+  const submit = useCallback(async (patch?: ResumeAnswers) => (await submitResult(patch)).ok, [submitResult]);
 
-  // #4: if a previous submit failed, re-send once on mount (background, silent).
-  const resentRef = useRef(false);
+  // Retry on launch, foreground and while online in the foreground. The shared
+  // outbox deduplicates the many mounted useResume hooks and keeps account scope.
   useEffect(() => {
-    if (!hydrated || resentRef.current) return;
-    resentRef.current = true;
-    loadJSON<boolean>(PENDING, false).then((pending) => {
+    if (!hydrated || !owner) return;
+    let active = true;
+    const retry = async () => {
+      // Migrate the old pending flag only when its email matches this account.
+      const [outbox, oldPending] = await Promise.all([loadJSON(RESUME_OUTBOX, null), loadJSON<boolean>(PENDING, false)]);
+      if (!active) return;
       const a = answersRef.current;
-      if (pending && Object.keys(a).length) send(a).catch(() => {});
-    });
-  }, [hydrated, send]);
+      const email = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase();
+      if (!outbox && oldPending && email && String(a.email ?? '').trim().toLowerCase() === email) {
+        await send(a);
+      } else {
+        await flushResume(owner, (opts) => getTokenRef.current(opts));
+      }
+    };
+    const safelyRetry = () => { void retry().catch(() => {}); };
+    safelyRetry();
+    const listener = AppState.addEventListener('change', (state) => { if (state === 'active') safelyRetry(); });
+    const timer = setInterval(() => { if (AppState.currentState === 'active') safelyRetry(); }, 60_000);
+    return () => { active = false; listener.remove(); clearInterval(timer); };
+  }, [hydrated, owner, send, user?.primaryEmailAddress?.emailAddress]);
 
-  return { answers, mergedAnswers, setField, completeness, submit, submitting, hydrated, dirty };
+  return { answers, mergedAnswers, setField, completeness, submit, submitResult, submitting, hydrated, dirty };
 }

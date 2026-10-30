@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>SectionHeader — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="660" safe-top="{{false}}" hint-size="390px,660px">
+  <dc-import name="Wrapper" pad-top="24" gap="20" hint-size="100%,620px">
+    <dc-import name="Wrapper2" pad-x="16" hint-size="100%,28px">
+      <dc-import name="Text" variant="title2" heading="1" text="SectionHeader" hint-size="100%,28px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,60px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=regular" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="SectionHeader" title="Продолжить" hint-size="100%,37px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,60px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=regular · action + href" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="SectionHeader" title="Мои курсы" action="Все" href="LMSHome.dc.html" hint-size="100%,40px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,60px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=regular · action без href (кнопка)" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="SectionHeader" title="Встречи рядом" action="Фильтр" hint-size="100%,40px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,50px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=small" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="SectionHeader" size="small" title="Достижения · 15/50" hint-size="100%,32px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,50px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=small · action" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="SectionHeader" size="small" title="Идут · 8 человек" action="Все" href="EventApplicants.dc.html" hint-size="100%,32px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,50px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=small · action · chevron=false" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="SectionHeader" size="small" title="Заявки · 12" action="Изменить" chevron="{{false}}" hint-size="100%,32px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,60px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="size=regular · action + href · chevron=false" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="SectionHeader" title="Рекомендации" action="Обновить" href="LMSHome.dc.html" chevron="{{false}}" hint-size="100%,40px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":660}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

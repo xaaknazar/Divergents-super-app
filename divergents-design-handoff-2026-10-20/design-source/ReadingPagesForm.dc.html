@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingPagesForm</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<section aria-label="Страницы за этот подход" style="{{rootCss}}">
+  <span style="{{titleCss}}">Страницы за этот подход</span>
+  <span style="{{subCss}}">{{sub}}</span>
+  <div style="display: flex; align-items: center; justify-content: center; gap: 22px; margin: 22px 0 6px">
+    <span role="button" aria-label="Меньше" style="{{stepCss}}"><dc-import name="Icon" icon="minus" size="lg" tone="inherit" hint-size="24px,24px"></dc-import></span>
+    <span style="{{valueCss}}">{{value}}</span>
+    <span role="button" aria-label="Больше" style="{{stepCss}}"><dc-import name="Icon" icon="plus" size="lg" tone="inherit" hint-size="24px,24px"></dc-import></span>
+  </div>
+  <span style="{{nextCss}}">{{next}}</span>
+  <span style="{{hintCss}}">Ноль — тоже можно, если сразу отвлекли.</span>
+  <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 20px">
+    <dc-import name="Button" label="Сохранить подход" variant="solid" size="large" full-width="{{true}}" hint-size="100%,56px"></dc-import>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"scheme": {"editor": "enum", "default": "light", "options": ["light", "dark"]}, "value": {"editor": "int", "default": 15, "min": 0, "max": 500}, "startPage": {"editor": "int", "default": 128}, "minutes": {"editor": "int", "default": 24}, "$preview": {"width": 358, "height": 294}}'>
+class Component extends DCLogic {
+  static PAL = {
+    light: { card: '#FFFFFF', border: '#E4E7EF', sep: 'rgba(60,60,67,0.12)', ink: '#0B0E16', ink2: '#5C5C60', ink3: '#6B6B70', brand: '#234088', accent: '#3D5BDB', tint: 'rgba(35,64,136,0.07)', track: '#E9ECF5', ok: '#187A32', okTint: 'rgba(24,122,50,0.09)', warn: '#934900', warnTint: 'rgba(255,149,0,0.12)', shadow: '0 1px 2px rgba(16,24,40,0.05), 0 10px 24px -14px rgba(16,24,40,0.22)', book: '/_blob/534c3a5937de37a34afa6a6ebd91be4b' },
+    dark: { card: '#161B26', border: 'rgba(255,255,255,0.08)', sep: 'rgba(255,255,255,0.10)', ink: '#F5F6FA', ink2: 'rgba(235,235,245,0.64)', ink3: 'rgba(235,235,245,0.5)', brand: '#8AA0FF', accent: '#8AA0FF', tint: 'rgba(138,160,255,0.12)', track: 'rgba(255,255,255,0.10)', ok: '#6FD39A', okTint: 'rgba(111,211,154,0.12)', warn: '#FFB35C', warnTint: 'rgba(255,179,92,0.14)', shadow: 'none', book: '/_blob/402f38a271f02261a3be20e630746183' }
+  };
+  static FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+
+  // Pages for the stopped segment only (not the daily total); shows the next page when the start page is known
+  renderVals() {
+    var p = this.props;
+    var C = Component.PAL[p.scheme === 'dark' ? 'dark' : 'light'];
+    var v = Number(p.value ?? 15), start = Number(p.startPage ?? 128);
+    return {
+      value: String(v), sub: 'Подход ' + (p.minutes ?? 24) + ' мин · начали со страницы ' + start,
+      next: start ? 'В следующий раз начнём со страницы ' + (start + v) : '',
+      rootCss: ['display: flex', 'flex-direction: column', 'align-items: center', 'text-align: center', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'padding: 22px 18px 18px', 'border-radius: 20px', 'background: ' + C.card, 'border: 1px solid ' + C.border, 'color: ' + C.ink, Component.FF].join('; '),
+      titleCss: 'font-size: 20px; line-height: 25px; font-weight: 700; color: ' + C.ink,
+      subCss: 'margin-top: 4px; font-size: 14px; line-height: 19px; color: ' + C.ink2,
+      stepCss: 'width: 52px; height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center; background: ' + C.tint + '; color: ' + C.brand,
+      valueCss: 'min-width: 96px; font-size: 52px; line-height: 56px; font-weight: 700; font-variant-numeric: tabular-nums; color: ' + C.ink,
+      nextCss: 'font-size: 14px; line-height: 19px; font-weight: 700; color: ' + C.brand,
+      hintCss: 'margin-top: 6px; font-size: 13px; line-height: 18px; color: ' + C.ink2
+    };
+  }
+}
+</script>
+</body>
+</html>

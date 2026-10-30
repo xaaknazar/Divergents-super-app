@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>StatTile — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="760" safe-top="{{false}}" hint-size="390px,760px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="24" hint-size="100%,700px">
+    <dc-import name="Text" variant="title2" heading="1" text="StatTile" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,130px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=boxed · tone brand / warning / danger · href" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" fill="equal" gap="10" align="stretch" hint-size="100%,104px">
+        <dc-import name="StatTile" icon="book" value="2" label="Курсов" tone="brand" href="LMSHome.dc.html" hint-size="100%,104px"></dc-import>
+        <dc-import name="StatTile" icon="trophy" value="15" label="Достижений" tone="warning" href="Achievements.dc.html" hint-size="100%,104px"></dc-import>
+        <dc-import name="StatTile" icon="flame" value="2" label="Челленджи" tone="danger" href="ChallengeHistory.dc.html" hint-size="100%,104px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,150px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=compact (итоги челленджа)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" fill="equal" gap="10" align="stretch" hint-size="100%,120px">
+        <dc-import name="StatTile" variant="compact" icon="book" value="420" label="страниц" hint-size="100%,120px"></dc-import>
+        <dc-import name="StatTile" variant="compact" icon="pulse" value="210 000" label="шагов" hint-size="100%,120px"></dc-import>
+        <dc-import name="StatTile" variant="compact" icon="check-circle" value="15" label="дней без сахара" tone="success" hint-size="100%,120px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=plain · без иконки (детали встречи)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Card" size="compact" hint-size="100%,70px">
+        <dc-import name="Wrapper3" dir="row" fill="equal" gap="0" hint-size="100%,40px">
+          <dc-import name="StatTile" variant="plain" icon="" value="8" label="Идут" hint-size="100%,38px"></dc-import>
+          <dc-import name="StatTile" variant="plain" icon="" value="4" label="Свободных мест" hint-size="100%,38px"></dc-import>
+          <dc-import name="StatTile" variant="plain" icon="" value="Бесплатно" label="Стоимость" hint-size="100%,38px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,110px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=plain · с иконкой · tone success / neutral" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" fill="equal" gap="10" hint-size="100%,70px">
+        <dc-import name="StatTile" variant="plain" icon="people" value="110" label="Участников" tone="success" hint-size="100%,64px"></dc-import>
+        <dc-import name="StatTile" variant="plain" icon="calendar-check" value="15" label="Дней" tone="neutral" hint-size="100%,64px"></dc-import>
+        <dc-import name="StatTile" variant="plain" icon="star" value="5,0" label="Рейтинг" tone="warning" hint-size="100%,64px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

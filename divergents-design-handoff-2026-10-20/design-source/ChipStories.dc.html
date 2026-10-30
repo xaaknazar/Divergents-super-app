@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Chip — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="600" safe-top="{{false}}" hint-size="390px,600px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,566px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">Chip</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Фильтр-чип: active · icon · size · href</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,72px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">ACTIVE / DEFAULT · ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="8" align="center" scroll="x" hint-size="100%,48px">
+<dc-import name="Chip" label="Все" active="{{true}}" hint-size="60px,48px"></dc-import>
+<dc-import name="Chip" label="Менеджмент" hint-size="120px,48px"></dc-import>
+<dc-import name="Chip" label="Психология" hint-size="120px,48px"></dc-import>
+<dc-import name="Chip" label="HR" hint-size="60px,48px"></dc-import>
+<dc-import name="Chip" label="Личная эффективность" hint-size="190px,48px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,128px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">WITH ICON</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="8" align="center" wrap="{{true}}" hint-size="100%,104px">
+<dc-import name="Chip" label="Популярные" icon="flame" active="{{true}}" hint-size="140px,48px"></dc-import>
+<dc-import name="Chip" label="Рейтинг 4+" icon="star" hint-size="130px,48px"></dc-import>
+<dc-import name="Chip" label="До 1 часа" icon="clock-3h" hint-size="130px,48px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,58px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">SIZE · SMALL</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="8" align="center" wrap="{{true}}" hint-size="100%,34px">
+<dc-import name="Chip" label="Халяль" size="small" active="{{true}}" hint-size="80px,34px"></dc-import>
+<dc-import name="Chip" label="Чисто" size="small" hint-size="70px,34px"></dc-import>
+<dc-import name="Chip" label="Wi-Fi" size="small" hint-size="80px,34px"></dc-import>
+<dc-import name="Chip" label="Розетки" size="small" hint-size="90px,34px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,72px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">LINK · href → &lt;a&gt;</dc-import>
+<dc-import name="Wrapper3" dir="row" gap="10" align="center" wrap="{{true}}" hint-size="100%,48px">
+<dc-import name="Chip" label="Каталог книг" icon="books-spines" href="BooksCatalog.dc.html" hint-size="150px,48px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

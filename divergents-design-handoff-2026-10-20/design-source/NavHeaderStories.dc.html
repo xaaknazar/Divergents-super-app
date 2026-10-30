@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>NavHeader — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="2080" safe-top="{{false}}" hint-size="390px,2080px">
+  <dc-import name="Wrapper" gap="20" hint-size="100%,2040px">
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,140px">
+      <dc-import name="NavHeader" variant="inline" title="Уведомления" back-href="ProfileHome.dc.html" action-label="Прочитать все" hint-size="100%,124px"></dc-import>
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=inline · safeArea (54px) · title + текстовое действие" hint-size="100%,18px"></dc-import></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,90px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=inline · safeArea=false · actions" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="inline" safe-area="{{false}}" title="Книжный клуб" back-href="CommunityHome.dc.html" actions="{{shareActions}}" hint-size="100%,64px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,90px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=plain · без заголовка (видна подпись «Назад»)" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="plain" safe-area="{{false}}" back-label="Обучение" back-href="LMSHome.dc.html" hint-size="100%,64px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,160px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=plain · largeTitle + subtitle" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="plain" safe-area="{{false}}" large-title="{{true}}" title="Достижения" subtitle="Открыто 15 из 50" back-href="ProfileHome.dc.html" hint-size="100%,140px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,90px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=frosted · actions с badge" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="frosted" safe-area="{{false}}" title="Чат канала" back-href="Channels.dc.html" actions="{{bellActions}}" hint-size="100%,64px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,250px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=overlay поверх MediaCover (Wrapper layer)" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="Wrapper3" layer="anchor" hint-size="100%,220px">
+        <dc-import name="MediaCover" src="/_blob/6c45288e0ebfca9ea993102d60703d42" aspect="hero" radius="none" overlay="bottom" hint-size="100%,220px"></dc-import>
+        <dc-import name="Wrapper4" layer="overlay-top" hint-size="100%,60px">
+          <dc-import name="NavHeader" variant="overlay" safe-area="{{false}}" back-label="Карта" back-href="MapHome.dc.html" actions="{{overlayActions}}" hint-size="100%,54px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,90px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=modal · «Готово»" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="modal" title="Итоги челленджа" action-label="Готово" action-href="ProfileHome.dc.html" hint-size="100%,72px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,90px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=modal · «Отмена» + крестик" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="modal" title="Фильтр" back-label="Сбросить" hint-size="100%,72px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,90px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="children-слот · справа перед actions (childrenPosition=beforeActions)" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="inline" safe-area="{{false}}" title="Книжный клуб" back-href="CommunityHome.dc.html" actions="{{shareActions}}" hint-size="100%,64px">
+        <dc-import name="Button" label="Вступить" variant="tinted" size="compact" hint-size="110px,44px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,90px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="children после actions · actions tone=danger / neutral" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="plain" safe-area="{{false}}" title="Черновик" back-href="CreateContent.dc.html" actions="{{toneActions}}" children-position="afterActions" hint-size="100%,64px">
+        <dc-import name="Button" label="Готово" size="compact" hint-size="96px,44px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,250px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=overlay · overlayScheme=light · action tone=danger" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="Wrapper3" layer="anchor" hint-size="100%,220px">
+        <dc-import name="MediaCover" src="/_blob/6c45288e0ebfca9ea993102d60703d42" aspect="hero" radius="none" overlay="bottom" hint-size="100%,220px"></dc-import>
+        <dc-import name="Wrapper4" layer="overlay-top" hint-size="100%,60px">
+          <dc-import name="NavHeader" variant="overlay" overlay-scheme="light" safe-area="{{false}}" back-label="Карта" back-href="MapHome.dc.html" actions="{{likedActions}}" hint-size="100%,54px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,90px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=modal · closeButton=false (без крестика)" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="modal" title="Новый пост" back-label="Отмена" close-button="{{false}}" hint-size="100%,72px"></dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" gap="4" hint-size="100%,140px">
+      <dc-import name="Wrapper3" pad-x="16" hint-size="100%,18px"><dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=modal · safeArea=true (полноэкранная модалка: белая шапка + hairline)" hint-size="100%,18px"></dc-import></dc-import>
+      <dc-import name="NavHeader" variant="modal" safe-area="{{true}}" title="Итоги челленджа" action-label="Готово" action-href="ProfileHome.dc.html" hint-size="100%,124px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      shareActions: [{ icon: 'share-network', label: 'Поделиться' }],
+      bellActions: [{ icon: 'people', label: 'Участники', href: 'ChallengeRoster.dc.html' }, { icon: 'bell', label: 'Уведомления', href: 'Notifications.dc.html', badge: 3 }],
+      toneActions: [{ icon: 'bin', label: 'Удалить', tone: 'danger' }, { icon: 'dots-three-horizontal', label: 'Ещё', tone: 'neutral' }],
+      likedActions: [{ icon: 'heart', label: 'В избранном', tone: 'danger' }, { icon: 'share-network', label: 'Поделиться' }],
+      overlayActions: [{ icon: 'heart', label: 'В избранное' }, { icon: 'share-network', label: 'Поделиться' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

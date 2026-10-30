@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MapDropPin — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="360" safe-top="{{false}}" hint-size="390px,360px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,326px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" text="MapDropPin" hint-size="100%,34px"></dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" text="Пин-капля: kind (place/start/finish) · category · size" hint-size="100%,18px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="KIND" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" align="center" wrap="{{true}}" hint-size="100%,60px"><dc-import name="MapDropPin" kind="place" category="cafe" hint-size="26px,34px"></dc-import><dc-import name="MapDropPin" kind="start" hint-size="26px,34px"></dc-import><dc-import name="MapDropPin" kind="finish" hint-size="26px,34px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="PLACE · CATEGORY" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" gap="16" align="center" wrap="{{true}}" hint-size="100%,60px"><dc-import name="MapDropPin" kind="place" category="cafe" hint-size="26px,34px"></dc-import><dc-import name="MapDropPin" kind="place" category="restaurant" hint-size="26px,34px"></dc-import><dc-import name="MapDropPin" kind="place" category="hotel" hint-size="26px,34px"></dc-import><dc-import name="MapDropPin" kind="place" category="park" hint-size="26px,34px"></dc-import><dc-import name="MapDropPin" kind="place" category="gym" hint-size="26px,34px"></dc-import><dc-import name="MapDropPin" kind="place" category="tourism" hint-size="26px,34px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="SIZE=LARGE (ВЫБОР ТОЧКИ)" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" gap="8" align="center" wrap="{{true}}" hint-size="100%,60px"><dc-import name="MapDropPin" kind="place" category="cafe" size="large" hint-size="30px,39px"></dc-import></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":360}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

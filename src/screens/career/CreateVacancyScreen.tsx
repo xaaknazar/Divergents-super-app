@@ -1,3 +1,5 @@
+import { Wrapper } from '../../components/Wrapper';
+import { ActionBlock } from '../../components/ActionBlock';
 // Create a vacancy from the app (role-gated: only users with canCreate reach it).
 // Full form matching the website ТЗ. Posts to /api/mobile/vacancies.
 import React, { useState } from 'react';
@@ -9,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
-import { PrimaryButton } from '../../components/ui';
+import { Button } from '../../components/ui';
 import { useCareer } from '../../state/CareerContext';
 import { createVacancy } from '../../data/career';
 import { uploadFile } from '../../data/api';
@@ -195,7 +197,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Field label="Описание (необязательно)">
             <TextInput value={about} onChangeText={setAbout} multiline placeholder="Подробное описание роли" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 90, textAlignVertical: 'top' }]} />
           </Field>
-          <Pressable onPress={() => setPublished((p) => !p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, marginBottom: 16 }}>
+          <Wrapper marginBottom={16}><ActionBlock size="compact" onPress={() => setPublished((p) => !p)}><Wrapper dir={'row'} align={'center'} gap={12}>
             <View style={{ width: 46, height: 28, borderRadius: 14, borderCurve: 'continuous', backgroundColor: published ? T.brand : T.fillTertiary, justifyContent: 'center', paddingHorizontal: 3 }}>
               <View style={{ width: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', backgroundColor: '#fff', alignSelf: published ? 'flex-end' : 'flex-start' }} />
             </View>
@@ -203,9 +205,9 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
               <Text style={[ty.subheadEm, { color: T.label }]}>{published ? 'Опубликовано' : 'Черновик'}</Text>
               <Text style={[ty.caption2, { color: T.labelTertiary }]}>Опубликованная вакансия видна всем в приложении</Text>
             </View>
-          </Pressable>
+          </Wrapper></ActionBlock></Wrapper>
 
-          <PrimaryButton label={busy ? 'Создание…' : 'Создать вакансию'} icon="checkmark" loading={busy} disabled={!ok} onPress={submit} />
+          <Button label={busy ? 'Создание…' : 'Создать вакансию'} icon="checkmark" loading={busy} disabled={!ok} onPress={submit} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

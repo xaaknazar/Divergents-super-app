@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ChallengeHero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<sc-if value="{{isActive}}" hint-placeholder-val="{{true}}">
+<section aria-label="{{title}}" style="{{activeCss}}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<span style="{{pillCss}}"><dc-import name="Icon" icon="flame" variant="solid" size="xs" tone="white" hint-size="12px,12px"></dc-import>{{badge}}</span>
+<sc-if value="{{hasMeta}}" hint-placeholder-val="{{true}}"><dc-import name="Text" variant="subheadEm" tone="white" align="end" text="{{meta}}" hint-size="140px,20px"></dc-import></sc-if>
+</div>
+<div style="display: flex; align-items: center; gap: 9px; margin-top: 11px">
+<dc-import name="Logo" size="sm" variant="white" hint-size="19px,24px"></dc-import>
+<div style="flex: 1; min-width: 0"><dc-import name="Text" variant="title2" tone="white" heading="1" text="{{title}}" hint-size="100%,28px"></dc-import></div>
+</div>
+<sc-if value="{{hasSubtitle}}" hint-placeholder-val="{{true}}"><div style="margin-top: 6px"><dc-import name="Text" variant="subhead" tone="whiteMuted" text="{{subtitle}}" hint-size="100%,20px"></dc-import></div></sc-if>
+<div style="margin-top: 13px">
+<div role="progressbar" aria-label="{{progressLabel}}" aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100" style="height: 6px; border-radius: 6px; background: rgba(255,255,255,0.22); overflow: hidden"><div style="{{fillCss}}"></div></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; margin-top: 7px">
+<dc-import name="Text" variant="caption1" tone="whiteMuted" text="{{progressLabel}}" hint-size="160px,16px"></dc-import>
+<dc-import name="Text" variant="caption2Em" tone="white" align="end" text="{{progressMeta}}" hint-size="100px,14px"></dc-import>
+</div>
+</div>
+</section>
+</sc-if>
+<sc-if value="{{isWinner}}" hint-placeholder-val="{{false}}">
+<section aria-label="{{title}}" style="{{winnerCss}}">
+<div style="display: flex; align-items: center; gap: 10px">
+<dc-import name="Logo" size="sm" variant="white" hint-size="19px,24px"></dc-import>
+<span style="flex: 1; min-width: 0; font-size: 13px; line-height: 18px; font-weight: 700; color: rgba(255,255,255,0.9)">{{eyebrow}}</span>
+</div>
+<div style="margin-top: 10px"><dc-import name="Text" variant="title1" tone="white" heading="1" text="{{title}}" hint-size="100%,34px"></dc-import></div>
+<sc-if value="{{hasSubtitle}}" hint-placeholder-val="{{true}}"><div style="margin-top: 4px"><dc-import name="Text" variant="subhead" tone="white" text="{{subtitle}}" hint-size="100%,20px"></dc-import></div></sc-if>
+<sc-if value="{{actionLink}}" hint-placeholder-val="{{false}}"><a href="{{actionHref}}" style="{{actionCss}}"><dc-import name="Icon" icon="trophy" variant="solid" size="md" tone="inherit" hint-size="20px,20px"></dc-import><span>{{actionLabel}}</span></a></sc-if>
+<sc-if value="{{actionButton}}" hint-placeholder-val="{{true}}"><button type="button" style="{{actionCss}}"><dc-import name="Icon" icon="trophy" variant="solid" size="md" tone="inherit" hint-size="20px,20px"></dc-import><span>{{actionLabel}}</span></button></sc-if>
+</section>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"active","options":["active","winner"]},"title":{"editor":"text","default":"Divergents challenge: 2 season"},"subtitle":{"editor":"text","default":"Команда «KEX group»"},"badge":{"editor":"text","default":"День 9 из 15"},"meta":{"editor":"text","default":"+40 pts сегодня"},"progress":{"editor":"int","default":60,"min":0,"max":100},"progressLabel":{"editor":"text","default":"Прогресс челленджа"},"progressMeta":{"editor":"text","default":"Осталось 6 дн"},"eyebrow":{"editor":"text","default":""},"actionLabel":{"editor":"text","default":""},"actionHref":{"editor":"text","default":""},"$preview":{"width":358,"height":170}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var winner = p.variant === 'winner';
+    var D = winner ? { title: '1 место!', subtitle: 'Команда «KEX group» победила.', eyebrow: 'Divergents challenge: 1 season', actionLabel: 'Получить награду' }
+                   : { title: 'Divergents challenge: 2 season', subtitle: 'Команда «KEX group»', badge: 'День 9 из 15', meta: '+40 pts сегодня', progressLabel: 'Прогресс челленджа', progressMeta: 'Осталось 6 дн' };
+    var g = function (k) { return (p[k] !== undefined && p[k] !== null) ? p[k] : (D[k] || ''); };
+    var pct = Math.max(0, Math.min(100, Number(p.progress ?? 60)));
+    var actionLabel = g('actionLabel');
+    return {
+      isActive: !winner, isWinner: winner,
+      title: g('title'), subtitle: g('subtitle'), hasSubtitle: !!g('subtitle'),
+      badge: g('badge'), meta: g('meta'), hasMeta: !!g('meta'),
+      progress: String(pct), progressLabel: g('progressLabel'), progressMeta: g('progressMeta'),
+      eyebrow: g('eyebrow'), actionLabel: actionLabel, actionHref: p.actionHref || '',
+      actionLink: !!actionLabel && !!p.actionHref, actionButton: !!actionLabel && !p.actionHref,
+      activeCss: ['display: block', 'box-sizing: border-box', 'width: 100%', 'border-radius: 18px', 'overflow: hidden', 'padding: 16px', 'background: linear-gradient(135deg, #234088, #3D5BDB)', 'color: #FFFFFF', FF].join('; '),
+      winnerCss: ['display: block', 'box-sizing: border-box', 'width: 100%', 'border-radius: 20px', 'overflow: hidden', 'padding: 18px', 'background: linear-gradient(135deg, #E0A21A, #E08A00)', 'color: #FFFFFF', FF].join('; '),
+      pillCss: 'display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.20); color: #FFFFFF; font-size: 11px; line-height: 14px; font-weight: 700; white-space: nowrap',
+      fillCss: 'width: ' + pct + '%; height: 100%; border-radius: 8px; background: #FFFFFF',
+      actionCss: ['width: 100%', 'box-sizing: border-box', 'margin-top: 14px', 'min-height: 48px', 'border-radius: 14px', 'border: 0', 'background: #FFFFFF', 'display: flex', 'align-items: center', 'justify-content: center', 'gap: 8px', 'cursor: pointer', 'text-decoration: none', 'color: #8A5D05', 'font-size: 17px', 'line-height: 22px', 'font-weight: 700', 'letter-spacing: -0.2px', FF].join('; ')
+    };
+  }
+}
+</script>
+</body>
+</html>

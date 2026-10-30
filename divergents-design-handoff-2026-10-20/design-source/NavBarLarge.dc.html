@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>NavBarLarge</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px 8px 20px; min-height: 48px; box-sizing: border-box; width: 100%; min-width: 0; color: #000000; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+    <dc-import name="Text" variant="largeTitle" heading="1" text="{{title}}" hint-size="100%,41px"></dc-import>
+    <sc-if value="{{hasSubtitle}}" hint-placeholder-val="{{false}}"><dc-import name="Text" variant="subhead" tone="secondary" text="{{subtitle}}" hint-size="100%,20px"></dc-import></sc-if>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0">
+    <sc-for list="{{actions}}" as="a" hint-placeholder-count="0">
+      <dc-import name="IconButton" icon="{{a.icon}}" label="{{a.label}}" href="{{a.href}}" badge="{{a.badge}}" variant="plain" hint-size="48px,48px"></dc-import>
+    </sc-for>
+    <sc-if value="{{avatar}}" hint-placeholder-val="{{true}}"><dc-import name="ProfileButton" person="{{person}}" src="{{avatarSrc}}" progress="{{profileProgress}}" badge="{{profileBadge}}" href="{{avatarHref}}" hint-size="52px,52px"></dc-import></sc-if>
+  </div>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Обучение"},"subtitle":{"editor":"text","default":""},"avatar":{"editor":"boolean","default":true},"avatarSrc":{"editor":"text","default":""},"avatarHref":{"editor":"text","default":"ProfileHome.dc.html"},"person":{"editor":"text","default":"Акназар"},"profileProgress":{"editor":"range","default":75,"min":0,"max":100,"step":5},"profileBadge":{"editor":"int","default":0,"min":0,"max":99},"actions":{"editor":null},"$preview":{"width":390,"height":68}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.title === undefined && p.subtitle === undefined && p.actions === undefined && p.avatar === undefined;
+    var on = function (v) { return v === true || v === 'true'; };
+    var avatar = demo ? true : on(p.avatar);
+    var avatarHref = p.avatarHref || 'ProfileHome.dc.html';
+    var actions = (p.actions || []).map(function (a) {
+      return { icon: a.icon || 'bell', label: a.label || '', href: a.href || '', badge: Number(a.badge || 0) };
+    });
+    return {
+      title: p.title !== undefined && p.title !== null ? p.title : (demo ? 'Обучение' : ''),
+      subtitle: p.subtitle || '', hasSubtitle: !!p.subtitle,
+      actions: actions,
+      avatar: avatar, avatarHref: avatarHref, avatarSrc: p.avatarSrc || '',
+      person: p.person || 'Акназар',
+      profileProgress: (p.profileProgress === undefined || p.profileProgress === null || p.profileProgress === '') ? 75 : Number(p.profileProgress),
+      profileBadge: Number(p.profileBadge || 0)
+    };
+  }
+}
+</script>
+</body>
+</html>

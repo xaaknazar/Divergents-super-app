@@ -20,7 +20,25 @@
         "buildType": "apk"
       }
     },
-    "production": {},
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_STORYBOOK_ENABLED": "false"
+      }
+    },
+    "production-reading": {
+      "extends": "production",
+      "environment": "production",
+      "ios": {
+        "image": "macos-tahoe-26.4-xcode-26.4"
+      },
+      "env": {
+        "EXPO_PUBLIC_STORYBOOK_ENABLED": "false",
+        "EXPO_PUBLIC_READING_CHALLENGES": "true",
+        "READING_FOCUS_PILOT": "true",
+        "READING_APP_ATTEST": "true",
+        "EXPO_NO_CAPABILITY_SYNC": "1"
+      }
+    },
     "development-device": {
       "developmentClient": true,
       "distribution": "internal",

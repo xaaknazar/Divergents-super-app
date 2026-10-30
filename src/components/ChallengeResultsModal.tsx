@@ -12,17 +12,17 @@
 // ПОКАЗЫВАЕМ ОДИН РАЗ. Отметка «видел» лежит на устройстве: на сервере ей
 // место только если бы окно надо было синхронизировать между телефонами, а
 // ради поздравления городить это незачем.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Modal, Pressable, ScrollView, AppState } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
+import React,{ useCallback,useEffect,useRef,useState } from 'react';
+import { AppState,Modal,Pressable,ScrollView,Text,View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '../theme/ThemeContext';
-import { loadJSON, saveJSON } from '../state/persist';
-import { fetchMyChallengeHistory, fetchChallengeResults, ChallengeResults } from '../data/community';
-import { ChallengeResultsContent } from '../screens/community/ChallengeResultsScreen';
+import { ChallengeResults,fetchChallengeResults,fetchMyChallengeHistory } from '../data/community';
 import { hSuccess } from '../lib/haptics';
+import { ChallengeResultsPanel } from './ChallengeResultsPanel';
 import { tr } from '../state/LanguageContext';
+import { loadJSON,saveJSON } from '../state/persist';
+import { useTheme } from '../theme/ThemeContext';
 
 const SEEN_KEY = 'dvg.challengeResultsSeen.v1';
 
@@ -84,7 +84,7 @@ export function ChallengeResultsModal() {
     <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
       <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
         <ScrollView contentContainerStyle={{ paddingTop: 8, paddingBottom: insets.bottom + 90 }}>
-          <ChallengeResultsContent data={data} compact />
+          <ChallengeResultsPanel data={data} compact />
         </ScrollView>
 
         {/* Кнопка закрытия — поверх, а не в конце списка: итоги длинные, и

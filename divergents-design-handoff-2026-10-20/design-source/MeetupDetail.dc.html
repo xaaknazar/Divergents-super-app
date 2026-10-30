@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Мероприятие</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1300" surface="plain" safe-top="{{false}}" hint-size="390px,1300px">
+  <dc-import name="EventHero" title="Книжный клуб" subtitle="Кофейня, ул. Панфилова 98" date="16 октября в 18:00 · UTC+5" back-href="CommunityHome.dc.html" back-label="Сообщество" favorite="{{true}}" hint-size="100%,240px"></dc-import>
+  <dc-import name="Wrapper" dir="row" fill="equal" pad-y="14" hint-size="100%,66px">
+    <sc-for list="{{stats}}" as="s" hint-placeholder-count="3">
+      <dc-import name="MetricValue" variant="detail" value="{{s.value}}" label="{{s.label}}" value-type="{{s.valueType}}" separator="{{s.separator}}" hint-size="100%,38px"></dc-import>
+    </sc-for>
+  </dc-import>
+  <dc-import name="Divider" hint-size="100%,1px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="4" gap="6" pad-bottom="120" hint-size="100%,960px">
+    <dc-import name="ListSection" header="О мероприятии" hint-size="100%,150px">
+      <dc-import name="Wrapper2" pad-x="16" pad-y="12" hint-size="100%,100px">
+        <dc-import name="Text" variant="body" text="{{about}}" hint-size="100%,96px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="Где и когда" hint-size="100%,220px">
+      <dc-import name="ListRow" icon="pin" icon-style="plain" title="{{place.address}}" trailing="none" hint-size="100%,48px"></dc-import>
+      <dc-import name="ListRow" icon="clock-3h" icon-style="plain" title="{{place.when}}" subtitle="Начало" trailing="none" separator="{{true}}" hint-size="100%,68px"></dc-import>
+      <dc-import name="ListRow" icon="map" icon-style="plain" title="Открыть точку на карте" subtitle="{{place.coords}}" trailing="chevron" separator="{{true}}" hint-size="100%,68px"></dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="Город" hint-size="100%,82px">
+      <dc-import name="ListRow" icon-style="none" title="{{city}}" trailing="none" hint-size="100%,48px"></dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="Организатор" hint-size="100%,100px">
+      <dc-import name="ListRow" person="{{organizer.initial}}" title="{{organizer.name}}" subtitle="{{organizer.role}}" trailing="none" hint-size="100%,68px"></dc-import>
+    </dc-import>
+    <dc-import name="ListSection" header="{{goingHeader}}" hint-size="100%,142px">
+      <dc-import name="EventAttendees" count="{{going}}" hint-size="100%,108px"></dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="BottomBar" placement="screen" variant="solid" hint-size="100%,108px">
+    <dc-import name="Button" label="Записаться · Бесплатно" icon="paperplane" variant="solid" tone="brand" full-width="{{true}}" hint-size="100%,50px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var going = 8;
+    var people = function (n) { var m = n % 10, h = n % 100; return (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? 'человека' : 'человек'; };
+    return {
+      stats: [{ value: String(going), label: 'Идут', valueType: 'number', separator: true }, { value: '4', label: 'Свободных мест', valueType: 'number', separator: true }, { value: 'Бесплатно', label: 'Стоимость', valueType: 'text', separator: false }],
+      about: 'Обсуждаем книгу месяца и делимся идеями, которые можно применить уже на этой неделе. Приходите, даже если не успели дочитать.',
+      place: { address: 'Кофейня, ул. Панфилова 98', when: '16 октября в 18:00 · UTC+5', coords: '43.25654, 76.94571' },
+      city: 'Алматы',
+      organizer: { initial: 'К', name: 'Команда Divergents', role: 'Divergents' },
+      going: going,
+      goingHeader: 'Идут · ' + going + ' ' + people(going)
+    };
+  }
+}
+</script>
+</body>
+</html>

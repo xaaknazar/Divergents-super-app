@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ChatBubble</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{isSystem}}" hint-placeholder-val="{{false}}"><p style="margin: 0; padding: 4px 12px; border-radius: 999px; background: rgba(116,116,128,0.08); font-size: 12px; line-height: 16px; color: #5C5C60; text-align: center">{{text}}</p></sc-if>
+  <sc-if value="{{isBubble}}" hint-placeholder-val="{{true}}"><div style="{{bubbleCss}}"><p style="{{textCss}}">{{text}}</p></div></sc-if>
+  <sc-if value="{{hasSources}}" hint-placeholder-val="{{false}}">
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; max-width: 90%">
+      <sc-for list="{{sources}}" as="s" hint-placeholder-count="2">
+        <span style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 999px; background: #FFFFFF; border: 0.5px solid rgba(60,60,67,0.18); font-size: 12px; line-height: 16px; font-weight: 500; color: #000000"><dc-import name="Icon" icon="book" variant="solid" size="xs" tone="brand" hint-size="12px,12px"></dc-import>{{s}}</span>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{hasTime}}" hint-placeholder-val="{{true}}"><span style="{{timeCss}}">{{time}}</span></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"role":{"editor":"enum","default":"assistant","options":["user","assistant","system"]},"text":{"editor":"text","default":"Хороший старт — понять свои сильные стороны."},"time":{"editor":"text","default":""},"sources":{"editor":null},"$preview":{"width":358,"height":150}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.text === undefined && p.time === undefined && p.sources === undefined;
+    var role = p.role || 'assistant';
+    var user = role === 'user';
+    var system = role === 'system';
+    var text = p.text !== undefined && p.text !== null ? p.text : (demo ? (user ? 'С чего начать развитие?' : 'Хороший старт — понять свои сильные стороны. Начните курс «Максимизация талантов Gallup»: в нём 34 урока, их удобно проходить по одному в день.') : '');
+    var time = p.time || (demo ? '14:32' : '');
+    var sources = (p.sources !== undefined && p.sources !== null) ? p.sources : (demo && role === 'assistant' ? ['Максимизация талантов Gallup', 'Код таланта'] : []);
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif";
+    return {
+      rootCss: ['display: flex', 'flex-direction: column', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', FF, '-webkit-font-smoothing: antialiased',
+        'align-items: ' + (system ? 'center' : user ? 'flex-end' : 'flex-start')].join('; '),
+      bubbleCss: ['max-width: 90%', 'box-sizing: border-box', 'padding: 12px 14px', 'background: ' + (user ? '#234088' : 'rgba(118,118,128,0.12)'),
+        'border-radius: ' + (user ? '18px 18px 4px 18px' : '18px 18px 18px 4px')].join('; '),
+      textCss: ['margin: 0', 'font-size: 17px', 'line-height: 24px', 'letter-spacing: -0.2px', 'white-space: pre-line', 'overflow-wrap: anywhere', 'color: ' + (user ? '#FFFFFF' : '#000000')].join('; '),
+      timeCss: 'margin-top: 4px; padding: 0 4px; font-size: 11px; line-height: 14px; font-weight: 500; color: #6B6B70',
+      isSystem: system, isBubble: !system,
+      text: text, time: time, hasTime: !!time && !system,
+      sources: role === 'assistant' ? sources : [], hasSources: role === 'assistant' && sources.length > 0
+    };
+  }
+}
+</script>
+</body>
+</html>

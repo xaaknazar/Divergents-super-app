@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AIAnswer — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="720" safe-top="{{false}}" hint-size="390px,720px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,686px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">AIAnswer</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Ответ ассистента: markdown (**жирный**, нумерованный список) · copyable</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">СПИСОК + ЖИРНЫЙ</dc-import>
+<dc-import name="AIAnswer" hint-size="100%,300px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">КОРОТКИЙ</dc-import>
+<dc-import name="AIAnswer" text="В курсе **8 уроков** — их удобно проходить по одному в день." hint-size="100%,146px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">БЕЗ КНОПКИ КОПИРОВАНИЯ</dc-import>
+<dc-import name="AIAnswer" text="Секунду, ищу подходящие курсы…" copyable="{{false}}" hint-size="100%,48px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

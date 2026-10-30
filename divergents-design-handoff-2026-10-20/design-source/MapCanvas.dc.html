@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MapCanvas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <svg width="100%" height="100%" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; top: 0; left: 0; display: block">
+    <rect width="390" height="844" fill="#ECEEE8"></rect>
+    <path d="M-20 430 C 70 392, 140 470, 220 444 S 330 380, 410 410" fill="none" stroke="#C7DCEF" stroke-width="22" stroke-linecap="round"></path>
+    <g fill="none" stroke="#FFFFFF" stroke-linecap="round">
+      <path d="M0 70H390M0 310H390M0 540H390M0 780H390M60 0V844M200 0V844M330 0V844" stroke-width="5"></path>
+      <path d="M0 190H390M0 660H390M130 0V844M270 0V844" stroke-width="10"></path>
+    </g>
+    <path d="M-20 820 L 410 250" fill="none" stroke="#F6E3B0" stroke-width="12" stroke-linecap="round"></path>
+    <g fill="#D3E6CC">
+      <rect x="216" y="96" width="44" height="80" rx="10"></rect>
+      <rect x="284" y="96" width="34" height="80" rx="10"></rect>
+      <rect x="216" y="200" width="44" height="100" rx="10"></rect>
+      <rect x="18" y="470" width="100" height="62" rx="12"></rect>
+      <rect x="16" y="560" width="104" height="90" rx="12"></rect>
+      <circle cx="300" cy="730" r="40"></circle>
+    </g>
+  </svg>
+  <sc-if value="{{hasRoute}}" hint-placeholder-val="{{false}}">
+    <svg width="{{w}}" height="{{h}}" viewBox="{{viewBox}}" aria-hidden="true" style="position: absolute; top: 0; left: 0; display: block"><polyline points="{{route}}" fill="none" stroke="#234088" stroke-width="{{routeWidth}}" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+  </sc-if>
+  <sc-for list="{{pins}}" as="q" hint-placeholder-count="0"><div style="{{q.css}}"><dc-import name="MapPin" kind="{{q.kind}}" size="{{pinSize}}" muted="{{q.muted}}" label="{{q.label}}" href="{{q.href}}" hint-size="32px,32px"></dc-import></div></sc-for>
+  <sc-for list="{{events}}" as="e" hint-placeholder-count="0"><div style="{{e.css}}"><dc-import name="MapEventTag" kind="{{e.kind}}" time="{{e.time}}" hint-size="64px,26px"></dc-import></div></sc-for>
+  <sc-for list="{{dots}}" as="d" hint-placeholder-count="0"><div style="{{d.css}}"><dc-import name="MapUserDot" hint-size="28px,28px"></dc-import></div></sc-for>
+  <sc-for list="{{drops}}" as="r" hint-placeholder-count="0"><div style="{{r.css}}"><dc-import name="MapDropPin" kind="{{r.kind}}" category="{{r.category}}" size="{{r.size}}" hint-size="26px,34px"></dc-import></div></sc-for>
+  <sc-if value="{{watermark}}" hint-placeholder-val="{{false}}"><div style="position: absolute; right: 12px; bottom: 12px; z-index: 2"><dc-import name="MapWatermark" hint-size="130px,40px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","default":"card","options":["screen","card","preview","mini"]},"pinSize":{"editor":"enum","default":"regular","options":["regular","compact"]},"routeEnds":{"editor":"boolean","default":false},"routeHead":{"editor":"boolean","default":false},"watermark":{"editor":"boolean","default":false},"route":{"editor":null},"pins":{"editor":null},"events":{"editor":null},"user":{"editor":null},"drop":{"editor":null},"$preview":{"width":358,"height":300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var SIZES = { screen: [844, 0], card: [300, 18], preview: [220, 16], mini: [150, 16] };
+    var size = SIZES[p.size] ? p.size : 'card';
+    var H = SIZES[size][0];
+    var W = size === 'screen' ? 390 : 358;
+    var demo = ['route', 'pins', 'events', 'user', 'drop'].every(function (k) { return p[k] === undefined || p[k] === null; });
+    var D = demo ? { route: '60,250 116,250 116,170 180,170 180,120 246,120 246,70 300,70 300,44 270,30 236,30', ends: true, watermark: true } : {};
+    var on = function (v) { return v === true || v === 'true'; };
+    var at = function (x, y, bottom) {
+      return 'position: absolute; left: ' + Number(x) + 'px; top: ' + Number(y) + 'px; transform: translate(-50%, ' + (bottom ? '-100%' : '-50%') + '); z-index: 1';
+    };
+    var route = String(p.route || D.route || '').trim();
+    var pts = route ? route.split(/\s+/).map(function (s) { return s.split(','); }) : [];
+    var drops = [];
+    var dots = [];
+    if (pts.length > 1 && (on(p.routeEnds) || D.ends)) {
+      drops.push({ css: at(pts[0][0], pts[0][1], true), kind: 'start', category: 'cafe', size: 'regular' });
+      drops.push({ css: at(pts[pts.length - 1][0], pts[pts.length - 1][1], true), kind: 'finish', category: 'cafe', size: 'regular' });
+    }
+    if (pts.length > 0 && on(p.routeHead)) dots.push({ css: at(pts[pts.length - 1][0], pts[pts.length - 1][1]) });
+    if (p.user) dots.push({ css: at(p.user.x, p.user.y) });
+    if (p.drop) drops.push({ css: at(p.drop.x, p.drop.y, true), kind: 'place', category: p.drop.category || 'cafe', size: p.drop.large ? 'large' : 'regular' });
+    var pins = (p.pins || []).map(function (q) {
+      return { css: at(q.x, q.y), kind: q.kind || 'cafe', label: q.label || '', href: q.href || '', muted: !!q.muted };
+    });
+    var events = (p.events || []).map(function (e) { return { css: at(e.x, e.y), kind: e.kind || 'meetup', time: e.time || '' }; });
+    var radius = SIZES[size][1];
+    return {
+      rootCss: ['position: relative', 'overflow: hidden', 'box-sizing: border-box', 'width: ' + (size === 'screen' ? '390px' : '100%'), 'height: ' + H + 'px',
+        'border-radius: ' + radius + 'px', 'background: #ECEEE8'].join('; '),
+      hasRoute: pts.length > 1, route: route, w: W, h: H, viewBox: '0 0 ' + W + ' ' + H,
+      routeWidth: size === 'screen' ? 6 : 5,
+      pins: pins, events: events, dots: dots, drops: drops,
+      pinSize: p.pinSize === 'compact' ? 'compact' : 'regular',
+      watermark: on(p.watermark) || !!D.watermark
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ProgramCard — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="800" safe-top="{{false}}" hint-size="390px,800px">
+<dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,740px">
+  <dc-import name="Text" variant="title2" heading="1" text="ProgramCard" hint-size="100%,28px"></dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=active (трекер дней)" hint-size="100%,18px"></dc-import>
+    <dc-import name="ProgramCard" variant="active" hint-size="100%,118px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=history · обычная" hint-size="100%,18px"></dc-import>
+    <dc-import name="ProgramCard" variant="history" title="Отжимания" caption="12 сент. 2026 г. — 2 окт. 2026 г." total="612 раз" value="90" summary="Норма: 19 из 21 дней · лучшая серия: 12 дней" href="ProgramResult.dc.html" hint-size="100%,170px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=history · perfect" hint-size="100%,18px"></dc-import>
+    <dc-import name="ProgramCard" variant="history" title="Планка" caption="10 авг. 2026 г. — 23 авг. 2026 г." total="840 сек" value="100" summary="Норма: 14 из 14 дней · лучшая серия: 14 дней" perfect="{{true}}" href="ProgramResult.dc.html" hint-size="100%,190px"></dc-import>
+  </dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":800}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

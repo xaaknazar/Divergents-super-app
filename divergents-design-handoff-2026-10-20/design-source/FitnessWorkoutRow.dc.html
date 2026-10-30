@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>FitnessWorkoutRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{separator}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="position: absolute; top: 0; left: 16px; right: 0; height: 0.5px; background: rgba(60,60,67,0.18)"></span></sc-if>
+  <svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true" style="flex-shrink: 0; display: block; border-radius: 12px; background: rgba(118,118,128,0.12)"><path d="{{routePath}}" fill="none" stroke="#234088" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px"><dc-import name="Text" variant="subheadEm" text="{{title}}" hint-size="100%,20px"></dc-import><dc-import name="Text" variant="caption1" tone="secondary" text="{{subtitle}}" hint-size="100%,16px"></dc-import></span>
+  <span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="chevron-right" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></span>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{true}}"><a href="{{href}}" aria-label="{{aria}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Пробежка · 5,02 км"},"subtitle":{"editor":"text","default":"9 окт · 27:40 · 5′31″/км"},"route":{"editor":"enum","default":"loop","options":["loop","line","circuit"]},"href":{"editor":"text","default":"WorkoutHistory.dc.html"},"separator":{"editor":"boolean","default":false},"$preview":{"width":358,"height":74}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var R = {
+      loop: 'M12 40c2-8 6-12 10-14s5-8 9-12 9-2 10 3-3 9-7 12-6 6-10 9-10 6-12 2z',
+      line: 'M10 14c6 2 12 1 18 4s8 8 14 10 3 10-4 12-14-2-20 0',
+      circuit: 'M27 44c-8 0-15-6-15-15s5-17 13-17 15 5 16 13-4 9-9 8-6 4-3 7-1 4-2 4z'
+    };
+    var title = p.title ?? 'Пробежка · 5,02 км';
+    var subtitle = p.subtitle ?? '9 окт · 27:40 · 5′31″/км';
+    var href = p.href ?? 'WorkoutHistory.dc.html';
+    return {
+      rootCss: ['position: relative', 'display: flex', 'align-items: center', 'gap: 12px', 'padding: 10px 16px', 'box-sizing: border-box', 'width: 100%', 'color: #000000', F].join('; '),
+      routePath: R[p.route] || R.loop, title: title, subtitle: subtitle, href: href, hasHref: !!href, aria: title + ', ' + subtitle,
+      separator: p.separator === true || p.separator === 'true'
+    };
+  }
+}
+</script>
+</body>
+</html>

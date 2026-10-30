@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AuthHero — stories</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="620" surface="plain" safe-top="{{false}}" hint-size="390px,620px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,560px">
+    <dc-import name="Text" variant="title2" heading="1" text="AuthHero" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,284px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=brand — экран входа (вместе с AuthSheet; включает 54px safe area)" hint-size="100%,18px"></dc-import>
+      <dc-import name="AuthHero" variant="brand" title="Добро пожаловать" subtitle="Один аккаунт для обучения, сообщества и карьеры" hint-size="100%,258px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,200px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=compact (псевдоним)" hint-size="100%,18px"></dc-import>
+      <dc-import name="AuthHero" variant="compact" title="Придумайте псевдоним" subtitle="Его увидят другие участники вместо вашего имени — в сообществе, челленджах и каналах." hint-size="100%,174px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":620}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

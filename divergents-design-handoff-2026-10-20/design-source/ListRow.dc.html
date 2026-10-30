@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ListRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{separator}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{sepCss}}"></span></sc-if>
+  <sc-if value="{{showTile}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="{{tileCss}}"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="sm" tone="white" hint-size="16px,16px"></dc-import></span></sc-if>
+  <sc-if value="{{showPlain}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{plainCss}}"><dc-import name="Icon" icon="{{icon}}" variant="line" size="md" tone="inherit" hint-size="20px,20px"></dc-import></span></sc-if>
+  <sc-if value="{{showThumb}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{thumbCss}}"><img src="{{thumb}}" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block"></span></sc-if>
+  <sc-if value="{{showAvatar}}" hint-placeholder-val="{{false}}"><dc-import name="Avatar" src="{{avatar}}" person="{{personName}}" size="md" hint-size="40px,40px"></dc-import></sc-if>
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+    <dc-import name="Text" variant="body" text="{{title}}" hint-size="100%,24px"></dc-import>
+    <sc-if value="{{hasSubtitle}}" hint-placeholder-val="{{false}}"><dc-import name="Text" variant="subhead" tone="secondary" text="{{subtitle}}" hint-size="100%,20px"></dc-import></sc-if>
+  </div>
+  <sc-if value="{{hasDetail}}" hint-placeholder-val="{{false}}"><div style="flex-shrink: 1; min-width: 0; max-width: 38%"><dc-import name="Text" variant="body" tone="{{detailTone}}" align="end" text="{{detail}}" hint-size="60px,24px"></dc-import></div></sc-if>
+  <sc-if value="{{isChevron}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="chevron-right" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></span></sc-if>
+  <sc-if value="{{isToggle}}" hint-placeholder-val="{{false}}"><div style="position: relative; z-index: 2; flex-shrink: 0; margin: -8px 0"><dc-import name="Toggle" checked="{{checked}}" label="{{title}}" hint-size="51px,48px"></dc-import></div></sc-if>
+  <sc-if value="{{isCheckOn}}" hint-placeholder-val="{{false}}"><span aria-label="Выбрано" role="img" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="check" size="md" tone="{{checkTone}}" hint-size="20px,20px"></dc-import></span></sc-if>
+  <sc-if value="{{isCheckOff}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 20px; height: 20px; flex-shrink: 0"></span></sc-if>
+  <sc-if value="{{isBadge}}" hint-placeholder-val="{{false}}"><span style="min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 6px; border-radius: 10px; background: #234088; color: #FFFFFF; font-size: 11px; line-height: 20px; font-weight: 700; text-align: center; flex-shrink: 0">{{badge}}</span></sc-if>
+  <sc-if value="{{isIcon}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="{{trailingIcon}}" size="md" tone="{{trailingTone}}" hint-size="20px,20px"></dc-import></span></sc-if>
+  <sc-if value="{{isTextStatic}}" hint-placeholder-val="{{false}}"><span style="{{actionCss}}">{{actionLabel}}</span></sc-if>
+  <sc-if value="{{isTextButton}}" hint-placeholder-val="{{false}}"><button type="button" style="{{actionBtnCss}}">{{actionLabel}}</button></sc-if>
+  <sc-if value="{{extraChevron}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="chevron-right" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></span></sc-if>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{false}}"><a href="{{href}}" aria-label="{{ariaLabel}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Прочитано"},"subtitle":{"editor":"text","default":""},"detail":{"editor":"text","default":""},"detailTone":{"editor":"enum","default":"secondary","options":["secondary","brand","danger","success"]},"icon":{"editor":"enum","default":"","options":["","arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-running","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"iconTone":{"editor":"enum","default":"brand","options":["brand","success","warning","danger","neutral","purple","teal","orange"]},"iconStyle":{"editor":"enum","default":"tile","options":["tile","plain","none"]},"thumb":{"editor":"text","default":""},"thumbShape":{"editor":"enum","default":"square","options":["square","book","round"]},"avatar":{"editor":"text","default":""},"person":{"editor":"text","default":""},"trailing":{"editor":"enum","default":"chevron","options":["none","chevron","toggle","check","badge","icon","text"]},"chevron":{"editor":"boolean","default":false},"checkTone":{"editor":"enum","default":"brand","options":["brand","success"]},"trailingIcon":{"editor":"enum","default":"","options":["","","arrow-down","arrow-from-square-up-right","arrow-left","arrow-right","arrow-rotate-cw-up","arrow-to-bracket-down","arrow-up","ball-soccer","bell","bell-slash","bike","bin","body-standing","bolt-vertical","book","book-bookmark","book-open","bookmark","books-spines","briefcase","building","bullseye","calendar","calendar-check","calendar-star","camera","car","chart-bar","chart-line","chart-pie","chat-bubble","chat-bubbles","check","check-circle","checks","chevron-down","chevron-left","chevron-right","chevron-small-down","chevron-small-right","chevron-up","clipboard","clock-3h","cloud-arrow-down","coffee-cup","compass","copy","credit-card","crescent","crown","dots-three-horizontal","dots-three-vertical","envelope","exclamation-circle","exclamation-triangle","eye","eye-slash","fast-backward","fast-forward","file","file-doc","flag","flame","funnel","gear","gift","globe","graduation-cap","grid-2x2","hand-heart","handshake","headphones","heart","history","home","image","images","inbox","layers","lightbulb","link","list","lock-locked","lock-unlocked","magic-wand","magnifying-glass","map","medal-sport","mic","minus","mountains","navigation","note","palette","paperplane","pause","pause-circle","pencil","pencil-square","people","person","person-check","person-circle","person-plus","person-square","phone","pin","pin-check","plane","play","play-circle","plus","plus-circle","pulse","qr-code","question-circle","quote-left","robot","rocket","seal-check","share-network","shield-check","shop","skip-backward","skip-forward","sliders","smartphone","sparkles","speaker","star","star-half","stopwatch","sun","tag","target-location","tent","text-i-circle","text-t","thumbs-up","ticket","translate","trending-up","trophy","utensils","video-camera","volume-2","wallet","weight","wifi-slash","x","x-circle"]},"trailingTone":{"editor":"enum","default":"secondary","options":["secondary","tertiary","brand","success","warning","danger"]},"actionLabel":{"editor":"text","default":""},"checked":{"editor":"boolean","default":false},"badge":{"editor":"text","default":""},"href":{"editor":"text","default":""},"separator":{"editor":"boolean","default":false},"$preview":{"width":358,"height":56}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var keys = ['title', 'subtitle', 'detail', 'icon', 'avatar', 'person', 'badge', 'thumb', 'actionLabel', 'trailingIcon'];
+    var demo = keys.every(function (k) { return p[k] === undefined || p[k] === null; });
+    var D = demo ? { title: 'Прочитано', detail: '3', icon: 'check', iconTone: 'success' } : {};
+    var get = function (k) { return (p[k] !== undefined && p[k] !== null) ? p[k] : D[k]; };
+    var on = function (v) { return v === true || v === 'true'; };
+    var title = get('title') || '';
+    var subtitle = get('subtitle') || '';
+    var detail = get('detail') === undefined || get('detail') === null ? '' : String(get('detail'));
+    var icon = get('icon') || '';
+    var avatar = get('avatar') || '';
+    var person = get('person') || '';
+    var tone = get('iconTone') || 'brand';
+    var style = p.iconStyle || 'tile';
+    var trailing = p.trailing || 'chevron';
+    var checked = on(p.checked);
+    var FILL = { brand: '#234088', success: '#34C759', warning: '#FF9500', danger: '#FF3B30', neutral: '#8E8E93', purple: '#AF52DE', teal: '#30B0C7', orange: '#EA580C' };
+    var INK = { brand: '#234088', success: '#187A32', warning: '#934900', danger: '#C5221F', neutral: '#5C5C60', purple: '#8944AB', teal: '#1E7F91', orange: '#C2410C' };
+    var thumb = get('thumb') || '';
+    var TH = { square: [40, 40, '8px'], book: [36, 48, '4px'], round: [40, 40, '50%'] };
+    var th = TH[p.thumbShape] || TH.square;
+    var showThumb = !!thumb;
+    var hasLeadMedia = showThumb || !!avatar || !!person;
+    var TT = { secondary: 1, tertiary: 1, brand: 1, success: 1, warning: 1, danger: 1 };
+    var trailingIcon = get('trailingIcon') || '';
+    var actionLabel = get('actionLabel') || '';
+    var href = p.href || '';
+    var isText = trailing === 'text' && !!actionLabel;
+    var actionBase = "display: flex; align-items: center; flex-shrink: 0; white-space: nowrap; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; font-size: 15px; line-height: 20px; font-weight: 700; letter-spacing: -0.1px; color: #234088";
+    var rootCss = [
+      'position: relative', 'display: flex', 'align-items: center', 'gap: 12px', 'padding: 11px 16px', 'min-height: 48px',
+      'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'color: #000000',
+      "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased'
+    ].join('; ');
+    var tileCss = 'width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: ' + (FILL[tone] || FILL.brand);
+    var plainCss = 'display: flex; flex-shrink: 0; width: 24px; justify-content: center; color: ' + (INK[tone] || INK.brand);
+    var personName = person.indexOf(' ') < 0 && person.length <= 3 ? person.split('').join(' ') : person;
+    // separator is inset to the text column (iOS inset-grouped): 16 pad + leading media + 12 gap
+    var showTileV = !hasLeadMedia && !!icon && style === 'tile';
+    var showPlainV = !hasLeadMedia && !!icon && style === 'plain';
+    var lead = showThumb ? th[0] + 12 : (avatar || person) ? 52 : showTileV ? 42 : showPlainV ? 36 : 0;
+    var sepCss = 'position: absolute; top: 0; left: ' + (16 + lead) + 'px; right: 0; height: 0.5px; background: rgba(60,60,67,0.18)';
+    return {
+      rootCss: rootCss, tileCss: tileCss, plainCss: plainCss, sepCss: sepCss,
+      separator: on(p.separator),
+      icon: icon, avatar: avatar, person: person,
+      showTile: !hasLeadMedia && !!icon && style === 'tile',
+      showPlain: !hasLeadMedia && !!icon && style === 'plain',
+      showThumb: showThumb, thumb: thumb,
+      thumbCss: 'width: ' + th[0] + 'px; height: ' + th[1] + 'px; border-radius: ' + th[2] + '; overflow: hidden; flex-shrink: 0; display: block; background: rgba(118,118,128,0.12); box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.06)',
+      showAvatar: !showThumb && (!!avatar || !!person), personName: personName || title,
+      title: title, subtitle: subtitle, hasSubtitle: !!subtitle,
+      detail: detail, hasDetail: detail !== '', detailTone: p.detailTone || 'secondary',
+      isChevron: trailing === 'chevron', isToggle: trailing === 'toggle',
+      isCheckOn: trailing === 'check' && checked, isCheckOff: trailing === 'check' && !checked,
+      isBadge: trailing === 'badge' && !!get('badge'), badge: get('badge') || '',
+      checkTone: p.checkTone === 'success' ? 'success' : 'brand',
+      isIcon: trailing === 'icon' && !!trailingIcon, trailingIcon: trailingIcon, trailingTone: TT[p.trailingTone] ? p.trailingTone : 'secondary',
+      actionLabel: actionLabel, isTextStatic: isText && !!href, isTextButton: isText && !href,
+      actionCss: actionBase + '; min-height: 24px',
+      actionBtnCss: actionBase + '; position: relative; z-index: 2; min-height: 48px; min-width: 48px; justify-content: flex-end; margin: -12px 0; padding: 0; border: 0; background: transparent; cursor: pointer',
+      extraChevron: on(p.chevron) && trailing !== 'chevron' && trailing !== 'toggle',
+      checked: checked,
+      hasHref: !!href && trailing !== 'toggle', href: href,
+      ariaLabel: [title, subtitle, detail].filter(Boolean).join(', ')
+    };
+  }
+}
+</script>
+</body>
+</html>

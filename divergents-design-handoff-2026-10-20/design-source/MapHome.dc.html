@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Карта мест</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="844" tab="map" safe-top="{{false}}" hint-size="390px,844px">
+  <dc-import name="Wrapper" layer="overlay-fill" hint-size="390px,844px">
+    <dc-import name="MapCanvas" size="screen" pins="{{pins}}" events="{{events}}" user="{{user}}" hint-size="390px,844px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" layer="overlay-top" pad-top="54" hint-size="100%,170px">
+    <dc-import name="Wrapper2" pad-top="4" gap="8" hint-size="100%,112px">
+      <dc-import name="Wrapper3" dir="row" fill="first" gap="8" pad-x="12" hint-size="100%,48px">
+        <dc-import name="SearchField" placeholder="Поиск: место, адрес, здание" hint-size="100%,48px"></dc-import>
+        <dc-import name="Button" label="Алматы" icon="pin" variant="tinted" size="compact" hint-size="120px,44px"></dc-import>
+        <dc-import name="ProfileButton" variant="floating" person="Акназар" progress="75" href="ProfileHome.dc.html" hint-size="52px,52px"></dc-import>
+      </dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="8" pad-x="12" scroll="x" hint-size="100%,48px">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+          <dc-import name="Chip" label="{{f.label}}" icon="{{f.icon}}" active="{{f.active}}" hint-size="90px,48px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" layer="overlay-bottom" align="end" pad-x="12" pad-bottom="120" gap="12" hint-size="100%,288px">
+    <dc-import name="MapControl" icon="seal-check" label="Заявки на метки" badge="{{3}}" href="AdminPlaces.dc.html" hint-size="48px,48px"></dc-import>
+    <dc-import name="MapControl" icon="navigation" label="Моё местоположение" hint-size="48px,48px"></dc-import>
+    <dc-import name="MapControl" icon="plus" tone="brand" label="Добавить место" href="AddPlace.dc.html" hint-size="48px,48px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+
+    return {
+      pins: [
+        { x: 96, y: 252, kind: 'cafe', label: 'Little stars, кафе', href: 'PlaceDetail.dc.html' },
+        { x: 296, y: 346, kind: 'restaurant', label: 'Pick Chick, ресторан' },
+        { x: 306, y: 230, kind: 'hotel', label: 'Отель' },
+        { x: 66, y: 606, kind: 'park', label: 'Парк' },
+        { x: 176, y: 520, kind: 'gym', label: 'Спортзал' },
+        { x: 252, y: 486, kind: 'tourism', label: 'Туризм' },
+        { x: 156, y: 706, kind: 'base', label: 'База отдыха' },
+        { x: 108, y: 346, kind: 'guesthouse', label: 'Гостевой дом' },
+        { x: 38, y: 416, kind: 'cafe', label: 'Культура, кафе', muted: true },
+        { x: 242, y: 626, kind: 'picnic', label: 'Пикник' }
+      ],
+      events: [
+        { x: 167, y: 227, kind: 'meetup', time: '18:30' },
+        { x: 279, y: 573, kind: 'sport', time: '07:00' }
+      ],
+      user: { x: 196, y: 434 },
+      filters: [
+        { label: 'Все', icon: '', active: true },
+        { label: 'Кафе', icon: 'coffee-cup', active: false },
+        { label: 'Ресторан', icon: 'utensils', active: false },
+        { label: 'Отель', icon: 'building', active: false },
+        { label: 'Гостевой дом', icon: 'home', active: false }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

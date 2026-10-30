@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Псевдоним</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="844" surface="grouped" hint-size="390px,844px">
+  <dc-import name="Wrapper" pad-x="24" pad-top="40" hint-size="100%,214px">
+    <dc-import name="AuthHero" variant="compact" title="Придумайте псевдоним" subtitle="Его увидят другие участники вместо вашего имени — в сообществе, челленджах и каналах." hint-size="100%,174px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="24" pad-top="28" gap="16" hint-size="100%,260px">
+    <dc-import name="AuthField" variant="white" label="Псевдоним" type="text" icon="" value="Aknazar" placeholder="Например: Aknazar" clearable="{{false}}" counter="{{true}}" status="success" message="Псевдоним свободен" max-length="13" hint-size="100%,99px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="4" hint-size="100%,32px">
+      <dc-import name="Text" variant="footnote" tone="tertiary" text="Латиницей, с заглавной буквы, 3–13 символов. Псевдоним уникален — занять чужой нельзя." hint-size="100%,36px"></dc-import>
+    </dc-import>
+    <dc-import name="NicknamePreview" nickname="Aknazar" caption="Так вас увидят другие участники" hint-size="100%,68px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" layer="overlay-bottom" pad-x="24" pad-bottom="32" gap="8" hint-size="100%,140px">
+    <dc-import name="Button" label="Сохранить и продолжить" variant="solid" size="large" full-width="{{true}}" href="LMSHome.dc.html" hint-size="100%,56px"></dc-import>
+    <dc-import name="Button" label="Выйти из аккаунта" variant="plain" tone="neutral" size="compact" full-width="{{true}}" hint-size="100%,44px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

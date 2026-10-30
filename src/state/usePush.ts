@@ -30,12 +30,14 @@ function whenReady(fn: () => void, tries = 0) {
 
 // Route a tapped notification to its target content. The push payload's `data`
 // carries the same `{ tab, screen, params }` shape as in-app notifications.
-function routeFromResponse(response: Notifications.NotificationResponse | null, signedIn: boolean) {
+export function routeFromResponse(response: Notifications.NotificationResponse | null, signedIn: boolean, accountId?: string | null, stillCurrent = () => true) {
   if (!response || !signedIn) return;
   const data: any = response.notification.request.content.data || {};
+  if (data.readingAccountId && data.readingAccountId !== accountId) return;
   const target = data.target || (data.tab ? data : null);
   const nav = navigationRef as any;
   whenReady(() => {
+    if (!stillCurrent()) return;
     try {
       // A tab without a screen is still a destination — open the tab.
       if (target?.tab) {
@@ -83,13 +85,14 @@ export async function unregisterPushToken(getToken: () => Promise<string | null>
  *   confusing and burns the one-shot iOS prompt. Tap routing is unaffected.
  */
 export function usePush(enabled = true) {
-  const { isSignedIn, getToken, isLoaded } = useAuth();
+  const { isSignedIn, getToken, isLoaded, userId } = useAuth();
   // Keep the latest getToken / auth state in refs so the effect can depend only
   // on isSignedIn without re-subscribing each time Clerk hands back a new fn.
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
   const signedInRef = useRef(!!isSignedIn);
   signedInRef.current = !!isSignedIn;
+  const accountRef = useRef(userId); accountRef.current = userId;
 
   // Register the device token with the backend (only when enabled — see above).
   const register = !!isSignedIn && enabled;
@@ -127,12 +130,15 @@ export function usePush(enabled = true) {
   // last-response read still happens exactly once.
   useEffect(() => {
     if (!isLoaded) return;
+    const routeResponse = (resp: Notifications.NotificationResponse | null) => {
+      const account = accountRef.current;
+      routeFromResponse(resp, signedInRef.current, account,
+        () => signedInRef.current && accountRef.current === account);
+    };
     Notifications.getLastNotificationResponseAsync()
-      .then((resp) => routeFromResponse(resp, signedInRef.current))
+      .then(routeResponse)
       .catch(() => {});
-    const sub = Notifications.addNotificationResponseReceivedListener((resp) =>
-      routeFromResponse(resp, signedInRef.current),
-    );
+    const sub = Notifications.addNotificationResponseReceivedListener(routeResponse);
     return () => sub.remove();
   }, [isLoaded]);
 }

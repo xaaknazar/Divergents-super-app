@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>EventHero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; height: 240px; box-sizing: border-box; width: 100%; overflow: hidden; background: #8AA3BD; {{ff}}">
+  <sc-if value="{{hasSrc}}" hint-placeholder-val="{{false}}"><img src="{{src}}" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block"></sc-if>
+  <sc-if value="{{noSrc}}" hint-placeholder-val="{{true}}"><svg width="100%" height="240" viewBox="0 0 400 240" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; top: 0; left: 0; display: block"><polygon points="0,170 90,110 160,150 240,90 310,140 400,100 400,240 0,240" fill="rgba(255,255,255,0.18)"></polygon><polygon points="0,200 70,150 150,180 220,130 300,170 360,145 400,180 400,240 0,240" fill="rgba(255,255,255,0.3)"></polygon></svg></sc-if>
+  <sc-if value="{{hasSrc}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%)"></span></sc-if>
+  <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 2">
+    <dc-import name="NavHeader" variant="overlay" overlay-scheme="light" back-label="{{backLabel}}" back-href="{{backHref}}" actions="{{actions}}" hint-size="100%,108px"></dc-import>
+  </div>
+  <div style="position: absolute; left: 20px; right: 20px; bottom: 20px; display: flex; flex-direction: column; align-items: flex-start; z-index: 2">
+    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: #FFFFFF; color: #000000"><dc-import name="Icon" icon="calendar" size="xs" tone="primary" hint-size="12px,12px"></dc-import><span style="font-size: 11px; line-height: 14px; font-weight: 700">{{date}}</span></span>
+    <div style="margin-top: 10px"><dc-import name="Text" variant="largeTitle" tone="white" heading="1" text="{{title}}" hint-size="300px,41px"></dc-import></div>
+    <div style="margin-top: 2px"><dc-import name="Text" variant="subhead" tone="whiteMuted" text="{{subtitle}}" hint-size="300px,20px"></dc-import></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Книжный клуб"},"subtitle":{"editor":"text","default":"Кофейня, ул. Панфилова 98"},"date":{"editor":"text","default":"16 октября в 18:00 · UTC+5"},"src":{"editor":"text","default":""},"backHref":{"editor":"text","default":"CommunityHome.dc.html"},"backLabel":{"editor":"text","default":"Сообщество"},"favorite":{"editor":"boolean","default":true},"share":{"editor":"boolean","default":false},"$preview":{"width":390,"height":240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var on = function (v, d) { return v === undefined || v === null ? d : (v === true || v === 'true'); };
+    var src = p.src || '';
+    return {
+      ff: "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased",
+      src: src, hasSrc: !!src, noSrc: !src,
+      title: p.title || 'Книжный клуб',
+      subtitle: p.subtitle !== undefined ? (p.subtitle || '') : 'Кофейня, ул. Панфилова 98',
+      date: p.date || '16 октября в 18:00 · UTC+5',
+      backHref: p.backHref !== undefined ? (p.backHref || '') : 'CommunityHome.dc.html',
+      backLabel: p.backLabel || 'Назад',
+      actions: [
+        on(p.favorite, true) ? { icon: 'heart', label: 'В избранное' } : null,
+        on(p.share, false) ? { icon: 'share-network', label: 'Поделиться' } : null
+      ].filter(Boolean)
+    };
+  }
+}
+</script>
+</body>
+</html>

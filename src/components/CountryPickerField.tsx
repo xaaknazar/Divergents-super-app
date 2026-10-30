@@ -1,28 +1,31 @@
+import { FieldTrigger } from './FieldTrigger';
+import { FieldLabel } from './FieldLabel';
+import { FieldError } from './FieldError';
 // Выбор посещённых стран.
 //
 // Раньше страны вбивались руками по одной: долго, и одно место превращалось в
 // «оаэ», «Эмираты» и «UAE» — три разных значения в базе. Здесь список с
 // поиском: касание добавляет и убирает страну.
-import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, Modal, FlatList } from 'react-native';
+import React,{ useMemo,useState } from 'react';
+import { FlatList,Modal,Pressable,Text,TextInput,View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme/ThemeContext';
-import { SF } from './SFIcon';
-import { minTouch } from '../theme/tokens';
-import { searchCountries, countryFlag, Country } from '../data/countries';
+import { Country,countryFlag,searchCountries } from '../data/countries';
 import { tr } from '../state/LanguageContext';
+import { useTheme } from '../theme/ThemeContext';
+import { minTouch } from '../theme/tokens';
+import { SF } from './SFIcon';
 
 export function CountryPickerField({
-  value, onChange, labelEl, inputStyle, errorEl, accessibilityLabel,
+  value, onChange, label, required, error, accessibilityLabel,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
-  labelEl: React.ReactNode;
-  inputStyle: object;
-  errorEl?: React.ReactNode;
+  label: string;
+  required?: boolean;
+  error?: string;
   accessibilityLabel: string;
 }) {
-  const { T, ty } = useTheme();
+  const { T, ty, reduceMotion } = useTheme();
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -56,19 +59,11 @@ export function CountryPickerField({
 
   return (
     <View style={{ marginBottom: 14 }}>
-      {labelEl}
+      <FieldLabel label={label} required={required} invalid={!!error} />
 
-      <Pressable
-        onPress={() => { setQuery(''); setOpen(true); }}
-        accessibilityRole="button"
-        accessibilityLabel={`${accessibilityLabel}. ${selected.length ? `Выбрано: ${selected.join(', ')}` : 'Ничего не выбрано'}`}
-        style={[inputStyle, { minHeight: minTouch, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }]}
-      >
-        <Text style={[ty.body, { color: selected.length ? T.label : T.labelTertiary, flex: 1 }]} numberOfLines={1}>
-          {selected.length ? `${tr('Выбрано')}: ${selected.length}` : tr('Выберите страны')}
-        </Text>
-        <SF name="chevron.right" size={14} color={T.labelTertiary} />
-      </Pressable>
+      <FieldTrigger onPress={() => { setQuery(''); setOpen(true); }} invalid={!!error}
+        value={selected.length ? `${tr('Выбрано')}: ${selected.length}` : ''} placeholder={tr('Выберите страны')}
+        accessibilityLabel={`${accessibilityLabel}. ${selected.length ? `Выбрано: ${selected.join(', ')}` : 'Ничего не выбрано'}`} />
 
       {/* Выбранные — чипами, касание убирает. Так видно список целиком, а не
           только счётчик. */}
@@ -90,9 +85,9 @@ export function CountryPickerField({
           ))}
         </View>
       ) : null}
-      {errorEl}
+      <FieldError message={error} />
 
-      <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} animationType={reduceMotion ? 'none' : 'slide'} onRequestClose={() => setOpen(false)}>
         <View style={{ flex: 1, backgroundColor: T.systemBg }}>
           {/* Модалка занимает весь экран, включая строку состояния: без отступа
               на «чёлку» кнопка «Готово» оказывалась под часами и батареей, и

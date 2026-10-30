@@ -1,0 +1,18 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingAllowedAppsCard } from './ReadingAllowedAppsCard';
+const value = { count: 2, editable: true, busy: false, needsReselection: false, choose: () => {} };
+const meta = { title: 'Reading/Allowed reading apps', component: ReadingAllowedAppsCard, args: { value } } satisfies Meta<typeof ReadingAllowedAppsCard>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Default: Story = {};
+export const NoExceptions: Story = { args: { value: { ...value, count: 0 } } };
+export const Loading: Story = { args: { value: { ...value, count: null, editable: false, busy: true } } };
+export const DuringApproach: Story = { args: { value: { ...value, editable: false } } };
+export const Revoked: Story = { args: { value: { ...value, count: 0, needsReselection: true } } };
+export const Failed: Story = { args: { value: { ...value, error: 'Не удалось сохранить исключения. Попробуйте ещё раз.' } } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+/** Всё настроено: одна строка-ссылка внизу экрана. */
+export const ConfiguredRow: Story = { args: { variant: 'row' } };
+export const ConfiguredRowDark: Story = { args: { variant: 'row' }, parameters: { scheme: 'dark' } };
+export const ConfiguredRowLargeText: Story = { args: { variant: 'row' }, parameters: { viewport: 'compact', textSize: 'xl' } };

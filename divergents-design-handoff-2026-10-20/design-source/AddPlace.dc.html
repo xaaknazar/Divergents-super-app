@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Новое место</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1760" safe-top="{{false}}" hint-size="390px,1760px">
+  <dc-import name="NavHeader" variant="inline" title="Новое место" back-label="Отмена" back-href="MapHome.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" pad-bottom="120" gap="16" hint-size="100%,1600px">
+    <dc-import name="Wrapper2" gap="12" hint-size="100%,248px">
+      <dc-import name="Text" variant="caption1" tone="secondary" text="Город: Алматы, Казахстан · нажмите на карту, чтобы поставить точку" hint-size="100%,16px"></dc-import>
+      <dc-import name="MapCanvas" size="preview" drop="{{drop}}" hint-size="100%,220px"></dc-import>
+    </dc-import>
+    <dc-import name="TextField" label="Название" value="Little stars" placeholder="напр. Coffee BOOM" hint-size="100%,80px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,244px">
+      <dc-import name="Text" variant="subheadEm" heading="2" text="Категория" hint-size="100%,20px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" wrap="{{true}}" gap="8" hint-size="100%,216px">
+        <sc-for list="{{categories}}" as="c" hint-placeholder-count="9">
+          <dc-import name="Chip" label="{{c.label}}" icon="{{c.icon}}" active="{{c.active}}" hint-size="100px,48px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,188px">
+      <dc-import name="Text" variant="subheadEm" heading="2" text="Особенности" hint-size="100%,20px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" wrap="{{true}}" gap="8" hint-size="100%,160px">
+        <sc-for list="{{features}}" as="f" hint-placeholder-count="6">
+          <dc-import name="Chip" label="{{f.label}}" icon="{{f.icon}}" active="{{f.active}}" hint-size="110px,48px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+    <dc-import name="TextField" label="Чем хорошо" multiline="{{true}}" rows="{{8}}" value="{{highlight}}" placeholder="напр. Вкусный колд брю, тихо, есть розетки" hint-size="100%,244px"></dc-import>
+    <dc-import name="TextField" label="Часы работы" value="9:00-22:00" placeholder="напр. 09:00–23:00" hint-size="100%,80px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,264px">
+      <dc-import name="Text" variant="subheadEm" heading="2" text="Фото" hint-size="100%,20px"></dc-import>
+      <dc-import name="MediaCover" src="/_blob/2838d15cc0d68fef076a9bd29a796f5b" aspect="banner" radius="xl" hint-size="100%,180px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" fill="equal" gap="10" hint-size="100%,44px">
+        <dc-import name="Button" label="Заменить" variant="tinted" size="compact" full-width="{{true}}" hint-size="100%,44px"></dc-import>
+        <dc-import name="Button" label="Удалить" variant="tinted" tone="neutral" size="compact" full-width="{{true}}" hint-size="100%,44px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+  <dc-import name="BottomBar" placement="screen" hint-size="100%,108px">
+    <dc-import name="Button" label="Добавить место" icon="plus" variant="solid" full-width="{{true}}" href="MapHome.dc.html" hint-size="100%,50px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1760}}'>
+class Component extends DCLogic {
+  renderVals() {
+
+    return {
+      drop: { x: 179, y: 110, category: 'cafe', large: true },
+      categories: [
+        { label: 'Кафе', icon: 'coffee-cup', active: true },
+        { label: 'Ресторан', icon: 'utensils', active: false },
+        { label: 'Отель', icon: 'building', active: false },
+        { label: 'Гостевой дом', icon: 'home', active: false },
+        { label: 'База отдыха', icon: 'tent', active: false },
+        { label: 'Парк', icon: 'mountains', active: false },
+        { label: 'Спортзал', icon: 'weight', active: false },
+        { label: 'Пикник', icon: 'sun', active: false },
+        { label: 'Туризм', icon: 'camera', active: false }
+      ],
+      features: [
+        { label: 'Халяль', icon: 'seal-check', active: true },
+        { label: 'Без алкоголя', icon: 'x', active: false },
+        { label: 'Чисто', icon: 'sparkles', active: true },
+        { label: 'Детская зона', icon: 'people', active: true },
+        { label: 'Для семьи', icon: 'heart', active: true },
+        { label: 'Намазхана', icon: 'crescent', active: false }
+      ],
+      highlight: 'Очень уютное место для отдыха с детьми. Здесь есть большая двухэтажная игровая зона, где детям точно будет чем заняться. Еда вкусная, официанты приветливые и внимательные. Отличный вариант, чтобы спокойно посидеть, вкусно поесть и при этом занять детей'
+    };
+  }
+}
+</script>
+</body>
+</html>

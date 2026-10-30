@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>LessonDownloadButton</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<button type="button" aria-busy="{{busy}}" aria-label="{{aria}}" style="{{css}}"><dc-import name="Icon" icon="{{icon}}" variant="{{iconVariant}}" size="{{iconSize}}" tone="{{tone}}" hint-size="20px,20px"></dc-import><sc-if value="{{showLabel}}" hint-placeholder-val="{{true}}"><span>{{label}}</span></sc-if></button>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","default":"idle","options":["idle","downloading","downloaded"]},"variant":{"editor":"enum","default":"pill","options":["pill","icon"]},"label":{"editor":"text","default":""},"progress":{"editor":"int","default":45,"min":0,"max":100},"$preview":{"width":230,"height":44}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var st = p.state || 'idle';
+    var icon = p.variant === 'icon';
+    var S = {
+      idle: ['cloud-arrow-down', 'line', 'brand', '#234088', 'Скачать аудио (офлайн)', 'rgba(61,91,219,0.13)'],
+      downloading: ['arrow-rotate-cw-up', 'line', 'brand', '#234088', 'Скачивание… ' + Number(p.progress ?? 45) + '%', 'rgba(61,91,219,0.13)'],
+      downloaded: ['check-circle', 'solid', 'success', '#187A32', 'Доступно офлайн', 'rgba(52,199,89,0.14)']
+    };
+    var s = S[st] || S.idle;
+    var label = p.label || s[4];
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    // pill = grey labelled action; icon = 44px round tinted button (label becomes aria-label)
+    var css = icon
+      ? ['display: inline-flex', 'align-items: center', 'justify-content: center', 'width: 44px', 'height: 44px', 'margin: 0', 'padding: 0', 'border: 0', 'border-radius: 22px',
+         'background: ' + s[5], 'cursor: pointer', 'flex-shrink: 0', F].join('; ')
+      : ['display: inline-flex', 'align-items: center', 'gap: 8px', 'margin: 0', 'border: 0', 'border-radius: 12px', 'background: rgba(120,120,128,0.16)',
+         'padding: 9px 14px', 'cursor: pointer', F, 'font-size: 13px', 'line-height: 18px', 'font-weight: 700', 'color: ' + s[3]].join('; ');
+    return {
+      icon: s[0], iconVariant: s[1], tone: s[2], iconSize: icon ? 'md' : 'sm',
+      label: label, aria: label, showLabel: !icon,
+      busy: st === 'downloading' ? 'true' : 'false',
+      css: css
+    };
+  }
+}
+</script>
+</body>
+</html>

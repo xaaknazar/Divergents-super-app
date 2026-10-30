@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TalentHero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <span role="img" aria-label="{{person}}" style="width: 88px; height: 88px; border-radius: 24px; background: #234088; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0"><sc-if value="{{hasSrc}}" hint-placeholder-val="{{false}}"><img src="{{src}}" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block"></sc-if><sc-if value="{{noSrc}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="font-size: 34px; line-height: 41px; font-weight: 700; color: #FFFFFF">{{initial}}</span></sc-if></span>
+  <div style="margin-top: 12px; width: 100%"><dc-import name="Text" variant="title2" heading="2" align="center" text="{{person}}" hint-size="100%,28px"></dc-import></div>
+  <sc-if value="{{hasBadges}}" hint-placeholder-val="{{true}}"><div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px"><sc-for list="{{badges}}" as="b" hint-placeholder-count="2"><dc-import name="StatusBadge" label="{{b.label}}" tone="{{b.tone}}" hint-size="90px,22px"></dc-import></sc-for></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"person":{"editor":"text","default":"Акназар [Фамилия]"},"src":{"editor":"text","default":""},"badges":{"editor":null},"$preview":{"width":350,"height":160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var demo = p.person === undefined && p.badges === undefined;
+    var person = String(p.person ?? 'Акназар [Фамилия]');
+    var raw = Array.isArray(p.badges) ? p.badges : (demo ? [{ label: 'MBTI · ENTJ', tone: 'brand' }, { label: 'Анкета 85%', tone: 'neutral' }] : []);
+    var src = p.src || '';
+    return {
+      rootCss: 'display: flex; flex-direction: column; align-items: center; box-sizing: border-box; width: 100%; min-width: 0; color: #000000; ' + F,
+      person: person, initial: person.trim().charAt(0).toUpperCase(), src: src, hasSrc: !!src, noSrc: !src,
+      badges: raw.map(function (b) { return { label: b.label || '', tone: b.tone || 'neutral' }; }), hasBadges: raw.length > 0
+    };
+  }
+}
+</script>
+</body>
+</html>

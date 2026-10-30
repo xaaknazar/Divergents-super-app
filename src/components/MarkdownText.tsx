@@ -3,7 +3,7 @@
 // bullet/numbered lists and horizontal rules. Any stray/unpaired markers are
 // stripped so the text always reads cleanly.
 import React from 'react';
-import { View, Text, TextStyle, Platform, Linking } from 'react-native';
+import { Linking,Platform,Text,TextStyle,View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
 const BOLD = 'GothamRnd-Bold';

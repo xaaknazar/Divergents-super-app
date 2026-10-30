@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CourseHero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<header style="display: flex; flex-direction: column; box-sizing: border-box; width: 100%; min-width: 0; color: #000000; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: rgba(61,91,219,0.13); display: flex; align-items: center; justify-content: center">
+    <sc-if value="{{hasSrc}}" hint-placeholder-val="{{true}}"><img src="{{src}}" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block"></sc-if>
+    <sc-if value="{{noSrc}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="graduation-cap" size="xxl" tone="brand" hint-size="36px,36px"></dc-import></sc-if>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 4px; padding: 16px 4px 0">
+    <dc-import name="Text" variant="title2" heading="1" text="{{title}}" hint-size="100%,28px"></dc-import>
+    <dc-import name="Text" variant="subhead" tone="secondary" text="{{meta}}" hint-size="100%,20px"></dc-import>
+  </div>
+  <sc-if value="{{hasBadge}}" hint-placeholder-val="{{true}}"><div style="display: flex; padding: 10px 4px 0"><dc-import name="StatusBadge" label="{{badge}}" icon="{{badgeIcon}}" tone="{{badgeTone}}" hint-size="110px,22px"></dc-import></div></sc-if>
+  <sc-if value="{{hasProgress}}" hint-placeholder-val="{{true}}">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 18px 4px 0">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+        <span style="font-size: 13px; line-height: 18px; font-weight: 700; color: #234088; font-variant-numeric: tabular-nums">{{progressText}}</span>
+        <span style="font-size: 13px; line-height: 18px; color: #5C5C60; text-align: right; min-width: 0">{{progressLabel}}</span>
+      </div>
+      <div role="progressbar" aria-label="Прогресс курса" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{progress}}" style="height: 4px; border-radius: 2px; background: rgba(118,118,128,0.16); overflow: hidden"><div style="{{fillCss}}"></div></div>
+    </div>
+  </sc-if>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Максимизация талантов Gallup"},"author":{"editor":"text","default":"Divergents"},"category":{"editor":"text","default":"Саморазвитие"},"lessons":{"editor":"text","default":"34 урока"},"src":{"editor":"text","default":"/_blob/d2748e25aa43564a123b0f02c16ddc18"},"badge":{"editor":"text","default":"Курс открыт"},"badgeTone":{"editor":"enum","default":"success","options":["success","brand","neutral","warning"]},"progress":{"editor":"int","default":42,"min":-1,"max":100},"progressLabel":{"editor":"text","default":"Урок 15 — Significance"},"$preview":{"width":358,"height":360}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.title === undefined;
+    var src = p.src ?? (demo ? '/_blob/d2748e25aa43564a123b0f02c16ddc18' : '');
+    var meta = [p.author ?? (demo ? 'Divergents' : ''), p.category ?? (demo ? 'Саморазвитие' : ''), p.lessons ?? (demo ? '34 урока' : '')].filter(Boolean).join(' · ');
+    var badge = p.badge ?? (demo ? 'Курс открыт' : '');
+    var tone = { success: 1, brand: 1, neutral: 1, warning: 1 }[p.badgeTone] ? p.badgeTone : 'success';
+    var progress = Number(p.progress ?? (demo ? 42 : -1));
+    var pct = Math.max(0, Math.min(100, progress));
+    return {
+      title: p.title ?? 'Максимизация талантов Gallup', meta: meta,
+      src: src, hasSrc: !!src, noSrc: !src,
+      badge: badge, hasBadge: !!badge, badgeTone: tone, badgeIcon: tone === 'success' ? 'seal-check' : '',
+      hasProgress: progress >= 0, progress: String(pct),
+      progressText: 'Пройдено ' + pct + '%',
+      progressLabel: p.progressLabel ?? (demo ? 'Урок 15 — Significance' : ''),
+      fillCss: 'width: ' + pct + '%; height: 100%; border-radius: 2px; background: #234088'
+    };
+  }
+}
+</script>
+</body>
+</html>

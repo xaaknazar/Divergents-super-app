@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AIAnswer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: column; align-items: flex-start; box-sizing: border-box; width: 100%; min-width: 0; color: #000000; {{ff}}">
+  <div style="max-width: 90%; box-sizing: border-box; padding: 12px 14px; background: rgba(118,118,128,0.12); border-radius: 18px 18px 18px 4px; display: flex; flex-direction: column">
+    <sc-for list="{{blocks}}" as="b" hint-placeholder-count="2"><p style="{{b.css}}"><sc-if value="{{b.isList}}" hint-placeholder-val="{{false}}"><span style="font-weight: 700; flex-shrink: 0">{{b.num}}</span></sc-if><span style="flex: 1; min-width: 0"><sc-for list="{{b.parts}}" as="s" hint-placeholder-count="1"><span style="{{s.css}}">{{s.text}}</span></sc-for></span></p></sc-for>
+  </div>
+  <sc-if value="{{copyable}}" hint-placeholder-val="{{true}}"><div style="margin-top: 4px"><dc-import name="Button" label="Копировать" icon="copy" variant="plain" tone="neutral" size="compact" hint-size="150px,44px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"text":{"editor":"text","default":"Хороший старт — понять свои сильные стороны. Предлагаю три шага:\n\n1. **Пройдите анкету** талантов в профиле\n2. Начните курс **«Первые шаги к своей цели»**\n3. Присоединитесь к челленджу в сообществе"},"copyable":{"editor":"boolean","default":true},"$preview":{"width":358,"height":240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var text = p.text !== undefined && p.text !== null ? String(p.text) : 'Хороший старт — понять свои сильные стороны. Предлагаю три шага:\n\n1. **Пройдите анкету** талантов в профиле\n2. Начните курс **«Первые шаги к своей цели»**\n3. Присоединитесь к челленджу в сообществе';
+    var BASE = 'font-size: 17px; line-height: 24px; letter-spacing: -0.2px; color: #000000';
+    var parts = function (s) {
+      return s.split('**').map(function (t, i) { return { text: t, css: i % 2 ? 'font-weight: 700' : 'font-weight: 400' }; }).filter(function (x) { return x.text !== ''; });
+    };
+    var blocks = text.split('\n').map(function (line) {
+      var m = line.match(/^(\d+)\.\s+(.*)$/);
+      if (!line.trim()) return { isList: false, num: '', parts: [], css: 'margin: 0; height: 6px' };
+      if (m) return { isList: true, num: m[1] + '.', parts: parts(m[2]), css: 'margin: 1px 0; display: flex; gap: 6px; ' + BASE };
+      return { isList: false, num: '', parts: parts(line), css: 'margin: 1px 0; display: flex; ' + BASE };
+    });
+    return {
+      ff: "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased",
+      blocks: blocks,
+      copyable: !(p.copyable === false || p.copyable === 'false')
+    };
+  }
+}
+</script>
+</body>
+</html>

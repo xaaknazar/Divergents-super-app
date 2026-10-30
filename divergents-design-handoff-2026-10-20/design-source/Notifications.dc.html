@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Уведомления</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1000" safe-top="{{false}}" hint-size="390px,1000px">
+  <dc-import name="NavHeader" variant="inline" title="Уведомления" back-label="Закрыть" back-href="ProfileHome.dc.html" action-label="Прочитать все" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-top="8" pad-bottom="64" hint-size="100%,780px">
+    <sc-for list="{{items}}" as="n" hint-placeholder-count="6">
+      <dc-import name="NotificationRow" kind="{{n.kind}}" title="{{n.title}}" text="{{n.text}}" time="{{n.time}}" unread="{{n.unread}}" href="{{n.href}}" hint-size="100%,112px"></dc-import>
+    </sc-for>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      "items": [
+        {
+          "kind": "career",
+          "unread": true,
+          "href": "VacancyDetail.dc.html",
+          "time": "15 мин назад",
+          "title": "Ответ по вашему отклику",
+          "text": "Работодатель ответил на ваш отклик на вакансию «HR бизнес-партнёр». Откройте, чтобы прочитать обратную связь."
+        },
+        {
+          "kind": "challenge",
+          "unread": true,
+          "href": "CommunityHome.dc.html",
+          "time": "2 ч назад",
+          "title": "День 12 челленджа",
+          "text": "Не забудьте отметить сегодняшние задания — до конца дня осталось несколько часов."
+        },
+        {
+          "kind": "course",
+          "unread": false,
+          "href": "LMSHome.dc.html",
+          "time": "5 ч назад",
+          "title": "Новый урок в курсе",
+          "text": "В курсе «Привычки, которые помогают двигаться вперёд» вышел новый урок."
+        },
+        {
+          "kind": "community",
+          "unread": false,
+          "href": "CommunityHome.dc.html",
+          "time": "1 дн назад",
+          "title": "Новая встреча в сообществе",
+          "text": "[Название встречи] · [дата и место]. Присоединяйтесь, пока есть места."
+        },
+        {
+          "kind": "map",
+          "unread": false,
+          "href": "MapHome.dc.html",
+          "time": "3 дн назад",
+          "title": "Новое место на карте",
+          "text": "[Название места] добавлено на карту сообщества."
+        },
+        {
+          "kind": "system",
+          "unread": false,
+          "href": "",
+          "time": "5 окт.",
+          "title": "Обновление приложения",
+          "text": "Добавили скачивание уроков — теперь их можно смотреть без интернета."
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

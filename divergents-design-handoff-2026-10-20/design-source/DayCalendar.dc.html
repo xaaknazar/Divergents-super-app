@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>DayCalendar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<sc-if value="{{isWeek}}" hint-placeholder-val="{{true}}">
+<div style="{{fontCss}}">
+<div style="{{headCss}}">
+<span aria-hidden="true" style="{{tileCss}}"><dc-import name="Icon" icon="calendar" size="sm" tone="brand" hint-size="16px,16px"></dc-import></span>
+<span style="{{titleCss}}">{{title}}</span>
+<sc-if value="{{hasBadge}}" hint-placeholder-val="{{true}}"><dc-import name="StatusBadge" label="{{badge}}" tone="brand" hint-size="44px,22px"></dc-import></sc-if>
+</div>
+<div style="padding: 7px 8px; display: flex; flex-wrap: wrap">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="15"><div style="width: 14.2857%; padding: 2px; box-sizing: border-box"><dc-import name="DayCell" label="{{d.label}}" sub="{{d.sub}}" state="{{d.state}}" size="compact" hint-size="100%,40px"></dc-import></div></sc-for>
+</div>
+<sc-if value="{{hasCaption}}" hint-placeholder-val="{{true}}"><div style="{{footCss}}">{{caption}}</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{isStatus}}" hint-placeholder-val="{{false}}">
+<div style="{{fontCss}}">
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="15"><dc-import name="DayCell" label="{{d.label}}" state="{{d.state}}" size="regular" hint-size="44px,44px"></dc-import></sc-for>
+</div>
+<sc-if value="{{hasLegend}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px">
+<sc-for list="{{legend}}" as="l" hint-placeholder-count="4"><span style="display: flex; align-items: center; gap: 5px"><span aria-hidden="true" style="{{l.swatch}}"></span><span style="{{legendCss}}">{{l.label}}</span></span></sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"week","options":["week","status"]},"title":{"editor":"text","default":"Календарь челленджа"},"badge":{"editor":"text","default":"9/15"},"caption":{"editor":"text","default":"Сегодня: 12 октября · 9/15 день"},"days":{"editor":null},"legend":{"editor":null},"$preview":{"width":358,"height":190}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var status = p.variant === 'status';
+    var days = Array.isArray(p.days) && p.days.length ? p.days : null;
+    if (!days) {
+      days = [];
+      for (var i = 1; i <= 15; i++) {
+        if (status) days.push({ label: String(i), state: i === 3 ? 'flagged' : i < 9 ? 'done' : i === 9 ? 'today' : 'upcoming' });
+        else days.push({ label: String(i + 3), sub: 'Д' + i, state: i < 9 ? 'past' : i === 9 ? 'current' : 'upcoming' });
+      }
+    }
+    var SW = { done: 'rgba(52,199,89,0.18)', flagged: 'rgba(255,59,48,0.14)', missed: 'rgba(255,59,48,0.28)', today: 'rgba(61,91,219,0.13)' };
+    var legend = Array.isArray(p.legend) && p.legend.length ? p.legend : [
+      { state: 'done', label: 'норма закрыта' }, { state: 'flagged', label: 'есть флаг' }, { state: 'missed', label: 'не отмечался' }, { state: 'today', label: 'сегодня' }
+    ];
+    var caption = p.caption ?? (status ? '' : 'Сегодня: 12 октября · 9/15 день');
+    var badge = p.badge ?? (status ? '' : '9/15');
+    return {
+      isWeek: !status, isStatus: status,
+      days: days.map(function (d) { return { label: String(d.label), sub: d.sub || '', state: d.state || 'upcoming' }; }),
+      title: p.title ?? 'Календарь челленджа', badge: badge, hasBadge: !!badge,
+      caption: caption, hasCaption: !!caption,
+      hasLegend: status && p.legend !== false,
+      legend: legend.map(function (l) { return { label: l.label, swatch: 'width: 10px; height: 10px; border-radius: 3px; background: ' + (SW[l.state] || SW.today) }; }),
+      fontCss: FF,
+      headCss: 'min-height: 46px; padding: 0 14px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid rgba(60,60,67,0.18)',
+      tileCss: 'width: 28px; height: 28px; border-radius: 8px; background: rgba(61,91,219,0.13); display: flex; align-items: center; justify-content: center; flex-shrink: 0',
+      titleCss: 'flex: 1; min-width: 0; font-size: 15px; line-height: 20px; font-weight: 700; color: #000000',
+      footCss: 'min-height: 32px; padding: 0 14px; display: flex; align-items: center; border-top: 0.5px solid rgba(60,60,67,0.18); font-size: 11px; line-height: 14px; font-weight: 500; color: #5C5C60',
+      legendCss: 'font-size: 11px; line-height: 14px; font-weight: 500; color: #5C5C60'
+    };
+  }
+}
+</script>
+</body>
+</html>

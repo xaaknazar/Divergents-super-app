@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingRankRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <span style="{{placeCss}}">{{place}}</span>
+  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+    <span style="{{nameCss}}">{{name}}<sc-if value="{{mine}}" hint-placeholder-val="{{false}}"><span style="{{meCss}}">вы</span></sc-if></span>
+    <span style="{{metaCss}}">{{meta}}</span>
+  </span>
+  <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex-shrink: 0">
+    <span style="{{valueCss}}">{{value}}</span>
+    <span style="{{unitCss}}">{{unit}}</span>
+  </span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"place": {"editor": "text", "default": "1"}, "label": {"editor": "text", "default": "Vertex"}, "meta": {"editor": "text", "default": "22 участника"}, "value": {"editor": "text", "default": "64"}, "unit": {"editor": "text", "default": "мин/день"}, "state": {"editor": "enum", "default": "ranked", "options": ["ranked", "observing", "review"]}, "mine": {"editor": "boolean", "default": false}, "separator": {"editor": "boolean", "default": false}, "scheme": {"editor": "enum", "default": "light", "options": ["light", "dark"]}, "$preview": {"width": 358, "height": 60}}'>
+class Component extends DCLogic {
+  static PAL = {
+    light: { card: '#FFFFFF', border: '#E4E7EF', sep: 'rgba(60,60,67,0.12)', ink: '#0B0E16', ink2: '#5C5C60', ink3: '#6B6B70', brand: '#234088', accent: '#3D5BDB', tint: 'rgba(35,64,136,0.07)', track: '#E9ECF5', ok: '#187A32', okTint: 'rgba(24,122,50,0.09)', warn: '#934900', warnTint: 'rgba(255,149,0,0.12)', shadow: '0 1px 2px rgba(16,24,40,0.05), 0 10px 24px -14px rgba(16,24,40,0.22)', book: '/_blob/534c3a5937de37a34afa6a6ebd91be4b' },
+    dark: { card: '#161B26', border: 'rgba(255,255,255,0.08)', sep: 'rgba(255,255,255,0.10)', ink: '#F5F6FA', ink2: 'rgba(235,235,245,0.64)', ink3: 'rgba(235,235,245,0.5)', brand: '#8AA0FF', accent: '#8AA0FF', tint: 'rgba(138,160,255,0.12)', track: 'rgba(255,255,255,0.10)', ok: '#6FD39A', okTint: 'rgba(111,211,154,0.12)', warn: '#FFB35C', warnTint: 'rgba(255,179,92,0.14)', shadow: 'none', book: '/_blob/402f38a271f02261a3be20e630746183' }
+  };
+  static FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+
+  // Leaderboard row (teams or members): place or the reason there is none, average minutes/day; own row tinted quietly
+  renderVals() {
+    var p = this.props;
+    var C = Component.PAL[p.scheme === 'dark' ? 'dark' : 'light'];
+    var st = p.state || 'ranked';
+    var mine = p.mine === true || p.mine === 'true';
+    var place = st === 'ranked' ? (p.place ?? '1') : '—';
+    return {
+      place: place, name: p.label ?? 'Vertex', mine: mine,
+      meta: st === 'observing' ? 'До участия в рейтинге — N дней' : st === 'review' ? 'Результат на проверке' : (p.meta ?? '22 участника'),
+      value: st === 'ranked' ? (p.value ?? '64') : '', unit: st === 'ranked' ? (p.unit ?? 'мин/день') : '',
+      rootCss: ['display: flex', 'align-items: center', 'gap: 12px', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'min-height: 60px', 'padding: 10px 16px', Component.FF,
+        'background: ' + (mine ? C.tint : 'transparent'), (p.separator === true || p.separator === 'true') ? 'border-top: 0.5px solid ' + C.sep : ''].join('; '),
+      placeCss: 'width: 26px; flex-shrink: 0; text-align: center; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; color: ' + (st === 'ranked' && Number(place) <= 3 ? C.brand : C.ink3),
+      nameCss: 'display: flex; align-items: center; gap: 6px; font-size: 16px; line-height: 21px; font-weight: 700; color: ' + C.ink + '; overflow: hidden; white-space: nowrap; text-overflow: ellipsis',
+      meCss: 'font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: ' + C.brand + '; color: ' + (p.scheme === 'dark' ? '#0B0E16' : '#FFFFFF'),
+      metaCss: 'font-size: 13px; line-height: 18px; color: ' + (st === 'review' ? C.warn : C.ink2),
+      valueCss: 'font-size: 17px; line-height: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: ' + C.ink,
+      unitCss: 'font-size: 11px; line-height: 14px; color: ' + C.ink3
+    };
+  }
+}
+</script>
+</body>
+</html>

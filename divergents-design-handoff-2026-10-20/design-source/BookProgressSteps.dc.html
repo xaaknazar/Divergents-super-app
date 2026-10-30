@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BookProgressSteps</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div role="group" aria-label="{{label}}" style="display: flex; gap: 2px; box-sizing: border-box; width: 100%; min-height: 48px; padding: 2px; border-radius: 10px; background: rgba(118,118,128,0.12); font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased"><sc-for list="{{steps}}" as="s" hint-placeholder-count="5"><button type="button" aria-pressed="{{s.pressed}}" onClick="{{s.pick}}" style="{{s.css}}">{{s.label}}</button></sc-for></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"steps":{"editor":null},"value":{"editor":"int","default":-1,"min":-1,"max":4},"label":{"editor":"text","default":"Отметить прогресс"},"$preview":{"width":326,"height":48}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var p = this.props;
+    var steps = Array.isArray(p.steps) && p.steps.length ? p.steps : ['0%', '25%', '50%', '75%', '100%'];
+    var value = this.state && this.state.v !== undefined ? this.state.v : Number(p.value ?? -1);
+    return {
+      label: p.label || 'Отметить прогресс',
+      steps: steps.map(function (label, i) {
+        var on = i === value;
+        return {
+          label: label, pressed: on ? 'true' : 'false',
+          pick: function () { self.setState({ v: i }); },
+          css: ['flex: 1 1 0', 'min-width: 0', 'min-height: 44px', 'margin: 0', 'padding: 8px 2px', 'border: 0', 'border-radius: 8px', 'cursor: pointer', 'font: inherit',
+            'font-size: 13px', 'line-height: 18px', 'font-weight: 700', 'font-variant-numeric: tabular-nums',
+            'background: ' + (on ? '#234088' : 'transparent'), 'color: ' + (on ? '#FFFFFF' : '#234088')].join('; ')
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

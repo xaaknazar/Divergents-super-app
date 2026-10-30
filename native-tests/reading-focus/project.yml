@@ -1,0 +1,89 @@
+name: DivergentsReadingQA
+options:
+  bundleIdPrefix: kz.divergents
+  deploymentTarget:
+    iOS: '16.2'
+settings:
+  base:
+    DEVELOPMENT_TEAM: DAJTP6MC3Q
+    SWIFT_VERSION: '5.9'
+    TARGETED_DEVICE_FAMILY: '1'
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_OBJC_BRIDGING_HEADER: ../../modules/reading-focus/ios/ReadingBootMarker.h
+targets:
+  DivergentsReadingQA:
+    type: application
+    platform: iOS
+    sources:
+      - path: ReadingQAApp.swift
+      - path: ../../modules/reading-focus/ios/ReadingFocusStore.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: kz.divergents.readingqa
+    info:
+      path: generated/App-Info.plist
+      properties:
+        CFBundleDisplayName: Divergents Reading QA
+        CFBundleShortVersionString: '1.0'
+        CFBundleVersion: '1'
+        UILaunchScreen: {}
+        DivergentsReadingFocusPilot: true
+        DivergentsReadingFocusQA: true
+        NSSupportsLiveActivities: true
+    entitlements:
+      path: generated/App.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.kz.divergents.reading]
+    dependencies:
+      - target: ReadingFocusMonitor
+      - target: ReadingFocusWidget
+  ReadingFocusMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ../../modules/reading-focus/ios/ReadingFocusStore.swift
+      - path: ../../modules/reading-focus/extensions/ReadingFocusMonitor.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: kz.divergents.readingqa.monitor
+        APPLICATION_EXTENSION_API_ONLY: YES
+    info:
+      path: generated/Monitor-Info.plist
+      properties:
+        CFBundleShortVersionString: '1.0'
+        CFBundleVersion: '1'
+        DivergentsReadingFocusPilot: true
+        DivergentsReadingFocusQA: true
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ReadingFocusMonitor
+    entitlements:
+      path: generated/Monitor.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.kz.divergents.reading]
+  ReadingFocusWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ../../modules/reading-focus/ios/ReadingFocusStore.swift
+      - path: ../../modules/reading-focus/extensions/ReadingFocusWidget.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: kz.divergents.readingqa.widget
+        APPLICATION_EXTENSION_API_ONLY: YES
+    info:
+      path: generated/Widget-Info.plist
+      properties:
+        CFBundleShortVersionString: '1.0'
+        CFBundleVersion: '1'
+        DivergentsReadingFocusPilot: true
+        DivergentsReadingFocusQA: true
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: generated/Widget.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.kz.divergents.reading]

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Заявки на метки</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1420" safe-top="{{false}}" hint-size="390px,1420px">
+  <dc-import name="NavHeader" variant="inline" title="Заявки на метки" back-label="Карта" back-href="MapHome.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-top="8" hint-size="100%,1260px">
+    <dc-import name="SectionHeader" title="На модерации · 3" action="" size="small" hint-size="100%,32px"></dc-import>
+    <dc-import name="Wrapper2" pad-x="16" gap="12" hint-size="100%,1220px">
+      <sc-for list="{{requests}}" as="r" hint-placeholder-count="3">
+        <dc-import name="ModerationCard" title="{{r.title}}" category="{{r.category}}" meta="{{r.meta}}" description="{{r.description}}" hours="{{r.hours}}" features="{{r.features}}" author="{{r.author}}" src="{{r.src}}" hint-size="100%,390px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1420}}'>
+class Component extends DCLogic {
+  renderVals() {
+
+    var F = {
+      halal: { label: 'Халяль', icon: 'seal-check' }, clean: { label: 'Чисто', icon: 'sparkles' }, kids: { label: 'Детская зона', icon: 'people' },
+      family: { label: 'Для семьи', icon: 'heart' }, noAlcohol: { label: 'Без алкоголя', icon: 'x' }
+    };
+    return {
+      requests: [
+        { title: 'Pick Chick', category: 'restaurant', meta: 'Ресторан · Алматы, Казахстан', description: 'Супер фастфуд', hours: '10:00 - 00:00',
+          features: [F.halal, F.clean, F.kids, F.family], author: 'Aknazar', src: '/_blob/47ec25e63ff159ffb263212f6c1f5044' },
+        { title: 'Little stars', category: 'cafe', meta: 'Кафе · Алматы, Казахстан',
+          description: 'Очень уютное место для отдыха с детьми. Здесь есть большая двухэтажная игровая зона, где детям точно будет чем заняться. Еда вкусная, официанты приветливые и внимательные. Отличный вариант, чтобы спокойно посидеть, вкусно поесть и при этом занять детей',
+          hours: '9:00-22:00', features: [F.halal, F.kids, F.family, F.clean], author: 'Bibi', src: '/_blob/2838d15cc0d68fef076a9bd29a796f5b' },
+        { title: 'Культура', category: 'cafe', meta: 'Кафе · Астана, Казахстан', description: 'Вкусный колд-брю. Очень вкусная кухня и отличный вайб.', hours: '8:00-23:00',
+          features: [F.halal, F.clean, F.noAlcohol], author: 'Yerassyl', src: '/_blob/269536a0a318f1c5e521ae0f85e93a1b' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

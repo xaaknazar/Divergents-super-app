@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>FitnessWorkoutRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="400" safe-top="{{false}}" hint-size="390px,400px">
+<dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,360px">
+  <dc-import name="Text" variant="title2" heading="1" text="FitnessWorkoutRow" hint-size="100%,28px"></dc-import>
+  <dc-import name="Wrapper2" gap="8" hint-size="100%,100px">
+    <dc-import name="Text" variant="footnoteEm" tone="secondary" text="route loop / line / circuit" hint-size="100%,18px"></dc-import>
+    <dc-import name="ListSection" header="" hint-size="100%,222px"><dc-import name="FitnessWorkoutRow" route="loop" hint-size="100%,74px"></dc-import><dc-import name="FitnessWorkoutRow" route="line" title="Ходьба · 3,40 км" subtitle="7 окт · 41:12 · 12′07″/км" separator="{{true}}" hint-size="100%,74px"></dc-import><dc-import name="FitnessWorkoutRow" route="circuit" title="Пробежка · 8,40 км" subtitle="3 окт · 47:53 · 5′42″/км" separator="{{true}}" hint-size="100%,74px"></dc-import></dc-import>
+  </dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":400}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

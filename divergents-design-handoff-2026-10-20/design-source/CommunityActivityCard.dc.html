@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CommunityActivityCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}">
+  <dc-import name="IconTile" icon="{{icon}}" tone="brand" variant="solid" size="md" hint-size="44px,44px"></dc-import>
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+    <span style="font-size: 11px; line-height: 14px; font-weight: 700; color: #234088; text-transform: uppercase; letter-spacing: 0.25px">{{eyebrow}}</span>
+    <dc-import name="Text" variant="subheadEm" lines="1" text="{{title}}" hint-size="100%,20px"></dc-import>
+    <dc-import name="Text" variant="caption2" tone="secondary" lines="1" text="{{meta}}" hint-size="100%,14px"></dc-import>
+  </div>
+  <span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="chevron-right" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></span>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{true}}"><a href="{{href}}" aria-label="{{aria}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; border-radius: inherit"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"icon":{"editor":"enum","default":"map","options":["map","calendar","flame","ball-soccer","people","trophy"]},"eyebrow":{"editor":"text","default":"Ваша поездка"},"title":{"editor":"text","default":"Выходные в горах"},"meta":{"editor":"text","default":"18 октября · Алматы"},"href":{"editor":"text","default":"TripDetail.dc.html"},"$preview":{"width":358,"height":72}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var title = p.title || 'Выходные в горах';
+    var href = p.href !== undefined ? (p.href || '') : 'TripDetail.dc.html';
+    var eyebrow = p.eyebrow !== undefined ? (p.eyebrow || '') : 'Ваша поездка';
+    var meta = p.meta !== undefined ? (p.meta || '') : '18 октября · Алматы';
+    return {
+      css: ['position: relative', 'display: flex', 'align-items: center', 'gap: 12px', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'min-height: 68px', 'padding: 10px 14px',
+        'background: #FFFFFF', 'border-radius: 14px', 'box-shadow: 0 1px 3px rgba(16,24,40,0.08), 0 12px 28px -10px rgba(16,24,40,0.28)', 'color: #000000', FF].join('; '),
+      icon: p.icon || 'map', eyebrow: eyebrow, title: title, meta: meta,
+      href: href, hasHref: !!href,
+      aria: [eyebrow, title, meta].filter(Boolean).join(', ')
+    };
+  }
+}
+</script>
+</body>
+</html>

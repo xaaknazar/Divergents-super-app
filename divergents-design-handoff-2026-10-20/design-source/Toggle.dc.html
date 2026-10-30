@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Toggle</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<button type="button" role="switch" aria-checked="{{ariaChecked}}" aria-label="{{label}}" disabled="{{disabled}}" onClick="{{toggle}}" style="{{hitCss}}"><span aria-hidden="true" style="{{trackCss}}"><span style="{{thumbCss}}"></span></span></button>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"checked":{"editor":"boolean","default":false},"label":{"editor":"text","default":"Уведомления"},"disabled":{"editor":"boolean","default":false},"$preview":{"width":51,"height":48}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var p = this.props;
+    var on = this.state && this.state.on !== undefined ? this.state.on : !!p.checked;
+    var disabled = !!p.disabled;
+    return {
+      ariaChecked: on ? 'true' : 'false',
+      label: p.label || 'Уведомления',
+      disabled: disabled,
+      toggle: function () { self.setState({ on: !on }); },
+      hitCss: 'display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0; margin: 0; border: 0; background: transparent; cursor: ' + (disabled ? 'default' : 'pointer') + '; opacity: ' + (disabled ? '0.4' : '1'),
+      trackCss: 'position: relative; display: block; width: 51px; height: 31px; border-radius: 999px; box-sizing: border-box; transition: background 0.2s; background: ' + (on ? '#234088' : 'rgba(120,120,128,0.16)'),
+      thumbCss: 'position: absolute; top: 2px; left: ' + (on ? 22 : 2) + 'px; width: 27px; height: 27px; border-radius: 50%; background: #FFFFFF; transition: left 0.2s; box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 3px 1px rgba(0,0,0,0.06)'
+    };
+  }
+}
+</script>
+</body>
+</html>

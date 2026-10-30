@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>EventRow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}">
+  <sc-if value="{{hasMotif}}" hint-placeholder-val="{{false}}"><dc-import name="CardMotif" kind="{{kind}}" hint-size="100%,0px"></dc-import></sc-if>
+  <sc-if value="{{separator}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="position: absolute; top: 0; left: 88px; right: 0; height: 0.5px; background: rgba(60,60,67,0.18)"></span></sc-if>
+  <sc-if value="{{useTile}}" hint-placeholder-val="{{false}}"><span style="position: relative; display: flex"><dc-import name="IconTile" icon="{{icon}}" tone="{{tileTone}}" variant="{{tileVariant}}" size="lg" hint-size="52px,52px"></dc-import></span></sc-if>
+  <sc-if value="{{useSpan}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="{{tileCss}}"><sc-if value="{{hasSrc}}" hint-placeholder-val="{{false}}"><img src="{{src}}" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block"></sc-if><sc-if value="{{noSrc}}" hint-placeholder-val="{{true}}"><dc-import name="Icon" icon="{{icon}}" variant="{{iconVariant}}" size="lg" tone="{{iconTone}}" hint-size="24px,24px"></dc-import></sc-if></span></sc-if>
+  <div style="position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+    <dc-import name="Text" variant="headline" lines="{{titleLines}}" text="{{title}}" hint-size="100%,22px"></dc-import>
+    <sc-if value="{{hasMeta}}" hint-placeholder-val="{{true}}"><dc-import name="Text" variant="caption1" tone="secondary" lines="1" text="{{meta}}" hint-size="100%,16px"></dc-import></sc-if>
+    <sc-if value="{{hasMeta2}}" hint-placeholder-val="{{false}}"><dc-import name="Text" variant="caption1" tone="secondary" lines="1" text="{{meta2}}" hint-size="100%,16px"></dc-import></sc-if>
+  </div>
+  <span aria-hidden="true" style="position: relative; display: flex; flex-shrink: 0"><dc-import name="Icon" icon="chevron-right" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></span>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{true}}"><a href="{{href}}" aria-label="{{aria}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; border-radius: inherit"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"grouped","options":["grouped","card"]},"kind":{"editor":"enum","default":"none","options":["none","challenge","trip","sport"]},"icon":{"editor":"enum","default":"calendar","options":["calendar","body-standing","ball-soccer","bike","mountains","book-open","video-camera","people"]},"src":{"editor":"text","default":""},"title":{"editor":"text","default":"Книжный клуб"},"meta":{"editor":"text","default":"Алматы · Кофейня"},"meta2":{"editor":"text","default":"16 октября, 18:00 · Бесплатно"},"separator":{"editor":"boolean","default":false},"href":{"editor":"text","default":"MeetupDetail.dc.html"},"$preview":{"width":358,"height":88}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var card = p.variant === 'card';
+    var src = p.src || '';
+    var title = p.title || 'Книжный клуб';
+    var meta = p.meta !== undefined ? (p.meta || '') : 'Алматы · Кофейня';
+    var meta2 = p.meta2 !== undefined ? (p.meta2 || '') : (card ? '' : '16 октября, 18:00 · Бесплатно');
+    var href = p.href !== undefined ? (p.href || '') : 'MeetupDetail.dc.html';
+    var tile = card ? 52 : 64;
+    // kind themes the card variant: tinted background + illustration (CardMotif) and a solid coloured tile
+    var kind = card && { challenge: 1, trip: 1, sport: 1 }[p.kind] ? p.kind : 'none';
+    return {
+      css: ['position: relative', 'display: flex', 'align-items: center', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'color: #000000', FF,
+        card ? 'gap: 14px; padding: 14px; background: #FFFFFF; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,0.08), 0 12px 28px -10px rgba(16,24,40,0.28)' : 'gap: 12px; padding: 12px; background: #FFFFFF'].join('; '),
+      tileCss: 'width: ' + tile + 'px; height: ' + tile + 'px; border-radius: ' + (card ? 15 : 12) + 'px; background: rgba(61,91,219,0.13); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative',
+      kind: kind, hasMotif: kind !== 'none', iconTone: 'brand',
+      useTile: card && !src, useSpan: !(card && !src),
+      tileTone: kind !== 'none' ? kind : 'brand', tileVariant: kind !== 'none' ? 'solid' : 'soft',
+      icon: p.icon || 'calendar', iconVariant: card ? 'solid' : 'line',
+      src: src, hasSrc: !!src, noSrc: !src,
+      title: title, titleLines: card ? '1' : '0',
+      meta: meta, hasMeta: !!meta, meta2: meta2, hasMeta2: !!meta2,
+      separator: !card && (p.separator === true || p.separator === 'true'),
+      href: href, hasHref: !!href,
+      aria: [title, meta, meta2].filter(Boolean).join(', ')
+    };
+  }
+}
+</script>
+</body>
+</html>

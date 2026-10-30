@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CommunityChallengeProgress</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}">
+  <dc-import name="CardMotif" kind="challengeDark" hint-size="100%,0px"></dc-import>
+  <div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px">
+    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.16); color: #FFFFFF"><dc-import name="Icon" icon="flame" variant="solid" size="xs" tone="white" hint-size="12px,12px"></dc-import><span style="font-size: 11px; line-height: 14px; font-weight: 700">{{badge}}</span></span>
+    <span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 18px; background: rgba(255,255,255,0.16); display: flex; align-items: center; justify-content: center; color: #FFFFFF"><dc-import name="Icon" icon="arrow-right" size="sm" tone="inherit" hint-size="16px,16px"></dc-import></span>
+  </div>
+  <div style="position: relative; margin-top: 10px; display: flex; flex-direction: column; gap: 4px">
+    <dc-import name="Text" variant="title3" tone="white" heading="3" lines="2" text="{{title}}" hint-size="100%,25px"></dc-import>
+    <dc-import name="Text" variant="footnote" tone="whiteMuted" lines="1" text="{{subtitle}}" hint-size="100%,18px"></dc-import>
+  </div>
+  <div style="position: relative; margin-top: 14px; display: flex; align-items: center; gap: 10px">
+    <div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{progress}}" aria-label="Прогресс челленджа" style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.22); overflow: hidden"><div style="{{barCss}}"></div></div>
+    <span style="font-size: 12px; line-height: 16px; font-weight: 700; color: rgba(255,255,255,0.85); white-space: nowrap">{{dayLabel}}</span>
+  </div>
+  <div role="list" style="position: relative; display: flex; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.14)">
+    <sc-for list="{{stats}}" as="st" hint-placeholder-count="3">
+      <div role="listitem" style="{{st.css}}">
+        <span style="font-size: 20px; line-height: 24px; font-weight: 700; color: #FFFFFF; font-variant-numeric: tabular-nums; white-space: nowrap">{{st.value}}</span>
+        <span style="font-size: 11px; line-height: 14px; color: rgba(255,255,255,0.68); white-space: nowrap">{{st.label}}</span>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{true}}"><a href="{{href}}" aria-label="{{aria}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; border-radius: inherit"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Divergents challenge: 2 season"},"subtitle":{"editor":"text","default":"Команда «KEX group» · сегодня +45 pts"},"badge":{"editor":"text","default":"Активный челлендж"},"day":{"editor":"int","default":9,"min":1,"max":365},"days":{"editor":"int","default":15,"min":1,"max":365},"ctaLabel":{"editor":"text","default":"Войти в челлендж"},"href":{"editor":"text","default":"ChallengeDetail.dc.html"},"stats":{"editor":null},"$preview":{"width":358,"height":200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var day = Number(p.day || 9), days = Number(p.days || 15);
+    var progress = Math.max(0, Math.min(100, Math.round(day / days * 100)));
+    var href = p.href !== undefined ? (p.href || '') : 'ChallengeDetail.dc.html';
+    var title = p.title || 'Divergents challenge: 2 season';
+    return {
+      // calm hero: one navy block, no full-width button — the whole card is the link (soft arrow top-right)
+      css: ['position: relative', 'display: flex', 'flex-direction: column', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'padding: 14px 16px 14px', 'border-radius: 14px', 'overflow: hidden', 'box-shadow: 0 1px 3px rgba(16,24,40,0.08), 0 12px 28px -10px rgba(16,24,40,0.28)',
+        'background: linear-gradient(140deg, #234088 0%, #2F4FB8 100%)', 'color: #FFFFFF', FF].join('; '),
+      barCss: 'width: ' + progress + '%; height: 100%; background: #FFFFFF; border-radius: 2px',
+      progress: String(progress),
+      badge: p.badge || 'Активный челлендж',
+      dayLabel: 'День ' + day + '/' + days,
+      title: title,
+      subtitle: p.subtitle !== undefined ? (p.subtitle || '') : 'Команда «KEX group» · сегодня +45 pts',
+      stats: (p.stats || [{ value: day + '/' + days, label: 'День' }, { value: '860', label: 'Очки команды' }, { value: '2 / 8', label: 'Место команды' }]).map(function (it, i, all) {
+        return { value: it.value, label: it.label,
+          css: 'flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; ' + (i > 0 ? 'border-left: 1px solid rgba(255,255,255,0.14)' : '') };
+      }),
+      ctaLabel: p.ctaLabel || 'Войти в челлендж',
+      href: href, hasHref: !!href,
+      aria: title + '. ' + (p.ctaLabel || 'Войти в челлендж')
+    };
+  }
+}
+</script>
+</body>
+</html>

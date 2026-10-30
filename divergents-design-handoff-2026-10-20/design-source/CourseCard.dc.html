@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CourseCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<a href="{{href}}" aria-label="{{aria}}" style="{{rootCss}}">
+  <sc-if value="{{isFeatured}}" hint-placeholder-val="{{false}}">
+    <dc-import name="MediaCover" src="{{src}}" aspect="banner" radius="none" placeholder-icon="graduation-cap" hint-size="100%,180px"></dc-import>
+    <div style="padding: 14px 16px 0; display: flex; flex-direction: column; gap: 4px">
+      <dc-import name="Text" variant="title3" text="{{title}}" hint-size="100%,25px"></dc-import>
+      <dc-import name="Text" variant="subhead" tone="secondary" text="{{category}}" hint-size="100%,20px"></dc-import>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 16px 16px">
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 20px; color: #5C5C60"><dc-import name="Icon" icon="book-open" variant="solid" size="sm" tone="secondary" hint-size="16px,16px"></dc-import>{{lessons}}</span>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 20px; font-weight: 700; color: #234088"><dc-import name="Icon" icon="play-circle" variant="solid" size="md" tone="brand" hint-size="20px,20px"></dc-import>{{actionText}}</span>
+    </div>
+  </sc-if>
+  <sc-if value="{{isCompact}}" hint-placeholder-val="{{true}}">
+    <dc-import name="MediaCover" src="{{src}}" aspect="16x9" radius="none" placeholder-icon="graduation-cap" hint-size="100%,96px"></dc-import>
+    <div style="{{bodyCss}}">
+      <span style="font-size: 15px; line-height: 20px; font-weight: 700; color: #000000; min-height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere">{{title}}</span>
+      <sc-if value="{{isGrid}}" hint-placeholder-val="{{true}}">
+        <span style="font-size: 12px; line-height: 16px; color: #5C5C60; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{gridMeta}}</span>
+        <span style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 10px">
+          <span style="font-size: 15px; line-height: 20px; font-weight: 700; color: #234088; white-space: nowrap">{{price}}</span>
+          <span aria-hidden="true" style="display: flex; flex-shrink: 0"><dc-import name="Icon" icon="chevron-right" size="sm" tone="tertiary" hint-size="16px,16px"></dc-import></span>
+        </span>
+      </sc-if>
+      <sc-if value="{{isShelf}}" hint-placeholder-val="{{false}}">
+        <span style="font-size: 12px; line-height: 16px; color: #5C5C60; margin-top: 4px">{{category}}</span>
+        <div role="progressbar" aria-label="{{progressAria}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{progress}}" style="margin-top: auto; padding-top: 12px"><div style="height: 4px; border-radius: 2px; background: rgba(118,118,128,0.16); overflow: hidden"><div style="{{fillCss}}"></div></div></div>
+        <span style="{{progressCss}}">{{progressText}}</span>
+      </sc-if>
+    </div>
+  </sc-if>
+</a>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"grid","options":["grid","shelf","featured"]},"title":{"editor":"text","default":"Максимизация талантов Gallup"},"category":{"editor":"text","default":"Саморазвитие"},"src":{"editor":"text","default":"/_blob/d2748e25aa43564a123b0f02c16ddc18"},"lessons":{"editor":"text","default":"34 урока"},"price":{"editor":"text","default":"30 000 ₸"},"progress":{"editor":"int","default":42,"min":0,"max":100},"badge":{"editor":"text","default":""},"actionLabel":{"editor":"text","default":"Продолжить"},"href":{"editor":"text","default":"CourseDetail.dc.html"},"$preview":{"width":171,"height":190}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var v = p.variant || 'grid';
+    var demo = p.title === undefined;
+    var progress = Math.max(0, Math.min(100, Number(p.progress ?? 42)));
+    var title = p.title ?? 'Максимизация талантов Gallup';
+    var featured = v === 'featured';
+    // every variant is a flat white block (r14): cover on top, text inside — each course reads as one unit
+    var rootCss = ['display: flex', 'flex-direction: column', 'box-sizing: border-box', v === 'shelf' ? 'width: 220px; flex-shrink: 0' : 'width: 100%', 'height: 100%', 'min-width: 0',
+      'background: #FFFFFF; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,0.08), 0 12px 28px -10px rgba(16,24,40,0.28)',
+      'text-decoration: none', 'color: #000000', "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased"].join('; ');
+    var lessons = p.lessons ?? (demo ? '34 урока' : '');
+    var category = p.category ?? (demo ? 'Саморазвитие' : '');
+    var done = progress >= 100;
+    return {
+      rootCss: rootCss,
+      bodyCss: 'flex: 1; display: flex; flex-direction: column; padding: 10px 12px 12px',
+      href: p.href || 'CourseDetail.dc.html',
+      aria: [title, category, lessons].filter(Boolean).join(', '),
+      isFeatured: featured, isCompact: !featured, isShelf: v === 'shelf', isGrid: v === 'grid',
+      src: p.src ?? (demo ? '/_blob/d2748e25aa43564a123b0f02c16ddc18' : ''),
+      title: title, category: category, lessons: lessons,
+      gridMeta: [category, lessons].filter(Boolean).join(' · '),
+      price: p.price ?? (demo ? '30 000 ₸' : ''),
+      progress: String(progress), progressAria: 'Пройдено: ' + title,
+      fillCss: 'width: ' + progress + '%; height: 100%; border-radius: 2px; background: ' + (done ? '#34C759' : '#234088'),
+      progressCss: 'font-size: 12px; line-height: 16px; font-weight: 700; margin-top: 6px; color: ' + (done ? '#187A32' : '#234088'),
+      progressText: (p.badge || '') || (done ? 'Пройден' : progress + '% пройдено'),
+      actionText: (p.actionLabel || 'Продолжить') + ' · ' + progress + '%'
+    };
+  }
+}
+</script>
+</body>
+</html>

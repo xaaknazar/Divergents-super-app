@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>EventCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{css}}">
+  <sc-if value="{{hasMotif}}" hint-placeholder-val="{{false}}"><dc-import name="CardMotif" kind="{{kind}}" hint-size="100%,0px"></dc-import></sc-if>
+  <sc-if value="{{isBanner}}" hint-placeholder-val="{{true}}">
+    <div style="position: relative; padding: 16px; background: linear-gradient(135deg, #234088, #3D5BDB)">
+      <span aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(0,0,0,0.28), rgba(0,0,0,0.04))"></span>
+      <div style="position: relative; display: flex; align-items: center; gap: 14px">
+        <span aria-hidden="true" style="width: 52px; height: 52px; border-radius: 15px; background: rgba(255,255,255,0.22); display: flex; align-items: center; justify-content: center; flex-shrink: 0"><dc-import name="Icon" icon="{{icon}}" variant="solid" size="lg" tone="white" hint-size="24px,24px"></dc-import></span>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 17px; line-height: 22px; font-weight: 700; letter-spacing: -0.2px; color: #FFFFFF; text-shadow: 0 1px 3px rgba(0,0,0,0.35)">{{title}}</span>
+          <span style="display: flex; align-items: center; gap: 5px; color: #FFFFFF"><dc-import name="Icon" icon="calendar" size="xs" tone="white" hint-size="12px,12px"></dc-import><span style="font-size: 12px; line-height: 16px; text-shadow: 0 1px 3px rgba(0,0,0,0.35)">{{date}}</span></span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{isCover}}" hint-placeholder-val="{{false}}">
+    <div style="position: relative; height: 150px; background: linear-gradient(135deg, rgba(61,91,219,0.22), rgba(61,91,219,0.10)); display: flex; align-items: center; justify-content: center; overflow: hidden">
+      <sc-if value="{{hasSrc}}" hint-placeholder-val="{{false}}"><img src="{{src}}" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block"></sc-if>
+      <sc-if value="{{noSrc}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="display: flex"><dc-import name="Icon" icon="{{icon}}" size="xxl" tone="brand" hint-size="36px,36px"></dc-import></span></sc-if>
+      <span style="position: absolute; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,0.55); color: #FFFFFF"><dc-import name="Icon" icon="calendar" size="xs" tone="white" hint-size="12px,12px"></dc-import><span style="font-size: 11px; line-height: 14px; font-weight: 700">{{date}}</span></span>
+    </div>
+  </sc-if>
+  <sc-if value="{{isPlain}}" hint-placeholder-val="{{false}}">
+    <div style="position: relative; padding: 14px 14px 0; display: flex; align-items: center; gap: 12px">
+      <dc-import name="IconTile" icon="{{icon}}" tone="{{tileTone}}" variant="{{tileVariant}}" size="md" hint-size="44px,44px"></dc-import>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+        <dc-import name="Text" variant="headline" heading="3" lines="2" text="{{title}}" hint-size="100%,22px"></dc-import>
+        <span style="display: flex; align-items: center; gap: 5px; color: #5C5C60"><dc-import name="Icon" icon="calendar" size="xs" tone="secondary" hint-size="12px,12px"></dc-import><span style="font-size: 13px; line-height: 18px">{{date}}</span></span>
+      </div>
+    </div>
+  </sc-if>
+  <div style="position: relative; padding: 14px; display: flex; flex-direction: column">
+    <sc-if value="{{isCover}}" hint-placeholder-val="{{false}}"><div style="margin-bottom: 8px"><dc-import name="Text" variant="headline" heading="3" text="{{title}}" hint-size="100%,22px"></dc-import></div></sc-if>
+    <sc-if value="{{hasDescription}}" hint-placeholder-val="{{true}}"><div style="margin-bottom: 10px"><dc-import name="Text" variant="subhead" tone="secondary" text="{{description}}" hint-size="100%,40px"></dc-import></div></sc-if>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap"><sc-for list="{{badges}}" as="b" hint-placeholder-count="3"><dc-import name="StatusBadge" label="{{b.label}}" icon="{{b.icon}}" tone="{{b.tone}}" variant="{{badgeVariant}}" hint-size="80px,22px"></dc-import></sc-for></div>
+    <div style="{{footerCss}}">
+      <span style="display: flex; align-items: center; gap: 6px; min-width: 0"><sc-if value="{{hasDot}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{dotCss}}"></span></sc-if><span style="font-size: 12px; line-height: 16px; color: #5C5C60">{{meta}}</span></span>
+      <span style="{{actionCss}}"><span style="font-size: 15px; line-height: 20px; font-weight: 700">{{action}}</span><sc-if value="{{actionChevron}}" hint-placeholder-val="{{false}}"><dc-import name="Icon" icon="chevron-right" size="xs" tone="inherit" hint-size="12px,12px"></dc-import></sc-if></span>
+    </div>
+  </div>
+  <sc-if value="{{hasHref}}" hint-placeholder-val="{{true}}"><a href="{{href}}" aria-label="{{aria}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; border-radius: inherit"></a></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"banner","options":["banner","cover","plain"]},"kind":{"editor":"enum","default":"none","options":["none","challenge","trip","sport"]},"icon":{"editor":"enum","default":"flame","options":["flame","map","mountains","calendar","ball-soccer","people","tent","trophy"]},"src":{"editor":"text","default":""},"title":{"editor":"text","default":"Divergents challenge: Teachers version"},"date":{"editor":"text","default":"Старт 12 октября"},"description":{"editor":"text","default":""},"meta":{"editor":"text","default":"Набор открыт"},"metaDot":{"editor":"enum","default":"none","options":["none","success","warning","danger"]},"action":{"editor":"text","default":"Подробнее"},"actionChevron":{"editor":"boolean","default":false},"href":{"editor":"text","default":"ChallengeDetail.dc.html"},"badges":{"editor":null},"$preview":{"width":358,"height":236}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var demo = p.title === undefined && p.badges === undefined;
+    var cover = p.variant === 'cover';
+    var plain = p.variant === 'plain';
+    // kind themes the plain card: tinted background + illustration (CardMotif) and a coloured icon tile
+    var kind = plain && { challenge: 1, trip: 1, sport: 1 }[p.kind] ? p.kind : 'none';
+    var INK = { challenge: '#C2410C', trip: '#15803D', sport: '#2F4FB8', none: '#234088' };
+    var src = p.src || '';
+    var dot = demo ? 'success' : (p.metaDot || 'none');
+    var DOT = { success: '#34C759', warning: '#FF9500', danger: '#FF3B30' };
+    var title = p.title || 'Divergents challenge: Teachers version';
+    var href = p.href !== undefined ? (p.href || '') : 'ChallengeDetail.dc.html';
+    var badges = (p.badges || (demo ? [{ label: 'Онлайн', icon: 'globe', tone: 'success' }, { label: '15 дней', icon: 'flame', tone: 'brand' }, { label: '12 заявок', icon: 'people', tone: 'neutral' }, { label: '3 вылет', icon: 'flag', tone: 'danger' }] : []))
+      .map(function (b) { return { label: b.label, icon: b.icon || '', tone: b.tone || 'neutral' }; });
+    var description = p.description !== undefined ? (p.description || '') : (demo ? 'Пять команд, 15 дней и общий рейтинг. Заявки открыты.' : '');
+    return {
+      css: ['position: relative', 'display: flex', 'flex-direction: column', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'border-radius: 14px', 'overflow: hidden', 'box-shadow: 0 1px 3px rgba(16,24,40,0.08), 0 12px 28px -10px rgba(16,24,40,0.28)',
+        'background: #FFFFFF', 'color: #000000', FF].join('; '),
+      isBanner: !cover && !plain, isCover: cover, isPlain: plain,
+      kind: kind, hasMotif: kind !== 'none',
+      tileTone: kind !== 'none' ? kind : 'brand', tileVariant: kind !== 'none' ? 'solid' : 'soft',
+      icon: p.icon || (cover ? 'mountains' : plain ? 'calendar' : 'flame'),
+      src: src, hasSrc: !!src, noSrc: !src,
+      title: title, date: p.date || (demo ? 'Старт 12 октября' : ''),
+      description: description, hasDescription: !!description,
+      badges: badges,
+      footerCss: 'display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid ' + (kind !== 'none' ? 'rgba(0,0,0,0.07)' : 'rgba(60,60,67,0.10)'),
+      actionCss: 'display: flex; align-items: center; gap: 4px; flex-shrink: 0; color: ' + INK[kind],
+      badgeVariant: kind !== 'none' ? 'frosted' : 'tinted',
+      hasDot: !!DOT[dot], dotCss: 'width: 7px; height: 7px; border-radius: 4px; flex-shrink: 0; background: ' + (DOT[dot] || 'transparent'),
+      meta: p.meta !== undefined ? (p.meta || '') : 'Набор открыт',
+      action: p.action !== undefined ? (p.action || '') : 'Подробнее',
+      actionChevron: demo ? true : (p.actionChevron === true || p.actionChevron === 'true'),
+      href: href, hasHref: !!href,
+      aria: [title, p.date || ''].filter(Boolean).join(', ')
+    };
+  }
+}
+</script>
+</body>
+</html>

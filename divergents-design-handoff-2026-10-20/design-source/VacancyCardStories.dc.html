@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>VacancyCard — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="760" safe-top="{{false}}" hint-size="390px,760px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,720px">
+    <dc-import name="Text" variant="title2" heading="1" text="VacancyCard" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,200px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=featured · eyebrow · href" hint-size="100%,18px"></dc-import>
+      <dc-import name="VacancyCard" variant="featured" eyebrow="Лучшее совпадение" title="HR бизнес-партнёр" company="Ритейл-группа" city="Алматы" logo-tone="brand" tags="{{tagsA}}" href="VacancyDetail.dc.html" hint-size="100%,170px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,180px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=regular · статус отклика" hint-size="100%,18px"></dc-import>
+      <dc-import name="VacancyCard" title="Менеджер по обучению персонала" company="Сеть кофеен" city="Алматы" logo-tone="success" tags="{{tagsB}}" href="VacancyDetail.dc.html" hint-size="100%,150px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,180px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="variant=regular · длинный подзаголовок (1 строка)" hint-size="100%,18px"></dc-import>
+      <dc-import name="VacancyCard" title="Руководитель отдела продаж" company="Производственная компания" city="Усть-Каменогорск" logo-tone="purple" tags="{{tagsC}}" hint-size="100%,150px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {"tagsA": [{"label": "Гибрид"}, {"label": "от 600 000 ₸"}, {"label": "3 ваших таланта", "tone": "success", "icon": "seal-check"}], "tagsB": [{"label": "Офис"}, {"label": "450 000 ₸"}, {"label": "Отклик отправлен", "tone": "success"}], "tagsC": [{"label": "Офис"}, {"label": "от 700 000 ₸"}, {"label": "1 ваших таланта", "tone": "success"}]};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,47 +1,66 @@
 // Screen scaffold: themed bg + Aurora backdrop + safe-area inset, with an
 // optional collapsing blurred header that fades in on scroll (iOS large-title style).
-import React, { useRef, useState } from 'react';
-import { View, ScrollView, Animated, RefreshControl, StyleProp, ViewStyle, Text } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Animated, ScrollView, RefreshControl, Text, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { Aurora } from './Aurora';
-import { ProgressiveBlur } from './ProgressiveBlur';
+import { HeaderBackdrop, HeaderBackdropMotif } from './HeaderBackdrop';
+import { tabDockContentInset, tabDockMiniPlayerHeight } from '../lib/tabDockLayout';
+import { useOptionalAudioTrack } from '../state/audioPlayerValue';
 
-export function Screen({
-  children, bg, scroll = true, tabPadding = true, contentStyle, topInset = true, gradient, aurora = true, largeTitle, onRefresh,
-}: {
+export interface ScreenProps {
   children: React.ReactNode;
-  bg?: string;
+  surface?: 'grouped' | 'transparent';
   scroll?: boolean;
   tabPadding?: boolean;
-  contentStyle?: StyleProp<ViewStyle>;
   topInset?: boolean;
-  gradient?: string[];
+  bottomInset?: boolean;
   aurora?: boolean;
+  /** Фон шапки корневого экрана вкладки. Заменяет «аврору», пока фон в персонализации —
+   * «По акценту» (по умолчанию); выбранный человеком другой фон остаётся его выбором. */
+  backdrop?: HeaderBackdropMotif;
   largeTitle?: string;
   onRefresh?: () => void | Promise<void>;
-}) {
-  const { T, isDark, reduceTransparency, ty } = useTheme();
-  const _bg = bg ?? T.groupedBg;
+  keyboardAware?: boolean;
+  /** A newly required action at the start of a screen must not remain above the viewport. */
+  scrollResetKey?: string;
+}
+
+export function Screen({ children, surface = 'grouped', scroll = true, tabPadding = true,
+  topInset = true, bottomInset = true, aurora = true, backdrop, largeTitle, onRefresh, keyboardAware = false, scrollResetKey }: ScreenProps) {
+  const { T, isDark, reduceTransparency, ty, background: backgroundPreset } = useTheme();
+  const background = surface === 'transparent' ? 'transparent' : T.groupedBg;
   const insets = useSafeAreaInsets();
   const top = topInset ? insets.top : 0;
-  const bottom = tabPadding ? insets.bottom + 64 : insets.bottom;
+  const { fontScale } = useWindowDimensions();
+  const audioTrack = useOptionalAudioTrack();
+  const playerHeight = audioTrack ? tabDockMiniPlayerHeight(ty.footnoteEm.lineHeight ?? 18, ty.caption2.lineHeight ?? 14, fontScale) : 0;
+  const bottom = tabPadding ? tabDockContentInset(bottomInset ? insets.bottom : 0, playerHeight) : bottomInset ? insets.bottom : 0;
   const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (scrollResetKey !== undefined) scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [scrollResetKey]);
   const [refreshing, setRefreshing] = useState(false);
   const doRefresh = async () => { if (!onRefresh) return; setRefreshing(true); try { await onRefresh(); } finally { setRefreshing(false); } };
 
   const headerOpacity = scrollY.interpolate({ inputRange: [44, 92], outputRange: [0, 1], extrapolate: 'clamp' });
 
   return (
-    <View style={{ flex: 1, backgroundColor: _bg }}>
-      {aurora ? <Aurora /> : null}
+    <KeyboardAvoidingView enabled={keyboardAware} behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: background }}>
+      {backdrop && (backgroundPreset ?? 'accent') === 'accent' ? <HeaderBackdrop motif={backdrop} />
+        : aurora ? <Aurora /> : null}
 
       {scroll ? (
         <Animated.ScrollView
+          ref={scrollRef}
           style={{ flex: 1, backgroundColor: 'transparent' }}
-          contentContainerStyle={[{ paddingTop: top, paddingBottom: bottom }, contentStyle]}
+          contentContainerStyle={{ paddingTop: top, paddingBottom: bottom }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           scrollEventThrottle={16}
           onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
           refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={doRefresh} tintColor={T.brand} /> : undefined}
@@ -51,12 +70,6 @@ export function Screen({
       ) : (
         <View style={{ flex: 1, paddingTop: top }}>{children}</View>
       )}
-
-      {/* Прогрессивное размытие над таб-баром: контент уходит под панель
-          «стеклянным» краем, а не обрывается ровной линией. */}
-      {scroll && tabPadding ? (
-        <ProgressiveBlur position="bottom" height={insets.bottom + 74} intensity={60} />
-      ) : null}
 
       {/* Collapsing compact header */}
       {largeTitle && scroll ? (
@@ -80,6 +93,6 @@ export function Screen({
           )}
         </Animated.View>
       ) : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }

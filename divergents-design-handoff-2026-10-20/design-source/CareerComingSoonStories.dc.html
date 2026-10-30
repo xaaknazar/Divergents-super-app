@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>CareerComingSoon — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="760" safe-top="{{false}}" hint-size="390px,760px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,720px">
+    <dc-import name="Text" variant="title2" heading="1" text="CareerComingSoon" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,330px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="по умолчанию (badge=Скоро)" hint-size="100%,18px"></dc-import>
+      <dc-import name="CareerComingSoon" icon="briefcase" badge="Скоро" title="Раздел в разработке" text="Мы дорабатываем «Карьеру»: вакансии и подбор по вашим талантам. Раздел появится в одном из следующих обновлений приложения." hint-size="100%,300px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,250px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="без бейджа · другая иконка" hint-size="100%,18px"></dc-import>
+      <dc-import name="CareerComingSoon" icon="handshake" badge="" title="Офферы скоро" text="Компании смогут приглашать вас напрямую." hint-size="100%,220px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Создать мероприятие</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1720" safe-top="{{false}}" hint-size="390px,1720px">
+  <dc-import name="NavHeader" variant="modal" title="Создать" back-label="Отмена" back-href="CommunityHome.dc.html" safe-area="{{true}}" close-button="{{false}}" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" pad-bottom="120" gap="16" hint-size="100%,1560px">
+    <dc-import name="Wrapper2" dir="row" wrap="{{true}}" gap="8" hint-size="100%,104px">
+      <sc-for list="{{kinds}}" as="k" hint-placeholder-count="5">
+        <dc-import name="Chip" label="{{k.label}}" active="{{k.active}}" hint-size="110px,48px"></dc-import>
+      </sc-for>
+    </dc-import>
+    <dc-import name="Card" variant="outlined" size="regular" hint-size="100%,130px">
+      <dc-import name="Wrapper2" gap="6" hint-size="100%,94px">
+        <dc-import name="Text" variant="headline" tone="brand" text="{{intro.title}}" hint-size="100%,22px"></dc-import>
+        <dc-import name="Text" variant="subhead" tone="secondary" text="{{intro.text}}" hint-size="100%,80px"></dc-import>
+      </dc-import>
+    </dc-import>
+    <dc-import name="TextField" label="Название" placeholder="напр. Кинопоказ и разбор" hint-size="100%,80px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,190px">
+      <dc-import name="TextField" label="Город · обязательно" placeholder="Например, Алматы" hint-size="100%,80px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="8" scroll="x" hint-size="100%,48px">
+        <sc-for list="{{cities}}" as="c" hint-placeholder-count="5">
+          <dc-import name="Chip" label="{{c}}" hint-size="96px,48px"></dc-import>
+        </sc-for>
+      </dc-import>
+      <dc-import name="Text" variant="caption1" tone="secondary" text="{{cityHelp}}" hint-size="100%,48px"></dc-import>
+    </dc-import>
+    <dc-import name="TextField" label="Место" placeholder="напр. Кофейня Sreda, Астана" hint-size="100%,80px"></dc-import>
+    <dc-import name="CreateDateTimeField" label="Начало" placeholder="Выберите дату и время" date="12 окт." time="14:30" selected="{{false}}" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Мест" type="number" placeholder="" hint-size="100%,80px"></dc-import>
+    <dc-import name="TextField" label="Описание" placeholder="О чём встреча, для кого, что взять с собой" multiline="{{true}}" rows="4" hint-size="100%,150px"></dc-import>
+    <dc-import name="CreateLocationPicker" label="Место на карте" hint="Нажмите на карту, чтобы поставить точку" pinned="{{false}}" hint-size="100%,274px"></dc-import>
+  </dc-import>
+  <dc-import name="BottomBar" placement="screen" variant="solid" hint-size="100%,108px">
+    <dc-import name="Button" label="Опубликовать" icon="check" variant="solid" tone="brand" full-width="{{true}}" disabled="{{true}}" hint-size="100%,50px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var KINDS = ['Челлендж', 'Поездка', 'Мероприятие', 'Спорт', 'Канал'];
+    return {
+      kinds: KINDS.map(function (k) { return { label: k, active: k === 'Мероприятие' }; }),
+      intro: { title: 'Бесплатная встреча', text: 'Участники отправляют заявки, а вы выбираете, кого принять. Организатор видит публичные имена; анкеты и контакты доступны только администраторам.' },
+      cities: ['Алматы', 'Астана', 'Шымкент', 'Караганда', 'Актобе'],
+      cityHelp: 'Время — по Казахстану (UTC+5). Адрес, описание, количество участников и точка на карте обязательны. Количество мест — для гостей, без организатора.'
+    };
+  }
+}
+</script>
+</body>
+</html>

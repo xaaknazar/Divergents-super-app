@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>PostCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<article style="{{css}}">
+  <div style="display: flex; align-items: center; gap: 8px">
+    <dc-import name="StatusBadge" label="{{kindLabel}}" icon="{{kindIcon}}" tone="brand" hint-size="80px,22px"></dc-import>
+    <span style="flex: 1"></span>
+    <span aria-hidden="true" style="display: flex"><dc-import name="Icon" icon="clock-3h" variant="solid" size="xs" tone="tertiary" hint-size="12px,12px"></dc-import></span>
+    <dc-import name="Text" variant="caption2" tone="tertiary" text="{{date}}" hint-size="90px,14px"></dc-import>
+  </div>
+  <div style="margin-top: 10px"><dc-import name="Text" variant="headline" heading="3" text="{{title}}" hint-size="100%,22px"></dc-import></div>
+  <sc-if value="{{hasText}}" hint-placeholder-val="{{true}}"><div style="margin-top: 8px"><dc-import name="Text" variant="body" tone="secondary" lines="{{lines}}" text="{{text}}" hint-size="100%,72px"></dc-import></div></sc-if>
+  <sc-if value="{{showMore}}" hint-placeholder-val="{{false}}"><button type="button" style="{{moreCss}}">Читать далее</button></sc-if>
+  <sc-if value="{{isVoice}}" hint-placeholder-val="{{false}}"><div style="margin-top: 12px"><dc-import name="PostVoiceNote" label="{{voiceLabel}}" hint-size="100%,64px"></dc-import></div></sc-if>
+  <div style="display: flex; align-items: center; gap: 6px; margin-top: 14px; flex-wrap: wrap">
+    <sc-for list="{{reactions}}" as="r" hint-placeholder-count="5"><dc-import name="ReactionChip" icon="{{r.icon}}" count="{{r.count}}" active="{{r.active}}" hint-size="52px,24px"></dc-import></sc-for>
+    <span style="flex: 1"></span>
+    <span aria-label="{{totalAria}}" style="font-size: 11px; line-height: 14px; font-weight: 500; color: #6B6B70">{{total}}</span>
+  </div>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","default":"article","options":["article","voice"]},"date":{"editor":"text","default":"10 окт., 18:30"},"title":{"editor":"text","default":"Анонс встреч на октябрь"},"text":{"editor":"text","default":""},"clamped":{"editor":"boolean","default":false},"voiceLabel":{"editor":"text","default":"Голосовое сообщение"},"total":{"editor":"int","default":0,"min":0,"max":99999},"reactions":{"editor":null},"$preview":{"width":358,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var FF = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var demo = p.title === undefined && p.text === undefined && p.reactions === undefined;
+    var kind = p.kind === 'voice' ? 'voice' : 'article';
+    var text = p.text !== undefined && p.text !== null ? p.text : (demo ? 'Друзья, в октябре нас ждёт насыщенный месяц. Каждую среду собираемся в книжном клубе, в выходные — выезд в горы для всех желающих. 12 октября стартует Divergents challenge: Teachers version — 15 дней, пять команд и общий рейтинг.' : '');
+    var clamped = demo ? true : (p.clamped === true || p.clamped === 'true');
+    var reactions = (p.reactions || (demo ? [{ icon: 'thumbs-up', count: 12 }, { icon: 'heart', count: 8, active: true }, { icon: 'flame', count: 5 }, { icon: 'hand-heart', count: 0 }, { icon: 'sparkles', count: 0 }] : [])).map(function (r) {
+      return { icon: r.icon || 'thumbs-up', count: Number(r.count || 0), active: !!r.active };
+    });
+    var total = p.total !== undefined && p.total !== null ? Number(p.total) : reactions.reduce(function (s, r) { return s + r.count; }, 0);
+    return {
+      css: ['display: flex', 'flex-direction: column', 'box-sizing: border-box', 'width: 100%', 'min-width: 0', 'padding: 18px', 'background: #FFFFFF',
+        'border-radius: 14px', 'color: #000000', FF].join('; '),
+      moreCss: ['align-self: flex-start', 'margin: 6px 0 0', 'padding: 0', 'border: 0', 'background: transparent', 'cursor: pointer', FF,
+        'font-size: 15px', 'line-height: 20px', 'font-weight: 700', 'color: #234088'].join('; '),
+      kindLabel: kind === 'voice' ? 'Голос' : 'Статья',
+      kindIcon: kind === 'voice' ? 'mic' : 'file-doc',
+      date: p.date || (demo ? '10 окт., 18:30' : ''),
+      title: p.title !== undefined && p.title !== null ? p.title : (demo ? 'Анонс встреч на октябрь' : ''),
+      text: text, hasText: !!text && kind === 'article',
+      lines: clamped ? '6' : '0', showMore: clamped && !!text && kind === 'article',
+      isVoice: kind === 'voice', voiceLabel: p.voiceLabel || 'Голосовое сообщение',
+      reactions: reactions,
+      total: total > 0 ? String(total) : '',
+      totalAria: 'Всего реакций: ' + total
+    };
+  }
+}
+</script>
+</body>
+</html>

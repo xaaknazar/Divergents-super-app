@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>HeaderBackdrop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div aria-hidden="true" style="{{rootCss}}">
+  <div style="{{washCss}}"></div>
+  <div style="{{motifCss}}"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"motif":{"editor":"enum","default":"learn","options":["learn","ai","community","profile"]},"$preview":{"width":390,"height":360}}'>
+class Component extends DCLogic {
+  // Decorative top-of-tab backdrop: pale navy wash + a thin line motif per section, fading into the grouped background.
+  // Placed by Screen (absolute, behind content); never used directly in pages.
+  static NAVY = '35,64,136';
+  static ACCENT = '61,91,219';
+  static motifSvg(m) {
+    var N = Component.NAVY, A = Component.ACCENT;
+    var out = [];
+    var line = function (d, o, w) { out.push('<path d="' + d + '" fill="none" stroke="rgba(' + N + ',' + o + ')" stroke-width="' + (w || 1.2) + '" stroke-linecap="round"/>'); };
+    var dot = function (x, y, r, o) { out.push('<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="rgba(' + A + ',' + o + ')"/>'); };
+    var ring = function (x, y, r, o) { out.push('<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#F4F6FB" stroke="rgba(' + A + ',' + o + ')" stroke-width="1.4"/>'); };
+    if (m === 'learn') {
+      // diverging paths: one origin, many directions
+      for (var i = 0; i < 10; i++) {
+        var y = -70 + i * 30;
+        line('M 30 340 C 150 340, 250 ' + (y + 110) + ', 430 ' + y, (0.15 - i * 0.008).toFixed(3));
+      }
+      dot(318, 52, 3, 0.42); dot(250, 22, 2.5, 0.36); dot(372, 150, 3.5, 0.32); dot(300, 196, 2.5, 0.28);
+    } else if (m === 'ai') {
+      // orbits around a soft core (top-right)
+      for (var k = 1; k <= 7; k++) line('M ' + (330 - k * 34) + ' 30 a ' + (k * 34) + ' ' + (k * 34) + ' 0 1 0 ' + (k * 68) + ' 0 a ' + (k * 34) + ' ' + (k * 34) + ' 0 1 0 ' + (-k * 68) + ' 0', (0.17 - k * 0.017).toFixed(3));
+      var spark = function (x, y, s, o) { out.push('<path d="M ' + x + ' ' + (y - s) + ' Q ' + x + ' ' + y + ' ' + (x + s) + ' ' + y + ' Q ' + x + ' ' + y + ' ' + x + ' ' + (y + s) + ' Q ' + x + ' ' + y + ' ' + (x - s) + ' ' + y + ' Q ' + x + ' ' + y + ' ' + x + ' ' + (y - s) + ' Z" fill="rgba(' + A + ',' + o + ')"/>'); };
+      spark(232, 64, 7, 0.42); spark(282, 160, 5, 0.34); spark(184, 128, 4, 0.28); spark(356, 210, 6, 0.3);
+      dot(330, 30, 5, 0.35);
+    } else if (m === 'community') {
+      // people as a network: nodes and links
+      var P = [[396, 14], [346, 30], [300, 10], [256, 36], [214, 12], [392, 128], [352, 152], [300, 178], [398, 206], [170, 26]];
+      var L = [[0, 1], [1, 2], [2, 3], [3, 4], [2, 4], [1, 5], [0, 5], [5, 6], [6, 7], [6, 8], [5, 8], [4, 9], [3, 7]];
+      L.forEach(function (e) { line('M ' + P[e[0]][0] + ' ' + P[e[0]][1] + ' L ' + P[e[1]][0] + ' ' + P[e[1]][1], 0.13, 1.1); });
+      P.forEach(function (p, j) { if (j % 3 === 0) ring(p[0], p[1], 5, 0.5); else dot(p[0], p[1], 3, 0.4); });
+    } else if (m === 'profile') {
+      // contour rings, like a fingerprint / personal map
+      for (var r = 1; r <= 8; r++) {
+        var rx = 26 + r * 30, ry = 18 + r * 22;
+        out.push('<ellipse cx="330" cy="40" rx="' + rx + '" ry="' + ry + '" transform="rotate(-18 330 40)" fill="none" stroke="rgba(' + N + ',' + (0.16 - r * 0.012).toFixed(3) + ')" stroke-width="1.2"/>');
+      }
+      dot(330, 40, 4, 0.4);
+    }
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="390" height="360" viewBox="0 0 390 360">' + out.join('') + '</svg>';
+    return 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) + '")';
+  }
+  renderVals() {
+    var m = { learn: 1, ai: 1, community: 1, profile: 1 }[this.props.motif] ? this.props.motif : 'learn';
+    var N = Component.NAVY, A = Component.ACCENT;
+    var fade = 'linear-gradient(180deg, #000 0%, #000 45%, transparent 100%)';
+    var motifFade = 'linear-gradient(180deg, #000 0%, #000 22%, transparent 78%)';
+    return {
+      rootCss: 'position: absolute; top: 0; left: 0; right: 0; height: 360px; overflow: hidden; pointer-events: none',
+      washCss: ['position: absolute; top: 0; left: 0; right: 0; bottom: 0',
+        'background: radial-gradient(90% 80% at 100% 0%, rgba(' + A + ',0.20) 0%, rgba(' + A + ',0) 70%), radial-gradient(70% 60% at 0% 0%, rgba(' + N + ',0.12) 0%, rgba(' + N + ',0) 70%), linear-gradient(180deg, #DDE5F6 0%, #E7ECF8 45%, #F2F2F7 100%)',
+        '-webkit-mask-image: ' + fade, 'mask-image: ' + fade].join('; '),
+      motifCss: ['position: absolute; top: 0; left: 0; width: 390px; height: 360px',
+        'background-image: ' + Component.motifSvg(m), 'background-repeat: no-repeat',
+        '-webkit-mask-image: ' + motifFade, 'mask-image: ' + motifFade].join('; ')
+    };
+  }
+}
+</script>
+</body>
+</html>

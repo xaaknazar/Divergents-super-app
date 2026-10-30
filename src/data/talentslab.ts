@@ -1,9 +1,10 @@
 // Talentslab integration: the signed-in user's candidate profile, Gallup
 // talents, MBTI, Gardner results and report files. Matched by email server-side
-// from the Clerk session token. Falls back to a demo profile until the API is live.
+// from the Clerk session token. A missing record is not a demo profile.
 import { TALENTSLAB_BASE } from '../config';
 import { loadJSON, saveJSON } from '../state/persist';
 import { netJson } from './net';
+import { NicknameTakenError } from './nickname';
 
 // ─── Types (mirror the Talentslab data model) ──────────────────────
 export type GallupDomain = 'executing' | 'influencing' | 'relationship' | 'strategic';
@@ -137,9 +138,10 @@ export async function fetchTalentProfile(token?: string | null, _email?: string 
 }
 
 /**
- * POST /api/mobile/resume — Clerk token only. Never throws: returns false when
+ * POST /api/mobile/resume — Clerk token only. Returns false when
  * the user has no valid session or the request fails, so local retry can handle
  * an offline save without exposing a shared credential in the bundle.
+ * NicknameTakenError is propagated so the form can ask for a different name.
  */
 export async function submitResume(token: string | null | undefined, answersIn: ResumeAnswers, _email?: string | null): Promise<boolean> {
   // Compose full_name from parts (Фамилия Имя Отчество) so the Talentslab
@@ -158,10 +160,21 @@ export async function submitResume(token: string | null | undefined, answersIn: 
         headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...headers },
         body: JSON.stringify(body),
       });
-      return res.ok;
+      if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        if (error?.reason === 'nickname_taken' || error?.error === 'nickname_taken') throw new NicknameTakenError();
+        return false;
+      }
+      // A proxy/login page or an application-level failure is not a saved row.
+      const result = await res.json();
+      if (result?.ok !== true && (result?.reason === 'nickname_taken' || result?.error === 'nickname_taken')) throw new NicknameTakenError();
+      return result?.ok === true;
     } finally { clearTimeout(t); }
   };
-  if (token) { try { if (await post({ Authorization: `Bearer ${token}` }, { answers })) return true; } catch {} }
+  if (token) {
+    try { if (await post({ Authorization: `Bearer ${token}` }, { answers })) return true; }
+    catch (error) { if (error instanceof NicknameTakenError) throw error; }
+  }
   return false;
 }
 
@@ -355,6 +368,13 @@ const _themes: [string, string[]][] = [
 for (const [en, ru] of _themes) {
   GALLUP_CANON[en] = en;
   for (const r of ru) GALLUP_CANON[r] = en;
+}
+
+/** Оригинальное английское название темы Gallup («Достижение» → «Achiever»); неизвестное — как есть. */
+export function gallupEnglishName(name: string): string {
+  const canon = GALLUP_CANON[name.trim().toLowerCase()];
+  if (!canon) return name.trim();
+  return canon.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
 }
 
 export function gallupCanon(name: string): string {
@@ -569,7 +589,7 @@ export async function checkNicknameAvailable(
     );
     if (!res.ok) return null;
     const d = await res.json();
-    return !!d?.available;
+    return typeof d?.available === 'boolean' ? d.available : null;
   } catch { return null; } finally { clearTimeout(t); }
 }
 

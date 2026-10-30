@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Illustration</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<img src="{{src}}" alt="" aria-hidden="true" style="{{css}}">
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","default":"trophy","options":["trophy","book","orb"]},"size":{"editor":"enum","default":"welcome","options":["compact","welcome","celebration"]},"$preview":{"width":112,"height":112}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var SRC = { trophy: '/_blob/6324acd61c4b082613f73b77207f53e0', book: '/_blob/23d489cf70f3171dffa423e0a5cace59', orb: '/_blob/efc16c75b3a2dad9da05def475dac734' };
+    var SIZE = { compact: 64, welcome: 112, celebration: 176 };
+    var d = SIZE[this.props.size] || 112;
+    return {
+      src: SRC[this.props.kind] || SRC.trophy,
+      css: 'width: ' + d + 'px; height: ' + d + 'px; object-fit: contain; display: block; flex-shrink: 0'
+    };
+  }
+}
+</script>
+</body>
+</html>

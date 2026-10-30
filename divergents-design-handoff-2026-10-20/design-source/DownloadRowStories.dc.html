@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>DownloadRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="420" safe-top="{{false}}" hint-size="390px,420px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,360px">
+    <dc-import name="Text" variant="title2" heading="1" text="DownloadRow" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,300px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="state: downloaded · playing · available (в ListSection)" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" header="Максимизация талантов Gallup" hint-size="100%,262px"><dc-import name="DownloadRow" state="downloaded" title="14. Communication" subtitle="9.8 МБ · Доступно офлайн" hint-size="100%,72px"></dc-import><dc-import name="DownloadRow" state="playing" title="15. Significance" subtitle="14.2 МБ · Доступно офлайн" hint-size="100%,72px"></dc-import><dc-import name="DownloadRow" state="available" title="16. Competition" subtitle="Аудио для офлайна" separator="{{true}}" hint-size="100%,72px"></dc-import></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":420}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

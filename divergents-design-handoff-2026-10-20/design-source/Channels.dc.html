@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Каналы</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="844" safe-top="{{false}}" hint-size="390px,844px">
+  <dc-import name="NavHeader" variant="inline" back-label="Сообщество" back-href="CommunityHome.dc.html" hint-size="100%,118px"></dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-top="16" pad-bottom="12" hint-size="100%,69px">
+    <dc-import name="Text" variant="largeTitle" heading="1" text="Каналы" hint-size="100%,41px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" gap="10" pad-bottom="24" hint-size="100%,120px">
+    <sc-for list="{{channels}}" as="c" hint-placeholder-count="1">
+      <dc-import name="ChannelCard" variant="plain" title="{{c.title}}" description="{{c.description}}" src="{{c.src}}" posts="{{c.posts}}" access="{{c.access}}" joined="{{c.joined}}" href="ServerChannel.dc.html" hint-size="100%,96px"></dc-import>
+    </sc-for>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      channels: [{ title: 'Danday Amokachi', description: 'Про развитие', src: '/_blob/f528fbb80d712d453cd5785a9e1e06f6', posts: '191', access: 'Открытый', joined: true }]
+    };
+  }
+}
+</script>
+</body>
+</html>

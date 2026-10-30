@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Персонализация</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1900" safe-top="{{false}}" hint-size="390px,1900px">
+<dc-import name="NavHeader" back-label="Профиль" back-href="ProfileHome.dc.html" hint-size="100%,124px"></dc-import>
+  <dc-import name="Wrapper" pad-x="20" pad-top="4" pad-bottom="20" gap="4" hint-size="100%,85px">
+    <dc-import name="Text" variant="largeTitle" heading="1" text="Персонализация" hint-size="100%,41px"></dc-import>
+    <dc-import name="Text" variant="subhead" tone="secondary" text="Настройте тему, акцент и размер под себя" hint-size="100%,20px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" gap="14" hint-size="100%,1500px">
+    <dc-import name="Wrapper2" pad-bottom="12" hint-size="100%,262px">
+      <dc-import name="ThemePreviewCard" person="Акназар" caption="Так выглядит ваша тема" accent-label="Divergents" completion="100" sample-progress="72" hint-size="100%,250px"></dc-import>
+    </dc-import>
+
+    <dc-import name="PersonalizeSection" icon="sun" title="Оформление" value="Система" hint-size="100%,110px">
+      <dc-import name="Wrapper2" pad-x="4" hint-size="100%,48px">
+        <dc-import name="Segmented" items="{{themeModes}}" icons="{{themeIcons}}" value="{{0}}" hint-size="100%,48px"></dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="PersonalizeSection" icon="palette" title="Акцентный цвет" value="Divergents" hint-size="100%,320px">
+      <dc-import name="Wrapper2" cols="4" gap="0" hint-size="100%,270px">
+        <sc-for list="{{accents}}" as="a" hint-placeholder-count="12">
+          <dc-import name="AccentSwatch" accent="{{a.accent}}" selected="{{a.selected}}" hint-size="100%,90px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="PersonalizeSection" icon="text-t" title="Размер текста" value="Обычный" hint-size="100%,330px">
+      <dc-import name="Wrapper2" gap="14" hint-size="100%,270px">
+        <dc-import name="Wrapper3" pad-x="4" hint-size="100%,200px">
+          <dc-import name="Segmented" items="{{textSizes}}" value="{{1}}" hint-size="100%,196px"></dc-import>
+        </dc-import>
+        <dc-import name="Wrapper3" pad-x="8" gap="2" hint-size="100%,44px">
+          <dc-import name="Text" variant="caption1" tone="tertiary" text="ПРИМЕР" hint-size="100%,16px"></dc-import>
+          <dc-import name="Text" variant="body" text="Дизайн, который подстраивается под вас." hint-size="100%,24px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="PersonalizeSection" icon="image" title="Фон" value="По акценту" hint-size="100%,400px">
+      <dc-import name="Wrapper2" cols="3" gap="0" hint-size="100%,350px">
+        <sc-for list="{{backdrops}}" as="b" hint-placeholder-count="10">
+          <dc-import name="ThemeBackdropSwatch" backdrop="{{b.backdrop}}" selected="{{b.selected}}" hint-size="100%,90px"></dc-import>
+        </sc-for>
+      </dc-import>
+    </dc-import>
+
+    <dc-import name="Wrapper2" pad-x="16" pad-top="8" hint-size="100%,40px">
+      <dc-import name="Text" variant="caption1" tone="tertiary" align="center" text="Настройки сохраняются на этом устройстве и применяются ко всему приложению." hint-size="100%,32px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var accentKeys = ['divergents', 'royal', 'violet', 'fuchsia', 'rose', 'sunset', 'gold', 'emerald', 'forest', 'ocean', 'sky', 'graphite'];
+    var backdropKeys = ['accent', 'aurora', 'dawn', 'ocean', 'nebula', 'forest', 'caramel', 'golden', 'mono', 'none'];
+    return {
+      themeModes: ['Система', 'Светлая', 'Тёмная'],
+      themeIcons: ['smartphone', 'sun', 'crescent'],
+      textSizes: ['Мелкий', 'Обычный', 'Крупный', 'Крупнее'],
+      accents: accentKeys.map(function (k) { return { accent: k, selected: k === 'divergents' }; }),
+      backdrops: backdropKeys.map(function (k) { return { backdrop: k, selected: k === 'accent' }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

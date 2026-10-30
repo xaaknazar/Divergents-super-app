@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ChatBubble — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="1100" safe-top="{{false}}" hint-size="390px,1100px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,1040px">
+    <dc-import name="Text" variant="title2" heading="1" text="ChatBubble" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,40px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="role=system" hint-size="100%,18px"></dc-import>
+      <dc-import name="ChatBubble" role="system" text="Новый чат · сегодня" hint-size="100%,24px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,90px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="role=user · time" hint-size="100%,18px"></dc-import>
+      <dc-import name="ChatBubble" role="user" text="С чего начать развитие?" time="14:31" hint-size="100%,66px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,260px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="role=assistant · многострочный текст · time" hint-size="100%,18px"></dc-import>
+      <dc-import name="ChatBubble" role="assistant" text="{{steps}}" time="14:31" hint-size="100%,230px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,190px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="role=assistant · sources" hint-size="100%,18px"></dc-import>
+      <dc-import name="ChatBubble" role="assistant" text="В курсе «Максимизация талантов Gallup» 34 урока — их удобно проходить по одному в день. В дополнение советую книгу Дэниела Койла." sources="{{sources}}" time="14:32" hint-size="100%,170px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,330px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="диалог (Wrapper gap 16)" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" gap="16" hint-size="100%,300px">
+        <dc-import name="ChatBubble" role="user" text="А сколько длится первый курс?" hint-size="100%,48px"></dc-import>
+        <dc-import name="ChatBubble" role="assistant" text="В курсе «Первые шаги к своей цели» 8 уроков — их удобно проходить по одному в день." hint-size="100%,96px"></dc-import>
+        <dc-import name="ChatBubble" role="user" text="Спасибо! Запиши меня" hint-size="100%,48px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      steps: 'Хороший старт — понять свои сильные стороны. Предлагаю три шага:\n1. Пройдите анкету талантов в профиле\n2. Начните курс «Первые шаги к своей цели»\n3. Присоединитесь к челленджу в сообществе',
+      sources: ['Максимизация талантов Gallup', 'Код таланта']
+    };
+  }
+}
+</script>
+</body>
+</html>

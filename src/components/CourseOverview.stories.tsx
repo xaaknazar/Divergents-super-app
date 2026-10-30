@@ -1,0 +1,12 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { CourseOverview } from './CourseOverview';
+import { demoDetailCourse } from '../storybook/detailFixtures';
+const meta = { title: 'Liven/Details/CourseOverview', component: CourseOverview, args: { course: demoDetailCourse, accessible: true },  } satisfies Meta<typeof CourseOverview>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Tablet: Story = { parameters: { viewport: 'tablet' } };
+export const Preview: Story = { args: { accessible: false } };

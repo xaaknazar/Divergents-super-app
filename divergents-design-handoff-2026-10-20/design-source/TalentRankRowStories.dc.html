@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TalentRankRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="400" safe-top="{{false}}" hint-size="390px,400px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,360px">
+    <dc-import name="Text" variant="title2" heading="1" text="TalentRankRow" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,330px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="domain=strategic · influencing · executing · relationship" hint-size="100%,18px"></dc-import>
+      <dc-import name="ListSection" header="Таланты Gallup" hint-size="100%,300px">
+        <dc-import name="TalentRankRow" rank="{{1}}" title="Стратег" domain="strategic" hint-size="100%,68px"></dc-import>
+        <dc-import name="TalentRankRow" rank="{{2}}" title="Активатор" domain="influencing" separator="{{true}}" hint-size="100%,68px"></dc-import>
+        <dc-import name="TalentRankRow" rank="{{3}}" title="Достижение" domain="executing" separator="{{true}}" hint-size="100%,68px"></dc-import>
+        <dc-import name="TalentRankRow" rank="{{8}}" title="Развитие" domain="relationship" separator="{{true}}" hint-size="100%,68px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

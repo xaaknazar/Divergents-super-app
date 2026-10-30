@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MediaCover</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootCss}}">
+  <sc-if value="{{hasSrc}}" hint-placeholder-val="{{true}}"><img src="{{src}}" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block"></sc-if>
+  <sc-if value="{{noSrc}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center"><dc-import name="Icon" icon="{{placeholderIcon}}" size="xxl" tone="brand" hint-size="36px,36px"></dc-import></span></sc-if>
+  <sc-if value="{{hasOverlay}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="{{overlayCss}}"></span></sc-if>
+  <sc-if value="{{hasBadge}}" hint-placeholder-val="{{true}}"><span style="{{badgeCss}}">{{badge}}</span></sc-if>
+  <sc-if value="{{hasChildren}}" hint-placeholder-val="{{false}}"><div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-direction: column; justify-content: flex-end; color: #FFFFFF">{{children}}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"src":{"editor":"text","default":""},"aspect":{"editor":"enum","default":"16x9","options":["16x9","4x3","1x1","3x4","hero","banner"]},"radius":{"editor":"enum","default":"lg","options":["none","md","lg","xl"]},"overlay":{"editor":"enum","default":"none","options":["none","bottom","full"]},"placeholderIcon":{"editor":"enum","default":"image","options":["image","play-circle","book","graduation-cap","mountains","map","people","calendar","video-camera","headphones"]},"badge":{"editor":"text","default":""},"badgeTone":{"editor":"enum","default":"brand","options":["brand","light","dark","success"]},"children":{"editor":null},"$preview":{"width":358,"height":202}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var hasChildren = p.children !== undefined && p.children !== null && p.children !== '';
+    var demo = !hasChildren && p.src === undefined && p.badge === undefined && p.placeholderIcon === undefined;
+    var src = p.src || (demo ? '/_blob/d2748e25aa43564a123b0f02c16ddc18' : '');
+    var badge = p.badge || (demo ? '42%' : '');
+    var aspect = p.aspect || '16x9';
+    var R = { none: 0, md: 10, lg: 12, xl: 16 };
+    var r = R[p.radius] !== undefined ? R[p.radius] : 12;
+    var css = ['position: relative', 'display: block', 'overflow: hidden', 'box-sizing: border-box', 'width: 100%', 'min-width: 0',
+      'background: rgba(61,91,219,0.13)', 'border-radius: ' + r + 'px', "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif"];
+    if (aspect === 'hero') css.push('height: 220px');
+    else if (aspect === 'banner') css.push('height: 180px');
+    else css.push('aspect-ratio: ' + ({ '16x9': '16 / 9', '4x3': '4 / 3', '1x1': '1 / 1', '3x4': '3 / 4' }[aspect] || '16 / 9'));
+    var overlay = p.overlay || 'none';
+    var overlayCss = 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; background: ' + (overlay === 'full'
+      ? 'linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.38) 50%, rgba(0,0,0,0.62) 100%)'
+      : 'linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.62) 100%)');
+    var B = { brand: ['#234088', '#FFFFFF'], light: ['#FFFFFF', '#000000'], dark: ['rgba(0,0,0,0.55)', '#FFFFFF'], success: ['#187A32', '#FFFFFF'] };
+    var b = B[p.badgeTone] || B.brand;
+    var badgeCss = 'position: absolute; top: 8px; right: 8px; z-index: 3; padding: 4px 8px; border-radius: 999px; font-size: 11px; line-height: 14px; font-weight: 700; background: ' + b[0] + '; color: ' + b[1];
+    return {
+      rootCss: css.join('; '), overlayCss: overlayCss, badgeCss: badgeCss,
+      src: src, hasSrc: !!src, noSrc: !src, placeholderIcon: p.placeholderIcon || 'image',
+      hasOverlay: overlay !== 'none',
+      badge: badge, hasBadge: !!badge,
+      hasChildren: hasChildren, children: p.children
+    };
+  }
+}
+</script>
+</body>
+</html>

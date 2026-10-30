@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GardnerChart</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<div role="img" aria-label="{{aria}}" style="{{rootCss}}">
+  <div aria-hidden="true" style="position: relative; width: 22px; height: 132px; flex-shrink: 0"><sc-for list="{{ticks}}" as="t" hint-placeholder-count="5"><span style="{{t.labelCss}}">{{t.label}}</span></sc-for></div>
+  <div aria-hidden="true" style="flex: 1; min-width: 0; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none">
+    <div style="{{innerCss}}">
+      <div style="position: relative; height: 132px">
+        <div style="position: absolute; left: 0; right: 0; top: 0; height: 132px"><sc-for list="{{ticks}}" as="t" hint-placeholder-count="5"><span style="{{t.lineCss}}"></span></sc-for></div>
+        <div style="position: relative; display: flex; height: 132px; align-items: flex-end"><sc-for list="{{bars}}" as="b" hint-placeholder-count="9"><div style="width: 66px; flex-shrink: 0; height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end"><span style="font-size: 11px; line-height: 14px; font-weight: 700; color: #5C5C60; margin-bottom: 3px">{{b.value}}</span><span style="{{b.barCss}}"></span></div></sc-for></div>
+      </div>
+      <div style="display: flex; margin-top: 8px"><sc-for list="{{bars}}" as="b" hint-placeholder-count="9"><div style="width: 66px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 0 2px; box-sizing: border-box"><span style="{{b.dotCss}}"></span><span style="min-height: 24px; text-align: center; font-size: 10px; line-height: 12px; font-weight: 500; color: #5C5C60; overflow-wrap: anywhere">{{b.label}}</span></div></sc-for></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"items":{"editor":null},"$preview":{"width":358,"height":200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var F = "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased";
+    var PAL = ['#e06666', '#ea9999', '#3c78d8', '#f6b26b', '#38761d', '#073763', '#a6bee7', '#f1c232', '#6d9eeb'];
+    var items = Array.isArray(p.items) && p.items.length ? p.items : [
+      { label: 'Лингвистический', value: 72 }, { label: 'Логико-математический', value: 85 }, { label: 'Музыкальный', value: 40 },
+      { label: 'Телесно-кинестетический', value: 55 }, { label: 'Пространственный', value: 63 }, { label: 'Межличностный', value: 88 },
+      { label: 'Внутриличностный', value: 80 }, { label: 'Натуралистический', value: 45 }, { label: 'Экзистенциальный', value: 60 }
+    ];
+    var ticks = [0, 25, 50, 75, 100].map(function (v, i) {
+      var y = 132 - i * 29;
+      return {
+        label: String(v),
+        labelCss: 'position: absolute; right: 4px; top: ' + (y - 7) + 'px; font-size: 10px; line-height: 14px; font-weight: 500; color: #6B6B70',
+        lineCss: 'position: absolute; left: 0; right: 0; top: ' + y + 'px; height: 0.5px; background: rgba(60,60,67,0.18)'
+      };
+    });
+    var bars = items.map(function (it, i) {
+      var v = Math.max(0, Math.min(100, Number(it.value || 0)));
+      var c = PAL[i % PAL.length];
+      return {
+        label: it.label || '', value: String(v),
+        barCss: 'display: block; width: 30px; height: ' + Math.round(v * 1.17) + 'px; border-radius: 8px 8px 2px 2px; background: ' + c,
+        dotCss: 'display: block; width: 10px; height: 10px; border-radius: 5px; margin: 4px 0 6px; background: ' + c
+      };
+    });
+    return {
+      rootCss: 'display: flex; box-sizing: border-box; width: 100%; min-width: 0; padding: 12px; border-radius: 16px; background: #F2F2F7; ' + F,
+      innerCss: 'width: ' + (bars.length * 66) + 'px',
+      aria: 'Множественный интеллект: ' + bars.map(function (b) { return b.label + ' ' + b.value; }).join(', '),
+      ticks: ticks, bars: bars
+    };
+  }
+}
+</script>
+</body>
+</html>

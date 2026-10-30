@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BookHero — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="900" safe-top="{{false}}" hint-size="390px,900px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" pad-bottom="24" gap="24" hint-size="100%,866px">
+    <dc-import name="Text" variant="title2" heading="1" text="BookHero" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,370px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="default · обложка, автор, оценки, жанры" hint-size="100%,18px"></dc-import>
+      <dc-import name="BookHero" title="Код таланта. Гениями не рождаются. Ими становятся" author="Дэниел Койл" src="/_blob/ab29d7c214eb7576b59de35205483cdb" rating="5.0" reader-rating="5.0" reader-count="3" genres="{{genres}}" hint-size="100%,344px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,330px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="без оценок читателей и жанров" hint-size="100%,18px"></dc-import>
+      <dc-import name="BookHero" title="Искусство войны" author="Сунь-цзы" src="/_blob/9ba6c2a15ce2a77ad63ff934f2cb142c" rating="5.0" reader-count="0" genres="{{none}}" hint-size="100%,300px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":900}}'>
+class Component extends DCLogic { renderVals() { return { genres: ["Личная эффективность", "Психология", "HR"], none: [] }; } }
+</script>
+</body>
+</html>

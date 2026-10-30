@@ -84,7 +84,7 @@ export async function loadJSON<T>(key: string, fallback: T): Promise<T> {
   return (await readJSON(key, fallback)).value;
 }
 
-export async function saveJSON(key: string, val: unknown): Promise<void> {
+export async function saveJSON(key: string, val: unknown, options?: { strict?: boolean }): Promise<void> {
   const payload = JSON.stringify(val) ?? 'null';
   await enqueue(key, async () => {
     try {
@@ -106,6 +106,7 @@ export async function saveJSON(key: string, val: unknown): Promise<void> {
         await deleteFileForKey(key);
       }
     } catch (error) {
+      if (options?.strict) throw error;
       // Preserve the existing no-throw contract used by fire-and-forget setters,
       // but make failures visible during development.
       if (__DEV__) console.warn(`[persist] Failed to save "${key}"`, error);

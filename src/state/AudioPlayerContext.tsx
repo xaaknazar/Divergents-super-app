@@ -14,66 +14,14 @@
 // плеера означали бы, что скачанная лекция и видеоурок могут звучать
 // одновременно, перекрикивая друг друга; с одним «включить» всегда значит
 // «вместо того, что играло».
-import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react';
-import { useVideoPlayer, VideoPlayer } from 'expo-video';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { useVideoPlayer } from 'expo-video';
 import { useEvent } from 'expo';
 import type { DownloadRecord } from './downloads';
-
-/** Что сейчас звучит. Достаточно и для подписи в мини-плеере, и для возврата. */
-export interface AudioTrack {
-  lessonId: string;
-  title: string;
-  courseTitle: string;
-  uri: string;
-  /**
-   * Откуда играем:
-   *   'download' — скачанный на телефон файл, пульт к нему на экране «Загрузки»;
-   *   'lesson'   — видеоурок курса, пульт к нему на экране урока.
-   * От этого зависит, куда вернёт тап по мини-плееру.
-   */
-  kind: 'download' | 'lesson';
-  /** Только для 'lesson': к какому курсу возвращаться. */
-  courseId?: string;
-}
-
-/** Что нужно знать плееру, чтобы включить видеоурок. */
-export interface LessonSource {
-  courseId: string;
-  lessonId: string;
-  title: string;
-  courseTitle: string;
-  /** HLS-ссылка урока. */
-  uri: string;
-}
-
-interface AudioPlayerValue {
-  /** Текущий трек или null, если ничего не выбрано. */
-  track: AudioTrack | null;
-  isPlaying: boolean;
-  currentTime: number;
-  duration: number;
-  /** Включить скачанный урок. Тот же самый — переключает паузу. */
-  play: (rec: DownloadRecord) => void;
-  /**
-   * Открыть видеоурок в общем плеере. Если этот урок уже играет — НИЧЕГО не
-   * делает: человек вернулся на экран и должен увидеть ту же секунду, а не
-   * начало. Именно поэтому проверка идёт по ссылке, а не только по id: у урока
-   * ссылка подписанная и может обновиться.
-   */
-  openLesson: (l: LessonSource) => void;
-  pause: () => void;
-  toggle: () => void;
-  /** Перемотка на абсолютную позицию в секундах. */
-  seekTo: (sec: number) => void;
-  /** Сдвиг относительно текущей позиции (±15 с). */
-  seekBy: (deltaSec: number) => void;
-  /** Убрать трек — например, когда его файл удалили. */
-  clear: () => void;
-  /** Низкоуровневый доступ: нужен экрану урока для картинки и экрану загрузок для событий. */
-  player: VideoPlayer;
-}
-
-const Ctx = createContext<AudioPlayerValue | null>(null);
+import { AudioPlaybackContext, AudioTrackContext } from './audioPlayerValue';
+import type { AudioPlayerValue, AudioTrack, LessonSource } from './audioPlayerValue';
+export { useAudioPlayer, useOptionalAudioPlayer, useOptionalAudioTrack } from './audioPlayerValue';
+export type { AudioPlayerValue, AudioTrack, LessonSource } from './audioPlayerValue';
 
 export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
   const [track, setTrackState] = React.useState<AudioTrack | null>(null);
@@ -172,11 +120,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     play, openLesson, pause, toggle, seekTo, seekBy, clear, player,
   }), [track, isPlaying, currentTime, duration, play, openLesson, pause, toggle, seekTo, seekBy, clear, player]);
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-export function useAudioPlayer(): AudioPlayerValue {
-  const v = useContext(Ctx);
-  if (!v) throw new Error('useAudioPlayer используется вне AudioPlayerProvider');
-  return v;
+  return (
+    <AudioPlaybackContext.Provider value={value}>
+      <AudioTrackContext.Provider value={track}>{children}</AudioTrackContext.Provider>
+    </AudioPlaybackContext.Provider>
+  );
 }

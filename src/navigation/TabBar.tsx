@@ -1,20 +1,16 @@
+import { TabDock } from '../components/TabDock';
 // Custom iOS-style tab bar (blur surface, brand active colour, SF icons).
-import React from 'react';
-import { View, Text, Pressable, useWindowDimensions, PixelRatio } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { minTouch } from '../theme/tokens';
-import { useTheme } from '../theme/ThemeContext';
-import { SF, SFName } from '../components/SFIcon';
+import React from 'react';
+import { MiniPlayer } from '../components/MiniPlayer';
+import { SFName } from '../components/SFIcon';
 import { hSelect } from '../lib/haptics';
 import { useLang } from '../state/LanguageContext';
 import { useRole } from '../state/useRole';
-import { MiniPlayer } from '../components/MiniPlayer';
 
 const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | 'tab_map' | 'tab_career' | 'tab_profile'; on: SFName; off: SFName }> = {
   LMSTab: { label: 'tab_learn', on: 'book.fill', off: 'book' },
-  AITab: { label: 'tab_ai', on: 'sparkles', off: 'sparkles' },
+  AITab: { label: 'tab_ai', on: 'sparkles', off: 'sparkles.outline' },
   CommunityTab: { label: 'tab_community', on: 'person.3.fill', off: 'person.3' },
   MapTab: { label: 'tab_map', on: 'map.fill', off: 'map' },
   CareerTab: { label: 'tab_career', on: 'briefcase.fill', off: 'briefcase' },
@@ -64,109 +60,23 @@ const TAB_FEATURE: Record<string, string> = {
 };
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
-  const { T, isDark, reduceTransparency, ty } = useTheme();
   const { t } = useLang();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const fontScale = PixelRatio.getFontScale();
   const { feature } = useRole();
-  const active = state.routes[state.index] as { name: string; state?: any };
-  const leaf = focusedLeafName(active);
-  if (!ROOT_ROUTES.has(leaf)) return null;
-
-  // Labels must never wrap or shrink into unreadable 9 pt text. Estimate the
-  // width the LONGEST label needs at the current font size (system Dynamic Type
-  // included); when it doesn't fit the per-tab slot, fall back to icons-only —
-  // the same thing iOS does at accessibility text sizes. Screen readers still
-  // announce each tab via accessibilityLabel.
-  const shown = (name: string) => {
-    if (!TABS[name]) return false;
-    const key = TAB_FEATURE[name];
-    // Открытую сейчас вкладку не прячем: иначе пользователь окажется на экране,
-    // до которого больше нет кнопки.
-    if (key && !feature(key) && name !== active.name) return false;
-    return true;
-  };
-  const visible = state.routes.filter((r) => shown(r.name));
-  const tabCount = Math.max(1, visible.length);
-  const slotW = (width - 8) / tabCount - 6; // bar padding + per-tab padding
-  const labelSize = ((ty.caption2 as { fontSize?: number }).fontSize ?? 11) * fontScale;
-  // ~0.58em average glyph width for Gotham Rounded Cyrillic + a small buffer.
-  const fits = (s: string) => s.length * labelSize * 0.58 + 4 <= slotW;
-  // Per-tab: full label → short label → icon only. Never wrap, never shrink
-  // below the readable 11 pt floor.
-  const bestLabel = (key: string): string | null => {
-    const full = t(TABS[key].label);
-    if (fits(full)) return full;
-    const short = SHORT_RU[key];
-    if (short && fits(short)) return short;
-    return null;
-  };
-  // All-or-nothing: if even one tab can't fit a readable label, drop labels
-  // everywhere so the bar stays visually consistent (icons-only), rather than
-  // a mix of words and bare icons.
-  const showLabels = visible.every((r) => bestLabel(r.name) !== null);
-  const labelFor = (key: string) => (showLabels ? bestLabel(key) : null);
-  const anyLabel = showLabels;
-  const iconSize = anyLabel ? 24 : 26;
-
-  const barLayout = {
-    position: 'absolute' as const, left: 0, right: 0, bottom: 0,
-    paddingBottom: Math.max(insets.bottom, 10), paddingTop: 8,
-    borderTopWidth: 0.5, borderTopColor: T.separator,
-  };
-
-  const content = (
-    <>
-    {/* «Сейчас играет» — над иконками вкладок. Полоска появляется сама, когда
-        в общем плеере есть трек, и исчезает, когда его нет. */}
+  const active = state.routes[state.index] as { key: string; name: string; state?: any };
+  if (!ROOT_ROUTES.has(focusedLeafName(active))) return null;
+  const visible = state.routes.filter(route => TABS[route.name]
+    && (!TAB_FEATURE[route.name] || feature(TAB_FEATURE[route.name]) || route.name === active.name));
+  return <TabDock items={visible.map(route => {
+    const meta = TABS[route.name];
+    const selected = route.key === active.key;
+    return { id: route.key, label: t(meta.label), shortLabel: SHORT_RU[route.name], icon: selected ? meta.on : meta.off, selected };
+  })} onSelect={key => {
+    const route = state.routes.find(r => r.key === key);
+    if (!route) return;
+    hSelect();
+    const event = navigation.emit({ type: 'tabPress', target: key, canPreventDefault: true });
+    if (route.key !== active.key && !event.defaultPrevented) navigation.navigate(route.name);
+  }} onLongPress={key => { navigation.emit({ type: 'tabLongPress', target: key }); }}>
     <MiniPlayer />
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 4 }}>
-      {state.routes.map((route, index) => {
-        const focused = state.index === index;
-        const meta = TABS[route.name];
-        if (!meta || !shown(route.name)) return null;
-        const color = focused ? T.brandText : T.labelSecondary;
-        const label = labelFor(route.name);
-        return (
-          <Pressable key={route.key}
-            accessibilityRole="button"
-            accessibilityState={{ selected: focused }}
-            accessibilityLabel={t(meta.label)}
-            onPress={() => {
-              hSelect();
-              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-              if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
-            }}
-            onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
-            style={({ pressed }) => ({ flex: 1, minHeight: minTouch, alignItems: 'center', justifyContent: 'center', gap: anyLabel ? 3 : 0, paddingHorizontal: 2, opacity: pressed ? 0.65 : 1 })}>
-            <SF name={focused ? meta.on : meta.off} size={iconSize} color={color} />
-            {label ? (
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="clip"
-                allowFontScaling={false}
-                style={[ty.caption2, { color, textAlign: 'center', fontSize: labelSize, lineHeight: Math.round(labelSize * 1.25) }]}
-              >
-                {label}
-              </Text>
-            ) : null}
-          </Pressable>
-        );
-      })}
-    </View>
-    </>
-  );
-
-  // Reduce Transparency: swap the frosted blur for an opaque surface.
-  if (reduceTransparency) {
-    return <View style={[barLayout, { backgroundColor: T.cardBg }]}>{content}</View>;
-  }
-  return (
-    <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={[barLayout, {
-      backgroundColor: isDark ? 'rgba(18,22,33,0.86)' : 'rgba(249,249,249,0.80)',
-    }]}>
-      {content}
-    </BlurView>
-  );
+  </TabDock>;
 }

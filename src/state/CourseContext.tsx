@@ -6,6 +6,7 @@ import React, { createContext, useContext, useMemo, useState, useCallback, useEf
 import { Course } from '../data/courses';
 import { fetchCatalog, fetchCourseDetail, fetchOwnedDetail, markLessonComplete } from '../data/api';
 import { loadJSON, saveJSON } from './persist';
+import { reconcileCourseAccess } from './courseAccessState';
 
 // No 'locked': an owned/free course opens every lesson (the sales page is the
 // only place that gates content, and it gates by `isFree`). The old 'locked'
@@ -117,17 +118,22 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     try {
       let detail;
       let ownedConfirmed = false;
+      let accessDenied = false;
       if (token) {
         // Signed in: try the owned-course endpoint (unlocks Mux HLS); if the
         // user doesn't own it (403) fall back to the public catalog detail.
         // A successful owned-detail is itself proof of ownership — record it so
         // access survives even when the "Мои курсы" list fetch failed.
         try { detail = await fetchOwnedDetail(id, token); ownedConfirmed = true; }
-        catch { detail = await fetchCourseDetail(id); }
+        catch (error) {
+          accessDenied = error instanceof Error && error.message === 'HTTP 403';
+          detail = await fetchCourseDetail(id);
+        }
       } else {
         detail = await fetchCourseDetail(id);
       }
-      setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...detail, ...(ownedConfirmed ? { owned: true } : {}) } : c)));
+      setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...detail,
+        ...(ownedConfirmed ? { owned: true } : accessDenied ? { owned: false, gifted: false } : {}) } : c)));
       // Сервер знает, какие уроки пройдены (в том числе на сайте). Раньше в
       // приложение попадал только общий процент, поэтому в «Программе курса»
       // ни один урок не был отмечен, хотя прогресс показывал, скажем, 38%.
@@ -160,12 +166,9 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     setCourses((prev) => {
       let changed = false;
       const next = prev.map((c) => {
-        const m = list.find((x) => x.id === c.id);
-        if (m && m.serverProgress != null && m.serverProgress !== c.serverProgress) {
-          changed = true;
-          return { ...c, serverProgress: m.serverProgress };
-        }
-        return c;
+        const updated = reconcileCourseAccess(c, list);
+        if (updated !== c) changed = true;
+        return updated;
       });
       return changed ? next : prev;
     });

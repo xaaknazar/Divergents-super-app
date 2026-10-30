@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Illustration — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Wrapper" pad="24" gap="28" hint-size="820px,860px">
+  <dc-import name="Text" variant="title2" heading="1" text="Illustration" hint-size="100%,28px"></dc-import>
+  <sc-for list="{{kinds}}" as="k" hint-placeholder-count="3">
+    <dc-import name="Wrapper2" gap="10" hint-size="100%,210px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="{{k.caption}}" hint-size="100%,18px"></dc-import>
+      <dc-import name="Wrapper3" dir="row" gap="32" align="end" hint-size="100%,176px">
+        <dc-import name="Wrapper4" gap="6" align="center" hint-size="64px,90px">
+          <dc-import name="Illustration" kind="{{k.kind}}" size="compact" hint-size="64px,64px"></dc-import>
+          <dc-import name="Text" variant="caption2" tone="tertiary" text="compact · 64" hint-size="80px,14px"></dc-import>
+        </dc-import>
+        <dc-import name="Wrapper4" gap="6" align="center" hint-size="112px,138px">
+          <dc-import name="Illustration" kind="{{k.kind}}" size="welcome" hint-size="112px,112px"></dc-import>
+          <dc-import name="Text" variant="caption2" tone="tertiary" text="welcome · 112" hint-size="80px,14px"></dc-import>
+        </dc-import>
+        <dc-import name="Wrapper4" gap="6" align="center" hint-size="176px,200px">
+          <dc-import name="Illustration" kind="{{k.kind}}" size="celebration" hint-size="176px,176px"></dc-import>
+          <dc-import name="Text" variant="caption2" tone="tertiary" text="celebration · 176" hint-size="100px,14px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </dc-import>
+  </sc-for>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      kinds: [
+        { kind: 'trophy', caption: 'kind=trophy — достижения, итоги челленджа' },
+        { kind: 'book', caption: 'kind=book — обучение, библиотека' },
+        { kind: 'orb', caption: 'kind=orb — ассистент Divergents AI' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

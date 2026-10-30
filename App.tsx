@@ -11,6 +11,7 @@ import { useFonts } from 'expo-font';
 import { RootNavigator } from './src/navigation';
 import { navigationRef } from './src/navigation/ref';
 import { CourseProvider } from './src/state/CourseContext';
+import { CoursePurchasesProvider } from './src/state/CoursePurchasesContext';
 import { ChallengeProvider } from './src/state/ChallengeContext';
 import { CareerProvider } from './src/state/CareerContext';
 import { EnrollmentProvider } from './src/state/EnrollmentContext';
@@ -18,6 +19,7 @@ import { PlacesProvider } from './src/state/PlacesContext';
 import { ChannelProvider } from './src/state/ChannelContext';
 import { ActivityProvider } from './src/state/ActivityContext';
 import { FitnessProvider } from './src/state/FitnessContext';
+import { AchievementProvider } from './src/state/AchievementContext';
 import { AudioPlayerProvider } from './src/state/AudioPlayerContext';
 // Импорт ради побочного эффекта: модуль регистрирует фоновую задачу записи
 // маршрута. Система может поднять приложение из фона ради одной координаты —
@@ -123,7 +125,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
   const { userId } = useAuth();
   return (
     <React.Fragment key={userId ?? 'anon'}>
-      <CourseProvider>
+      <CoursePurchasesProvider><CourseProvider>
         <ChallengeProvider>
           <ActivityProvider>
           <FitnessProvider>
@@ -137,7 +139,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
                           экраны размонтируются при переходах, а лекция должна
                           продолжать играть. */}
                       <AudioPlayerProvider>
-                        {children}
+                        <AchievementProvider>{children}</AchievementProvider>
                       </AudioPlayerProvider>
                     </ModerationProvider>
                   </NotificationsProvider>
@@ -148,7 +150,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
           </FitnessProvider>
           </ActivityProvider>
         </ChallengeProvider>
-      </CourseProvider>
+      </CourseProvider></CoursePurchasesProvider>
     </React.Fragment>
   );
 }

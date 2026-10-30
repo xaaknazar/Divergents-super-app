@@ -1,3 +1,5 @@
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
@@ -7,7 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection, ListRow, PrimaryButton } from '../../components/ui';
+import { ListSection, ListRow, Button } from '../../components/ui';
 import { GardnerChart } from '../../components/GardnerChart';
 import { ErrorState } from '../../components/StateViews';
 import { useTalentProfile } from '../../state/useTalentProfile';
@@ -123,12 +125,12 @@ export function TalentProfileScreen({ navigation, route }: Props) {
           action={editKey ? tr('Изменить') : undefined}
           accessibilityLabel={editKey ? `${tr('Изменить')} · ${label}` : undefined}
           onPress={editKey ? () => editStep(editKey) : undefined} />
-        <ListSection>
+        <Wrapper marginTop={6} marginHorizontal={16}><ListSection>
           {data.map(([rowLabel, value], i) => (
-            <ListRow key={rowLabel} title={rowLabel} detail={value.length > 22 ? undefined : value} last={i === data.length - 1}
+            <ListRow key={rowLabel} title={rowLabel} detail={value.length > 22 ? undefined : value}
               subtitle={value.length > 22 ? value : undefined} />
           ))}
-        </ListSection>
+        </ListSection></Wrapper>
       </View>
     );
   };
@@ -149,8 +151,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
                 : tr('Не удалось получить профиль Talentslab. Проверьте подключение.')}
               onRetry={() => reload()}
             />
-            <PrimaryButton label={tr('Редактировать анкету')} icon="arrow.right"
-              style={{ marginHorizontal: 32 }} onPress={() => navigation.navigate('Resume')} />
+            <Wrapper marginHorizontal={32}><Button label={tr('Редактировать анкету')} icon="arrow.right" onPress={() => navigation.navigate('Resume')} /></Wrapper>
           </View>
         ) : (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
@@ -163,12 +164,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
                 ? `${tr('Заполнено')} ${localCompleteness}%. ${tr('Отправим данные в Talentslab при следующем сохранении.')}`
                 : tr('Заполните анкету, чтобы увидеть свой профиль талантов.')}
             </Text>
-            <PrimaryButton
-              label={localCompleteness > 0 ? tr('Редактировать анкету') : tr('Заполнить анкету')}
-              icon="arrow.right"
-              style={{ width: '100%', maxWidth: 320, minHeight: 56, marginTop: 24, paddingHorizontal: 20 }}
-              onPress={() => navigation.navigate('Resume')}
-            />
+            <Wrapper width={'100%'} maxWidth={320} marginTop={24}><Button label={localCompleteness > 0 ? tr('Редактировать анкету') : tr('Заполнить анкету')} icon="arrow.right" onPress={() => navigation.navigate('Resume')} size="large" /></Wrapper>
           </View>
         )}
       </View>
@@ -177,8 +173,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Моя анкета')} backLabel={backLabel} onBack={() => navigation.goBack()}
-        trailing={
+      <NavHeader title={tr('Моя анкета')} backLabel={backLabel} onBack={() => navigation.goBack()} trailing={
           <>
             {/* Share the анкета as a PDF (send to other apps / save). */}
             <Pressable onPress={onSharePdf} disabled={sharing} hitSlop={8}
@@ -217,8 +212,8 @@ export function TalentProfileScreen({ navigation, route }: Props) {
             : <View style={{ width: 88, height: 88, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.largeTitle, { color: '#fff' }]}>{(profile?.fullName ?? 'D').charAt(0)}</Text></View>}
           <Text style={[ty.title2, { color: T.label, marginTop: 12, textAlign: 'center' }]}>{profile?.fullName ?? '—'}</Text>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-            {profile?.mbtiType ? <Capsule bg={T.brandTinted} color={T.brand}>MBTI · {profile.mbtiType}</Capsule> : null}
-            <Capsule bg={T.fillTertiary} color={T.label}>{tr('Анкета')} {effectiveResumeCompleteness(profile, localCompleteness)}%</Capsule>
+            {profile?.mbtiType ? <StatusBadge label={["MBTI · ", (profile.mbtiType)].join('')} tone="brand" /> : null}
+            <StatusBadge label={[(tr('Анкета')), " ", (effectiveResumeCompleteness(profile, localCompleteness)), "%"].join('')} tone="neutral" />
           </View>
         </View>
 
@@ -231,27 +226,26 @@ export function TalentProfileScreen({ navigation, route }: Props) {
           const we: any[] = Array.isArray(r?.work_experience) ? r!.work_experience! : [];
           if (we.length === 0) return null;
           return (
-            <ListSection header={tr('Опыт работы')}>
+            <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Опыт работы')}>
               {we.map((w, i) => (
                 <ListRow key={i} leading={<SF name="briefcase.fill" size={18} color={T.brand} />}
                   title={typeof w === 'string' ? w : [w.position, w.company].filter(Boolean).join(' · ')}
-                  subtitle={typeof w === 'object' ? [w.start_date, w.end_date].filter(Boolean).join(' — ') : undefined}
-                  last={i === we.length - 1} />
+                  subtitle={typeof w === 'object' ? [w.start_date, w.end_date].filter(Boolean).join(' — ') : undefined} />
               ))}
-            </ListSection>
+            </ListSection></Wrapper>
           );
         })()}
 
         {/* MBTI — plain text (no boxed square) */}
         {profile?.mbtiType ? (
-          <ListSection header={tr('Тип личности (MBTI)')}>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Тип личности (MBTI)')}>
             <View style={{ padding: 16 }}>
               <Text style={[ty.body, { color: T.label }]}>
                 {profile.mbtiType}
                 {(profile.mbtiName || mbtiName(profile.mbtiType)) ? ` · ${profile.mbtiName || mbtiName(profile.mbtiType)}` : ''}
               </Text>
             </View>
-          </ListSection>
+          </ListSection></Wrapper>
         ) : null}
 
         {/* All Gallup talents — flat, in the user's (locally-saved) order.
@@ -262,12 +256,12 @@ export function TalentProfileScreen({ navigation, route }: Props) {
               action={editGallup ? tr('Готово') : tr('Изменить')}
               accessibilityLabel={tr('Изменить порядок талантов Gallup')}
               onPress={() => setEditGallup((v) => !v)} />
-            <ListSection>
+            <Wrapper marginTop={6} marginHorizontal={16}><ListSection>
               {orderedGallup.map((g, i) => {
                 const meta = GALLUP_DOMAIN_META[g.domain];
                 const last = i === orderedGallup.length - 1;
                 return (
-                  <ListRow key={gallupId(g)} last={last}
+                  <ListRow key={gallupId(g)}
                     leading={
                       <View style={{ width: 26, height: 26, borderRadius: 13, borderCurve: 'continuous', backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
                         <Text style={[ty.caption2Em, { color: meta.color }]}>{i + 1}</Text>
@@ -293,7 +287,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
                     )} />
                 );
               })}
-            </ListSection>
+            </ListSection></Wrapper>
             <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 36, paddingTop: 6 }]}>
               {tr('Порядок талантов сохраняется только на этом устройстве. Официальный отчёт Talentslab формируется на сайте и не меняется.')}
             </Text>
@@ -312,14 +306,13 @@ export function TalentProfileScreen({ navigation, route }: Props) {
 
         {/* Reports */}
         {(profile?.reports ?? []).length > 0 ? (
-          <ListSection header={tr('Отчёты')}>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Отчёты')}>
             {profile!.reports.map((rep, i) => (
               <ListRow key={i} onPress={() => Linking.openURL(encodeURI(rep.url)).catch(() => Alert.alert(tr('Не удалось открыть отчёт'), tr('Проверьте подключение и попробуйте снова.')))}
                 leading={<SF name="doc.fill" size={20} color={T.brand} />} title={rep.title}
-                trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />}
-                last={i === profile!.reports.length - 1} />
+                trailing={<SF name="arrow.up.circle.fill" size={20} color={T.brand} />} />
             ))}
-          </ListSection>
+          </ListSection></Wrapper>
         ) : null}
 
         <View style={{ height: 20 }} />

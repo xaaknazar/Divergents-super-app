@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>BookCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<a href="{{href}}" aria-label="{{aria}}" style="{{rootCss}}">
+  <div style="position: relative; display: block">
+    <dc-import name="BookCover" src="{{src}}" size="fill" hint-size="100%,235px"></dc-import>
+    <sc-if value="{{hasCoverBadge}}" hint-placeholder-val="{{false}}"><span style="position: absolute; top: 6px; left: 6px; display: flex"><dc-import name="StatusBadge" label="{{status}}" tone="brand" variant="solid" size="compact" hint-size="56px,20px"></dc-import></span></sc-if>
+  </div>
+  <span style="{{titleCss}}">{{title}}</span>
+  <sc-if value="{{hasAuthor}}" hint-placeholder-val="{{true}}"><span style="{{authorCss}}">{{author}}</span></sc-if>
+  <sc-if value="{{hasStatus}}" hint-placeholder-val="{{false}}"><span style="display: flex"><dc-import name="StatusBadge" label="{{status}}" tone="brand" size="compact" hint-size="60px,20px"></dc-import></span></sc-if>
+  <sc-if value="{{hasProgress}}" hint-placeholder-val="{{false}}"><div style="display: flex; flex-direction: column; gap: 6px"><div role="progressbar" aria-label="{{progressAria}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pct}}" style="height: 4px; border-radius: 4px; background: rgba(118,118,128,0.12); overflow: hidden"><div style="{{fillCss}}"></div></div><span style="font-size: 12px; line-height: 16px; color: #5C5C60">{{pctText}}</span></div></sc-if>
+  <sc-if value="{{hasMeta}}" hint-placeholder-val="{{true}}">
+    <div style="{{metaCss}}">
+      <sc-for list="{{meta}}" as="m" hint-placeholder-count="2"><span style="display: flex; align-items: center; gap: 3px; font-size: 12px; line-height: 16px; color: #5C5C60; white-space: nowrap"><dc-import name="Icon" icon="{{m.icon}}" variant="solid" size="xs" tone="{{m.tone}}" hint-size="12px,12px"></dc-import>{{m.text}}</span></sc-for>
+    </div>
+  </sc-if>
+</a>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","default":"grid","options":["grid","shelf","compact"]},"title":{"editor":"text","default":"Код таланта. Гениями не рождаются. Ими становятся"},"author":{"editor":"text","default":"Дэниел Койл"},"src":{"editor":"text","default":"/_blob/ab29d7c214eb7576b59de35205483cdb"},"status":{"editor":"text","default":"Читаю"},"progress":{"editor":"int","default":-1,"min":-1,"max":100},"rating":{"editor":"text","default":"5.0"},"readerRating":{"editor":"text","default":"5.0"},"readerCount":{"editor":"int","default":3,"min":0,"max":10000},"comments":{"editor":"int","default":0,"min":0,"max":10000},"href":{"editor":"text","default":"BookDetail.dc.html"},"$preview":{"width":173,"height":400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.title === undefined;
+    var v = p.variant || 'grid';
+    var shelf = v === 'shelf';
+    var compact = v === 'compact';
+    var title = p.title ?? 'Код таланта. Гениями не рождаются. Ими становятся';
+    var author = shelf ? '' : (p.author ?? (demo ? 'Дэниел Койл' : ''));
+    var status = shelf ? '' : (p.status ?? (demo ? 'Читаю' : ''));
+    var progress = Number(p.progress ?? -1);
+    var meta = [];
+    if (!shelf) {
+      var rating = p.rating ?? (demo ? '5.0' : '');
+      var rr = p.readerRating ?? (demo ? '5.0' : '');
+      var rc = Number(p.readerCount ?? (demo ? 3 : 0));
+      var cm = Number(p.comments || 0);
+      if (rating) meta.push({ icon: 'star', tone: 'warning', text: rating });
+      // compact (3-col): reader count only; grid: reader rating · count
+      if (rc > 0) meta.push({ icon: 'people', tone: 'secondary', text: compact ? String(rc) : (rr ? rr + ' · ' + rc : String(rc)) });
+      if (cm > 0) meta.push({ icon: 'chat-bubble', tone: 'secondary', text: String(cm) });
+    }
+    var pct = Math.max(0, Math.min(100, progress));
+    var clamp = function (n) { return 'overflow: hidden; display: -webkit-box; -webkit-line-clamp: ' + n + '; -webkit-box-orient: vertical'; };
+    return {
+      rootCss: ['display: flex', 'flex-direction: column', 'gap: ' + (compact ? 6 : 10) + 'px', 'box-sizing: border-box', shelf ? 'width: 160px; flex-shrink: 0' : 'width: 100%', 'min-width: 0',
+        'text-decoration: none', 'color: #000000', "font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif", '-webkit-font-smoothing: antialiased'].join('; '),
+      titleCss: compact ? 'margin-top: 2px; font-size: 13px; line-height: 18px; font-weight: 700; color: #000000; overflow-wrap: anywhere; ' + clamp(2)
+        : 'font-size: 15px; line-height: 20px; font-weight: 700; color: #000000; overflow-wrap: anywhere',
+      authorCss: compact ? 'margin-top: -4px; font-size: 12px; line-height: 16px; color: #5C5C60; white-space: nowrap; overflow: hidden; text-overflow: ellipsis'
+        : 'font-size: 13px; line-height: 18px; color: #5C5C60',
+      metaCss: 'display: flex; flex-wrap: ' + (compact ? 'nowrap' : 'wrap') + '; gap: ' + (compact ? 6 : 8) + 'px; overflow: hidden',
+      href: p.href || 'BookDetail.dc.html',
+      aria: [title, author, status].filter(Boolean).join(', '),
+      src: p.src ?? (demo ? '/_blob/ab29d7c214eb7576b59de35205483cdb' : ''),
+      title: title, author: author, hasAuthor: !!author,
+      status: status, hasStatus: !!status && !compact, hasCoverBadge: !!status && compact,
+      hasProgress: progress >= 0, pct: String(pct), pctText: pct + '%', progressAria: 'Прочитано: ' + title,
+      fillCss: 'width: ' + pct + '%; height: 100%; border-radius: 4px; background: #234088',
+      meta: meta, hasMeta: meta.length > 0
+    };
+  }
+}
+</script>
+</body>
+</html>

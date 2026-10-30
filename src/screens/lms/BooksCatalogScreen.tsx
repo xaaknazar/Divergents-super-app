@@ -1,24 +1,26 @@
+import { BookCard } from '../../components/BookCard';
+import { BookAdvisorCard } from '../../components/BookAdvisorCard';
+import { Wrapper } from '../../components/Wrapper';
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
-import { Image } from 'expo-image';
+import { useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
-import { Screen } from '../../components/Screen';
+import { DetailScreen } from '../../components/DetailScreen';
+import { PageHeading } from '../../components/PageHeading';
+import { InlineNotice } from '../../components/InlineNotice';
+import { BookShelf } from '../../components/BookShelf';
 import { HeaderIcon } from '../../components/headers';
-import { NavHeader } from '../../components/NavHeader';
-import { SF } from '../../components/SFIcon';
-import { Chip, SectionHeader } from '../../components/ui';
+import { Segmented, SectionHeader, Button } from '../../components/ui';
+import { SearchField } from '../../components/SearchField';
+import { FilterPicker } from '../../components/FilterPicker';
 import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
-import { imgUrl } from '../../data/api';
-import { fetchBooks, fetchMyShelf, BookListItem, ShelfEntry, ShelfStatus } from '../../data/books';
+import { fetchBooks, fetchMyShelf, BookListItem, ShelfEntry } from '../../data/books';
 import { onShelfChanged } from '../../state/shelfBus';
 import { LMSStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'Books'>;
 
-const SHELF_LABEL: Record<ShelfStatus, string> = { want: 'В планах', reading: 'Читаю', read: 'Прочитано' };
-const SHELF_COLOR: Record<ShelfStatus, string> = { want: '#AF52DE', reading: '#FF9500', read: '#34C759' };
 type Sort = 'rating' | 'title' | 'newest';
 const SORTS: { key: Sort; label: string }[] = [
   { key: 'rating', label: 'По рейтингу' },
@@ -27,7 +29,9 @@ const SORTS: { key: Sort; label: string }[] = [
 ];
 
 export function BooksCatalogScreen({ navigation }: Props) {
-  const { T, ty } = useTheme();
+  const { textScale = 1 } = useTheme();
+  const { width, fontScale } = useWindowDimensions();
+  const singleColumn = width < 350 || fontScale * textScale > 1.3;
   const { getToken, isSignedIn } = useAuth();
   const [books, setBooks] = useState<BookListItem[]>([]);
   const [shelf, setShelf] = useState<ShelfEntry[]>([]);
@@ -77,142 +81,56 @@ export function BooksCatalogScreen({ navigation }: Props) {
   const reading = shelf.filter((s) => s.status === 'reading');
   const plan = shelf.filter((s) => s.status === 'want');
 
-  const Cover = ({ url, w = 320 }: { url?: string | null; w?: number }) => (
-    url
-      ? <Image source={imgUrl(url, w)} style={{ width: '100%', aspectRatio: 0.68, borderRadius: 12 }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
-      : <View style={{ width: '100%', aspectRatio: 0.68, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center' }}><SF name="book.fill" size={30} color={T.labelTertiary} /></View>
-  );
-
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title="Библиотека" backLabel="Обучение" onBack={() => navigation.goBack()}
-        trailing={<HeaderIcon name="sparkles" color={T.brand} label="AI-помощник" onPress={() => navigation.navigate('BookAI')} />} />
-      <Screen topInset={false} aurora={false} onRefresh={load}>
-        <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
-          <Text style={[ty.largeTitle, { color: T.label }]}>Книги</Text>
+    <DetailScreen title="Библиотека" backLabel="Обучение" onBack={() => navigation.goBack()} onRefresh={load}
+      actions={<HeaderIcon name="sparkles" label="AI-помощник" onPress={() => navigation.navigate('BookAI')} />}>
+        <Wrapper paddingHorizontal={20} paddingTop={8} paddingBottom={4}>
           {/* Count only once loaded — «· 0» during the fetch reads as an empty library. */}
-          <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2 }]}>{loading ? 'Библиотека Divergents' : `Библиотека Divergents · ${books.length}`}</Text>
-        </View>
+          <PageHeading title="Книги" description={loading ? 'Библиотека Divergents' : `Библиотека Divergents · ${books.length}`} />
+        </Wrapper>
 
-        <Pressable onPress={() => navigation.navigate('BookAI')} accessibilityRole="button" accessibilityLabel="Спросить ИИ, что почитать" accessibilityHint="Открывает подбор книг с AI-помощником"
-          style={{ minHeight: 68, marginHorizontal: 16, marginTop: 12, marginBottom: 6, borderRadius: 16, borderCurve: 'continuous', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.brandTintedStrong }}>
-          <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="sparkles" size={20} color="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[ty.headline, { color: T.label }]}>Спросить ИИ, что почитать</Text>
-            <Text style={[ty.footnote, { color: T.labelSecondary }]}>Подберёт книги под ваши таланты, психотип и цели</Text>
-          </View>
-          <SF name="chevron.right" size={14} color={T.labelTertiary} />
-        </Pressable>
+        <Wrapper marginHorizontal={16} marginTop={12} marginBottom={6}><BookAdvisorCard onPress={() => navigation.navigate('BookAI')} /></Wrapper>
 
-        <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingHorizontal: 8, paddingVertical: 4, minHeight: 48 }}>
-            <SF name="magnifyingglass" size={16} color={T.labelSecondary} />
-            <TextInput value={query} onChangeText={setQuery} placeholder="Название или автор" placeholderTextColor={T.labelTertiary} accessibilityLabel="Поиск книги по названию или автору" style={[ty.body, { flex: 1, color: T.label, minHeight: 40, paddingVertical: 6 }]} />
-            {query ? <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Очистить поиск" style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}><SF name="xmark" size={15} color={T.labelTertiary} /></Pressable> : null}
-          </View>
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 8 }}>
-          {genres.map((g) => <Chip key={g} label={g} active={genre === g} onPress={() => setGenre(g)} />)}
-        </ScrollView>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
-          {SORTS.map((s) => <Chip key={s.key} label={s.label} active={sort === s.key} onPress={() => setSort(s.key)} />)}
-        </ScrollView>
+        <Wrapper paddingHorizontal={16} paddingTop={10} paddingBottom={12} gap={8}>
+          <SearchField value={query} onChangeText={setQuery} placeholder="Название или автор" label="Поиск книги по названию или автору" />
+          {genres.length > 1 ? <FilterPicker label="Жанр" items={genres} value={genre} onChange={setGenre} /> : null}
+          <Segmented items={SORTS.map(s => s.label)} value={SORTS.findIndex(s => s.key === sort)} onChange={i => setSort(SORTS[i].key)} />
+        </Wrapper>
 
         {loading ? (
-          <View style={{ paddingTop: 8 }}><CourseGridSkeleton count={4} /></View>
+          <Wrapper paddingTop={8}><CourseGridSkeleton count={4} /></Wrapper>
         ) : error && books.length === 0 ? (
           <ErrorState onRetry={load} />
         ) : (
           <>
+            {error ? <Wrapper marginHorizontal={16} marginBottom={16}>
+              <InlineNotice message="Не удалось обновить библиотеку. Показаны ранее загруженные книги." actionLabel="Повторить загрузку" onRetry={load} />
+            </Wrapper> : null}
             {reading.length > 0 && !query && genre === 'Все' ? (
-              <View style={{ marginBottom: 8 }}>
-                <SectionHeader title="Продолжить чтение" />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                  {reading.map((s) => (
-                    <Pressable key={s.book.id} onPress={() => navigation.navigate('BookDetail', { bookId: s.book.id })} style={{ width: 120 }}>
-                      <Cover url={s.book.imageUrl} />
-                      <Text style={[ty.subheadEm, { color: T.label, marginTop: 6 }]} numberOfLines={2}>{s.book.title}</Text>
-                      <View style={{ height: 4, borderRadius: 2, borderCurve: 'continuous', backgroundColor: T.fillTertiary, marginTop: 6, overflow: 'hidden' }}>
-                        <View style={{ height: 4, width: (s.progress + '%') as any, backgroundColor: SHELF_COLOR.reading }} />
-                      </View>
-                      <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 3 }]}>{s.progress}%</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
+              <BookShelf title="Продолжить чтение" entries={reading} onBookPress={bookId => navigation.navigate('BookDetail', { bookId })} />
             ) : null}
 
             {plan.length > 0 && !query && genre === 'Все' ? (
-              <View style={{ marginBottom: 8 }}>
-                <SectionHeader title="В планах" />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                  {plan.map((s) => (
-                    <Pressable key={s.book.id} onPress={() => navigation.navigate('BookDetail', { bookId: s.book.id })} style={{ width: 110 }}>
-                      <Cover url={s.book.imageUrl} />
-                      <Text style={[ty.subhead, { color: T.label, marginTop: 6 }]} numberOfLines={2}>{s.book.title}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
+              <BookShelf title="В планах" entries={plan} onBookPress={bookId => navigation.navigate('BookDetail', { bookId })} />
             ) : null}
 
             <SectionHeader title={query || genre !== 'Все' ? ('Найдено: ' + filtered.length) : 'Все книги'} />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16 }}>
+            <Wrapper dir="row" wrap justify="space-between" paddingHorizontal={16}>
               {filtered.slice(0, visible).map((b) => (
-                <Pressable key={b.id} onPress={() => navigation.navigate('BookDetail', { bookId: b.id })} style={{ width: '48.5%', marginBottom: 18 }}>
-                  <View>
-                    <Cover url={b.imageUrl} />
-                    {b.shelf ? (
-                      <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: SHELF_COLOR[b.shelf.status], paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderCurve: 'continuous' }}>
-                        <Text style={[ty.caption2Em, { color: '#fff' }]}>{SHELF_LABEL[b.shelf.status]}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <Text style={[ty.subheadEm, { color: T.label, marginTop: 8 }]} numberOfLines={2}>{b.title}</Text>
-                  <Text style={[ty.footnote, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{b.author}</Text>
-                  {/* Звезда — редакционная оценка Divergents, человечки — средняя
-                      оценка читателей со счётчиком. Это разные числа. */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                    {b.rating ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }} accessibilityLabel={`Оценка Divergents ${b.rating.toFixed(1)}`}>
-                        <SF name="star.fill" size={11} color="#FF9500" />
-                        <Text style={[ty.caption2Em, { color: T.labelSecondary }]}>{b.rating.toFixed(1)}</Text>
-                      </View>
-                    ) : null}
-                    {b.userRating ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }} accessibilityLabel={`Оценка читателей ${b.userRating.toFixed(1)}, оценок: ${b.userRatingCount ?? 0}`}>
-                        <SF name="person.2.fill" size={10} color={T.labelTertiary} />
-                        <Text style={[ty.caption2, { color: T.labelTertiary }]}>{b.userRating.toFixed(1)} · {b.userRatingCount ?? 0}</Text>
-                      </View>
-                    ) : null}
-                    {b.comments ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }} accessibilityLabel={`Комментариев: ${b.comments}`}>
-                        <SF name="bubble.left.fill" size={10} color={T.labelTertiary} />
-                        <Text style={[ty.caption2, { color: T.labelTertiary }]}>{b.comments}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                </Pressable>
+                <Wrapper key={b.id} width={singleColumn ? '100%' : '48.5%'} marginBottom={16}><BookCard book={b} onPress={() => navigation.navigate('BookDetail', { bookId: b.id })} /></Wrapper>
               ))}
-            </View>
+            </Wrapper>
             {filtered.length > visible ? (
-              <Pressable onPress={() => setVisible((v) => v + 30)}
-                style={{ marginHorizontal: 16, marginTop: 2, marginBottom: 10, height: 46, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={[ty.subheadEm, { color: T.brand }]}>Показать ещё · {Math.min(30, filtered.length - visible)}</Text>
-              </Pressable>
+              <Wrapper marginHorizontal={16} marginBottom={10}><Button label={`Показать ещё · ${Math.min(30, filtered.length - visible)}`} onPress={() => setVisible(v => v + 30)} variant="tinted" /></Wrapper>
             ) : null}
             {filtered.length === 0 ? (
               books.length === 0
                 ? <EmptyState icon="book" title="Книги скоро появятся" subtitle="Библиотека обновляется — загляните чуть позже." />
-                : <EmptyState icon="magnifyingglass" title="Ничего не найдено" subtitle="Измените запрос или жанр." />
+                : <EmptyState icon="magnifyingglass" title="Ничего не найдено" subtitle="Измените запрос или жанр." actionLabel="Сбросить поиск и фильтр" onAction={() => { setQuery(''); setGenre('Все'); }} />
             ) : null}
-            <View style={{ height: 16 }} />
+            <Wrapper paddingBottom={16} />
           </>
         )}
-      </Screen>
-    </View>
+    </DetailScreen>
   );
 }

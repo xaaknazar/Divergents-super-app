@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Icon — набор</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Wrapper" pad="24" gap="20" hint-size="820px,3240px">
+  <dc-import name="Wrapper2" gap="6" hint-size="100%,60px">
+    <dc-import name="Text" variant="title2" heading="1" text="Icon — 151 иконка" hint-size="100%,28px"></dc-import>
+    <dc-import name="Text" variant="footnote" tone="secondary" text="В каждой ячейке: variant=line (tone=primary) и variant=solid (tone=brand), size=lg · 24px. Набор layero Round." hint-size="100%,18px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper2" cols="5" gap="10" hint-size="100%,3110px">
+    <sc-for list="{{icons}}" as="ic" hint-placeholder-count="151">
+      <dc-import name="Card" size="compact" hint-size="100%,90px">
+        <dc-import name="Wrapper3" gap="8" align="center" hint-size="100%,60px">
+          <dc-import name="Wrapper4" dir="row" gap="16" justify="center" hint-size="100%,24px">
+            <dc-import name="Icon" icon="{{ic.name}}" variant="line" size="lg" tone="primary" hint-size="24px,24px"></dc-import>
+            <dc-import name="Icon" icon="{{ic.name}}" variant="solid" size="lg" tone="brand" hint-size="24px,24px"></dc-import>
+          </dc-import>
+          <dc-import name="Text" variant="caption2" tone="secondary" align="center" text="{{ic.name}}" hint-size="100%,28px"></dc-import>
+        </dc-import>
+      </dc-import>
+    </sc-for>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":3240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var names = ["arrow-down", "arrow-from-square-up-right", "arrow-left", "arrow-right", "arrow-rotate-cw-up", "arrow-to-bracket-down", "arrow-up", "ball-soccer", "bell", "bell-slash", "bike", "bin", "body-standing", "bolt-vertical", "book", "book-bookmark", "book-open", "bookmark", "books-spines", "briefcase", "building", "bullseye", "calendar", "calendar-check", "calendar-star", "camera", "car", "chart-bar", "chart-line", "chart-pie", "chat-bubble", "chat-bubbles", "check", "check-circle", "checks", "chevron-down", "chevron-left", "chevron-right", "chevron-small-down", "chevron-small-right", "chevron-up", "clipboard", "clock-3h", "cloud-arrow-down", "coffee-cup", "compass", "copy", "credit-card", "crescent", "crown", "dots-three-horizontal", "dots-three-vertical", "envelope", "exclamation-circle", "exclamation-triangle", "eye", "eye-slash", "fast-backward", "fast-forward", "file", "file-doc", "flag", "flame", "funnel", "gear", "gift", "globe", "graduation-cap", "grid-2x2", "hand-heart", "handshake", "headphones", "heart", "history", "home", "image", "images", "inbox", "layers", "lightbulb", "link", "list", "lock-locked", "lock-unlocked", "magic-wand", "magnifying-glass", "map", "medal-sport", "mic", "minus", "mountains", "navigation", "note", "palette", "paperplane", "pause", "pause-circle", "pencil", "pencil-square", "people", "person", "person-check", "person-circle", "person-plus", "person-square", "phone", "pin", "pin-check", "plane", "play", "play-circle", "plus", "plus-circle", "pulse", "qr-code", "question-circle", "quote-left", "robot", "rocket", "seal-check", "share-network", "shield-check", "shop", "skip-backward", "skip-forward", "sliders", "smartphone", "sparkles", "speaker", "star", "star-half", "stopwatch", "sun", "tag", "target-location", "tent", "text-i-circle", "text-t", "thumbs-up", "ticket", "translate", "trending-up", "trophy", "utensils", "video-camera", "volume-2", "wallet", "weight", "wifi-slash", "x", "x-circle"];
+    return { icons: names.map(function (n) { return { name: n }; }) };
+  }
+}
+</script>
+</body>
+</html>

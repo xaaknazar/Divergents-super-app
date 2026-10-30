@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>VacancyBulletList — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="420" safe-top="{{false}}" hint-size="390px,420px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,380px">
+    <dc-import name="Text" variant="title2" heading="1" text="VacancyBulletList" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone=warning · icon=seal-check" hint-size="100%,18px"></dc-import>
+      <dc-import name="VacancyBulletList" label="Ценности" icon="seal-check" tone="warning" items="{{values}}" hint-size="100%,100px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="tone=success · icon=check-circle" hint-size="100%,18px"></dc-import>
+      <dc-import name="VacancyBulletList" label="Преимущества" icon="check-circle" tone="success" items="{{benefits}}" hint-size="100%,100px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":420}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {"values": ["Забота о клиенте", "Открытость", "Развитие сотрудников"], "benefits": ["Карьерный рост", "Обучение за счёт компании", "Медицинская страховка"]};
+  }
+}
+</script>
+</body>
+</html>

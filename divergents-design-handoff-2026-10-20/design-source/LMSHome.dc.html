@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Обучение — главная</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="3560" tab="learn" hint-size="390px,3560px">
+  <dc-import name="NavBarLarge" title="Обучение" subtitle="Добрый день, Акназар" avatar="{{true}}" avatar-href="ProfileHome.dc.html" hint-size="100%,81px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="8" gap="16" hint-size="100%,520px">
+    <dc-import name="SearchField" placeholder="Курсы, уроки, книги" surface="raised" hint-size="100%,48px"></dc-import>
+    <dc-import name="LearningResumeCard" title="{{continueCourse.title}}" lesson="Урок 15 из 34 · Significance" progress="{{continueCourse.progress}}" src="{{continueCourse.image}}" action-label="Продолжить" href="Video.dc.html" hint-size="100%,120px"></dc-import>
+    <dc-import name="Wrapper2" cols="2" gap="12" hint-size="100%,112px">
+      <dc-import name="ShortcutTile" icon="cloud-arrow-down" accent="brand" title="Скачанные" caption="Уроки без интернета" count="3" href="Downloads.dc.html" hint-size="100%,112px"></dc-import>
+      <dc-import name="ShortcutTile" icon="book" accent="violet" title="Библиотека" caption="Книги и ИИ-советник" count="24" href="BooksCatalog.dc.html" hint-size="100%,112px"></dc-import>
+    </dc-import>
+    <dc-import name="Callout" tone="brand" accent="brand" icon="file-doc" title="Заполните анкету · 1 из 4" text="Откроет заявки в сообществе и отклики на вакансии" href="ResumeForm.dc.html" trailing="chevron" hint-size="100%,76px"></dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="28" hint-size="100%,272px">
+    <dc-import name="SectionHeader" title="Мои курсы" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" dir="row" scroll="x" gap="16" pad-x="16" pad-top="4" pad-bottom="24" align="start" hint-size="100%,254px">
+      <sc-for list="{{myCourses}}" as="c" hint-placeholder-count="2">
+        <dc-import name="CourseCard" variant="shelf" title="{{c.title}}" category="{{c.category}}" progress="{{c.progress}}" src="{{c.image}}" href="CourseDetail.dc.html" hint-size="220px,226px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-top="8" hint-size="100%,108px">
+    <dc-import name="SectionHeader" title="Все курсы" action="" hint-size="100%,40px"></dc-import>
+    <dc-import name="Wrapper2" dir="row" scroll="x" gap="8" pad-x="16" hint-size="100%,48px">
+      <sc-for list="{{categories}}" as="k" hint-placeholder-count="7">
+        <dc-import name="Chip" label="{{k.label}}" active="{{k.active}}" hint-size="120px,48px"></dc-import>
+      </sc-for>
+    </dc-import>
+  </dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" cols="2" gap="12" hint-size="100%,2250px">
+    <sc-for list="{{courses}}" as="c" hint-placeholder-count="21">
+      <dc-import name="CourseCard" variant="grid" title="{{c.title}}" category="{{c.category}}" lessons="{{c.lessons}}" price="{{c.price}}" src="{{c.image}}" href="CourseDetail.dc.html" hint-size="100%,186px"></dc-import>
+    </sc-for>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":3560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      categories: [
+        { label: "Все", active: true }, { label: "Саморазвитие", active: false }, { label: "Менеджмент", active: false },
+        { label: "Лидерство", active: false }, { label: "Мышление", active: false }, { label: "Отношения", active: false }, { label: "Навыки", active: false }
+      ],
+      continueCourse: { title: "Максимизация талантов Gallup", category: "Саморазвитие", lessons: "34 урока", progress: 42, image: "/_blob/d2748e25aa43564a123b0f02c16ddc18" },
+      myCourses: [
+        { title: "Максимизация талантов Gallup", category: "Саморазвитие", progress: 42, image: "/_blob/d2748e25aa43564a123b0f02c16ddc18" },
+        { title: "Психотипы", category: "Саморазвитие", progress: 100, image: "/_blob/6e8f6f5cdd95ebf7eace39d453d17f81" }
+      ],
+      courses: [
+        { title: "Важность знания себя", category: "Саморазвитие", lessons: "1 урок", price: "500 ₸", image: "/_blob/5d5a09cdea44e06fedf9bf37cfe5e9d1" },
+        { title: "4 параметра руководителя", category: "Менеджмент", lessons: "1 урок", price: "4 000 ₸", image: "/_blob/e998c752df8471a99af51210f6d791c6" },
+        { title: "5 уровней лидерства", category: "Лидерство", lessons: "1 урок", price: "4 000 ₸", image: "/_blob/72e49bb11360416f42d24a10f5c15f78" },
+        { title: "Брак через призму Gallup", category: "Отношения", lessons: "1 урок", price: "4 000 ₸", image: "/_blob/1774360b52503eb89ceb82cd0fdd3d45" },
+        { title: "Уровни мышления", category: "Мышление", lessons: "1 урок", price: "4 000 ₸", image: "/_blob/31f50c4b0420c9fc0bd57a45c1b09da8" },
+        { title: "Потенциал к управленчеству", category: "Менеджмент", lessons: "1 урок", price: "4 000 ₸", image: "/_blob/9e7f439033b2d7b00acda866b4d7b32e" },
+        { title: "Метапрограммы", category: "Мышление", lessons: "1 урок", price: "4 000 ₸", image: "/_blob/45a817b4e53dd5b1be1b6be9eed2707c" },
+        { title: "Психотипы", category: "Саморазвитие", lessons: "1 урок", price: "5 000 ₸", image: "/_blob/6e8f6f5cdd95ebf7eace39d453d17f81" },
+        { title: "Divergents Teaching Course", category: "Саморазвитие", lessons: "12 уроков", price: "20 000 ₸", image: "/_blob/69703ba0dbdfdd3d48d6646208a3c807" },
+        { title: "Divergents Career Counseling", category: "Мышление", lessons: "31 урок", price: "30 000 ₸", image: "/_blob/9e5284d71df027d123bd542f6e04e1c7" },
+        { title: "Максимизация талантов Gallup", category: "Саморазвитие", lessons: "34 урока", price: "30 000 ₸", image: "/_blob/d2748e25aa43564a123b0f02c16ddc18" },
+        { title: "Цикл Дивергента", category: "Мышление", lessons: "10 уроков", price: "30 000 ₸", image: "/_blob/e16186b9d1c6018955eeefb20474ecc5" },
+        { title: "Divergents Human Resources", category: "Навыки", lessons: "33 урока", price: "40 000 ₸", image: "/_blob/1db68851094a0678d6e8597f1d42076a" },
+        { title: "Психотипы Advanced", category: "Саморазвитие", lessons: "8 уроков", price: "40 000 ₸", image: "/_blob/463138c0cc86ac79362969cc0a668060" },
+        { title: "Basic Development Program", category: "Саморазвитие", lessons: "27 уроков", price: "40 000 ₸", image: "/_blob/581d5fcf4fdc39fe70842c258ef6ed3e" },
+        { title: "Максимизация Психотипов", category: "Мышление", lessons: "8 уроков", price: "80 000 ₸", image: "/_blob/1cb77a0e5e7c51a5c031ee7d98a6cc4c" },
+        { title: "Курс \"Конфликтология\"", category: "Менеджмент", lessons: "6 уроков", price: "100 000 ₸", image: "/_blob/818bc036a7c95a09d4c64b88603695d7" },
+        { title: "Курс \"Менеджмент 1\"", category: "Менеджмент", lessons: "12 уроков", price: "100 000 ₸", image: "/_blob/cbc1a5e260f1d22c3d7b88e8b49cc73d" },
+        { title: "Курс \"Учимся разбираться в людях\"", category: "Саморазвитие", lessons: "10 уроков", price: "100 000 ₸", image: "/_blob/173298048934e5b23c2096bf8d930ec0" },
+        { title: "Курс \"Лидерства\"", category: "Лидерство", lessons: "6 уроков", price: "150 000 ₸", image: "/_blob/7d3058f8a383a7bc47e7a963e73f4bc4" },
+        { title: "Курс \"Управление талантами\"", category: "Менеджмент", lessons: "6 уроков", price: "150 000 ₸", image: "/_blob/917d9c5977f3d3488ff3aabdd58a3a49" }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

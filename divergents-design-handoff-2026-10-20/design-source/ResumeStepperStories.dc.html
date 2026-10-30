@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ResumeStepper — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="360" safe-top="{{false}}" hint-size="390px,360px">
+  <dc-import name="Wrapper" pad-x="16" pad-top="24" gap="20" hint-size="100%,320px">
+    <dc-import name="Text" variant="title2" heading="1" text="ResumeStepper" hint-size="100%,28px"></dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,60px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="current=0 · tone=warning" hint-size="100%,18px"></dc-import>
+      <dc-import name="ResumeStepper" steps="{{steps}}" current="{{0}}" tone="warning" hint-size="100%,44px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,60px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="current=2 · tone=brand" hint-size="100%,18px"></dc-import>
+      <dc-import name="ResumeStepper" steps="{{steps}}" current="{{2}}" tone="brand" hint-size="100%,44px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,60px">
+      <dc-import name="Text" variant="footnoteEm" tone="secondary" text="current=3 · tone=success" hint-size="100%,18px"></dc-import>
+      <dc-import name="ResumeStepper" steps="{{steps}}" current="{{3}}" tone="success" hint-size="100%,44px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":360}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {"steps": ["Личные данные", "Дополнительно", "Образование и опыт", "Оценки и тесты"]};
+  }
+}
+</script>
+</body>
+</html>

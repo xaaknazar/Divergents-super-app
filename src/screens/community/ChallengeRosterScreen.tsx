@@ -1,3 +1,5 @@
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Team roster (Состав команды). Every member sees who's on the team — name,
 // day, points and a clear red-flag badge — but NOT the anketa. Captains and
 // managers (curators/teachers) can tap a member to open the full anketa directly.
@@ -11,7 +13,7 @@ import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { AwardBadge } from '../../components/AwardBadge';
-import { Capsule, ListSection, PrimaryButton } from '../../components/ui';
+import { ListSection, Button } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
@@ -30,7 +32,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
   const { T, ty } = useTheme();
   const { userId, getToken } = useAuth();
   const { has } = useRole();
-  const { challenge, leaderboard, refresh } = useChallenge();
+  const { challenge, leaderboard, refresh } = useChallenge(challengeId);
   const isCaptain = !!challenge.captainId && challenge.captainId === userId;
   const maxFlags = flagsToEliminate(challenge.rules);
   // Анкету участника открывает КАПИТАН своей команды или человек с правом
@@ -106,7 +108,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
         {leaderboard.length === 0 ? (
           <EmptyState icon="person.2.fill" title={tr('Команда ещё формируется')} subtitle={tr('Участники появятся здесь после одобрения заявок.')} />
         ) : (
-          <ListSection header={tr('Участники')} footer={`${tr('🚩 — флаги за пропуск дневной нормы (чтение / без сахара / активность).')} ${maxFlags} ${tr('в одной категории → ⛔ вылет. 🏳️ — вышел по белому флагу капитана.')}`}>
+          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Участники')} footer={`${tr('🚩 — флаги за пропуск дневной нормы (чтение / без сахара / активность).')} ${maxFlags} ${tr('в одной категории → ⛔ вылет. 🏳️ — вышел по белому флагу капитана.')}`}>
             {leaderboard.map((m, i) => {
               const flagN = totalFlags(m.flags);
               const left = m.left === true;
@@ -139,7 +141,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
                     </Text>
                   </View>
                   {flagN > 0 ? (
-                    <Capsule bg="rgba(255,59,48,0.14)" color={T.red}>🚩 {flagN}</Capsule>
+                    <StatusBadge label={["🚩 ", (flagN)].join('')} tone="danger" />
                   ) : medal ? <SF name={medal.icon} size={16} color={medal.color} /> : null}
                   {/* Отдельная кнопка, а не пункт в длинном нажатии: капитан
                       должен видеть, что такая возможность есть. Скрытое
@@ -170,7 +172,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
                 </View>
               );
             })}
-          </ListSection>
+          </ListSection></Wrapper>
         )}
 
         <View style={{ height: 30 }} />
@@ -206,12 +208,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
               }]}
               accessibilityLabel={tr('Причина белого флага')}
             />
-            <PrimaryButton
-              label={saving ? tr('Отправляем…') : tr('Поднять белый флаг')}
-              icon="checkmark"
-              disabled={saving || !reason.trim()}
-              onPress={submitFlag}
-            />
+            <Button label={saving ? tr('Отправляем…') : tr('Поднять белый флаг')} icon="checkmark" disabled={saving || !reason.trim()} onPress={submitFlag} />
           </View>
         </KeyboardAvoidingView>
       </Modal>

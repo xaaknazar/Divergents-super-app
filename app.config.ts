@@ -20,7 +20,7 @@ const config: ExpoConfig = {
     bundleIdentifier: 'kz.divergents.app',
     // Pinned so a LOCAL build (eas build --local) produces an explicit number
     // instead of asking the EAS server. Bump this for every new TestFlight upload.
-    buildNumber: '81',
+    buildNumber: '106',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       // audio    — урок продолжает звучать после сворачивания приложения.
@@ -77,6 +77,7 @@ const config: ExpoConfig = {
   },
   web: { bundler: 'metro' },
   plugins: [
+    ['./plugins/withReadingFocus.js', { enabled: process.env.READING_FOCUS_PILOT === 'true', appAttest: process.env.READING_APP_ATTEST === 'true' }],
     './plugins/withFmtConstevalWorkaround.js',
     ['expo-location', {
       locationWhenInUsePermission: 'Divergents использует геолокацию, чтобы показывать вас на карте и строить маршрут до мест сообщества.',

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>StandingRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="1600" safe-top="{{false}}" hint-size="390px,1600px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,1560px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" hint-size="100%,34px">StandingRow</dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" hint-size="100%,18px">Строка рейтинга: variant regular|detailed|team|mini · rank · medal · me · status · flags · trend</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">REGULAR · МЕДАЛИ / РАНГ / ВЫ / ВЫБЫЛ / БЕЛЫЙ ФЛАГ</dc-import>
+<dc-import name="ListSection" hint-size="100%,330px">
+<dc-import name="StandingRow" variant="regular" rank="{{1}}" medal="crown" person="Айгерим" title="Айгерим" subtitle="Divergents team" points="412 pts" hint-size="100%,62px"></dc-import>
+<dc-import name="StandingRow" variant="regular" rank="{{2}}" medal="silver" person="Nurik" title="Nurik" subtitle="Qarasu" points="401 pts" separator="{{true}}" hint-size="100%,62px"></dc-import>
+<dc-import name="StandingRow" variant="regular" rank="{{7}}" person="Акназар" title="Акназар" subtitle="KEX group" points="336 pts" flags="{{1}}" me="{{true}}" separator="{{true}}" hint-size="100%,62px"></dc-import>
+<dc-import name="StandingRow" variant="regular" rank="{{25}}" person="Ainur" title="Ainur" subtitle="Monolith · выбыл" points="231 pts" flags="{{3}}" status="eliminated" separator="{{true}}" hint-size="100%,62px"></dc-import>
+<dc-import name="StandingRow" variant="regular" rank="{{28}}" person="Ербол" title="Ербол" subtitle="Monolith · вышел" points="190 pts" status="left" separator="{{true}}" hint-size="100%,62px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">REGULAR БЕЗ РАНГА (СОСТАВ) · МЕДАЛЬ СПРАВА</dc-import>
+<dc-import name="ListSection" hint-size="100%,130px">
+<dc-import name="StandingRow" variant="regular" rank="{{0}}" medal="crown" person="Арман" title="Арман" subtitle="Сегодня 47 · всего 388 pts" points="" hint-size="100%,62px"></dc-import>
+<dc-import name="StandingRow" variant="regular" rank="{{0}}" person="Акназар" title="Акназар" subtitle="Сегодня 40 · всего 336 pts" points="" flags="{{1}}" me="{{true}}" separator="{{true}}" hint-size="100%,62px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">TEAM</dc-import>
+<dc-import name="ListSection" hint-size="100%,200px">
+<dc-import name="StandingRow" variant="team" rank="{{1}}" medal="crown" title="Divergents team" subtitle="20 человек" points="2240 pts" flags="{{3}}" hint-size="100%,64px"></dc-import>
+<dc-import name="StandingRow" variant="team" rank="{{2}}" medal="silver" title="KEX group" subtitle="20 человек · выбыло 1" points="2053 pts" flags="{{7}}" me="{{true}}" me-label="ваша" separator="{{true}}" hint-size="100%,64px"></dc-import>
+<dc-import name="StandingRow" variant="team" rank="{{4}}" title="Monolith" subtitle="20 человек · выбыло 1" white-flags="{{1}}" points="1615 pts" flags="{{6}}" separator="{{true}}" hint-size="100%,64px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">DETAILED (КАРТОЧКА КОМАНДЫ)</dc-import>
+<dc-import name="Card" size="flush" hint-size="100%,350px">
+<dc-import name="StandingRow" variant="detailed" rank="{{1}}" medal="gold" person="Арман" title="Арман" points="388 pts" pace="45,4 pts/день · средний темп" trend="up" trend-label="на 1 позицию" hint-size="100%,86px"></dc-import>
+<dc-import name="StandingRow" variant="detailed" rank="{{3}}" medal="bronze" person="Акназар" title="Акназар (вы)" points="336 pts" pace="37 pts/день · средний темп" trend="same" flags="{{1}}" flag-codes="A-1" me="{{true}}" me-label="" streak="{{true}}" separator="{{true}}" hint-size="100%,126px"></dc-import>
+<dc-import name="StandingRow" variant="detailed" rank="{{20}}" person="Тимур" title="Тимур" points="120 pts" pace="24 pts/день · средний темп" trend="same" flags="{{3}}" flag-codes="A-3" status="eliminated" separator="{{true}}" hint-size="100%,126px"></dc-import>
+</dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="8" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" hint-size="100%,14px">MINI (ИТОГИ)</dc-import>
+<dc-import name="Card" size="flush" hint-size="100%,120px">
+<dc-import name="StandingRow" variant="mini" rank="{{1}}" medal="trophy" person="Арман" title="Арман" subtitle="KEX group" points="742" hint-size="100%,60px"></dc-import>
+<dc-import name="StandingRow" variant="mini" rank="{{2}}" person="Dana_fit" title="Dana_fit" subtitle="Qarasu" points="701" separator="{{true}}" hint-size="100%,60px"></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

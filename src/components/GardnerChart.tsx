@@ -3,12 +3,15 @@
 // language: rounded-top coloured bars, % above each bar, emoji + short name
 // below, light Y gridlines at 0/25/50/75/100. Horizontally scrollable when the
 // bars don't fit the available width. Bars grow in subtly on mount (Animated).
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React,{ useEffect,useMemo,useRef,useState } from 'react';
 import {
-  View, Text, ScrollView, Animated, LayoutChangeEvent,
+Animated,LayoutChangeEvent,
+ScrollView,
+Text,
+View,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { radius, space } from '../theme/tokens';
+import { radius,space } from '../theme/tokens';
 
 // ─── Type config ───────────────────────────────────────────────────
 // Exported so screens can reuse the same colours / emoji / labels. `match`
@@ -82,7 +85,8 @@ export function GardnerChart({
   const MIN_BAR = 6;            // keep low scores visible
   const plotInner = PLOT_H - VALUE_H;
   const GUTTER = 22;            // left axis-labels column
-  const minCol = compact ? 52 : 66;
+  // В компактном виде (Профиль) — колонки 62, короткие подписи; график прокручивается.
+  const minCol = compact ? 62 : 66;
   const n = items.length;
 
   const onLayout = (e: LayoutChangeEvent) => setPlotW(e.nativeEvent.layout.width);
@@ -137,7 +141,7 @@ export function GardnerChart({
           <View key={i} style={{ width: colW, alignItems: 'center', paddingHorizontal: 2 }}>
             <Text style={{ fontSize: compact ? 15 : 17, marginBottom: 2 }}>{it.cfg.emoji}</Text>
             <Text numberOfLines={2} style={[ty.caption2, { color: T.labelSecondary, textAlign: 'center', fontSize: 10, lineHeight: 12, minHeight: 24 }]}>
-              {it.cfg.name || it.cfg.short}
+              {(compact ? it.cfg.short : it.cfg.name) || it.cfg.short || it.cfg.name}
             </Text>
           </View>
         ))}

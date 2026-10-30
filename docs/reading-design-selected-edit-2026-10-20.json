@@ -1,0 +1,9 @@
+{
+  "kind": "text-localization",
+  "tool": "built-in image_gen",
+  "prompt": "Use case: text-localization. Image1 is the edit target, an already approved two-panel mobile UI design concept for Divergents. Make ONLY the following text changes; preserve the exact original book engravings, satin blue bookmark ribbons, layout, image size 1024x1536, colours, backgrounds, all margins, type style, weights, card edges, buttons, arrows and all other text. In the top LIGHT card, replace the subtitle \"60 минут в день · Без срока\" with exactly \"60 минут в день\" (remove middle dot too), keeping same left alignment. Top title \"Время для книги\" stays unchanged. In the bottom DARK card, replace the big title \"Talents lab — Reading\" with exactly: \"Extreme reading\" Challenge (including the two straight quotation marks around Extreme reading; no quotation marks around Challenge). Preserve the same title font and size, wrap neatly to two lines only if needed to avoid book illustration; do not shrink to tiny type. In bottom subtitle, replace \"Читаем каждый день. Без даты окончания.\" with exactly \"Читаем каждый день.\" Everything else stays unchanged, especially all book illustrations, \"Reading challenge\" small labels, \"Открыть челлендж\" and \"Команды и заявки\". Do not redesign, do not add wording, do not shift the visual composition beyond the minimal text wrapping required. There must be no occurrence of \"Без срока\", \"Без даты окончания\", or \"Talents lab\" anywhere in the final image.",
+  "source": "variant-1.png",
+  "result": "variant-1-v2.png",
+  "directionSelectedByUser": true,
+  "requestedCopyChangesApplied": true
+}

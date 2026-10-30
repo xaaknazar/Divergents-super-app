@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingRankRow — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="520" safe-top="{{false}}" hint-size="390px,520px">
+  <dc-import name="Wrapper" pad="16" gap="20" hint-size="100%,480px">
+    <dc-import name="Wrapper2" pad-x="4" gap="4" hint-size="100%,56px">
+      <dc-import name="Text" variant="title1" heading="1" text="ReadingRankRow" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Строка рейтинга: место или причина его отсутствия, средние минуты в день, своя строка выделена спокойно" hint-size="100%,36px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="УЧАСТНИКИ (В LISTSECTION)" hint-size="100%,14px"></dc-import>
+      <dc-import name="ListSection" header="" hint-size="100%,300px"><dc-import name="ReadingRankRow" place="1" label="Аружан" meta="Vertex · 14 дней" value="72" hint-size="100%,60px"></dc-import><dc-import name="ReadingRankRow" place="2" label="Нурлан" meta="Qarasu · 14 дней" value="66" separator="{{true}}" hint-size="100%,60px"></dc-import><dc-import name="ReadingRankRow" place="7" label="Акназар" meta="Vertex · 12 дней" value="54" mine="{{true}}" separator="{{true}}" hint-size="100%,60px"></dc-import><dc-import name="ReadingRankRow" label="Дана" state="observing" separator="{{true}}" hint-size="100%,60px"></dc-import><dc-import name="ReadingRankRow" label="Ербол" state="review" separator="{{true}}" hint-size="100%,60px"></dc-import></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":520}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

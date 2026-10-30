@@ -1,3 +1,4 @@
+import { Wrapper } from './Wrapper';
 // First-visit page intro. Drop <PageIntro page="..." /> into a tab's root screen:
 // the first time that tab is focused, a designed explainer modal appears (icon,
 // what the page is for, key features) and is remembered so it shows only once.
@@ -8,7 +9,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { SF, SFName } from './SFIcon';
-import { PrimaryButton } from './ui';
+import { Button } from './ui';
 import { usePageIntroState } from '../state/PageIntroContext';
 
 export type PageKey = 'lms' | 'ai' | 'community' | 'map' | 'profile';
@@ -130,7 +131,7 @@ function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: bool
                   </View>
                 ))}
               </View>
-              <PrimaryButton label={info.cta} icon="checkmark" onPress={onClose} style={{ marginTop: 22 }} />
+              <Wrapper marginTop={22}><Button label={info.cta} icon="checkmark" onPress={onClose} /></Wrapper>
             </View>
           </ScrollView>
         </Animated.View>

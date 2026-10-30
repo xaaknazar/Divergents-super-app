@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ModerationCard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/92c640fe018c2e26a60b16fe2c9a1bdf) format('opentype');font-weight:400;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/d12941af6cfeccdeef01ccee92a0f6e3) format('opentype');font-weight:500;font-style:normal}
+@font-face{font-family:'Gotham Rounded';src:url(/_blob/c2d151a5429ab2fbffbf91e93a8c4c76) format('opentype');font-weight:700;font-style:normal}
+body{margin:0}
+</style>
+</helmet>
+<article style="box-sizing: border-box; width: 100%; border-radius: 14px; overflow: hidden; background: #FFFFFF; font-family: 'Gotham Rounded', 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: #000000">
+  <sc-if value="{{hasPhoto}}" hint-placeholder-val="{{true}}"><img src="{{src}}" alt="" style="display: block; width: 100%; height: 130px; object-fit: cover; background: rgba(118,118,128,0.12)"></sc-if>
+  <div style="padding: 14px; display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <dc-import name="PlaceIconTile" category="{{category}}" size="medium" hint-size="40px,40px"></dc-import>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+        <dc-import name="Text" variant="headline" heading="2" lines="1" text="{{title}}" hint-size="100%,22px"></dc-import>
+        <dc-import name="Text" variant="caption1" tone="secondary" text="{{meta}}" hint-size="100%,16px"></dc-import>
+      </div>
+    </div>
+    <dc-import name="Text" variant="subhead" tone="secondary" lines="3" text="{{description}}" hint-size="100%,40px"></dc-import>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <sc-if value="{{hasHours}}" hint-placeholder-val="{{true}}"><dc-import name="StatusBadge" icon="clock-3h" label="{{hours}}" tone="neutral" hint-size="90px,22px"></dc-import></sc-if>
+      <sc-for list="{{features}}" as="f" hint-placeholder-count="3"><dc-import name="StatusBadge" icon="{{f.icon}}" label="{{f.label}}" tone="brand" hint-size="90px,22px"></dc-import></sc-for>
+    </div>
+    <dc-import name="Text" variant="caption2" tone="tertiary" text="{{authorLine}}" hint-size="100%,14px"></dc-import>
+    <div style="display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; margin-top: 4px">
+      <dc-import name="Button" label="Отклонить" variant="tinted" tone="danger" size="compact" full-width="{{true}}" hint-size="100%,44px"></dc-import>
+      <dc-import name="Button" label="Одобрить" variant="solid" tone="brand" size="compact" full-width="{{true}}" hint-size="100%,44px"></dc-import>
+    </div>
+  </div>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"Pick Chick"},"category":{"editor":"enum","default":"restaurant","options":["cafe","restaurant","hotel","guesthouse","base","park","gym","picnic","tourism"]},"meta":{"editor":"text","default":"Ресторан · Алматы, Казахстан"},"description":{"editor":"text","default":"Супер фастфуд"},"hours":{"editor":"text","default":"10:00 - 00:00"},"author":{"editor":"text","default":"Aknazar"},"src":{"editor":"text","default":"/_blob/47ec25e63ff159ffb263212f6c1f5044"},"features":{"editor":null},"$preview":{"width":358,"height":380}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props;
+    var demo = p.title === undefined && p.features === undefined;
+    var features = p.features || (demo ? [
+      { label: 'Халяль', icon: 'seal-check' }, { label: 'Чисто', icon: 'sparkles' }, { label: 'Детская зона', icon: 'people' }, { label: 'Для семьи', icon: 'heart' }
+    ] : []);
+    var src = p.src ?? (demo ? '/_blob/47ec25e63ff159ffb263212f6c1f5044' : '');
+    var hours = p.hours ?? (demo ? '10:00 - 00:00' : '');
+    var author = p.author ?? (demo ? 'Aknazar' : '');
+    return {
+      title: p.title ?? 'Pick Chick',
+      category: p.category || 'restaurant',
+      meta: p.meta ?? (demo ? 'Ресторан · Алматы, Казахстан' : ''),
+      description: p.description ?? (demo ? 'Супер фастфуд' : ''),
+      src: src, hasPhoto: !!src,
+      hours: hours, hasHours: !!hours,
+      features: features,
+      authorLine: author ? 'Предложил: ' + author : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

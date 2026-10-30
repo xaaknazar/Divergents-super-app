@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ReadingPagesForm — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="820" safe-top="{{false}}" hint-size="390px,820px">
+  <dc-import name="Wrapper" pad="16" gap="20" hint-size="100%,920px">
+    <dc-import name="Wrapper2" pad-x="4" gap="4" hint-size="100%,56px">
+      <dc-import name="Text" variant="title1" heading="1" text="ReadingPagesForm" hint-size="100%,34px"></dc-import>
+      <dc-import name="Text" variant="footnote" tone="secondary" text="Страницы за остановленный подход (не за день); следующая страница, если известна начальная" hint-size="100%,36px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="DEFAULT" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingPagesForm" hint-size="100%,380px"></dc-import>
+    </dc-import>
+    <dc-import name="Wrapper2" gap="8" hint-size="100%,120px">
+      <dc-import name="Text" variant="caption2Em" tone="secondary" text="НОЛЬ СТРАНИЦ" hint-size="100%,14px"></dc-import>
+      <dc-import name="ReadingPagesForm" value="0" minutes="3" hint-size="100%,380px"></dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":820}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

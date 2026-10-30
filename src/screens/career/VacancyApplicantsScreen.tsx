@@ -1,3 +1,8 @@
+import { ActionBlock } from '../../components/ActionBlock';
+import { FieldValueRow } from '../../components/FieldValueRow';
+import { ApplicationStatusBadge } from '../../components/ApplicationStatusBadge';
+import { StatusBadge } from '../../components/StatusBadge';
+import { Wrapper } from '../../components/Wrapper';
 // Vacancy applicants (owner view): list of people who applied, their full
 // Talentslab анкета, and controls to accept/reject + leave written feedback.
 import React, { useCallback, useEffect, useState, useRef } from 'react';
@@ -7,19 +12,13 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule, ListSection } from '../../components/ui';
+import { ListSection } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { fetchApplicants, decideApplication, Applicant, AppStatus } from '../../data/career';
 import { resumeRows } from '../../data/talentslab';
 import { CareerStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CareerStackParams, 'VacancyApplicants'>;
-
-const STATUS_META: Record<AppStatus, { label: string; bg: string; color: string }> = {
-  pending: { label: 'Новый', bg: 'rgba(142,142,147,0.16)', color: '#8E8E93' },
-  approved: { label: 'Принят', bg: 'rgba(52,199,89,0.16)', color: '#34C759' },
-  rejected: { label: 'Отклонён', bg: 'rgba(255,59,48,0.14)', color: '#FF3B30' },
-};
 
 export function VacancyApplicantsScreen({ route, navigation }: Props) {
   const jobId = route.params?.jobId ?? '';
@@ -74,7 +73,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title="Отклики" onBack={() => navigation.goBack()} hairline />
+      <NavHeader title="Отклики" onBack={() => navigation.goBack()} />
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       ) : items.length === 0 ? (
@@ -83,11 +82,10 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
         <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: 30 }}>
           <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Откликнулось · {items.length}</Text>
           {items.map((a) => {
-            const meta = STATUS_META[a.status];
+
             const name = a.userName || a.profile?.fullName || (a.userEmail ? a.userEmail.split('@')[0] : 'Кандидат');
             return (
-              <Pressable key={a.id} onPress={() => openApplicant(a)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder }}>
+              <Wrapper marginHorizontal={16} marginBottom={10} key={a.id}><ActionBlock size="compact" onPress={() => openApplicant(a)}><Wrapper dir={'row'} align={'center'} gap={12}>
                 <View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.headline, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
                 </View>
@@ -97,8 +95,8 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
                     {a.profile?.mbtiType ? `${a.profile.mbtiType} · ` : ''}{a.profile?.completeness != null ? `анкета ${a.profile.completeness}%` : (a.userEmail || '')}
                   </Text>
                 </View>
-                <Capsule bg={meta.bg} color={meta.color}>{meta.label}</Capsule>
-              </Pressable>
+                <ApplicationStatusBadge status={a.status} />
+              </Wrapper></ActionBlock></Wrapper>
             );
           })}
         </ScrollView>
@@ -107,7 +105,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
       {/* Applicant detail */}
       <Modal visible={!!sel} animationType="slide" onRequestClose={() => setSel(null)}>
         <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-          <NavHeader title={sel?.userName || sel?.profile?.fullName || 'Кандидат'} backLabel="Закрыть" onBack={() => setSel(null)} hairline />
+          <NavHeader title={sel?.userName || sel?.profile?.fullName || 'Кандидат'} backLabel="Закрыть" onBack={() => setSel(null)} />
           <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
             <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
               {!p ? (
@@ -116,29 +114,29 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
                 </View>
               ) : (
                 <>
-                  <ListSection header="Профиль">
+                  <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Профиль">
                     <View style={{ padding: 14, gap: 8 }}>
-                      {p.fullName ? <Row T={T} k="Имя" v={p.fullName} /> : null}
-                      {sel?.userEmail ? <Row T={T} k="Email" v={sel.userEmail} /> : null}
-                      {p.phone ? <Row T={T} k="Телефон" v={p.phone} /> : null}
-                      {p.currentCity ? <Row T={T} k="Город" v={p.currentCity} /> : null}
-                      {p.mbtiType ? <Row T={T} k="MBTI" v={`${p.mbtiType}${p.mbtiName ? ` · ${p.mbtiName}` : ''}`} /> : null}
-                      <Row T={T} k="Заполненность" v={`${p.completeness ?? 0}%`} />
+                      {p.fullName ? <FieldValueRow label="Имя" value={p.fullName} /> : null}
+                      {sel?.userEmail ? <FieldValueRow label="Email" value={sel.userEmail} /> : null}
+                      {p.phone ? <FieldValueRow label="Телефон" value={p.phone} /> : null}
+                      {p.currentCity ? <FieldValueRow label="Город" value={p.currentCity} /> : null}
+                      {p.mbtiType ? <FieldValueRow label="MBTI" value={`${p.mbtiType}${p.mbtiName ? ` · ${p.mbtiName}` : ''}`} /> : null}
+                      <FieldValueRow label="Заполненность" value={`${p.completeness ?? 0}%`} />
                     </View>
-                  </ListSection>
+                  </ListSection></Wrapper>
 
                   {p.gallup.length > 0 ? (
-                    <ListSection header="Топ таланты Gallup">
+                    <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Топ таланты Gallup">
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 14 }}>
                         {p.gallup.slice(0, 12).map((g) => (
-                          <Capsule key={g.rank} bg={T.fillTertiary} color={T.label}>{g.rank}. {g.name}</Capsule>
+                          <StatusBadge key={g.rank} label={[(g.rank), ". ", (g.name)].join('')} tone="neutral" />
                         ))}
                       </View>
-                    </ListSection>
+                    </ListSection></Wrapper>
                   ) : null}
 
                   {p.gardner.length > 0 ? (
-                    <ListSection header="Множественный интеллект (Гарднер)">
+                    <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Множественный интеллект (Гарднер)">
                       <View style={{ padding: 14, gap: 6 }}>
                         {p.gardner.slice().sort((a, b) => b.score - a.score).slice(0, 5).map((g) => (
                           <View key={g.category} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -147,21 +145,21 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
                           </View>
                         ))}
                       </View>
-                    </ListSection>
+                    </ListSection></Wrapper>
                   ) : null}
 
                   {rows.length > 0 ? (
-                    <ListSection header="Анкета полностью">
+                    <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Анкета полностью">
                       <View style={{ padding: 14, gap: 8 }}>
-                        {rows.map((r, i) => <Row key={i} T={T} k={r.label} v={r.value} />)}
+                        {rows.map((r, i) => <FieldValueRow key={i} label={r.label} value={r.value} />)}
                       </View>
-                    </ListSection>
+                    </ListSection></Wrapper>
                   ) : null}
                 </>
               )}
 
               {/* Feedback + decision */}
-              <ListSection header="Обратная связь кандидату">
+              <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Обратная связь кандидату">
                 <View style={{ padding: 14, gap: 10 }}>
                   <TextInput value={feedback} onChangeText={setFeedback} multiline placeholder="Напишите ответ кандидату — он увидит его в приложении…"
                     placeholderTextColor={T.labelTertiary}
@@ -170,7 +168,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
                     <Text style={[ty.subheadEm, { color: feedback.trim() ? T.brand : T.labelTertiary }]}>Отправить ответ</Text>
                   </Pressable>
                 </View>
-              </ListSection>
+              </ListSection></Wrapper>
 
               <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 6 }}>
                 <Pressable onPress={() => decide('rejected')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
@@ -184,16 +182,6 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
           </KeyboardAvoidingView>
         </View>
       </Modal>
-    </View>
-  );
-}
-
-function Row({ T, k, v }: { T: any; k: string; v: string }) {
-  const { ty } = useTheme();
-  return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-      <Text style={[ty.subhead, { color: T.labelSecondary, flexShrink: 0, maxWidth: '45%' }]}>{k}</Text>
-      <Text style={[ty.subhead, { color: T.label, flex: 1, textAlign: 'right' }]}>{v}</Text>
     </View>
   );
 }

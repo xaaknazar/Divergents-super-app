@@ -1,0 +1,15 @@
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { DownloadRow } from './DownloadRow';
+const meta = { title: 'Liven/Details/DownloadRow', component: DownloadRow } satisfies Meta<typeof DownloadRow>;
+export default meta;
+type Story = StoryObj<typeof DownloadRow>;
+const saved = { state: 'downloaded' as const, title: 'Демо · Привычки, которые остаются с нами', number: 2, bytes: 12600000, selected: false, playing: false, onPlay: () => {}, onAction: () => {} };
+export const Light: Story = { args: saved };
+export const Dark: Story = { args: saved, parameters: { scheme: 'dark' } };
+export const CompactLargeText: Story = { args: saved, parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Tablet: Story = { args: saved, parameters: { viewport: 'tablet' } };
+export const Playing: Story = { args: { ...saved, selected: true, playing: true } };
+export const Pending: Story = { args: { state: 'pending', title: 'Демо · Новый урок', courseTitle: 'Путь к привычке', progress: 0.37, onAction: () => {} } };
+export const Available: Story = { args: { state: 'available', title: 'Демо · Новый урок', busy: false, onAction: () => {} } };
+export const Starting: Story = { args: { state: 'available', title: 'Демо · Новый урок', busy: true, progress: 0, onAction: () => {} } };

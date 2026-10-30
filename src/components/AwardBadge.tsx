@@ -11,8 +11,8 @@
 // два разных цвета, а один и тот же, взятый с нужной стороны шкалы.
 import React from 'react';
 import { View } from 'react-native';
-import { SF } from './SFIcon';
 import { useTheme } from '../theme/ThemeContext';
+import { SF } from './SFIcon';
 
 /** Фирменное золото награды. Держим здесь, чтобы экраны брали один и тот же. */
 export const AWARD_GOLD = '#E0A21A';

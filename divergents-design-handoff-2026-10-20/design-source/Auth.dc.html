@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Вход</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="844" surface="plain" safe-top="{{false}}" hint-size="390px,844px">
+  <dc-import name="AuthHero" variant="brand" title="Добро пожаловать" subtitle="Один аккаунт для обучения, сообщества и карьеры" hint-size="100%,258px"></dc-import>
+  <dc-import name="AuthSheet" hint-size="100%,545px">
+    <dc-import name="Wrapper" hint-size="100%,520px">
+      <dc-import name="Wrapper2" gap="16" hint-size="100%,243px">
+        <dc-import name="AuthSegmented" items="{{intents}}" value="0" hint-size="100%,56px"></dc-import>
+        <dc-import name="AuthField" variant="filled" label="Почта" type="email" icon="envelope" value="aknazar@example.com" placeholder="you@example.com" clearable="{{true}}" hint-size="100%,75px"></dc-import>
+        <dc-import name="Wrapper3" gap="10" hint-size="100%,80px">
+          <dc-import name="AuthActionButton" variant="primary" label="Продолжить" href="NicknameGate.dc.html" hint-size="100%,54px"></dc-import>
+          <dc-import name="Wrapper4" dir="row" justify="center" align="center" gap="6" hint-size="100%,16px">
+            <dc-import name="Icon" icon="lock-locked" variant="solid" size="xs" tone="tertiary" hint-size="12px,12px"></dc-import>
+            <dc-import name="Text" variant="caption1" tone="tertiary" align="center" text="Без пароля — отправим код на почту" hint-size="220px,16px"></dc-import>
+          </dc-import>
+        </dc-import>
+      </dc-import>
+      <dc-import name="Wrapper2" pad-top="20" gap="16" hint-size="100%,170px">
+        <dc-import name="AuthDivider" label="или" hint-size="100%,16px"></dc-import>
+        <dc-import name="Wrapper3" gap="10" hint-size="100%,118px">
+          <dc-import name="AuthActionButton" variant="google" label="Войти через Google" href="NicknameGate.dc.html" hint-size="100%,54px"></dc-import>
+          <dc-import name="AuthActionButton" variant="apple" label="Войти через Apple" href="NicknameGate.dc.html" hint-size="100%,54px"></dc-import>
+        </dc-import>
+      </dc-import>
+      <dc-import name="Wrapper2" pad-top="4" hint-size="100%,52px">
+        <dc-import name="AuthTextLink" label="Не получается войти?" hint-size="100%,48px"></dc-import>
+      </dc-import>
+      <dc-import name="Wrapper2" pad-top="8" hint-size="100%,56px">
+        <dc-import name="AuthLegal" terms-href="#" privacy-href="#" hint-size="100%,48px"></dc-import>
+      </dc-import>
+    </dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals() { return { intents: ["Вход", "Регистрация"] }; } }
+</script>
+</body>
+</html>

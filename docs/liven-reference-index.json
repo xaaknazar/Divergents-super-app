@@ -1,0 +1,889 @@
+{
+  "app": "Liven",
+  "platform": "ios",
+  "collection": "May 2026",
+  "studyCompleted": "2026-10-08",
+  "source": "https://mobbin.com/apps/liven-ios-033811d5-116f-4528-b152-e1618a7b0f87",
+  "coverage": {
+    "staticScreensViewed": 279,
+    "flows": 71,
+    "mcpUniqueScreens": 278,
+    "mcpFlows": 70,
+    "animatedScreensListed": 25,
+    "motionClipsAnalysed": 2
+  },
+  "notes": [
+    "278 unique MCP images inspected in 31 contact sheets.",
+    "Additional Word information flow inspected in the signed-in browser; two screens, one already present in the MCP corpus. Its extra screen is recorded by flow URL rather than an invented screen ID.",
+    "Canonical reference IDs and URLs only. No licensed image pixels or temporary authenticated media URLs are included in the repository.",
+    "Reference study coverage does not imply full application migration or native visual approval."
+  ],
+  "browserSupplement": {
+    "name": "Word information",
+    "url": "https://mobbin.com/flows/e24f4a21-997b-485d-87b4-681b63a04cb2",
+    "screenCount": 2,
+    "newUniqueScreens": 1
+  },
+  "motion": [
+    {
+      "screenId": "4ddcb17d-e1ed-45c5-a190-e5812fefd336",
+      "url": "https://mobbin.com/screens/4ddcb17d-e1ed-45c5-a190-e5812fefd336",
+      "durationSeconds": 3.35,
+      "framesInspected": 12,
+      "observation": "Today completion ring draws and then settles."
+    },
+    {
+      "screenId": "70692487-ba6e-4297-bd49-5c244ee95dd9",
+      "url": "https://mobbin.com/screens/70692487-ba6e-4297-bd49-5c244ee95dd9",
+      "durationSeconds": 4.1667,
+      "framesInspected": 12,
+      "observation": "Mood slider changes illustration silhouette with restrained morph/rotation."
+    }
+  ],
+  "flows": [
+    {
+      "name": "Today",
+      "id": "87094d5a-c1de-49d0-a08f-45ce1eab1ec1",
+      "url": "https://mobbin.com/flows/87094d5a-c1de-49d0-a08f-45ce1eab1ec1",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "a73aa6f7-4213-44a5-a28a-ddbd36162d0e",
+        "4ddcb17d-e1ed-45c5-a190-e5812fefd336",
+        "508e5651-05a4-4c37-855a-199f2fcc680a",
+        "18b13d04-cd0f-4339-9e0a-129d21cc8c1c",
+        "418f7a5e-0d48-415f-9fba-13c6ff059361"
+      ]
+    },
+    {
+      "name": "Widgets",
+      "id": "78d72a12-316c-4d2b-a815-8a33d319d97a",
+      "url": "https://mobbin.com/flows/78d72a12-316c-4d2b-a815-8a33d319d97a",
+      "screenIds": [
+        "30e09a65-4b59-4fea-a70b-82f2f6e04545"
+      ]
+    },
+    {
+      "name": "Add a widget",
+      "id": "92ae8886-8ce3-4397-af20-fc895810acbe",
+      "url": "https://mobbin.com/flows/92ae8886-8ce3-4397-af20-fc895810acbe",
+      "screenIds": [
+        "0dea0bc7-d875-469c-aae1-aa0216855133",
+        "8e910653-1c8a-4f74-870a-2d78c27bdd91",
+        "5af2d30d-7127-4dd7-b050-6e4087128328"
+      ]
+    },
+    {
+      "name": "To-do",
+      "id": "1695ea41-5bcc-47c5-8729-d842ba682721",
+      "url": "https://mobbin.com/flows/1695ea41-5bcc-47c5-8729-d842ba682721",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "8c1170b5-7b82-49e9-9683-7c239f9322b6",
+        "fe05d03c-4510-4991-adb8-6b63a42c713d"
+      ]
+    },
+    {
+      "name": "Streak",
+      "id": "f3bb7798-05ff-4d4e-a28e-472fce9e6a2a",
+      "url": "https://mobbin.com/flows/f3bb7798-05ff-4d4e-a28e-472fce9e6a2a",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "aa65235f-6b03-491f-bfda-8329766fb3a8",
+        "d3d3c2f9-4d8b-4ae7-9962-64d151dd7b0b"
+      ]
+    },
+    {
+      "name": "Profile",
+      "id": "6df487e9-a0ec-4e28-9237-8d38a14c3805",
+      "url": "https://mobbin.com/flows/6df487e9-a0ec-4e28-9237-8d38a14c3805",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "0c629cd9-a913-4805-8637-a28607d4c2d8",
+        "b5463dcd-b3a5-464d-b61c-42941e2eba13",
+        "6690c780-5008-4c58-a0e6-0f93e2040498",
+        "8e9d5f10-13c5-4ede-b6a1-5171d4cf3747"
+      ]
+    },
+    {
+      "name": "Mood breakdown",
+      "id": "9c8a8a0a-171e-471e-9f64-4adfee2cc59c",
+      "url": "https://mobbin.com/flows/9c8a8a0a-171e-471e-9f64-4adfee2cc59c",
+      "screenIds": [
+        "8e9d5f10-13c5-4ede-b6a1-5171d4cf3747",
+        "0ad7efd5-81e5-45b3-9c28-2793dc792eac",
+        "9348a67a-5bda-4377-a0d4-e0ee9f0afe55",
+        "11ae0c7b-4470-4704-9a9f-cc91e7350a8e"
+      ]
+    },
+    {
+      "name": "Setting a streak goal",
+      "id": "3241a0f9-1ac4-47ec-87b0-3d319263210d",
+      "url": "https://mobbin.com/flows/3241a0f9-1ac4-47ec-87b0-3d319263210d",
+      "screenIds": [
+        "85f59a4b-98e0-462e-aa63-2e6fcac06911",
+        "92b03f22-7a06-49d3-8833-69ad40444247",
+        "a317faa2-f405-4ae9-b928-c60ae8d32f11",
+        "0f4b7ca0-cfd3-49e0-bcda-5572c6da5c68",
+        "d662ae7c-84c7-41f4-a9b4-780ad1d8e218",
+        "0dea0bc7-d875-469c-aae1-aa0216855133"
+      ]
+    },
+    {
+      "name": "Completing tasks",
+      "id": "9a2e017b-6cab-444e-a449-c1d19702a4eb",
+      "url": "https://mobbin.com/flows/9a2e017b-6cab-444e-a449-c1d19702a4eb",
+      "screenIds": [
+        "fe05d03c-4510-4991-adb8-6b63a42c713d",
+        "830acd26-9c41-4a51-a754-0ce158b73563",
+        "ca9955a6-9ab8-4544-b89f-0d8041dd8e7a"
+      ]
+    },
+    {
+      "name": "Setting up personalized program",
+      "id": "5695ec7e-a531-4d04-8381-746e3591db36",
+      "url": "https://mobbin.com/flows/5695ec7e-a531-4d04-8381-746e3591db36",
+      "screenIds": [
+        "aaadd26d-e10c-4f64-b96f-c8bd6bf8916b",
+        "529b0ea8-3610-4a28-93d6-13231f1aaad8",
+        "d5328a11-2a32-4814-9b81-f04e70a31777",
+        "99886b28-0eeb-4a87-9ab5-28794c93a09f",
+        "643a28b5-af4e-4bed-bb97-7e3f785f5dd4",
+        "d6296a97-aa9a-4a4b-9ef7-fce8a1d28ab2",
+        "a70a7e8c-02d0-434f-8c75-7e073da6a8e5",
+        "9a17f374-68fa-4091-adef-db7d64c23a1e",
+        "ff056604-fd54-4c1a-a4f4-f898e14083fa",
+        "34be32b3-5373-41fb-bc60-b711b66e65da",
+        "7537e817-a4c4-4281-867b-42692398bc32",
+        "58246da9-b4d5-428a-9f80-eab2588f135b",
+        "f167dd12-0872-4f50-82cd-b2f3a2d38a72",
+        "b1ba81b3-1890-4aad-87fc-e9e7c747d4a9",
+        "8cd1c622-5b13-4592-8c66-03118325a84a",
+        "4c1e0549-5288-4703-a2af-6106f85acf1d",
+        "bd0f5158-2733-4d86-97eb-eb6b01448c48",
+        "6b7812a7-3797-47a4-af41-67df731adc5e",
+        "29461a02-f081-44c2-ac3d-27cb25e22d30",
+        "19fe2a90-1ccd-4d95-9ef0-e943a8f26191",
+        "40365966-8d27-4646-b11a-feeea1c408a7",
+        "73b8df64-3d5e-4f04-9562-01a7e906c079",
+        "808c6b5e-da56-49c3-aace-9abaa398de9a"
+      ]
+    },
+    {
+      "name": "Logging in",
+      "id": "1ef5d78f-d484-4cf3-aaee-ada73455e18f",
+      "url": "https://mobbin.com/flows/1ef5d78f-d484-4cf3-aaee-ada73455e18f",
+      "screenIds": [
+        "645d36a4-39fb-41f2-9239-3f63bd76755c",
+        "a16e7c06-8d15-4d28-8326-83d34f2cb609",
+        "a294ab37-78ee-479b-b40d-9e06fd9f2d30",
+        "48931ae3-0056-4a8d-a5fc-2d551675d0d8",
+        "4ddcb17d-e1ed-45c5-a190-e5812fefd336"
+      ]
+    },
+    {
+      "name": "Completing a quiz",
+      "id": "54d7e83f-76b6-4d14-8ed2-6e86ce2c23e7",
+      "url": "https://mobbin.com/flows/54d7e83f-76b6-4d14-8ed2-6e86ce2c23e7",
+      "screenIds": [
+        "a79f08e4-090f-4ec9-9159-5ca368e23d24",
+        "8cc83f79-83f3-4617-86fe-a991b2e364af",
+        "77e36dc4-1b70-406c-98a8-d36cdb97a35e",
+        "ef8768f5-c6be-4611-b8e1-7a8316e89294",
+        "a51266c4-3c5d-4530-8ba4-30be21c7f09a",
+        "8dacc7b9-6274-40f1-9673-66e42a189522",
+        "a6501b1c-78d5-449a-a9f7-84a83b21996c",
+        "29bb3356-7974-407e-aedc-93b1d42c3ce9",
+        "1631b2b5-fe0d-4012-ba21-c8925709325c",
+        "db31d935-a489-48f2-84c5-c358688a1246",
+        "d98bf80c-9d46-45c6-833d-d0baef1b2e1d"
+      ]
+    },
+    {
+      "name": "Completing a personalized course",
+      "id": "4dba6e5b-b0b8-4644-a6e5-312f4f18d094",
+      "url": "https://mobbin.com/flows/4dba6e5b-b0b8-4644-a6e5-312f4f18d094",
+      "screenIds": [
+        "1aa3b784-2b8d-4263-b412-0d342add307f",
+        "58d2cdc7-7978-4c42-891f-f671e7f7615c",
+        "c58ba261-c864-4329-9e22-4831c1c926d6",
+        "af87d331-1fcd-438b-8573-07bc0dda2d7a",
+        "4fe39d9b-4784-4175-b5ab-1cabaaa21d3f",
+        "5757133d-8fd3-4eec-a2bf-06ae7a2a28bd",
+        "1ffc94db-e1d1-4561-b560-0cddf769f207",
+        "19fe7704-22d7-499f-8651-4a56345ff8c3",
+        "40979156-6cee-4070-a387-2ba5cfedd075",
+        "e4dce295-8597-45a8-a631-1968603c81bd",
+        "a6576bdc-a5bf-4156-adf7-7ddf129b1aeb",
+        "679a8447-d994-4812-9099-f5e0121d6bc5",
+        "85f59a4b-98e0-462e-aa63-2e6fcac06911"
+      ]
+    },
+    {
+      "name": "Journey",
+      "id": "7c501451-69d2-4ddb-9172-819325d0eabd",
+      "url": "https://mobbin.com/flows/7c501451-69d2-4ddb-9172-819325d0eabd",
+      "screenIds": [
+        "c9d2fcaf-4346-4ec2-86d7-7ea56f9bd04f",
+        "c2a31d18-6bf5-4ab4-888b-1c2c429c7870",
+        "a79f08e4-090f-4ec9-9159-5ca368e23d24",
+        "94a0eae2-de4e-4e05-8516-cedc97cdd4d9",
+        "849a4b98-4719-4fc8-a686-fd7e14e16759"
+      ]
+    },
+    {
+      "name": "Rating a lesson",
+      "id": "39eb7ac4-1bc4-49c7-bfea-d4f509391cc2",
+      "url": "https://mobbin.com/flows/39eb7ac4-1bc4-49c7-bfea-d4f509391cc2",
+      "screenIds": [
+        "679a8447-d994-4812-9099-f5e0121d6bc5",
+        "6083e40f-14a7-4c98-94f6-db9baf1bfe0b",
+        "42bfc4d8-007a-4f1e-9ee6-d0e1755107a7",
+        "85f59a4b-98e0-462e-aa63-2e6fcac06911"
+      ]
+    },
+    {
+      "name": "Completing a test",
+      "id": "d27a53f3-03c0-4ce1-acb1-2e455a69b14f",
+      "url": "https://mobbin.com/flows/d27a53f3-03c0-4ce1-acb1-2e455a69b14f",
+      "screenIds": [
+        "59e74f58-9557-4e52-a32b-5c203c54448b",
+        "c5ee410c-42fc-4929-ad75-aa961f3661cd",
+        "82baea2a-b986-43ed-97c0-ebb21e2dbd22",
+        "8723680a-e880-412f-8f95-9a0ce7aba6fe",
+        "9e038bb4-842b-4029-a2a2-e96a809c845d",
+        "0059205f-c11a-409c-a75f-9a549a201559",
+        "4bb9c0b4-94cb-4a63-9d45-5cffde3eb4bd"
+      ]
+    },
+    {
+      "name": "Transcript",
+      "id": "9d0ecb98-52b8-4075-b464-774c3c89d1c9",
+      "url": "https://mobbin.com/flows/9d0ecb98-52b8-4075-b464-774c3c89d1c9",
+      "screenIds": [
+        "30e5b130-8b37-4613-876e-7ed177a608cd",
+        "7398e66f-b5ee-4c6e-9953-b202621aee19"
+      ]
+    },
+    {
+      "name": "Switching to audio mode",
+      "id": "5f0ae541-b79a-4037-a463-4bf05f9ee635",
+      "url": "https://mobbin.com/flows/5f0ae541-b79a-4037-a463-4bf05f9ee635",
+      "screenIds": [
+        "1ffc94db-e1d1-4561-b560-0cddf769f207",
+        "30e5b130-8b37-4613-876e-7ed177a608cd",
+        "8c33451b-40fe-4659-a955-57d375a7c195"
+      ]
+    },
+    {
+      "name": "Completing a reflection",
+      "id": "14e63a3c-2032-4815-b7e3-a4017ac128b0",
+      "url": "https://mobbin.com/flows/14e63a3c-2032-4815-b7e3-a4017ac128b0",
+      "screenIds": [
+        "94a0eae2-de4e-4e05-8516-cedc97cdd4d9",
+        "c481ea77-b788-4009-9ec9-7d8bf3cf08c6",
+        "649f920a-6755-4d42-9222-edac86f65a92",
+        "880da7b2-3302-41fc-8a70-f4eff9a100b6",
+        "9e6fc6df-788f-4565-8baf-5b9f892a7985",
+        "4784adb2-046d-439e-a4be-e01343c25670",
+        "2ddaff3e-01d0-4426-8781-bc1e5c70bd0f",
+        "c39939c8-da41-4778-8299-f358f5fb9b43"
+      ]
+    },
+    {
+      "name": "Onboarding",
+      "id": "ba9958ef-dd21-4a03-9ba1-2e5a3f5b51e3",
+      "url": "https://mobbin.com/flows/ba9958ef-dd21-4a03-9ba1-2e5a3f5b51e3",
+      "screenIds": [
+        "bb636265-b423-4b69-b232-b3add0f52150",
+        "645d36a4-39fb-41f2-9239-3f63bd76755c",
+        "e680983f-8a34-4368-b4ac-4dae8400d65e",
+        "6fe4d9aa-0574-46b2-9567-36e65cfbc25f",
+        "c99bb7bc-dded-4998-b058-8eae5c99c4d0",
+        "75ad56c4-0864-4124-9f32-a3b4ac8a1400",
+        "0c379643-c33e-4086-948b-a17a3fcf120e",
+        "2db2accd-db78-4848-a004-598cdfecf381",
+        "c0c4da0d-b817-4c6a-8f59-ae257a715ab7",
+        "94900681-e867-4b9a-8635-32d3e6bb36e0",
+        "61580004-9359-42d8-9243-0e95a164dfe6",
+        "aaadd26d-e10c-4f64-b96f-c8bd6bf8916b",
+        "adf87bfe-afec-4489-814f-0178df8a087b",
+        "968e48a3-ebca-4b29-a20a-68a00927e07e",
+        "ecb036be-e2c8-446f-925a-56c35096ea5a",
+        "89046b2a-c06f-43cb-b0ae-738cffa0f3bb",
+        "1aa3b784-2b8d-4263-b412-0d342add307f",
+        "c8fe3b69-9ca3-40dd-bc3d-d722a3e5b4e2",
+        "c9d2fcaf-4346-4ec2-86d7-7ea56f9bd04f",
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e"
+      ]
+    },
+    {
+      "name": "Customizing a course display",
+      "id": "b0edd3ca-5353-4717-853b-6ae8805232e7",
+      "url": "https://mobbin.com/flows/b0edd3ca-5353-4717-853b-6ae8805232e7",
+      "screenIds": [
+        "1ffc94db-e1d1-4561-b560-0cddf769f207",
+        "b01bab12-379a-4609-89ae-37ec9ce2a909",
+        "a076b72a-8be4-40bf-a36a-26b901429502",
+        "5073f106-c09e-4b89-8296-d5c2fa5e2986",
+        "4d538fee-27e8-4958-af2b-e85879497bd7"
+      ]
+    },
+    {
+      "name": "Scheduling a task",
+      "id": "44233db2-bc45-4e40-93dc-a1139051865e",
+      "url": "https://mobbin.com/flows/44233db2-bc45-4e40-93dc-a1139051865e",
+      "screenIds": [
+        "d755ac6f-5d97-4086-a664-fd54e094b716",
+        "801a1d32-de95-49f9-9ec7-5584a27d8a50",
+        "b1ce2900-268a-4217-896b-4067db6d0103",
+        "398cc29b-bbdf-4581-b1a9-367e31c4806f"
+      ]
+    },
+    {
+      "name": "Progress",
+      "id": "15d4ad53-49cc-4589-b012-fa7930c31946",
+      "url": "https://mobbin.com/flows/15d4ad53-49cc-4589-b012-fa7930c31946",
+      "screenIds": [
+        "59e74f58-9557-4e52-a32b-5c203c54448b",
+        "00d0821f-51ac-43c5-b726-183a526ea4f8",
+        "e94c2d77-2d96-4b13-994f-51a155e24d81"
+      ]
+    },
+    {
+      "name": "Workbook information",
+      "id": "c08bd691-068f-4b34-9949-47374ff50783",
+      "url": "https://mobbin.com/flows/c08bd691-068f-4b34-9949-47374ff50783",
+      "screenIds": [
+        "aa6c4630-9f3e-493e-8863-03d54fee98d9",
+        "a37d3326-6608-465a-aa1b-0f44ae1330cb",
+        "e51a2af2-bb7d-4314-b291-061965b5ea92",
+        "d5859e63-eb9b-4c6c-8b86-def0dbddc170"
+      ]
+    },
+    {
+      "name": "Giving good feedback",
+      "id": "529c5a8c-aa1e-486b-b35a-01da9966d185",
+      "url": "https://mobbin.com/flows/529c5a8c-aa1e-486b-b35a-01da9966d185",
+      "screenIds": [
+        "92d70ed7-c508-4ec1-a21e-ecd8ca315f70",
+        "2476b0ad-6570-43dd-a063-752ce4650158"
+      ]
+    },
+    {
+      "name": "Playing a sound",
+      "id": "6c69f753-8f03-4057-ae61-5df94f978dac",
+      "url": "https://mobbin.com/flows/6c69f753-8f03-4057-ae61-5df94f978dac",
+      "screenIds": [
+        "0d8a13b7-4f11-444f-912b-ee9340916f41",
+        "0b1c8e6d-b2a5-457f-a7b5-8a2d86e89fa5",
+        "b51acdb9-eb2f-421c-9229-bd3bc750f1d3"
+      ]
+    },
+    {
+      "name": "Watching a video",
+      "id": "15b5ba3a-7abe-43c4-adbe-ead5596193d6",
+      "url": "https://mobbin.com/flows/15b5ba3a-7abe-43c4-adbe-ead5596193d6",
+      "screenIds": [
+        "ec7f310f-64f4-4b5b-96ab-aa1ad60d732c",
+        "d65a7fb2-a821-4035-bcf9-31f18057ac54",
+        "d0632655-6c72-4f55-b6d8-ab9ad982c54c",
+        "f4868839-07af-45d5-9420-15f728021321"
+      ]
+    },
+    {
+      "name": "Signing a contract",
+      "id": "2eb18b2d-aaa7-4c37-9f02-548eefc64d41",
+      "url": "https://mobbin.com/flows/2eb18b2d-aaa7-4c37-9f02-548eefc64d41",
+      "screenIds": [
+        "808c6b5e-da56-49c3-aace-9abaa398de9a",
+        "e68f075c-fbab-4539-a34c-8b9dabbe81f1",
+        "d5a3c4d7-0ef2-4ed4-af1b-cbbe498628ea",
+        "532201bd-8316-4946-883d-583b9ff7ea0a",
+        "78c5b478-7522-4c3a-9afe-39d7bb5e3d13",
+        "adf87bfe-afec-4489-814f-0178df8a087b"
+      ]
+    },
+    {
+      "name": "Explore",
+      "id": "aebd90d3-d0a1-48f8-99d8-c87bca63fc23",
+      "url": "https://mobbin.com/flows/aebd90d3-d0a1-48f8-99d8-c87bca63fc23",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "ec7f310f-64f4-4b5b-96ab-aa1ad60d732c",
+        "c60ee0d1-b1a7-4717-8d4f-e7c8e74b0f2a",
+        "1fc8ad29-c590-4f74-ba9a-71ed4389893b",
+        "fb2069bb-48b6-48d4-aee1-3b73b849b8ef"
+      ]
+    },
+    {
+      "name": "Chatting with AI",
+      "id": "e4e49bc5-68ef-4113-9604-3fcf56237a04",
+      "url": "https://mobbin.com/flows/e4e49bc5-68ef-4113-9604-3fcf56237a04",
+      "screenIds": [
+        "8addf4a5-2cdd-4ca3-90dd-a6d8987f753b",
+        "1c5f2f40-25aa-4c41-8ed3-da7b3ad759c8",
+        "90ac5259-095b-4b6c-95d4-24db15c9099b",
+        "ac942ee5-90f5-4f87-80c6-a775d94dbf00",
+        "07a16a41-4050-4178-977e-fec5d1405f2e",
+        "432d47e4-e609-4aa9-8dc5-236455ff8291"
+      ]
+    },
+    {
+      "name": "Smart companion",
+      "id": "5c74047f-499e-4ddd-b3b1-789a8b84aed3",
+      "url": "https://mobbin.com/flows/5c74047f-499e-4ddd-b3b1-789a8b84aed3",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "62581c1f-4af0-4e6d-bdb9-526f3be7514a",
+        "8addf4a5-2cdd-4ca3-90dd-a6d8987f753b",
+        "89bea665-364c-4b01-a95e-cfbc18333591"
+      ]
+    },
+    {
+      "name": "Commit will be back",
+      "id": "fe88b7a7-dcbc-4636-9492-f3450f06037c",
+      "url": "https://mobbin.com/flows/fe88b7a7-dcbc-4636-9492-f3450f06037c",
+      "screenIds": [
+        "432d47e4-e609-4aa9-8dc5-236455ff8291",
+        "bdeda510-ad2a-448e-bdb9-6d5ef5a72316",
+        "370546d4-ce8c-473b-8bba-a4b3902e2204"
+      ]
+    },
+    {
+      "name": "Chat summaries",
+      "id": "2dc11d7c-abfb-4372-9611-6fc53769b0bc",
+      "url": "https://mobbin.com/flows/2dc11d7c-abfb-4372-9611-6fc53769b0bc",
+      "screenIds": [
+        "89bea665-364c-4b01-a95e-cfbc18333591",
+        "c6c9168e-71f0-489d-9286-877b4edb1749",
+        "d2121bed-a008-41d7-9bfa-dd3f1c299756"
+      ]
+    },
+    {
+      "name": "Chatting with support",
+      "id": "ffd1c56b-3131-4515-8850-b1cdcc5bb196",
+      "url": "https://mobbin.com/flows/ffd1c56b-3131-4515-8850-b1cdcc5bb196",
+      "screenIds": [
+        "f67a7fff-f8de-4bf6-8e1f-6d73c8886a12",
+        "03578824-ddae-4d4f-8e5c-eccdadae8a1c",
+        "fbf15c27-6c61-4413-9ff3-68a2471e8d71",
+        "9467d53d-79a2-4e48-bb0e-0ed4fbe812ed",
+        "a8846917-589e-49ba-a378-658b1ae107bd",
+        "855a92be-de9a-434c-bf04-0ddd3d9b9872"
+      ]
+    },
+    {
+      "name": "Journal",
+      "id": "e9484039-b881-42cf-8722-41877dbb7b3a",
+      "url": "https://mobbin.com/flows/e9484039-b881-42cf-8722-41877dbb7b3a",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "9123635c-e543-4451-a375-4b4b7ded976a",
+        "6018453a-656d-41e3-aa8c-a9e049103549"
+      ]
+    },
+    {
+      "name": "Adding an entry",
+      "id": "e66ba915-0cdf-4187-a5e7-c4e741b68fdb",
+      "url": "https://mobbin.com/flows/e66ba915-0cdf-4187-a5e7-c4e741b68fdb",
+      "screenIds": [
+        "dc9f7b93-1ff1-486c-9e9f-c9bd8511fe42",
+        "ddd5384e-be2d-4165-8d78-b28ede9c5bf9",
+        "7d2ffe85-bf67-4e37-b300-23f1d284d3e9",
+        "38033ce4-7925-4855-8661-c3eed67397f1"
+      ]
+    },
+    {
+      "name": "Logging a mood",
+      "id": "c7aef444-387b-4043-8e88-a682bc311a7d",
+      "url": "https://mobbin.com/flows/c7aef444-387b-4043-8e88-a682bc311a7d",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "70692487-ba6e-4297-bd49-5c244ee95dd9",
+        "771b2da5-e25c-4e78-9195-97061746b424",
+        "e2513bbe-5d42-43e8-b7c8-977344abbfec",
+        "d49125fd-150e-4705-90b2-c5d5aac8ad94",
+        "dc9f7b93-1ff1-486c-9e9f-c9bd8511fe42",
+        "d3e050c4-fc11-451b-9411-7ae26072fc7d",
+        "3493dca4-c1d6-46e5-9264-dc55a826e840",
+        "c3544f8c-78c0-4afb-8fc3-c8de4373abbd",
+        "5dd2923a-217e-4ba4-bbcc-428cd9b5d51e",
+        "2d091530-1b3c-4a3b-8e1b-cd3a9c082400",
+        "a985c801-b31c-44ac-a6d1-a7aa2f2d3dce",
+        "d9d6e6a5-1896-4188-add6-95086972363e",
+        "a73aa6f7-4213-44a5-a28a-ddbd36162d0e"
+      ]
+    },
+    {
+      "name": "History detail",
+      "id": "2e6404e8-6697-4c48-bbdb-2b2323770fbc",
+      "url": "https://mobbin.com/flows/2e6404e8-6697-4c48-bbdb-2b2323770fbc",
+      "screenIds": [
+        "8d10063c-ceff-4668-a314-0714cded6d09",
+        "32c14bb3-1302-4580-aa70-18933d30364c"
+      ]
+    },
+    {
+      "name": "Feelings information",
+      "id": "f677a1c8-38f8-4c7f-b134-e89099bce55f",
+      "url": "https://mobbin.com/flows/f677a1c8-38f8-4c7f-b134-e89099bce55f",
+      "screenIds": [
+        "32c14bb3-1302-4580-aa70-18933d30364c",
+        "28818d1c-645b-4a90-b085-46a8bcabf875"
+      ]
+    },
+    {
+      "name": "Adding an entry (journal)",
+      "id": "645bc8a7-25c6-4daa-9023-5b03f8fda28f",
+      "url": "https://mobbin.com/flows/645bc8a7-25c6-4daa-9023-5b03f8fda28f",
+      "screenIds": [
+        "6018453a-656d-41e3-aa8c-a9e049103549",
+        "62ca474a-bf2f-410f-b9f8-47d4f8866121",
+        "669ac762-a281-48f5-a5a6-77306ff28a75",
+        "862600c1-287b-46bd-93a1-dd90650d561e",
+        "56530789-2ed3-4f08-a561-1ab78113f767",
+        "8d10063c-ceff-4668-a314-0714cded6d09"
+      ]
+    },
+    {
+      "name": "Mood timeline",
+      "id": "adfaa6b5-8c85-45cd-976d-d9535fd8610a",
+      "url": "https://mobbin.com/flows/adfaa6b5-8c85-45cd-976d-d9535fd8610a",
+      "screenIds": [
+        "8e9d5f10-13c5-4ede-b6a1-5171d4cf3747",
+        "8cc327b2-1314-4bfa-a9b1-4efd9dd905e4",
+        "570a1a72-11a8-4c0d-8eb9-977688af4849",
+        "e8652f4b-91b7-4b63-80ca-52fd98e55f83"
+      ]
+    },
+    {
+      "name": "Filtering mood records",
+      "id": "dd6e50b8-e56f-461f-abb0-8b78f6811b46",
+      "url": "https://mobbin.com/flows/dd6e50b8-e56f-461f-abb0-8b78f6811b46",
+      "screenIds": [
+        "40bd9aed-e8fd-4a13-bce4-2375f56daa2c",
+        "3aaf7554-aa5a-4276-95b2-a7635a6fa2f8",
+        "0d020304-1d1e-4988-be3f-1bc9329229b8"
+      ]
+    },
+    {
+      "name": "Reasons for your mood",
+      "id": "6bd2d5bc-bda5-4d68-be67-6bd402506395",
+      "url": "https://mobbin.com/flows/6bd2d5bc-bda5-4d68-be67-6bd402506395",
+      "screenIds": [
+        "8e9d5f10-13c5-4ede-b6a1-5171d4cf3747",
+        "4badf549-25e2-4e33-9936-4a59f806ddd7"
+      ]
+    },
+    {
+      "name": "Adding a feeling",
+      "id": "865d0bdf-f5f3-4157-8941-39059e9d7c90",
+      "url": "https://mobbin.com/flows/865d0bdf-f5f3-4157-8941-39059e9d7c90",
+      "screenIds": [
+        "e2513bbe-5d42-43e8-b7c8-977344abbfec",
+        "f974a607-96cc-46b1-9c34-17198a481796",
+        "a9d19d2f-0e0e-4275-b875-2d21290fc239",
+        "021f866b-48bd-4898-839f-9c6606d4747c",
+        "36d1946c-d363-43c0-9bbf-88c67d5ac833",
+        "53c6fd22-9ee4-49a3-9e5e-78bb460b3c86"
+      ]
+    },
+    {
+      "name": "Most frequent feelings",
+      "id": "97d78719-5d12-4120-b780-3c1e3e5cdcd5",
+      "url": "https://mobbin.com/flows/97d78719-5d12-4120-b780-3c1e3e5cdcd5",
+      "screenIds": [
+        "8e9d5f10-13c5-4ede-b6a1-5171d4cf3747",
+        "40bd9aed-e8fd-4a13-bce4-2375f56daa2c"
+      ]
+    },
+    {
+      "name": "Deleting an entry",
+      "id": "7361301b-05e0-4140-8269-8f747c66b9e5",
+      "url": "https://mobbin.com/flows/7361301b-05e0-4140-8269-8f747c66b9e5",
+      "screenIds": [
+        "7d2ffe85-bf67-4e37-b300-23f1d284d3e9",
+        "453b6b06-147b-4157-96d2-241ce3a39e11",
+        "ddd5384e-be2d-4165-8d78-b28ede9c5bf9"
+      ]
+    },
+    {
+      "name": "Settings",
+      "id": "e5a30b2a-31df-4085-88c5-089eb4553b3b",
+      "url": "https://mobbin.com/flows/e5a30b2a-31df-4085-88c5-089eb4553b3b",
+      "screenIds": [
+        "0c629cd9-a913-4805-8637-a28607d4c2d8",
+        "210a7368-1406-4ae5-b7f3-bf0bdbef3cda",
+        "f67a7fff-f8de-4bf6-8e1f-6d73c8886a12"
+      ]
+    },
+    {
+      "name": "Changing username",
+      "id": "69f90f58-4277-4b39-b850-6e19008d19ed",
+      "url": "https://mobbin.com/flows/69f90f58-4277-4b39-b850-6e19008d19ed",
+      "screenIds": [
+        "210a7368-1406-4ae5-b7f3-bf0bdbef3cda",
+        "d27c9d13-206f-4137-b13d-9966db63324a",
+        "f8f28b44-cfdc-483c-b13f-cb9aec4b3538",
+        "6b2c993e-65bd-420f-a055-53e70da03ec1"
+      ]
+    },
+    {
+      "name": "Changing password",
+      "id": "c35b936f-0e80-474c-a424-55623095ddc2",
+      "url": "https://mobbin.com/flows/c35b936f-0e80-474c-a424-55623095ddc2",
+      "screenIds": [
+        "210a7368-1406-4ae5-b7f3-bf0bdbef3cda",
+        "485bc86c-fb8c-4a79-8472-54bea09d1af1",
+        "67f8ff83-28ab-412b-824e-3fc936e3f4ed",
+        "25882566-309b-4a5b-9b5b-a960ced425e0",
+        "908424c9-e5a2-43d5-98b8-579db7836d3e"
+      ]
+    },
+    {
+      "name": "Switching to dark mode",
+      "id": "da75a786-98a0-4ca4-8add-2631936840fa",
+      "url": "https://mobbin.com/flows/da75a786-98a0-4ca4-8add-2631936840fa",
+      "screenIds": [
+        "210a7368-1406-4ae5-b7f3-bf0bdbef3cda",
+        "e15efcdd-fcea-4063-a728-d09b7d303d56",
+        "7e7bd6b1-1c37-442b-9b76-3c6e39c28e0f",
+        "0c40686a-8257-4e18-811a-a9d1d057dedf",
+        "064b7e3f-b5e0-444e-aa68-b8abd4a2efc5",
+        "d4c3a7a4-8003-4a6d-b030-d880b24c10f3",
+        "af914344-6a4d-4a5a-bbb2-a734b8919322",
+        "21485ebc-e030-49b8-82b5-5f9a33f0e757",
+        "8016a998-90e1-43ec-8a8e-60d8076ec344"
+      ]
+    },
+    {
+      "name": "Logging out",
+      "id": "d9d22a4e-a040-4631-9995-d6d5efc43b28",
+      "url": "https://mobbin.com/flows/d9d22a4e-a040-4631-9995-d6d5efc43b28",
+      "screenIds": [
+        "f67a7fff-f8de-4bf6-8e1f-6d73c8886a12",
+        "645d36a4-39fb-41f2-9239-3f63bd76755c"
+      ]
+    },
+    {
+      "name": "Deleting account",
+      "id": "b0e1eb38-4e06-43a4-b6d1-2ab103275c1c",
+      "url": "https://mobbin.com/flows/b0e1eb38-4e06-43a4-b6d1-2ab103275c1c",
+      "screenIds": [
+        "f67a7fff-f8de-4bf6-8e1f-6d73c8886a12",
+        "56bd9f8a-dc63-4ea7-b222-30d82e4dd7e6",
+        "676fe0ff-941f-4e14-a344-47f816bd23cd",
+        "295b4628-9dba-4ec6-bb58-f7bc4223531c",
+        "347b9606-93e7-48ef-bc99-d91e1a2bd3ce",
+        "7cb21026-79fe-4c81-90c2-6e97ff96cb41",
+        "3490233d-d6b0-4e76-b6e8-2f704c1dddc5",
+        "3e43ccce-8c5d-4db6-b95b-bbc5bdb6d77b",
+        "7ad69cd4-8319-4a46-ba4d-c83139a32d50",
+        "645d36a4-39fb-41f2-9239-3f63bd76755c"
+      ]
+    },
+    {
+      "name": "Creating account",
+      "id": "a06f1200-4e7c-4cc7-a825-bb737d01a129",
+      "url": "https://mobbin.com/flows/a06f1200-4e7c-4cc7-a825-bb737d01a129",
+      "screenIds": [
+        "ecb036be-e2c8-446f-925a-56c35096ea5a",
+        "aa6c4630-9f3e-493e-8863-03d54fee98d9",
+        "cf3b1037-3805-44f0-8d88-be6fc7e2517a",
+        "538faf0f-f9b7-468c-8fda-fc9bd5137012",
+        "3eb0162b-13f1-4f14-9a8b-352b1a14433a",
+        "37832c51-89c8-48d8-b7a7-e13bb894f363",
+        "82509aec-81f3-48c0-899e-8cfae2ad7101"
+      ]
+    },
+    {
+      "name": "Subscribing to Liven",
+      "id": "52def315-c933-4561-be31-b51d4327c7fb",
+      "url": "https://mobbin.com/flows/52def315-c933-4561-be31-b51d4327c7fb",
+      "screenIds": [
+        "adf87bfe-afec-4489-814f-0178df8a087b",
+        "a612cffd-939d-471f-9b89-bf734058ab1a",
+        "4f6bbe35-a613-4427-a19b-20c8bd3e1fe3",
+        "968e48a3-ebca-4b29-a20a-68a00927e07e"
+      ]
+    },
+    {
+      "name": "Adding a task",
+      "id": "49d1c55f-a7f8-4e54-a81e-e396a9b52115",
+      "url": "https://mobbin.com/flows/49d1c55f-a7f8-4e54-a81e-e396a9b52115",
+      "screenIds": [
+        "8c1170b5-7b82-49e9-9683-7c239f9322b6",
+        "d755ac6f-5d97-4086-a664-fd54e094b716",
+        "bcf18a50-0141-4b07-9bb0-2e227bb11a96",
+        "0d4f76c3-add8-4c5c-8dae-644ae2d65d0d",
+        "34c438bf-55b3-4b3e-a25b-ce63cbed6e75",
+        "d23049c1-338a-4af1-8fd6-10f6f2529726",
+        "a4a50e48-eb87-4afd-9a69-30fc0774995e",
+        "86a8b18c-0756-438b-b566-c48be25023a8"
+      ]
+    },
+    {
+      "name": "Article detail",
+      "id": "ed541c1d-9219-4e0e-995d-52d09f51a4b0",
+      "url": "https://mobbin.com/flows/ed541c1d-9219-4e0e-995d-52d09f51a4b0",
+      "screenIds": [
+        "ec7f310f-64f4-4b5b-96ab-aa1ad60d732c",
+        "8eb8280f-62af-45ee-b9fa-4082c4af1ed4",
+        "6fac03c9-d6ee-46b0-8ddd-4a01c2222067",
+        "92d70ed7-c508-4ec1-a21e-ecd8ca315f70"
+      ]
+    },
+    {
+      "name": "Favoriting a sound",
+      "id": "8f42e85f-758b-4510-aa3d-9ea2e96177ec",
+      "url": "https://mobbin.com/flows/8f42e85f-758b-4510-aa3d-9ea2e96177ec",
+      "screenIds": [
+        "0d8a13b7-4f11-444f-912b-ee9340916f41",
+        "d542f365-b3fc-4cf0-ba13-f0627e3e73fb",
+        "33bda7eb-c5ff-4cb3-a212-8c0484698e90"
+      ]
+    },
+    {
+      "name": "Giving feedback to the app",
+      "id": "6e83d49d-c1b1-4afe-99ba-0052a0106408",
+      "url": "https://mobbin.com/flows/6e83d49d-c1b1-4afe-99ba-0052a0106408",
+      "screenIds": [
+        "0c629cd9-a913-4805-8637-a28607d4c2d8",
+        "07f8a46c-875f-468e-a6f6-99cd43510eab",
+        "ea58e3d3-433b-4445-a927-8b409b6eaf8c",
+        "0c9c6f66-49b7-42cc-b1a8-5f3208c094d0",
+        "733985e8-ac22-4ea3-b35b-437720e1db1a"
+      ]
+    },
+    {
+      "name": "Collections",
+      "id": "25f35ebf-96ea-4153-aca1-4095d9cb9240",
+      "url": "https://mobbin.com/flows/25f35ebf-96ea-4153-aca1-4095d9cb9240",
+      "screenIds": [
+        "c60ee0d1-b1a7-4717-8d4f-e7c8e74b0f2a",
+        "6afeb490-faec-43d4-b8e0-dd31e12a2abb"
+      ]
+    },
+    {
+      "name": "Deleting a tag",
+      "id": "ee915d81-dee5-4cfc-aa26-c5da430bfbb5",
+      "url": "https://mobbin.com/flows/ee915d81-dee5-4cfc-aa26-c5da430bfbb5",
+      "screenIds": [
+        "dc9f7b93-1ff1-486c-9e9f-c9bd8511fe42",
+        "e279b49d-a4a8-4a65-976d-0d87d52bf29d",
+        "5fb141fa-6f18-4863-85f5-0e9076a5bee4",
+        "77327677-7960-44fe-83bf-bc380ee4daae",
+        "2db2d395-3cc9-481b-ac69-05d3eba66d3d",
+        "84180701-7007-49e1-8522-4dbdc3cf727b"
+      ]
+    },
+    {
+      "name": "Tests",
+      "id": "511fc8e1-a355-4313-bd77-58fb8ca56849",
+      "url": "https://mobbin.com/flows/511fc8e1-a355-4313-bd77-58fb8ca56849",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "b83fe218-17d9-4401-8375-477ab6f28441",
+        "bb55c6e3-3eb1-47c4-8f62-83c3b52f95b6",
+        "59e74f58-9557-4e52-a32b-5c203c54448b",
+        "cbada657-1b8d-4f01-9e81-c5af21af265c",
+        "26d54342-5862-49ba-8c31-500a8f81d89e"
+      ]
+    },
+    {
+      "name": "Changing playback speed",
+      "id": "260d8a4c-edcf-4488-a609-a538ca4e6e83",
+      "url": "https://mobbin.com/flows/260d8a4c-edcf-4488-a609-a538ca4e6e83",
+      "screenIds": [
+        "d0632655-6c72-4f55-b6d8-ab9ad982c54c",
+        "faab3d56-ef50-43dd-8d40-d8605e526a4c",
+        "b0242462-5122-4021-9794-509322c7ad77",
+        "ea028f4f-9e81-4d6d-b3e6-052d28a36b60"
+      ]
+    },
+    {
+      "name": "Disabling captions",
+      "id": "33737222-c402-4372-a61e-acbcaaf09493",
+      "url": "https://mobbin.com/flows/33737222-c402-4372-a61e-acbcaaf09493",
+      "screenIds": [
+        "d0632655-6c72-4f55-b6d8-ab9ad982c54c",
+        "5f3f2686-9e1d-42c3-a594-3366accc039c",
+        "6c602d03-b634-4ba5-81b4-26048b148ec9"
+      ]
+    },
+    {
+      "name": "Sound detail",
+      "id": "8f186e1c-11a4-49de-8c9c-ceabaad10ddc",
+      "url": "https://mobbin.com/flows/8f186e1c-11a4-49de-8c9c-ceabaad10ddc",
+      "screenIds": [
+        "b1921145-d49b-40f6-95b5-95a1cf68af6f",
+        "96c06dfa-c487-4193-ae14-a08b91f7dae2",
+        "0d8a13b7-4f11-444f-912b-ee9340916f41"
+      ]
+    },
+    {
+      "name": "Sounds",
+      "id": "e4c1f6af-2780-47c0-a1a8-f58f075476a7",
+      "url": "https://mobbin.com/flows/e4c1f6af-2780-47c0-a1a8-f58f075476a7",
+      "screenIds": [
+        "f619b32b-6cd8-4b5f-8acd-a7f3673a502e",
+        "b1921145-d49b-40f6-95b5-95a1cf68af6f",
+        "929c2d87-db36-4236-9129-36051ff90416"
+      ]
+    },
+    {
+      "name": "Giving bad feedback",
+      "id": "d7974e65-2f99-4884-94f8-d6691180bde6",
+      "url": "https://mobbin.com/flows/d7974e65-2f99-4884-94f8-d6691180bde6",
+      "screenIds": [
+        "92d70ed7-c508-4ec1-a21e-ecd8ca315f70",
+        "542102b3-ed54-4fc4-8090-4c44f1697d5f",
+        "cdc45472-6d3c-4674-bad3-4ae17f1db970",
+        "e48307bb-6fc8-4480-a934-9dede98714cb",
+        "c5fc7e66-9fa6-4078-a957-fc72957e76c4"
+      ]
+    },
+    {
+      "name": "Expert detail",
+      "id": "14e33029-e8d5-42ea-8eba-08a9aea9f71b",
+      "url": "https://mobbin.com/flows/14e33029-e8d5-42ea-8eba-08a9aea9f71b",
+      "screenIds": [
+        "fb2069bb-48b6-48d4-aee1-3b73b849b8ef",
+        "28564391-b6d3-4f2f-8a3f-4d7d7924499b",
+        "4791cb4d-ee14-48f1-b9a7-933061c095bd",
+        "1ffa1a04-7bdb-4b0e-912e-af0cd42b2d44"
+      ]
+    },
+    {
+      "name": "Resetting password",
+      "id": "70262819-0949-4042-89a3-7bebd9c993a4",
+      "url": "https://mobbin.com/flows/70262819-0949-4042-89a3-7bebd9c993a4",
+      "screenIds": [
+        "a294ab37-78ee-479b-b40d-9e06fd9f2d30",
+        "d67a2d42-a71d-4edb-936f-974091dd7e8d",
+        "d789d12c-3a8e-4285-9153-e850a78a215e",
+        "a01885cf-cbb3-4f5c-89be-1276bccf4bf1"
+      ]
+    },
+    {
+      "name": "Deleting a task",
+      "id": "c076cdec-e466-48a5-a5ce-1b49d30964a4",
+      "url": "https://mobbin.com/flows/c076cdec-e466-48a5-a5ce-1b49d30964a4",
+      "screenIds": [
+        "fe05d03c-4510-4991-adb8-6b63a42c713d",
+        "3f8b6e77-f661-4411-9c9f-e6fd022ff150",
+        "f399e97e-14c4-488e-9df8-9ea7f5a59147"
+      ]
+    },
+    {
+      "name": "Giving response feedback",
+      "id": "bb1c2e22-c4f3-4d94-8e86-9027ef44f70e",
+      "url": "https://mobbin.com/flows/bb1c2e22-c4f3-4d94-8e86-9027ef44f70e",
+      "screenIds": [
+        "432d47e4-e609-4aa9-8dc5-236455ff8291",
+        "e0830de4-2da4-4b31-829b-ecbe552b62a2",
+        "6ddfdff7-3d94-45ad-a0b3-a411f6084a70"
+      ]
+    }
+  ]
+}

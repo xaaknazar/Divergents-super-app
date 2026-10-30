@@ -1,0 +1,16 @@
+# Opt-in physical-device QA. Keeps the separate QA bundle and every QA namespace.
+include:
+  - path: project.yml
+targets:
+  DivergentsReadingQA:
+    info:
+      properties:
+        DivergentsReadingStrictQA: true
+  ReadingFocusMonitor:
+    info:
+      properties:
+        DivergentsReadingStrictQA: true
+  ReadingFocusWidget:
+    info:
+      properties:
+        DivergentsReadingStrictQA: true

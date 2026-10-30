@@ -1,3 +1,5 @@
+import { Wrapper } from '../../components/Wrapper';
+import { ContentBlock } from '../../components/ContentBlock';
 // Карточка для сторис — как у Strava: цифры, контур маршрута и подпись на
 // чёрном или на своём фото.
 //
@@ -195,7 +197,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Поделиться')} backLabel={tr('Назад')} onBack={() => navigation.goBack()} hairline />
+      <NavHeader title={tr('Поделиться')} backLabel={tr('Назад')} onBack={() => navigation.goBack()} />
 
       {/* Превью. Снимается ровно этот View — всё, что нужно на картинке,
           лежит внутри него, и ничего лишнего. */}
@@ -290,7 +292,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
 
             <ScrollView style={{ maxHeight: Math.round(screenH * 0.8) - 130 - insets.bottom }} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 14 }} keyboardShouldPersistTaps="handled">
               {/* Блок */}
-              <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 14, gap: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+              <ContentBlock size="compact"><Wrapper gap={12}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{tr('Размер блока')}</Text>
                   <Stepper T={T} ty={ty} value={Math.round(style.size * 100)} unit="%" onDec={() => patch({ size: Math.max(0.5, +(style.size - 0.1).toFixed(1)) })} onInc={() => patch({ size: Math.min(1.1, +(style.size + 0.1).toFixed(1)) })} />
@@ -299,10 +301,10 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
                   <Text style={[ty.subhead, { color: T.label }]}>{tr('Положение')}</Text>
                   <Segmented items={[tr('Сверху'), tr('По центру'), tr('Снизу')]} value={style.place === 'top' ? 0 : style.place === 'bottom' ? 2 : 1} onChange={(i) => patch({ place: i === 0 ? 'top' : i === 2 ? 'bottom' : 'center' })} />
                 </View>
-              </View>
+              </Wrapper></ContentBlock>
 
               {/* Цвета */}
-              <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}>
+              <ContentBlock size="flush">
                 {colorRows.map((row, i) => {
                   const value = style[row.key];
                   const open = editing === row.key;
@@ -339,7 +341,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
                     </View>
                   );
                 })}
-              </View>
+              </ContentBlock>
             </ScrollView>
 
             <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MetricValue — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<dc-import name="Screen" height="760" safe-top="{{false}}" hint-size="390px,760px">
+<dc-import name="Wrapper" pad="20" gap="24" hint-size="100%,726px">
+<dc-import name="Wrapper2" gap="4" hint-size="100%,56px">
+<dc-import name="Text" variant="title1" heading="1" text="MetricValue" hint-size="100%,34px"></dc-import>
+<dc-import name="Text" variant="footnote" tone="secondary" text="Значение метрики с подписью: variant (strip/grid/story/detail/card) · valueType · separator" hint-size="100%,18px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="VARIANT=STRIP · SEPARATOR" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" fill="equal" hint-size="100%,46px"><dc-import name="MetricValue" variant="strip" value="2.47" label="км" separator="{{true}}" hint-size="100%,46px"></dc-import><dc-import name="MetricValue" variant="strip" value="14:32" label="время" separator="{{true}}" hint-size="100%,46px"></dc-import><dc-import name="MetricValue" variant="strip" value="5′44″" label="мин/км" separator="{{true}}" hint-size="100%,46px"></dc-import><dc-import name="MetricValue" variant="strip" value="2318" label="шагов" hint-size="100%,46px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="VARIANT=GRID" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" cols="2" hint-size="100%,104px"><dc-import name="MetricValue" variant="grid" value="5,02 км" label="Дистанция" hint-size="100%,52px"></dc-import><dc-import name="MetricValue" variant="grid" value="5′34″" label="Средний темп" hint-size="100%,52px"></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="VARIANT=DETAIL · ПОЛОСА ПОД ОБЛОЖКОЙ СОБЫТИЯ (VALUETYPE=TEXT У «БЕСПЛАТНО»)" hint-size="100%,14px"></dc-import>
+<dc-import name="Wrapper3" dir="row" fill="equal" pad-y="14" hint-size="100%,66px"><dc-import name="MetricValue" variant="detail" value="8" label="Идут" separator="{{true}}" hint-size="100%,38px"></dc-import><dc-import name="MetricValue" variant="detail" value="4" label="Свободных мест" separator="{{true}}" hint-size="100%,38px"></dc-import><dc-import name="MetricValue" variant="detail" value="Бесплатно" label="Стоимость" value-type="text" hint-size="100%,38px"></dc-import></dc-import>
+<dc-import name="Divider" hint-size="100%,1px"></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="VARIANT=CARD · СТАТИСТИКА ВНУТРИ КАРТОЧКИ" hint-size="100%,14px"></dc-import>
+<dc-import name="Card" size="flush" variant="outlined" hint-size="100%,70px"><dc-import name="Wrapper3" dir="row" fill="equal" pad-y="14" hint-size="100%,70px"><dc-import name="MetricValue" variant="card" value="9/15" label="День" separator="{{true}}" hint-size="100%,42px"></dc-import><dc-import name="MetricValue" variant="card" value="860" label="Очки команды" separator="{{true}}" hint-size="100%,42px"></dc-import><dc-import name="MetricValue" variant="card" value="2 / 8" label="Место команды" hint-size="100%,42px"></dc-import></dc-import></dc-import>
+</dc-import>
+<dc-import name="Wrapper2" gap="10" hint-size="100%,80px">
+<dc-import name="Text" variant="caption2Em" tone="secondary" text="VARIANT=STORY (НА ТЁМНОЙ КАРТОЧКЕ)" hint-size="100%,14px"></dc-import>
+<dc-import name="StoryBackdrop" tone="dark" hint-size="100%,100px"><dc-import name="MetricValue" variant="story" value="5,02 км" label="Расстояние" hint-size="100%,62px"></dc-import></dc-import>
+</dc-import>
+</dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

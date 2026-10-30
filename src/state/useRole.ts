@@ -15,7 +15,7 @@ export const DEFAULT_FEATURES: Record<string, boolean> = {
 };
 
 export function useRole() {
-  const { isSignedIn, getToken } = useAuth();
+  const { isSignedIn, userId, getToken } = useAuth();
   const [canCreate, setCanCreate] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
@@ -27,6 +27,7 @@ export function useRole() {
 
   useEffect(() => {
     let alive = true;
+    setCanCreate(false); setIsAdmin(false); setEmail(null); setPerms([]);
     (async () => {
       if (!isSignedIn) {
         setCanCreate(false); setIsAdmin(false); setEmail(null); setPerms([]); setGift(NO_GIFT);
@@ -55,7 +56,7 @@ export function useRole() {
       }
     })();
     return () => { alive = false; };
-  }, [isSignedIn]);
+  }, [isSignedIn, userId]);
 
   /** Есть ли у пользователя право на раздел (админ — на всё). */
   const has = (perm: string) => isAdmin || perms.includes(perm);

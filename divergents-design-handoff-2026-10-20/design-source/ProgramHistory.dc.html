@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>История программ</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="900" safe-top="{{false}}" hint-size="390px,900px">
+<dc-import name="NavHeader" title="История программ" back-label="Назад" back-href="ProfileHome.dc.html" hint-size="100%,124px"></dc-import>
+  <dc-import name="Wrapper" pad-x="16" pad-top="16" gap="16" hint-size="100%,700px">
+    <dc-import name="Wrapper2" pad-bottom="8" hint-size="100%,140px">
+      <dc-import name="PageHeading" title="Ваши усилия остаются с вами" description="Завершённые программы, личные достижения и результаты, которыми хочется поделиться." summary="2 программы · 34 дня с активностью в программах" hint-size="100%,132px"></dc-import>
+    </dc-import>
+    <sc-for list="{{programs}}" as="pr" hint-placeholder-count="2">
+      <dc-import name="ProgramCard" variant="history" title="{{pr.title}}" caption="{{pr.dates}}" total="{{pr.total}}" value="{{pr.value}}" summary="{{pr.summary}}" perfect="{{pr.perfect}}" href="ProgramResult.dc.html" hint-size="100%,170px"></dc-import>
+    </sc-for>
+    <dc-import name="Text" variant="subhead" tone="secondary" text="История хранится на этом устройстве. Удаление программы удаляет и её результат." hint-size="100%,40px"></dc-import>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      programs: [
+        { title: 'Отжимания', dates: '12 сент. 2026 г. — 2 окт. 2026 г.', total: '612 раз', value: 90, summary: 'Норма: 19 из 21 дней · лучшая серия: 12 дней', perfect: false },
+        { title: 'Планка', dates: '10 авг. 2026 г. — 23 авг. 2026 г.', total: '840 сек', value: 100, summary: 'Норма: 14 из 14 дней · лучшая серия: 14 дней', perfect: true }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

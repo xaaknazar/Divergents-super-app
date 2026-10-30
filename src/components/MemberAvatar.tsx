@@ -10,9 +10,9 @@
 // когда появился настоящий «белый флаг» по правилам, символ стал читаться
 // в обе стороны. Белый флаг — это то, что человек получил по уважительной
 // причине, и путать его с наказанием нельзя.
-import React, { useState } from 'react';
-import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
+import React,{ useState } from 'react';
+import { Text,View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
 export function MemberAvatar({

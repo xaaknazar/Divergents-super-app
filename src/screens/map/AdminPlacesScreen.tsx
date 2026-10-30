@@ -1,3 +1,6 @@
+import { Wrapper } from '../../components/Wrapper';
+import { ContentBlock } from '../../components/ContentBlock';
+import { StatusBadge } from '../../components/StatusBadge';
 // Admin/curator (xaaknazar@gmail.com): the approval queue for user-suggested
 // places. Approve → the marker becomes public on the map; reject → it's deleted.
 // The list of pending suggestions is the "список на карте" for moderation.
@@ -9,7 +12,6 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { Capsule } from '../../components/ui';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { hSuccess } from '../../lib/haptics';
 import { usePlaces } from '../../state/PlacesContext';
@@ -73,7 +75,7 @@ export function AdminPlacesScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Заявки на метки')} backLabel={tr('Карта')} onBack={() => navigation.goBack()} hairline />
+      <NavHeader title={tr('Заявки на метки')} backLabel={tr('Карта')} onBack={() => navigation.goBack()} />
       {!canModerate ? (
         <EmptyState icon="lock.fill" title={tr('Нет доступа')} subtitle={tr('Модерация меток доступна только администратору.')} />
       ) : loading ? (
@@ -91,7 +93,7 @@ export function AdminPlacesScreen({ navigation }: Props) {
             const countryName = COUNTRIES.find((c) => c.key === p.country)?.name ?? p.country;
             const busy = busyId === p.id;
             return (
-              <View key={p.id} style={{ backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 12, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}>
+              <Wrapper marginHorizontal={16} marginBottom={12} key={p.id}><ContentBlock size="flush" elevated>
                 {p.photo ? <Image source={{ uri: p.photo }} style={{ width: '100%', height: 130 }} contentFit="cover" /> : null}
                 <View style={{ padding: 14, gap: 8 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -107,8 +109,8 @@ export function AdminPlacesScreen({ navigation }: Props) {
                   {p.highlights ? <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={3}>{p.highlights}</Text> : null}
 
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                    {p.hours ? <Capsule bg={T.fillTertiary} color={T.label}><SF name="clock.fill" size={10} color={T.labelSecondary} />{p.hours}</Capsule> : null}
-                    {p.tags.slice(0, 4).map((tg) => <Capsule key={tg} bg={T.brandTinted} color={T.brand}><SF name={TAG_META[tg].icon} size={10} color={T.brand} />{TAG_META[tg].label}</Capsule>)}
+                    {p.hours ? <StatusBadge label={String((p.hours))} tone="neutral" icon="clock.fill" /> : null}
+                    {p.tags.slice(0, 4).map((tg) => <StatusBadge key={tg} label={String((TAG_META[tg].label))} tone="brand" icon={TAG_META[tg].icon} />)}
                   </View>
 
                   <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>
@@ -126,7 +128,7 @@ export function AdminPlacesScreen({ navigation }: Props) {
                     </Pressable>
                   </View>
                 </View>
-              </View>
+              </ContentBlock></Wrapper>
             );
           })}
         </ScrollView>

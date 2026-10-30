@@ -1,32 +1,8 @@
 // Modern talent widgets: progress ring + Gallup domain distribution bar.
 import React from 'react';
-import { View, Text } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import { Text,View } from 'react-native';
+import { GALLUP_DOMAIN_META,GallupDomain,GallupTalent } from '../data/talentslab';
 import { useTheme } from '../theme/ThemeContext';
-import { GALLUP_DOMAIN_META, GallupDomain, GallupTalent } from '../data/talentslab';
-
-export function Ring({
-  value, size = 64, stroke = 7, color, label, sub, textColor,
-}: { value: number; size?: number; stroke?: number; color?: string; label?: string; sub?: string; textColor?: string }) {
-  const { T, ty } = useTheme();
-  const c = color ?? T.brand;
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  const pct = Math.min(1, Math.max(0, value));
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size}>
-        <Circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={'rgba(255,255,255,0.25)'} strokeWidth={stroke} />
-        <Circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={c} strokeWidth={stroke}
-          strokeDasharray={`${pct * circ} ${circ}`} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-      </Svg>
-      <View style={{ position: 'absolute', alignItems: 'center' }}>
-        {label ? <Text style={[ty.subheadEm, { color: textColor ?? T.label }]} numberOfLines={1}>{label}</Text> : null}
-        {sub ? <Text style={[ty.caption2, { color: textColor ?? T.labelSecondary }]} numberOfLines={1}>{sub}</Text> : null}
-      </View>
-    </View>
-  );
-}
 
 const ORDER: GallupDomain[] = ['executing', 'influencing', 'relationship', 'strategic'];
 

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ProfileButton — варианты</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<dc-import name="Screen" height="520" safe-top="{{false}}" hint-size="390px,520px">
+  <dc-import name="Wrapper" pad="20" gap="20" hint-size="100%,480px">
+    <dc-import name="Text" variant="title3" text="ProfileButton" hint-size="100%,25px"></dc-import>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+      <dc-import name="Wrapper2" dir="row" fill="last" gap="16" align="center" hint-size="100%,52px">
+        <dc-import name="ProfileButton" person="Акназар" progress="{{r.progress}}" badge="{{r.badge}}" variant="{{r.variant}}" hint-size="52px,52px"></dc-import>
+        <dc-import name="Text" variant="footnote" tone="secondary" text="{{r.caption}}" hint-size="100%,18px"></dc-import>
+      </dc-import>
+    </sc-for>
+  </dc-import>
+</dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { rows: [
+      { progress: 75, badge: 0, variant: 'plain', caption: 'По умолчанию: кольцо заполненности анкеты 75%' },
+      { progress: 100, badge: 0, variant: 'plain', caption: 'Анкета заполнена — кольца нет' },
+      { progress: 40, badge: 3, variant: 'plain', caption: 'С бейджем: 3 новых события' },
+      { progress: 75, badge: 0, variant: 'floating', caption: 'floating — стеклянная подложка поверх карты' },
+      { progress: 0, badge: 12, variant: 'floating', caption: 'floating + бейдж 9+' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>
