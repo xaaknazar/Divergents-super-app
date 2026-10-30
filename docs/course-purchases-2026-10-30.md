@@ -81,3 +81,12 @@ App Store IAP. Возможности внешних платежей завис
 - https://developer.apple.com/app-store/review/guidelines/#in-app-purchase
 - https://developer.apple.com/help/app-store-connect/manage-agreements/sign-and-update-agreements/
 - https://apple.github.io/app-store-server-library-node/
+
+## Продолжение настройки Apple — 30 октября
+
+В App Store Connect созданы 21 черновик курса с русскими названиями и ценами.
+19 цен совпадают с сайтом; для двух курсов владелец подтвердил 149 990 ₸ вместо
+150 000 ₸. Цены проверены чтением из Apple после записи. Продажи и review не
+включены. Paid Apps Agreement принят, но ещё ожидаются завершение W-8BEN и
+обработка банка. Отдельный IAP-ключ, серверный выпуск и физические Sandbox
+покупки остаются следующим этапом; новая мобильная сборка не выпускалась.
