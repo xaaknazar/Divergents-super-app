@@ -2,7 +2,6 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { CourseDetailScreen } from '../CourseDetailScreen';
 import { demoDetailCourse } from '../../../storybook/detailFixtures';
-import { startCoursePayment } from '../../../data/api';
 
 let mockCourse: any;
 let mockMy: any;
@@ -10,19 +9,24 @@ let mockPurchases = false;
 let mockCurrent = 1;
 const mockLoad = jest.fn(async () => {});
 const mockReload = jest.fn(async () => {});
+const mockBuy = jest.fn(async () => true);
 jest.mock('../../../state/CourseContext', () => ({ useCourses: () => ({
   getCourse: () => mockCourse, loadDetail: mockLoad, reload: mockReload, loading: false, error: null,
   detailLoading: {}, detailError: {}, progress: () => mockCurrent === -1 ? 1 : 0.5,
   currentLessonIndex: () => mockCurrent, lessonStatus: () => 'current',
 }) }));
 jest.mock('../../../state/useMyCourses', () => ({ useMyCourses: () => mockMy }));
-jest.mock('../../../state/useRole', () => ({ useRole: () => ({ feature: () => mockPurchases }) }));
+jest.mock('../../../state/CoursePurchasesContext', () => ({ useCoursePurchases: () => ({
+  available: true, phase: 'idle', message: null, buy: mockBuy, restore: jest.fn(),
+  catalog: { enabled: mockPurchases, accountToken: mockPurchases ? 'account-token' : null,
+    products: mockPurchases ? [{ courseId: mockCourse.id, productId: 'apple-product' }] : [] },
+  products: mockPurchases ? [{ id: 'apple-product', title: 'Курс', displayPrice: '4 990 ₸' }] : [],
+}) }));
 jest.mock('../../../state/LanguageContext', () => ({ tr: (value: string) => value, useLang: () => ({}) }));
 jest.mock('@clerk/clerk-expo', () => {
   const getToken = async () => 'demo-token';
   return { useAuth: () => ({ getToken, isSignedIn: true }) };
 });
-jest.mock('../../../data/api', () => ({ ...jest.requireActual('../../../data/api'), startCoursePayment: jest.fn() }));
 jest.mock('../../../components/SFIcon', () => ({ SF: () => null }));
 jest.mock('../../../lib/haptics', () => ({ hTap: jest.fn(), hSelect: jest.fn() }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }) }));
@@ -78,11 +82,11 @@ it('retains gift suppression of paid controls', async () => {
 });
 it('keeps a single purchase action and refreshes real access after successful payment', async () => {
   mockPurchases = true;
-  jest.mocked(startCoursePayment).mockResolvedValue({ status: 'success' } as any);
   const view = await render(screen());
   expect(view.getAllByRole('button', { name: /Купить курс/ })).toHaveLength(1);
   await fireEvent.press(view.getByRole('button', { name: /Купить курс/ }));
-  expect(startCoursePayment).toHaveBeenCalledWith(mockCourse.id, 'demo-token');
+  expect(mockBuy).toHaveBeenCalledWith(mockCourse.id);
+  expect(view.getByText('4 990 ₸')).toBeTruthy();
   expect(mockReload).toHaveBeenCalled();
   expect(mockLoad).toHaveBeenLastCalledWith(mockCourse.id, 'demo-token');
 });

@@ -2,7 +2,6 @@
 // Talks to the public read-only API added at /api/mobile on divergents-lms.kz.
 import { z } from 'zod';
 import { captureAchievementRecorder } from './achievementEvents';
-import * as WebBrowser from 'expo-web-browser';
 import { T } from '../theme/tokens';
 import { SFName } from '../components/SFIcon';
 import { Course, Lesson } from './courses';
@@ -87,7 +86,10 @@ const ApiOwnedCourseSchema = ApiCourseSummarySchema.extend({
 const courseListPre = (d: unknown) =>
   Array.isArray(d) ? d : (d && Array.isArray((d as { courses?: unknown }).courses) ? (d as { courses: unknown[] }).courses : []);
 const CourseListSchema = z.preprocess(courseListPre, arrayOf(ApiCourseSummarySchema, 'course'));
-const OwnedListSchema = z.preprocess(courseListPre, arrayOf(ApiOwnedCourseSchema, 'owned course'));
+// An invalid ownership response must never become an empty successful list.
+const OwnedListSchema = z.preprocess((d: unknown) => Array.isArray(d) ? d
+  : d && typeof d === 'object' ? (d as { courses?: unknown }).courses : undefined,
+z.array(ApiOwnedCourseSchema));
 
 type ApiCourseSummary = z.infer<typeof ApiCourseSummarySchema>;
 type ApiChapter = z.infer<typeof ApiChapterSchema>;
@@ -952,37 +954,15 @@ export function webAuthedUrl(ticket: string | null, path: string): string {
   return `${API_BASE}${path}`;
 }
 
-// ───────── Покупка курса (TipTopPay через страницу сайта) ─────────
-// Родной iOS SDK TipTopPay потребовал бы нативного модуля, поэтому оплату
-// открываем во встроенном браузере на странице сайта /pay/:courseId — том же
-// виджете, что и на divergents-lms.kz. Страница возвращает результат deep
-// link'ом divergents://pay?status=…, по нему браузер и закрывается.
+// Legacy website return links can still arrive from an existing browser tab.
+// New iOS purchases use StoreKit through CoursePurchasesContext.
 export type PaymentStatus = 'success' | 'fail' | 'cancel';
-
-const PAY_RETURN_URL = 'divergents://pay';
 
 /** Статус из вернувшегося deep link'а. Всё непонятное считаем отменой. */
 export function parsePaymentReturnUrl(url: string | null | undefined): PaymentStatus {
   const m = /[?&]status=([^&#]*)/.exec(url ?? '');
   const status = m ? decodeURIComponent(m[1]) : '';
   return status === 'success' || status === 'fail' ? status : 'cancel';
-}
-
-export async function startCoursePayment(
-  courseId: string, token: string | null,
-): Promise<{ status: PaymentStatus }> {
-  // Билет открывает страницу оплаты уже авторизованной: /pay не публичный, а
-  // сессии сайта во встроенном браузере у пользователя нет.
-  const ticket = await getSignInTicket(token);
-  const url = webAuthedUrl(ticket, `/pay/${encodeURIComponent(courseId)}`);
-  try {
-    const result = await WebBrowser.openAuthSessionAsync(url, PAY_RETURN_URL);
-    if (result.type === 'success') return { status: parsePaymentReturnUrl(result.url) };
-    // 'cancel' / 'dismiss' — пользователь закрыл браузер сам.
-    return { status: 'cancel' };
-  } catch {
-    return { status: 'cancel' };
-  }
 }
 
 // ───────── Sport (server) ─────────

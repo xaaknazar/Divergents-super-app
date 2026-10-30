@@ -6,6 +6,7 @@ import { Course } from '../data/courses';
 import { fetchMyCourses } from '../data/api';
 import { revalidateDownloads } from './downloads';
 import { useCourses } from './CourseContext';
+import { onCourseAccessChanged } from './coursePurchases';
 
 export function useMyCourses() {
   const { isSignedIn, getToken } = useAuth();
@@ -45,12 +46,8 @@ export function useMyCourses() {
         // instead of playing forever. Only on a SUCCESSFUL fetch: the throw
         // below is caught and leaves the files alone.
         //
-        // НО НЕ НА ПУСТОМ СПИСКЕ. Успешный ответ с пустым массивом — это либо
-        // «курсов правда нет», либо осечка на стороне сервера, и отличить их
-        // отсюда нечем. В первом случае удалять нечего (скачать уроки можно
-        // только из своего курса), во втором удаление стирает человеку всю
-        // офлайн-библиотеку без предупреждения. Поэтому пустой список —
-        // единственный случай, когда мы ничего не трогаем.
+        // Preserve the existing offline-library policy for an empty list.
+        // Free courses not yet started are absent from this endpoint too.
         if (list.length > 0) void revalidateDownloads(list.map((c) => c.id));
       } else {
         setCourses([]);
@@ -65,8 +62,9 @@ export function useMyCourses() {
   }, [isSignedIn]);
 
   useEffect(() => { run(); }, [run]);
+  useEffect(() => onCourseAccessChanged(() => { void run(true); }), [run]);
 
-  // Course purchases happen on the website (opened in an external browser), so
+  // Purchases and refunds may happen on another device, so
   // when the user returns to the app we silently re-pull owned courses — the
   // just-bought course then appears in "Мои курсы" without a manual refresh.
   useEffect(() => {

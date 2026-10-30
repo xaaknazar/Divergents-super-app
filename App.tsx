@@ -11,6 +11,7 @@ import { useFonts } from 'expo-font';
 import { RootNavigator } from './src/navigation';
 import { navigationRef } from './src/navigation/ref';
 import { CourseProvider } from './src/state/CourseContext';
+import { CoursePurchasesProvider } from './src/state/CoursePurchasesContext';
 import { ChallengeProvider } from './src/state/ChallengeContext';
 import { CareerProvider } from './src/state/CareerContext';
 import { EnrollmentProvider } from './src/state/EnrollmentContext';
@@ -124,7 +125,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
   const { userId } = useAuth();
   return (
     <React.Fragment key={userId ?? 'anon'}>
-      <CourseProvider>
+      <CoursePurchasesProvider><CourseProvider>
         <ChallengeProvider>
           <ActivityProvider>
           <FitnessProvider>
@@ -149,7 +150,7 @@ function UserScopedProviders({ children }: { children: React.ReactNode }) {
           </FitnessProvider>
           </ActivityProvider>
         </ChallengeProvider>
-      </CourseProvider>
+      </CourseProvider></CoursePurchasesProvider>
     </React.Fragment>
   );
 }

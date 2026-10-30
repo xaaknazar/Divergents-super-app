@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Share } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { Share } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { useLang, tr } from '../../state/LanguageContext';
 import { useCourses } from '../../state/CourseContext';
 import { useMyCourses } from '../../state/useMyCourses';
-import { useRole } from '../../state/useRole';
-import { stripHtml, API_BASE, formatPrice, startCoursePayment } from '../../data/api';
+import { useCoursePurchases } from '../../state/CoursePurchasesContext';
+import { stripHtml, API_BASE } from '../../data/api';
 import { LMSStackParams } from '../../navigation/types';
 import { DetailScreen } from '../../components/DetailScreen';
 import { HeaderIcon } from '../../components/HeaderIcon';
@@ -22,6 +22,7 @@ import { CourseIncludes } from '../../components/CourseIncludes';
 import { LessonRow } from '../../components/LessonRow';
 import { ContentLoading } from '../../components/ContentLoading';
 import { EmptyState, ErrorState } from '../../components/StateViews';
+import { CoursePurchasePanel } from '../../components/CoursePurchasePanel';
 import { lessonsWord } from '../../components/CourseCardPremium';
 
 type Props = NativeStackScreenProps<LMSStackParams, 'CourseDetail'>;
@@ -33,8 +34,9 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   const course = getCourse(courseId);
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
-  const { feature } = useRole();
-  const [buying, setBuying] = useState(false);
+  const store = useCoursePurchases();
+  const mapping = store.catalog.products.find(p => p.courseId === courseId);
+  const product = mapping ? store.products.find(p => p.id === mapping.productId) : undefined;
 
   useEffect(() => {
     if (!course || course.source === 'mock') return;
@@ -78,40 +80,29 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   const retryDetail = async () => { const token = isSignedIn ? await getToken() : null; await loadDetail(courseId, token); };
   const gifted = course.gifted === true;
   const price = course.price ?? 0;
-  const canBuy = !owned && feature('purchases') && !gifted && price > 0;
+  const canBuy = !owned && store.catalog.enabled && !!product && !gifted && price > 0;
   const freeLesson = course.lessons.find(lesson => lesson.isFree);
   const openLesson = (lessonId: string) => navigation.navigate('Video', { courseId, lessonId });
 
   const buy = async () => {
-    if (buying) return;
-    setBuying(true);
-    try {
-      const token = await getToken();
-      const { status } = await startCoursePayment(courseId, token);
-      if (status === 'success') await onPurchased();
-      else if (status === 'fail') {
-        Alert.alert(tr('Оплата не прошла'), tr('Платёж отклонён. Попробуйте ещё раз или другой картой.'));
-      }
-    } catch {
-      Alert.alert(tr('Не удалось открыть оплату'), tr('Проверьте подключение и попробуйте снова.'));
-    } finally {
-      setBuying(false);
-    }
+    if (await store.buy(courseId)) await onPurchased();
   };
 
 
   return <DetailScreen onBack={goBack} backLabel="Обучение" actions={<>
     {owned ? <HeaderIcon name="arrow.down.circle" label="Загрузки" onPress={() => navigation.navigate('Downloads')} /> : null}
     <HeaderIcon name="square.and.arrow.up" label="Поделиться" onPress={() => { Share.share({ message: course.title + ' — Divergents\n' + API_BASE + '/courses/' + courseId }); }} />
-  </>} footer={!owned && (canBuy || freeLesson) ? <BottomBar>
-    {canBuy ? <Button label={tr('Купить курс') + ' · ' + formatPrice(price)} icon="creditcard.fill" loading={buying} onPress={buy} /> : null}
+  </>} footer={!owned && (canBuy || freeLesson || (store.available && store.catalog.accountToken)) ? <BottomBar>
+    {store.available && store.catalog.accountToken ? <CoursePurchasePanel priceLabel={canBuy ? product?.displayPrice : undefined}
+      phase={store.phase} message={store.message} canRestore onBuy={buy}
+      onRestore={async () => { await store.restore(); await onPurchased(); }} /> : null}
     {freeLesson ? <Button label={tr('Смотреть бесплатный урок')} icon="play.fill" onPress={() => openLesson(freeLesson.id)} variant={canBuy ? 'plain' : 'solid'} /> : null}
   </BottomBar> : undefined}>
     <Wrapper padding={16} gap={20}>
       <CourseOverview course={course} accessible={owned} />
       {owned ? course.lessons.length > 0 ? <CourseProgressCard progress={p} completed={allDone} lesson={currentLesson}
         onStart={currentLesson ? () => openLesson(currentLesson.id) : undefined} /> : null
-        : <CourseAccessCard gifted={gifted} canBuy={canBuy} price={price} />}
+        : <CourseAccessCard gifted={gifted} canBuy={canBuy} price={price} priceLabel={product?.displayPrice} />}
       {!owned && stripHtml(course.description) ? <TextSection title={tr('О курсе')} text={stripHtml(course.description)} /> : null}
       {!owned ? <CourseIncludes lessonCount={course.chaptersCount ?? course.lessons.length} hasMaterials={(course.attachments?.length ?? 0) > 0} /> : null}
       {chaptersLoading ? <ContentLoading /> : detailError[courseId] && course.lessons.length === 0 ?
