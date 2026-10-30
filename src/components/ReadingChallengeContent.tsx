@@ -101,7 +101,8 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const standing = readingStandings(d.ranking).find(s => s.member.userId === member.userId);
   const pagesStanding = readingStandings(d.ranking, 'pages').find(s => s.member.userId === member.userId);
   const book = p.book;
-  const bookReady = READING_REQUIRE_VERIFIED_BOOK ? !!book.verified : book.title.trim().length >= 2;
+  const selectedBookArchived = p.library?.books.some(saved => saved.key === book.verified?.key && saved.finished);
+  const bookReady = !selectedBookArchived && (READING_REQUIRE_VERIFIED_BOOK ? !!book.verified : book.title.trim().length >= 2);
   const startBook = book.verified ?? { title: book.title.trim(), author: book.author.trim() };
   const previousBook = (d.todayBooks ?? []).find(saved => saved.key === book.verified?.key)
     ?? p.library?.books.find(saved => saved.key === book.verified?.key);

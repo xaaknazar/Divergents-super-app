@@ -13,6 +13,7 @@ export function ReadingHistoryScreen({ route, navigation }: NativeStackScreenPro
   return <Screen topInset={false} onRefresh={state.retry}>
     <NavHeader title="История чтения" onBack={() => navigation.goBack()} />
     {state.error ? <Wrapper padding={16}><InlineNotice message={state.error} onRetry={state.retry} /></Wrapper> : null}
-    {state.data ? <ReadingHistoryContent data={state.data} busy={state.busy} onStatus={state.markBook} /> : !state.error ? <ContentLoading /> : null}
+    {state.data ? <ReadingHistoryContent key={`${route.params.challengeId}:${route.params.readerId}`} data={state.data}
+      busy={state.busy} updatingBookKey={state.updatingBookKey} onStatus={state.markBook} /> : !state.error ? <ContentLoading /> : null}
   </Screen>;
 }

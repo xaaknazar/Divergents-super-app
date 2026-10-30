@@ -12,4 +12,7 @@ export const Light: Story = {};
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
 export const Finished: Story = { args: { book: { ...historyBookFixture, finished: true } } };
+export const Returning: Story = { args: { book: { ...historyBookFixture, finished: true }, busy: true, updating: true } };
+export const NoApproaches: Story = { args: { book: { ...historyBookFixture, lastReadAt: null, addedAt: '2026-10-29T10:00:00Z',
+  pages: 0, elapsedMs: 0, nextPage: null } } };
 export const Spectator: Story = { args: { book: { ...historyBookFixture, editable: false }, onStatus: undefined } };

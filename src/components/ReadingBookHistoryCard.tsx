@@ -1,14 +1,14 @@
 import React from 'react';
 import { Image, Text } from 'react-native';
-import { ReadingHistory } from '../data/readingBooks';
+import { ReadingHistory, ReadingShelfBook } from '../data/readingBooks';
 import { useTheme } from '../theme/ThemeContext';
 import { ContentBlock } from './ContentBlock';
 import { Wrapper } from './Wrapper';
 import { StatusBadge } from './StatusBadge';
 import { Button } from './Button';
 import { fmtDate, fmtInt } from '../data/format';
-export function ReadingBookHistoryCard({ book, busy, onStatus }: {
-  book: ReadingHistory['books'][number]; busy: boolean; onStatus?: (finished: boolean) => void;
+export function ReadingBookHistoryCard({ book, busy, updating = false, onStatus }: {
+  book: ReadingHistory['books'][number] | ReadingShelfBook; busy: boolean; updating?: boolean; onStatus?: (finished: boolean) => void;
 }) {
   const { T, ty } = useTheme();
   return <ContentBlock><Wrapper gap={14}>
@@ -22,8 +22,12 @@ export function ReadingBookHistoryCard({ book, busy, onStatus }: {
       </Wrapper>
     </Wrapper>
     <Text style={[ty.subheadEm, { color: T.label }]}>{fmtInt(book.pages)} стр. · {Math.floor(book.elapsedMs / 60000)} мин чтения</Text>
-    {book.nextPage != null ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>Продолжить со страницы {book.nextPage}</Text> : null}
-    <Text style={[ty.footnote, { color: T.labelSecondary }]}>Последнее чтение: {fmtDate(book.lastReadAt, { timeZone: 'Asia/Almaty' })}</Text>
-    {onStatus && book.editable ? <Button label={book.finished ? 'Вернуть в чтение' : 'Отметить книгу прочитанной'} variant="tinted" disabled={busy} onPress={() => onStatus(!book.finished)} /> : null}
+    {!book.finished && book.nextPage != null ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>Продолжить со страницы {book.nextPage}</Text> : null}
+    <Text style={[ty.footnote, { color: T.labelSecondary }]}>{book.lastReadAt
+      ? `Последнее чтение: ${fmtDate(book.lastReadAt, { timeZone: 'Asia/Almaty' })}` : 'Пока нет сохранённых подходов'}</Text>
+    {onStatus && book.editable ? <Button label={book.finished ? 'Вернуть в чтение' : 'Отметить книгу прочитанной'} variant="tinted"
+      loading={updating} disabled={busy && !updating}
+      accessibilityHint={book.finished ? 'Книга снова появится под таймером. Сохранённые страницы и время останутся.' : 'Переместить книгу в «Прочитано», сохранив все страницы и время'}
+      onPress={() => onStatus(!book.finished)} /> : null}
   </Wrapper></ContentBlock>;
 }

@@ -199,7 +199,7 @@ describe('clean layout', () => {
   });
 });
 
-test('a finished book leaves «Что читаете»: it is marked after a confirmation and can be returned', async () => {
+test('a finished book leaves «Что читаете» completely, and the confirmation explains where to find it', async () => {
   const { Alert } = require('react-native');
   const alert = jest.spyOn(Alert, 'alert').mockImplementation((...args: unknown[]) => (args[2] as any[] | undefined)?.find(b => b.text === 'Прочитана')?.onPress?.());
   const setFinished = jest.fn(async () => true);
@@ -208,15 +208,35 @@ test('a finished book leaves «Что читаете»: it is marked after a con
   // The finished book is not offered for the next approach.
   expect(v.queryByRole('button', { name: /Читать «Пять уровней лидерства»/ })).toBeNull();
   await fireEvent.press(v.getByRole('button', { name: 'Дочитал(а) эту книгу' }));
-  expect(alert.mock.calls[0][1]).toMatch(/Моих книгах/);
+  expect(alert.mock.calls[0][1]).toMatch(/Мои книги и история.*Прочитано/);
   expect(setFinished).toHaveBeenCalledWith(readingBookExample.key, true);
-  await fireEvent.press(v.getByRole('button', { name: 'Прочитанные книги: 1' }));
-  await fireEvent.press(v.getByRole('button', { name: 'Вернуть' }));
-  expect(setFinished).toHaveBeenLastCalledWith(second.key, false);
+  expect(v.queryByText(second.title)).toBeNull();
+  expect(v.queryByRole('button', { name: /Прочитанные книги/ })).toBeNull();
+  expect(v.queryByRole('button', { name: /^Вернуть/ })).toBeNull();
   // An approach in progress keeps its book: no «finished» action while selection is locked.
   await v.rerender(<ThemePreviewProvider><ReadingBookshelf library={lib} selectedKey={readingBookExample.key} selectionLocked /></ThemePreviewProvider>);
   expect(v.queryByRole('button', { name: 'Дочитал(а) эту книгу' })).toBeNull();
   alert.mockRestore();
+});
+
+test('after the final book is archived the empty shelf explains how to find it', async () => {
+  const lib = { ...library(), books: [{ ...readingBookExample, finished: true }, { ...second, finished: true }] };
+  const v = await render(<ThemePreviewProvider><ReadingBookshelf library={lib} composer={shelfComposer(async () => true)} /></ThemePreviewProvider>);
+  expect(v.getByText(/Все книги прочитаны.*Мои книги и история/)).toBeTruthy();
+  expect(v.getByRole('button', { name: 'Добавить книгу' })).toBeEnabled();
+  expect(v.queryByText(second.title)).toBeNull();
+  expect(v.queryByText(readingBookExample.title)).toBeNull();
+});
+
+test('a book archived from history cannot silently start a new approach with the old selection', async () => {
+  const p = props();
+  p.library = { ...p.library!, books: [{ ...readingBookExample, finished: true }, second] };
+  const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  const start = v.getByRole('button', { name: 'Новый подход' });
+  expect(start).toBeDisabled();
+  await fireEvent.press(start);
+  expect(p.onStart).not.toHaveBeenCalled();
+  expect(v.getByRole('button', { name: /Читать «Пять уровней лидерства»/ })).toBeEnabled();
 });
 
 describe('book chosen after the timer stopped', () => {

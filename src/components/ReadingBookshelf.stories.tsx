@@ -14,6 +14,9 @@ export const Default: Story = {};
 export const CurrentApproachLocked: Story = { args: { selectionLocked: true } };
 export const Loading: Story = { args: { library: { ...library, books: [], busy: true } } };
 export const Empty: Story = { args: { library: { ...library, books: [] } } };
+export const FinishedBooksHidden: Story = { args: { library: { ...library, books: [...library.books,
+  { ...readingBookExample, key: 'finished', title: 'Netflix. Инсайдерская история компании, завоевавшей мир', finished: true }] } } };
+export const AllFinished: Story = { args: { library: { ...library, books: library.books.map(book => ({ ...book, finished: true })) } } };
 export const OlderServer: Story = { args: { composer: { ...composer, supported: false } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
