@@ -96,6 +96,27 @@ test('«Старт» in airplane mode starts the timer on the phone and queues t
   expect(h.result.current.timerState).toBe('running');
 });
 
+test('Moderate offline launch sends its participation identity and uses a 30-minute native target', async () => {
+  mockDisk[cacheKey] = { ...cached, level: 'moderate', targetMs: 1_800_000, participationId: 'moderate-participation' };
+  const h = await openOffline();
+  await act(async () => { await h.result.current.start('Книга'); });
+  expect(h.result.current.error).toBeUndefined();
+  expect(jest.mocked(readingNative.start).mock.calls[0][5]).toBe(1_800_000);
+  expect(queued()[0]).toMatchObject({ participationId: 'moderate-participation', challengeId: 'reading-demo' });
+});
+
+test('a cached annual membership cannot start offline past its anniversary', async () => {
+  const endsAt = Date.now() - 60_000;
+  mockDisk[cacheKey] = { ...cached, me: { ...cached.me!, period: {
+    startsAt: endsAt - 365 * DAY, endsAt, personalDay: 365, totalDays: 365, completed: false,
+  } } };
+  const h = await openOffline();
+  await act(async () => { await h.result.current.start('Книга'); });
+  expect(readingNative.start).not.toHaveBeenCalled();
+  expect(queued()).toHaveLength(0);
+  expect(h.result.current.data?.me?.period?.completed).toBe(true);
+});
+
 test('cold offline entry goes from the saved community catalog to the real timer and queues its start', async () => {
   await readingCatalogCache.reset();
   mockDisk[READING_CATALOG_CACHE_KEY] = [[readingCatalogKey('demo-reader'), { updatedAt: Date.now() - 2 * 86400000,

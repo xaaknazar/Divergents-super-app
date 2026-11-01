@@ -1,3 +1,4 @@
+import { ReadingModeIcon } from './ReadingModeIcon';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import type { ReadingCatalogItem } from '../data/reading';
@@ -7,7 +8,6 @@ import { useTheme } from '../theme/ThemeContext';
 import { radius, shadows } from '../theme/tokens';
 import { SF } from './SFIcon';
 import { ReadingCardStyle } from '../data/readingAppearance';
-import { ReadingBookIllustration } from './ReadingBookIllustration';
 import { Wrapper } from './Wrapper';
 
 /** A complete catalog card, not a styleable shell. Placement belongs to Shelf.
@@ -25,17 +25,17 @@ export function ReadingChallengeCard({ challenge: c, onPress, variant = 'feature
   const dot = c.phase === 'finished' ? T.labelTertiary : c.phase === 'upcoming' ? T.brandAccent : T.greenText;
   const note = c.membership === 'approved' ? 'Вы участвуете' : null;
   // Индивидуальный зачёт: без команд и заявок — вступление сразу, после согласия с правилами.
-  const action = c.phase === 'finished' ? 'Смотреть итоги' : c.membership === 'approved' ? c.phase === 'active' ? 'Продолжить чтение' : 'Вы участвуете'
+  const action = c.period?.completed ? 'Итоги года' : c.phase === 'finished' ? 'Смотреть итоги' : c.membership === 'approved' ? c.phase === 'active' ? 'Продолжить чтение' : 'Вы участвуете'
     : c.phase === 'active' && c.mode !== 'continuous' ? 'Смотреть рейтинг' : 'Присоединиться';
   const period = c.mode === 'continuous' ? null : days(c.durationDays);
-  const goal = `60 минут в день${period ? ` · ${period}` : ''}`;
+  const goal = `${(c.targetMs ?? 3_600_000) / 60000} минут в день${period ? ` · ${period}` : ''}`;
   return <View style={[styles.lift, isDark ? null : shadows.tappable]}>
     <Pressable onPress={onPress} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
       onLayout={event => setCardWidth(Math.round(event.nativeEvent.layout.width))}
       accessibilityRole="button" accessibilityLabel={`${c.title}. ${status}${note ? `. ${note}` : ''}. ${goal}. ${action}`}
       style={({ pressed }) => [styles.card, { backgroundColor: T.cardBg, borderColor: focused ? T.brandText : T.cardBorder, opacity: pressed ? 0.8 : 1 }]}>
       {compact ? <View style={styles.compactRow}>
-        <ReadingBookIllustration placement="thumb" />
+        <ReadingModeIcon level={c.level ?? 'extreme'} />
         <View style={styles.copy}>
           <Text numberOfLines={stacked ? undefined : 1} style={[ty.caption1, { color: T.labelSecondary }]}>Reading challenge · {goal}</Text>
           <Text numberOfLines={stacked ? undefined : 2} style={[ty.headline, { color: T.label }]}>{c.title}</Text>
@@ -45,7 +45,7 @@ export function ReadingChallengeCard({ challenge: c, onPress, variant = 'feature
       </View> : <>
         <Wrapper testID="reading-paper-composition" dir={stacked ? 'column' : 'row'} gap={12} align={stacked ? 'stretch' : 'center'}
           paddingHorizontal={16} paddingTop={16}>
-          {stacked ? <Wrapper align="flex-end"><ReadingBookIllustration placement="card" /></Wrapper> : null}
+          {stacked ? <Wrapper align="flex-end"><ReadingModeIcon level={c.level ?? 'extreme'} /></Wrapper> : null}
           <Wrapper flex={stacked ? undefined : 1} gap={4}>
             <Text style={[ty.footnote, { color: T.labelSecondary }]}>{goal}</Text>
             <Text numberOfLines={stacked ? undefined : 2} style={[ty.title3, { color: T.label }]}>{c.title}</Text>
@@ -56,7 +56,7 @@ export function ReadingChallengeCard({ challenge: c, onPress, variant = 'feature
               </Text>
             </View>
           </Wrapper>
-          {!stacked ? <ReadingBookIllustration placement="card" /> : null}
+          {!stacked ? <ReadingModeIcon level={c.level ?? 'extreme'} /> : null}
         </Wrapper>
         <View style={[styles.footer, { borderTopColor: T.separator }]}>
           <Text style={[ty.subheadEm, styles.shrink, { color: T.brandText }]}>{action}</Text>

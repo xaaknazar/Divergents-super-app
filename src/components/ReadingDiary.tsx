@@ -8,12 +8,13 @@ import { StatusBadge } from './StatusBadge';
 import { Button } from './Button';
 
 // Keep old cached histories readable without inventing a completed hour or flag.
-const STATE = { complete: 'Час выполнен', missed: 'Красный флаг', review: 'Записанные данные', open: 'Идёт', future: 'Впереди', excluded: 'Участие завершено' } as const;
+const STATE = { complete: 'Норма выполнена', missed: 'Красный флаг', review: 'Записанные данные', open: 'Идёт', future: 'Впереди', excluded: 'Участие завершено' } as const;
 
 /** Дневник чтения по личным дням: «День N» с дня вступления, минуты, страницы, флаг дня. */
 export function ReadingDiary({ member }: { member: NonNullable<ReadingDetail['me']> }) {
   const { T, ty } = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const targetMs = member.targetMs ?? 3_600_000;
   const days = member.history.filter(h => h.state !== 'future').reverse();
   const visible = expanded ? days : days.slice(0, 3);
   if (!days.length) return null;
@@ -25,7 +26,7 @@ export function ReadingDiary({ member }: { member: NonNullable<ReadingDetail['me
         <StatusBadge label={h.state === 'missed' && h.flagForgivenOn ? 'Флаг снят' : STATE[h.state]} size="compact" icon={h.state === 'missed' ? 'flag.fill' : undefined}
           tone={h.flagForgivenOn ? 'neutral' : h.state === 'complete' ? 'success' : h.state === 'missed' ? 'danger' : 'neutral'} />
       </View>
-      <Text style={[ty.subhead, nums, { color: T.labelSecondary }]}>{Math.floor(h.elapsedMs / 60000)} мин · {h.pages} стр.{h.elapsedMs > 3600000 ? ` · +${Math.floor((h.elapsedMs - 3600000) / 60000)} мин сверх часа` : ''}</Text>
+      <Text style={[ty.subhead, nums, { color: T.labelSecondary }]}>{Math.floor(h.elapsedMs / 60000)} мин · {h.pages} стр.{h.elapsedMs > targetMs ? ` · +${Math.floor((h.elapsedMs - targetMs) / 60000)} мин сверх нормы` : ''}</Text>
       {h.flagForgivenOn ? <Text style={[ty.subhead, { color: T.labelSecondary }]}>Снят за серию чтения в день {h.flagForgivenOn - (member.firstDay ?? 1) + 1}. Пропуск остался в истории.</Text> : null}
       {h.flagForgivenForDay ? <Text style={[ty.subheadEm, { color: T.greenText }]}>За серию чтения снят флаг за день {h.flagForgivenForDay - (member.firstDay ?? 1) + 1}.</Text> : null}
     </View>)}

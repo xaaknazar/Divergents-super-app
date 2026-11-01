@@ -81,7 +81,7 @@ test('today warns in red only when the day is running out, until the hour is don
   expect(view.getByText('22,3 стр/день')).toBeTruthy();
   expect(view.getByText('средний темп')).toBeTruthy();
   await view.rerender(<ThemePreviewProvider><ReadingChallengeContent {...p} data={withToday(61 * 60000, 'complete')} timerState="complete" /></ThemePreviewProvider>);
-  expect(view.getByText('Час выполнен — сегодня без флага')).toBeTruthy();
+  expect(view.getByText('Норма выполнена — сегодня без флага')).toBeTruthy();
 });
 test('a foreign session cannot show or pause someone else’s timer', async () => {
   const p = { ...props(), sessionNotice: { kind: 'other-account' as const, message: 'Сеанс другого аккаунта сохранён отдельно.' }, startBlocked: true };
@@ -239,7 +239,7 @@ test('strict mode requests authorization without an application picker', async (
 });
 test('overtime counts up and shows a completed ring instead of resetting the hour', async () => {
   const view = await render(<ThemePreviewProvider><ReadingTimer remainingMs={-925000} state="running" /></ThemePreviewProvider>);
-  expect(view.getByText('+15:25')).toBeTruthy(); expect(view.getByText('Час выполнен')).toBeTruthy();
+  expect(view.getByText('+15:25')).toBeTruthy(); expect(view.getByText('Норма выполнена')).toBeTruthy();
 });
 test.each(['paused', 'recording', 'saving'] as const)('%s keeps the frozen overtime value visible', async state => {
   const view = await render(<ThemePreviewProvider><ReadingTimer remainingMs={-925000} state={state} /></ThemePreviewProvider>);

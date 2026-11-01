@@ -1,0 +1,10 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingModeIcon } from './ReadingModeIcon';
+import { readingYearHistoryFixture } from '../storybook/readingFixtures';
+const meta = { title: 'Reading/Year/ReadingModeIcon', component: ReadingModeIcon, args: { level: 'extreme' } } satisfies Meta<typeof ReadingModeIcon>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+export const Moderate: Story = { args: { level: 'moderate' } };

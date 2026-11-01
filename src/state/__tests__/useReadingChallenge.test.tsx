@@ -908,3 +908,52 @@ describe('start recovery and responsiveness', () => {
     expect(readingNative.start).toHaveBeenCalledTimes(1);
   });
 });
+
+test('leave pauses locally and only clears evidence after the server confirms reset', async () => {
+  const participationId = '10de0677-6bf7-44ef-a301-94c98d9c35d2';
+  const d = { ...server, supportsLeave: true, participationId };
+  fetchDetail.mockResolvedValue(d);
+  const running = { ...local, status: 'running' as const, resumeVersion: 1 as const, terminal: false };
+  jest.mocked(readingNative.snapshot).mockResolvedValue(running);
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  send.mockImplementation(async (_token, command) => {
+    if (command.action === 'leave') {
+      expect(readingNative.pause).toHaveBeenCalled();
+      expect(readingNative.acknowledge).not.toHaveBeenCalled();
+      fetchDetail.mockResolvedValue({ ...d, membership: null, me: null, session: null });
+      jest.mocked(readingNative.snapshot).mockResolvedValue(null);
+    }
+    return { ok: true };
+  });
+  await act(async () => { await h.result.current.leave(); });
+  expect(send).toHaveBeenCalledWith('token', expect.objectContaining({ action: 'leave', participationId, confirmReset: true }));
+  expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 's1');
+  expect(h.result.current.data?.me).toBeNull();
+});
+test('lost leave response preserves evidence and repeats the same destructive operation identity', async () => {
+  fetchDetail.mockResolvedValue({ ...server, supportsLeave: true, participationId: '10de0677-6bf7-44ef-a301-94c98d9c35d2' });
+  jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, status: 'running', resumeVersion: 1, terminal: false });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  send.mockRejectedValue(new Error('offline'));
+  await act(async () => { await h.result.current.leave(); });
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+  expect(h.result.current.data?.membership).toBe('approved');
+  await act(async () => { await h.result.current.leave(); });
+  const leaves = send.mock.calls.filter(c => c[1].action === 'leave');
+  expect(leaves).toHaveLength(2); expect(leaves[0][1]).toEqual(leaves[1][1]);
+});
+test('new participation on another device releases only this challenge old native session', async () => {
+  const d = { ...server, supportsLeave: true, participationId: 'old' };
+  fetchDetail.mockResolvedValue(d);
+  jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, status: 'running', resumeVersion: 1, terminal: false });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  fetchDetail.mockResolvedValue({ ...readingFixture, supportsLeave: true, participationId: 'new' });
+  jest.mocked(readingNative.acknowledge).mockImplementation(async () => { jest.mocked(readingNative.snapshot).mockResolvedValue(null); });
+  await act(async () => { await h.result.current.retry(); });
+  expect(readingNative.pause).toHaveBeenCalled();
+  expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 's1');
+  expect(h.result.current.data?.participationId).toBe('new');
+});

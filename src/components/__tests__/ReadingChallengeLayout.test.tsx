@@ -146,7 +146,7 @@ test.each(['ready', 'unavailable'] as const)('pending pages lead the screen even
 test('overtime reminder pauses, never silently finishes or credits pages', async () => {
   const p = props(); p.timerState = 'running'; p.remainingMs = -1000; p.data = { ...p.data, session };
   const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
-  expect(view.getByText('Час прочитан. Запишите страницы')).toBeTruthy();
+  expect(view.getByText('Норма выполнена. Запишите страницы')).toBeTruthy();
   await fireEvent.press(view.getByRole('button', { name: 'Записать страницы' }));
   expect(p.onPause).toHaveBeenCalledTimes(1);
   expect(p.onReport).not.toHaveBeenCalled(); expect(p.onSaveApproach).not.toHaveBeenCalled();

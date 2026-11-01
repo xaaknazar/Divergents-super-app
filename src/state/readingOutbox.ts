@@ -67,13 +67,20 @@ export class ReadingOutbox {
       }
     });
   }
+  discardChallenge(challengeId: string) {
+    return this.serialize(async () => {
+      const q = await this.queue();
+      await this.deps.write({ ...q, commands: q.commands.filter(c => c.challengeId !== challengeId) });
+    });
+  }
   private acknowledge(command: ReadingCommand) {
     return this.serialize(async () => {
       // Re-read after the response: pages or another account's operations may
       // have been saved while the request was in flight. Never overwrite them.
       const q = await this.queue();
       const existing = q.commands.find(c => c.operationId === command.operationId);
-      if (!existing || JSON.stringify(existing) !== JSON.stringify(command)) throw new Error('Конфликт сохранённого действия');
+      if (!existing) return; // A confirmed leave can discard an upload while its response is in flight.
+      if (JSON.stringify(existing) !== JSON.stringify(command)) throw new Error('Конфликт сохранённого действия');
       await this.deps.write({ ...q, commands: q.commands.filter(c => c.operationId !== command.operationId) });
     });
   }
@@ -114,7 +121,7 @@ export class ReadingOutbox {
           // Transport errors, 401 and 5xx keep everything for a retry. A definitive refusal never
           // blocks the queue: user actions are shown as errors, approaches as visible records.
           if (!(error instanceof ReadingApiError) || ![400, 403, 404, 409].includes(error.status) || !this.deps.isCurrentAccount()) throw error;
-          if (['apply', 'review', 'resolve'].includes(command.action)) { await this.acknowledge(command); throw error; }
+          if (['join', 'apply', 'review', 'resolve'].includes(command.action)) { await this.acknowledge(command); throw error; }
           // Only the reading API's own refusal (it always names a code) is final for an approach. A 400/403/404
           // from a proxy, firewall or misrouted deploy carries no code: keep everything and retry.
           if (!error.code) throw error;

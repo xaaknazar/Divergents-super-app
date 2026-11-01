@@ -74,12 +74,12 @@ test('paper card is neutral, keeps its text scalable, and stacks its illustratio
   expect(StyleSheet.flatten(card.props.style).backgroundColor).toBe(lightTheme.cardBg);
   await fireEvent(card, 'layout', { nativeEvent: { layout: { width: 358 } } });
   expect(StyleSheet.flatten(v.getByTestId('reading-paper-composition').props.style).flexDirection).toBe('row');
-  expect(v.getByTestId('reading-book-illustration-card', { includeHiddenElements: true })).toBeTruthy();
+  expect(v.getByTestId('reading-mode-extreme', { includeHiddenElements: true })).toBeTruthy();
   // Компактная карточка: название — не больше двух строк, пока есть место рядом с книгой.
   expect(v.getByText(readingFixture.title).props.numberOfLines).toBe(2);
   await fireEvent(card, 'layout', { nativeEvent: { layout: { width: 280 } } });
   expect(StyleSheet.flatten(v.getByTestId('reading-paper-composition').props.style).flexDirection).toBe('column');
-  expect(v.getByTestId('reading-book-illustration-card', { includeHiddenElements: true })).toBeTruthy();
+  expect(v.getByTestId('reading-mode-extreme', { includeHiddenElements: true })).toBeTruthy();
   expect(v.getByText(readingFixture.title).props.numberOfLines).toBeUndefined();
   expect(v.getByText(readingFixture.title).props.allowFontScaling).not.toBe(false);
   await v.rerender(<ThemePreviewProvider textSize="xl"><ReadingChallengeCard challenge={readingFixture} onPress={jest.fn()} /></ThemePreviewProvider>);

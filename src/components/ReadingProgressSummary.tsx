@@ -9,7 +9,7 @@ import { ReadingTodayBooks } from './ReadingTodayBooks';
 import { ReadingFlagRecovery } from './ReadingFlagRecovery';
 import { SF } from './SFIcon';
 
-const GOAL_MINUTES = 60;
+
 /** Красным строка становится, только когда до конца дня остаётся меньше двух часов запаса. */
 const URGENT_SLACK_MS = 2 * 3_600_000;
 const durationOf = (ms: number) => {
@@ -21,8 +21,8 @@ const durationOf = (ms: number) => {
  * часы), книги за день; ниже «За весь челлендж» — сетка 2×2 — средний темп
  * в страницах, дни чтения, красные флаги, страницы всего. Оба показателя доступны в рейтинге.
  * Без `todayMs` — только сетка (история). */
-export function ReadingProgressSummary({ member, todayMs, dayLeftMs, books }: {
-  member: NonNullable<ReadingDetail['me']>; todayMs?: number; books?: ReadingBookSummary[];
+export function ReadingProgressSummary({ member, todayMs, dayLeftMs, books, targetMinutes = 60 }: {
+  member: NonNullable<ReadingDetail['me']>; targetMinutes?: number; todayMs?: number; books?: ReadingBookSummary[];
   /** Сколько осталось до конца дня по серверу. Без него строка нейтральная, без отсчёта. */
   dayLeftMs?: number;
 }) {
@@ -31,10 +31,10 @@ export function ReadingProgressSummary({ member, todayMs, dayLeftMs, books }: {
   const [cardWidth, setCardWidth] = useState(width - 32);
   const single = fontScale * textScale > 1.3 || cardWidth < 300;
   const minutes = todayMs !== undefined ? Math.floor(todayMs / 60000) : 0;
-  const left = Math.max(0, GOAL_MINUTES - minutes);
+  const left = Math.max(0, targetMinutes - minutes);
   // Утром «иначе красный флаг» только пугает: красный — когда запаса до полуночи мало.
   const urgent = left > 0 && dayLeftMs !== undefined && dayLeftMs - left * 60000 < URGENT_SLACK_MS;
-  const deadline = !left ? { text: 'Час выполнен — сегодня без флага', tone: T.greenText, icon: 'checkmark.circle.fill' }
+  const deadline = !left ? { text: 'Норма выполнена — сегодня без флага', tone: T.greenText, icon: 'checkmark.circle.fill' }
     : urgent ? { text: `До 00:00 — ${durationOf(dayLeftMs!)}. Нужно ещё ${left} мин, иначе красный флаг`, tone: T.redText, icon: 'flag.fill' }
     : { text: dayLeftMs !== undefined ? `Ещё ${left} мин чтения · до 00:00 ${durationOf(dayLeftMs)}` : `Ещё ${left} мин чтения до 00:00`, tone: T.labelSecondary, icon: 'clock' };
   const readingDays = readingDaysOf(member);
@@ -50,12 +50,12 @@ export function ReadingProgressSummary({ member, todayMs, dayLeftMs, books }: {
     {todayMs !== undefined ? <>
       <View style={styles.todayRow}>
         <Text accessibilityRole="header" style={[ty.headline, { color: T.label }]}>Сегодня</Text>
-        <Text accessibilityLabel={`Сегодня ${minutes} из ${GOAL_MINUTES} минут`} style={[ty.title2, nums, { color: T.label }]}>
-          {minutes}<Text style={[ty.callout, nums, { color: T.labelSecondary }]}> / {GOAL_MINUTES} мин</Text>
+        <Text accessibilityLabel={`Сегодня ${minutes} из ${targetMinutes} минут`} style={[ty.title2, nums, { color: T.label }]}>
+          {minutes}<Text style={[ty.callout, nums, { color: T.labelSecondary }]}> / {targetMinutes} мин</Text>
         </Text>
       </View>
       <View accessible={false} style={[styles.track, { backgroundColor: T.fillTertiary }]}>
-        <View style={[styles.fill, { width: `${Math.min(1, minutes / GOAL_MINUTES) * 100}%`, backgroundColor: left ? T.brandText : T.greenText }]} />
+        <View style={[styles.fill, { width: `${Math.min(1, minutes / targetMinutes) * 100}%`, backgroundColor: left ? T.brandText : T.greenText }]} />
       </View>
       <View style={styles.deadline}>
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name={deadline.icon} size={14} color={deadline.tone} /></View>

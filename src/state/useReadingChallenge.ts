@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Crypto from 'expo-crypto';
-import { fetchReadingDetail, ReadingApiError, ReadingCommand, ReadingDetail, ReadingDetailSchema, ReadingReportBook, sendReadingCommand } from '../data/reading';
+import { readingGoalMs, fetchReadingDetail, ReadingApiError, ReadingCommand, ReadingDetail, ReadingDetailSchema, ReadingReportBook, sendReadingCommand } from '../data/reading';
 import { loadJSON, readJSON, saveJSON } from './persist';
 import { readingNative, NativeReadingSession, ReadingCapabilities, ReadingLiveActivityStatus, isLegacyReadingQASession } from './readingNative';
 import { ReadingOutbox, ReadingQueue, READING_OUTBOX_KEY, readingErrorMessage, hasPendingReadingClose } from './readingOutbox';
@@ -74,7 +74,7 @@ function targetRemaining(data: ReadingDetail | null, local: NativeReadingSession
   const saved = data?.me?.history.find(d => d.day === data.session?.day)?.elapsedMs ?? 0;
   // A native session captures its goal at start. Later server history must not
   // double-count a reported segment or change the paused display.
-  return (local.targetMs ?? 3_600_000 - saved) - (local.budgetMs - remainingBudget);
+  return (local.targetMs ?? readingGoalMs(data) - saved) - (local.budgetMs - remainingBudget);
 }
 function localRemaining(local: NativeReadingSession): Promise<number> {
   if (local.measuredElapsedMs != null) return Promise.resolve(Math.max(0, local.budgetMs - local.measuredElapsedMs));
@@ -305,6 +305,18 @@ export function useReadingChallenge(challengeId: string) {
     const result = await withDeadline(fetchReadingDetail(value, challengeId, nonce), deadlineMs);
     if (!current()) return null;
     if (result.id !== challengeId) throw new Error('Сервер вернул другой челлендж. Повторите обновление.');
+    const previous = serverDetailRef.current;
+    if (previous?.supportsLeave && previous.participationId && (result.participationId !== previous.participationId || result.membership !== 'approved')) {
+      const local = await readingNative.snapshot();
+      const pending = (await queue.pending()).commands;
+      if (!current()) return null;
+      const belongs = local?.accountId === account && (local.sessionId === previous.session?.id || pending.some(c => c.challengeId === challengeId && c.sessionId === local.sessionId));
+      if (belongs) { await readingNative.pause(); await readingNative.acknowledge(account, local.sessionId); }
+      await queue.discardChallenge(challengeId);
+      await saveJSON(pendingStartKey, null, { strict: true });
+      if (current()) { setNativeSession(null); setStartRecovery(null); startRecoveryRef.current = null; }
+    }
+    if (!current()) return null;
     requestStartedAt.current = startedAt;
     const received = sent ? await readingNative.clock?.().catch(() => null) : null;
     if (sent && received && account && received.bootId === sent.bootId && received.uptimeMs >= sent.uptimeMs
@@ -477,7 +489,7 @@ export function useReadingChallenge(challengeId: string) {
       await readingNative.acknowledge(account, local.sessionId);
       if (!current()) return;
       setNativeSession(null); setSessionNotice(undefined);
-      setRemaining(3_600_000 - (result.me?.history.find(day => day.day === result.currentDay)?.elapsedMs ?? 0));
+      setRemaining(readingGoalMs(result) - (result.me?.history.find(day => day.day === result.currentDay)?.elapsedMs ?? 0));
     } else if (local?.accountId === account && result.session && local.sessionId === result.session.id) {
       setSessionNotice(undefined);
       setNativeSession(local);
@@ -553,7 +565,7 @@ export function useReadingChallenge(challengeId: string) {
         } else if (!local) {
           setNativeSession(null); setSessionNotice(undefined);
           const d = dataRef.current;
-          setRemaining(3_600_000 - (d?.me?.history.find(h => h.day === d.currentDay)?.elapsedMs ?? 0));
+          setRemaining(readingGoalMs(d) - (d?.me?.history.find(h => h.day === d.currentDay)?.elapsedMs ?? 0));
         }
       } catch (e) { if (alive && current()) setError(readingErrorMessage(e)); }
       finally { polling = false; }
@@ -737,7 +749,7 @@ export function useReadingChallenge(challengeId: string) {
       // «Старт» in the last minute of a day is placed by the server on the next day (counts from 00:00).
       if (session.day !== d.currentDay && session.day !== d.currentDay + 1 || d.phase !== 'active') throw new Error('День завершился. Обновите экран перед новым подходом.');
       await saveJSON(cacheKey, d, { strict: true });
-      const targetMs = 3_600_000 - (d.me?.history.find(h => h.day === session.day)?.elapsedMs ?? 0);
+      const targetMs = readingGoalMs(d) - (d.me?.history.find(h => h.day === session.day)?.elapsedMs ?? 0);
       // Conservative deadline: network/cache latency must never move the stop past midnight.
       const untilMidnight = Math.floor(readingDayEnd(d.startDate, session.day) - d.serverNow - (performance.now() - requestStartedAt.current));
       if (untilMidnight <= 0) throw new Error('День завершился. Обновите экран перед новым подходом.');
@@ -777,9 +789,10 @@ export function useReadingChallenge(challengeId: string) {
     const session = view.session;
     if (session?.id !== pending.sessionId) throw new Error('Не удалось начать подход на телефоне. Повторите.');
     try {
+      if (view.me?.period && Date.parse(session.startedAt) >= view.me.period.endsAt) throw new Error('Год чтения завершён. Откройте итоговый отчёт.');
       const untilMidnight = readingDayEnd(view.startDate, session.day) - (await readingPhoneNow(account)).now;
       if (untilMidnight <= 0) throw new Error('День завершился. Начните новый подход.');
-      const targetMs = 3_600_000 - (view.me?.history.find(h => h.day === session.day)?.elapsedMs ?? 0);
+      const targetMs = readingGoalMs(view) - (view.me?.history.find(h => h.day === session.day)?.elapsedMs ?? 0);
       if (!current()) return;
       const local = await readingNative.start(account, pending.sessionId, pending.deviceId, pending.book, Math.min(session.budgetMs, untilMidnight), targetMs);
       await clearPendingStart().catch(() => {});
@@ -880,6 +893,9 @@ export function useReadingChallenge(challengeId: string) {
       if (dataRef.current?.session) throw new Error(dataRef.current.session.status === 'awaiting_pages'
         ? 'Сначала сохраните страницы предыдущего подхода' : visibleSessionNotice?.message ?? 'Сначала восстановите предыдущий сеанс и сохраните страницы');
       if (await loadJSON<ReadingPendingStart | null>(pendingStartKey, null)) throw new Error('Предыдущий запуск ещё ждёт ответа сервера. Повторите через минуту.');
+      if (dataRef.current?.membership !== 'approved') throw new Error('Сначала вступите в челлендж.');
+      const period = dataRef.current?.me?.period;
+      if (period && (await readingPhoneNow(account)).now >= period.endsAt) throw new Error('Год чтения завершён. Откройте итоговый отчёт.');
       const c = await readingNative.capabilities();
       if (!c.available || !c.authorized || c.blockingMode !== 'all-apps' && !c.selectedCount) throw new Error('Сначала подключите блокировку приложений');
       const deviceId = await loadJSON<string>('dvg.readingDevice.v1', '') || Crypto.randomUUID();
@@ -906,6 +922,7 @@ export function useReadingChallenge(challengeId: string) {
         await saveJSON(pendingStartKey, pending, { strict: true });
         // The phone time travels with the start, so a late delivery lands on the right day.
         await queue.enqueue({ action: 'start', operationId: pending.operationId, challengeId, sessionId, deviceId, book, ...metadata,
+          ...(dataRef.current?.participationId ? { participationId: dataRef.current.participationId } : {}),
           ...(offlineCapable() ? { ...timing, ...(assertion && attestKey ? { attestKeyId: attestKey.keyId, assertion } : {}) } : {}) });
         if (!offlineStart) {
           try {
@@ -935,6 +952,9 @@ export function useReadingChallenge(challengeId: string) {
       if (local) throw new Error(sessionNoticeFor(local, account, d.session?.id)?.message ?? 'На телефоне уже есть подход. Сначала сохраните его страницы.');
       const deviceId = await loadJSON<string>('dvg.readingDevice.v1', '');
       if (deviceId !== pending.deviceId) throw new Error('Этот сеанс начат на другом устройстве. Откройте Divergents на нём.');
+      if (dataRef.current?.membership !== 'approved') throw new Error('Сначала вступите в челлендж.');
+      const period = dataRef.current?.me?.period;
+      if (period && (await readingPhoneNow(account)).now >= period.endsAt) throw new Error('Год чтения завершён. Откройте итоговый отчёт.');
       const c = await readingNative.capabilities();
       if (!c.available || !c.authorized || c.blockingMode !== 'all-apps' && !c.selectedCount) throw new Error('Сначала подключите блокировку приложений');
       if (mode === 'offline') await launchOffline(pending); else await launchNative(pending, d);
@@ -964,6 +984,28 @@ export function useReadingChallenge(challengeId: string) {
       await synchronize();
     }),
     // Индивидуальный зачёт: согласие с правилами — и человек сразу участник, без команды и модерации.
-    join: () => command({ action: 'join', challengeId, acceptRules: true }),
+    leave: () => run(async () => {
+      const detail = dataRef.current;
+      if (!detail?.supportsLeave || !detail.participationId) throw new Error('Выход пока недоступен. Обновите экран.');
+      const local = await readingNative.snapshot();
+      const pending = (await queue.pending()).commands;
+      if (!current()) return;
+      const ownSession = local?.accountId === account && (local.sessionId === detail.session?.id || pending.some(c => c.challengeId === challengeId && c.sessionId === local.sessionId));
+      // Pause before the online mutation, so an interrupted request never leaves shields active.
+      if (ownSession && local.status === 'running') await readingNative.pause();
+      const operationId = await readingOperationId(detail.participationId, 'leave');
+      const accessToken = await token();
+      if (!current()) return;
+      await sendReadingCommand(accessToken, { action: 'leave', challengeId, participationId: detail.participationId, confirmReset: true, operationId });
+      if (!current()) return;
+      await queue.discardChallenge(challengeId);
+      if (ownSession) await readingNative.acknowledge(account, local.sessionId);
+      await clearPendingStart();
+      await saveJSON(cacheKey, null, { strict: true });
+      setNativeSession(null); setRemaining(readingGoalMs(detail));
+      setData(null); dataRef.current = null; serverDetailRef.current = null;
+      await refresh();
+    }),
+    join: () => command({ action: 'join', challengeId, acceptRules: true, ...(dataRef.current?.participationId ? { participationId: dataRef.current.participationId } : {}) }),
   };
 }

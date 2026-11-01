@@ -105,6 +105,7 @@ export function readingLocalView(detail: ReadingDetail, approaches: ReadingLocal
     view = { ...view, currentDay: Math.max(1, Math.min(day, detail.durationDays)), dayEnd: readingDayEnd(detail.startDate, day), serverNow: now,
       phase: day < 1 ? 'upcoming' : day > detail.durationDays ? 'finished' : 'active' };
   }
+  if (view.me?.period && now >= view.me.period.endsAt) view = { ...view, me: { ...view.me, period: { ...view.me.period, completed: true } } };
   if (!approaches.length) return view;
   // Already counted by the server copy (pages delivered, queue not yet cleared): never add twice.
   const counted = new Set(detail.reportedSessionIds ?? []);
@@ -130,7 +131,7 @@ export function readingLocalView(detail: ReadingDetail, approaches: ReadingLocal
       if (index < 0) history.push({ day: approach.day!, state: 'open', ...add });
       else history[index] = { ...history[index], pages: history[index].pages + add.pages, elapsedMs: history[index].elapsedMs + add.elapsedMs };
     }
-    return { ...member, pages, elapsedMs, history: history.map(h => h.state !== 'complete' && h.state !== 'excluded' && h.elapsedMs >= 3_600_000
+    return { ...member, pages, elapsedMs, history: history.map(h => h.state !== 'complete' && h.state !== 'excluded' && h.elapsedMs >= (detail.targetMs ?? 3_600_000)
       && saved.some(a => a.day === h.day) ? { ...h, state: 'complete' as const } : h).sort((a, b) => a.day - b.day) };
   };
   const me = view.me ? addToMember(view.me) : view.me;

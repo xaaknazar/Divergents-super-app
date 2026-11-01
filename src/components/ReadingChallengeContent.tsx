@@ -4,6 +4,8 @@ import { READING_REQUIRE_VERIFIED_BOOK, ReadingBookSummary, ReadingDetail, Readi
 import { ReadingBookMetadata } from '../data/readingBooks';
 import { readingDateLabel } from '../data/readingCreation';
 import { readingDayDate } from '../data/readingOffline';
+import { ReadingJourneyCard } from './ReadingJourneyCard';
+import { ReadingLeaveButton } from './ReadingLeaveButton';
 import { Button } from './Button';
 import { Wrapper } from './Wrapper';
 import { ScreenDescription } from './ScreenDescription';
@@ -25,7 +27,7 @@ import { ReadingBookLibrary, ReadingBookshelf, ReadingShelfComposer } from './Re
 import { ReadingAllowedAppsCard, ReadingAllowedAppsView } from './ReadingAllowedAppsCard';
 export type { ReadingBookInput } from './ReadingBookField';
 
-const HOUR = 3_600_000;
+
 export type ReadingChallengeContentProps = {
   data: ReadingDetail; remainingMs: number; timerState: 'ready' | 'running' | 'paused' | 'complete';
   protection: 'unavailable' | 'permission' | 'selection' | 'ready'; busy: boolean; error?: string; awaitingPages: boolean;
@@ -44,6 +46,7 @@ export type ReadingChallengeContentProps = {
   library?: ReadingBookLibrary;
   composer?: ReadingShelfComposer;
   allowedApps?: ReadingAllowedAppsView;
+  onStatistics?: () => void; onLeave?: () => void;
   onJoin: () => void; onRetry: () => void; onRanking: () => void; onHistory?: (userId: string) => void;
   sessionNotice?: { kind: 'test-running' | 'other-account' | 'other-challenge' | 'other-device'; message: string }; startBlocked?: boolean;
   needsRecovery: boolean; onRecover: () => void;
@@ -66,6 +69,8 @@ export type ReadingChallengeContentProps = {
  * «Приложения для чтения» строкой и свёрнутые правила. */
 export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const d = p.data;
+  const HOUR = d.targetMs ?? 3_600_000;
+  const yearComplete = !!d.me?.period?.completed;
   const [agreed, setAgreed] = useState(false);
   // Ноль — допустимый результат подхода: форма сразу готова сохранить 0 страниц.
   const [pages, setPages] = useState('0');
@@ -81,9 +86,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
 
   if (!member) return <Wrapper padding={16} gap={18}>
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
-    <ReadingChallengeHeader variant="compact" title={d.title} phase={d.phase} day={d.currentDay} durationDays={d.durationDays}
+    <ReadingChallengeHeader targetMinutes={HOUR / 60000} variant="compact" title={d.title} phase={d.phase} day={d.currentDay} durationDays={d.durationDays}
       startDate={d.startDate} mode={d.mode} participants={participants} />
-    <ReadingRules variant="list" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />
+    <ReadingRules targetMinutes={HOUR / 60000} variant="list" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />
     {canJoin ? <Wrapper gap={12}>
       <Checkbox label="Я ознакомился(-ась) с правилами челленджа" checked={agreed} onChange={setAgreed} disabled={p.busy} />
       <Button label="Присоединиться" size="large" onPress={p.onJoin} loading={p.busy} disabled={!agreed}
@@ -93,7 +98,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
 
   const today = member.history.find(h => h.day === d.currentDay);
   const todayMs = today?.elapsedMs ?? 0;
-  const reader = d.phase === 'active' && !member.eliminatedOn;
+  const reader = d.phase === 'active' && !member.eliminatedOn && !yearComplete;
   const running = p.timerState === 'running';
   const awaitingPages = p.awaitingPages || d.session?.status === 'awaiting_pages';
   const softPaused = !!p.resumableSession && p.timerState === 'paused' && !awaitingPages;
@@ -154,7 +159,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const dayLeftMs = Math.max(0, d.dayEnd - Math.max(d.serverNow, p.nowMs ?? d.serverNow));
   // Исключения — настройка до чтения: во время подхода скрыты. Настроенные — одной строкой внизу,
   // а если нужно действие (ничего не выбрано, ошибка, доступ изменился) — карточкой выше «Сегодня».
-  const allowedApps = p.allowedApps && d.phase !== 'finished' && !approachOpen
+  const allowedApps = p.allowedApps && d.phase !== 'finished' && !yearComplete && !approachOpen
     ? { ...p.allowedApps, editable: p.allowedApps.editable && !p.busy && !p.sessionNotice } : undefined;
   const appsNeedAttention = !!allowedApps && (!allowedApps.count || allowedApps.needsReselection || !!allowedApps.error);
   return <Wrapper padding={16} gap={18}>
@@ -163,6 +168,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {(p.rejectedApproaches ?? []).map(r => <InlineNotice key={r.sessionId} actionLabel="Понятно" onRetry={p.onDismissRejected}
       message={`Сервер не засчитал подход${r.book ? ` «${r.book}»` : ''}${r.elapsedMs != null ? ` (${Math.floor(r.elapsedMs / 60000)} мин${r.pages != null ? `, ${r.pages} стр.` : ''})` : ''}: ${r.message}`} />)}
     {p.sessionNotice ? <InlineNotice message={p.sessionNotice.message} onRetry={p.onRetry} /> : null}
+    {yearComplete ? <ReadingJourneyCard period={member.period} completed onPress={p.onStatistics} /> : null}
     {member.eliminatedOn ? <InlineNotice message={`Участие завершено на ${member.eliminatedOn}-й день.`} /> : null}
     {d.phase === 'upcoming' ? <ScreenDescription text={`Челлендж начнётся ${readingDateLabel(d.startDate)}. В этот день здесь появится таймер.`} /> : null}
     {recording && !p.sessionNotice ? <Wrapper gap={12}>
@@ -183,7 +189,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
         fromPage={reportFromPage} nextPage={nextPage} />
     </Wrapper> : null}
     {reader && !p.sessionNotice ? <Wrapper gap={16}>
-      <ReadingTimer remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)}
+      <ReadingTimer targetMs={HOUR} remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)}
         size={recording ? 'compact' : 'regular'} />
       {running && !awaitingPages ? <>
         <ReadingTimerControls action="pause" onPress={p.onPause} />
@@ -206,8 +212,8 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
           <Button label="Записать страницы" variant="tinted" disabled={p.localBusy} onPress={() => setPagesRequested(true)}
             accessibilityHint={d.supportsReportBook ? 'Выбрать книгу, которую читали, и записать страницы этого подхода' : 'Завершить этот подход и сохранить страницы текущей книги. Потом можно выбрать другую книгу'} />
           <ScreenDescription text={d.supportsReportBook
-            ? 'Можно продолжить чтение или записать страницы. Перед сохранением выберите книгу, которую читали. Все подходы складываются в общие 60 минут за день.'
-            : 'Можно продолжить эту книгу или сохранить подход и выбрать другую. Все подходы складываются в общие 60 минут за день.'} />
+            ? `Можно продолжить чтение или записать страницы. Перед сохранением выберите книгу, которую читали. Все подходы складываются в общие ${HOUR / 60000} минут за день.`
+            : `Можно продолжить эту книгу или сохранить подход и выбрать другую. Все подходы складываются в общие ${HOUR / 60000} минут за день.`} />
         </>
         : <>
           {p.protection !== 'ready' ? <>
@@ -232,13 +238,15 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
       selectedKey={d.session?.bookKey ?? book.verified?.key} selectionLocked={approachOpen || !!p.sessionNotice || !reader}
       changeLater={!!d.supportsReportBook && approachOpen} disabled={p.busy} /> : null}
     {allowedApps && appsNeedAttention ? <ReadingAllowedAppsCard value={allowedApps} /> : null}
-    {d.phase !== 'upcoming' ? <ReadingProgressSummary member={member} todayMs={d.phase === 'active' ? todayMs : undefined}
-      dayLeftMs={d.phase === 'active' ? dayLeftMs : undefined}
-      books={d.phase === 'active' && d.todayBooks?.length ? d.todayBooks : undefined} /> : null}
+    {d.phase !== 'upcoming' ? <ReadingProgressSummary targetMinutes={HOUR / 60000} member={member} todayMs={reader ? todayMs : undefined}
+      dayLeftMs={reader ? dayLeftMs : undefined}
+      books={reader && d.todayBooks?.length ? d.todayBooks : undefined} /> : null}
+    {!yearComplete ? <ReadingJourneyCard period={member.period} completed={false} onPress={p.onStatistics} /> : null}
     <ReadingRankLink place={standing?.place ?? null} pagesPlace={pagesStanding?.place ?? null} participants={participants} onPress={p.onRanking} />
     {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
     {allowedApps && !appsNeedAttention ? <ReadingAllowedAppsCard variant="row" value={allowedApps} /> : null}
-    <ReadingRules variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />
+    <ReadingRules targetMinutes={HOUR / 60000} variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} />
+    {d.supportsLeave && p.onLeave ? <ReadingLeaveButton busy={p.busy} onLeave={p.onLeave} /> : null}
   </Wrapper>;
 }
 

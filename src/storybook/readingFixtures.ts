@@ -41,3 +41,15 @@ export const individualReadingFixture: ReadingDetail = {
 };
 export const readingBookExample = { key: 'ol:OL1W', title: 'Атомные привычки', author: 'Джеймс Клир',
   coverId: null, pages: 15, elapsedMs: 25 * 60000, nextPage: null };
+
+export const readingYearHistoryFixture = {
+  challengeId: 'reading-year', title: 'Extreme Reading', own: true, generatedAt: Date.parse('2027-10-31T18:00:00Z'),
+  reader: { ...continuousReadingFixture.me!, pages: 8240, elapsedMs: 365 * 72 * 60000, completedDays: 348,
+    daysParticipated: 365, averagePages: 22.6, bestStreak: 82, readingDays: 360,
+    period: { startsAt: Date.parse('2026-10-31T19:00:00Z'), endsAt: Date.parse('2027-10-31T19:00:00Z'), totalDays: 365, personalDay: 365, completed: true } },
+  books: [
+    { key: '1', title: 'Атомные привычки', author: 'Джеймс Клир', pages: 320, elapsedMs: 12 * 3600000, coverId: null, nextPage: null, lastReadAt: '2027-10-25', finished: true, editable: true },
+    { key: '2', title: 'Племя', author: 'Майкл Моррис', pages: 240, elapsedMs: 8 * 3600000, coverId: null, nextPage: null, lastReadAt: '2027-10-26', finished: true, editable: true },
+    { key: '3', title: 'Краткая история Японии', author: 'Ричард Мейсон', pages: 120, elapsedMs: 4 * 3600000, coverId: null, nextPage: null, lastReadAt: '2027-10-30', finished: false, editable: true },
+  ],
+};

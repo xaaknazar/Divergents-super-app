@@ -10,6 +10,7 @@ export const READING_REQUIRE_VERIFIED_BOOK = true;
  * Сервер рассчитывает средний темп по календарным дням участия, включая пропуски. */
 export const READING_CHALLENGE_RULES: { title: string; text: string }[] = [
   { title: 'Каждый сам за себя', text: 'Зачёт индивидуальный: команд, капитанов и заявок нет. Вступить можно в любой день — после согласия с правилами вы сразу участник.' },
+  { title: 'Один режим на год', text: 'Участвовать можно только в одном Reading challenge. Ваш личный год начинается со дня вступления и заканчивается в 00:00 по Алматы в годовщину. После него доступен итоговый отчёт. Выход обнуляет прогресс этого челленджа: при возвращении начнётся новый день 1.' },
   { title: 'Ваш день 1 — день вступления', text: 'Челлендж для каждого начинается в день его вступления. Дни, флаги и темп считаются для каждого участника отдельно.' },
   { title: 'Час чтения в день', text: 'Норма — минимум 60 минут чтения по таймеру в день. Её можно набрать несколькими подходами с паузами.' },
   { title: 'Пауза и страницы', text: 'На паузе время не идёт, ограничения приложений снимаются. «Возобновить» продолжает подход. Чтобы закончить подход, нажмите «Записать страницы»: выберите книгу, которую читали, затем укажите число страниц и сохраните. Если на старте выбрали не ту книгу, её можно исправить перед сохранением. Это можно сделать и до 60 минут — без проверки результата.' },
@@ -27,7 +28,9 @@ const history = z.object({ day: z.number(), state: z.enum(['complete', 'missed',
 const flagRecovery = z.object({ requiredDays: z.number().int().positive(), progressDays: z.number().int().nonnegative(),
   daysRemaining: z.number().int().nonnegative(), earnedFlags: z.number().int().nonnegative(), forgivenFlags: z.number().int().nonnegative() });
 export type ReadingFlagRecoveryState = z.infer<typeof flagRecovery>;
-const member = z.object({ userId: z.string(), name: z.string(), teamId: z.string().nullable().optional(), flags: z.number(), completedDays: z.number(),
+export const ReadingPeriodSchema = z.object({ startsAt: z.number(), endsAt: z.number(), totalDays: z.number(), personalDay: z.number(), completed: z.boolean() });
+export type ReadingPeriod = z.infer<typeof ReadingPeriodSchema>;
+const member = z.object({ period: ReadingPeriodSchema.optional(), targetMs: z.number().optional(), userId: z.string(), name: z.string(), teamId: z.string().nullable().optional(), flags: z.number(), completedDays: z.number(),
   pages: z.number(), elapsedMs: z.number(), extraMs: z.number().default(0), eliminatedOn: z.number().nullable(), history: z.array(history),
   averageMinutes: z.number().optional(), averagePages: z.number().optional(), daysParticipated: z.number().optional(), readingDays: z.number().optional(),
   firstDay: z.number().optional(), streak: z.number().optional(), bestStreak: z.number().optional(),
@@ -35,12 +38,14 @@ const member = z.object({ userId: z.string(), name: z.string(), teamId: z.string
   flagRecovery: flagRecovery.optional(),
   pace: z.enum(['on_target', 'below_target']).optional() });
 const mode = z.enum(['scheduled', 'continuous']).optional();
-const catalogItem = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, membership, mode });
+const catalogItem = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, membership, mode, period: ReadingPeriodSchema.optional(), level: z.enum(['extreme', 'moderate']).optional(), targetMs: z.number().optional() });
 export const ReadingCatalogSchema = z.object({ enabled: z.boolean(), challenges: z.array(catalogItem) });
 export const ReadingBookSummarySchema = z.object({ key: z.string(), title: z.string(), author: z.string(), coverId: z.number().nullable(),
   pages: z.number(), elapsedMs: z.number(), nextPage: z.number().nullable() });
 export type ReadingBookSummary = z.infer<typeof ReadingBookSummarySchema>;
 export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, mode,
+  supportsLeave: z.boolean().optional(), participationId: z.string().nullable().optional(),
+  level: z.enum(['extreme', 'moderate']).optional(), targetMs: z.number().optional(),
   format: z.enum(['individual', 'teams']).optional(), participants: z.number().optional(),
   flagRecoveryDays: z.number().int().positive().optional(),
   // The server accepts approaches started without internet (start.startedAt), delivered later.
@@ -79,7 +84,7 @@ export class ReadingApiError extends Error {
 }
 async function request(token: string | null, id?: string, body?: ReadingCommand, clockNonce?: string): Promise<unknown> {
   if (!token) throw new ReadingApiError('Войдите в аккаунт', 401);
-  const query = id ? `?id=${encodeURIComponent(id)}&v=2${clockNonce ? `&clockNonce=${encodeURIComponent(clockNonce)}` : ''}` : '?v=2';
+  const query = id ? `?id=${encodeURIComponent(id)}&v=3${clockNonce ? `&clockNonce=${encodeURIComponent(clockNonce)}` : ''}` : '?v=3';
   const response = await netFetch(`${API_BASE}/api/mobile/reading-challenges${query}`, {
     method: body ? 'POST' : 'GET', retries: 0, timeoutMs: 12_000,
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
@@ -118,3 +123,5 @@ export function readingStandings(ranking: ReadingMemberStats[], metric: ReadingR
 }
 /** «из 48 участников», «из 21 участника». */
 export const participantsOf = (n: number) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'участника' : 'участников'}`;
+
+export const readingGoalMs = (value?: { targetMs?: number } | null) => value?.targetMs === 1_800_000 ? 1_800_000 : READING_TARGET_MS;

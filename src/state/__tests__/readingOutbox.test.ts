@@ -216,3 +216,25 @@ test('switching accounts during an upload preserves new-account pages and old-ac
   expect(h.disk()?.otherAccounts).toEqual([{ accountId: 'reader', commands: [stop] }]);
 });
 });
+
+test('confirmed leave discards only this challenge and tolerates an already uploading receipt', async () => {
+  const other = { ...report, challengeId: 'c2', operationId: 'other-challenge' };
+  const h = harness({ accountId: 'reader', commands: [report, other], otherAccounts: [{ accountId: 'someone', commands: [report] }] });
+  let resolve!: (value: { ok: true }) => void;
+  h.io.send.mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+  const upload = h.box.flush();
+  while (!resolve) await new Promise(r => setTimeout(r, 0));
+  await h.box.discardChallenge('c1');
+  resolve({ ok: true }); await upload;
+  expect(h.disk()?.commands).toEqual([]);
+  expect(h.disk()?.otherAccounts?.[0].commands).toEqual([report]);
+  expect(h.io.send).toHaveBeenLastCalledWith(other);
+});
+test('another Reading refusal does not poison later queued approaches', async () => {
+  const h = harness();
+  await h.box.enqueue({ action: 'join', operationId: 'join', challengeId: 'other' });
+  await h.box.enqueue(report);
+  h.io.send.mockRejectedValueOnce(new ReadingApiError('Вы уже участвуете', 409, 'another_reading'));
+  await expect(h.box.flush()).rejects.toThrow('Вы уже участвуете');
+  await h.box.flush(); expect(h.disk()?.commands).toEqual([]);
+});

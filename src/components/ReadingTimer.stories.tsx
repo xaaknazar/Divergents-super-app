@@ -26,3 +26,5 @@ export const StrictOvertime: Story = { args: { blockingMode: 'all-apps', remaini
 export const RecordingCompact: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' } };
 export const RecordingCompactDark: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' }, parameters: { scheme: 'dark' } };
 export const RecordingCompactLargeText: Story = { args: { state: 'recording', remainingMs: 0, size: 'compact' }, parameters: { viewport: 'compact', textSize: 'xl' } };
+
+export const Moderate: Story = { args: { state: 'ready', remainingMs: 1800000, targetMs: 1800000 } };

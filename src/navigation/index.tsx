@@ -28,6 +28,7 @@ import { ChallengeDetailScreen } from '../screens/community/ChallengeDetailScree
 import { ReadingChallengeScreen } from '../screens/community/ReadingChallengeScreen';
 import { ReadingAppearanceScreen } from '../screens/community/ReadingAppearanceScreen';
 import { ReadingRankingScreen } from '../screens/community/ReadingRankingScreen';
+import { ReadingStatisticsScreen } from '../screens/community/ReadingStatisticsScreen';
 import { ReadingHistoryScreen } from '../screens/community/ReadingHistoryScreen';
 import { CreateReadingChallengeScreen } from '../screens/community/CreateReadingChallengeScreen';
 import { ChallengeApplicantsScreen } from '../screens/community/ChallengeApplicantsScreen';
@@ -100,6 +101,7 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="ReadingChallenge" component={ReadingChallengeScreen} />
       <CommunityStack.Screen name="ReadingAppearance" component={ReadingAppearanceScreen} />
       <CommunityStack.Screen name="ReadingRanking" component={ReadingRankingScreen} />
+      <CommunityStack.Screen name="ReadingStatistics" component={ReadingStatisticsScreen} />
       <CommunityStack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
       <CommunityStack.Screen name="CreateReadingChallenge" component={CreateReadingChallengeScreen} />
       <CommunityStack.Screen name="ChallengeApplicants" component={ChallengeApplicantsScreen} />

@@ -18,8 +18,8 @@ const clockOf = (ms: number) => {
 /** Таймер обязательного часа (handoff 2026-10-20 §6): кольцо 248 (трек 10), цифры 56 tabular-nums,
  * «таблетка» блокировки. Доп. время — оранжевая дуга поверх полного синего круга и «+12:34».
  * Действия собирает экран: таймер только показывает состояние. */
-export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = 'selected', size = 'regular' }: {
-  remainingMs: number; state: ReadingTimerState;
+export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = 'selected', size = 'regular', targetMs = HOUR }: {
+  remainingMs: number; state: ReadingTimerState; targetMs?: number;
   /** compact — когда главный шаг экрана другой (ввод страниц): кольцо 148, цифры 34. */
   size?: 'regular' | 'compact';
   blockingMode?: 'selected' | 'all-apps';
@@ -37,25 +37,25 @@ export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = '
   const visual = state === 'complete' ? 'done' : state === 'running' && remainingMs < 0 ? 'overtime' : state;
   const overtimeMs = visual === 'overtime' ? -remainingMs : 0;
   const stopped = visual === 'paused' || visual === 'recording' || visual === 'saving';
-  const resumed = visual === 'ready' && remainingMs < HOUR;
+  const resumed = visual === 'ready' && remainingMs < targetMs;
   // Pausing overtime freezes its positive count instead of replacing it with 00:00.
   const clock = visual === 'overtime' || stopped && remainingMs < 0
-    ? `+${clockOf(-remainingMs)}` : visual === 'done' ? '60:00' : clockOf(Math.ceil(Math.min(HOUR, remainingMs) / 1000) * 1000);
+    ? `+${clockOf(-remainingMs)}` : visual === 'done' ? clockOf(targetMs) : clockOf(Math.ceil(Math.min(targetMs, remainingMs) / 1000) * 1000);
   const lockLabel = blockingMode === 'all-apps' ? 'Строгий режим · ограничения iOS' : 'Выбранные приложения ограничены';
   const S = {
-    ready: { over: resumed ? 'Осталось сегодня' : 'Цель на сегодня', under: resumed ? 'из 60 минут' : 'минут чтения', pill: blockingMode === 'all-apps' ? 'Строгий режим · все приложения' : 'Выбранные приложения будут ограничены', icon: 'lock.fill', tone: 'neutral' },
-    running: { over: 'Осталось', under: 'из 60 минут', pill: lockLabel, icon: 'lock.fill', tone: 'brand' },
+    ready: { over: resumed ? 'Осталось сегодня' : 'Цель на сегодня', under: resumed ? `из ${targetMs / 60000} минут` : 'минут чтения', pill: blockingMode === 'all-apps' ? 'Строгий режим · все приложения' : 'Выбранные приложения будут ограничены', icon: 'lock.fill', tone: 'neutral' },
+    running: { over: 'Осталось', under: `из ${targetMs / 60000} минут`, pill: lockLabel, icon: 'lock.fill', tone: 'brand' },
     paused: { over: 'Пауза', under: 'время не идёт', pill: 'Пауза — приложения доступны', icon: 'lock.open.fill', tone: 'warn' },
     recording: { over: 'Пауза', under: 'запишите страницы', pill: 'Пауза — приложения доступны', icon: 'lock.open.fill', tone: 'warn' },
     saving: { over: 'Пауза', under: 'отправляем подход', pill: 'Ждём подтверждения сервера', icon: 'clock', tone: 'neutral' },
-    overtime: { over: 'Час выполнен', under: 'дополнительное время', pill: lockLabel, icon: 'lock.fill', tone: 'brand' },
+    overtime: { over: 'Норма выполнена', under: 'дополнительное время', pill: lockLabel, icon: 'lock.fill', tone: 'brand' },
     done: { over: 'Цель дня выполнена', under: extraMs >= 60000 ? `и ещё ${Math.floor(extraMs / 60000)} мин сверху` : 'подтверждено', pill: 'Ограничения сняты', icon: 'checkmark.circle.fill', tone: 'ok' },
   }[visual];
   const tones: Record<string, [string, string]> = { neutral: [T.brandTinted, T.labelSecondary], brand: [T.brandTinted, T.brandText], warn: ['rgba(255,149,0,0.14)', T.orangeText], ok: [T.emeraldBadgeBg, T.greenText] };
   const pill = tones[S.tone];
   const extraInk = isDark ? '#FFB35C' : '#E8590C';
   const ringInk = stopped ? hexToRgba(T.brandText, isDark ? 0.55 : 0.45) : visual === 'done' ? T.greenText : T.brandText;
-  const target = visual === 'overtime' || visual === 'done' ? 1 : visual === 'ready' && !resumed ? 0 : 1 - Math.max(0, remainingMs) / HOUR;
+  const target = visual === 'overtime' || visual === 'done' ? 1 : visual === 'ready' && !resumed ? 0 : 1 - Math.max(0, remainingMs) / targetMs;
   const progress = useRef(new Animated.Value(target)).current;
   const breath = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -72,7 +72,7 @@ export function ReadingTimer({ remainingMs, state, extraMs = 0, blockingMode = '
     animation.start(); return () => animation.stop();
   }, [target, progress, reduceMotion]);
   // Доп. время рисуется дугой по кругу часа: 15 минут сверху — четверть окружности.
-  const extraArc = visual === 'overtime' ? Math.min(1, (overtimeMs % HOUR) / HOUR) * circumference : 0;
+  const extraArc = visual === 'overtime' ? Math.min(1, (overtimeMs % targetMs) / targetMs) * circumference : 0;
   const digits = <Text style={[ty.largeTitle, nums, styles.digits, { color: stopped ? T.labelSecondary : T.label }, largeText ? null : compact ? { fontSize: 34, lineHeight: 38 } : { fontSize: 56, lineHeight: 60 }]}>{clock}</Text>;
   return <View onLayout={event => setAvailableWidth(event.nativeEvent.layout.width)} style={[styles.root, compact && styles.compactRoot]}>
     <View accessible accessibilityRole="timer" accessibilityLabel={`${S.over}. ${clock.replace('+', 'плюс ')}. ${S.under}`}

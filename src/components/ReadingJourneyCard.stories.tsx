@@ -1,0 +1,10 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingJourneyCard } from './ReadingJourneyCard';
+import { readingYearHistoryFixture } from '../storybook/readingFixtures';
+const meta = { title: 'Reading/Year/ReadingJourneyCard', component: ReadingJourneyCard, args: { period: readingYearHistoryFixture.reader.period, completed: true, onPress: () => {} } } satisfies Meta<typeof ReadingJourneyCard>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Light: Story = {};
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+export const Active: Story = { args: { completed: false, period: { ...readingYearHistoryFixture.reader.period, personalDay: 12, completed: false } } };

@@ -13,11 +13,11 @@ import { Wrapper } from './Wrapper';
 
 /** editorial — до вступления: книга сверху справа, title1. compact — у участника: одна строка
  * с книгой 108×72, чтобы таймер оставался на первом экране (handoff 2026-10-20 §6). */
-export function ReadingChallengeHeader({ title, phase, day, durationDays, startDate, mode = 'scheduled', variant = 'editorial', teamName, participants }: {
+export function ReadingChallengeHeader({ title, phase, day, durationDays, startDate, mode = 'scheduled', variant = 'editorial', teamName, participants, targetMinutes = 60 }: {
   title: string; phase: 'upcoming' | 'active' | 'finished'; day: number; durationDays: number; startDate: string; mode?: 'scheduled' | 'continuous';
   variant?: ReadingHeaderStyle; teamName?: string;
-  /** Число участников — для компактного блока на экране вступления: «60 минут в день · N участников». */
-  participants?: number;
+  /** Число участников — для компактного блока на экране вступления: «${targetMinutes} минут в день · N участников». */
+  participants?: number; targetMinutes?: number;
 }) {
   const { T, ty, isDark, reduceTransparency } = useTheme();
   const progress = phase === 'finished' ? 1 : phase === 'upcoming' ? 0 : Math.max(0, Math.min(1, (day - 1) / Math.max(1, durationDays)));
@@ -27,14 +27,14 @@ export function ReadingChallengeHeader({ title, phase, day, durationDays, startD
   const horizontal = variant === 'split';
   const ink = branded ? T.onBrand : T.label;
   const accent = branded ? T.onBrand : T.brandText;
-  const subtitle = phase === 'upcoming' ? `Старт ${readingDateLabel(startDate)} · ${mode === 'continuous' ? '60 минут в день' : days(durationDays)}`
+  const subtitle = phase === 'upcoming' ? `Старт ${readingDateLabel(startDate)} · ${mode === 'continuous' ? `${targetMinutes} минут в день` : days(durationDays)}`
     : phase === 'finished' ? 'Челлендж завершён · ваши результаты ниже'
-      : mode === 'continuous' ? 'Читаем каждый день.' : `День ${day} из ${durationDays} · 60 минут для себя`;
-  // Строка «60 минут в день» с часами — если подзаголовок её ещё не сказал.
-  const meta = [subtitle.includes('60 минут') ? null : '60 минут в день', teamName ? `команда «${teamName}»` : null].filter(Boolean).join(' · ');
-  const compactMeta = participants !== undefined && phase !== 'finished' ? `60 минут в день · ${participants} ${word(participants, 'участник', 'участника', 'участников')}`
+      : mode === 'continuous' ? 'Читаем каждый день.' : `День ${day} из ${durationDays} · ${targetMinutes} минут для себя`;
+  // Строка «${targetMinutes} минут в день» с часами — если подзаголовок её ещё не сказал.
+  const meta = [subtitle.includes(`${targetMinutes} минут`) ? null : `${targetMinutes} минут в день`, teamName ? `команда «${teamName}»` : null].filter(Boolean).join(' · ');
+  const compactMeta = participants !== undefined && phase !== 'finished' ? `${targetMinutes} минут в день · ${participants} ${word(participants, 'участник', 'участника', 'участников')}`
     : phase === 'active'
-    ? [mode === 'scheduled' ? `День ${day} из ${durationDays}` : null, '60 минут в день', teamName ? `команда «${teamName}»` : null].filter(Boolean).join(' · ')
+    ? [mode === 'scheduled' ? `День ${day} из ${durationDays}` : null, `${targetMinutes} минут в день`, teamName ? `команда «${teamName}»` : null].filter(Boolean).join(' · ')
     : subtitle;
   const glass = variant === 'glass' && !reduceTransparency && Platform.OS === 'ios';
   return <View style={[styles.shell, { backgroundColor: branded ? T.brand : variant === 'minimal' || glass ? 'transparent' : T.cardBg,
@@ -71,11 +71,11 @@ export function ReadingChallengeHeader({ title, phase, day, durationDays, startD
       ]}><SF name={variant === 'community' ? 'person.3.fill' : variant === 'focus' ? 'clock' : 'book.fill'} size={variant === 'split' ? 38 : 24} color={accent} /></View>
       <View style={[styles.copy, horizontal && styles.flex, centered && styles.centered]}>
         <Text style={[ty.footnoteEm, { color: accent }, centered && styles.centerText]}>Reading challenge</Text>
-        {variant === 'focus' ? <Text style={[ty.largeTitle, styles.centerText, { color: T.brandText }]}>60 минут</Text> : null}
+        {variant === 'focus' ? <Text style={[ty.largeTitle, styles.centerText, { color: T.brandText }]}>{targetMinutes} минут</Text> : null}
         <Text accessibilityRole="header" style={[ty.title2, { color: ink }, centered && styles.centerText]}>{title}</Text>
         {variant === 'ticket' ? <View style={[styles.perforation, { borderColor: T.separator }]} /> : null}
         <Text style={[ty.subhead, { color: branded ? T.onBrand : T.labelSecondary }, centered && styles.centerText]}>{subtitle}</Text>
-        {mode === 'continuous' && phase === 'active' && variant !== 'focus' ? <Text style={[ty.footnote, { color: branded ? T.onBrand : T.labelSecondary }, centered && styles.centerText]}>60 минут в день</Text> : null}
+        {mode === 'continuous' && phase === 'active' && variant !== 'focus' ? <Text style={[ty.footnote, { color: branded ? T.onBrand : T.labelSecondary }, centered && styles.centerText]}>{targetMinutes} минут в день</Text> : null}
       </View>
     </View>}
     {mode === 'scheduled' ? <View accessible accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: durationDays, now: Math.round(progress * durationDays) }}

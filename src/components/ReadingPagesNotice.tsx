@@ -16,7 +16,7 @@ export function ReadingPagesNotice({ state, onRecord, busy = false }: {
         <SF name="book.fill" size={20} color={T.brandText} />
       </View>
       <Text accessibilityRole="header" style={[ty.headline, styles.title, { color: T.label }]}>
-        {state === 'goal' ? 'Час прочитан. Запишите страницы' : 'Осталось записать страницы'}
+        {state === 'goal' ? 'Норма выполнена. Запишите страницы' : 'Осталось записать страницы'}
       </Text>
     </View>
     <Text style={[ty.subhead, { color: T.labelSecondary }]}>{state === 'goal'

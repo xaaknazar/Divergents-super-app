@@ -21,7 +21,7 @@ export const ReadingShelfBookSchema = ReadingBookSummarySchema.extend({
   lastReadAt: z.string().nullable(), addedAt: z.string().nullable(), finished: z.boolean(), editable: z.boolean(),
 });
 export type ReadingShelfBook = z.infer<typeof ReadingShelfBookSchema>;
-export const ReadingHistorySchema = z.object({ challengeId: z.string(), own: z.boolean(), reader: ReadingDetailSchema.shape.me.unwrap(),
+export const ReadingHistorySchema = z.object({ challengeId: z.string(), title: z.string().optional(), level: z.enum(['extreme', 'moderate']).optional(), targetMs: z.number().optional(), generatedAt: z.number().optional(), own: z.boolean(), reader: ReadingDetailSchema.shape.me.unwrap(),
   books: z.array(ReadingBookSummarySchema.extend({ lastReadAt: z.string(), finished: z.boolean(), editable: z.boolean() })),
   // Old servers still expose only read books. Never mistake that for a saved,
   // writable shelf; the owner-only field is the capability boundary.

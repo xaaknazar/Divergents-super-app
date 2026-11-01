@@ -55,6 +55,7 @@ export function ReadingChallengeScreen({ route, navigation }: NativeStackScreenP
       composer={{ draft, supported: library.supportsBookshelf, adding: library.adding, error: library.addError,
         reset: () => { draft.reset(); library.clearAddError(); },
         save: async () => draft.verified ? !!(await library.add(draft.verified)) : false }}
+      onLeave={reading.leave} onStatistics={() => reading.data?.me && navigation.navigate('ReadingStatistics', { challengeId, readerId: reading.data.me.userId })}
       onRanking={() => navigation.navigate('ReadingRanking', { challengeId })}
       onHistory={readerId => navigation.navigate('ReadingHistory', { challengeId, readerId })}
       onPrepare={reading.prepare} onStart={reading.start} onPause={reading.pause} onReport={reading.report} onSaveApproach={reading.saveApproach}
