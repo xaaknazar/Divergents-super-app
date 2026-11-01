@@ -1,6 +1,6 @@
 # Extreme and Moderate Reading — implementation
 
-Status: **implemented, not published**. Mobile base `1ddac7f`, branch `codex/reading-year-modes`. Server code is in `/Users/xaknazar/divergents-lms-year`, branch `codex/reading-year-modes`, based on `c222a3e`.
+Status: **published in internal TestFlight 107**; see [release evidence](release-107-2026-11-02.md). Mobile base `1ddac7f`, branch `codex/reading-year-modes`. Server code is in `/Users/xaknazar/divergents-lms-year`, branch `codex/reading-year-modes`, based on `c222a3e`.
 
 ## What changed
 
