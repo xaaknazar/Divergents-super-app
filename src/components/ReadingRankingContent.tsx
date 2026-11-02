@@ -6,15 +6,16 @@ import { ScreenDescription } from './ScreenDescription';
 import { ReadingRankRow } from './ReadingRankRow';
 import { Segmented } from './Segmented';
 
-/** Два самостоятельных рейтинга по подтверждённым сервером данным. */
-export function ReadingRankingContent({ data, onHistory, initialMetric = 'pace' }: {
+/** Два самостоятельных рейтинга по подтверждённым сервером данным. Первым открывается «Всего страниц»,
+ * вторая вкладка — «Средний темп». */
+export function ReadingRankingContent({ data, onHistory, initialMetric = 'pages' }: {
   data: ReadingDetail; onHistory?: (userId: string) => void; initialMetric?: ReadingRankingMetric;
 }) {
   const [metric, setMetric] = useState<ReadingRankingMetric>(initialMetric);
   const rows = readingStandings(data.ranking, metric);
   return <Wrapper padding={16} gap={12}>
-    <Segmented items={['Средний темп', 'Всего страниц']} value={metric === 'pace' ? 0 : 1}
-      onChange={index => setMetric(index === 1 ? 'pages' : 'pace')} />
+    <Segmented items={['Всего страниц', 'Средний темп']} value={metric === 'pages' ? 0 : 1}
+      onChange={index => setMetric(index === 0 ? 'pages' : 'pace')} />
     <ScreenDescription text={metric === 'pace'
       ? 'Выше тот, кто читает больше страниц в среднем за день. При равном темпе — тот, кто участвует дольше.'
       : 'Выше тот, кто прочитал больше страниц за всё участие в этом челлендже. При равном количестве — выше средний темп, затем больше дней участия.'} />
@@ -24,6 +25,6 @@ export function ReadingRankingContent({ data, onHistory, initialMetric = 'pace' 
         isMe={m.userId === data.me?.userId}
         last={i === rows.length - 1} onPress={onHistory ? () => onHistory(m.userId) : undefined} />)}
     </ContentBlock> : <ScreenDescription text="Пока никто не вступил. Первые участники появятся здесь." />}
-    <ScreenDescription text={`Рейтинг доступен с первого дня. Средний темп: все сохранённые страницы делятся на календарные дни участия, включая пропуски. Всего страниц: подтверждённая сервером сумма по всем книгам за всё участие в этом челлендже, а не только за сегодня. Флаг ставится за день, когда к 00:00 по Алматы набрано меньше 60 минут.${data.flagRecoveryDays ? ` За каждые ${data.flagRecoveryDays} дней подряд с выполненной нормой и сохранёнными страницами снимается один накопленный флаг. Здесь показаны оставшиеся флаги.` : ' Флаги накапливаются.'}`} />
+    <ScreenDescription text={`Рейтинг доступен с первого дня. Всего страниц: подтверждённая сервером сумма по всем книгам за всё участие в этом челлендже, а не только за сегодня. Средний темп: все сохранённые страницы делятся на календарные дни участия, включая пропуски. Флаг ставится за день, когда к 00:00 по Алматы набрано меньше 60 минут.${data.flagRecoveryDays ? ` За каждые ${data.flagRecoveryDays} дней подряд с выполненной нормой и сохранёнными страницами снимается один накопленный флаг. Здесь показаны оставшиеся флаги.` : ' Флаги накапливаются.'}`} />
   </Wrapper>;
 }
