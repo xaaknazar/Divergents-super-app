@@ -14,6 +14,7 @@ import { InlineNotice } from './InlineNotice';
 import { Checkbox } from './Checkbox';
 import { ReadingChallengeHeader } from './ReadingChallengeHeader';
 import { ReadingRules } from './ReadingRules';
+import { ReadingRulesHighlights } from './ReadingRulesHighlights';
 import { ReadingRankLink } from './ReadingRankLink';
 import { ReadingBookField, ReadingBookInput } from './ReadingBookField';
 import { ReadingTimer } from './ReadingTimer';
@@ -89,7 +90,8 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {p.error ? <InlineNotice message={p.error} onRetry={p.onRetry} /> : null}
     <ReadingChallengeHeader targetMinutes={HOUR / 60000} variant="compact" title={d.title} phase={d.phase} day={d.currentDay} durationDays={d.durationDays}
       startDate={d.startDate} mode={d.mode} participants={participants} />
-    <ReadingRules targetMinutes={HOUR / 60000} variant="list" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} eliminationFlags={d.eliminationFlags} />
+    <ReadingRulesHighlights targetMinutes={HOUR / 60000} flagRecoveryDays={d.flagRecoveryDays} eliminationFlags={d.eliminationFlags} />
+    <ReadingRules targetMinutes={HOUR / 60000} variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} eliminationFlags={d.eliminationFlags} />
     {canJoin ? <Wrapper gap={12}>
       <Checkbox label="Я ознакомился(-ась) с правилами челленджа" checked={agreed} onChange={setAgreed} disabled={p.busy} />
       <Button label="Присоединиться" size="large" onPress={p.onJoin} loading={p.busy} disabled={!agreed}

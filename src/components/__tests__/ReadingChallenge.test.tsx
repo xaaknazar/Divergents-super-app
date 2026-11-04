@@ -35,6 +35,9 @@ test('joining needs the rules checkbox and joins immediately, without teams or a
   const p = { ...props(), data: { ...individualReadingFixture, membership: null, me: null } };
   const view = await show(p);
   expect(view.getByText(/60 минут в день · 5 участников/)).toBeTruthy();
+  // The key points are visible at once; the full rules open in place.
+  expect(view.getByText('Книга и страницы')).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: /^Правила челленджа/ }));
   for (const rule of READING_CHALLENGE_RULES) expect(view.getByText(rule.title)).toBeTruthy();
   const join = view.getByRole('button', { name: 'Присоединиться' });
   expect(join).toBeDisabled();
