@@ -69,7 +69,7 @@ test('background refresh cannot disable local resume or saving pages, but an act
   expect(view.getByRole('button', { name: 'Сохранить подход' })).toBeDisabled();
 });
 test.each<LayoutCase>(['ready', 'running', 'paused', 'review'])(
-  '%s: timer actions precede the book, and rank is immediately before history',
+  '%s: timer actions precede the book; between approaches rank is immediately before history',
   async state => {
     const p = props();
     if (state === 'running' || state === 'paused') {
@@ -87,6 +87,16 @@ test.each<LayoutCase>(['ready', 'running', 'paused', 'review'])(
     const timer = view.getByRole('timer');
     const action = view.getByRole('button', { name: state === 'running' ? 'Пауза' : state === 'paused' ? 'Возобновить' : state === 'review' ? 'Новый подход' : 'Старт' });
     const currentBook = view.getByLabelText(/^Что читаете:/);
+    if (state === 'running') {
+      // Focus while reading: no statistics, ranking or history until the approach is saved.
+      expectOrder(view.container, timer, action, currentBook);
+      expect(view.queryByRole('button', { name: /^Мой рейтинг\./ })).toBeNull();
+      expect(view.queryByRole('header', { name: 'Сегодня' })).toBeNull();
+      expect(action).toBeEnabled();
+      await fireEvent.press(action);
+      expect(p.onPause).toHaveBeenCalledTimes(1);
+      return;
+    }
     const progress = view.getByRole('header', { name: 'Сегодня' });
     const rank = view.getByRole('button', { name: /^Мой рейтинг\./ });
     const history = view.getByRole('button', { name: 'Мои книги и история' });
@@ -96,11 +106,6 @@ test.each<LayoutCase>(['ready', 'running', 'paused', 'review'])(
     const siblings = rank.parent!.children;
     expect(siblings.indexOf(history)).toBe(siblings.indexOf(rank) + 1);
     if (state === 'paused') expect(view.queryByLabelText('Страниц за этот подход')).toBeNull();
-    if (state === 'running') {
-      expect(action).toBeEnabled();
-      await fireEvent.press(action);
-      expect(p.onPause).toHaveBeenCalledTimes(1);
-    }
   },
 );
 

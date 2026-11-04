@@ -51,8 +51,16 @@ test('a finished challenge cannot be joined', async () => {
   expect(view.queryByRole('button', { name: 'Присоединиться' })).toBeNull();
   expect(view.getByText(/вступить уже нельзя/)).toBeTruthy();
 });
+test('while reading only the timer, pause and the book stay; statistics and ranking come back after the approach', async () => {
+  const view = await show(props());
+  expect(view.getByRole('button', { name: 'Пауза' })).toBeTruthy();
+  expect(view.queryByRole('button', { name: /^Мой рейтинг/ })).toBeNull();
+  expect(view.queryByRole('button', { name: 'Мои книги и история' })).toBeNull();
+  expect(view.getByText('Статистика, рейтинг и правила — после подхода. Сейчас только чтение.')).toBeTruthy();
+});
 test('participant page: rank link opens the ranking; no challenge block, teams or tabs', async () => {
-  const p = props();
+  // Between approaches: while reading, the screen keeps only the timer (focus).
+  const p = { ...props(), timerState: 'ready' as const, data: { ...individualReadingFixture, session: null } };
   const view = await show(p);
   await fireEvent.press(view.getByRole('button', { name: 'Мой рейтинг. По страницам: 4 место из 5 участников. По среднему темпу: 4 место из 5 участников' }));
   expect(p.onRanking).toHaveBeenCalledTimes(1);
@@ -62,7 +70,7 @@ test('participant page: rank link opens the ranking; no challenge block, teams o
   expect(p.onHistory).toHaveBeenCalledWith('demo-reader');
 });
 test('legacy qualification flags cannot hide a participant’s place', async () => {
-  const p = props();
+  const p = { ...props(), timerState: 'ready' as const, data: { ...individualReadingFixture, session: null } };
   p.data = { ...p.data, ranking: p.data.ranking.map(m => m.userId === 'demo-reader' ? { ...m, rankingEligible: false, qualificationDaysLeft: 4 } : m) };
   const view = await show(p);
   expect(view.getByRole('button', { name: 'Мой рейтинг. По страницам: 4 место из 5 участников. По среднему темпу: 4 место из 5 участников' })).toBeTruthy();

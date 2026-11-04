@@ -106,6 +106,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   const awaitingPages = p.awaitingPages || d.session?.status === 'awaiting_pages';
   const softPaused = !!p.resumableSession && p.timerState === 'paused' && !awaitingPages;
   const recording = softPaused && (p.remainingMs <= 0 || pagesRequested) || awaitingPages;
+  // Фокус: пока идёт чтение или записываются страницы, на экране только таймер, действие и книга.
+  // Статистика, рейтинг, история и правила возвращаются после подхода.
+  const focus = reader && !p.sessionNotice && (running || recording);
   const standing = readingStandings(d.ranking).find(s => s.member.userId === member.userId);
   const pagesStanding = readingStandings(d.ranking, 'pages').find(s => s.member.userId === member.userId);
   const book = p.book;
@@ -242,6 +245,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {p.library && !rebook ? <ReadingBookshelf key={`${d.id}:${member.userId}`} library={p.library} composer={p.composer}
       selectedKey={d.session?.bookKey ?? book.verified?.key} selectionLocked={approachOpen || !!p.sessionNotice || !reader}
       changeLater={!!d.supportsReportBook && approachOpen} disabled={p.busy} /> : null}
+    {focus ? <ScreenDescription text="Статистика, рейтинг и правила — после подхода. Сейчас только чтение." /> : <>
     {allowedApps && appsNeedAttention ? <ReadingAllowedAppsCard value={allowedApps} /> : null}
     {d.phase !== 'upcoming' ? <ReadingProgressSummary targetMinutes={HOUR / 60000} member={member} eliminationFlags={d.eliminationFlags} todayMs={reader ? todayMs : undefined}
       dayLeftMs={reader ? dayLeftMs : undefined}
@@ -252,6 +256,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {allowedApps && !appsNeedAttention ? <ReadingAllowedAppsCard variant="row" value={allowedApps} /> : null}
     <ReadingRules targetMinutes={HOUR / 60000} variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} eliminationFlags={d.eliminationFlags} />
     {d.supportsLeave && p.onLeave && !flagsOut ? <ReadingLeaveButton busy={p.busy} onLeave={p.onLeave} /> : null}
+    </>}
   </Wrapper>;
 }
 

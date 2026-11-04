@@ -49,7 +49,7 @@ export function ReadingStatisticsContent({ data, onShare }: { data: ReadingHisto
         {r.flags ? `${r.flags} ${word(r.flags, 'красный флаг', 'красных флага', 'красных флагов')}` : 'Красных флагов нет'}{s.forgivenFlags ? ` · ${s.forgivenFlags} ${word(s.forgivenFlags, 'снят', 'снято', 'снято')} за серии` : ''}
       </Text>
       <Button icon="square.and.arrow.up" label="Поделиться в сторис" onPress={onShare} />
-      <Text style={[ty.caption1, { color: T.labelSecondary }]}>Только сохранённые результаты{data.generatedAt ? ` · ${readingStatsDate(data.generatedAt)}` : ''}</Text>
+      <Text style={[ty.caption1, { color: T.labelSecondary }]}>Только сохранённые результаты{data.generatedAt ? ` · ${readingStatsDate(data.generatedAt).replace(/\s?г\.$/, '')}` : ''}</Text>
     </Wrapper></ContentBlock>
     {s.recent.length ? <ContentBlock><Wrapper gap={14}>
       <Wrapper gap={2}>
