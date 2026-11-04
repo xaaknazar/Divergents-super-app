@@ -87,6 +87,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const [storageError, setStorageError] = useState(false);
   const [timeTick, setTimeTick] = useState(() => Date.now());
   const engineRef = useRef<ProgressOutbox | null>(null);
+  // Re-reads the saved marks when the first read failed. A single failed read (keychain briefly
+  // unavailable at launch, or a marker left by a reinstall) must not disable marking for the session.
+  const restoreRef = useRef<(() => Promise<boolean>) | null>(null);
   const ownerRef = useRef(userId); ownerRef.current = userId;
   const getTokenRef = useRef(getToken); getTokenRef.current = getToken;
   const revision = useRef(0);
@@ -133,32 +136,63 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     snapshotRef.current = [];
     setData({ ownerId: userId, snapshots: [] });
     setLoading(true); setError(false); setOutbox(null); setStorageError(false);
+    let retry: ReturnType<typeof setTimeout> | null = null, attempts = 0;
+    let restoring: Promise<boolean> | null = null;
+    const owner = userId;
+    const createEngine = (restoredValue: ProgressOutboxState | null) => new ProgressOutbox(owner!, restoredValue, {
+      uuid: randomUUID,
+      save: state => saveJSON(PENDING_KEY, state, { strict: true }),
+      send: async operation => {
+        if (ownerRef.current !== owner) return { ok: false, status: 401 };
+        const token = await getTokenRef.current();
+        if (ownerRef.current !== owner) return { ok: false, status: 401 };
+        return postChallengeProgress(operation.challengeId, operation, token);
+      },
+      changed: (state, issue) => {
+        if (!alive || ownerRef.current !== owner) return;
+        setOutbox({ ...state }); setStorageError(issue === 'storage');
+        const next = snapshotRef.current.map(s => ({ ...s, challenge: mergeProgressOutbox(s.challenge, state) }));
+        snapshotRef.current = next;
+        setData({ ownerId: owner, snapshots: next });
+      },
+    });
+    /** Reads the saved queue and starts the engine. Never overwrites an unread queue with an empty one. */
+    const restore = (): Promise<boolean> => {
+      if (engineRef.current) return Promise.resolve(true);
+      restoring ??= (async () => {
+        try {
+          const restored = await readJSON<ProgressOutboxState | null>(PENDING_KEY, null);
+          if (!alive || ownerRef.current !== owner) return false;
+          if (!restored.ok) {
+            setStorageError(true);
+            // Retry on its own: 2 s, 5 s, 15 s, then every 30 s while the screen lives.
+            if (retry) clearTimeout(retry);
+            retry = setTimeout(() => { void restore(); }, [2_000, 5_000, 15_000][attempts++] ?? 30_000);
+            return false;
+          }
+          if (retry) { clearTimeout(retry); retry = null; }
+          const engine = createEngine(restored.value);
+          engineRef.current = engine; setOutbox({ ...engine.state }); setStorageError(false);
+          const next = snapshotRef.current.map(s => ({ ...s, challenge: mergeProgressOutbox(s.challenge, engine.state) }));
+          snapshotRef.current = next; setData({ ownerId: owner!, snapshots: next });
+          void engine.flush();
+          return true;
+        } catch {
+          if (alive) setStorageError(true);
+          return false;
+        } finally { restoring = null; }
+      })();
+      return restoring;
+    };
+    restoreRef.current = restore;
+    const appState = AppState.addEventListener('change', state => { if (state === 'active') void restore(); });
     (async () => {
       try {
         engineRef.current?.dispose(); engineRef.current = null;
         if (!isSignedIn || !userId) return;
-        const restored = await readJSON<ProgressOutboxState | null>(PENDING_KEY, null);
-        if (!alive || ownerRef.current !== userId) return;
-        if (!restored.ok) { setStorageError(true); setError(true); return; }
-        const owner = userId;
-        const engine = new ProgressOutbox(owner, restored.value, {
-          uuid: randomUUID,
-          save: state => saveJSON(PENDING_KEY, state, { strict: true }),
-          send: async operation => {
-            if (ownerRef.current !== owner) return { ok: false, status: 401 };
-            const token = await getTokenRef.current();
-            if (ownerRef.current !== owner) return { ok: false, status: 401 };
-            return postChallengeProgress(operation.challengeId, operation, token);
-          },
-          changed: (state, issue) => {
-            if (!alive || ownerRef.current !== owner) return;
-            setOutbox({ ...state }); setStorageError(issue === 'storage');
-            const next = snapshotRef.current.map(s => ({ ...s, challenge: mergeProgressOutbox(s.challenge, state) }));
-            snapshotRef.current = next;
-            setData({ ownerId: owner, snapshots: next });
-          },
-        });
-        engineRef.current = engine; setOutbox({ ...engine.state });
+        // A failed read shows «storage» and is retried; the challenge itself still loads.
+        await restore();
+        if (!alive || ownerRef.current !== owner) return;
         const legacy = await loadJSON<{ updates?: unknown[] } | null>('dvg.challengeProgressPending.v1', null);
         if (alive && ownerRef.current === owner && legacy?.updates?.length) {
           Alert.alert('Проверьте старые отметки', 'Есть неподтверждённые отметки из прошлой версии. Проверьте результат на сервере; старые значения не будут отправлены автоматически.');
@@ -167,7 +201,8 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       } catch { if (alive) setError(true); }
       finally { if (alive) setLoading(false); }
     })();
-    return () => { alive = false; ++revision.current; engineRef.current?.dispose(); engineRef.current = null; };
+    return () => { alive = false; ++revision.current; if (retry) clearTimeout(retry); appState.remove(); restoreRef.current = null;
+      engineRef.current?.dispose(); engineRef.current = null; };
   }, [isSignedIn, userId, refreshLive]);
 
   useEffect(() => {
@@ -212,11 +247,14 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
+  const enqueueRef = useRef<(owner: typeof userId, challengeId: string, day: number, taskId: string, value?: number) => void>(() => {});
   const enqueue = useCallback((owner: typeof userId, challengeId: string, day: number, taskId: string, value?: number) => {
     if (!owner || ownerRef.current !== owner) return;
     const current = snapshotRef.current.find(s => s.challenge.id === challengeId)?.challenge;
     // A stale dialog callback cannot write to a different challenge or a new day.
-    if (!current || current.currentDay !== day || marksClosed(current) || !engineRef.current) return;
+    if (!current || current.currentDay !== day || marksClosed(current)) return;
+    // Saved marks were not readable yet: read them now, then apply this same tap (it is not lost).
+    if (!engineRef.current) { void restoreRef.current?.().then(ok => { if (ok && engineRef.current) enqueueRef.current(owner, challengeId, day, taskId, value); }); return; }
     const task = current.tasks.find(t => t.id === taskId);
     if (!task) return;
     if (task.kind === 'metric') {
@@ -226,6 +264,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       engineRef.current.enqueue({ challengeId, day, taskId, done: !task.done, expectedVersion: task.version ?? 0 });
     }
   }, []);
+  enqueueRef.current = enqueue;
 
   const value = useMemo<ChallengeState>(() => {
     const makeState = ({ challenge, members }: Snapshot): ChallengeState => {

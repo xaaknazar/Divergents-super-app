@@ -66,6 +66,12 @@ export async function readJSON<T>(key: string, fallback: T): Promise<{ value: T;
       if (!documentDirectory) return { value: fallback, ok: false };
       const slot = stored.startsWith(FILE_MARKER_PREFIX) ? stored.slice(FILE_MARKER_PREFIX.length) : 'legacy';
       if (slot !== 'a' && slot !== 'b' && slot !== 'legacy') return { value: fallback, ok: false };
+      // iOS keeps keychain items when the app is deleted, but removes its files. A marker whose
+      // file is definitely absent means «nothing saved», not a failure: otherwise a reinstall
+      // would make this key unreadable forever (marks could never be saved again).
+      // A file that cannot be checked or read stays an honest failure (ok: false).
+      const info = await getInfoAsync(fileUri(key, slot));
+      if (!info.exists) return { value: fallback, ok: true };
       return { value: JSON.parse(await readAsStringAsync(fileUri(key, slot))) as T, ok: true };
     }
     const parsed = JSON.parse(stored) as T;

@@ -92,3 +92,22 @@ test('stale screen callbacks cannot write yesterday or use another account', asy
   await act(async () => ownerEdit('reading', 99));
   expect(postChallengeProgress).not.toHaveBeenCalled(); expect(root.activeChallenges).toEqual([]);
 });
+test('one failed read of saved marks at launch does not disable marking: the next tap retries and is sent', async () => {
+  jest.mocked(readJSON).mockResolvedValueOnce({ ok: false, value: null }).mockResolvedValue({ ok: true, value: null });
+  await render(app());
+  expect(second.syncError).toBe('storage');
+  await act(async () => { second.setMetric('reading', 45); });
+  await act(async () => { await Promise.resolve(); });
+  expect(postChallengeProgress).toHaveBeenCalledWith('second', expect.objectContaining({ taskId: 'reading', value: 45, day: 2 }), 'token');
+  expect(second.syncError).toBeNull(); expect(second.pointsToday).toBe(45);
+});
+test('a failed read is retried automatically, without a tap', async () => {
+  jest.mocked(readJSON).mockResolvedValueOnce({ ok: false, value: null }).mockResolvedValue({ ok: true, value: null });
+  await render(app());
+  expect(second.syncError).toBe('storage');
+  await act(async () => { jest.advanceTimersByTime(5_000); });
+  await act(async () => { await Promise.resolve(); });
+  expect(second.syncError).toBeNull();
+  await act(async () => { second.setMetric('reading', 41); });
+  expect(postChallengeProgress).toHaveBeenCalledWith('second', expect.objectContaining({ value: 41 }), 'token');
+});
