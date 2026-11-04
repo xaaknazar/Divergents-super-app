@@ -10,15 +10,19 @@ const STRICT_MODE = 'В строгом режиме iOS ограничивает
 /** Правила Reading challenge: пронумерованные пункты, каждый раскрывается на месте.
  * list — на экране вступления: заголовок «Правила» и пункты сразу видны.
  * collapsed — у участника: одна строка «Правила челленджа · 9», раскрывается на месте. */
-export function ReadingRules({ variant = 'collapsed', initiallyExpanded = false, blockingMode = 'selected', flagRecoveryDays, targetMinutes = 60 }: {
+export function ReadingRules({ variant = 'collapsed', initiallyExpanded = false, blockingMode = 'selected', flagRecoveryDays, targetMinutes = 60, eliminationFlags }: {
   variant?: 'list' | 'collapsed'; initiallyExpanded?: boolean; blockingMode?: 'selected' | 'all-apps'; flagRecoveryDays?: number; targetMinutes?: number;
+  /** Столько флагов одновременно завершают участие (годовой челлендж); вернуться можно только с нуля. */
+  eliminationFlags?: number;
 }) {
   const { T, ty } = useTheme();
   const [expanded, setExpanded] = useState(initiallyExpanded);
   const [open, setOpen] = useState<number | null>(null);
   const rules = READING_CHALLENGE_RULES.map(rule => ({ title: rule.title === 'Час чтения в день' && targetMinutes !== 60 ? `${targetMinutes} минут в день` : rule.title, text: rule.text.replaceAll('60 минут', `${targetMinutes} минут`) })).map((rule, index) => {
+    const elimination = eliminationFlags ? ` ${eliminationFlags} красных флагов одновременно — и участие завершается: вы выходите из рейтинга, новые подходы недоступны. Вернуться можно в любой момент, но с нуля: прогресс, флаги и история этого челленджа обнуляются, день 1 — день возвращения.` : '';
     if (rule.title === 'Красный флаг' && flagRecoveryDays) return { title: 'Красные флаги и их снятие',
-      text: `Если за день не набраны ${targetMinutes} минут чтения, ставится красный флаг. За каждые ${flagRecoveryDays} дней подряд с выполненной нормой и сохранёнными страницами снимается один накопленный флаг. После снятия серия для следующего флага начинается заново. Пропуск прерывает серию. При нуле флагов списания не копятся на будущее; история пропусков сохраняется.` };
+      text: `Если за день не набраны ${targetMinutes} минут чтения, ставится красный флаг. За каждые ${flagRecoveryDays} дней подряд с выполненной нормой и сохранёнными страницами снимается один накопленный флаг. После снятия серия для следующего флага начинается заново. Пропуск прерывает серию. При нуле флагов списания не копятся на будущее; история пропусков сохраняется.${elimination}` };
+    if (rule.title === 'Красный флаг' && elimination) return { ...rule, text: rule.text.replace(' Флаги накапливаются.', elimination) };
     return blockingMode === 'all-apps' && index === READING_CHALLENGE_RULES.length - 1
       ? { ...rule, text: `${rule.text} ${STRICT_MODE}` } : rule;
   });

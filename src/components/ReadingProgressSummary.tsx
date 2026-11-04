@@ -21,8 +21,10 @@ const durationOf = (ms: number) => {
  * часы), книги за день; ниже «За весь челлендж» — сетка 2×2 — средний темп
  * в страницах, дни чтения, красные флаги, страницы всего. Оба показателя доступны в рейтинге.
  * Без `todayMs` — только сетка (история). */
-export function ReadingProgressSummary({ member, todayMs, dayLeftMs, books, targetMinutes = 60 }: {
+export function ReadingProgressSummary({ member, todayMs, dayLeftMs, books, targetMinutes = 60, eliminationFlags }: {
   member: NonNullable<ReadingDetail['me']>; targetMinutes?: number; todayMs?: number; books?: ReadingBookSummary[];
+  /** Годовой челлендж: столько флагов одновременно завершают участие. */
+  eliminationFlags?: number;
   /** Сколько осталось до конца дня по серверу. Без него строка нейтральная, без отсчёта. */
   dayLeftMs?: number;
 }) {
@@ -73,7 +75,7 @@ export function ReadingProgressSummary({ member, todayMs, dayLeftMs, books, targ
         <Text style={[ty.footnote, { color: T.labelSecondary }]}>{c.label}</Text>
       </View>)}
     </View>
-    {member.flagRecovery ? <ReadingFlagRecovery flags={member.flags} recovery={member.flagRecovery} /> : null}
+    {member.flagRecovery && !member.eliminatedOn ? <ReadingFlagRecovery flags={member.flags} recovery={member.flagRecovery} eliminationFlags={eliminationFlags} /> : null}
   </View>;
 }
 const styles = StyleSheet.create({

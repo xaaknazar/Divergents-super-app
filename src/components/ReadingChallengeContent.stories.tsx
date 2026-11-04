@@ -111,3 +111,10 @@ export const OfflineRunning: Story = { args: { ...shelfArgs, offline: true, pend
 export const OfflineDark: Story = { ...OfflineSaved, parameters: { scheme: 'dark' } };
 export const OfflineRejected: Story = { args: { ...shelfArgs, rejectedApproaches: [{ sessionId: 'x', book: 'Атомные привычки', elapsedMs: 25 * 60000, pages: 12,
   message: 'Подход начат больше 7 дней назад и уже не принимается.' }], onDismissRejected: noop, data: shelfToday } };
+/** Пять красных флагов одновременно: участие завершено, таймера нет, можно начать заново с нуля. */
+const eliminated = { ...individualReadingFixture, ranking: individualReadingFixture.ranking.filter(m => m.userId !== 'demo-reader'), participants: 4, supportsLeave: true, participationId: '11111111-1111-4111-8111-111111111111', eliminationFlags: 5,
+  me: { ...individualReadingFixture.me!, flags: 5, eliminatedOn: 12, firstDay: 2,
+    flagRecovery: { requiredDays: 5, progressDays: 0, daysRemaining: 5, earnedFlags: 6, forgivenFlags: 1 } } };
+export const EliminatedByFlags: Story = { args: { data: eliminated, onLeave: () => {} } };
+export const EliminatedByFlagsDark: Story = { ...EliminatedByFlags, parameters: { scheme: 'dark' } };
+export const EliminatedByFlagsLargeText: Story = { ...EliminatedByFlags, parameters: { viewport: 'compact', textSize: 'xl' } };

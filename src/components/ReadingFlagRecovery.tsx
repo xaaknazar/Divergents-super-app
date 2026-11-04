@@ -7,9 +7,13 @@ import { word } from '../data/plural';
 import { SF } from './SFIcon';
 
 /** Read-only server progress. Never infer forgiveness from a local timer. */
-export function ReadingFlagRecovery({ flags, recovery }: { flags: number; recovery: ReadingFlagRecoveryState }) {
+export function ReadingFlagRecovery({ flags, recovery, eliminationFlags }: { flags: number; recovery: ReadingFlagRecoveryState;
+  /** Столько флагов одновременно завершают участие: показываем, сколько ещё можно получить. */
+  eliminationFlags?: number;
+}) {
   const { T, ty } = useTheme();
   const active = flags > 0;
+  const toElimination = eliminationFlags ? Math.max(0, eliminationFlags - flags) : null;
   const left = Math.max(0, recovery.requiredDays - recovery.progressDays);
   return <View style={[styles.panel, { backgroundColor: T.fillTertiary }]}>
     <View style={styles.heading}>
@@ -29,6 +33,9 @@ export function ReadingFlagRecovery({ flags, recovery }: { flags: number; recove
       </View>
       <Text style={[ty.footnote, { color: T.labelSecondary }]}>Ещё {left} {word(left, 'день', 'дня', 'дней')} с часом чтения и страницами — и флаг снимется. Пропуск начнёт серию заново.</Text>
     </> : <Text style={[ty.footnote, { color: T.labelSecondary }]}>Если появится флаг, его можно снять за {recovery.requiredDays} дней чтения подряд. Списания не копятся на будущее.</Text>}
+    {active && toElimination ? <Text accessibilityLiveRegion="polite" style={[ty.footnoteEm, nums, { color: toElimination <= 2 ? T.redText : T.labelSecondary }]}>
+      {`Ещё ${toElimination} ${word(toElimination, 'флаг', 'флага', 'флагов')} — и участие завершится. Вернуться можно будет только с нуля.`}
+    </Text> : null}
     {recovery.forgivenFlags > 0 ? <Text style={[ty.footnoteEm, { color: T.greenText }]}>Снято флагов за серии: {recovery.forgivenFlags}</Text> : null}
   </View>;
 }

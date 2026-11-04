@@ -45,6 +45,8 @@ export const ReadingBookSummarySchema = z.object({ key: z.string(), title: z.str
 export type ReadingBookSummary = z.infer<typeof ReadingBookSummarySchema>;
 export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, mode,
   supportsLeave: z.boolean().optional(), participationId: z.string().nullable().optional(),
+  /** Годовой челлендж: столько красных флагов одновременно завершают участие (вернуться можно только с нуля). */
+  eliminationFlags: z.number().int().positive().optional(),
   level: z.enum(['extreme', 'moderate']).optional(), targetMs: z.number().optional(),
   format: z.enum(['individual', 'teams']).optional(), participants: z.number().optional(),
   flagRecoveryDays: z.number().int().positive().optional(),

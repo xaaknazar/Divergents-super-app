@@ -11,3 +11,6 @@ export const AllForgiven: Story = { args: { flags: 0, recovery: { requiredDays: 
 export const NoFlagsYet: Story = { args: { flags: 0, recovery: { requiredDays: 5, progressDays: 0, daysRemaining: 0, earnedFlags: 0, forgivenFlags: 0 } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+/** Годовой челлендж: сколько флагов осталось до выбывания (5 одновременно). */
+export const NearElimination: Story = { args: { flags: 3, eliminationFlags: 5 } };
+export const NearEliminationDark: Story = { args: { flags: 4, eliminationFlags: 5 }, parameters: { scheme: 'dark' } };
