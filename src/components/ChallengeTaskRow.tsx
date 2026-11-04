@@ -72,11 +72,15 @@ export function ChallengeTaskRow({
             больше нет: страницы и шаги никто не набирает по единице, а мелкая
             иконка карандаша рядом с цифрой терялась. */}
         <View style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
-          <Text style={[ty.subhead, nums, { color: T.labelSecondary, flex: 1 }]} numberOfLines={1}>
-            <Text style={{ color: over ? T.green : T.brand, fontFamily: ty.subheadEm.fontFamily }}>{fmt(task.current)}</Text>
-            {` / ${fmt(task.min)} ${task.unit}`}
-            {over ? <Text style={{ color: T.green }}>{`  +${fmt(task.current - task.min)}`}</Text> : null}
-          </Text>
+          {/* Значение не обрезается («6 400 / 10 000 шаг…»), а переносится частями: число никогда
+              не разрывается («10 / 000»). Неразрывный пробел не годится — см. data/format.ts. */}
+          {/* Части разделены отступом, а не пробелами по краям строк: крайние пробелы схлопываются. */}
+          <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 4 }}>
+            <Text style={[ty.subheadEm, nums, { color: over ? T.green : T.brand }]} numberOfLines={1}>{fmt(task.current)}</Text>
+            <Text style={[ty.subhead, nums, { color: T.labelSecondary }]} numberOfLines={1}>/ {fmt(task.min)}</Text>
+            <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{task.unit}</Text>
+            {over ? <Text style={[ty.subhead, nums, { color: T.green, marginLeft: 4 }]} numberOfLines={1}>+{fmt(task.current - task.min)}</Text> : null}
+          </View>
           {onSet ? (
             <Pressable onPress={onSet} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Ввести значение: ${task.title}`} accessibilityState={{ disabled }}
               style={({ pressed }) => ({
