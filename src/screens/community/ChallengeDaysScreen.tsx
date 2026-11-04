@@ -437,13 +437,28 @@ function DayRow({ d, last, onPress }: { d: ChallengeDay; last: boolean; onPress:
           <Text style={[ty.body, { color: T.label }]} numberOfLines={1}>
             {dayDate(d.dateISO)}{!d.past ? ` · ${tr('идёт')}` : ''}
           </Text>
-          <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
-            {d.left
-              ? tr('🏳️ вышли по белому флагу')
-              : missed
-                ? tr('не отмечался')
-                : `${d.pages} ${tr('стр.')} · ${d.sugarFree ? tr('без сахара') : tr('сахар был')} · ${fmtInt(d.steps)} ${tr('шагов')}`}
-          </Text>
+          {/* Части дня переносятся целиком, а не обрезаются «… · 10 …»: шаги — главное число дня.
+              Неразрывный пробел для этого не годится (см. data/format.ts), поэтому каждая часть —
+              отдельная строка в ряду с переносом. Часть с флагом — красная. */}
+          {d.left || missed ? (
+            <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>
+              {d.left ? tr('🏳️ вышли по белому флагу') : tr('не отмечался')}
+            </Text>
+          ) : (
+            // Разделитель «·» висит в конце части, а не в начале строки; отступ между частями — columnGap,
+            // потому что крайние пробелы строки схлопываются.
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 4, marginTop: 1 }}>
+              {([
+                [`${d.pages} ${tr('стр.')}`, d.flags.R > 0],
+                [d.sugarFree ? tr('без сахара') : tr('сахар был'), d.flags.NS > 0],
+                [`${fmtInt(d.steps)} ${tr('шагов')}`, d.flags.A > 0],
+              ] as [string, boolean][]).map(([text, flagged], i, all) => (
+                <Text key={i} style={[ty.caption1, { color: flagged ? T.redText : T.labelSecondary }]} numberOfLines={1}>
+                  {text}{i < all.length - 1 ? <Text style={{ color: T.labelSecondary }}>{' ·'}</Text> : null}
+                </Text>
+              ))}
+            </View>
+          )}
         </View>
 
         {flags > 0 ? <StatusBadge label={["🚩 ", (flags)].join('')} tone="danger" /> : null}
