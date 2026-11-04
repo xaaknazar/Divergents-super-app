@@ -139,7 +139,9 @@ test.each(['ready', 'unavailable'] as const)('pending pages lead the screen even
   p.data = { ...p.data, session: { ...session, elapsedMs: 3600000, status: 'awaiting_pages' } };
   const view = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
   expectOrder(view.container, view.getByRole('header', { name: 'Осталось записать страницы' }),
-    view.getByLabelText('Страниц за этот подход'), view.getByRole('button', { name: 'Сохранить подход' }), view.getByRole('timer'));
+    view.getByLabelText('Страниц за этот подход'), view.getByRole('button', { name: 'Сохранить подход' }));
+  // Writing pages is its own step: no paused «00:00» timer under the form.
+  expect(view.queryByRole('timer')).toBeNull();
   expect(view.queryByRole('button', { name: 'Старт' })).toBeNull();
   expect(view.queryByRole('button', { name: 'Новый подход' })).toBeNull();
   expect(view.queryByRole('button', { name: 'Возобновить' })).toBeNull();

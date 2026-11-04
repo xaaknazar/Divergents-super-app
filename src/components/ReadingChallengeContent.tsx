@@ -197,8 +197,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
         fromPage={reportFromPage} nextPage={nextPage} />
     </Wrapper> : null}
     {reader && !p.sessionNotice ? <Wrapper gap={16}>
-      <ReadingTimer targetMs={HOUR} remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)}
-        size={recording ? 'compact' : 'regular'} />
+      {/* Запись страниц — отдельный шаг: таймер «Пауза 00:00» над формой ничего не добавляет. */}
+      {recording ? null : <ReadingTimer targetMs={HOUR} remainingMs={p.remainingMs} state={timerVisual} blockingMode={p.blockingMode} extraMs={Math.max(0, todayMs - HOUR)}
+        size="regular" />}
       {running && !awaitingPages ? <>
         <ReadingTimerControls action="pause" onPress={p.onPause} />
         {p.remainingMs <= 0 ? <ReadingPagesNotice state="goal" onRecord={p.onPause} busy={p.localBusy} /> : null}
