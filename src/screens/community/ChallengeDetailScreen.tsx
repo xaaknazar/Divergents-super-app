@@ -1030,15 +1030,17 @@ const flagWord = (value: number) => {
   return tr('флагов');
 };
 
+// Флаги участника словами, а не кодами правил («A-1 · NS-1 · R-1» читали как ошибку).
+const FLAG_CATEGORY_WORDS: Record<keyof FlagCounts, string> = { R: 'чтение', NS: 'сахар', A: 'шаги' };
 function memberFlagDetail(flags: FlagCounts | undefined): string {
   if (!flags) return '';
-  const details = [
-    flags.A > 0 ? `A-${flags.A}` : '',
-    flags.NS > 0 ? `NS-${flags.NS}` : '',
-    flags.R > 0 ? `R-${flags.R}` : '',
-  ].filter(Boolean);
+  const details = (['R', 'NS', 'A'] as const)
+    .filter(key => flags[key] > 0)
+    .map(key => `${tr(FLAG_CATEGORY_WORDS[key])} ${flags[key]}`);
   return details.join(' · ');
 }
+/** Подпись категории в «Мои флаги»: «Без сахара», как на экране «Дни челленджа». */
+const flagTileTitle = (key: keyof FlagCounts, title: string) => key === 'NS' ? tr('Без сахара') : title;
 
 function RatingModeSwitch({ value, onChange, T }: {
   value: 'overall' | 'today';
@@ -1304,7 +1306,7 @@ function MyFlagRow({ flags, maxFlags }: { flags: FlagCounts; maxFlags: number })
             <SF name={cat.icon} size={16} color={danger ? T.red : cat.color} />
             {/* Number only — the section header already says these are flags. */}
             <Text style={[ty.title3, { color: danger ? T.red : T.label, marginTop: 4 }]} numberOfLines={1}>{n}</Text>
-            <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{cat.title}</Text>
+            <Text style={[ty.caption2, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>{flagTileTitle(cat.key, cat.title)}</Text>
           </View>
         );
       })}
