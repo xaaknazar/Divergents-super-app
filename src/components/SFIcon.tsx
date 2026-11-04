@@ -33,7 +33,8 @@ export type SFName =
   | 'square.and.pencil' | 'info.circle' | 'rectangle.portrait.and.arrow.right'
   | 'gift.fill' | 'gift'
   | 'stopwatch' | 'mountain.2.fill' | 'tent.fill' | 'chart.line.uptrend.xyaxis' | 'kettlebell'
-  | 'waveform.path.ecg' | 'arrow.down.circle.fill' | 'books.vertical.fill';
+  | 'waveform.path.ecg' | 'arrow.down.circle.fill' | 'books.vertical.fill' | 'chart.bar.fill'
+  | 'checkmark.icloud.fill' | 'exclamationmark.triangle.fill' | 'hand.raised.fill' | 'megaphone.fill' | 'pause.circle.fill' | 'person.badge.plus' | 'person.crop.circle.badge.exclamationmark' | 'person.text.rectangle' | 'play.slash' | 'questionmark.circle' | 'wifi.exclamationmark' | 'xmark.circle';
 
 type Lib = 'ion' | 'mci' | 'svg';
 
@@ -120,6 +121,19 @@ const MAP: Record<string, [Lib, string]> = {
   'chart.line.uptrend.xyaxis': ['ion', 'trending-up'], 'kettlebell': ['mci', 'kettlebell'],
   'waveform.path.ecg': ['ion', 'pulse'], 'arrow.down.circle.fill': ['ion', 'arrow-down-circle'],
   'books.vertical.fill': ['ion', 'library'],
+  'chart.bar.fill': ['ion', 'stats-chart'],
+  'checkmark.icloud.fill': ['ion', 'cloud-done'],
+  'exclamationmark.triangle.fill': ['ion', 'warning'],
+  'hand.raised.fill': ['ion', 'hand-left'],
+  'megaphone.fill': ['ion', 'megaphone'],
+  'pause.circle.fill': ['ion', 'pause-circle'],
+  'person.badge.plus': ['ion', 'person-add'],
+  'person.crop.circle.badge.exclamationmark': ['ion', 'alert-circle'],
+  'person.text.rectangle': ['ion', 'id-card-outline'],
+  'play.slash': ['ion', 'eye-off-outline'],
+  'questionmark.circle': ['ion', 'help-circle-outline'],
+  'wifi.exclamationmark': ['ion', 'cloud-offline-outline'],
+  'xmark.circle': ['ion', 'close-circle-outline'],
 };
 
 export interface SFProps {

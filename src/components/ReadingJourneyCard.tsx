@@ -9,7 +9,7 @@ export function ReadingJourneyCard({ period, completed, onPress }: { period?: Re
   return <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={completed ? 'Итоги года чтения' : 'Статистика чтения'}
     style={({ pressed }) => [styles.card, { backgroundColor: T.cardBg, borderColor: T.cardBorder, opacity: pressed ? 0.75 : 1 }]}>
     <View style={styles.row}>
-      <SF name={completed ? 'trophy.fill' : 'chart.bar.fill'} size={23} color={T.brandText} />
+      <SF name={completed ? 'trophy.fill' : 'chart.bar.fill'} size={22} color={T.brandText} />
       <View style={styles.copy}>
         <Text style={[ty.headline, { color: T.label }]}>{completed ? 'Ваш год чтения завершён' : 'Статистика'}</Text>
         <Text style={[ty.footnote, { color: T.labelSecondary }]}>{completed ? 'Итоги, книги и карточки для сторис' : period ? `День ${period.personalDay} из ${period.totalDays} · ваш год чтения` : 'Мой прогресс и карточки для сторис'}</Text>
