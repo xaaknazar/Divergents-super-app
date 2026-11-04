@@ -53,3 +53,30 @@ export const readingYearHistoryFixture = {
     { key: '3', title: 'Краткая история Японии', author: 'Ричард Мейсон', pages: 120, elapsedMs: 4 * 3600000, coverId: null, nextPage: null, lastReadAt: '2027-10-30', finished: false, editable: true },
   ],
 };
+
+/** Год в процессе: 84-й личный день, реалистичный дневник (норма, недочитанные дни, флаги, снятый флаг, сегодня). */
+const activeDays = 84;
+const activeHistory = Array.from({ length: activeDays }, (_, i) => {
+  const day = i + 1;
+  if (day === activeDays) return { day, state: 'open' as const, pages: 9, elapsedMs: 25 * 60000 };
+  const missed = [12, 13, 31, 47, 58, 70].includes(day), partial = [13, 47].includes(day);
+  const pages = missed ? partial ? 8 : 0 : 14 + ((day * 7) % 19);
+  return { day, state: missed ? 'missed' as const : 'complete' as const, pages,
+    elapsedMs: missed ? partial ? 25 * 60000 : 0 : (60 + (day * 11) % 35) * 60000,
+    ...(day === 12 ? { flagForgivenOn: 18 } : {}), ...(day === 18 ? { flagForgivenForDay: 12 } : {}) };
+});
+export const readingActiveYearFixture = {
+  challengeId: 'reading-year', title: 'Extreme Reading', own: true, generatedAt: Date.parse('2027-01-22T09:00:00Z'),
+  reader: { ...continuousReadingFixture.me!, firstDay: 1, history: activeHistory,
+    pages: activeHistory.reduce((s, d) => s + d.pages, 0), elapsedMs: activeHistory.reduce((s, d) => s + d.elapsedMs, 0),
+    completedDays: activeHistory.filter(d => d.state === 'complete').length, daysParticipated: activeDays, flags: 5 - 1,
+    averagePages: activeHistory.reduce((s, d) => s + d.pages, 0) / activeDays, bestStreak: 23, streak: 13,
+    readingDays: activeHistory.filter(d => d.elapsedMs > 0).length,
+    flagRecovery: { requiredDays: 5, progressDays: 3, daysRemaining: 2, earnedFlags: 5, forgivenFlags: 1 },
+    period: { startsAt: Date.parse('2026-10-31T19:00:00Z'), endsAt: Date.parse('2027-10-31T19:00:00Z'), totalDays: 365, personalDay: activeDays, completed: false } },
+  books: [
+    { key: 'ol:1', title: 'Атомные привычки', author: 'Джеймс Клир', pages: 320, elapsedMs: 12 * 3600000, coverId: null, nextPage: null, lastReadAt: '2026-12-02', finished: true, editable: true },
+    { key: 'ol:2', title: 'Племя', author: 'Майкл Моррис', pages: 412, elapsedMs: 19 * 3600000, coverId: null, nextPage: null, lastReadAt: '2027-01-06', finished: true, editable: true },
+    { key: 'ol:3', title: 'Краткая история Японии', author: 'Ричард Мейсон', pages: 731, elapsedMs: 41 * 3600000, coverId: null, nextPage: 214, lastReadAt: '2027-01-22', finished: false, editable: true },
+  ],
+};
