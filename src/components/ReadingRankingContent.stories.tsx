@@ -6,7 +6,8 @@ const meta = { title: 'Reading/Ranking', component: ReadingRankingContent, args:
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
-export const TotalPages: Story = { args: { initialMetric: 'pages' } };
+/** Вторая вкладка. */
+export const AveragePace: Story = { args: { initialMetric: 'pace' } };
 export const DifferentLeaders: Story = { args: { data: { ...individualReadingFixture,
   ranking: individualReadingFixture.ranking.map(member => member.userId === 'r1' ? { ...member, pages: 82, daysParticipated: 2 } : member),
 } } };

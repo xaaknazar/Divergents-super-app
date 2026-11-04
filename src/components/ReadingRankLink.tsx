@@ -7,7 +7,7 @@ import { SF } from './SFIcon';
 import { TappableSurface } from './TappableSurface';
 
 /** Оба места из одного списка участников; карточка открывает переключаемый рейтинг.
- * Два места — двумя равными колонками: «4 из 5 · по темпу» и «4 из 5 · по страницам». */
+ * Два места — двумя равными колонками в порядке вкладок рейтинга: «4 из 5 · по страницам», затем «4 из 5 · по темпу». */
 export function ReadingRankLink({ place, pagesPlace, participants, onPress }: {
   /** Место по среднему темпу. */
   place: number | null; pagesPlace: number | null; participants: number;
@@ -22,8 +22,8 @@ export function ReadingRankLink({ place, pagesPlace, participants, onPress }: {
     </Text>
     <Text style={[ty.footnote, { color: T.labelSecondary }]}>{label}</Text>
   </View>;
-  return <TappableSurface onPress={onPress} accessibilityLabel={`Мой рейтинг. По среднему темпу: ${main}. ${pages}`}
-    accessibilityHint="Открыть рейтинг и выбрать средний темп или всего страниц">
+  return <TappableSurface onPress={onPress} accessibilityLabel={`Мой рейтинг. ${pages}. По среднему темпу: ${main}`}
+    accessibilityHint="Открыть рейтинг: всего страниц или средний темп">
     <View style={styles.root}>
       <View style={styles.heading}>
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name="trophy.fill" size={16} color={T.brandText} /></View>
@@ -31,9 +31,9 @@ export function ReadingRankLink({ place, pagesPlace, participants, onPress }: {
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name="chevron.forward" size={16} color={T.labelTertiary} /></View>
       </View>
       <View style={styles.metrics}>
-        {metric(place, 'по среднему темпу')}
-        <View style={[styles.divider, { backgroundColor: T.separator }]} />
         {metric(pagesPlace, 'по страницам')}
+        <View style={[styles.divider, { backgroundColor: T.separator }]} />
+        {metric(place, 'по среднему темпу')}
       </View>
     </View>
   </TappableSurface>;

@@ -54,7 +54,7 @@ test('a finished challenge cannot be joined', async () => {
 test('participant page: rank link opens the ranking; no challenge block, teams or tabs', async () => {
   const p = props();
   const view = await show(p);
-  await fireEvent.press(view.getByRole('button', { name: 'Мой рейтинг. По среднему темпу: 4 место из 5 участников. По страницам: 4 место из 5 участников' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Мой рейтинг. По страницам: 4 место из 5 участников. По среднему темпу: 4 место из 5 участников' }));
   expect(p.onRanking).toHaveBeenCalledTimes(1);
   expect(view.queryByText(individualReadingFixture.title)).toBeNull();
   expect(view.queryByText(/Команды|Участники/)).toBeNull();
@@ -65,7 +65,7 @@ test('legacy qualification flags cannot hide a participant’s place', async () 
   const p = props();
   p.data = { ...p.data, ranking: p.data.ranking.map(m => m.userId === 'demo-reader' ? { ...m, rankingEligible: false, qualificationDaysLeft: 4 } : m) };
   const view = await show(p);
-  expect(view.getByRole('button', { name: 'Мой рейтинг. По среднему темпу: 4 место из 5 участников. По страницам: 4 место из 5 участников' })).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Мой рейтинг. По страницам: 4 место из 5 участников. По среднему темпу: 4 место из 5 участников' })).toBeTruthy();
   expect(view.queryByText(/До участия в рейтинге/)).toBeNull();
 });
 test('today warns in red only when the day is running out, until the hour is done', async () => {
