@@ -1,0 +1,10 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { ReadingYearBookRow } from './ReadingYearBookRow';
+import { readingActiveYearFixture } from '../storybook/readingFixtures';
+const meta = { title: 'Reading/Year/ReadingYearBookRow', component: ReadingYearBookRow, args: { book: readingActiveYearFixture.books[2] } } satisfies Meta<typeof ReadingYearBookRow>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Reading: Story = {};
+export const Finished: Story = { args: { book: readingActiveYearFixture.books[0] } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
