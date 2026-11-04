@@ -32,7 +32,7 @@ import { deleteChallenge, withdrawChallengeApplication } from '../../data/api';
 import {
   fetchChallengesAndTeams, getChallengeMeta, daysUntil, teamsNeed,
   CHALLENGE_CATEGORIES, CHALLENGE_RULES, ACTIVITY_CONVERSIONS, ChallengeListItem, ChallengeTeam, taskDone,
-  FlagCounts, totalFlags, flagsToEliminate, ChallengeTask, MetricTask, MemberTaskProgress,
+  FlagCounts, totalFlags, flagsToEliminate, ChallengeTask, MetricTask, MemberTaskProgress, ChallengeDay,
   fetchMyChallengeApplications, MyChallengeApplication,
   setTeamChat, broadcastTeam,
   leaveChallenge, whiteFlagErrorText, NO_WHITE_FLAG,
@@ -816,7 +816,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
         </View>
       </ContentBlock></Wrapper>
 
-      <ChallengeCalendar totalDays={c.totalDays} currentDay={c.currentDay} startISO={c.startISO} T={T} />
+      <ChallengeCalendar totalDays={c.totalDays} currentDay={c.currentDay} startISO={c.startISO} days={c.myDays} T={T} />
 
       {/* Team card follows the supplied leaderboard reference. */}
       <Pressable onPress={openStandings} accessibilityRole="button" accessibilityLabel={tr('Открыть рейтинг команд')}
@@ -1235,7 +1235,18 @@ function challengeDayOneUtc(startISO?: string): number | null {
   return Date.UTC(almaty.getUTCFullYear(), almaty.getUTCMonth(), almaty.getUTCDate());
 }
 
-function ChallengeCalendar({ totalDays, currentDay, startISO, T }: { totalDays: number; currentDay: number; startISO?: string; T: any }) {
+// Прошедший день окрашен по итогу, как на экране «Дни челленджа»: зелёный — чисто, красный — флаг или не отмечался.
+type CalendarDayState = 'clean' | 'flagged' | 'missed' | 'today' | 'future' | 'past';
+function calendarDayState(day: number, current: number, days: ChallengeDay[] | undefined): CalendarDayState {
+  if (day === current) return 'today';
+  if (day > current) return 'future';
+  const d = days?.find(x => x.day === day);
+  // Белый флаг 🏳️ и незакрытые дни не судятся — нейтральные, как раньше.
+  if (!d || d.left || !d.past) return 'past';
+  if (!d.reported) return 'missed';
+  return totalFlags(d.flags) > 0 ? 'flagged' : 'clean';
+}
+function ChallengeCalendar({ totalDays, currentDay, startISO, days, T }: { totalDays: number; currentDay: number; startISO?: string; days?: ChallengeDay[]; T: any }) {
   const { ty } = useTheme();
   const almatyNow = new Date(Date.now() + 5 * 3_600_000);
   const todayUtc = Date.UTC(almatyNow.getUTCFullYear(), almatyNow.getUTCMonth(), almatyNow.getUTCDate());
@@ -1262,22 +1273,46 @@ function ChallengeCalendar({ totalDays, currentDay, startISO, T }: { totalDays: 
       <View style={{ paddingHorizontal: 8, paddingVertical: 7, flexDirection: 'row', flexWrap: 'wrap' }}>
         {Array.from({ length: safeTotal }, (_, i) => {
           const challengeDay = i + 1;
-          const isToday = challengeDay === safeCurrent;
-          const isPast = challengeDay < safeCurrent;
+          const state = calendarDayState(challengeDay, safeCurrent, days);
+          const isToday = state === 'today';
           const date = new Date(dayOneUtc + (challengeDay - 1) * 86_400_000);
           const dateLabel = fmtDate(date, { day: 'numeric', month: 'long', timeZone: 'UTC' });
+          const look = {
+            today: { bg: T.brand, fg: '#fff', sub: 'rgba(255,255,255,0.82)', said: tr('сегодня') },
+            clean: { bg: 'rgba(52,199,89,0.18)', fg: T.greenText, sub: T.greenText, said: tr('норма закрыта') },
+            flagged: { bg: 'rgba(255,59,48,0.14)', fg: T.redText, sub: T.redText, said: tr('есть флаг') },
+            missed: { bg: 'rgba(255,59,48,0.28)', fg: T.redText, sub: T.redText, said: tr('не отмечался') },
+            past: { bg: T.brandTinted, fg: T.brand, sub: T.labelSecondary, said: tr('прошёл') },
+            future: { bg: T.fillTertiary, fg: T.labelTertiary, sub: T.labelTertiary, said: '' },
+          }[state];
           return (
             <View key={challengeDay} accessible accessibilityRole="text"
-              accessibilityLabel={`${tr('День')} ${challengeDay}, ${dateLabel}${isToday ? `, ${tr('сегодня')}` : isPast ? `, ${tr('прошёл')}` : ''}`}
+              accessibilityLabel={`${tr('День')} ${challengeDay}, ${dateLabel}${look.said ? `, ${look.said}` : ''}`}
               style={{ width: `${100 / 7}%`, padding: 2 }}>
-              <View style={{ minHeight: 40, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: isToday ? T.brand : isPast ? T.brandTinted : T.fillTertiary, borderWidth: isToday ? 0 : 0.5, borderColor: isPast ? T.brand : T.cardBorder }}>
-                <Text style={[ty.footnoteEm, { color: isToday ? '#fff' : isPast ? T.brand : T.label }]}>{date.getUTCDate()}</Text>
-                <Text style={[ty.caption2, { color: isToday ? 'rgba(255,255,255,0.82)' : T.labelSecondary, marginTop: 1 }]}>{tr('Д')}{challengeDay}</Text>
+              <View style={{ minHeight: 40, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: look.bg }}>
+                <Text style={[ty.footnoteEm, nums, { color: look.fg }]}>{date.getUTCDate()}</Text>
+                <Text style={[ty.caption2, { color: look.sub, marginTop: 1, opacity: isToday ? 1 : 0.85 }]}>{state === 'flagged' || state === 'missed' ? '🚩' : `${tr('Д')}${challengeDay}`}</Text>
               </View>
             </View>
           );
         })}
       </View>
+      {days?.length ? (
+        // Легенда — та же, что на экране «Дни челленджа»: без неё цвета приходится угадывать.
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 4, paddingHorizontal: 14, paddingBottom: 10 }}>
+          {([
+            ['rgba(52,199,89,0.18)', tr('норма закрыта')],
+            ['rgba(255,59,48,0.14)', tr('есть флаг')],
+            ['rgba(255,59,48,0.28)', tr('не отмечался')],
+            [T.brand, tr('сегодня')],
+          ] as [string, string][]).map(([bg, label]) => (
+            <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 3, borderCurve: 'continuous', backgroundColor: bg }} />
+              <Text style={[ty.caption2, { color: T.labelSecondary }]}>{label}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
       <View style={{ minHeight: 32, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: T.separator }}>
         <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Сегодня')}: {todayLabel} · {safeCurrent}/{safeTotal} {tr('день')}</Text>
       </View>
