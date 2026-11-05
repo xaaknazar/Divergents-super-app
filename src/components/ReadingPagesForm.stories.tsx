@@ -22,3 +22,5 @@ export const LargeText: Story = { parameters: { viewport: 'compact', textSize: '
 /** День подхода уже закончился: страницы за тот день, затем — таймер на сегодня. */
 export const PreviousDay: Story = { args: { initial: '0', sessionMinutes: 60, dayLabel: '24 октября', submitLabel: 'Сохранить и читать сегодня' } };
 export const PreviousDayDark: Story = { ...PreviousDay, parameters: { scheme: 'dark' } };
+export const UnusualCount: Story = { args: { initial: '415', sessionMinutes: 58, fromPage: undefined } };
+export const InvalidDecimal: Story = { args: { initial: '12,5' } };

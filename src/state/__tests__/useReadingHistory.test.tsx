@@ -59,3 +59,51 @@ test('confirmed return updates both book lists and notifies the profile even whe
   expect(listener).toHaveBeenCalledTimes(1);
   off();
 });
+
+const session = { id: 'approach', book: 'Книга', author: null, day: 1, date: '2026-11-05', editableUntil: 1793991600000,
+  startedAt: '2026-11-05T08:00:00Z', pages: 415, elapsedMs: 3600000 };
+const editableHistory = { ...history, supportsPageCorrection: true, participationId: 'participation', editableSessions: [session] };
+test('page correction waits for acknowledgement, reuses an ambiguous retry and refreshes totals', async () => {
+  fetchHistory.mockResolvedValue(editableHistory);
+  const h = await renderHook(() => useReadingHistory('club', 'reader'));
+  await waitFor(() => expect(h.result.current.data).toBe(editableHistory));
+  send.mockRejectedValueOnce(new Error('Нет подтверждения'));
+  await act(async () => { await expect(h.result.current.correctPages(session, 50)).rejects.toThrow('Нет подтверждения'); });
+  expect(h.result.current.data).toBe(editableHistory);
+  const corrected = { ...editableHistory, editableSessions: [{ ...session, pages: 50 }] };
+  fetchHistory.mockResolvedValueOnce(corrected);
+  await act(async () => { await h.result.current.correctPages(session, 50); });
+  expect(send.mock.calls[1][1]).toEqual(send.mock.calls[0][1]);
+  expect(send.mock.calls[0][1]).toMatchObject({ action: 'correctPages', sessionId: 'approach', expectedPages: 415, pages: 50, participationId: 'participation' });
+  expect(h.result.current.data).toBe(corrected);
+  expect(h.result.current.busy).toBe(false);
+});
+test('a conflict refreshes the server value and does not claim success', async () => {
+  fetchHistory.mockResolvedValue(editableHistory);
+  const h = await renderHook(() => useReadingHistory('club', 'reader'));
+  await waitFor(() => expect(h.result.current.data).toBe(editableHistory));
+  const otherDevice = { ...editableHistory, editableSessions: [{ ...session, pages: 55 }] };
+  fetchHistory.mockResolvedValueOnce(otherDevice);
+  send.mockRejectedValueOnce(Object.assign(new Error('Страницы изменились'), { code: 'correction_conflict' }));
+  await act(async () => { await expect(h.result.current.correctPages(session, 50)).rejects.toThrow('Страницы изменились'); });
+  expect(h.result.current.data).toBe(otherDevice);
+});
+test('confirmed correction with failed refresh hides outdated totals', async () => {
+  fetchHistory.mockResolvedValueOnce(editableHistory);
+  const h = await renderHook(() => useReadingHistory('club', 'reader'));
+  await waitFor(() => expect(h.result.current.data).toBe(editableHistory));
+  fetchHistory.mockRejectedValueOnce(new Error('offline'));
+  await act(async () => { await h.result.current.correctPages(session, 50); });
+  expect(h.result.current.data).toBeUndefined();
+  expect(h.result.current.error).toMatch(/Страницы сохранены/);
+});
+test('old servers and other reader histories never send page corrections', async () => {
+  const h = await renderHook(() => useReadingHistory('club', 'reader'));
+  await waitFor(() => expect(h.result.current.data).toBe(history));
+  await act(async () => { await expect(h.result.current.correctPages(session, 50)).rejects.toThrow(); });
+  fetchHistory.mockResolvedValue(editableHistory);
+  const other = await renderHook(() => useReadingHistory('club', 'other'));
+  await waitFor(() => expect(other.result.current.data).toBe(editableHistory));
+  await act(async () => { await expect(other.result.current.correctPages(session, 50)).rejects.toThrow(); });
+  expect(send).not.toHaveBeenCalled();
+});

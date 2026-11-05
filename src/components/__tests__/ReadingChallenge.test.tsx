@@ -158,7 +158,7 @@ test.each([0, -60000])('after the daily goal (%i ms remaining): pages and resume
   const view = await show(p);
   await fireEvent.press(view.getByRole('button', { name: 'Возобновить' }));
   expect(p.onResume).toHaveBeenCalledTimes(1);
-  expect(view.getByText('Страницы за этот подход')).toBeTruthy();
+  expect(view.getByText('Сколько страниц прочитали?')).toBeTruthy();
   await fireEvent.changeText(view.getByLabelText('Страниц за этот подход'), '22');
   await fireEvent.press(view.getByRole('button', { name: 'Сохранить подход' }));
   expect(p.onSaveApproach).toHaveBeenCalledWith(22, undefined);

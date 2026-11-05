@@ -21,3 +21,8 @@ export const Empty: Story = { args: { data: { ...data, books: [] } } };
 export const NotStartedBook: Story = { args: { data: { ...data, books: [], supportsBookshelf: true,
   shelfBooks: [{ ...finished, pages: 0, elapsedMs: 0, lastReadAt: null, addedAt: '2026-10-29T10:00:00Z' }] } } };
 export const Spectator: Story = { args: { data: { ...data, own: false } } };
+export const CorrectPages: Story = { args: { data: { ...data, supportsPageCorrection: true,
+  participationId: '11111111-1111-4111-8111-111111111111', editableSessions: [{ id: '22222222-2222-4222-8222-222222222222',
+    book: historyBookFixture.title, author: historyBookFixture.author, day: 1, date: '2026-11-05',
+    startedAt: '2026-11-05T08:00:00Z', editableUntil: Date.UTC(2026,10,6,19), pages: 415, elapsedMs: 58*60000 }] },
+  onCorrectPages: async () => {} } };

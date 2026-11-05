@@ -10,10 +10,10 @@ import { ReadingHistoryContent } from '../../components/ReadingHistoryContent';
 import { useReadingHistory } from '../../state/useReadingHistory';
 export function ReadingHistoryScreen({ route, navigation }: NativeStackScreenProps<CommunityStackParams, 'ReadingHistory'>) {
   const state = useReadingHistory(route.params.challengeId, route.params.readerId);
-  return <Screen topInset={false} onRefresh={state.retry}>
+  return <Screen topInset={false} keyboardAware onRefresh={state.retry}>
     <NavHeader title="История чтения" onBack={() => navigation.goBack()} />
     {state.error ? <Wrapper padding={16}><InlineNotice message={state.error} onRetry={state.retry} /></Wrapper> : null}
     {state.data ? <ReadingHistoryContent key={`${route.params.challengeId}:${route.params.readerId}`} data={state.data}
-      busy={state.busy} updatingBookKey={state.updatingBookKey} onStatus={state.markBook} /> : !state.error ? <ContentLoading /> : null}
+      busy={state.busy} updatingBookKey={state.updatingBookKey} onStatus={state.markBook} onCorrectPages={state.correctPages} /> : !state.error ? <ContentLoading /> : null}
   </Screen>;
 }
