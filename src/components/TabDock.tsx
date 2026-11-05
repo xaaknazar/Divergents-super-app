@@ -1,7 +1,8 @@
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { I18nManager, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_DOCK_GUTTER, TAB_DOCK_HEIGHT, TAB_DOCK_MAX_WIDTH, TAB_DOCK_PLAYER_GAP, tabDockBottomInset } from '../lib/tabDockLayout';
 import { useTheme } from '../theme/ThemeContext';
@@ -19,12 +20,28 @@ export interface TabDockProps {
 /** Floating glass navigation. Visuals are sealed here; TabBar owns routing.
  * Панель — радиус 24; выбранная вкладка заполняет всю ячейку, радиус 18 (концентрично). */
 export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps) {
-  const { T, ty, isDark, reduceTransparency } = useTheme();
+  const { T, ty, isDark, reduceTransparency, reduceMotion } = useTheme();
   const { width, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [measuredWidth, setMeasuredWidth] = useState<number>();
   const [playerHeight, setPlayerHeight] = useState(0);
   const [focusedId, setFocusedId] = useState<string>();
+  const [rowWidth, setRowWidth] = useState(0);
+  const capsuleX = useSharedValue(0);
+  const previousGeometry = useRef('');
+  const selectedIndex = items.findIndex(item => item.selected);
+  const capsuleWidth = rowWidth / Math.max(1, items.length);
+  const geometry = `${rowWidth}:${items.map(item => item.id).join(':')}`;
+  useEffect(() => {
+    const index = I18nManager.isRTL ? items.length - 1 - selectedIndex : selectedIndex;
+    const target = Math.max(0, index) * capsuleWidth;
+    // First layout and rotation place the pill directly. Subsequent taps can
+    // interrupt the spring, continuing from its current position and velocity.
+    capsuleX.value = reduceMotion || previousGeometry.current !== geometry
+      ? target : withSpring(target, { stiffness: 330, damping: 29, mass: 0.85 });
+    previousGeometry.current = geometry;
+  }, [selectedIndex, capsuleWidth, geometry, items.length, reduceMotion, capsuleX]);
+  const capsuleStyle = useAnimatedStyle(() => ({ transform: [{ translateX: capsuleX.value }] }));
   const availableWidth = Math.min(TAB_DOCK_MAX_WIDTH, width - insets.left - insets.right - TAB_DOCK_GUTTER * 2);
   const dockWidth = Math.min(measuredWidth ?? availableWidth, availableWidth);
   const slot = (dockWidth - 8) / Math.max(items.length, 1) - 4;
@@ -63,7 +80,11 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
             style={StyleSheet.absoluteFill} />
             : <View testID="tab-dock-tint" style={[StyleSheet.absoluteFill, { backgroundColor: surface }]} />}
         </View>
-        <View style={styles.row}>
+        <View testID="tab-dock-row" style={styles.row} onLayout={event => setRowWidth(event.nativeEvent.layout.width)}>
+          {selectedIndex >= 0 && rowWidth > 0 ? <Animated.View testID="tab-dock-active-capsule"
+            pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+            style={[styles.capsule, { width: capsuleWidth, backgroundColor: T.brandTinted,
+              borderColor: hexToRgba(T.brand, 0.12) }, capsuleStyle]} /> : null}
           {items.map((item, i) => <Pressable key={item.id} accessibilityRole="tab" accessibilityLabel={item.label}
             accessibilityShowsLargeContentViewer accessibilityLargeContentTitle={item.label}
             accessibilityState={{ selected: item.selected }} onPress={() => onSelect(item.id)}
@@ -71,10 +92,8 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
             onFocus={() => setFocusedId(item.id)} onBlur={() => setFocusedId(undefined)}
             style={({ pressed }) => [styles.tab, {
               opacity: pressed ? 0.65 : 1,
-              backgroundColor: item.selected ? T.brandTinted : 'transparent',
               borderColor: focusedId === item.id ? T.brandText : 'transparent',
             }]}>
-            {item.selected ? <View pointerEvents="none" style={[styles.selectedLine, { borderColor: hexToRgba(T.brand, 0.12) }]} /> : null}
             <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants">
               <SF name={item.icon} size={showLabels ? ICON : 28} color={item.selected ? T.brandText : idle} />
             </View>
@@ -101,6 +120,5 @@ const styles = StyleSheet.create({
   row: { flex: 1, flexDirection: 'row' },
   tab: { flex: 1, minWidth: 0, minHeight: 60, paddingHorizontal: 2, gap: 3,
     alignItems: 'center', justifyContent: 'center', borderRadius: TAB_RADIUS, borderCurve: 'continuous', borderWidth: 2 },
-  // Внутренняя линия 0.5 выбранной ячейки; рамка 2 остаётся под фокус клавиатуры.
-  selectedLine: { position: 'absolute', top: -2, left: -2, right: -2, bottom: -2, borderRadius: TAB_RADIUS, borderWidth: 0.5 },
+  capsule: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: TAB_RADIUS, borderCurve: 'continuous', borderWidth: 0.5 },
 });

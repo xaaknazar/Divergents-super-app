@@ -9,14 +9,14 @@ import { TextSection } from './TextSection';
 import { Wrapper } from './Wrapper';
 import { TabDock } from './TabDock';
 const meta = { title: 'Навигация/TabDock', component: TabDock,
-  parameters: { canvasLayout: 'screen', reduceTransparency: false },
+  parameters: { canvasLayout: 'screen', reduceTransparency: false, reduceMotion: false },
   render: function Preview(args) {
     const [selected, setSelected] = useState(args.items.find(item => item.selected)?.id);
     useEffect(() => { setSelected(args.items.find(item => item.selected)?.id); }, [args.items]);
     return <Wrapper flex={1}>
       <Screen topInset={false}>
         <Wrapper padding={16} gap={16}>
-          <TextSection title="Навигация Divergents" text="Приподнятая стеклянная панель: прежние пять вкладок и иконки, скруглённый контур и отдельное выделение выбранного раздела. Демонстрационные данные." />
+          <TextSection title="Навигация Divergents" text="Приподнятая стеклянная панель: нажимайте вкладки, чтобы проверить плавное движение активной капсулы, в том числе при быстрых повторных переключениях. Демонстрационные данные." />
           <BookCard book={demoBook} variant="shelf" progress={35} onPress={fn()} />
           <ProgramHistoryCard program={demoProgram} stats={demoProgramStats} onPress={fn()} />
           <BookCard book={demoBook} onPress={fn()} />
@@ -37,6 +37,7 @@ const meta = { title: 'Навигация/TabDock', component: TabDock,
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Light: Story = {};
+export const ReducedMotion: Story = { parameters: { reduceMotion: true } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
 export const ReducedTransparency: Story = { parameters: { reduceTransparency: true } };

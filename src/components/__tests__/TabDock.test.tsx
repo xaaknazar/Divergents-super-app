@@ -6,9 +6,14 @@ import { hexToRgba } from '../../theme/personalization';
 import { TAB_DOCK_HEIGHT, tabDockBottomInset, tabDockContentInset, tabDockMiniPlayerHeight } from '../../lib/tabDockLayout';
 import { TabDock, TabDockProps } from '../TabDock';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
+import { withSpring } from 'react-native-reanimated';
 
 jest.mock('../SFIcon', () => ({ SF: () => null }));
 jest.mock('expo-blur', () => ({ BlurView: require('react-native').View }));
+jest.mock('react-native-reanimated', () => {
+  const original = jest.requireActual('react-native-reanimated');
+  return { ...original, __esModule: true, withSpring: jest.fn(original.withSpring) };
+});
 const mockDimensions = { width: 393, height: 852, scale: 3, fontScale: 1 };
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true, default: () => mockDimensions,
@@ -39,7 +44,8 @@ it.each(['light', 'dark'] as const)('uses the system material and themed translu
   if (scheme === 'dark') expect(flattened(tint).backgroundColor).toBe(hexToRgba(resolveThemePalette(scheme).cardBg, 0.84));
   else expect(tint.props.colors).toEqual(['rgba(255,255,255,0.58)', 'rgba(244,246,251,0.42)'].map(c => processColor(c)));
   const selected = view.getByRole('tab', { name: 'Обучение' });
-  expect(flattened(selected).backgroundColor).toBe(resolveThemePalette(scheme).brandTinted);
+  await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 340 } } });
+  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).backgroundColor).toBe(resolveThemePalette(scheme).brandTinted);
   expect(flattened(selected).borderRadius).toBe(18);
   expect(flattened(view.getByTestId('tab-dock-surface'))).toMatchObject({ height: TAB_DOCK_HEIGHT, borderRadius: 24, overflow: 'hidden' });
   expect(flattened(selected).minHeight).toBeGreaterThanOrEqual(48);
@@ -119,4 +125,53 @@ it('never clips oversized labels vertically and retains the native large-content
 it('does not leave an empty floating surface when no destinations are supplied', async () => {
   const view = await render(theme(<TabDock items={[]} onSelect={jest.fn()} />));
   expect(view.queryByTestId('tab-dock-position')).toBeNull();
+});
+
+const selectItems = (id: string, destinations = items) => destinations.map(item => ({ ...item, selected: item.id === id }));
+const motionPreview = (id: string, reduceMotion = false, destinations = items) => (
+  <ThemePreviewProvider reduceMotion={reduceMotion}>
+    <TabDock items={selectItems(id, destinations)} onSelect={jest.fn()} />
+  </ThemePreviewProvider>
+);
+
+it('moves one non-interactive capsule to the latest tab during rapid switches', async () => {
+  const view = await render(motionPreview('learn'));
+  await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 350 } } });
+  jest.mocked(withSpring).mockClear();
+  await view.rerender(motionPreview('career'));
+  expect(withSpring).toHaveBeenLastCalledWith(280, expect.any(Object));
+  await view.rerender(motionPreview('ai'));
+  expect(withSpring).toHaveBeenLastCalledWith(70, expect.any(Object));
+  expect(view.getAllByTestId('tab-dock-active-capsule', hidden)).toHaveLength(1);
+  expect(view.getByTestId('tab-dock-active-capsule', hidden).props.pointerEvents).toBe('none');
+  expect(view.getByRole('tab', { name: 'AI', selected: true })).toBeTruthy();
+});
+
+it('does not animate first placement, resizing or changes to visible destinations', async () => {
+  jest.mocked(withSpring).mockClear();
+  const view = await render(motionPreview('community'));
+  await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 350 } } });
+  expect(withSpring).not.toHaveBeenCalled();
+  await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 500 } } });
+  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).width).toBe(100);
+  const fewer = items.filter(item => item.id === 'learn' || item.id === 'community');
+  await view.rerender(motionPreview('community', false, fewer));
+  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).width).toBe(250);
+  expect(withSpring).not.toHaveBeenCalled();
+  await view.rerender(motionPreview('learn', false, fewer));
+  expect(withSpring).toHaveBeenLastCalledWith(0, expect.any(Object));
+});
+
+it('respects reduced motion when the setting changes while the panel is mounted', async () => {
+  const view = await render(motionPreview('learn'));
+  await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 350 } } });
+  await view.rerender(motionPreview('community'));
+  expect(withSpring).toHaveBeenCalled();
+  jest.mocked(withSpring).mockClear();
+  await view.rerender(motionPreview('community', true));
+  await view.rerender(motionPreview('career', true));
+  expect(withSpring).not.toHaveBeenCalled();
+  expect(view.getByRole('tab', { name: 'Карьера', selected: true })).toBeTruthy();
+  await view.rerender(motionPreview('learn', false));
+  expect(withSpring).toHaveBeenLastCalledWith(0, expect.any(Object));
 });
