@@ -5,13 +5,12 @@
 //   • floating round buttons over a hero image / gradient     → variant="overlay"
 // Safe-area aware. Surface, separator and contrast belong to semantic variants.
 import React from 'react';
-import { View, Text, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { minTouch, space } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
-import { hSelect } from '../lib/haptics';
-import { SF } from './SFIcon';
+import { GlassButton } from './GlassButton';
 
 export type NavHeaderProps = {
   /** Inline (centered) title, or the large title when `largeTitle`. */
@@ -22,7 +21,7 @@ export type NavHeaderProps = {
   subtitle?: string;
   /** Back-button label. Default "Назад". */
   backLabel?: string;
-  /** Hide the back label, keep only the chevron. */
+  /** Оставлен для совместимости: с iOS 26-стеклом подписи у «назад» нет всегда. */
   hideBackLabel?: boolean;
   /** Back handler. If omitted, no back button is rendered. */
   onBack?: () => void;
@@ -69,7 +68,6 @@ export function NavHeader({
     );
   }
 
-  const fg = variant === 'hero' ? '#FFFFFF' : T.brandText;
   const titleColor = variant === 'hero' ? '#FFFFFF' : T.label;
   const subtitleColor = variant === 'hero' ? 'rgba(255,255,255,0.85)' : T.labelSecondary;
   const showHairline = variant === 'frosted' && reduceTransparency;
@@ -80,13 +78,10 @@ export function NavHeader({
       paddingTop: top + space.sm - 2, paddingBottom: space.sm + 2,
       paddingLeft: space.md, paddingRight: space.sm, minHeight: minTouch,
     }}>
-      {onBack ? (
-        <Pressable onPress={() => { hSelect(); onBack(); }} accessibilityRole="button" accessibilityLabel={backLabel}
-          style={({ pressed }) => ({ minWidth: minTouch, minHeight: minTouch, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 6, opacity: pressed ? 0.6 : 1 })}>
-          <SF name="chevron.left" size={20} color={fg} />
-          {!hideBackLabel && (!title || largeTitle) ? <Text style={[ty.body, { color: fg, flexShrink: 1 }]}>{backLabel}</Text> : null}
-        </Pressable>
-      ) : <View style={{ width: 8 }} />}
+      {/* iOS 26: «назад» — круглая стеклянная кнопка со стрелкой, без подписи. Куда ведёт кнопка,
+          VoiceOver по-прежнему называет экран, куда она ведёт. На hero-шапке стекло тёмное. */}
+      {onBack ? <GlassButton icon="chevron.left" onPress={onBack} scheme={variant === 'hero' ? 'dark' : undefined}
+        label={backLabel} /> : <View style={{ width: 8 }} />}
 
       {title && !largeTitle && !stackedTitle ? <Text accessibilityRole="header" style={[ty.headline, { color: titleColor, flex: 1, textAlign: 'center', marginHorizontal: 8 }]}>{title}</Text> : null}
       <View style={{ minWidth: title && !stackedTitle ? minTouch : 0, flexShrink: 1, flexDirection: 'row', gap: space.sm, paddingRight: 6, alignItems: 'center', justifyContent: 'flex-end' }}>{trailing}</View>

@@ -1,0 +1,11 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { GlassButton } from './GlassButton';
+const meta = { title: 'Atoms/GlassButton', component: GlassButton, args: { icon: 'chevron.left', label: 'Назад', onPress: () => {} } } satisfies Meta<typeof GlassButton>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Back: Story = {};
+export const Close: Story = { args: { icon: 'xmark', label: 'Закрыть' } };
+export const Prominent: Story = { args: { icon: 'checkmark', label: 'Готово', prominent: true } };
+export const OnPhoto: Story = { args: { icon: 'square.and.arrow.up', label: 'Поделиться', scheme: 'dark' } };
+export const Badge: Story = { args: { icon: 'bell.fill', label: 'Уведомления', badge: 3 } };
+export const Dark: Story = { parameters: { scheme: 'dark' } };

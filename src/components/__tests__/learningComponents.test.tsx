@@ -75,9 +75,14 @@ it('retains safe areas and owns scroll content padding', async () => {
 
 it('leaves the page background visible behind detail headers by default', async () => {
   const view = await render(<NavHeader title="Reading challenge" onBack={jest.fn()} />);
+  // Only the glass back button has its own surface; the bar itself stays unpainted.
+  const insideButton = (node: { parent: any; props: any }) => {
+    for (let n = node.parent; n; n = n.parent) if (n.props?.accessibilityRole === 'button') return true;
+    return false;
+  };
   const painted = view.container.queryAll(node => {
     const style = StyleSheet.flatten(node.props.style);
-    return style?.backgroundColor && style.backgroundColor !== 'transparent';
+    return !!style?.backgroundColor && style.backgroundColor !== 'transparent' && !insideButton(node);
   });
   expect(painted).toHaveLength(0);
 });
