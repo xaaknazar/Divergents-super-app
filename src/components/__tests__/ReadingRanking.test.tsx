@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { ReadingRankingContent } from '../ReadingRankingContent';
-import { ReadingRankLink } from '../ReadingRankLink';
+import { ReadingLinksGroup } from '../ReadingLinksGroup';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
 import { individualReadingFixture } from '../../storybook/readingFixtures';
 import { readingStandings } from '../../data/reading';
@@ -47,7 +47,7 @@ test('my ranking distinguishes both places from the same full ranking and keeps 
   const pace = readingStandings(ranking).find(r => r.member.userId === 'fast')!.place;
   const pages = readingStandings(ranking, 'pages').find(r => r.member.userId === 'fast')!.place;
   const onPress = jest.fn();
-  const v = await render(<ThemePreviewProvider textSize="xl"><ReadingRankLink place={pace} pagesPlace={pages} participants={2} onPress={onPress} /></ThemePreviewProvider>);
+  const v = await render(<ThemePreviewProvider textSize="xl"><ReadingLinksGroup rank={{ place: pace, pagesPlace: pages, participants: 2, onPress }} /></ThemePreviewProvider>);
   const button = v.getByRole('button', { name: 'Мой рейтинг. По страницам: 2 место из 2 участников. По среднему темпу: 1 место из 2 участников' });
   await fireEvent.press(button);
   expect(onPress).toHaveBeenCalledTimes(1);

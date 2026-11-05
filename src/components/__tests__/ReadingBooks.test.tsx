@@ -166,8 +166,11 @@ describe('clean layout', () => {
     // Configured: one quiet row after «Мои книги и история», not a card between the book and «Сегодня».
     const row = v.getByRole('button', { name: 'Приложения для чтения. Разрешено: 1' });
     const history = v.getByRole('button', { name: 'Мои книги и история' });
-    expect(row.parent).toBe(history.parent);
-    expect(row.parent!.children.indexOf(row)).toBe(row.parent!.children.indexOf(history) + 1);
+    // «Мои книги и история» is the last row of the links list; the apps row comes right after that list.
+    let group = history;
+    while (group.parent && group.parent !== row.parent) group = group.parent;
+    expect(group.parent).toBe(row.parent);
+    expect(row.parent!.children.indexOf(row)).toBe(row.parent!.children.indexOf(group) + 1);
     await fireEvent.press(row);
     expect(allowedApps.choose).toHaveBeenCalledTimes(1);
     // Nothing chosen yet: the full card with an explicit button stays above «Сегодня».

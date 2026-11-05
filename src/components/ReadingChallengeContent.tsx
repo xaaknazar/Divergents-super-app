@@ -15,7 +15,7 @@ import { Checkbox } from './Checkbox';
 import { ReadingChallengeHeader } from './ReadingChallengeHeader';
 import { ReadingRules } from './ReadingRules';
 import { ReadingRulesHighlights } from './ReadingRulesHighlights';
-import { ReadingRankLink } from './ReadingRankLink';
+import { ReadingLinksGroup } from './ReadingLinksGroup';
 import { ReadingBookField, ReadingBookInput } from './ReadingBookField';
 import { ReadingTimer } from './ReadingTimer';
 import { ReadingTimerControls } from './ReadingTimerControls';
@@ -24,7 +24,6 @@ import { ReadingSaveStatus } from './ReadingSaveStatus';
 import { ReadingPagesNotice } from './ReadingPagesNotice';
 import { ReadingOfflineStatus } from './ReadingOfflineStatus';
 import { ReadingProgressSummary } from './ReadingProgressSummary';
-import { ReadingHistoryLink } from './ReadingHistoryLink';
 import { ReadingBookLibrary, ReadingBookshelf, ReadingShelfComposer } from './ReadingBookshelf';
 import { ReadingAllowedAppsCard, ReadingAllowedAppsView } from './ReadingAllowedAppsCard';
 export type { ReadingBookInput } from './ReadingBookField';
@@ -253,9 +252,9 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
     {d.phase !== 'upcoming' ? <ReadingProgressSummary targetMinutes={HOUR / 60000} member={member} eliminationFlags={d.eliminationFlags} todayMs={reader ? todayMs : undefined}
       dayLeftMs={reader ? dayLeftMs : undefined}
       books={reader && d.todayBooks?.length ? d.todayBooks : undefined} /> : null}
-    {!yearComplete ? <ReadingJourneyCard period={member.period} completed={false} onPress={p.onStatistics} /> : null}
-    <ReadingRankLink place={standing?.place ?? null} pagesPlace={pagesStanding?.place ?? null} participants={participants} onPress={p.onRanking} />
-    {p.onHistory ? <ReadingHistoryLink onPress={() => p.onHistory?.(member.userId)} /> : null}
+    <ReadingLinksGroup statistics={!yearComplete ? { period: member.period, onPress: p.onStatistics } : undefined}
+      rank={{ place: standing?.place ?? null, pagesPlace: pagesStanding?.place ?? null, participants, onPress: p.onRanking }}
+      onHistory={p.onHistory ? () => p.onHistory?.(member.userId) : undefined} />
     {allowedApps && !appsNeedAttention ? <ReadingAllowedAppsCard variant="row" value={allowedApps} /> : null}
     <ReadingRules targetMinutes={HOUR / 60000} variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} eliminationFlags={d.eliminationFlags} />
     {d.supportsLeave && p.onLeave && !flagsOut ? <ReadingLeaveButton busy={p.busy} onLeave={p.onLeave} /> : null}

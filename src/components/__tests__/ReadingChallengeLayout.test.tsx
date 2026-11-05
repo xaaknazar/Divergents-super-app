@@ -103,8 +103,9 @@ test.each<LayoutCase>(['ready', 'running', 'paused', 'review'])(
 
     expectOrder(view.container, timer, action, currentBook, progress, rank, history);
     expect(rank.parent).toBe(history.parent);
-    const siblings = rank.parent!.children;
-    expect(siblings.indexOf(history)).toBe(siblings.indexOf(rank) + 1);
+    // One list: history is the next row after rank (only a hairline separator between them).
+    const rows = rank.parent!.children.filter(child => typeof child !== 'string' && child.props.accessibilityRole === 'button');
+    expect(rows.indexOf(history)).toBe(rows.indexOf(rank) + 1);
     if (state === 'paused') expect(view.queryByLabelText('Страниц за этот подход')).toBeNull();
   },
 );
@@ -129,8 +130,9 @@ test.each(['upcoming', 'finished'] as const)('%s keeps rank directly above histo
   expect(view.queryByRole('timer')).toBeNull();
   expectOrder(view.container, rank, history);
   expect(rank.parent).toBe(history.parent);
-  const siblings = rank.parent!.children;
-  expect(siblings.indexOf(history)).toBe(siblings.indexOf(rank) + 1);
+  // One list: history is the next row after rank (only a hairline separator between them).
+  const rows = rank.parent!.children.filter(child => typeof child !== 'string' && child.props.accessibilityRole === 'button');
+  expect(rows.indexOf(history)).toBe(rows.indexOf(rank) + 1);
 });
 
 test.each(['ready', 'unavailable'] as const)('pending pages lead the screen even with %s protection and a stale prop', async protection => {
