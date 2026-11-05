@@ -1,6 +1,7 @@
 import { IconBadge } from '../../components/IconBadge';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Wrapper } from '../../components/Wrapper';
+import { GlassGroup } from '../../components/GlassButton';
 import React, { useCallback, useState, useRef } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { tr } from '../../state/LanguageContext';
@@ -218,10 +219,12 @@ export function TripDetailScreen({ route, navigation }: Props) {
               <Polygon points="0,230 60,170 130,210 200,140 280,200 340,170 400,210 400,280 0,280" fill="rgba(255,255,255,0.3)" />
             </Svg>
           )}
-          <NavHeader variant="overlay" overlayScheme="light" backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={<>
-              <NavRoundButton icon={fav ? 'heart.fill' : 'heart'} scheme="light" accessibilityLabel={tr('В избранное')} onPress={() => toggle(`tripfav:${trip.id}`)} />
-              <NavRoundButton icon="square.and.arrow.up" scheme="light" accessibilityLabel={tr('Поделиться')} onPress={() => Share.share({ message: [`${trip.title} — поездка Divergents`, trip.region, trip.date].filter(Boolean).join(' · ') })} />
-            </>} />
+          <NavHeader variant="overlay" overlayScheme="light" backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={
+              // Связанные действия — одной стеклянной капсулой, как в панелях iOS 26.
+              <GlassGroup scheme="light" items={[
+                { icon: fav ? 'heart.fill' : 'heart', label: tr('В избранное'), onPress: () => toggle(`tripfav:${trip.id}`) },
+                { icon: 'square.and.arrow.up', label: tr('Поделиться'), onPress: () => Share.share({ message: [`${trip.title} — поездка Divergents`, trip.region, trip.date].filter(Boolean).join(' · ') }) },
+              ]} />} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             {meta ? <StatusBadge label={String((meta))} tone="neutral" variant="surface" icon="calendar" /> : null}
             {/* Две строки: названия поездок редко влезают в одну, и «Поездка

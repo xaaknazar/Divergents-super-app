@@ -5,6 +5,7 @@ import { Wrapper } from '../../components/Wrapper';
 // Устроена как карточка поездки и по тем же правилам: заявка, решение
 // организатора, разбор заявок для создателя. Полей меньше — нет региона, числа
 // дней, сложности и маршрута, они про поход.
+import { GlassGroup } from '../../components/GlassButton';
 import React, { useCallback, useState, useRef } from 'react';
 import { View, Text, Pressable, ScrollView, Share, Alert, ActivityIndicator, Linking, Platform } from 'react-native';
 import { Image } from 'expo-image';
@@ -206,10 +207,12 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
               <Polygon points="0,200 70,150 150,180 220,130 300,170 360,145 400,180 400,240 0,240" fill="rgba(255,255,255,0.3)" />
             </Svg>
           )}
-          <NavHeader variant="overlay" overlayScheme="light" backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={<>
-              <NavRoundButton icon={fav ? 'heart.fill' : 'heart'} scheme="light" accessibilityLabel={tr('В избранное')} onPress={() => toggle(`meetupfav:${meetup.id}`)} />
-              <NavRoundButton icon="square.and.arrow.up" scheme="light" accessibilityLabel={tr('Поделиться')} onPress={() => Share.share({ message: [`${meetup.title} — мероприятие Divergents`, meetup.place, when].filter(Boolean).join(' · ') })} />
-            </>} />
+          <NavHeader variant="overlay" overlayScheme="light" backLabel={tr('Сообщество')} onBack={() => navigation.goBack()} trailing={
+              // Связанные действия — одной стеклянной капсулой, как в панелях iOS 26.
+              <GlassGroup scheme="light" items={[
+                { icon: fav ? 'heart.fill' : 'heart', label: tr('В избранное'), onPress: () => toggle(`meetupfav:${meetup.id}`) },
+                { icon: 'square.and.arrow.up', label: tr('Поделиться'), onPress: () => Share.share({ message: [`${meetup.title} — мероприятие Divergents`, meetup.place, when].filter(Boolean).join(' · ') }) },
+              ]} />} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             {when ? <StatusBadge label={String((when))} tone="neutral" variant="surface" icon="calendar" /> : null}
             <Text

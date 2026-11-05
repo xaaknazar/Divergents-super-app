@@ -6,6 +6,7 @@
 // Раньше и на Android — матовое стекло: размытие фона + светлая заливка + тонкий блик по краю.
 // «Понижение прозрачности» — сплошная плашка с рамкой, без размытия.
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import React from 'react';
 import { Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
@@ -41,16 +42,18 @@ export function GlassSurface({ children, style, tint, interactive = false, schem
       borderWidth: StyleSheet.hairlineWidth, borderColor: T.cardBorder }]}>{children}</View>;
   }
   // Тень — на внешнем слое: внутренний обрезает размытие по форме, а обрезанная тень пропала бы.
-  return <View style={[styles.center, style, styles.lift, { borderCurve: 'continuous' }]}>
+  // Как у Apple (iOS 26): полупрозрачная заливка, мягкий свет сверху вниз и светлая кромка,
+  // ярче по верхнему краю. В тёмной теме стекло светлее фона, в светлой — белее.
+  const fill = tint ?? (scheme === 'dark' ? 'rgba(0,0,0,0.24)' : isDark ? 'rgba(96,96,102,0.42)' : 'rgba(255,255,255,0.42)');
+  return <View style={[styles.center, style, isDark ? styles.liftDark : styles.lift, { borderCurve: 'continuous' }]}>
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden', borderCurve: 'continuous' }]}>
       <BlurView intensity={36} tint={scheme === 'dark' ? 'default' : isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-      {/* Заливка лёгкая: сквозь стекло должно быть видно, что под ним. Поверх фото и цветной
-          шапки (scheme="dark") — тёмная дымка под белый глиф, на фоне экрана — светлая. */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: tint ?? (scheme === 'dark' ? 'rgba(0,0,0,0.24)' : isDark ? 'rgba(58,58,64,0.45)' : 'rgba(255,255,255,0.3)'), opacity: tint ? 0.92 : 1 }]} />
-      {/* Блик: светлая кромка, ярче сверху, — то, по чему глаз узнаёт стекло. */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? 0.94 : 1 }]} />
+      <LinearGradient colors={tint ? ['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)'] : isDark || scheme === 'dark' ? ['rgba(255,255,255,0.13)', 'rgba(255,255,255,0.02)'] : ['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.05)']}
+        style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: 1, borderCurve: 'continuous',
-        borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.85)',
-        borderTopColor: isDark ? 'rgba(255,255,255,0.30)' : '#FFFFFF' }]} />
+        borderColor: isDark || scheme === 'dark' ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.8)',
+        borderTopColor: isDark || scheme === 'dark' ? 'rgba(255,255,255,0.26)' : '#FFFFFF' }]} />
     </View>
     {children}
   </View>;
@@ -58,4 +61,5 @@ export function GlassSurface({ children, style, tint, interactive = false, schem
 const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   lift: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  liftDark: { shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
 });

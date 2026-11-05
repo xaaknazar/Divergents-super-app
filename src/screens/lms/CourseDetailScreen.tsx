@@ -1,3 +1,4 @@
+import { GlassGroup } from '../../components/GlassButton';
 import React, { useCallback, useEffect } from 'react';
 import { Share } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -89,10 +90,11 @@ export function CourseDetailScreen({ route, navigation }: Props) {
   };
 
 
-  return <DetailScreen onBack={goBack} backLabel="Обучение" actions={<>
-    {owned ? <HeaderIcon name="arrow.down.circle" label="Загрузки" onPress={() => navigation.navigate('Downloads')} /> : null}
-    <HeaderIcon name="square.and.arrow.up" label="Поделиться" onPress={() => { Share.share({ message: course.title + ' — Divergents\n' + API_BASE + '/courses/' + courseId }); }} />
-  </>} footer={!owned && (canBuy || freeLesson || (store.available && store.catalog.accountToken && (store.message || store.phase === 'pending'))) ? <BottomBar>
+  // Два действия — одной стеклянной капсулой, как в панелях iOS 26; одно — отдельным кругом.
+  const share = { icon: 'square.and.arrow.up', label: 'Поделиться', onPress: () => { Share.share({ message: course.title + ' — Divergents\n' + API_BASE + '/courses/' + courseId }); } };
+  return <DetailScreen onBack={goBack} backLabel="Обучение" actions={owned
+    ? <GlassGroup items={[{ icon: 'arrow.down.circle', label: 'Загрузки', onPress: () => navigation.navigate('Downloads') }, share]} />
+    : <HeaderIcon name={share.icon} label={share.label} onPress={share.onPress} />} footer={!owned && (canBuy || freeLesson || (store.available && store.catalog.accountToken && (store.message || store.phase === 'pending'))) ? <BottomBar>
     {store.available && store.catalog.accountToken ? <CoursePurchasePanel priceLabel={canBuy ? product?.displayPrice : undefined}
       phase={store.phase} message={store.message} testMode={store.catalog.testMode} onBuy={buy}
       onRetry={async () => { await store.retry(); await onPurchased(); }} /> : null}
