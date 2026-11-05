@@ -17,6 +17,8 @@ export interface StandingRow {
   fullName?: string;
   /** Вторая строка — у участника это команда. */
   subtitle?: string;
+  /** Вторая строка элементом вместо текста — например, цели дня значками. */
+  detail?: React.ReactNode;
   /** Фото участника. У команд фото нет — передайте undefined. */
   avatar?: { uri?: string | null; eliminated?: boolean; left?: boolean };
   /** Насколько мест сдвинулся со вчера: >0 вверх, <0 вниз, null — сравнивать не с чем. */
@@ -117,7 +119,7 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
           <View key={r.id}>
             {zoneAfter > 0 && i === zoneAfter ? <View testID="standings-zone" style={[styles.zone, { backgroundColor: T.separator }]} /> : null}
             <Row testID={`standing-${r.id}`} label={label} onPress={r.onPress} hint={r.a11yHint}
-              style={[styles.row, { minHeight: r.subtitle ? 60 : 48 }, r.isMine && { backgroundColor: mineBg }]}>
+              style={[styles.row, { minHeight: r.subtitle || r.detail ? 60 : 48 }, r.isMine && { backgroundColor: mineBg }]}>
               <Text style={[ty.body, num, { width: COL_RANK, color: T.label }]}>{r.rank}</Text>
               {r.avatar ? <View style={{ marginRight: 10, opacity: r.dimmed ? 0.55 : 1 }}>
                 <MemberAvatar name={r.name} avatar={r.avatar.uri} size={AVATAR} eliminated={r.avatar.eliminated} left={r.avatar.left} />
@@ -126,7 +128,7 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
                 <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}>
                   <Text style={[r.isMine ? ty.headline : ty.body, { flexShrink: 1, color: T.label }]} numberOfLines={1}>{r.name}</Text>
                 </View>
-                {r.subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{r.subtitle}</Text> : null}
+                {r.detail ?? (r.subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{r.subtitle}</Text> : null)}
               </View>
               {showMove ? <View testID={`standing-move-${r.id}`} style={{ width: COL_MOVE, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', columnGap: 1 }}>
                 {moved ? <>

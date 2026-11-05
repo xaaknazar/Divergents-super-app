@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StandingsTable, StandingRow, rankChangeOf, shortPersonName } from '../StandingsTable';
-import { ChallengeRankingCard, ChallengeRankingHeader } from '../ChallengeRanking';
+import { ChallengeRankingCard, ChallengeRankingHeader, TodayGoals } from '../ChallengeRanking';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
 
 jest.mock('../SFIcon', () => ({ SF: ({ name }: { name: string }) => { const { Text } = require('react-native'); return <Text>{`icon:${name}`}</Text>; } }));
@@ -58,17 +58,19 @@ describe('StandingsTable', () => {
 
 describe('ChallengeRankingCard', () => {
   const teams = [row('a', 1, 0)];
-  const members = [row('m', 1, 0, 0, { name: 'Алия', subtitle: 'Книжные черви', avatar: { uri: null } })];
 
-  it('switches between teams and participants, teams first', async () => {
+  it('shows teams and participants tabs, teams first, and the today value column', async () => {
     const onTab = jest.fn();
-    const view = await render(<ThemePreviewProvider><ChallengeRankingCard tab="teams" onTab={onTab} teams={teams} members={members} /></ThemePreviewProvider>);
+    const view = await render(<ThemePreviewProvider><ChallengeRankingCard tab="teams" onTab={onTab} rows={teams} period="overall" /></ThemePreviewProvider>);
     const tabs = view.getAllByRole('radio');
     expect(tabs.map((t) => t.props.accessibilityLabel)).toEqual(['Команды', 'Участники']);
     expect(view.getByText('Команда a')).toBeTruthy();
-    expect(view.queryByText('Алия')).toBeNull();
+    expect(view.queryByTestId('standing-move-a')).toBeTruthy();
     await fireEvent.press(tabs[1]);
     expect(onTab).toHaveBeenCalledWith('members');
+    const today = await render(<ThemePreviewProvider><ChallengeRankingCard tab="teams" rows={[row('a', 1, null, 0, { value: '+40' })]} period="today" /></ThemePreviewProvider>);
+    expect(today.getByText('+40')).toBeTruthy();
+    expect(today.queryByTestId('standing-move-a')).toBeNull();
   });
 
   it('shows the season capsule only when the server sends it', async () => {
@@ -76,5 +78,15 @@ describe('ChallengeRankingCard', () => {
     expect(withSeason.getByText('Сезон 3')).toBeTruthy();
     const without = await render(<ThemePreviewProvider><ChallengeRankingHeader season={null} /></ThemePreviewProvider>);
     expect(without.queryByTestId('ranking-season')).toBeNull();
+  });
+
+  it('reads today goals aloud: done, failed and not yet marked', async () => {
+    const t = (id: string, kind: 'metric' | 'binary', title: string, value: number, target: number | null, completed: boolean, marked: boolean) =>
+      ({ id, kind, title, icon: 'book.fill' as const, unit: id === 'reading' ? 'стр.' : id === 'steps' ? 'шагов' : '', target, value, done: completed, marked, completed });
+    const view = await render(<ThemePreviewProvider><TodayGoals tasks={[
+      t('reading', 'metric', '20 страниц книги', 24, 20, true, true), t('sugar', 'binary', 'День без сахара', 0, null, false, true),
+      t('steps', 'metric', '10 000 шагов', 0, 10000, false, false)]} /></ThemePreviewProvider>);
+    expect(view.getByTestId('today-goals').props.accessibilityLabel)
+      .toBe('Чтение 24 из 20 выполнено, Без сахара не выполнено, Активность 0 из 10000 не отмечено');
   });
 });

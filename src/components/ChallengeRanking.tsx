@@ -1,16 +1,22 @@
 // Рейтинг челленджа как в Apple Sports: крупная шапка с логотипом и капсулой
 // сезона, ниже одна карточка «Рейтинг» с переключателем «Команды | Участники».
+// Период («Весь челлендж | Сегодня») выбирается над карточкой — экран.
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { radius } from '../theme/tokens';
+import { minTouch, radius } from '../theme/tokens';
 import { Logo } from './Logo';
+import { SF } from './SFIcon';
 import { Segmented } from './Segmented';
 import { StandingsTable, StandingRow } from './StandingsTable';
 import { tr } from '../state/LanguageContext';
+import { fmtDecimal } from '../data/format';
+import { hSelect } from '../lib/haptics';
+import type { MemberTaskProgress } from '../data/community';
 import { useColorWash, WashSurface } from './ColorWash';
 
 export type RankingTab = 'teams' | 'members';
+export type RankingPeriod = 'overall' | 'today';
 
 export function ChallengeRankingHeader({ title = 'Divergents Challenge', season }: { title?: string; season?: number | null }) {
   const { T, ty, isDark } = useTheme();
@@ -37,19 +43,6 @@ export function ChallengeRankingHeader({ title = 'Divergents Challenge', season 
   );
 }
 
-export interface ChallengeRankingCardProps {
-  tab: RankingTab;
-  onTab?: (tab: RankingTab) => void;
-  teams: StandingRow[];
-  members: StandingRow[];
-  /** Под заголовком: «День 9 из 21 · изменения со вчера». */
-  caption?: string;
-  /** Пустой список — текст вместо таблицы. */
-  emptyText?: string;
-}
-
-const TABS: RankingTab[] = ['teams', 'members'];
-
 /** Карточка «Рейтинг» как в Apple Sports: заголовок, подпись, переключатель и таблица. */
 export function RankingCard({ caption, tabs, value, onChange, children }: {
   caption?: string; tabs: string[]; value: number; onChange?: (index: number) => void; children: React.ReactNode;
@@ -67,13 +60,94 @@ export function RankingCard({ caption, tabs, value, onChange, children }: {
   );
 }
 
-export function ChallengeRankingCard({ tab, onTab, teams, members, caption, emptyText }: ChallengeRankingCardProps) {
+/** Маленький переключатель-капсулы внутри карточки, например «Все | Моя команда». */
+export function PillToggle({ items, value, onChange, label }: { items: string[]; value: number; onChange: (index: number) => void; label: string }) {
   const { T, ty } = useTheme();
-  const rows = tab === 'teams' ? teams : members;
+  return (
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', justifyContent: 'center', columnGap: 8, paddingTop: 8 }}>
+      {items.map((item, i) => {
+        const on = i === value;
+        return (
+          <Pressable key={item} onPress={() => { hSelect(); onChange(i); }} accessibilityRole="radio" accessibilityLabel={item}
+            accessibilityState={{ checked: on, selected: on }}
+            style={({ pressed }) => ({ minHeight: minTouch, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+            <View style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderCurve: 'continuous', backgroundColor: on ? T.brand : T.fillTertiary }}>
+              <Text style={[ty.subheadEm, { color: on ? T.onBrand : T.labelSecondary }]}>{item}</Text>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const GOAL_ICON: Record<string, string> = { reading: 'book.fill', sugar: 'cube.fill', steps: 'figure.walk' };
+
+function goalKind(t: MemberTaskProgress): 'reading' | 'sugar' | 'steps' | 'other' {
+  const text = `${t.title} ${t.unit ?? ''}`;
+  if (/сахар/i.test(text)) return 'sugar';
+  if (/чтен|книг|стр/i.test(text)) return 'reading';
+  if (/актив|шаг/i.test(text)) return 'steps';
+  return 'other';
+}
+
+/** Подпись цели для VoiceOver: «Чтение 24 из 20 выполнено». */
+export function goalLabel(t: MemberTaskProgress): string {
+  const kind = goalKind(t);
+  const name = kind === 'sugar' ? tr('Без сахара') : kind === 'reading' ? tr('Чтение') : kind === 'steps' ? tr('Активность') : t.title;
+  const value = t.kind === 'metric' ? `${t.value} ${tr('из')} ${t.target ?? 0}` : '';
+  const state = t.completed ? tr('выполнено') : t.marked ? tr('не выполнено') : tr('не отмечено');
+  return [name, value, state].filter(Boolean).join(' ');
+}
+
+/** Цели дня значками: зелёный — выполнено, красный — отмечено и не выполнено, серый — ещё не отмечено. */
+export function TodayGoals({ tasks }: { tasks: MemberTaskProgress[] }) {
+  const { T, ty } = useTheme();
+  if (!tasks.length) return null;
+  return (
+    <View testID="today-goals" accessible accessibilityLabel={tasks.map(goalLabel).join(', ')} style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, marginTop: 2 }}>
+      {tasks.map((t) => {
+        const color = t.completed ? T.greenText : t.marked ? T.redText : T.labelTertiary;
+        const kind = goalKind(t);
+        const value = t.kind === 'binary'
+          ? (t.completed ? '✓' : t.marked ? '✗' : '–')
+          : kind === 'steps' && t.value >= 1000 ? `${fmtDecimal(Math.floor(t.value / 100) / 10)}${tr('к')}` : String(t.value);
+        return (
+          <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', columnGap: 3 }}>
+            <SF name={GOAL_ICON[kind] ?? t.icon} size={11} color={color} />
+            <Text style={[ty.footnoteEm, { color, fontVariant: ['tabular-nums'] }]}>{value}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+export interface ChallengeRankingCardProps {
+  tab: RankingTab;
+  onTab?: (tab: RankingTab) => void;
+  rows: StandingRow[];
+  period: RankingPeriod;
+  /** Под заголовком: «День 9 из 21 · изменения со вчера». */
+  caption?: string;
+  /** Фильтр над таблицей участников («Все | Моя команда»). */
+  filter?: React.ReactNode;
+  /** Пустой список — текст вместо таблицы. */
+  emptyText?: string;
+}
+
+const TABS: RankingTab[] = ['teams', 'members'];
+
+export function ChallengeRankingCard({ tab, onTab, rows, period, caption, filter, emptyText }: ChallengeRankingCardProps) {
+  const { T, ty } = useTheme();
+  const today = period === 'today';
   return (
     <RankingCard caption={caption} tabs={[tr('Команды'), tr('Участники')]} value={TABS.indexOf(tab)} onChange={onTab ? (i) => onTab(TABS[i]) : undefined}>
+      {filter}
       {rows.length ? (
-        <StandingsTable nameColumn={tab === 'teams' ? tr('Команда') : tr('Участник')} rows={rows} />
+        <StandingsTable
+          nameColumn={tab === 'teams' ? tr('Команда') : today ? tr('Участник · цели дня') : tr('Участник')}
+          rows={rows} showMove={!today} valueColumn={today ? tr('Сегодня') : tr('Очки')} />
       ) : (
         <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', paddingVertical: 32, paddingHorizontal: 24 }]}>
           {emptyText ?? tr('Рейтинг ещё пуст')}
