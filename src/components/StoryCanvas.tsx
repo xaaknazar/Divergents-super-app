@@ -13,11 +13,13 @@ export interface StoryCanvasProps {
   layout?: 'content' | 'screen';
   reduceMotion?: boolean;
   reduceTransparency?: boolean;
+  accent?: string;
+  background?: string;
 }
 
 /** Development-only preview surface, not imported by the application. */
 export function StoryCanvas({ children, scheme = 'light', textSize = 'md', viewport = 'phone',
-  layout = 'content', reduceMotion = true, reduceTransparency = true }: StoryCanvasProps) {
+  layout = 'content', reduceMotion = true, reduceTransparency = true, accent, background }: StoryCanvasProps) {
   const [ready] = useFonts({
     'GothamRnd-Light': require('../../assets/fonts/gothamrnd_light.otf'),
     'GothamRnd-Book': require('../../assets/fonts/gothamrnd_book.otf'),
@@ -27,7 +29,7 @@ export function StoryCanvas({ children, scheme = 'light', textSize = 'md', viewp
   const T = scheme === 'dark' ? darkTheme : lightTheme;
   const content = ready ? children : <ActivityIndicator accessibilityLabel="Загрузка шрифтов" color={T.brandText} />;
   return <SafeAreaProvider><ThemePreviewProvider scheme={scheme} textSize={textSize}
-    reduceMotion={reduceMotion} reduceTransparency={reduceTransparency}>
+    reduceMotion={reduceMotion} reduceTransparency={reduceTransparency} accent={accent} background={background}>
     {layout === 'screen' ? (
       <View style={[styles.frame, { backgroundColor: T.groupedBg }]}>
         <View style={[styles.content, styles[viewport], styles.surface]}>{content}</View>

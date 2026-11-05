@@ -12,6 +12,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { Wrapper } from '../../components/Wrapper';
+import { ColorWash } from '../../components/ColorWash';
 import { ErrorState, ListSkeleton } from '../../components/StateViews';
 import { ChallengeRankingCard, ChallengeRankingHeader, RankingTab } from '../../components/ChallengeRanking';
 import { rankChangeOf, shortPersonName, StandingRow } from '../../components/StandingsTable';
@@ -71,8 +72,10 @@ export function ChallengeRankingScreen({ challengeId: routeId, initialTab, onBac
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+      {/* Цветной фон как в Apple Sports — из цветов «Персонализации». */}
+      <ColorWash />
       <NavHeader backLabel={tr('Челлендж')} onBack={onBack} />
-      <Screen tabPadding={false} topInset={false}>
+      <Screen tabPadding={false} topInset={false} aurora={false} surface="transparent">
         <ChallengeRankingHeader season={season} />
         {needResults && !results && loading ? <ListSkeleton />
           : needResults && !results && error ? <ErrorState onRetry={reload} />

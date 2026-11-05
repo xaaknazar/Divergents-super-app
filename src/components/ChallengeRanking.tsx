@@ -8,23 +8,28 @@ import { Logo } from './Logo';
 import { Segmented } from './Segmented';
 import { StandingsTable, StandingRow } from './StandingsTable';
 import { tr } from '../state/LanguageContext';
+import { useColorWash, WashSurface } from './ColorWash';
 
 export type RankingTab = 'teams' | 'members';
 
 export function ChallengeRankingHeader({ title = 'Divergents Challenge', season }: { title?: string; season?: number | null }) {
   const { T, ty, isDark } = useTheme();
+  const wash = useColorWash();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
       <View accessible accessibilityRole="header" accessibilityLabel={title}
         style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', columnGap: 8 }}>
-        <Logo size={34} body={isDark ? '#FFFFFF' : undefined} />
+        {/* На цветном фоне синий логотип сливается — тогда тело знака цветом текста. */}
+        <Logo size={34} body={isDark ? '#FFFFFF' : wash ? T.label : undefined} />
         <Text style={[ty.title1, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{title}</Text>
       </View>
       {season ? (
-        <View testID="ranking-season" accessible accessibilityLabel={`${tr('Сезон')} ${season}`}
-          style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: radius.pill, borderCurve: 'continuous',
-            justifyContent: 'center', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder }}>
-          <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
+        <View testID="ranking-season" accessible accessibilityLabel={`${tr('Сезон')} ${season}`}>
+          <WashSurface radius={radius.pill}>
+            <View style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' }}>
+              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
+            </View>
+          </WashSurface>
         </View>
       ) : null}
     </View>
@@ -48,7 +53,7 @@ export function ChallengeRankingCard({ tab, onTab, teams, members, caption, empt
   const { T, ty } = useTheme();
   const rows = tab === 'teams' ? teams : members;
   return (
-    <View testID="challenge-ranking-card" style={{ backgroundColor: T.cardBg, borderRadius: radius.block, borderCurve: 'continuous', overflow: 'hidden', paddingTop: 16, paddingBottom: 8 }}>
+    <WashSurface testID="challenge-ranking-card" radius={radius.block}><View style={{ paddingTop: 16, paddingBottom: 8 }}>
       <Text accessibilityRole="header" style={[ty.headline, { color: T.label, textAlign: 'center' }]}>{tr('Рейтинг')}</Text>
       {caption ? <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginTop: 2, paddingHorizontal: 16 }]}>{caption}</Text> : null}
       <View style={{ paddingHorizontal: 12, paddingTop: 14 }}>
@@ -61,6 +66,6 @@ export function ChallengeRankingCard({ tab, onTab, teams, members, caption, empt
           {emptyText ?? tr('Рейтинг ещё пуст')}
         </Text>
       )}
-    </View>
+    </View></WashSurface>
   );
 }

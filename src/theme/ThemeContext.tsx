@@ -53,6 +53,16 @@ export function resolveThemePalette(scheme: Scheme, accent = 'divergents'): Them
     brandTintedStrong: hexToRgba(ac.accent, scheme === 'dark' ? 0.28 : 0.20) };
 }
 
+/** Цвета фона из персонализации: null — «Без фона». Одно правило для приложения и превью. */
+export function resolveAuroraColors(scheme: Scheme, accent = 'divergents', background = 'accent'): string[] | null {
+  const base = scheme === 'dark' ? darkTheme : lightTheme;
+  const acc = ACCENTS.find((a) => a.key === accent) ?? ACCENTS[0];
+  const ac = scheme === 'dark' ? acc.dark : acc.light;
+  const bg = BACKGROUNDS.find((b) => b.key === background) ?? BACKGROUNDS[0];
+  if (bg.key === 'none') return null;
+  return bg.colors === null ? [ac.accent, ac.brand, base.sky] : bg.colors;
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>('system');
   const [accent, setAccentState] = useState<string>('divergents');
@@ -109,12 +119,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const T = resolveThemePalette(scheme, accent);
 
-  const bg = BACKGROUNDS.find((b) => b.key === background) ?? BACKGROUNDS[0];
-  const auroraColors = bg.key === 'none'
-    ? null
-    : bg.colors === null
-      ? [ac.accent, ac.brand, base.sky]
-      : bg.colors;
+  const auroraColors = resolveAuroraColors(scheme, accent, background);
 
   return (
     <ThemeCtx.Provider value={{ T, scheme, mode, setMode, isDark: scheme === 'dark', accent, setAccent, background, setBackground, auroraColors, textSize, setTextSize, textScale, ty, reduceTransparency, reduceMotion }}>
