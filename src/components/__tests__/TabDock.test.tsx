@@ -45,9 +45,10 @@ it.each(['light', 'dark'] as const)('uses the system material and themed translu
   else expect(tint.props.colors).toEqual(['rgba(255,255,255,0.58)', 'rgba(244,246,251,0.42)'].map(c => processColor(c)));
   const selected = view.getByRole('tab', { name: 'Обучение' });
   await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 340 } } });
-  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).backgroundColor).toBe(resolveThemePalette(scheme).brandTinted);
-  expect(flattened(selected).borderRadius).toBe(18);
-  expect(flattened(view.getByTestId('tab-dock-surface'))).toMatchObject({ height: TAB_DOCK_HEIGHT, borderRadius: 24, overflow: 'hidden' });
+  // iOS 26 pill: neutral glass capsule, concentric with the dock (dock radius − 4 pt inset).
+  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).backgroundColor).toBe(scheme === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.065)');
+  expect(flattened(selected).borderRadius).toBe(TAB_DOCK_HEIGHT / 2 - 4);
+  expect(flattened(view.getByTestId('tab-dock-surface'))).toMatchObject({ height: TAB_DOCK_HEIGHT, borderRadius: TAB_DOCK_HEIGHT / 2, overflow: 'hidden' });
   expect(flattened(selected).minHeight).toBeGreaterThanOrEqual(48);
 });
 

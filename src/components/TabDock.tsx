@@ -8,6 +8,8 @@ import { TAB_DOCK_GUTTER, TAB_DOCK_HEIGHT, TAB_DOCK_MAX_WIDTH, TAB_DOCK_PLAYER_G
 import { useTheme } from '../theme/ThemeContext';
 import { hexToRgba } from '../theme/personalization';
 import { shadow } from '../theme/tokens';
+import { GlassView } from 'expo-glass-effect';
+import { nativeGlass } from './GlassSurface';
 import { SF } from './SFIcon';
 
 export interface TabDockProps {
@@ -18,7 +20,9 @@ export interface TabDockProps {
 }
 
 /** Floating glass navigation. Visuals are sealed here; TabBar owns routing.
- * Панель — радиус 24; выбранная вкладка заполняет всю ячейку, радиус 18 (концентрично). */
+ * iOS 26 (Liquid Glass): панель — пилюля, под выбранной вкладкой — нейтральная стеклянная
+ * капсула (концентрично панели), которая скользит пружиной. На iOS 26 — системное стекло,
+ * ниже — размытие с подкраской; «Понижение прозрачности» — сплошная панель. */
 export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps) {
   const { T, ty, isDark, reduceTransparency, reduceMotion } = useTheme();
   const { width, fontScale } = useWindowDimensions();
@@ -58,6 +62,11 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
   const glass = useNativeMaterial && !isDark;
   const edge = isDark ? hexToRgba(T.label, 0.22) : 'rgba(255,255,255,0.75)';
   const idle = isDark ? T.labelTertiary : '#8A8F98';
+  // Выбранная вкладка: синяя в светлой теме, белая в тёмной — как системные панели iOS 26.
+  const active = isDark ? '#FFFFFF' : T.brandText;
+  const capsuleFill = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.065)';
+  const capsuleEdge = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)';
+  const liquid = nativeGlass && !reduceTransparency;
 
   if (!items.length) return null;
 
@@ -74,17 +83,18 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
         : shadow({ color: '#234088', opacity: 0.14, radius: 15, y: 10, elevation: 6 })]}>
       <View testID="tab-dock-surface" onLayout={event => setMeasuredWidth(event.nativeEvent.layout.width)} style={[styles.surface, { borderColor: edge }]}>
         <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
-          {useNativeMaterial ? <BlurView testID="tab-dock-blur" intensity={72}
+          {liquid ? <GlassView testID="tab-dock-glass" glassEffectStyle="regular" style={StyleSheet.absoluteFill} />
+          : useNativeMaterial ? <BlurView testID="tab-dock-blur" intensity={72}
             tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
-          {glass ? <LinearGradient testID="tab-dock-tint" colors={['rgba(255,255,255,0.58)', 'rgba(244,246,251,0.42)']}
+          {liquid ? null : glass ? <LinearGradient testID="tab-dock-tint" colors={['rgba(255,255,255,0.58)', 'rgba(244,246,251,0.42)']}
             style={StyleSheet.absoluteFill} />
             : <View testID="tab-dock-tint" style={[StyleSheet.absoluteFill, { backgroundColor: surface }]} />}
         </View>
         <View testID="tab-dock-row" style={styles.row} onLayout={event => setRowWidth(event.nativeEvent.layout.width)}>
           {selectedIndex >= 0 && rowWidth > 0 ? <Animated.View testID="tab-dock-active-capsule"
             pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-            style={[styles.capsule, { width: capsuleWidth, backgroundColor: T.brandTinted,
-              borderColor: hexToRgba(T.brand, 0.12) }, capsuleStyle]} /> : null}
+            style={[styles.capsule, { width: capsuleWidth, backgroundColor: capsuleFill,
+              borderColor: capsuleEdge }, capsuleStyle]} /> : null}
           {items.map((item, i) => <Pressable key={item.id} accessibilityRole="tab" accessibilityLabel={item.label}
             accessibilityShowsLargeContentViewer accessibilityLargeContentTitle={item.label}
             accessibilityState={{ selected: item.selected }} onPress={() => onSelect(item.id)}
@@ -95,10 +105,10 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
               borderColor: focusedId === item.id ? T.brandText : 'transparent',
             }]}>
             <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants">
-              <SF name={item.icon} size={showLabels ? ICON : 28} color={item.selected ? T.brandText : idle} />
+              <SF name={item.icon} size={showLabels ? ICON : 28} color={item.selected ? active : idle} />
             </View>
             {showLabels ? <Text numberOfLines={1} allowFontScaling={false} style={[item.selected ? ty.caption2Em : ty.caption2, {
-              fontSize: size, lineHeight: labelLineHeight, color: item.selected ? T.brandText : idle,
+              fontSize: size, lineHeight: labelLineHeight, color: item.selected ? active : idle,
             }]}>{labels[i]}</Text> : null}
           </Pressable>)}
         </View>
@@ -109,16 +119,17 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
 }
 
 const ICON = 24;
-const DOCK_RADIUS = 24;
-const TAB_RADIUS = 18;
+// Пилюля: радиус — половина высоты; капсула вкладки концентрична (панель минус отступ 4).
+const DOCK_RADIUS = TAB_DOCK_HEIGHT / 2;
+const TAB_RADIUS = DOCK_RADIUS - 4;
 const styles = StyleSheet.create({
   position: { position: 'absolute', alignItems: 'center' },
   width: { width: '100%', maxWidth: TAB_DOCK_MAX_WIDTH },
   elevation: { borderRadius: DOCK_RADIUS, borderCurve: 'continuous' },
   surface: { height: TAB_DOCK_HEIGHT, borderRadius: DOCK_RADIUS, borderCurve: 'continuous', borderWidth: 0.5, overflow: 'hidden', padding: 4 },
-  player: { borderRadius: DOCK_RADIUS, overflow: 'hidden' },
+  player: { borderRadius: 24, borderCurve: 'continuous', overflow: 'hidden' },
   row: { flex: 1, flexDirection: 'row' },
   tab: { flex: 1, minWidth: 0, minHeight: 60, paddingHorizontal: 2, gap: 3,
     alignItems: 'center', justifyContent: 'center', borderRadius: TAB_RADIUS, borderCurve: 'continuous', borderWidth: 2 },
-  capsule: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: TAB_RADIUS, borderCurve: 'continuous', borderWidth: 0.5 },
+  capsule: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: TAB_RADIUS, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
 });
