@@ -8,7 +8,9 @@ import { SF, SFName } from './SFIcon';
 export function Segmented({
   items, value, onChange, leadingIcons,
 }: { items: string[]; value: number; onChange?: (i: number) => void; leadingIcons?: (SFName | string)[] }) {
-  const { T, ty, textScale = 1 } = useTheme();
+  const { T, ty, isDark, textScale = 1 } = useTheme();
+  // iOS: в тёмной теме ползунок светло-серый, а не чёрный — иначе он тонет в карточке.
+  const thumb = isDark ? '#636366' : T.systemBg;
   const { width, fontScale } = useWindowDimensions();
   const stacked = fontScale * textScale > 1.3 || (items.length > 3 && width < 400);
   return (
@@ -19,7 +21,7 @@ export function Segmented({
           <Pressable key={i} onPress={() => { hSelect(); onChange?.(i); }} accessibilityRole="radio"
             disabled={!onChange} accessibilityLabel={s} accessibilityState={{ checked: on, selected: on, disabled: !onChange }} style={({ pressed }) => ({
             flex: stacked ? undefined : 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.65 : 1,
-            minHeight: minTouch, paddingVertical: 8, paddingHorizontal: space.xs, backgroundColor: on ? T.systemBg : 'transparent', borderRadius: stacked ? radius.md : radius.pill,
+            minHeight: minTouch, paddingVertical: 8, paddingHorizontal: space.xs, backgroundColor: on ? thumb : 'transparent', borderRadius: stacked ? radius.md : radius.pill,
             borderCurve: 'continuous',
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
           })}>
