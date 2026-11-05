@@ -34,6 +34,8 @@ export type NavHeaderProps = {
   overlayScheme?: 'light' | 'dark';
   /** Apply the top safe-area inset. Default true. */
   safeArea?: boolean;
+  /** Шапка лежит на цветном фоне (ColorWash): кнопка «назад» — «цветное стекло». */
+  onWash?: boolean;
 };
 
 /** Circular translucent action button for the `overlay` variant (and trailing slots). */
@@ -42,7 +44,7 @@ export { NavRoundButton } from './NavRoundButton';
 
 export function NavHeader({
   title, largeTitle = false, subtitle, backLabel = 'Назад', hideBackLabel = false,
-  onBack, trailing, variant = 'plain', overlayScheme = 'dark', safeArea = true,
+  onBack, trailing, variant = 'plain', overlayScheme = 'dark', safeArea = true, onWash = false,
 }: NavHeaderProps) {
   const { T, isDark, reduceTransparency, ty, textScale = 1 } = useTheme();
   const { fontScale, width } = useWindowDimensions();
@@ -81,7 +83,7 @@ export function NavHeader({
       {/* iOS 26: «назад» — круглая стеклянная кнопка со стрелкой, без подписи. Куда ведёт кнопка,
           VoiceOver по-прежнему называет экран, куда она ведёт. На hero-шапке стекло тёмное. */}
       {onBack ? <GlassButton icon={backLabel === 'Закрыть' ? 'xmark' : 'chevron.left'} onPress={onBack} scheme={variant === 'hero' ? 'dark' : undefined}
-        label={backLabel} /> : <View style={{ width: 8 }} />}
+        onWash={onWash} label={backLabel} /> : <View style={{ width: 8 }} />}
 
       {title && !largeTitle && !stackedTitle ? <Text accessibilityRole="header" style={[ty.headline, { color: titleColor, flex: 1, textAlign: 'center', marginHorizontal: 8 }]}>{title}</Text> : null}
       <View style={{ minWidth: title && !stackedTitle ? minTouch : 0, flexShrink: 1, flexDirection: 'row', gap: space.sm, paddingRight: 6, alignItems: 'center', justifyContent: 'flex-end' }}>{trailing}</View>

@@ -4,6 +4,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { minTouch, radius, space } from '../theme/tokens';
 import { hSelect } from '../lib/haptics';
 import { SF, SFName } from './SFIcon';
+import { useWashGlass } from './ColorWash';
 
 /**
  * Переключатель в цвете бренда, без серого: дорожка — лёгкий оттенок акцента,
@@ -16,14 +17,16 @@ export function Segmented({
 }: { items: string[]; value: number; onChange?: (i: number) => void; leadingIcons?: (SFName | string)[]; variant?: 'standard' | 'glass' }) {
   const { T, ty, isDark, textScale = 1 } = useTheme();
   const glass = variant === 'glass';
-  const track = glass ? (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.24)') : T.brandTinted;
+  const washGlass = useWashGlass();
+  const track = glass ? washGlass ?? 'rgba(255,255,255,0.24)' : T.brandTinted;
   const thumb = glass ? '#FFFFFF' : isDark ? T.brand : '#FFFFFF';
-  const onInk = glass ? (isDark ? '#1B2A5C' : T.brand) : isDark ? T.onBrand : T.brandText;
+  const onInk = glass ? '#234088' : isDark ? T.onBrand : T.brandText;
   const offInk = glass ? '#FFFFFF' : T.brandText;
   const { width, fontScale } = useWindowDimensions();
   const stacked = fontScale * textScale > 1.3 || (items.length > 3 && width < 400);
   return (
-    <View testID="segmented-control" accessibilityRole="radiogroup" style={{ flexDirection: stacked ? 'column' : 'row', backgroundColor: track, borderRadius: stacked ? radius.lg : radius.pill, borderCurve: 'continuous', padding: 3, minHeight: minTouch }}>
+    <View testID="segmented-control" accessibilityRole="radiogroup" style={{ flexDirection: stacked ? 'column' : 'row', backgroundColor: track, borderRadius: stacked ? radius.lg : radius.pill, borderCurve: 'continuous', padding: 3, minHeight: minTouch,
+      ...(glass ? { borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.35)' } : null) }}>
       {items.map((s, i) => {
         const on = i === value;
         return (

@@ -13,6 +13,18 @@ export function useColorWash(): boolean {
   return !!useTheme().auroraColors;
 }
 
+/**
+ * «Цветное стекло» для кнопок поверх цветного фона — как Liquid Glass у Apple:
+ * у стекла нет своего цвета, оно берёт цвет фона под собой. Поэтому не серое,
+ * а оттенок фона; подписи на нём белые. null — фона нет, кнопки обычные.
+ */
+export function useWashGlass(): string | null {
+  const { isDark, auroraColors } = useTheme();
+  if (!auroraColors) return null;
+  const [c1, c2] = auroraColors;
+  return hexToRgba(isDark ? c2 : c1, isDark ? 0.62 : 0.58);
+}
+
 export function ColorWash({ strength = 'soft' }: { strength?: 'soft' | 'strong' }) {
   const { isDark, auroraColors } = useTheme();
   if (!auroraColors) return null;

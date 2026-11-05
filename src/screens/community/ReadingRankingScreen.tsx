@@ -20,7 +20,7 @@ export function ReadingRankingScreen({ route, navigation }: NativeStackScreenPro
   const state = useReadingRanking(route.params.challengeId);
   return <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
     <ColorWash strength="strong" />
-    <NavHeader backLabel="Назад" onBack={() => navigation.goBack()} />
+    <NavHeader backLabel="Назад" onBack={() => navigation.goBack()} onWash />
     <Screen topInset={false} onRefresh={state.retry} aurora={false} surface="transparent">
       <ChallengeRankingHeader title="Divergents Reading" />
       {state.error ? <Wrapper padding={16}><InlineNotice message={state.error} onRetry={state.retry} /></Wrapper> : null}

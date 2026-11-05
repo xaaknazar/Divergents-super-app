@@ -645,8 +645,8 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Цветной фон как в Apple Sports — из цветов «Персонализации». */}
       <ColorWash />
-      <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} trailing={(
-        <HeaderIcon name="list.bullet" label={tr('Меню челленджа')} onPress={openMenu} />
+      <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} onWash trailing={(
+        <HeaderIcon name="list.bullet" label={tr('Меню челленджа')} onPress={openMenu} onWash />
       )} variant="plain" />
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 16, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>

@@ -261,7 +261,7 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <ColorWash />
-      <NavHeader backLabel={tr('Челлендж')} onBack={() => navigation.goBack()} />
+      <NavHeader backLabel={tr('Челлендж')} onBack={() => navigation.goBack()} onWash />
       <Screen tabPadding={false} topInset={false} aurora={false} surface="transparent">
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
           {/* У завершённого челленджа это уже не дневник, а итоги, — и человек

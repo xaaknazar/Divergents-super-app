@@ -13,17 +13,35 @@ import { tr } from '../state/LanguageContext';
 import { fmtDecimal } from '../data/format';
 import { hSelect } from '../lib/haptics';
 import type { MemberTaskProgress } from '../data/community';
-import { useColorWash, WashSurface } from './ColorWash';
+import { useColorWash, useWashGlass, WashSurface } from './ColorWash';
 
 export type RankingTab = 'teams' | 'members';
 
-/** Фирменные цвета знака Divergents — не меняются с темой. */
-const BRAND_LOGO = { body: '#234088', head: '#3D5BDB' };
+/** Фирменные цвета знака Divergents (public/logo.svg) — не меняются с темой. */
+const BRAND_LOGO = { body: '#234088', head: '#2F60DA' };
+
+/**
+ * Знак Divergents на белой плашке, как значок приложения. Центр — оптический:
+ * у знака голова слева вверху, а тяжёлое тело справа, поэтому по рамке он
+ * выглядит сдвинутым вправо-вверх. Сдвиг возвращает «вес» знака в центр плашки.
+ */
+export function LogoTile({ size = 44 }: { size?: number }) {
+  const mark = Math.round(size * 0.74);
+  return (
+    <View testID="ranking-logo" style={{ width: size, height: size, borderRadius: Math.round(size * 0.27), borderCurve: 'continuous', backgroundColor: '#FFFFFF',
+      alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
+      <View style={{ transform: [{ translateX: -size * 0.05 }, { translateY: size * 0.02 }] }}>
+        <Logo size={mark} body={BRAND_LOGO.body} head={BRAND_LOGO.head} />
+      </View>
+    </View>
+  );
+}
 export type RankingPeriod = 'overall' | 'today';
 
 export function ChallengeRankingHeader({ title = 'Divergents Challenge', season }: { title?: string; season?: number | null }) {
   const { T, ty } = useTheme();
   const wash = useColorWash();
+  const glass = useWashGlass();
   // На цветном фоне шапка белая, как в Apple Sports; без фона — цветом текста.
   const ink = wash ? '#FFFFFF' : T.label;
   return (
@@ -32,16 +50,13 @@ export function ChallengeRankingHeader({ title = 'Divergents Challenge', season 
         style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', columnGap: 10 }}>
         {/* Логотип всегда в фирменных цветах — на белой плашке, как значок
             приложения: так он виден на любом фоне и в любой теме. */}
-        <View testID="ranking-logo" style={{ width: 44, height: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: '#FFFFFF',
-          alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
-          <Logo size={30} body={BRAND_LOGO.body} head={BRAND_LOGO.head} />
-        </View>
+        <LogoTile size={44} />
         <Text style={[ty.title1, { color: ink, flexShrink: 1 }]} numberOfLines={2}>{title}</Text>
       </View>
       {season ? (
         <View testID="ranking-season" accessible accessibilityLabel={`${tr('Сезон')} ${season}`}
           style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center', borderRadius: radius.pill, borderCurve: 'continuous',
-            backgroundColor: wash ? 'rgba(255,255,255,0.22)' : T.brandTinted, borderWidth: wash ? 0.5 : 0, borderColor: 'rgba(255,255,255,0.45)' }}>
+            backgroundColor: glass ?? T.brandTinted, borderWidth: glass ? 0.5 : 0, borderColor: 'rgba(255,255,255,0.35)' }}>
           <Text style={[ty.headline, { color: wash ? '#FFFFFF' : T.brandText }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
         </View>
       ) : null}

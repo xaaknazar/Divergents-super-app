@@ -70,7 +70,7 @@ export function ChallengeRankingScreen({ challengeId: routeId, initialTab, onBac
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Цветной фон как в Apple Sports — из цветов «Персонализации». */}
       <ColorWash strength="strong" />
-      <NavHeader backLabel={tr('Челлендж')} onBack={onBack} />
+      <NavHeader backLabel={tr('Челлендж')} onBack={onBack} onWash />
       <Screen tabPadding={false} topInset={false} aurora={false} surface="transparent">
         <ChallengeRankingHeader season={season} />
         {hasToday ? (
