@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as Crypto from 'expo-crypto';
-import { fetchReadingHistory, ReadingHistory } from '../data/readingBooks';
+import { fetchReadingHistory, ReadingHistory, ReadingEditableSession } from '../data/readingBooks';
 import { sendReadingCommand } from '../data/reading';
 import { emitShelfChanged } from './shelfBus';
 export function useReadingHistory(challengeId: string, readerId: string) {
@@ -12,17 +12,60 @@ export function useReadingHistory(challengeId: string, readerId: string) {
   const alive = useRef(false), inFlight = useRef(false);
   const loadSequence = useRef(0);
   const pending = useRef<{ context: string; bookKey: string; finished: boolean; operationId: string } | undefined>(undefined);
+  const pendingCorrection = useRef<{ context: string; sessionId: string; expectedPages: number; pages: number; participationId: string; operationId: string } | undefined>(undefined);
   const load = useCallback(async () => {
     const request = ++loadSequence.current;
     try {
       const token = await auth.current.getToken();
       if (!alive.current || current.current !== context) return;
       const data = await fetchReadingHistory(token, challengeId, readerId);
-      if (alive.current && current.current === context && loadSequence.current === request) setState({ key: context, data, busy: false });
-    } catch (e) { if (alive.current && current.current === context && loadSequence.current === request) setState(s => ({ data: s.key === context ? s.data : undefined, key: context, busy: false, error: e instanceof Error ? e.message : 'История недоступна' })); }
+      if (alive.current && current.current === context && loadSequence.current === request) {
+        setState({ key: context, data, busy: inFlight.current });
+        return data;
+      }
+    } catch (e) { if (alive.current && current.current === context && loadSequence.current === request) setState(s => ({ data: s.key === context ? s.data : undefined, key: context, busy: inFlight.current, error: e instanceof Error ? e.message : 'История недоступна' })); }
   }, [context, challengeId, readerId]);
   useFocusEffect(useCallback(() => { alive.current = true; void load(); return () => { alive.current = false; loadSequence.current++; }; }, [load]));
-  return { ...(state.key === context ? state : { busy: false }), retry: load,
+  return { ...(state.key === context ? state : { busy: false }), retry: async () => { await load(); },
+    correctPages: async (session: ReadingEditableSession, pages: number) => {
+      if (inFlight.current || readerId !== userId || state.key !== context || !state.data?.own ||
+          !state.data.supportsPageCorrection || !state.data.participationId) throw new Error('Сначала обновите свою историю чтения.');
+      if (!Number.isSafeInteger(pages) || pages < 0 || pages > 10000) throw new Error('Введите целое число от 0 до 10 000.');
+      inFlight.current = true; loadSequence.current++;
+      setState(s => ({ ...s, busy: true, error: undefined }));
+      const previous = pendingCorrection.current;
+      const operation = previous?.context === context && previous.sessionId === session.id && previous.expectedPages === session.pages && previous.pages === pages
+        && previous.participationId === state.data.participationId ? previous
+        : { context, sessionId: session.id, expectedPages: session.pages, pages, participationId: state.data.participationId, operationId: Crypto.randomUUID() };
+      pendingCorrection.current = operation;
+      try {
+        const token = await auth.current.getToken();
+        if (!alive.current || current.current !== context) throw new Error('Аккаунт изменился. Откройте историю снова.');
+        const { context: _context, ...payload } = operation;
+        await sendReadingCommand(token, { action: 'correctPages', challengeId, ...payload });
+        if (!alive.current || current.current !== context) return;
+        pendingCorrection.current = undefined;
+        emitShelfChanged();
+        const refreshed = await load();
+        if (!refreshed && alive.current && current.current === context) {
+          // The write is confirmed, but old totals are no longer truthful. Reload from the server.
+          setState({ key: context, busy: false, error: 'Страницы сохранены. Не удалось обновить историю — нажмите «Повторить».' });
+        }
+      } catch (error) {
+        // A definitive conflict needs fresh server values before another explicit save.
+        // Keep the operation ID after an ambiguous network failure so a retry is idempotent.
+        const code = (error as { code?: string } | null)?.code;
+        if (['correction_conflict', 'correction_expired', 'correction_unavailable', 'participation_changed'].includes(code ?? '')
+            && alive.current && current.current === context) {
+          pendingCorrection.current = undefined;
+          await load();
+        }
+        throw error;
+      } finally {
+        inFlight.current = false;
+        if (alive.current && current.current === context) setState(s => ({ ...s, busy: false }));
+      }
+    },
     markBook: async (bookKey: string, finished: boolean) => {
       if (inFlight.current || readerId !== userId) return;
       inFlight.current = true; setState(s => ({ ...s, busy: true, updatingBookKey: bookKey, error: undefined }));

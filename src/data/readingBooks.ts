@@ -21,11 +21,15 @@ export const ReadingShelfBookSchema = ReadingBookSummarySchema.extend({
   lastReadAt: z.string().nullable(), addedAt: z.string().nullable(), finished: z.boolean(), editable: z.boolean(),
 });
 export type ReadingShelfBook = z.infer<typeof ReadingShelfBookSchema>;
+export const ReadingEditableSessionSchema = z.object({ id: z.string(), book: z.string(), author: z.string().nullable(), day: z.number().int(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), editableUntil: z.number(), startedAt: z.string(), pages: z.number().int().min(0).max(10000), elapsedMs: z.number().nonnegative() });
+export type ReadingEditableSession = z.infer<typeof ReadingEditableSessionSchema>;
 export const ReadingHistorySchema = z.object({ challengeId: z.string(), title: z.string().optional(), level: z.enum(['extreme', 'moderate']).optional(), targetMs: z.number().optional(), generatedAt: z.number().optional(), own: z.boolean(), reader: ReadingDetailSchema.shape.me.unwrap(),
   books: z.array(ReadingBookSummarySchema.extend({ lastReadAt: z.string(), finished: z.boolean(), editable: z.boolean() })),
   // Old servers still expose only read books. Never mistake that for a saved,
   // writable shelf; the owner-only field is the capability boundary.
   supportsBookshelf: z.boolean().optional(), shelfBooks: z.array(ReadingShelfBookSchema).optional(),
+  supportsPageCorrection: z.boolean().optional(), participationId: z.string().optional(), editableSessions: z.array(ReadingEditableSessionSchema).optional(),
 });
 export type ReadingHistory = z.infer<typeof ReadingHistorySchema>;
 export async function fetchReadingHistory(token: string | null, challengeId: string, readerId: string) {

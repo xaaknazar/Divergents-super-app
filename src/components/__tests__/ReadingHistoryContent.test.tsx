@@ -72,3 +72,16 @@ test('spectators can view the archive but cannot return or finish another reader
   expect(v.getByText(finished.title)).toBeTruthy();
   expect(v.queryByRole('button', { name: 'Вернуть в чтение' })).toBeNull();
 });
+
+test('page correction is discoverable only in the owner’s history on a supporting server', async () => {
+  const session = { id: 's1', book: 'Атомные привычки', author: null, day: 1, date: '2026-11-05',
+    startedAt: '2026-11-05T08:00:00Z', editableUntil: Date.UTC(2026,10,6,19), pages: 415, elapsedMs: 58*60000 };
+  const editable = { ...data, supportsPageCorrection: true, participationId: 'participation', editableSessions: [session] };
+  const v=await render(<ThemePreviewProvider><ReadingHistoryContent data={editable} busy={false} onStatus={jest.fn()} onCorrectPages={async()=>{}} /></ThemePreviewProvider>);
+  await fireEvent.press(v.getByRole('button', { name:'Исправить страницы за сегодня и вчера' }));
+  expect(v.getByRole('button',{name:'Изменить страницы'})).toBeTruthy();
+  await v.rerender(<ThemePreviewProvider><ReadingHistoryContent data={{...editable,own:false}} busy={false} onStatus={jest.fn()} onCorrectPages={async()=>{}} /></ThemePreviewProvider>);
+  expect(v.queryByRole('button',{name:'Изменить страницы'})).toBeNull();
+  await v.rerender(<ThemePreviewProvider><ReadingHistoryContent data={data} busy={false} onStatus={jest.fn()} onCorrectPages={async()=>{}} /></ThemePreviewProvider>);
+  expect(v.queryByRole('button',{name:'Изменить страницы'})).toBeNull();
+});

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ReadingHistory } from '../data/readingBooks';
+import { ReadingHistory, ReadingEditableSession } from '../data/readingBooks';
 import { Wrapper } from './Wrapper';
 import { PageHeading } from './PageHeading';
 import { ReadingProgressSummary } from './ReadingProgressSummary';
@@ -7,11 +7,14 @@ import { ReadingDiary } from './ReadingDiary';
 import { ReadingBookHistoryCard } from './ReadingBookHistoryCard';
 import { ScreenDescription } from './ScreenDescription';
 import { Segmented } from './Segmented';
+import { Button } from './Button';
+import { ReadingRecentSessions } from './ReadingRecentSessions';
 
 /** One destination for the current shelf, finished books and the reading diary.
  * Shelf-only books remain reachable even before their first recorded approach. */
-export function ReadingHistoryContent({ data, busy, updatingBookKey, onStatus }: {
+export function ReadingHistoryContent({ data, busy, updatingBookKey, onStatus, onCorrectPages }: {
   data: ReadingHistory; busy: boolean; updatingBookKey?: string; onStatus: (key: string, finished: boolean) => void;
+  onCorrectPages?: (session: ReadingEditableSession, pages: number) => Promise<void>;
 }) {
   // Preserve legacy history entries and use the owner's shelf for current status.
   const books = [...new Map([...data.books, ...(data.own ? data.shelfBooks ?? [] : [])].map(book => [book.key, book])).values()];
@@ -19,11 +22,14 @@ export function ReadingHistoryContent({ data, busy, updatingBookKey, onStatus }:
   const finished = books.filter(book => book.finished);
   const [section, setSection] = useState(() => !current.length && finished.length ? 1 : 0);
   const visible = section === 1 ? finished : current;
+  const canCorrect = data.own && data.supportsPageCorrection && !!data.participationId && !!onCorrectPages;
   return <Wrapper padding={16} gap={18}>
     <PageHeading title={data.own ? 'Мои книги и история' : data.reader.name}
       description={data.own ? 'Ваши книги и сохранённые результаты чтения' : 'Книги и история участника'} />
     <Segmented items={['Читаю', 'Прочитано', 'По дням']} value={section} onChange={setSection} />
+    {canCorrect && section !== 2 && !!data.editableSessions?.length ? <Button label="Исправить страницы за сегодня и вчера" icon="square.and.pencil" variant="tinted" onPress={() => setSection(2)} /> : null}
     {section === 2 ? <>
+      {canCorrect ? <ReadingRecentSessions sessions={data.editableSessions ?? []} busy={busy} onSave={onCorrectPages!} /> : null}
       <ReadingProgressSummary member={data.reader} />
       <ReadingDiary member={data.reader} />
     </> : <>
