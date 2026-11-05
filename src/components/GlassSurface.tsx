@@ -54,7 +54,8 @@ export function GlassSurface({ children, style, tint, interactive = false, schem
   const glow = clear || dark ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.14)'] as const : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.35)'] as const;
   return <View style={[styles.center, style, clear ? styles.liftClear : dark ? styles.liftDark : styles.lift, { borderCurve: 'continuous' }]}>
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden', borderCurve: 'continuous' }]}>
-      <BlurView intensity={clear ? 28 : 40} tint={clear ? 'default' : dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      {/* Радиус — и на самом размытии: иначе в браузере размытие выходит прямоугольником за скругление. */}
+      <BlurView intensity={clear ? 22 : 40} tint={clear ? 'light' : dark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]} />
       <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? 0.94 : 1 }]} />
       <LinearGradient colors={sheen} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
       <LinearGradient colors={glow} start={{ x: 0.5, y: 0.55 }} end={{ x: 0.5, y: 1 }} style={StyleSheet.absoluteFill} />
