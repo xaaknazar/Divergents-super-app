@@ -339,6 +339,10 @@ export interface TeamStanding {
   eliminated?: number;
   /** Сколько вышло по белому флагу 🏳️. Это не провал команды — считаем отдельно. */
   left?: number;
+  /** Место вчера. null — вчерашнего зачёта ещё нет (первый день) или старый сервер. */
+  previousRank?: number | null;
+  /** Насколько мест сдвинулась со вчера: >0 поднялась, <0 опустилась. */
+  rankChange?: number | null;
 }
 
 /**
@@ -754,6 +758,8 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
         flags: numOf(r?.flags),
         eliminated: numOf(r?.eliminated),
         left: numOf(r?.left),
+        previousRank: typeof r?.previousRank === 'number' ? numOf(r.previousRank) : null,
+        rankChange: typeof r?.rankChange === 'number' ? numOf(r.rankChange) : null,
       }))
       .filter((t: TeamStanding) => t.id),
     // Разбор по дням считает тот же зачёт, что и баллы: экран истории и
