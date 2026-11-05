@@ -81,16 +81,22 @@ export function ChallengeTaskRow({
             <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{task.unit}</Text>
             {over ? <Text style={[ty.subhead, nums, { color: T.green, marginLeft: 4 }]} numberOfLines={1}>+{fmt(task.current - task.min)}</Text> : null}
           </View>
-          {onSet ? (
+          {onSet ? (() => {
+            // «Ввести» — главное действие строки (залитая кнопка). «Изменить» — правка уже введённого,
+            // поэтому тонированная: в плане из трёх задач не горят три одинаковые синие кнопки.
+            const edit = task.current > 0;
+            const fg = disabled ? T.labelTertiary : edit ? T.brand : T.onBrand;
+            return (
             <Pressable onPress={onSet} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Ввести значение: ${task.title}`} accessibilityState={{ disabled }}
               style={({ pressed }) => ({
                 minHeight: 40, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', gap: 7,
-                backgroundColor: disabled ? T.fillTertiary : T.brand, opacity: pressed ? 0.75 : 1,
+                backgroundColor: disabled ? T.fillTertiary : edit ? T.brandTinted : T.brand, opacity: pressed ? 0.75 : 1,
               })}>
-              <SF name="square.and.pencil" size={15} color={disabled ? T.labelTertiary : T.onBrand} />
-              <Text style={[ty.subheadEm, { color: disabled ? T.labelTertiary : T.onBrand }]}>{task.current > 0 ? 'Изменить' : 'Ввести'}</Text>
+              <SF name="square.and.pencil" size={15} color={fg} />
+              <Text style={[ty.subheadEm, { color: fg }]}>{edit ? 'Изменить' : 'Ввести'}</Text>
             </Pressable>
-          ) : null}
+            );
+          })() : null}
         </View>
       </View>
     </View>
