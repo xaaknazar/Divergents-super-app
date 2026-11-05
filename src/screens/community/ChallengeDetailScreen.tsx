@@ -1109,8 +1109,12 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
       : rankChange < 0
         ? `↓ ${tr('на')} ${Math.abs(rankChange)} ${positionWord(Math.abs(rankChange))}`
         : tr('Без изменений');
+  // Плашка движения — только когда место изменилось: «Без изменений» и «Первый день» стояли у
+  // большинства участников и ничего не сообщали.
+  const moved = rankChange !== 0;
+  const hasChips = moved || flagCount > 0;
   const content = (
-    <View style={{ minHeight: mode === 'today' ? 94 : flagDetail ? 126 : flagCount > 0 ? 108 : 86, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 9, backgroundColor: member.isMe ? T.brandTinted : 'transparent', opacity: out ? 0.62 : 1, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
+    <View style={{ minHeight: mode === 'today' ? 94 : 72, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 9, backgroundColor: member.isMe ? T.brandTinted : 'transparent', opacity: out ? 0.62 : 1, borderBottomWidth: divider ? 0.5 : 0, borderBottomColor: T.separator }}>
       <View style={{ width: 22, minHeight: 36, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={[ty.footnoteEm, { color: displayRank <= 3 ? T.brand : T.labelSecondary }]}>{displayRank}</Text>
       </View>
@@ -1122,6 +1126,8 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
           {member.award ? <AwardBadge size={15} /> : null}
           <Text style={[ty.footnoteEm, { color: out ? T.labelSecondary : T.label, flex: 1, flexShrink: 1 }]}>
             {member.name}{member.isMe ? ` (${tr('вы')})` : ''}
+            {/* Медаль — рядом с именем: одна в строке плашек она висела отдельной строкой. */}
+            {mode === 'overall' && rankMark ? ` ${rankMark}` : ''}
             {left
               ? <Text style={{ color: T.labelSecondary }}> · 🏳️ {tr('вышел')}</Text>
               : eliminated ? <Text style={{ color: T.red }}> · {tr('выбыл')}</Text> : null}
@@ -1141,23 +1147,19 @@ function TeamMemberPreview({ member, currentDay, T, canOpen, onPress, divider, m
                   : `${formatPace(member.averagePoints)} pts/${tr('день')} · ${tr('средний темп')}`}
               </Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-              <View accessible accessibilityLabel={rankMovement} style={{ minHeight: 24, paddingHorizontal: 8, borderRadius: 8, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', backgroundColor: rankChange > 0 ? 'rgba(52,199,89,0.13)' : rankChange < 0 ? 'rgba(255,149,0,0.13)' : T.fillTertiary }}>
+            {hasChips ? <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+              {moved ? <View accessible accessibilityLabel={rankMovement} style={{ minHeight: 24, paddingHorizontal: 8, borderRadius: 8, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', backgroundColor: rankChange > 0 ? 'rgba(52,199,89,0.13)' : rankChange < 0 ? 'rgba(255,149,0,0.13)' : T.fillTertiary }}>
                 <Text style={[ty.caption2Em, { color: rankChange > 0 ? T.greenText : rankChange < 0 ? T.orangeText : T.labelSecondary }]}>{rankMovement}</Text>
-              </View>
-              {rankMark ? <Text style={{ fontSize: 14 }}>{rankMark}</Text> : null}
+              </View> : null}
+              {/* Одна плашка вместо «3 флага» и отдельной красной строки под ней: из чего флаги — сразу в ней. */}
               {flagCount > 0 ? (
-                <View style={{ minHeight: 24, paddingHorizontal: 8, borderRadius: 8, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,59,48,0.10)' }}>
+                <View accessible accessibilityLabel={`${flagCount} ${flagWord(flagCount)}${flagDetail ? `: ${flagDetail}` : ''}`}
+                  style={{ minHeight: 24, maxWidth: '100%', paddingHorizontal: 8, borderRadius: 8, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,59,48,0.10)' }}>
                   <SF name="flag.fill" size={11} color={T.red} />
-                  <Text style={[ty.caption2Em, { color: T.red }]}>{flagCount} {flagWord(flagCount)}</Text>
+                  <Text style={[ty.caption2Em, { color: T.redText, flexShrink: 1 }]} numberOfLines={2}>{flagDetail || `${flagCount} ${flagWord(flagCount)}`}</Text>
                 </View>
               ) : null}
-            </View>
-            {flagDetail ? (
-              <Text style={[ty.caption2Em, { color: T.red, marginTop: 5 }]} numberOfLines={1} accessibilityLabel={`${tr('Флаги')}: ${flagDetail}`}>
-                {flagDetail}
-              </Text>
-            ) : null}
+            </View> : null}
           </>
         ) : (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
