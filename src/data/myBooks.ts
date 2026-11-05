@@ -14,7 +14,8 @@ export type MyBookItem = {
 const coverUrl = (coverId: number | null) => coverId != null ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null;
 function readingDetail(book: MyReadingBook) {
   const minutes = Math.floor(book.elapsedMs / 60000);
-  const time = minutes >= 60 ? `${fmtInt(Math.floor(minutes / 60))} ч ${minutes % 60} мин` : `${minutes} мин`;
+  // «2 ч», а не «2 ч 0 мин».
+  const time = minutes >= 60 ? `${fmtInt(Math.floor(minutes / 60))} ч${minutes % 60 ? ` ${minutes % 60} мин` : ''}` : `${minutes} мин`;
   return book.pages || book.elapsedMs ? `Reading · ${fmtInt(book.pages)} стр. · ${time}` : 'Reading · на полке';
 }
 const libraryDetail = (entry: ShelfEntry) => entry.status === 'read' ? 'Прочитано' : entry.status === 'reading' ? `Читаю · ${entry.progress}%` : 'В планах';

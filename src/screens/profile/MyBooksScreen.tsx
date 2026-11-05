@@ -29,7 +29,7 @@ export function MyBooksScreen({ navigation }: Props) {
     onToggleRead={item.status === 'want' ? undefined : () => books.setRead(item, item.status !== 'read')} />;
   return <DetailScreen backLabel="Профиль" onBack={() => navigation.goBack()} onRefresh={books.reload}>
     <Wrapper paddingHorizontal={20} paddingTop={4} paddingBottom={16}>
-      <PageHeading title="Мои книги" description="Книги из библиотеки и Reading-челленджей. Отметка «Прочитана» общая: прочитанная книга уходит из «Что читаете» во всех челленджах." />
+      <PageHeading title="Мои книги" description="Библиотека и Reading вместе. Прочитанная книга уходит из «Что читаете» во всех челленджах." />
     </Wrapper>
     {books.error ? <Wrapper paddingHorizontal={16} paddingBottom={12}><InlineNotice message={books.error} /></Wrapper> : null}
     {!books.loaded ? <ContentLoading /> : !books.items.length ? <EmptyState icon="book.fill" title="Пока нет книг"
