@@ -13,7 +13,8 @@ import { tr } from '../state/LanguageContext';
 import { fmtDecimal } from '../data/format';
 import { hSelect } from '../lib/haptics';
 import type { MemberTaskProgress } from '../data/community';
-import { CLEAR_GLASS, useColorWash, useGlassControl, useWashGlass, WashSurface } from './ColorWash';
+import { useColorWash, WashSurface } from './ColorWash';
+import { GlassSurface } from './GlassSurface';
 
 export type RankingTab = 'teams' | 'members';
 
@@ -39,10 +40,8 @@ export function LogoTile({ size = 44 }: { size?: number }) {
 export type RankingPeriod = 'overall' | 'today';
 
 export function ChallengeRankingHeader({ title = 'Divergents Challenge', season }: { title?: string; season?: number | null }) {
-  const { T, ty } = useTheme();
+  const { T, ty, isDark } = useTheme();
   const wash = useColorWash();
-  const glass = useWashGlass();
-  const seasonGlass = useGlassControl(false);
   // На цветном фоне шапка белая, как в Apple Sports; без фона — цветом текста.
   const ink = wash ? '#FFFFFF' : T.label;
   return (
@@ -55,10 +54,10 @@ export function ChallengeRankingHeader({ title = 'Divergents Challenge', season 
         <Text style={[ty.title1, { color: ink, flexShrink: 1 }]} numberOfLines={2}>{title}</Text>
       </View>
       {season ? (
-        <View testID="ranking-season" accessible accessibilityLabel={`${tr('Сезон')} ${season}`}
-          style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center', borderRadius: radius.pill, borderCurve: 'continuous',
-            backgroundColor: glass ?? seasonGlass.thumb, borderWidth: 0.5, borderColor: glass ? CLEAR_GLASS.rim : seasonGlass.trackRim }}>
-          <Text style={[ty.headline, { color: wash ? '#FFFFFF' : T.label }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
+        <View testID="ranking-season" accessible accessibilityLabel={`${tr('Сезон')} ${season}`}>
+          <GlassSurface variant={wash ? 'clear' : 'regular'} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: radius.pill }}>
+            <Text style={[ty.headline, { color: wash || isDark ? '#FFFFFF' : T.label }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
+          </GlassSurface>
         </View>
       ) : null}
     </View>
@@ -84,8 +83,8 @@ export function RankingCard({ caption, tabs, value, onChange, children }: {
 
 /** Маленький переключатель-капсулы внутри карточки, например «Все | Моя команда». */
 export function PillToggle({ items, value, onChange, label }: { items: string[]; value: number; onChange: (index: number) => void; label: string }) {
-  const { ty } = useTheme();
-  const g = useGlassControl(false);
+  const { T, ty, isDark } = useTheme();
+  const ink = isDark ? '#FFFFFF' : T.label;
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', justifyContent: 'center', columnGap: 8, paddingTop: 8 }}>
       {items.map((item, i) => {
@@ -94,11 +93,12 @@ export function PillToggle({ items, value, onChange, label }: { items: string[];
           <Pressable key={item} onPress={() => { hSelect(); onChange(i); }} accessibilityRole="radio" accessibilityLabel={item}
             accessibilityState={{ checked: on, selected: on }}
             style={({ pressed }) => ({ minHeight: minTouch, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-            <View style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderCurve: 'continuous', borderWidth: 0.5,
-              backgroundColor: on ? g.thumb : g.track, borderColor: on ? g.thumbRim : g.trackRim,
-              ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } } : null) }}>
-              <Text style={[on ? ty.subheadEm : ty.subhead, { color: on ? g.onInk : g.offInk }]}>{item}</Text>
-            </View>
+            {/* Выбранный пункт — стеклянная капсула, остальные — просто текст, как в iOS 26. */}
+            {on ? <GlassSurface interactive style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill }}>
+              <Text style={[ty.subheadEm, { color: ink }]}>{item}</Text>
+            </GlassSurface> : <View style={{ paddingHorizontal: 14, paddingVertical: 7 }}>
+              <Text style={[ty.subhead, { color: ink }]}>{item}</Text>
+            </View>}
           </Pressable>
         );
       })}

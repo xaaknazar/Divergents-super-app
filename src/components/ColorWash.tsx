@@ -13,29 +13,6 @@ export function useColorWash(): boolean {
   return !!useTheme().auroraColors;
 }
 
-/**
- * Прозрачное стекло для кнопок поверх цветного фона — как «clear» Liquid Glass
- * у Apple: своего цвета нет, сквозь него виден фон, по краю светлый блик,
- * подписи белые. null — цветного фона нет, кнопки обычные.
- */
-export function useWashGlass(): string | null {
-  const { auroraColors } = useTheme();
-  return auroraColors ? CLEAR_GLASS.fill : null;
-}
-
-export const CLEAR_GLASS = { fill: 'rgba(255,255,255,0.16)', rim: 'rgba(255,255,255,0.42)' } as const;
-
-/**
- * Цвета стеклянного переключателя: без серого и без синего. На цветном фоне —
- * прозрачное стекло с белыми подписями; на обычном — светлое стекло.
- */
-export function useGlassControl(onColor: boolean) {
-  const { T, isDark } = useTheme();
-  if (onColor) return { track: CLEAR_GLASS.fill, trackRim: CLEAR_GLASS.rim, thumb: 'rgba(255,255,255,0.34)', thumbRim: 'rgba(255,255,255,0.75)', onInk: '#FFFFFF', offInk: 'rgba(255,255,255,0.86)' };
-  if (isDark) return { track: 'rgba(255,255,255,0.08)', trackRim: 'rgba(255,255,255,0.16)', thumb: 'rgba(255,255,255,0.22)', thumbRim: 'rgba(255,255,255,0.34)', onInk: '#FFFFFF', offInk: 'rgba(255,255,255,0.86)' };
-  return { track: 'rgba(255,255,255,0.55)', trackRim: 'rgba(60,60,67,0.12)', thumb: '#FFFFFF', thumbRim: 'rgba(255,255,255,1)', onInk: T.label, offInk: T.label };
-}
-
 export function ColorWash({ strength = 'soft' }: { strength?: 'soft' | 'strong' }) {
   const { isDark, auroraColors } = useTheme();
   if (!auroraColors) return null;

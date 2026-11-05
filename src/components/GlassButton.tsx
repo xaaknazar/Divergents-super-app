@@ -9,7 +9,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { hSelect } from '../lib/haptics';
 import { useTheme } from '../theme/ThemeContext';
-import { useWashGlass } from './ColorWash';
+import { useColorWash } from './ColorWash';
 import { minTouch } from '../theme/tokens';
 import { GlassSurface } from './GlassSurface';
 import { SF } from './SFIcon';
@@ -42,16 +42,16 @@ export function GlassButton({ icon, onPress, onLongPress, label, prominent = fal
   onWash?: boolean;
 }) {
   const { T, ty, isDark } = useTheme();
-  const washGlass = useWashGlass();
-  const tint = onWash ? washGlass ?? undefined : undefined;
+  const wash = useColorWash();
+  const clear = onWash && wash && !prominent;
   const baseGlyph = useGlyph(scheme, prominent, danger, !onPress);
-  const glyph = tint && !prominent && !danger ? '#FFFFFF' : baseGlyph;
+  const glyph = clear && !danger ? '#FFFFFF' : baseGlyph;
   const prominentTint = isDark && !scheme ? 'rgba(235,235,240,0.94)' : T.brand;
   return <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} onLongPress={onLongPress} disabled={!onPress}
     accessibilityRole="button" accessibilityLabel={badge ? `${label}. ${badge}` : label} accessibilityState={{ disabled: !onPress }}
     hitSlop={Math.max(0, (minTouch - size) / 2)}
     style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.94 : 1 }], opacity: pressed ? 0.85 : 1 })}>
-    <GlassSurface interactive tint={prominent ? prominentTint : tint} scheme={scheme} style={{ width: size, height: size, borderRadius: size / 2 }}>
+    <GlassSurface interactive tint={prominent ? prominentTint : undefined} variant={clear ? 'clear' : 'regular'} scheme={scheme} style={{ width: size, height: size, borderRadius: size / 2 }}>
       <SF name={icon} size={Math.round(size * 0.48)} color={glyph} />
     </GlassSurface>
     {badge ? <View style={{ position: 'absolute', top: -3, right: -3, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: T.brand,
