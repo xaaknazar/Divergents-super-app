@@ -45,6 +45,7 @@ function openCreateSheet(navigation: Nav) {
 }
 
 const SECTION_KEYS = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_meetups', 'sec_sport'] as const;
+const SECTION_ICONS = ['house.fill', 'bubble.left.fill', 'flame.fill', 'airplane', 'calendar', 'figure.run'] as const;
 // Разделы «Сообщества» можно выключать в админ-панели сайта. Лента и челленджи
 // флага не имеют: без них вкладка теряет смысл.
 //
@@ -144,12 +145,12 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
         </>
       )} />
 
-      {/* Макет: строка разделов pad-top 8, первый раздел ленты — через 20. */}
-      <Wrapper paddingHorizontal={16} paddingTop={8} paddingBottom={20} gap={14}>
-        {seg === 2 ? <ResumeCallout area="community" /> : null}
-        <ChipRail inset="none" itemRole="tab" overflowHint
+      {seg === 2 ? <Wrapper paddingHorizontal={16} paddingTop={8}><ResumeCallout area="community" /></Wrapper> : null}
+      {/* Разделы — мягкие чипы с иконками; ряд идёт до края экрана и затухает, если не влез. */}
+      <Wrapper paddingTop={seg === 2 ? 6 : 4} paddingBottom={14}>
+        <ChipRail inset="page" itemRole="tab" overflowHint
           items={SECTION_KEYS.flatMap((key, id) => sectionOn(id) ? [{
-            key: String(id), label: t(key), active: seg === id,
+            key: String(id), label: t(key), icon: SECTION_ICONS[id], active: seg === id,
             onPress: () => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(id); },
           }] : [])} />
       </Wrapper>

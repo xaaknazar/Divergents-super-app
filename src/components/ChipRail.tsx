@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { minTouch, radius } from '../theme/tokens';
+import { hexToRgba } from '../theme/personalization';
 import { Chip } from './Chip';
-import { SF, SFName } from './SFIcon';
+import { SFName } from './SFIcon';
 
 export type ChipRailItem = { key: string; label: string; icon?: SFName | string; active?: boolean; onPress: () => void };
 
@@ -14,8 +15,8 @@ export interface ChipRailProps {
   overflowHint?: boolean;
 }
 
-/** Shared filter pills. Edge controls appear only when more filters are offscreen;
- * selection and keyboard focus reveal a pill without hiding it behind a control. */
+/** Shared filter pills. When more filters are offscreen, the edge softly fades (no arrow
+ * buttons covering pills — November 2026); selection and keyboard focus scroll a pill into view. */
 export function ChipRail({ items, inset = 'page', itemRole = 'button', overflowHint = false }: ChipRailProps) {
   const { T, reduceMotion } = useTheme();
   const scroll = useRef<ScrollView>(null);
@@ -46,8 +47,8 @@ export function ChipRail({ items, inset = 'page', itemRole = 'button', overflowH
     const item = key ? positions.current.get(key) : undefined;
     if (!item || !viewport.current || !contentWidth.current) return;
     const max = Math.max(0, contentWidth.current - viewport.current);
-    // Reserve space for controls at intermediate offsets too, not just the current edge.
-    const guard = overflowHint && max > 1 ? minTouch + 4 : 0;
+    // Keep a revealed pill clear of the fade at intermediate offsets too.
+    const guard = overflowHint && max > 1 ? FADE : 0;
     const left = item.x - gutter - guard;
     const right = item.x + item.width + gutter + guard;
     const oversized = item.width + gutter * 2 > viewport.current - guard * 2;
@@ -77,29 +78,19 @@ export function ChipRail({ items, inset = 'page', itemRole = 'button', overflowH
           onFocus={() => reveal(item.key, true)} onPress={() => { reveal(item.key, true); item.onPress(); }} />
       </View>)}
     </ScrollView>
-    {(['previous', 'next'] as const).map(direction => edges[direction] ? <Pressable key={direction}
-      testID={`chip-rail-${direction}`} accessibilityRole="button"
-      accessibilityLabel={direction === 'previous' ? 'Предыдущие фильтры' : 'Следующие фильтры'}
-      accessibilityHint="Прокрутить список без изменения выбранного фильтра"
-      onPress={() => scrollTo(offset.current + viewport.current * (direction === 'previous' ? -0.7 : 0.7), true)}
-      style={({ pressed }) => [styles.arrow, direction === 'previous' ? styles.previous : styles.next, {
-        backgroundColor: T.cardBg, borderColor: T.separator, opacity: pressed ? 0.65 : 1,
-      }]}>
-      <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <SF name={direction === 'previous' ? 'chevron.left' : 'chevron.right'} size={16} color={T.brandText} />
-      </View>
-    </Pressable> : null)}
+    {(['previous', 'next'] as const).map(direction => edges[direction] ? <LinearGradient key={direction}
+      testID={`chip-rail-fade-${direction}`} pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants"
+      start={{ x: direction === 'previous' ? 1 : 0, y: 0 }} end={{ x: direction === 'previous' ? 0 : 1, y: 0 }}
+      colors={[hexToRgba(T.groupedBg, 0), T.groupedBg]}
+      style={[styles.fade, direction === 'previous' ? styles.previous : styles.next]} /> : null)}
   </View>;
 }
 
+const FADE = 32;
 const styles = StyleSheet.create({
   rail: { position: 'relative' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  arrow: {
-    position: 'absolute', top: 0, bottom: 0, minWidth: minTouch, minHeight: minTouch,
-    alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, borderWidth: 0.5,
-    shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 3,
-  },
+  fade: { position: 'absolute', top: 0, bottom: 0, width: FADE },
   previous: { left: 0 },
   next: { right: 0 },
 });

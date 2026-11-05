@@ -461,7 +461,7 @@ export function MapHomeScreen({ navigation }: Props) {
             ))}
           </ContentBlock></Wrapper>
         ) : null}
-        <Wrapper paddingTop={8}><ChipRail inset="compact" overflowHint items={[
+        <Wrapper paddingTop={8}><ChipRail inset="compact" items={[
           { key: 'all', label: t('all'), active: !cat, onPress: () => setCat(null) },
           ...CATEGORIES.map((c) => ({ key: `cat-${c}`, label: CATEGORY_META[c].label, active: cat === c, onPress: () => setCat(cat === c ? null : c) })),
           ...TAGS.map((tag) => ({ key: `tag-${tag}`, label: TAG_META[tag].label, active: tags.includes(tag), onPress: () => setTags((p) => p.includes(tag) ? p.filter((x) => x !== tag) : [...p, tag]) })),

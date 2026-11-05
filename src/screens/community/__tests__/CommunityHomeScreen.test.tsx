@@ -86,7 +86,7 @@ beforeEach(() => {
 
 afterEach(() => { jest.restoreAllMocks(); });
 
-it('uses the shared text-only filter rail and keeps community navigation controlled', async () => {
+it('uses the shared soft-chip filter rail and keeps community navigation controlled', async () => {
   const view = await render(screen());
   const labels = ['sec_home', 'sec_channels', 'sec_challenges', 'sec_trips', 'sec_meetups', 'sec_sport'];
   expect(view.getByTestId('chip-rail')).toBeTruthy();
@@ -97,7 +97,9 @@ it('uses the shared text-only filter rail and keeps community navigation control
   const rail = view.getByTestId('chip-rail-scroll');
   await fireEvent(rail, 'layout', { nativeEvent: { layout: { width: 300, height: 48, x: 0, y: 0 } } });
   await fireEvent(rail, 'contentSizeChange', 800, 48);
-  await fireEvent.press(view.getByRole('button', { name: 'Следующие фильтры' }));
+  // Offscreen sections are hinted by a fade, not by a button over the pills.
+  expect(view.getByTestId('chip-rail-fade-next', { includeHiddenElements: true })).toBeTruthy();
+  expect(view.queryByRole('button', { name: 'Следующие фильтры' })).toBeNull();
   expect(view.getByRole('tab', { name: 'sec_home' }).props.accessibilityState.selected).toBe(true);
 
   await fireEvent.press(view.getByRole('tab', { name: 'sec_challenges' }));

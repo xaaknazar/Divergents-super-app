@@ -8,8 +8,8 @@ jest.mock('../SFIcon', () => ({ SF: () => null }));
 jest.mock('../../lib/haptics', () => ({ hSelect: jest.fn() }));
 
 const labels = ['Главное', 'Каналы', 'Челленджи', 'Поездки', 'Мероприятия', 'Спорт'];
-const previous = 'Предыдущие фильтры';
-const next = 'Следующие фильтры';
+const hidden = { includeHiddenElements: true };
+const fade = (view: Rendered, side: 'previous' | 'next') => view.queryByTestId(`chip-rail-fade-${side}`, hidden);
 type Rendered = Awaited<ReturnType<typeof render>>;
 type RailProps = React.ComponentProps<typeof ChipRail>;
 type Assert<T extends true> = T;
@@ -52,34 +52,36 @@ async function placeItem(view: Rendered, key: string, x: number, width: number) 
 beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
 
-it('only offers overflow controls at the edges with more content', async () => {
+it('fades only the edges that have more content, without controls over the pills', async () => {
   const view = await render(rail());
-  expect(view.queryByRole('button', { name: previous })).toBeNull();
-  expect(view.queryByRole('button', { name: next })).toBeNull();
+  expect(fade(view, 'previous')).toBeNull();
+  expect(fade(view, 'next')).toBeNull();
   await measure(view);
-  expect(view.queryByRole('button', { name: previous })).toBeNull();
-  expect(view.getByRole('button', { name: next })).toBeTruthy();
+  expect(fade(view, 'previous')).toBeNull();
+  expect(fade(view, 'next')).toBeTruthy();
+  expect(fade(view, 'next')!.props.pointerEvents).toBe('none');
+  expect(view.queryAllByRole('button').filter(b => /фильтры/.test(b.props.accessibilityLabel ?? ''))).toHaveLength(0);
 
   await move(view, 200);
-  expect(view.getByRole('button', { name: previous })).toBeTruthy();
-  expect(view.getByRole('button', { name: next })).toBeTruthy();
+  expect(fade(view, 'previous')).toBeTruthy();
+  expect(fade(view, 'next')).toBeTruthy();
 
   await move(view, 500);
-  expect(view.getByRole('button', { name: previous })).toBeTruthy();
-  expect(view.queryByRole('button', { name: next })).toBeNull();
+  expect(fade(view, 'previous')).toBeTruthy();
+  expect(fade(view, 'next')).toBeNull();
 
   await move(view, 0);
-  expect(view.queryByRole('button', { name: previous })).toBeNull();
-  expect(view.getByRole('button', { name: next })).toBeTruthy();
+  expect(fade(view, 'previous')).toBeNull();
+  expect(fade(view, 'next')).toBeTruthy();
 });
 
 it('does not suggest scrolling when everything fits or the rail is empty', async () => {
   const view = await render(rail());
   await measure(view, 900, 800);
-  expect(view.queryByRole('button', { name: previous })).toBeNull();
-  expect(view.queryByRole('button', { name: next })).toBeNull();
+  expect(fade(view, 'previous')).toBeNull();
+  expect(fade(view, 'next')).toBeNull();
   await measure(view, 800, 800);
-  expect(view.queryByRole('button', { name: next })).toBeNull();
+  expect(fade(view, 'next')).toBeNull();
   await view.rerender(rail({ items: [] }));
   expect(view.queryByTestId('chip-rail')).toBeNull();
 });
@@ -87,39 +89,18 @@ it('does not suggest scrolling when everything fits or the rail is empty', async
 it('keeps overflow hints opt-in for existing chip rails', async () => {
   const view = await render(<ThemePreviewProvider><ChipRail items={items()} /></ThemePreviewProvider>);
   await measure(view);
-  expect(view.queryByRole('button', { name: previous })).toBeNull();
-  expect(view.queryByRole('button', { name: next })).toBeNull();
+  expect(fade(view, 'previous')).toBeNull();
+  expect(fade(view, 'next')).toBeNull();
 });
 
-it('removes stale overflow controls after a resize makes all filters visible', async () => {
+it('removes stale fades after a resize makes all filters visible', async () => {
   const view = await render(rail());
   await measure(view);
   await move(view, 500);
-  expect(view.getByRole('button', { name: previous })).toBeTruthy();
+  expect(fade(view, 'previous')).toBeTruthy();
   await measure(view, 900, 800);
-  expect(view.queryByRole('button', { name: previous })).toBeNull();
-  expect(view.queryByRole('button', { name: next })).toBeNull();
-});
-
-it('scrolls in both directions without changing the selected filter and clamps to content edges', async () => {
-  const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
-  const onPress = jest.fn();
-  const view = await render(rail({ items: items(0, onPress) }));
-  await measure(view);
-  await fireEvent.press(view.getByRole('button', { name: next }));
-  expect(scrollTo).toHaveBeenLastCalledWith({ x: 210, animated: true });
-  await move(view, 210);
-  await fireEvent.press(view.getByRole('button', { name: previous }));
-  expect(scrollTo).toHaveBeenLastCalledWith({ x: 0, animated: true });
-
-  await move(view, 450);
-  await fireEvent.press(view.getByRole('button', { name: next }));
-  expect(scrollTo).toHaveBeenLastCalledWith({ x: 500, animated: true });
-  await move(view, 50);
-  await fireEvent.press(view.getByRole('button', { name: previous }));
-  expect(scrollTo).toHaveBeenLastCalledWith({ x: 0, animated: true });
-  expect(onPress).not.toHaveBeenCalled();
-  expect(view.getByRole('button', { name: 'Главное' }).props.accessibilityState.selected).toBe(true);
+  expect(fade(view, 'previous')).toBeNull();
+  expect(fade(view, 'next')).toBeNull();
 });
 
 it('reveals an externally selected filter and focused filter without selecting on focus', async () => {
@@ -154,14 +135,12 @@ it('reveals the selected filter once its layout arrives after the viewport', asy
   expect(lastScroll.animated).toBe(false);
 });
 
-it('disables scroll animation for reduced motion on arrows, external selection and focus', async () => {
+it('disables scroll animation for reduced motion on external selection and focus', async () => {
   const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
   const view = await render(rail({ items: items(0), itemRole: 'tab' }, true));
   await measure(view);
   await placeItem(view, '0', 16, 100);
   await placeItem(view, '5', 650, 100);
-  await fireEvent.press(view.getByRole('button', { name: next }));
-  expect(scrollTo).toHaveBeenLastCalledWith({ x: 210, animated: false });
   await view.rerender(rail({ items: items(5), itemRole: 'tab' }, true));
   expect(scrollTo.mock.calls.at(-1)?.[0]).toMatchObject({ animated: false });
   await fireEvent(view.getByRole('tab', { name: 'Главное' }), 'focus');
@@ -180,10 +159,6 @@ it('preserves full scalable labels, touch targets and controlled selection', asy
     expect(view.getByText(label).props.numberOfLines).toBeUndefined();
     expect(view.getByText(label).props.allowFontScaling).not.toBe(false);
   }
-  await measure(view);
-  const hint = StyleSheet.flatten(view.getByRole('button', { name: next }).props.style);
-  expect(hint.width ?? hint.minWidth).toBeGreaterThanOrEqual(48);
-  expect(hint.height ?? hint.minHeight).toBeGreaterThanOrEqual(48);
 
   await fireEvent.press(view.getByRole('tab', { name: 'Спорт' }));
   expect(onPress).toHaveBeenCalledWith(5);
