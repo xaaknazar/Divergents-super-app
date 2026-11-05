@@ -73,8 +73,8 @@ export function ProgramResultContent({ program: p, stats: s }: { program: Fitnes
 }
 
 const styles = StyleSheet.create({
-  metric: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: 20, borderCurve: 'continuous' },
-  badge: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: 20, borderCurve: 'continuous', flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  metric: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: 24, borderCurve: 'continuous' },
+  badge: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: 24, borderCurve: 'continuous', flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   icon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  journal: { borderRadius: 20, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  journal: { borderRadius: 24, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
 });

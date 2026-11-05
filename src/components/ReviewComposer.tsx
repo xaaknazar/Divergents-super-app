@@ -14,7 +14,7 @@ export function ReviewComposer({ value, onChange, onSend, sending, kind, editing
     <TextInput value={value} onChangeText={onChange} multiline editable={!sending} accessibilityLabel={label}
       placeholder={`${label}…`} placeholderTextColor={T.labelSecondary} selectionColor={T.brandText}
       style={[ty.body, { color: T.label, backgroundColor: T.cardBg, borderWidth: 1, borderColor: T.separator,
-        borderRadius: 16, minHeight: 52, maxHeight: 120, paddingHorizontal: 14, paddingVertical: 12, textAlignVertical: 'top' }]} />
+        borderRadius: 16, minHeight: 52, maxHeight: 120, paddingHorizontal: 16, paddingVertical: 12, textAlignVertical: 'top' }]} />
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 8 }}>
       {editing ? <Button label="Отменить изменение" variant="plain" size="compact" disabled={sending} onPress={onCancelEdit} /> : null}
       <Button label={editing ? 'Сохранить' : 'Отправить'} icon="arrow.up" size="compact"

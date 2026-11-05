@@ -79,7 +79,7 @@ export function OverallStandingsScreen({ route, navigation }: Props) {
 
         {/* Своё место — крупно и сразу, чтобы не искать себя в списке. */}
         {me ? (
-          <View style={{ marginHorizontal: 16, marginBottom: 12, padding: 14, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ marginHorizontal: 16, marginBottom: 12, padding: 16, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <MemberAvatar name={me.name} avatar={me.avatar} size={40} eliminated={me.eliminated} left={me.left === true} />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Вы')} · {me.name}</Text>
@@ -103,7 +103,7 @@ export function OverallStandingsScreen({ route, navigation }: Props) {
                 accessibilityRole="button"
                 accessibilityState={{ selected: mineOnly === only }}
                 style={{
-                  paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999,
+                  paddingVertical: 7, paddingHorizontal: 16, borderRadius: 999,
                   borderCurve: 'continuous',
                   backgroundColor: mineOnly === only ? T.brand : T.fillSecondary,
                 }}

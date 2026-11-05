@@ -235,7 +235,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         {/* Categories + scoring */}
         <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Категории и баллы')}>
           {CHALLENGE_CATEGORIES.map((cat, i) => (
-            <View key={cat.key} style={{ flexDirection: 'row', gap: 12, padding: 14, position: 'relative' }}>
+            <View key={cat.key} style={{ flexDirection: 'row', gap: 12, padding: 16, position: 'relative' }}>
               <IconBadge icon={cat.icon} tone={cat.key === 'R' ? 'brand' : cat.key === 'NS' ? 'danger' : 'success'} shape="squircle" size="large" />
               <View style={{ flex: 1 }}>
                 <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{cat.title} <Text style={[ty.caption1, { color: T.labelTertiary }]}>· {cat.key}</Text></Text>
@@ -262,14 +262,14 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         {/* Teams */}
         <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={teams.length === 0 ? tr('Команды') : full ? tr('Команды · набор завершён') : `Команды · нужно ещё ${pl.people(teamsNeed(teams))}`}>
           {teams.length === 0 ? (
-            <View style={{ padding: 18, alignItems: 'center' }}>
+            <View style={{ padding: 16, alignItems: 'center' }}>
               <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Команды пока не сформированы.')}</Text>
             </View>
           ) : teams.map((t, i) => {
             const need = Math.max(0, t.capacity - t.members);
             const full = need === 0;
             return (
-              <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, position: 'relative' }}>
+              <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, position: 'relative' }}>
                 <View style={{ width: 44, height: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: t.tint, alignItems: 'center', justifyContent: 'center' }}>
                   <SF name="person.3.fill" size={20} color={T.brand} />
                 </View>
@@ -316,7 +316,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         {isChallengeManager ? (
           <Pressable onPress={() => navigation.navigate('ManageChallenge', { challengeId: meta.id })}
             accessibilityRole="button" accessibilityLabel="Управление челленджем"
-            style={{ height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            style={{ height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="slider.horizontal.3" size={16} color="#fff" />
             <Text style={[ty.headline, { color: '#fff' }]}>Управление челленджем</Text>
           </Pressable>
@@ -324,7 +324,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         {canReview ? (
           <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId: meta.id })}
             accessibilityRole="button" accessibilityLabel={isChallengeManager ? 'Заявки (все команды)' : 'Заявки моей команды'}
-            style={{ height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            style={{ height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="person.2.fill" size={16} color={T.brand} />
             <Text style={[ty.headline, { color: T.brand }]}>{isChallengeManager ? 'Заявки (все команды)' : 'Заявки моей команды'}</Text>
           </Pressable>
@@ -333,7 +333,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         {/* Applicant CTA — one application; can re-apply only after a rejection. */}
         {myApp?.status === 'approved' ? (
           <>
-            <View style={{ height: 50, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <View style={{ height: 50, borderRadius: 16, borderCurve: 'continuous', backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
               <SF name="checkmark.circle.fill" size={18} color={T.greenText} />
               <Text style={[ty.headline, { color: T.greenText }]}>Вы в команде{myApp.teamName ? ` «${myApp.teamName}»` : ''}</Text>
             </View>
@@ -343,12 +343,12 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
           </>
         ) : myApp?.status === 'pending' ? (
           <>
-            <View style={{ height: 50, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            <View style={{ height: 50, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
               <SF name="clock.fill" size={16} color={T.labelSecondary} />
               <Text style={[ty.headline, { color: T.labelSecondary }]}>Заявка на рассмотрении</Text>
             </View>
             <Pressable onPress={confirmWithdraw} disabled={withdrawing} accessibilityRole="button" accessibilityLabel="Отозвать заявку"
-              style={{ height: 44, borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'rgba(255,59,48,0.10)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: withdrawing ? 0.6 : 1 }}>
+              style={{ height: 44, borderRadius: 16, borderCurve: 'continuous', backgroundColor: 'rgba(255,59,48,0.10)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: withdrawing ? 0.6 : 1 }}>
               {withdrawing ? <ActivityIndicator color={T.red} /> : (
                 <>
                   <SF name="xmark.circle.fill" size={16} color={T.red} />
@@ -358,7 +358,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
             </Pressable>
           </>
         ) : full ? (
-          <View style={{ borderRadius: 14, borderCurve: 'continuous', backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', paddingVertical: 11, gap: 2 }}>
+          <View style={{ borderRadius: 16, borderCurve: 'continuous', backgroundColor: 'rgba(52,199,89,0.14)', alignItems: 'center', justifyContent: 'center', paddingVertical: 11, gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <SF name="checkmark.seal.fill" size={18} color={T.greenText} />
               <Text style={[ty.headline, { color: T.greenText }]} numberOfLines={1}>Команды сформированы</Text>
@@ -652,7 +652,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
         </Pressable>
       )} variant="plain" />
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
-        <View style={{ backgroundColor: T.brand, borderRadius: 18, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+        <View style={{ backgroundColor: T.brand, borderRadius: 16, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <Text style={{ fontSize: 18 }}>🎉</Text>
           <Text style={[ty.headline, { color: '#fff' }]}>{tr('День закрыт!')} · {tr('День')} {c.currentDay} 🔥</Text>
         </View>
@@ -661,7 +661,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
 
       {/* Compact overview: context and season progress, without repeating daily data. */}
       <View accessible accessibilityLabel={`${c.title}. ${tr('День')} ${c.currentDay} ${tr('из')} ${c.totalDays}. ${myEliminated ? tr('Очки зафиксированы') : `+${pointsToday} pts ${tr('сегодня')}`}. ${c.teamName ? `${tr('Команда')} ${c.teamName}. ` : ''}${finished ? tr('Челлендж завершён') : `${tr('Осталось')} ${pl.days(remainingDays)}`}`}
-        style={{ marginHorizontal: 16, marginTop: 6, marginBottom: 12, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 }}>
+        style={{ marginHorizontal: 16, marginTop: 6, marginBottom: 12, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 }}>
         <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <StatusBadge label={[(tr('День')), " ", (c.currentDay), " ", (tr('из')), " ", (c.totalDays)].join('')} tone="inverse" icon="flame.fill" />
@@ -690,7 +690,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
 
       {/* Elimination is critical and therefore stays before the daily plan. */}
       {myEliminated ? (
-        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: 'rgba(255,59,48,0.10)', borderRadius: 14, borderCurve: 'continuous', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 0.5, borderColor: 'rgba(255,59,48,0.25)' }}>
+        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: 'rgba(255,59,48,0.10)', borderRadius: 16, borderCurve: 'continuous', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 0.5, borderColor: 'rgba(255,59,48,0.25)' }}>
           {/* ⛔, не 🏳️: белый флаг — это разрешение капитана, вылет — наказание.
               Одним символом их путали. */}
           <Text style={{ fontSize: 24 }}>⛔</Text>
@@ -708,7 +708,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
           решит, что уже вышел, перестанет отмечаться и наберёт красных флагов
           за дни, которые формально шли. */}
       {whiteFlag.left ? (
-        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.fillTertiary, borderRadius: 14, borderCurve: 'continuous', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
+        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.fillTertiary, borderRadius: 16, borderCurve: 'continuous', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 0.5, borderColor: T.cardBorder }}>
           <Text style={{ fontSize: 24 }}>🏳️</Text>
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]}>{tr('Вы вышли из челленджа')}</Text>
@@ -719,7 +719,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
           </View>
         </View>
       ) : whiteFlag.raised && !myEliminated ? (
-        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.brandTinted, borderRadius: 14, borderCurve: 'continuous', padding: 14, gap: 10 }}>
+        <View style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: T.brandTinted, borderRadius: 16, borderCurve: 'continuous', padding: 16, gap: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Text style={{ fontSize: 24 }}>🏳️</Text>
             <View style={{ flex: 1 }}>
@@ -738,7 +738,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
 
       {/* Primary flow: every change is saved automatically; there is no report step. */}
       <Wrapper marginHorizontal={16} marginBottom={12}><ContentBlock size="flush">
-        <View style={{ paddingHorizontal: 14, paddingTop: 12, paddingBottom: 2 }}>
+        <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Text style={[ty.headline, { color: T.label, flex: 1 }]}>{tr('План на сегодня')}</Text>
             <Wrapper alignSelf="center"><StatusBadge label={tr(progressSync.label)} tone={progressSync.tone} icon={progressSync.icon} /></Wrapper>
@@ -750,7 +750,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
             <View style={{ width: `${c.tasks.length > 0 ? (completedTasks / c.tasks.length) * 100 : 0}%`, height: '100%', borderRadius: 6, borderCurve: 'continuous', backgroundColor: !progressSync.confirmed ? T.orange : allDone ? T.green : T.brand }} />
           </View>
         </View>
-        <View style={{ paddingHorizontal: 14 }}>
+        <View style={{ paddingHorizontal: 16 }}>
           {c.tasks.map((t, i) => (
             <ChallengeTaskRow key={t.id} task={t} divider={i < c.tasks.length - 1}
               disabled={tasksLocked}
@@ -827,7 +827,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
         <SF name="chevron.forward" size={12} color={T.labelTertiary} />
       </Pressable>
       <Wrapper marginHorizontal={16} marginBottom={12}><ContentBlock size="flush">
-        <View style={{ minHeight: 92, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+        <View style={{ minHeight: 92, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
           <View accessible accessibilityLabel={ratingMode === 'overall' ? `${tr('Накоплено командой')}: ${teamPoints} pts` : `${tr('Очки команды сегодня')}: ${teamPointsToday} pts`} style={{ flex: 1, minWidth: 0 }}>
             <Text style={[ty.footnoteEm, { color: T.labelSecondary }]}>{ratingMode === 'overall' ? tr('Очки команды') : tr('Сегодня командой')}</Text>
             <Text style={[ty.title2, nums, { color: T.brand, marginTop: 4 }]} numberOfLines={1}>{formatTeamNumber(ratingMode === 'overall' ? teamPoints : teamPointsToday)} pts</Text>
@@ -889,7 +889,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
       <Modal visible={metricEditor !== null} transparent animationType="fade" onRequestClose={() => setMetricEditor(null)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <Pressable onPress={() => setMetricEditor(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
-            <Pressable onPress={() => {}} accessible={false} style={{ backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 18 }}>
+            <Pressable onPress={() => {}} accessible={false} style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16 }}>
               <Text style={[ty.title3, { color: T.label }]}>{metricEditor?.title}</Text>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{tr('Введите значение')} ({metricEditor?.unit})</Text>
               {/* Подсказка шагомера. Не подставляем молча: число попадает в
@@ -918,15 +918,15 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
               ) : null}
               <TextInput value={metricDraft} onChangeText={setMetricDraft} autoFocus keyboardType="number-pad"
                 selectTextOnFocus accessibilityLabel={tr('Значение активности')}
-                style={[ty.title2, { color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: 52, paddingHorizontal: 14, marginTop: 14 }]} />
+                style={[ty.title2, { color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: 52, paddingHorizontal: 16, marginTop: 14 }]} />
               <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 14 }}>
                 <Pressable onPress={() => setMetricEditor(null)} accessibilityRole="button" accessibilityLabel={tr('Отмена')}
-                  style={{ minHeight: 44, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' }}>
+                  style={{ minHeight: 44, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.headline, { color: T.labelSecondary }]}>{tr('Отмена')}</Text>
                 </Pressable>
                 <Pressable onPress={saveMetric} disabled={!/\d/.test(metricDraft)}
                   accessibilityRole="button" accessibilityLabel={tr('Сохранить')} accessibilityState={{ disabled: !/\d/.test(metricDraft) }}
-                  style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: /\d/.test(metricDraft) ? 1 : 0.45 }}>
+                  style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: /\d/.test(metricDraft) ? 1 : 0.45 }}>
                   <Text style={[ty.headline, { color: T.onBrand }]}>{tr('Сохранить')}</Text>
                 </Pressable>
               </View>
@@ -938,7 +938,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
       <Modal visible={textEditor !== null} transparent animationType="fade" onRequestClose={() => setTextEditor(null)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <Pressable onPress={() => setTextEditor(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
-            <Pressable onPress={() => {}} accessible={false} style={{ backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', padding: 18 }}>
+            <Pressable onPress={() => {}} accessible={false} style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16 }}>
               <Text style={[ty.title3, { color: T.label }]}>{textEditor?.title}</Text>
               <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{textEditor?.message}</Text>
               <TextInput
@@ -949,14 +949,14 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
                 keyboardType={textEditor?.kind === 'chat' ? 'url' : 'default'}
                 autoCapitalize={textEditor?.kind === 'chat' ? 'none' : 'sentences'}
                 accessibilityLabel={textEditor?.title}
-                style={[ty.body, { color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: textEditor?.kind === 'message' ? 96 : 52, padding: 14, marginTop: 14, textAlignVertical: 'top' }]}
+                style={[ty.body, { color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: textEditor?.kind === 'message' ? 96 : 52, padding: 16, marginTop: 14, textAlignVertical: 'top' }]}
               />
               <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 14 }}>
-                <Pressable accessibilityRole="button" accessibilityLabel={tr('Отмена')} onPress={() => setTextEditor(null)} style={{ minHeight: 44, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={tr('Отмена')} onPress={() => setTextEditor(null)} style={{ minHeight: 44, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.headline, { color: T.labelSecondary }]}>{tr('Отмена')}</Text>
                 </Pressable>
                 <Pressable accessibilityRole="button" accessibilityLabel={tr('Сохранить')} accessibilityState={{ disabled: textSaving, busy: textSaving }} onPress={saveTextEditor} disabled={textSaving}
-                  style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: textSaving ? 0.55 : 1 }}>
+                  style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: textSaving ? 0.55 : 1 }}>
                   {textSaving ? <ActivityIndicator color={T.onBrand} /> : <Text style={[ty.headline, { color: T.onBrand }]}>{tr('Сохранить')}</Text>}
                 </Pressable>
               </View>
@@ -1061,7 +1061,7 @@ function RatingModeSwitch({ value, onChange, T }: {
             style={({ pressed }) => ({
               flex: 1,
               minHeight: 38,
-              borderRadius: 9,
+              borderRadius: 8,
               borderCurve: 'continuous',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1215,7 +1215,7 @@ function QuickLink({ icon, title, detail, onPress, T, accent }: { icon: any; tit
   const color = accent ?? T.brand;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={detail ? `${title}, ${detail}` : title}
-      style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: pressed ? T.fillTertiary : 'transparent' })}>
+      style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: pressed ? T.fillTertiary : 'transparent' })}>
       <View style={{ width: 28, height: 28, borderRadius: 8, borderCurve: 'continuous', backgroundColor: accent ? 'rgba(34,158,217,0.12)' : T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
         <SF name={icon} size={14} color={color} />
       </View>
@@ -1265,7 +1265,7 @@ function ChallengeCalendar({ totalDays, currentDay, startISO, days, T }: { total
 
   return (
     <Wrapper marginHorizontal={16} marginBottom={12}><ContentBlock size="flush">
-      <View style={{ minHeight: 46, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
+      <View style={{ minHeight: 46, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 0.5, borderBottomColor: T.separator }}>
         <View style={{ width: 28, height: 28, borderRadius: 8, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
           <SF name="calendar" size={14} color={T.brand} />
         </View>
@@ -1291,7 +1291,7 @@ function ChallengeCalendar({ totalDays, currentDay, startISO, days, T }: { total
             <View key={challengeDay} accessible accessibilityRole="text"
               accessibilityLabel={`${tr('День')} ${challengeDay}, ${dateLabel}${look.said ? `, ${look.said}` : ''}`}
               style={{ width: `${100 / 7}%`, padding: 2 }}>
-              <View style={{ minHeight: 40, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: look.bg }}>
+              <View style={{ minHeight: 40, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: look.bg }}>
                 <Text style={[ty.footnoteEm, nums, { color: look.fg }]}>{date.getUTCDate()}</Text>
                 <Text style={[ty.caption2, { color: look.sub, marginTop: 1, opacity: isToday ? 1 : 0.85 }]}>{state === 'flagged' || state === 'missed' ? '🚩' : `${tr('Д')}${challengeDay}`}</Text>
               </View>
@@ -1301,7 +1301,7 @@ function ChallengeCalendar({ totalDays, currentDay, startISO, days, T }: { total
       </View>
       {days?.length ? (
         // Легенда — та же, что на экране «Дни челленджа»: без неё цвета приходится угадывать.
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 4, paddingHorizontal: 14, paddingBottom: 10 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 4, paddingHorizontal: 16, paddingBottom: 10 }}>
           {([
             ['rgba(52,199,89,0.18)', tr('норма закрыта')],
             ['rgba(255,59,48,0.14)', tr('есть флаг')],
@@ -1315,7 +1315,7 @@ function ChallengeCalendar({ totalDays, currentDay, startISO, days, T }: { total
           ))}
         </View>
       ) : null}
-      <View style={{ minHeight: 32, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: T.separator }}>
+      <View style={{ minHeight: 32, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: T.separator }}>
         <Text style={[ty.caption2, { color: T.labelSecondary }]} numberOfLines={1}>{tr('Сегодня')}: {todayLabel} · {safeCurrent}/{safeTotal} {tr('день')}</Text>
       </View>
     </ContentBlock></Wrapper>

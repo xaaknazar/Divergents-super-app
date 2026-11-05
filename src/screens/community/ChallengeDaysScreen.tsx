@@ -619,7 +619,7 @@ function DayDetail({ day: d, onClose }: { day: ChallengeDay | null; onClose: () 
       </ListSection></Wrapper>
 
       <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Итог дня')}>
-        <View style={{ padding: 14, gap: 8 }}>
+        <View style={{ padding: 16, gap: 8 }}>
           <Line T={T} k={tr('Заработано')} v={`+${Math.round(d.positive)}`} />
           {d.penalty ? <Line T={T} k={tr('Штрафы')} v={String(Math.round(d.penalty))} danger /> : null}
           <View style={{ height: 0.5, backgroundColor: T.separator }} />
@@ -685,7 +685,7 @@ function DayStat({ icon, value, ok, T, ty }: { icon: string; value: string; ok: 
     <View style={{
       flexGrow: 1, flexShrink: 1, flexBasis: 'auto',
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
-      paddingVertical: 5, paddingHorizontal: 8, borderRadius: 9,
+      paddingVertical: 5, paddingHorizontal: 8, borderRadius: 8,
       borderCurve: 'continuous',
       backgroundColor: ok ? 'rgba(52,199,89,0.14)' : 'rgba(255,59,48,0.12)',
     }}>

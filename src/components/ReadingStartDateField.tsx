@@ -25,7 +25,7 @@ export function ReadingStartDateField({ value, onChange, disabled = false, error
     <Pressable accessibilityRole="button" accessibilityLabel={`Дата старта: ${readingDateLabel(value)}`}
       accessibilityState={{ disabled, expanded: open }} disabled={disabled}
       onPress={() => { setDraft(chosen); setOpen(true); }}
-      style={({ pressed }) => ({ minHeight: 48, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.cardBg,
+      style={({ pressed }) => ({ minHeight: 48, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.cardBg,
         opacity: disabled ? 0.5 : pressed ? 0.7 : 1, flexDirection: 'row', gap: 10, alignItems: 'center' })}>
       <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><SF name="calendar" size={15} color={T.brandText} /></View>
       <Text style={[ty.body, { color: T.label, flex: 1 }]}>{readingDateLabel(value)}</Text>

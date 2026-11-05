@@ -296,7 +296,7 @@ function ActBtn({ icon, label, active, onPress, T }: { icon: any; label: string;
   const { ty } = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }}
-      style={({ pressed }) => ({ flex: 1, minHeight: 62, borderRadius: 14, borderCurve: 'continuous', backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4, opacity: pressed ? 0.7 : 1 })}>
+      style={({ pressed }) => ({ flex: 1, minHeight: 62, borderRadius: 16, borderCurve: 'continuous', backgroundColor: active ? T.brandTinted : T.cardBg, borderWidth: 0.5, borderColor: active ? 'transparent' : T.cardBorder, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 4, opacity: pressed ? 0.7 : 1 })}>
       <SF name={icon} size={20} color={active ? T.brandText : T.label} />
       <Text style={[ty.caption1, { color: active ? T.brandText : T.labelSecondary }]} numberOfLines={1}>{label}</Text>
     </Pressable>

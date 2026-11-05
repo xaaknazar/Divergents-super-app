@@ -21,4 +21,4 @@ export function ReadingJourneyCard({ period, completed, onPress }: { period?: Re
     </View> : null}
   </Pressable>;
 }
-const styles = StyleSheet.create({ card: { borderRadius: radius.block, borderWidth: 1, padding: 18, gap: 16 }, row: { flexDirection: 'row', gap: 12, alignItems: 'center' }, copy: { flex: 1, gap: 5 }, track: { height: 5, borderRadius: 3, overflow: 'hidden' }, fill: { height: 5 } });
+const styles = StyleSheet.create({ card: { borderRadius: radius.block, borderWidth: 1, padding: 16, gap: 16 }, row: { flexDirection: 'row', gap: 12, alignItems: 'center' }, copy: { flex: 1, gap: 5 }, track: { height: 5, borderRadius: 3, overflow: 'hidden' }, fill: { height: 5 } });

@@ -19,7 +19,7 @@ export function Chip({
       disabled={!onPress} accessibilityLabel={label} accessibilityState={{ selected: active, disabled: !onPress }} style={({ pressed }) => [{
       flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%',
       minHeight: minTouch, minWidth: minTouch, justifyContent: 'center',
-      paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.pill,
+      paddingVertical: 8, paddingHorizontal: 16, borderRadius: radius.pill,
       borderCurve: 'continuous',
       backgroundColor: active ? T.brand : T.cardBg,
       borderWidth: 0.5, borderColor: active ? 'transparent' : T.separator,

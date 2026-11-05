@@ -126,9 +126,9 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
           {job.companyLogo ? (
-            <Image source={{ uri: job.companyLogo }} style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: T.cardBg }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
+            <Image source={{ uri: job.companyLogo }} style={{ width: 60, height: 60, borderRadius: 16, backgroundColor: T.cardBg }} contentFit="cover" transition={150} cachePolicy="memory-disk" />
           ) : (
-            <View style={{ width: 60, height: 60, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
+            <View style={{ width: 60, height: 60, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}>
               <Text style={[ty.title1, { color: job.color }]}>{job.logo}</Text>
             </View>
           )}
@@ -147,7 +147,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       {/* Owner: view applicants */}
       {canCreate ? (
         <Pressable onPress={() => navigation.navigate('VacancyApplicants', { jobId: job.id })}
-          style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 4, padding: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTintedStrong, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 4, padding: 16, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTintedStrong, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <SF name="person.2.fill" size={18} color={T.brand} />
           <Text style={[ty.headline, { color: T.label, flex: 1 }]}>Отклики на вакансию</Text>
           <SF name="chevron.right" size={14} color={T.labelTertiary} />
@@ -181,7 +181,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
         const m = talentMatch(job.talents, gallup);
         return (
           <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Почему вам подходит')}>
-            <View style={{ padding: 14 }}>
+            <View style={{ padding: 16 }}>
               {/* m.total — количество талантов ВАКАНСИИ, а не пользователя,
                   поэтому формулировка считает совпадения по талантам роли. */}
               <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]}>
@@ -200,7 +200,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       {/* О компании */}
       {(job.companyValues.length > 0 || job.officeAddress) ? (
         <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('О компании')}>
-          <View style={{ padding: 14, gap: 12 }}>
+          <View style={{ padding: 16, gap: 12 }}>
             {job.officeAddress ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <SF name="mappin.circle.fill" size={18} color={T.sky} />
@@ -225,7 +225,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       {/* Условия */}
       {(job.conditions || job.benefits.length > 0) ? (
         <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Условия')}>
-          <View style={{ padding: 14, gap: 12 }}>
+          <View style={{ padding: 16, gap: 12 }}>
             {job.conditions ? <Text style={[ty.body, { color: T.label }]}>{job.conditions}</Text> : null}
             {job.benefits.length > 0 ? (
               <View style={{ gap: 6 }}>
@@ -245,7 +245,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       {/* Требования */}
       {(job.experience.length > 0 || job.diplomaRequired !== null || job.adjacentFields || job.otherRequirements || job.gallupFile) ? (
         <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Требования')}>
-          <View style={{ padding: 14, gap: 12 }}>
+          <View style={{ padding: 16, gap: 12 }}>
             {job.gallupFile ? (
               <Pressable onPress={() => Linking.openURL(job.gallupFile).catch(() => {})} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <SF name="doc.text.fill" size={18} color={T.brand} />
@@ -280,7 +280,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
       {/* About */}
       {job.about ? (
         <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('О вакансии')}>
-          <View style={{ padding: 14 }}>
+          <View style={{ padding: 16 }}>
             <Text style={[ty.body, { color: T.label }]}>{job.about}</Text>
           </View>
         </ListSection></Wrapper>

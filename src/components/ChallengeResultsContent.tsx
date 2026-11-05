@@ -124,9 +124,9 @@ export function ChallengeResultsContent({
             borderWidth: won ? 1 : 0.5, borderColor: won ? AWARD_GOLD : T.cardBorder,
             overflow: 'hidden',
           }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
               <View style={{
-                width: 44, height: 44, borderRadius: 14, borderCurve: 'continuous',
+                width: 44, height: 44, borderRadius: 16, borderCurve: 'continuous',
                 backgroundColor: won ? 'rgba(240,180,41,0.16)' : T.brandTinted,
                 alignItems: 'center', justifyContent: 'center',
               }}>

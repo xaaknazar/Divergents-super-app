@@ -40,7 +40,7 @@ export function ReadingFlagRecovery({ flags, recovery, eliminationFlags }: { fla
   </View>;
 }
 const styles = StyleSheet.create({
-  panel: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.xl, borderCurve: 'continuous', gap: 8 },
+  panel: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.xl, borderCurve: 'continuous', gap: 8 },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   title: { flex: 1, minWidth: 150 },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },

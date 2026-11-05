@@ -12,7 +12,7 @@ export function ReadingField({ label, value, onChange, kind = 'text', disabled =
     <TextInput accessibilityLabel={label} value={value} onChangeText={onChange} editable={!disabled}
       keyboardType={kind === 'number' ? 'number-pad' : 'default'} maxLength={kind === 'number' ? 6 : 180}
       autoCapitalize={kind === 'nickname' ? 'none' : 'sentences'} autoCorrect={kind !== 'nickname'}
-      style={[ty.body, { minHeight: 50, padding: 14, borderRadius: 14, backgroundColor: T.fillTertiary, color: T.label }]} />
+      style={[ty.body, { minHeight: 50, padding: 16, borderRadius: 16, backgroundColor: T.fillTertiary, color: T.label }]} />
     <FieldError message={error} />
   </View>;
 }

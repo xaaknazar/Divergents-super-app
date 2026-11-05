@@ -37,7 +37,7 @@ export function ReadingSaveStatus({ state, detail, onRetry, variant = 'card' }: 
   </View>;
 }
 const styles = StyleSheet.create({
-  box: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.xl, borderCurve: 'continuous' },
+  box: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.xl, borderCurve: 'continuous' },
   copy: { flex: 1, minWidth: 0, gap: 2 },
   inline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 8 },
   inlineText: { flexShrink: 1, textAlign: 'center' },

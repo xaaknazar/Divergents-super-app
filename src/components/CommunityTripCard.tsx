@@ -50,10 +50,10 @@ export function CommunityTripCard({ trip, navigation }: { trip: Trip; navigation
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 14, paddingHorizontal: 14 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 14, paddingHorizontal: 16 },
   titles: { flex: 1, minWidth: 0, gap: 3 },
   date: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  body: { padding: 14 },
+  body: { padding: 16 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth },
 });

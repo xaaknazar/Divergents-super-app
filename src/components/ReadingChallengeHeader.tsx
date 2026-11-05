@@ -86,11 +86,11 @@ export function ReadingChallengeHeader({ title, phase, day, durationDays, startD
 }
 const styles = StyleSheet.create({
   shell: { borderRadius: radius.block, borderCurve: 'continuous', padding: 22, gap: 18, overflow: 'hidden' },
-  compactShell: { paddingVertical: 16, paddingLeft: 18, paddingRight: 16, gap: 14 },
+  compactShell: { paddingVertical: 16, paddingLeft: 16, paddingRight: 16, gap: 14 },
   content: { gap: 16 }, copy: { gap: 9 }, horizontal: { flexDirection: 'row', alignItems: 'center' }, flex: { flex: 1 },
   centered: { alignItems: 'center' }, centerText: { textAlign: 'center' },
   emblem: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  largeEmblem: { width: 74, height: 94, borderRadius: 22 }, bookEmblem: { height: 66, borderRadius: 8 },
+  largeEmblem: { width: 74, height: 94, borderRadius: 24 }, bookEmblem: { height: 66, borderRadius: 8 },
   cover: { borderTopLeftRadius: 8, borderBottomLeftRadius: 8, paddingLeft: 30 }, minimal: { paddingHorizontal: 4 },
   perforation: { borderTopWidth: 1, borderStyle: 'dashed', marginVertical: 6 },
   progress: { height: 5, borderRadius: 3, overflow: 'hidden' },

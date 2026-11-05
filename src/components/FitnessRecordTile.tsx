@@ -35,6 +35,6 @@ export function FitnessRecordTile({ icon, tone, value, label, caption, onPress, 
 }
 
 const styles = StyleSheet.create({
-  tile: { borderRadius: 18, borderCurve: 'continuous', padding: 14, minHeight: 124 },
+  tile: { borderRadius: 16, borderCurve: 'continuous', padding: 16, minHeight: 124 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

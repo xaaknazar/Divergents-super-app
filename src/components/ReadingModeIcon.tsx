@@ -10,4 +10,4 @@ export function ReadingModeIcon({ level }: { level: 'extreme' | 'moderate' }) {
     <SF name={level === 'moderate' ? 'leaf.fill' : 'flame.fill'} size={30} color={T.brandText} />
   </View>;
 }
-const styles = StyleSheet.create({ mark: { width: 64, height: 64, borderRadius: 22, alignItems: 'center', justifyContent: 'center' } });
+const styles = StyleSheet.create({ mark: { width: 64, height: 64, borderRadius: 24, alignItems: 'center', justifyContent: 'center' } });

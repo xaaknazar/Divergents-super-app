@@ -8,7 +8,7 @@ export function ResultMetric({ kind, value, label }: { kind: 'reading' | 'walkin
   const { T, ty } = useTheme();
   const icon = { reading: 'book.fill', walking: 'figure.walk', sugar: 'cube.fill', focus: 'clock', completed: 'checkmark.circle.fill' }[kind];
   return <View testID={`result-metric-${kind}`} accessible accessibilityLabel={`${value} ${label}`} style={{
-    flexGrow: 1, alignItems: 'center', gap: 8, padding: 14,
+    flexGrow: 1, alignItems: 'center', gap: 8, padding: 16,
     backgroundColor: T.cardBg, borderRadius: radius.block, borderCurve: 'continuous',
     borderWidth: 0.5, borderColor: T.cardBorder,
   }}>

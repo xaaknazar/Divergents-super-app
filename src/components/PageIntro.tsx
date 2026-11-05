@@ -112,7 +112,7 @@ function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: bool
               <View pointerEvents="none" style={{ position: 'absolute', right: -12, top: -20, opacity: 0.16 }}>
                 <SF name={info.icon} size={132} color={T.onBrand} />
               </View>
-              <View style={{ width: 74, height: 74, borderRadius: 22, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 74, height: 74, borderRadius: 24, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
                 <SF name={info.icon} size={38} color={T.onBrand} />
               </View>
               <Text accessibilityRole="header" style={[ty.title2, { color: T.onBrand, marginTop: 14, textAlign: 'center' }]}>{info.title}</Text>
@@ -124,7 +124,7 @@ function IntroModal({ info, visible, onClose }: { info: IntroInfo; visible: bool
               <View style={{ marginTop: 18, gap: 14 }}>
                 {info.points.map((p, i) => (
                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <View style={{ width: 34, height: 34, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 34, height: 34, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name={p.icon} size={17} color={T.brand} />
                     </View>
                     <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>{p.text}</Text>

@@ -26,6 +26,6 @@ export function CommunitySportCard({ activity, onPress }: { activity: SportActiv
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
   text: { flex: 1, minWidth: 0, gap: 2 },
 });

@@ -20,6 +20,6 @@ export function TappableSurface({ children, onPress, accessibilityLabel, accessi
 }
 
 const styles = StyleSheet.create({
-  shadow: { borderRadius: 14, borderCurve: 'continuous' },
-  clip: { borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden' },
+  shadow: { borderRadius: 16, borderCurve: 'continuous' },
+  clip: { borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' },
 });

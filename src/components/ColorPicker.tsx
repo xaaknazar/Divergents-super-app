@@ -85,7 +85,7 @@ export function ColorPicker({ value, onChange, presets = COLOR_PRESETS, extra }:
           onBlur={() => setHexDraft(null)}
           autoCapitalize="characters" autoCorrect={false} maxLength={7}
           accessibilityLabel="Код цвета"
-          style={[ty.body, { flex: 1, color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: 44, paddingHorizontal: 14 }]}
+          style={[ty.body, { flex: 1, color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: 44, paddingHorizontal: 16 }]}
         />
       </View>
     </View>

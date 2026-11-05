@@ -30,7 +30,7 @@ export function ChallengeResultRankingRow(props: Props) {
   const stacked = width < 360 || fontScale * textScale > 1.25;
   return <View testID={`result-ranking-${props.kind}-${row.id}`} accessible
     accessibilityLabel={`${rank} ${tr('место')}. ${row.name}${mine ? `, ${props.kind === 'team' ? tr('ваша команда') : tr('вы')}` : ''}. ${fmtInt(row.points)} ${tr('баллов')}${subtitle ? `. ${subtitle}` : ''}`}
-    style={{ padding: 14, gap: 10, flexDirection: 'row', alignItems: 'center',
+    style={{ padding: 16, gap: 10, flexDirection: 'row', alignItems: 'center',
       backgroundColor: mine ? T.brandTinted : T.cardBg,
       borderBottomWidth: props.last ? 0 : 0.5, borderBottomColor: T.separator }}>
     <Text style={[ty.footnoteEm, nums, { color: T.labelSecondary, minWidth: 28, textAlign: 'center' }]}>{rank || '—'}</Text>

@@ -49,7 +49,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
 
   // Vacancy is valid only with a title AND a company name (both required by ТЗ).
   const ok = title.trim().length > 1 && company.trim().length > 0;
-  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 14, color: T.label, borderWidth: 0.5, borderColor: T.cardBorder, ...ty.body } as any;
+  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, color: T.label, borderWidth: 0.5, borderColor: T.cardBorder, ...ty.body } as any;
 
   const pickImage = async (which: 'logo' | 'gallup') => {
     try {
@@ -140,7 +140,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Field label="Формат">
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {FORMATS.map((f) => (
-                <Pressable key={f} onPress={() => setFormat(f)} style={{ flex: 1, paddingVertical: 10, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', backgroundColor: format === f ? T.brand : T.fillTertiary }}>
+                <Pressable key={f} onPress={() => setFormat(f)} style={{ flex: 1, paddingVertical: 10, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', backgroundColor: format === f ? T.brand : T.fillTertiary }}>
                   <Text style={[ty.subheadEm, { color: format === f ? '#fff' : T.labelSecondary }]}>{f}</Text>
                 </Pressable>
               ))}
@@ -169,7 +169,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Field label="Обязателен ли диплом по специальности?">
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {([['yes', 'Да'], ['no', 'Нет']] as const).map(([k, l]) => (
-                <Pressable key={k} onPress={() => setDiploma(diploma === k ? '' : k)} style={{ flex: 1, paddingVertical: 10, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', backgroundColor: diploma === k ? T.brand : T.fillTertiary }}>
+                <Pressable key={k} onPress={() => setDiploma(diploma === k ? '' : k)} style={{ flex: 1, paddingVertical: 10, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', backgroundColor: diploma === k ? T.brand : T.fillTertiary }}>
                   <Text style={[ty.subheadEm, { color: diploma === k ? '#fff' : T.labelSecondary }]}>{l}</Text>
                 </Pressable>
               ))}

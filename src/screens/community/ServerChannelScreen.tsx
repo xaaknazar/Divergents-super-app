@@ -215,14 +215,14 @@ export function ServerChannelScreen({ route, navigation }: Props) {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }} showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}>
         {/* Gradient hero header */}
-        <View style={{ borderRadius: 22, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
-          <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
+        <View style={{ borderRadius: 24, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 0.5, borderColor: T.cardBorder, shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+          <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
             <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.22)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               {ch.avatarUrl ? (
-                <Image source={{ uri: ch.avatarUrl }} style={{ width: 66, height: 66, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)' }} contentFit="cover" cachePolicy="memory-disk" />
+                <Image source={{ uri: ch.avatarUrl }} style={{ width: 66, height: 66, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)' }} contentFit="cover" cachePolicy="memory-disk" />
               ) : (
-                <View style={{ width: 66, height: 66, borderRadius: 20, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 66, height: 66, borderRadius: 24, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.title1, { color: '#fff' }]}>{initial}</Text>
                 </View>
               )}
@@ -246,23 +246,23 @@ export function ServerChannelScreen({ route, navigation }: Props) {
           </LinearGradient>
 
           {/* Actions on a solid surface for readable contrast */}
-          <View style={{ backgroundColor: T.cardBg, padding: 14 }}>
+          <View style={{ backgroundColor: T.cardBg, padding: 16 }}>
             {owner ? (
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Pressable onPress={() => setPostOpen(true)} style={{ flex: 1, height: 46, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                <Pressable onPress={() => setPostOpen(true)} style={{ flex: 1, height: 46, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
                   <SF name="plus" size={15} color="#fff" /><Text style={[ty.subheadEm, { color: '#fff' }]}>Создать пост</Text>
                 </Pressable>
                 {ch.access !== 'open' ? (
-                  <Pressable onPress={() => { setReqOpen(true); loadRequests(); }} style={{ height: 46, paddingHorizontal: 14, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                  <Pressable onPress={() => { setReqOpen(true); loadRequests(); }} style={{ height: 46, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
                     <SF name="person.2.fill" size={15} color={T.brand} /><Text style={[ty.subheadEm, { color: T.brand }]}>{requests.length ? requests.length : ''}</Text>
                   </Pressable>
                 ) : null}
-                <Pressable onPress={() => setManageOpen(true)} style={{ height: 46, paddingHorizontal: 15, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => setManageOpen(true)} style={{ height: 46, paddingHorizontal: 15, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
                   <SF name="gearshape.fill" size={17} color={T.label} />
                 </Pressable>
               </View>
             ) : (
-              <Pressable onPress={join} disabled={busy || state === 'requested'} style={{ height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: state === 'subscribed' || state === 'approved' ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+              <Pressable onPress={join} disabled={busy || state === 'requested'} style={{ height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: state === 'subscribed' || state === 'approved' ? T.fillSecondary : T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
                 {busy ? <ActivityIndicator color={state === 'subscribed' || state === 'approved' ? T.label : '#fff'} /> : (
                   <>
                     {state === 'subscribed' || state === 'approved' ? <SF name="checkmark.circle.fill" size={16} color={T.brand} /> : null}
@@ -316,12 +316,12 @@ export function ServerChannelScreen({ route, navigation }: Props) {
             {ch.posts.length === 0 ? (
               owner ? (
                 <ContentBlock size="regular"><Wrapper align={'center'}>
-                  <View style={{ width: 60, height: 60, borderRadius: 20, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 60, height: 60, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                     <SF name="square.and.pencil" size={26} color={T.brand} />
                   </View>
                   <Text style={[ty.headline, { color: T.label, marginTop: 14 }]}>Опубликуйте первый пост</Text>
                   <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 6, textAlign: 'center' }]}>Поделитесь статьёй или голосовым сообщением — участники увидят его здесь.</Text>
-                  <Pressable onPress={() => setPostOpen(true)} style={{ marginTop: 16, height: 46, paddingHorizontal: 22, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <Pressable onPress={() => setPostOpen(true)} style={{ marginTop: 16, height: 46, paddingHorizontal: 22, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     <SF name="plus" size={15} color="#fff" /><Text style={[ty.subheadEm, { color: '#fff' }]}>Создать пост</Text>
                   </Pressable>
                 </Wrapper></ContentBlock>
@@ -359,7 +359,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                     {p.title ? <Text style={[ty.headline, { color: T.label, marginTop: 10 }]}>{p.title}</Text> : null}
 
                     {isAudio && p.audioUrl ? (
-                      <Pressable onPress={() => playPost(p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, backgroundColor: T.fillSecondary, borderRadius: 14, borderCurve: 'continuous', padding: 10 }}>
+                      <Pressable onPress={() => playPost(p)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, backgroundColor: T.fillSecondary, borderRadius: 16, borderCurve: 'continuous', padding: 10 }}>
                         <View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
                           <SF name={playingId === p.id ? 'pause.fill' : 'play.fill'} size={18} color="#fff" />
                         </View>
@@ -390,7 +390,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                         const count = p.reactions?.[e] ?? 0;
                         return (
                           <Pressable key={e} onPress={() => react(p.id, e)} hitSlop={4}
-                            style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderCurve: 'continuous', backgroundColor: on ? T.brandTinted : T.fillSecondary, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                            style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderCurve: 'continuous', backgroundColor: on ? T.brandTinted : T.fillSecondary, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                             <Text style={{ fontSize: 14 }}>{e}</Text>
                             {count > 0 ? <Text style={[ty.caption2Em, { color: on ? T.brand : T.labelSecondary }]}>{count}</Text> : null}
                           </Pressable>
@@ -438,8 +438,8 @@ export function ServerChannelScreen({ route, navigation }: Props) {
                 <Text style={[ty.subheadEm, { color: T.label }]}>{r.profile?.fullName || r.userName || r.userEmail}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary }]}>{r.userEmail}{r.profile?.phone ? ` · ${r.profile.phone}` : ''}{r.profile?.mbtiType ? ` · MBTI ${r.profile.mbtiType}` : ''}</Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                  <Pressable accessibilityRole="button" accessibilityLabel="Принять заявку" onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'approve'); loadRequests(); load(); }} style={{ flex: 1, minHeight: 48, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.onBrand }]}>Принять</Text></Pressable>
-                  <Pressable accessibilityRole="button" accessibilityLabel="Отклонить заявку" onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'reject'); loadRequests(); }} style={{ flex: 1, minHeight: 48, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]}>Отклонить</Text></Pressable>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Принять заявку" onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'approve'); loadRequests(); load(); }} style={{ flex: 1, minHeight: 48, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.onBrand }]}>Принять</Text></Pressable>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Отклонить заявку" onPress={async () => { const tk = await getToken(); await actChannelRequest(tk, id, r.userId, 'reject'); loadRequests(); }} style={{ flex: 1, minHeight: 48, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.label }]}>Отклонить</Text></Pressable>
                 </View>
               </ContentBlock></Wrapper>
             ))}
@@ -493,7 +493,7 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
       });
     } catch {}
   };
-  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
+  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, color: T.label, ...ty.body } as any;
   const submit = async () => {
     if (!ok) return; setBusy(true);
     try {
@@ -515,7 +515,7 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
         <Text style={[ty.title3, { color: T.label, marginBottom: 12 }]}>Новый пост</Text>
         <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 12, borderCurve: 'continuous', padding: 4, marginBottom: 12 }}>
           {(['article', 'audio'] as const).map((k) => (
-            <Pressable key={k} onPress={() => setType(k)} style={{ flex: 1, paddingVertical: 9, borderRadius: 9, borderCurve: 'continuous', alignItems: 'center', backgroundColor: type === k ? T.cardBg : 'transparent' }}>
+            <Pressable key={k} onPress={() => setType(k)} style={{ flex: 1, paddingVertical: 9, borderRadius: 8, borderCurve: 'continuous', alignItems: 'center', backgroundColor: type === k ? T.cardBg : 'transparent' }}>
               <Text style={[ty.footnoteEm, { color: type === k ? T.brand : T.labelSecondary }]}>{k === 'article' ? 'Статья' : 'Аудио'}</Text>
             </Pressable>
           ))}
@@ -525,7 +525,7 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
           ? <TextInput value={body} onChangeText={setBody} placeholder="Текст" placeholderTextColor={T.labelTertiary} multiline style={[inp, { minHeight: 110, textAlignVertical: 'top' }]} />
           : (
             <View>
-              <Pressable onPress={recording ? stopRec : startRec} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: recording ? '#EF4444' : T.brandTinted, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 14 }}>
+              <Pressable onPress={recording ? stopRec : startRec} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: recording ? '#EF4444' : T.brandTinted, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16 }}>
                 <SF name={recording ? 'pause.fill' : 'waveform'} size={18} color={recording ? '#fff' : T.brand} />
                 <Text style={[ty.subheadEm, { color: recording ? '#fff' : T.brand }]}>{recording ? `Остановить · ${recSec}s` : recordedUri ? 'Записать заново' : 'Записать голос'}</Text>
               </Pressable>
@@ -534,7 +534,7 @@ function CreatePost({ channelId, onClose, onDone }: { channelId: string; onClose
               <TextInput value={audioUrl} onChangeText={setAudioUrl} placeholder="Ссылка на аудио (mp3/m4a)" placeholderTextColor={T.labelTertiary} autoCapitalize="none" style={inp} />
             </View>
           )}
-        <Pressable onPress={submit} disabled={!ok || busy} style={{ marginTop: 14, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: ok ? T.brand : T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={submit} disabled={!ok || busy} style={{ marginTop: 14, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: ok ? T.brand : T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}>
           {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: ok ? '#fff' : T.labelTertiary }]}>Опубликовать</Text>}
         </Pressable>
       </View>
@@ -557,7 +557,7 @@ function ManageChannel({ channel, onClose, onSaved, onDeleted }: { channel: Serv
 
   useEffect(() => { (async () => { const t = await getToken(); setMembers(await fetchChannelMembers(t, channel.id)); })(); }, []);
 
-  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
+  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, color: T.label, ...ty.body } as any;
   const sectionLabel = { ...ty.footnote, color: T.labelSecondary, marginBottom: 6, marginLeft: 4, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
 
   const pickAvatar = async () => {
@@ -620,7 +620,7 @@ function ManageChannel({ channel, onClose, onSaved, onDeleted }: { channel: Serv
           <TextInput value={name} onChangeText={setName} style={[inp, { marginBottom: 14 }]} />
 
           <Text style={sectionLabel}>Имя (@handle)</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingLeft: 14, marginBottom: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingLeft: 16, marginBottom: 14 }}>
             <Text style={[ty.body, { color: T.labelTertiary }]}>@</Text>
             <TextInput value={handle} onChangeText={setHandle} autoCapitalize="none" placeholder="channel" placeholderTextColor={T.labelTertiary} style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 6, color: T.label, ...ty.body }} />
           </View>
@@ -650,13 +650,13 @@ function ManageChannel({ channel, onClose, onSaved, onDeleted }: { channel: Serv
             </Wrapper></ContentBlock></Wrapper>
           ))}
 
-          <Pressable onPress={save} disabled={busy} style={{ marginTop: 20, height: 50, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={save} disabled={busy} style={{ marginTop: 20, height: 50, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
             {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]}>Сохранить</Text>}
           </Pressable>
 
           {/* Danger zone */}
           <Text style={[sectionLabel, { marginTop: 26, color: T.red }]}>Опасная зона</Text>
-          <Pressable onPress={del} disabled={busy} style={{ height: 50, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+          <Pressable onPress={del} disabled={busy} style={{ height: 50, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.red, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="trash.fill" size={16} color="#fff" />
             <Text style={[ty.headline, { color: '#fff' }]}>Удалить канал</Text>
           </Pressable>

@@ -209,7 +209,7 @@ export function CreateContentScreen({ navigation }: Props) {
       destination={createdId ? 'detail' : 'collection'} onOpen={openResult} onClose={closeResult} />;
   }
 
-  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body } as any;
+  const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, color: T.label, ...ty.body } as any;
 
   const accessIndex = ACCESS.findIndex((x) => x.k === access);
 
@@ -233,7 +233,7 @@ export function CreateContentScreen({ navigation }: Props) {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, paddingTop: 8 }}>
               {knownCities.filter(c => !city || c.name.toLocaleLowerCase().startsWith(city.trim().toLocaleLowerCase())).slice(0, 5).map(c =>
                 <Pressable key={c.key} accessibilityRole="button" accessibilityLabel={`Выбрать город ${c.name}`} onPress={() => { setCity(c.name); setMeetCoord(null); }}
-                  style={{ minHeight: 48, paddingHorizontal: 14, borderRadius: 24, backgroundColor: T.cardBg, justifyContent: 'center' }}>
+                  style={{ minHeight: 48, paddingHorizontal: 16, borderRadius: 24, backgroundColor: T.cardBg, justifyContent: 'center' }}>
                   <Text style={[ty.subhead, { color: T.brandText }]}>{c.name}</Text>
                 </Pressable>)}
             </ScrollView>
@@ -291,7 +291,7 @@ export function CreateContentScreen({ navigation }: Props) {
                 <DateField value={meetAt} onChange={setMeetAt} mode="datetime" placeholder="Выберите дату и время" clearable />
               </Field>
               <Field label="Точка встречи на карте">
-                <View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', height: 240 }}>
+                <View style={{ borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', height: 240 }}>
                   <MapView key={selectedCity?.key ?? 'custom'} testID="meeting-map" accessibilityLabel="Нажмите на карту для выбора места встречи" style={{ flex: 1 }} initialRegion={{ latitude: meetCoord?.latitude ?? selectedCity?.lat ?? 43.238, longitude: meetCoord?.longitude ?? selectedCity?.lng ?? 76.889, latitudeDelta: 0.06, longitudeDelta: 0.06 }} onPress={(e) => setMeetCoord(e.nativeEvent.coordinate)}>
                     {meetCoord ? <Marker coordinate={meetCoord} pinColor={T.brand} /> : null}
                   </MapView>
@@ -316,7 +316,7 @@ export function CreateContentScreen({ navigation }: Props) {
                 <TextInput value={desc} onChangeText={setDesc} multiline placeholder="О чём встреча, для кого, что взять с собой" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 110, textAlignVertical: 'top' }]} accessibilityLabel="Описание" />
               </Field>
               <Field label="Место на карте">
-                <View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', height: 240 }}>
+                <View style={{ borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', height: 240 }}>
                   <MapView key={selectedCity?.key ?? 'custom'} testID="meeting-map" accessibilityLabel="Нажмите на карту для выбора места встречи" style={{ flex: 1 }} initialRegion={{ latitude: meetCoord?.latitude ?? selectedCity?.lat ?? 43.238, longitude: meetCoord?.longitude ?? selectedCity?.lng ?? 76.889, latitudeDelta: 0.06, longitudeDelta: 0.06 }} onPress={(e) => setMeetCoord(e.nativeEvent.coordinate)}>
                     {meetCoord ? <Marker coordinate={meetCoord} pinColor={T.brand} /> : null}
                   </MapView>
@@ -333,7 +333,7 @@ export function CreateContentScreen({ navigation }: Props) {
               <Field label="Мест"><TextInput value={spots} onChangeText={(t) => setSpots(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" style={inp} accessibilityLabel="Мест" /></Field>
               <Field label="Описание"><TextInput value={desc} onChangeText={setDesc} multiline placeholder="Кратко" placeholderTextColor={T.labelTertiary} style={[inp, { minHeight: 80, textAlignVertical: 'top' }]} accessibilityLabel="Описание" /></Field>
               <Field label="Место на карте">
-                <View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', height: 240 }}>
+                <View style={{ borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', height: 240 }}>
                   <MapView key={selectedCity?.key ?? 'custom'} testID="meeting-map" accessibilityLabel="Нажмите на карту для выбора места встречи" style={{ flex: 1 }} initialRegion={{ latitude: meetCoord?.latitude ?? selectedCity?.lat ?? 43.238, longitude: meetCoord?.longitude ?? selectedCity?.lng ?? 76.889, latitudeDelta: 0.06, longitudeDelta: 0.06 }} onPress={(e) => setMeetCoord(e.nativeEvent.coordinate)}>
                     {meetCoord ? <Marker coordinate={meetCoord} pinColor={T.brand} /> : null}
                   </MapView>
@@ -345,8 +345,8 @@ export function CreateContentScreen({ navigation }: Props) {
             <>
               <View style={{ alignItems: 'center', marginBottom: 6 }}>
                 <Pressable onPress={pickAvatar} accessibilityRole="button" accessibilityLabel={avatar ? 'Изменить фото канала' : 'Добавить фото канала'} accessibilityState={{ busy: avBusy }}>
-                  {avatar ? <Image source={{ uri: avatar }} style={{ width: 84, height: 84, borderRadius: 22 }} contentFit="cover" />
-                    : <View style={{ width: 84, height: 84, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="photo" size={24} color={T.labelSecondary} /></View>}
+                  {avatar ? <Image source={{ uri: avatar }} style={{ width: 84, height: 84, borderRadius: 24 }} contentFit="cover" />
+                    : <View style={{ width: 84, height: 84, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center' }}><SF name="photo" size={24} color={T.labelSecondary} /></View>}
                   <Text style={[ty.caption1, { color: T.brandText, textAlign: 'center', marginTop: 6 }]}>{avBusy ? 'Загрузка…' : 'Фото канала'}</Text>
                 </Pressable>
               </View>
@@ -393,7 +393,7 @@ function DateField({ value, onChange, mode, placeholder, clearable }: {
   };
 
   return (
-    <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingHorizontal: 14, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingHorizontal: 16, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
       <SF name={withTime ? 'clock.fill' : 'calendar'} size={15} color={T.brandText} />
       {Platform.OS === 'ios' ? (
         <>

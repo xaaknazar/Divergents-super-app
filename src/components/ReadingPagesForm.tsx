@@ -54,7 +54,7 @@ function StepButton({ icon, label, disabled, onPress }: { icon: string; label: s
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radius.block, borderCurve: 'continuous', borderWidth: 1, padding: 18, gap: 8 },
+  card: { borderRadius: radius.block, borderCurve: 'continuous', borderWidth: 1, padding: 16, gap: 8 },
   center: { textAlign: 'center' },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24, marginVertical: 10 },
   step: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },

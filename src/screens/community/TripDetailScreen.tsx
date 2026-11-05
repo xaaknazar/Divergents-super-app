@@ -257,7 +257,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
 
         {trip.description ? (
           <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('О поездке')}>
-            <View style={{ padding: 14 }}>
+            <View style={{ padding: 16 }}>
               <Text style={[ty.body, { color: T.label }]}>{trip.description}</Text>
             </View>
           </ListSection></Wrapper>
@@ -341,7 +341,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
               <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>{tr('Пока никто не записался — будьте первым.')}</Text>
             </View>
           ) : (
-            <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               {Array.from({ length: Math.min(goingCount, 9) }).map((_, i) => (
                 <View key={i} style={{ width: 36, height: 36, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                   <SF name="person.fill" size={18} color={T.brand} />

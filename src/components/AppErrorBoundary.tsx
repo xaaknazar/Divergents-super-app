@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: 24,
-    borderRadius: 20,
+    borderRadius: 24,
     borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
   },
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
+    borderRadius: 16,
     borderCurve: 'continuous',
     backgroundColor: '#234088',
     paddingHorizontal: 20,

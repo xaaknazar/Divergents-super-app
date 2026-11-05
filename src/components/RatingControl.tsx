@@ -7,7 +7,7 @@ import { SF } from './SFIcon';
 export function RatingControl({ value, onChange, disabled = false }: { value: number | null; onChange: (value: number) => void; disabled?: boolean }) {
   const { T, ty } = useTheme();
   return <ContentBlock size="flush">
-    <Text accessibilityRole="header" style={[ty.headline, { color: T.label, padding: 14, paddingBottom: 0 }]}>Моя оценка</Text>
+    <Text accessibilityRole="header" style={[ty.headline, { color: T.label, padding: 16, paddingBottom: 0 }]}>Моя оценка</Text>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', paddingVertical: 12 }}>
       {[1, 2, 3, 4, 5].map(rating => <Pressable key={rating} accessibilityRole="button" accessibilityLabel={`${rating} из 5`}
         accessibilityState={{ selected: value === rating, disabled }} disabled={disabled} onPress={() => onChange(rating)}

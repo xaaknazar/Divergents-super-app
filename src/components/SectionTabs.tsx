@@ -67,7 +67,7 @@ export function SectionTabs({ items, value, onChange }: SectionTabsProps) {
 const styles = StyleSheet.create({
   surface: { borderRadius: radius.pill, borderWidth: 1, overflow: 'hidden' },
   row: { flexDirection: 'row', flexWrap: 'nowrap', gap: 4, padding: 4 },
-  tab: { minHeight: minTouch, minWidth: minTouch, flexShrink: 0, paddingHorizontal: 18, paddingVertical: 10,
+  tab: { minHeight: minTouch, minWidth: minTouch, flexShrink: 0, paddingHorizontal: 16, paddingVertical: 10,
     borderWidth: 2, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   // Soft lift for the selected segment, like the iOS segmented control.
   selected: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },

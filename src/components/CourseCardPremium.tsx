@@ -52,8 +52,8 @@ export function CourseCardPremium({
 
 const styles = StyleSheet.create({
   // Тень снаружи, скругление и обрезка обложки — на внутреннем слое (иначе iOS срежет тень).
-  card: { flexGrow: 1, borderRadius: 14, borderCurve: 'continuous' },
-  clip: { flexGrow: 1, borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden' },
+  card: { flexGrow: 1, borderRadius: 16, borderCurve: 'continuous' },
+  clip: { flexGrow: 1, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' },
   body: { flexGrow: 1, paddingTop: 10, paddingHorizontal: 12, paddingBottom: 12 },
   title: { minHeight: 40 },
   footer: { marginTop: 'auto', paddingTop: 10 },

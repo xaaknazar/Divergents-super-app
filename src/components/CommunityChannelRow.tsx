@@ -91,11 +91,11 @@ export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: 
 
 const styles = StyleSheet.create({
   banner: { height: 72, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
   rowCover: { alignItems: 'flex-end', gap: 12, paddingTop: 0 },
   avatarLift: { marginTop: -26, borderRadius: 21 },
   avatarFrame: { borderRadius: 21, borderCurve: 'continuous', overflow: 'hidden' },
-  avatar: { width: 56, height: 56, borderRadius: 18, borderCurve: 'continuous' },
+  avatar: { width: 56, height: 56, borderRadius: 16, borderCurve: 'continuous' },
   center: { alignItems: 'center', justifyContent: 'center' },
   lock: { position: 'absolute', right: -3, bottom: -3, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   lockInner: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },

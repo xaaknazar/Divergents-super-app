@@ -16,7 +16,7 @@ export function ChallengeResultHero({ title, sequence, won, teamName, durationDa
         colors={won ? [AWARD_GOLD, '#E08A00'] : [T.brand, T.brandAccent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ borderRadius: 20, borderCurve: 'continuous', padding: 18, overflow: 'hidden' }}
+        style={{ borderRadius: 24, borderCurve: 'continuous', padding: 16, overflow: 'hidden' }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Logo size={26} body="#fff" head="#fff" />
@@ -49,7 +49,7 @@ export function ChallengeResultHero({ title, sequence, won, teamName, durationDa
                 accessibilityLabel={claiming ? tr('Получаем…') : tr('Получить награду')}
                 accessibilityState={{ disabled: claiming, busy: claiming }}
                 style={({ pressed }) => ({
-                  marginTop: 14, minHeight: 48, borderRadius: 14, borderCurve: 'continuous',
+                  marginTop: 14, minHeight: 48, borderRadius: 16, borderCurve: 'continuous',
                   backgroundColor: pressed ? 'rgba(255,255,255,0.82)' : '#fff',
                   alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8,
                   opacity: claiming ? 0.7 : 1,

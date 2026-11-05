@@ -50,7 +50,7 @@ export function LearningResumeCard({ title, caption, progress, imageUrl, icon = 
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 14, borderCurve: 'continuous', paddingTop: 14, paddingHorizontal: 14, paddingBottom: 16, gap: 14 },
+  card: { borderRadius: 16, borderCurve: 'continuous', paddingTop: 14, paddingHorizontal: 16, paddingBottom: 16, gap: 14 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   cover: { width: 64, height: 64, borderRadius: 12, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, minWidth: 0, gap: 3 },

@@ -95,9 +95,9 @@ export function AdminPlacesScreen({ navigation }: Props) {
             return (
               <Wrapper marginHorizontal={16} marginBottom={12} key={p.id}><ContentBlock size="flush" elevated>
                 {p.photo ? <Image source={{ uri: p.photo }} style={{ width: '100%', height: 130 }} contentFit="cover" /> : null}
-                <View style={{ padding: 14, gap: 8 }}>
+                <View style={{ padding: 16, gap: 8 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 10, borderCurve: 'continuous', backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', backgroundColor: meta.color + '22', alignItems: 'center', justifyContent: 'center' }}>
                       <SF name={meta.icon} size={20} color={meta.color} />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>

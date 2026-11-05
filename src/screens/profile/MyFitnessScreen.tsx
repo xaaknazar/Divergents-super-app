@@ -168,7 +168,7 @@ export function MyFitnessScreen({ navigation }: Props) {
 
         <Pressable accessibilityRole="button" accessibilityLabel={`История программ: ${finishedPrograms.length}`}
           onPress={() => navigation.navigate('ProgramHistory')}
-          style={({ pressed }) => ({ marginHorizontal: 16, marginTop: 12, padding: 16, minHeight: 64, borderRadius: 20, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.75 : 1 })}>
+          style={({ pressed }) => ({ marginHorizontal: 16, marginTop: 12, padding: 16, minHeight: 64, borderRadius: 24, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.75 : 1 })}>
           <IconTile icon="clock.arrow.circlepath" tone="brand" variant="soft" size="sm" />
           <View style={{ flex: 1 }}>
             <Text style={[ty.headline, { color: T.label }]}>История программ</Text>
@@ -178,7 +178,7 @@ export function MyFitnessScreen({ navigation }: Props) {
         </Pressable>
         {finishedPrograms[0] ? <Pressable accessibilityRole="button" accessibilityLabel={`Посмотреть итог: ${finishedPrograms[0].p.title}`}
           onPress={() => navigation.navigate('ProgramResult', { programId: finishedPrograms[0].p.id })}
-          style={({ pressed }) => ({ marginHorizontal: 16, marginTop: 12, padding: 16, minHeight: 64, borderRadius: 20, backgroundColor: T.brandTinted, opacity: pressed ? 0.75 : 1, gap: 4 })}>
+          style={({ pressed }) => ({ marginHorizontal: 16, marginTop: 12, padding: 16, minHeight: 64, borderRadius: 24, backgroundColor: T.brandTinted, opacity: pressed ? 0.75 : 1, gap: 4 })}>
           <Text style={[ty.subheadEm, { color: T.brandText }]}>Последний результат · {finishedPrograms[0].p.title}</Text>
           <Text style={[ty.subhead, { color: T.label }]}>Норма выполнена: {finishedPrograms[0].s.done} из {finishedPrograms[0].p.days} дней. Посмотреть итоги</Text>
         </Pressable> : null}
@@ -347,7 +347,7 @@ function ProgramCard({ p, s, onOpen, onDone }: { p: FitnessProgram; s: ProgramSt
             <StatusBadge label={String((tr('сегодня ✓')))} tone="success" />
           ) : (
             <Pressable onPress={onDone} accessibilityRole="button" accessibilityLabel={`${tr('Сделал')}: ${p.title}`}
-              style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
+              style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.8 : 1 })}>
               <SF name="checkmark" size={14} color={T.onBrand} />
               <Text style={[ty.subheadEm, { color: T.onBrand }]}>{tr('Сделал')}</Text>
             </Pressable>
@@ -421,7 +421,7 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
           {s.grid.map((g) => {
             const c = color(g.state);
             return (
-              <View key={g.key} style={{ width: 38, height: 38, borderRadius: 10, borderCurve: 'continuous', backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center', borderWidth: g.state === 'today' || g.state === 'partial' ? 1.5 : 0, borderColor: T.brand }}>
+              <View key={g.key} style={{ width: 38, height: 38, borderRadius: 12, borderCurve: 'continuous', backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center', borderWidth: g.state === 'today' || g.state === 'partial' ? 1.5 : 0, borderColor: T.brand }}>
                 <Text style={[ty.caption1, { color: c.fg, fontFamily: ty.subheadEm.fontFamily }]}>{g.index}</Text>
               </View>
             );
@@ -443,7 +443,7 @@ function ProgramDetail({ row, onClose, onLog, onRemind, onRemove, onShare }: {
           <Text style={[ty.subheadEm, { color: T.label }]}>{tr('Сегодня')}: {s.todayValue} / {p.target} {p.unit}{s.todayDone ? ' ✓' : ''}</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TextInput value={draft} onChangeText={setDraft} placeholder={String(p.target)} placeholderTextColor={T.labelTertiary} keyboardType="decimal-pad" accessibilityLabel={tr('Сколько сделали')}
-              style={[ty.body, { flex: 1, color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: 44, paddingHorizontal: 14 }]} />
+              style={[ty.body, { flex: 1, color: T.label, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', minHeight: 44, paddingHorizontal: 16 }]} />
             <Pressable onPress={submit} accessibilityRole="button" accessibilityLabel={tr('Записать')} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={[ty.subheadEm, { color: T.brand }]}>{tr('Записать')}</Text>
             </Pressable>
@@ -542,7 +542,7 @@ function SectionTitle({ title, action, onAction, first }: { title: string; actio
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: first ? 18 : 24, paddingBottom: 10 }}>
       <Text accessibilityRole="header" style={[ty.title3, { color: T.label, flex: 1 }]}>{title}</Text>
       {action ? (
-        <Pressable onPress={onAction} accessibilityRole="button" accessibilityLabel={action} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, opacity: pressed ? 0.5 : 1, minHeight: 32, paddingHorizontal: 10, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted })}>
+        <Pressable onPress={onAction} accessibilityRole="button" accessibilityLabel={action} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, opacity: pressed ? 0.5 : 1, minHeight: 32, paddingHorizontal: 10, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted })}>
           <SF name="plus" size={13} color={T.brand} />
           <Text style={[ty.subheadEm, { color: T.brand }]}>{action}</Text>
         </Pressable>
@@ -561,7 +561,7 @@ function Hint({ icon, title, text, action, onAction }: { icon: string; title: st
       </View>
       <Text style={[ty.subhead, { color: T.labelSecondary }]}>{text}</Text>
       {action && onAction ? (
-        <Pressable onPress={() => { hTap(); onAction(); }} accessibilityRole="button" accessibilityLabel={action} style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}>
+        <Pressable onPress={() => { hTap(); onAction(); }} accessibilityRole="button" accessibilityLabel={action} style={({ pressed }) => ({ alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}>
           <Text style={[ty.subheadEm, { color: T.onBrand }]}>{action}</Text>
         </Pressable>
       ) : null}
@@ -612,7 +612,7 @@ function Field({ label, value, onChange, placeholder, keyboard = 'default' }: { 
     <View style={{ gap: 6 }}>
       <Text style={[ty.caption1, { color: T.labelSecondary }]}>{label}</Text>
       <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={T.labelTertiary} keyboardType={keyboard} accessibilityLabel={label}
-        style={[ty.body, { color: T.label, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', minHeight: 46, paddingHorizontal: 14, borderWidth: 0.5, borderColor: T.cardBorder }]} />
+        style={[ty.body, { color: T.label, backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', minHeight: 46, paddingHorizontal: 16, borderWidth: 0.5, borderColor: T.cardBorder }]} />
     </View>
   );
 }

@@ -26,6 +26,6 @@ export function ReadingOfflineStatus({ state, pending = 0 }: { state: 'offline' 
   </View>;
 }
 const styles = StyleSheet.create({
-  box: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.xl, borderCurve: 'continuous' },
+  box: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.xl, borderCurve: 'continuous' },
   copy: { flex: 1, minWidth: 0, gap: 2 },
 });

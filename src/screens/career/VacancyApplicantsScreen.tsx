@@ -115,7 +115,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
               ) : (
                 <>
                   <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Профиль">
-                    <View style={{ padding: 14, gap: 8 }}>
+                    <View style={{ padding: 16, gap: 8 }}>
                       {p.fullName ? <FieldValueRow label="Имя" value={p.fullName} /> : null}
                       {sel?.userEmail ? <FieldValueRow label="Email" value={sel.userEmail} /> : null}
                       {p.phone ? <FieldValueRow label="Телефон" value={p.phone} /> : null}
@@ -127,7 +127,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
 
                   {p.gallup.length > 0 ? (
                     <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Топ таланты Gallup">
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 14 }}>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 16 }}>
                         {p.gallup.slice(0, 12).map((g) => (
                           <StatusBadge key={g.rank} label={[(g.rank), ". ", (g.name)].join('')} tone="neutral" />
                         ))}
@@ -137,7 +137,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
 
                   {p.gardner.length > 0 ? (
                     <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Множественный интеллект (Гарднер)">
-                      <View style={{ padding: 14, gap: 6 }}>
+                      <View style={{ padding: 16, gap: 6 }}>
                         {p.gardner.slice().sort((a, b) => b.score - a.score).slice(0, 5).map((g) => (
                           <View key={g.category} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                             <Text style={[ty.subhead, { color: T.label }]}>{g.category}</Text>
@@ -150,7 +150,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
 
                   {rows.length > 0 ? (
                     <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Анкета полностью">
-                      <View style={{ padding: 14, gap: 8 }}>
+                      <View style={{ padding: 16, gap: 8 }}>
                         {rows.map((r, i) => <FieldValueRow key={i} label={r.label} value={r.value} />)}
                       </View>
                     </ListSection></Wrapper>
@@ -160,21 +160,21 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
 
               {/* Feedback + decision */}
               <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Обратная связь кандидату">
-                <View style={{ padding: 14, gap: 10 }}>
+                <View style={{ padding: 16, gap: 10 }}>
                   <TextInput value={feedback} onChangeText={setFeedback} multiline placeholder="Напишите ответ кандидату — он увидит его в приложении…"
                     placeholderTextColor={T.labelTertiary}
                     style={{ backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', padding: 12, minHeight: 90, textAlignVertical: 'top', color: T.label, ...ty.body }} />
-                  <Pressable onPress={saveFeedback} disabled={busy || !feedback.trim()} style={{ alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderCurve: 'continuous', backgroundColor: feedback.trim() ? T.brandTinted : T.fillTertiary }}>
+                  <Pressable onPress={saveFeedback} disabled={busy || !feedback.trim()} style={{ alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: feedback.trim() ? T.brandTinted : T.fillTertiary }}>
                     <Text style={[ty.subheadEm, { color: feedback.trim() ? T.brand : T.labelTertiary }]}>Отправить ответ</Text>
                   </Pressable>
                 </View>
               </ListSection></Wrapper>
 
               <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 6 }}>
-                <Pressable onPress={() => decide('rejected')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
+                <Pressable onPress={() => decide('rejected')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
                   <Text style={[ty.headline, { color: '#FF3B30' }]}>Отклонить</Text>
                 </Pressable>
-                <Pressable onPress={() => decide('approved')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', backgroundColor: T.brand }}>
+                <Pressable onPress={() => decide('approved')} disabled={busy} style={{ flex: 1, paddingVertical: 14, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', backgroundColor: T.brand }}>
                   {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]}>Принять</Text>}
                 </Pressable>
               </View>

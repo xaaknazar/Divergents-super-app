@@ -35,7 +35,7 @@ export function ShortcutTile({ icon, tone = 'brand', title, caption, count, onPr
 }
 
 const styles = StyleSheet.create({
-  tile: { flex: 1, borderRadius: 14, borderCurve: 'continuous', paddingTop: 14, paddingHorizontal: 14, paddingBottom: 13, gap: 14 },
+  tile: { flex: 1, borderRadius: 16, borderCurve: 'continuous', paddingTop: 14, paddingHorizontal: 16, paddingBottom: 13, gap: 14 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   text: { gap: 2, minWidth: 0 },
 });

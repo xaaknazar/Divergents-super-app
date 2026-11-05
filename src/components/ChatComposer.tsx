@@ -11,8 +11,8 @@ export function ChatComposer({ value, onChangeText, onSend, disabled, busy, plac
   return <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
     <TextInput accessibilityLabel={inputLabel} accessibilityState={{ disabled }} value={value} onChangeText={onChangeText}
       placeholder={placeholder} placeholderTextColor={T.labelSecondary} selectionColor={T.brandText}
-      style={[ty.body, { flex: 1, minWidth: 0, minHeight: 48, maxHeight: multiline ? 120 : undefined, color: T.label, paddingVertical: 9, paddingHorizontal: 14,
-        backgroundColor: T.cardBg, borderRadius: 18, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.separator }]}
+      style={[ty.body, { flex: 1, minWidth: 0, minHeight: 48, maxHeight: multiline ? 120 : undefined, color: T.label, paddingVertical: 9, paddingHorizontal: 16,
+        backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.separator }]}
       multiline={multiline} onSubmitEditing={multiline ? undefined : () => { if (!blocked) onSend(); }} returnKeyType={multiline ? 'default' : 'send'} editable={!disabled} />
     <Pressable accessibilityRole="button" accessibilityLabel="Отправить сообщение" accessibilityState={{ disabled: blocked, busy }}
       onPress={onSend} disabled={blocked} style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24,

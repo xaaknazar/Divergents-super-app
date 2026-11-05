@@ -169,7 +169,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                 style={({ pressed }) => ({
                   flexDirection: 'row', alignItems: 'center', gap: 12,
                   backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10,
-                  padding: 14, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder,
+                  padding: 16, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder,
                   minHeight: 48, opacity: pressed ? 0.7 : 1,
                 })}
               >
@@ -195,7 +195,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
           <NavHeader title={sel?.userName || 'Участник'} backLabel="Закрыть" onBack={() => setSel(null)} />
           <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }}>
             <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Заявка">
-              <View style={{ padding: 14, gap: 8 }}>
+              <View style={{ padding: 16, gap: 8 }}>
                 <FieldValueRow label="Статус" value={sel ? STATUS_LABEL[sel.status] ?? sel.status : ''} hideWhenEmpty />
                 {/* ФИО и почта доступны только администраторам. */}
                 {canViewProfiles ? <FieldValueRow label="Имя" value={sel?.fullName} hideWhenEmpty /> : null}
@@ -214,7 +214,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
               </View>
             ) : (
               <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Анкета">
-                <View style={{ padding: 14, gap: 8 }}>
+                <View style={{ padding: 16, gap: 8 }}>
                   {resumeRows(p?.resume ?? null).map((r, i) => <FieldValueRow key={i} label={r.label} value={r.value} hideWhenEmpty />)}
                 </View>
               </ListSection></Wrapper>

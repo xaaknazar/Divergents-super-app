@@ -15,7 +15,7 @@ export function HeaderIcon({ name, onPress, onLongPress, badge, label, variant =
     <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} onLongPress={onLongPress} accessibilityRole="button"
       disabled={!onPress}
       accessibilityLabel={badge ? `${label}. ${badge}` : label} accessibilityState={{ disabled: !onPress }}
-      style={({ pressed }) => ({ position: 'relative', minWidth: Math.max(minTouch, size + 8), minHeight: Math.max(minTouch, size + 8), borderRadius: 14,
+      style={({ pressed }) => ({ position: 'relative', minWidth: Math.max(minTouch, size + 8), minHeight: Math.max(minTouch, size + 8), borderRadius: 16,
         backgroundColor: variant === 'primary' ? T.brand : variant === 'floating' ? T.cardBg : 'transparent',
         alignItems: 'center', justifyContent: 'center', opacity: !onPress ? 0.45 : pressed ? 0.55 : 1 })}>
       <SF name={name} size={size} color={variant === 'primary' ? T.onBrand : T.brandText} />

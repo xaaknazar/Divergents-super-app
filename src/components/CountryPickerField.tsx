@@ -101,7 +101,7 @@ export function CountryPickerField({
                 <Text style={[ty.body, { color: T.brand, fontWeight: '600' }]}>{tr('Готово')}</Text>
               </Pressable>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, backgroundColor: T.fillTertiary, borderRadius: 10, borderCurve: 'continuous', paddingHorizontal: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingHorizontal: 10 }}>
               <SF name="magnifyingglass" size={15} color={T.labelTertiary} />
               <TextInput
                 value={query}

@@ -47,7 +47,7 @@ function DetailRow({ T, ty, label, note, value, last }: {
   T: any; ty: any; label: string; note?: string; value: string; last?: boolean;
 }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 14, borderBottomWidth: last ? 0 : 0.5, borderBottomColor: T.separator }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16, borderBottomWidth: last ? 0 : 0.5, borderBottomColor: T.separator }}>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[ty.subhead, { color: T.label }]} numberOfLines={2}>{label}</Text>
         {note ? <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 1 }]} numberOfLines={2}>{note}</Text> : null}
@@ -181,7 +181,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
 
         {/* Карта с маршрутом */}
         {region ? (
-          <View style={{ height: 300, marginHorizontal: 16, borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden' }}>
+          <View style={{ height: 300, marginHorizontal: 16, borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' }}>
             <MapView ref={mapRef} style={{ flex: 1 }} initialRegion={region} showsCompass={false}>
               <Polyline coordinates={w.coords} strokeColor={T.brand} strokeWidth={5} lineCap="round" lineJoin="round" />
               {/* Старт зелёный, финиш красный — направление читается сразу. */}
@@ -196,7 +196,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
               style={{
                 position: 'absolute', right: 12, bottom: 12,
                 flexDirection: 'row', alignItems: 'center', gap: 8,
-                paddingVertical: 8, paddingLeft: 10, paddingRight: 14, borderRadius: 999,
+                paddingVertical: 8, paddingLeft: 10, paddingRight: 16, borderRadius: 999,
                 borderCurve: 'continuous',
                 backgroundColor: 'rgba(255,255,255,0.94)',
               }}

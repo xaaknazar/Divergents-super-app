@@ -49,6 +49,6 @@ export function ReadingAllowedAppsCard({ value, variant = 'card' }: { value: Rea
 const styles = StyleSheet.create({
   heading: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   copy: { flex: 1, minWidth: 0, gap: 2 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingLeft: 14, paddingRight: 16, minHeight: 60 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingLeft: 16, paddingRight: 16, minHeight: 60 },
   dim: { opacity: 0.55 },
 });

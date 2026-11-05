@@ -30,7 +30,7 @@ export function CommunityChallengeCard({ ch, onPress }: { ch: ChallengeListItem;
         {/* Darkening overlay → guarantees white text contrast across the gradient */}
         <LinearGradient pointerEvents="none" colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0.04)']} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ width: 52, height: 52, borderRadius: 15, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 16, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
             <SF name={ch.icon} size={26} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
@@ -42,7 +42,7 @@ export function CommunityChallengeCard({ ch, onPress }: { ch: ChallengeListItem;
           </View>
         </View>
       </LinearGradient>
-      <View style={{ padding: 14 }}>
+      <View style={{ padding: 16 }}>
         {ch.subtitle ? <Text style={[ty.subhead, { color: T.labelSecondary, marginBottom: 10 }]} numberOfLines={2}>{ch.subtitle}</Text> : null}
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           <StatusBadge label={String((tr('Онлайн')))} tone="success" icon="globe" />

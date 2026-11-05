@@ -9,7 +9,7 @@ export function FieldTrigger({ value, placeholder, icon = 'chevron.right', inval
 }) {
   const { T, ty } = useTheme();
   return <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel}
-    style={({ pressed }) => ({ minHeight: 52, paddingVertical: 14, paddingHorizontal: 14, borderRadius: 16,
+    style={({ pressed }) => ({ minHeight: 52, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16,
       borderWidth: 1, borderColor: invalid ? T.redText : T.cardBorder, backgroundColor: T.cardBg,
       flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.65 : 1 })}>
     <Text style={[ty.body, { color: value ? T.label : T.labelTertiary, flex: 1 }]}>{value || placeholder}</Text>

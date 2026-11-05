@@ -69,7 +69,7 @@ export function ReadingChallengeCard({ challenge: c, onPress, variant = 'feature
 const styles = StyleSheet.create({
   lift: { borderRadius: radius.block, borderCurve: 'continuous' },
   card: { borderRadius: radius.block, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 1 },
-  compactRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingLeft: 16, paddingRight: 14 },
+  compactRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingLeft: 16, paddingRight: 16 },
   copy: { flex: 1, minWidth: 0, gap: 3 },
   status: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 2 },
   dot: { width: 7, height: 7, borderRadius: 4 },

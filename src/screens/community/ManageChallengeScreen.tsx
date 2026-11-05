@@ -276,7 +276,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
         <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
 
           {locked ? (
-            <View style={{ marginHorizontal: 16, marginBottom: 6, backgroundColor: 'rgba(255,149,0,0.12)', borderRadius: 14, borderCurve: 'continuous', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: 'rgba(255,149,0,0.3)' }}>
+            <View style={{ marginHorizontal: 16, marginBottom: 6, backgroundColor: 'rgba(255,149,0,0.12)', borderRadius: 16, borderCurve: 'continuous', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: 'rgba(255,149,0,0.3)' }}>
               <SF name="lock.fill" size={18} color={T.orange} />
               <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>Челлендж уже идёт — изменения недоступны. Редактировать можно только до старта.</Text>
             </View>
@@ -284,7 +284,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
 
           {/* ── Challenge ── */}
           <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Челлендж">
-            <View style={{ padding: 14, gap: 12 }}>
+            <View style={{ padding: 16, gap: 12 }}>
               <LabeledInput label="Название" value={title} onChangeText={setTitle} editable={!locked} placeholder="Название челленджа" T={T} />
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
@@ -316,9 +316,9 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
             {teams.map((team, i) => {
               const count = countFor(team.id);
               return (
-                <View key={team.id} style={{ padding: 14, gap: 12, borderTopWidth: i > 0 ? 0.5 : 0, borderTopColor: T.separator }}>
+                <View key={team.id} style={{ padding: 16, gap: 12, borderTopWidth: i > 0 ? 0.5 : 0, borderTopColor: T.separator }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                       <SF name="person.3.fill" size={18} color={T.brand} />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -376,7 +376,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
           {/* ── Participants ── */}
           <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Участники" footer={locked ? undefined : 'Нажмите на участника, чтобы переместить его в другую команду или удалить.'}>
             {members.length === 0 ? (
-              <View style={{ padding: 18, alignItems: 'center' }}>
+              <View style={{ padding: 16, alignItems: 'center' }}>
                 <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center' }]}>Пока никто не в командах. Принимайте заявки на экране «Заявки».</Text>
               </View>
             ) : (
@@ -404,7 +404,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
 
           {/* Link to the applications review */}
           <Pressable onPress={() => navigation.navigate('ChallengeApplicants', { challengeId })} accessibilityRole="button" accessibilityLabel="Заявки на вступление"
-            style={{ marginHorizontal: 16, marginTop: 4, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+            style={{ marginHorizontal: 16, marginTop: 4, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <SF name="person.2.fill" size={16} color={T.brand} />
             <Text style={[ty.headline, { color: T.brand }]}>Заявки на вступление</Text>
           </Pressable>
@@ -422,7 +422,7 @@ function LabeledInput({ label, value, onChangeText, editable, placeholder, keybo
       <TextInput
         value={value} onChangeText={onChangeText} editable={editable}
         placeholder={placeholder} placeholderTextColor={T.labelTertiary} keyboardType={keyboardType}
-        style={{ backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 11, paddingHorizontal: 14, color: editable ? T.label : T.labelSecondary, ...ty.body }}
+        style={{ backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 11, paddingHorizontal: 16, color: editable ? T.label : T.labelSecondary, ...ty.body }}
       />
     </View>
   );

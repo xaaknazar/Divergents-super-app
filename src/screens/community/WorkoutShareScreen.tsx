@@ -203,7 +203,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
           лежит внутри него, и ничего лишнего. */}
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }} onLayout={(e) => setAreaH(e.nativeEvent.layout.height)}>
         {W > 0 ? (
-          <View ref={canvasRef} collapsable={false} style={{ width: W, height: H, backgroundColor: '#000', borderRadius: 18, borderCurve: 'continuous', overflow: 'hidden' }}>
+          <View ref={canvasRef} collapsable={false} style={{ width: W, height: H, backgroundColor: '#000', borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' }}>
             {background ? (
               <>
                 <Image source={{ uri: background }} style={{ position: 'absolute', width: W, height: H }} resizeMode="cover" />
@@ -312,7 +312,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
                   return (
                     <View key={row.key} style={{ borderTopWidth: i ? 0.5 : 0, borderTopColor: T.separator }}>
                       <Pressable onPress={() => { hTap(); setEditing(open ? null : row.key); }} accessibilityRole="button" accessibilityLabel={row.label} accessibilityState={{ expanded: open }}
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 }}>
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
                         <Text style={[ty.body, { color: T.label, flex: 1 }]}>{row.label}</Text>
                         {isBrand ? (
                           <View style={{ width: 28, height: 28, borderRadius: 14, borderCurve: 'continuous', backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(128,128,128,0.45)' }}>
@@ -325,7 +325,7 @@ export function WorkoutShareScreen({ route, navigation }: Props) {
                         <SF name={open ? 'chevron.down' : 'chevron.right'} size={13} color={T.labelTertiary} />
                       </Pressable>
                       {open ? (
-                        <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+                        <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
                           <ColorPicker
                             value={isBrand ? '#234088' : value}
                             onChange={(hex) => patch({ [row.key]: hex } as Partial<CardStyle>)}
@@ -368,7 +368,7 @@ function Tool({ icon, label, onPress, T, ty }: { icon: string; label: string; on
 function Stepper({ T, ty, value, unit, onDec, onInc }: { T: any; ty: any; value: number; unit: string; onDec: () => void; onInc: () => void }) {
   const btn = (icon: string, onPress: () => void, label: string) => (
     <Pressable onPress={() => { hTap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label}
-      style={{ width: 36, height: 36, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: T.fillTertiary }}>
+      style={{ width: 36, height: 36, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: T.fillTertiary }}>
       <SF name={icon} size={14} color={T.label} />
     </Pressable>
   );
@@ -388,7 +388,7 @@ function ActionButton({ icon, label, onPress, busy, disabled, primary, T, ty }: 
   return (
     <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled, busy: !!busy }}
       style={({ pressed }) => ({
-        flex: 1, minHeight: 50, borderRadius: 14, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        flex: 1, minHeight: 50, borderRadius: 16, borderCurve: 'continuous', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
         backgroundColor: primary ? T.brand : T.brandTinted, opacity: disabled && !busy ? 0.5 : pressed ? 0.7 : 1,
       })}>
       {busy ? <ActivityIndicator color={fg} /> : <SF name={icon} size={16} color={fg} />}

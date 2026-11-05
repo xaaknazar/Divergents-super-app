@@ -163,7 +163,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
             return (
               <Pressable key={a.id} onPress={() => openApplicant(a)}
                 accessibilityRole="button" accessibilityLabel={`${name}${a.teamName ? `, ${a.teamName}` : ''}, ${applicationStatusLabel(a.status)}`}
-                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, minHeight: 48, opacity: pressed ? 0.7 : 1 })}>
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.cardBg, marginHorizontal: 16, marginBottom: 10, padding: 16, borderRadius: 16, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, minHeight: 48, opacity: pressed ? 0.7 : 1 })}>
                 <View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={[ty.headline, { color: T.brand }]}>{name.charAt(0).toUpperCase()}</Text>
                 </View>
@@ -190,7 +190,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
             <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
               {!directProfile ? (
                 <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Заявка">
-                  <View style={{ padding: 14, gap: 8 }}>
+                  <View style={{ padding: 16, gap: 8 }}>
                     {sel?.teamName ? <FieldValueRow label="Команда" value={sel.teamName} /> : null}
                     <FieldValueRow label="Статус" value={sel ? STATUS_LABEL[sel.status] : ''} />
                     {sel?.telegram ? (
@@ -221,7 +221,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
               ) : (
                 <>
                   <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Профиль">
-                    <View style={{ padding: 14, gap: 8 }}>
+                    <View style={{ padding: 16, gap: 8 }}>
                       {p.fullName || sel?.fullName ? <FieldValueRow label="Имя" value={p.fullName || sel!.fullName} /> : null}
                       {sel?.userEmail ? <FieldValueRow label="Email" value={sel.userEmail} /> : null}
                       {p.phone ? <FieldValueRow label="Телефон" value={p.phone} /> : null}
@@ -233,7 +233,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
                   {p.gallup.length > 0 ? (
                     <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Топ таланты Gallup">
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 14 }}>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 16 }}>
                         {p.gallup.slice(0, 12).map((g) => (
                           <StatusBadge key={g.rank} label={[(g.rank), ". ", (g.name)].join('')} tone="neutral" />
                         ))}
@@ -243,7 +243,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
                   {p.gardner.length > 0 ? (
                     <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Множественный интеллект (Гарднер)">
-                      <View style={{ padding: 14, gap: 6 }}>
+                      <View style={{ padding: 16, gap: 6 }}>
                         {p.gardner.slice().sort((a, b) => b.score - a.score).slice(0, 5).map((g) => (
                           <View key={g.category} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                             <Text style={[ty.subhead, { color: T.label }]}>{g.category}</Text>
@@ -256,7 +256,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
                   {rows.length > 0 ? (
                     <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Анкета полностью">
-                      <View style={{ padding: 14, gap: 8 }}>
+                      <View style={{ padding: 16, gap: 8 }}>
                         {rows.map((r, i) => <FieldValueRow key={i} label={r.label} value={r.value} />)}
                       </View>
                     </ListSection></Wrapper>
@@ -270,13 +270,13 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
               {canReview && !directProfile && !sel?.isCaptain ? (
                 <>
                   <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Ответ кандидату (причина)">
-                    <View style={{ padding: 14, gap: 10 }}>
+                    <View style={{ padding: 16, gap: 10 }}>
                       <TextInput value={feedback} onChangeText={setFeedback} multiline placeholder="Напишите причину приёма/отклонения — кандидат увидит её…"
                         placeholderTextColor={T.labelTertiary}
                         style={{ backgroundColor: T.fillTertiary, borderRadius: 12, borderCurve: 'continuous', padding: 12, minHeight: 90, textAlignVertical: 'top', color: T.label, ...ty.body }} />
                       <Pressable onPress={saveFeedback} disabled={busy || !feedback.trim()}
                         accessibilityRole="button" accessibilityLabel="Отправить ответ" accessibilityState={{ disabled: busy || !feedback.trim() }}
-                        style={{ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderCurve: 'continuous', backgroundColor: feedback.trim() ? T.brandTinted : T.fillTertiary }}>
+                        style={{ alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: feedback.trim() ? T.brandTinted : T.fillTertiary }}>
                         <Text style={[ty.subheadEm, { color: feedback.trim() ? T.brand : T.labelTertiary }]}>Отправить ответ</Text>
                       </Pressable>
                     </View>
@@ -285,7 +285,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
                   {canManage && sel?.teamId ? (
                     <View style={{ paddingHorizontal: 16, paddingTop: 6 }}>
                       <Pressable onPress={makeCaptain} disabled={busy} accessibilityRole="button" accessibilityLabel={`Назначить капитаном «${sel.teamName}»`}
-                        style={{ minHeight: 48, paddingVertical: 12, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: T.brandTinted }}>
+                        style={{ minHeight: 48, paddingVertical: 12, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, backgroundColor: T.brandTinted }}>
                         <SF name="star.fill" size={15} color={T.brand} />
                         <Text style={[ty.subheadEm, { color: T.brand }]}>Назначить капитаном «{sel.teamName}»</Text>
                       </Pressable>
@@ -294,11 +294,11 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
                   <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 10 }}>
                     <Pressable onPress={confirmReject} disabled={busy} accessibilityRole="button" accessibilityLabel="Отклонить заявку" accessibilityState={{ disabled: busy }}
-                      style={{ flex: 1, minHeight: 48, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
+                      style={{ flex: 1, minHeight: 48, paddingVertical: 14, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', backgroundColor: 'rgba(255,59,48,0.12)' }}>
                       <Text style={[ty.headline, { color: T.redText }]}>Отклонить</Text>
                     </Pressable>
                     <Pressable onPress={() => decide('approved')} disabled={busy} accessibilityRole="button" accessibilityLabel="Принять заявку" accessibilityState={{ disabled: busy, busy }}
-                      style={{ flex: 1, minHeight: 48, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', alignItems: 'center', backgroundColor: T.brand }}>
+                      style={{ flex: 1, minHeight: 48, paddingVertical: 14, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', backgroundColor: T.brand }}>
                       {busy ? <ActivityIndicator color="#fff" /> : <Text style={[ty.headline, { color: '#fff' }]}>Принять</Text>}
                     </Pressable>
                   </View>

@@ -111,7 +111,7 @@ export function NicknameGateScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ alignItems: 'center', marginBottom: 26 }}>
-            <View style={{ width: 64, height: 64, borderRadius: 20, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <View style={{ width: 64, height: 64, borderRadius: 24, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Logo size={34} body="#FFFFFF" head="#FFFFFF" />
             </View>
             <Text style={[ty.title2, { color: T.label, textAlign: 'center' }]}>Напишите псевдоним</Text>
@@ -135,7 +135,7 @@ export function NicknameGateScreen() {
             onSubmitEditing={save}
             accessibilityLabel="Псевдоним"
             style={[ty.body, {
-              backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', paddingVertical: 14, paddingHorizontal: 16,
+              backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', paddingVertical: 14, paddingHorizontal: 16,
               color: T.label, borderWidth: 1, borderColor: showError ? T.red : T.cardBorder,
             }]}
           />

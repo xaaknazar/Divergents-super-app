@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   root: { overflow: 'hidden' },
   body: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 22 },
   lanes: { position: 'absolute', right: -150, top: -60 },
-  glass: { position: 'absolute', right: 16, top: 4, width: 56, height: 56, borderRadius: 17, borderCurve: 'continuous',
+  glass: { position: 'absolute', right: 16, top: 4, width: 56, height: 56, borderRadius: 16, borderCurve: 'continuous',
     alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)',
     borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.28)' },
   eyebrow: { color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: 0.6, paddingRight: 72 },
@@ -78,6 +78,6 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', marginTop: 16 },
   stat: { flex: 1, minWidth: 0 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 16 },
-  button: { flex: 1, minWidth: 0, minHeight: 46, borderRadius: 13, borderCurve: 'continuous', flexDirection: 'row',
+  button: { flex: 1, minWidth: 0, minHeight: 46, borderRadius: 12, borderCurve: 'continuous', flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 10 },
 });

@@ -210,7 +210,7 @@ export function AIChatScreen({ navigation }: Props) {
             onCopy={() => { Clipboard.setStringAsync(m.text).then(hSuccess).catch(() => {}); }} />)}
 
           {busy ? (
-            <View accessible accessibilityLabel={isGeneral ? 'Ассистент готовит ответ' : 'Ищу в материалах курса'} accessibilityState={{ busy: true }} accessibilityLiveRegion="polite" style={{ backgroundColor: T.fillTertiary, alignSelf: 'flex-start', borderRadius: 18, borderCurve: 'continuous', borderBottomLeftRadius: 4, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <View accessible accessibilityLabel={isGeneral ? 'Ассистент готовит ответ' : 'Ищу в материалах курса'} accessibilityState={{ busy: true }} accessibilityLiveRegion="polite" style={{ backgroundColor: T.fillTertiary, alignSelf: 'flex-start', borderRadius: 16, borderCurve: 'continuous', borderBottomLeftRadius: 4, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <ActivityIndicator color={T.labelSecondary} />
               <Text style={[ty.caption1, { color: T.labelSecondary }]} numberOfLines={1}>{isGeneral ? tr('Думаю…') : tr('Ищу в материалах курса…')}</Text>
             </View>

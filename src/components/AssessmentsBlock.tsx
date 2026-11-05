@@ -46,7 +46,7 @@ function Row({
       accessibilityHint={done ? undefined : subtitle}
       accessibilityState={{ disabled: !!busy, busy: !!busy }}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, minHeight: minTouch, opacity: pressed ? 0.6 : 1 })}>
-      <View style={{ width: 38, height: 38, borderRadius: 11, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: done ? 'rgba(52,199,89,0.14)' : T.brandTinted }}>
+      <View style={{ width: 38, height: 38, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: done ? 'rgba(52,199,89,0.14)' : T.brandTinted }}>
         {busy && !done ? <ActivityIndicator size="small" color={T.brand} />
           : <SF name={done ? 'checkmark.circle.fill' : (icon as any)} size={19} color={done ? T.green : T.brand} />}
       </View>

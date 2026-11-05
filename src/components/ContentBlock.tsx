@@ -18,6 +18,6 @@ export function ContentBlock({ children, size = 'regular', elevated = false, acc
     borderWidth: elevated ? 0 : 0.5, borderColor: T.cardBorder,
     ...(elevated ? shadows.floating : {}),
   }}><View style={{ borderRadius: radius.block, borderCurve: 'continuous', overflow: 'hidden',
-    padding: size === 'flush' ? 0 : size === 'compact' ? 14 : 18,
+    padding: size === 'flush' ? 0 : size === 'compact' ? 12 : 16,
   }}>{children}</View></View>;
 }

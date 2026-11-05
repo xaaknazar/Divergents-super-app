@@ -171,7 +171,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
 
         <FieldLabel>{tr('Фото')}</FieldLabel>
         {photo ? (
-          <View style={{ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', marginBottom: 16 }}>
+          <View style={{ borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', marginBottom: 16 }}>
             <Image source={{ uri: photo }} style={{ width: '100%', height: 180 }} contentFit="cover" />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
               <Pressable accessibilityRole="button" accessibilityLabel={tr('Заменить фото')} onPress={pickPhoto} style={{ flex: 1, minHeight: 48, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.footnoteEm, { color: T.brandText }]} numberOfLines={1}>{tr('Заменить')}</Text></Pressable>
@@ -179,7 +179,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
             </View>
           </View>
         ) : (
-          <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel={tr('Добавить фото')} style={{ minHeight: 90, borderRadius: 14, borderCurve: 'continuous', borderWidth: 1, borderColor: T.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexDirection: 'row' }}>
+          <Pressable onPress={pickPhoto} accessibilityRole="button" accessibilityLabel={tr('Добавить фото')} style={{ minHeight: 90, borderRadius: 16, borderCurve: 'continuous', borderWidth: 1, borderColor: T.separator, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexDirection: 'row' }}>
             <SF name="photo" size={18} color={T.brandText} /><Text style={[ty.subhead, { color: T.brandText }]} numberOfLines={1}>{tr('Добавить фото')}</Text>
           </Pressable>
         )}
@@ -215,4 +215,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </View>
   );
 }
-function inp(T: any, ty: Typography) { return { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous' as const, paddingVertical: 12, paddingHorizontal: 14, color: T.label, ...ty.body }; }
+function inp(T: any, ty: Typography) { return { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous' as const, paddingVertical: 12, paddingHorizontal: 16, color: T.label, ...ty.body }; }

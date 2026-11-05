@@ -269,7 +269,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {challengeActive ? (
         <Wrapper marginTop={6} marginHorizontal={16} marginBottom={18}><ListSection header={t('active_challenge')} >
           <Pressable onPress={goChallenge} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }}>
-            <View style={{ width: 30, height: 30, borderRadius: 9, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 30, height: 30, borderRadius: 8, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
               <Logo size={19} body={T.onBrand} head={T.onBrand} />
             </View>
             <View style={{ flex: 1 }}>
@@ -377,7 +377,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Физические показатели: рекорды из тренировок, цели, свои показатели. */}
       <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={tr('Физические показатели')} >
         <Pressable onPress={() => navigation.navigate('MyFitness')} accessibilityRole="button" accessibilityLabel={tr('Мои тренировки')}
-          style={({ pressed }) => ({ padding: 14, gap: 12, opacity: pressed ? 0.8 : 1 })}>
+          style={({ pressed }) => ({ padding: 16, gap: 12, opacity: pressed ? 0.8 : 1 })}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <IconTile icon="figure.run" tone="brand" size="sm" />
             <View style={{ flex: 1, minWidth: 0 }}>

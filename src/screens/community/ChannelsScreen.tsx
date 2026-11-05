@@ -42,9 +42,9 @@ export function ChannelsScreen({ navigation }: Props) {
             <Wrapper marginBottom={10} key={ch.id}><ActionBlock size="compact" onPress={() => navigation.navigate('ServerChannel', { channelId: ch.id })} accessibilityRole="button" accessibilityLabel={`${tr('Канал')} ${ch.name}`}><Wrapper dir={'row'} align={'center'} gap={14}>
               <View>
                 {ch.avatar ? (
-                  <Image source={{ uri: ch.avatar }} style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
+                  <Image source={{ uri: ch.avatar }} style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: T.brandTinted }} contentFit="cover" cachePolicy="memory-disk" />
                 ) : (
-                  <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 56, height: 56, borderRadius: 18, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' }}>
+                  <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 56, height: 56, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={[ty.title3, { color: '#fff' }]}>{initial}</Text>
                   </LinearGradient>
                 )}
@@ -70,7 +70,7 @@ export function ChannelsScreen({ navigation }: Props) {
               ) : joined ? (
                 <SF name="checkmark.circle.fill" size={20} color={T.brand} />
               ) : (
-                <View style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
+                <View style={{ paddingVertical: 6, paddingHorizontal: 16, borderRadius: 999, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
                   <Text style={[ty.caption2Em, { color: T.brand }]}>{closed ? tr('Запрос') : tr('Открыть')}</Text>
                 </View>
               )}

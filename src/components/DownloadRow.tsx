@@ -24,7 +24,7 @@ export function DownloadRow(props: DownloadRowProps) {
     const size = props.bytes > 0 ? mb >= 1 ? `${mb.toFixed(1)} МБ` : `${Math.max(1, Math.round(props.bytes / 1024))} КБ` : '';
     subtitle = [size, tr('Доступно офлайн')].filter(Boolean).join(' · ');
   } else subtitle = props.busy ? `${tr('Скачивание')} ${Math.round((props.progress ?? 0) * 100)}%` : tr('Аудио для офлайна');
-  return <View style={{ padding: 14, gap: 10, backgroundColor: active ? T.brandTinted : 'transparent' }}>
+  return <View style={{ padding: 16, gap: 10, backgroundColor: active ? T.brandTinted : 'transparent' }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <Pressable accessible={downloaded} disabled={!downloaded} onPress={downloaded ? props.onPlay : undefined} onLongPress={downloaded ? props.onAction : undefined}
         accessibilityRole={downloaded ? 'button' : undefined} accessibilityLabel={downloaded ? `${title}. ${active && props.playing ? tr('Пауза') : tr('Воспроизвести')}` : undefined}

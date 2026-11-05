@@ -74,7 +74,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
           borderWidth: won ? 1 : 0.5, borderColor: won ? AWARD_GOLD : T.cardBorder,
           opacity: pressed ? 0.85 : 1, overflow: 'hidden',
         })}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
           <View style={{
             width: 42, height: 42, borderRadius: 12, borderCurve: 'continuous',
             backgroundColor: won ? 'rgba(240,180,41,0.16)' : T.brandTinted,

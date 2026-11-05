@@ -141,13 +141,13 @@ export function OfflineMapScreen({ navigation }: Props) {
         </Map>
 
         {busy ? (
-          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 14, borderCurve: 'continuous', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.brand, borderRadius: 16, borderCurve: 'continuous', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <ActivityIndicator color="#fff" />
             <Text style={[ty.subheadEm, { color: '#fff', flex: 1 }]} numberOfLines={1}>{tr('Загрузка карты…')}</Text>
             <Text style={[ty.headline, { color: '#fff' }]} numberOfLines={1}>{pct}%</Text>
           </View>
         ) : noKey ? (
-          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
+          <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}>
             <SF name="map.fill" size={18} color={T.orange} />
             <Text style={[ty.caption1, { color: T.labelSecondary, flex: 1 }]}>{tr('Базовая карта без ключа — детализация ограничена.')}</Text>
           </View>
@@ -181,7 +181,7 @@ export function OfflineMapScreen({ navigation }: Props) {
               </View>
             </View>
             <Pressable onPress={() => { const id = selPlace.id; setSel(null); navigation.navigate('PlaceDetail', { placeId: id }); }}
-              style={{ marginTop: 16, height: 46, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              style={{ marginTop: 16, height: 46, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={[ty.headline, { color: T.brand }]} numberOfLines={1}>{tr('Детали')}</Text>
             </Pressable>
           </View>
@@ -198,7 +198,7 @@ export function OfflineMapScreen({ navigation }: Props) {
             {AREAS.map((a) => (
               <Pressable key={a.key} disabled={busy} onPress={() => download(a.km, tr(a.key))}
                 accessibilityRole="button" accessibilityLabel={`${tr('Скачать')}: ${tr(a.key)}`} accessibilityState={{ disabled: busy }}
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, alignItems: 'center', gap: 6 }}>
+                style={{ flex: 1, paddingVertical: 14, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.cardBg, borderWidth: 0.5, borderColor: T.cardBorder, alignItems: 'center', gap: 6 }}>
                 <SF name="square.and.arrow.down" size={20} color={T.brand} />
                 <Text style={[ty.footnoteEm, { color: T.label, textAlign: 'center' }]} numberOfLines={1}>{tr(a.key)}</Text>
               </Pressable>

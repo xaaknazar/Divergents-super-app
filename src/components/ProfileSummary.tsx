@@ -16,8 +16,8 @@ export function ProfileSummary({ name, email, photoUrl, completeness, talent, aw
  const [broken, setBroken] = useState<string | null>(null);
  const initial = name.trim().charAt(0).toUpperCase() || 'D';
  return <Pressable onPress={onEdit} accessibilityRole="button" accessibilityLabel="Редактировать анкету"
-        style={{ borderRadius: 22, borderCurve: 'continuous', overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
-        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
+        style={{ borderRadius: 24, borderCurve: 'continuous', overflow: 'hidden', shadowColor: T.brand, shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}>
+        <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
           {/* Legibility scrim (same as PersonalizeScreen): white copy must stay
               readable when the user's accent is a pastel, esp. in dark theme. */}
           <LinearGradient
@@ -28,9 +28,9 @@ export function ProfileSummary({ name, email, photoUrl, completeness, talent, aw
           />
           <View style={{ flexDirection: largeText ? 'column' : 'row', alignItems: 'center', gap: 14 }}>
             {photoUrl && photoUrl !== broken ? (
-              <Image source={{ uri: photoUrl }} onError={() => setBroken(photoUrl)} style={{ width: 64, height: 64, borderRadius: 18 }} contentFit="cover" cachePolicy="memory-disk" />
+              <Image source={{ uri: photoUrl }} onError={() => setBroken(photoUrl)} style={{ width: 64, height: 64, borderRadius: 16 }} contentFit="cover" cachePolicy="memory-disk" />
             ) : (
-              <View style={{ width: 64, height: 64, borderRadius: 18, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 64, height: 64, borderRadius: 16, borderCurve: 'continuous', backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={[ty.title1, { color: T.onBrand }]}>{initial}</Text>
               </View>
             )}

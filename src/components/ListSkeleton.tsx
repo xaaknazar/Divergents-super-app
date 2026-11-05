@@ -9,7 +9,7 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
   return <View accessible accessibilityLabel="Загрузка списка" accessibilityState={{ busy: true }}
     style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', overflow: 'hidden' }}>
     {Array.from({ length: rows }).map((_, i) => (
-      <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
+      <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16,
         borderBottomWidth: i < rows - 1 ? 0.5 : 0, borderBottomColor: T.separator }}>
         <Skeleton variant="avatar" />
         <Wrapper flex={1} gap={7}>

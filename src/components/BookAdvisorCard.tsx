@@ -6,7 +6,7 @@ import { SF } from './SFIcon';
 export function BookAdvisorCard({ onPress }: { onPress: () => void }) {
   const { T, ty } = useTheme();
   return <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Спросить ИИ, что почитать" accessibilityHint="Открывает подбор книг с AI-помощником"
-    style={({ pressed }) => ({ minHeight: 68, borderRadius: 16, borderCurve: 'continuous', padding: 14, backgroundColor: T.brandTintedStrong, opacity: pressed ? 0.7 : 1 })}>
+    style={({ pressed }) => ({ minHeight: 68, borderRadius: 16, borderCurve: 'continuous', padding: 16, backgroundColor: T.brandTintedStrong, opacity: pressed ? 0.7 : 1 })}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><SF name="sparkles" size={20} color={T.onBrand} /></View>
       <View style={{ flex: 1, gap: 6 }}><Text style={[ty.headline, { color: T.label }]}>Спросить ИИ, что почитать</Text>

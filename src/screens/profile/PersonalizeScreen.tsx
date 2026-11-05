@@ -30,7 +30,7 @@ function Group({ icon, title, value, children }: { icon: SFName; title: string; 
   return (
     <View
       accessibilityRole="summary"
-      style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 20, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}
+      style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: T.cardBg, borderRadius: 24, borderCurve: 'continuous', borderWidth: 0.5, borderColor: T.cardBorder, overflow: 'hidden' }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 13, paddingBottom: 12 }}>
         <View style={{ width: 26, height: 26, borderRadius: 8, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
@@ -149,7 +149,7 @@ export function PersonalizeScreen({ navigation }: Props) {
 
         {/* Live preview — the user's own card, reflecting accent + appearance + text scale */}
         <Animated.View style={{ marginHorizontal: 16, marginBottom: 24, borderRadius: 24, borderCurve: 'continuous', overflow: 'hidden', transform: [{ scale: pop }], shadowColor: ac.brand, shadowOpacity: scheme === 'dark' ? 0.4 : 0.28, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 7 }}>
-          <LinearGradient colors={[ac.brand, ac.accent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
+          <LinearGradient colors={[ac.brand, ac.accent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
             {/* Directional legibility scrim — darkens the text side so white copy
                 stays readable even on light accents (amber/teal ~2–3:1 otherwise). */}
             <LinearGradient
@@ -180,7 +180,7 @@ export function PersonalizeScreen({ navigation }: Props) {
           {/* Surface block — reflects light/dark + accent tints + text scale */}
           <View style={{ backgroundColor: T.cardBg, padding: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <View style={{ width: 38, height: 38, borderRadius: 11, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 38, height: 38, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                 <SF name="paintpalette.fill" size={18} color={T.brand} />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -193,7 +193,7 @@ export function PersonalizeScreen({ navigation }: Props) {
               <View style={{ flex: 1 }}>
                 <Button label={tr('Кнопка')} icon="checkmark" onPress={() => {}} size="compact" />
               </View>
-              <View style={{ paddingVertical: 10, paddingHorizontal: 15, borderRadius: 18, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
+              <View style={{ paddingVertical: 10, paddingHorizontal: 15, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted }}>
                 <Text style={[ty.footnoteEm, { color: T.brand }]}>{tr('Чип')}</Text>
               </View>
             </View>
@@ -281,7 +281,7 @@ export function PersonalizeScreen({ navigation }: Props) {
                   accessibilityLabel={`${tr('Фон')} ${b.name}`}
                   accessibilityState={{ selected: on }}
                 >
-                  <View style={{ borderRadius: 15, borderCurve: 'continuous', overflow: 'hidden', borderWidth: on ? 2 : 0.5, borderColor: on ? T.brand : T.cardBorder }}>
+                  <View style={{ borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', borderWidth: on ? 2 : 0.5, borderColor: on ? T.brand : T.cardBorder }}>
                     <BgSwatch colors={cols} none={b.key === 'none'} selected={on} />
                   </View>
                   <Text style={[ty.caption2, { color: on ? T.label : T.labelSecondary, textAlign: 'center', marginTop: 5 }]} numberOfLines={1}>{b.name}</Text>

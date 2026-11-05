@@ -44,7 +44,7 @@ export function MapCityButton({ city, country, expanded = false, onPress }: MapC
 const styles = StyleSheet.create({
   button: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    minHeight: 64, minWidth: minTouch, paddingHorizontal: 14, paddingVertical: 10,
+    minHeight: 64, minWidth: minTouch, paddingHorizontal: 16, paddingVertical: 10,
     borderRadius: radius.lg, borderCurve: 'continuous', borderWidth: 0.5,
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 4,
   },

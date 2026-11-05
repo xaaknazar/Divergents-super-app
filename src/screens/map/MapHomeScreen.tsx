@@ -403,7 +403,7 @@ export function MapHomeScreen({ navigation }: Props) {
               title={`Встреча · ${m.title}`} description={`${m.meetPlace ?? ''}${m.meetAt ? ` · ${m.meetAt}` : ''}`.trim().replace(/^· /, '')}
               accessibilityLabel={`Встреча · ${m.title}`}>
               <View style={{ alignItems: 'center' }}>
-                <View style={{ backgroundColor: T.brand, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderCurve: 'continuous', borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ backgroundColor: T.brand, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderCurve: 'continuous', borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <SF name="flag.fill" size={11} color="#fff" />
                   <Text style={[ty.caption2Em, { color: '#fff' }]} numberOfLines={1}>{m.meetAt ? m.meetAt.split(' ').slice(-1)[0] : 'Встреча'}</Text>
                 </View>
@@ -415,7 +415,7 @@ export function MapHomeScreen({ navigation }: Props) {
               title={`Спорт · ${m.title}`} description={`${m.place ?? ''}${m.meetAt ? ` · ${m.meetAt}` : ''}`.trim().replace(/^· /, '')}
               accessibilityLabel={`Спорт · ${m.title}`}>
               <View style={{ alignItems: 'center' }}>
-                <View style={{ backgroundColor: T.green, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderCurve: 'continuous', borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ backgroundColor: T.green, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderCurve: 'continuous', borderWidth: 2, borderColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <SF name="figure.run" size={11} color="#fff" />
                   <Text style={[ty.caption2Em, { color: '#fff' }]} numberOfLines={1}>{m.meetAt ? m.meetAt.split(' ').slice(-1)[0] : 'Спорт'}</Text>
                 </View>
@@ -436,9 +436,9 @@ export function MapHomeScreen({ navigation }: Props) {
         </Wrapper>
         {searchFocused && q.trim().length < 3 && recents.length > 0 ? (
           <Wrapper marginHorizontal={12} marginTop={8}><ContentBlock size="flush" elevated>
-            <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 2 }]} numberOfLines={1}>{t('recent_')}</Text>
+            <Text style={[ty.caption1, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 2 }]} numberOfLines={1}>{t('recent_')}</Text>
             {recents.map((g, i) => (
-              <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14 }}>
+              <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16 }}>
                 <SF name="clock.arrow.circlepath" size={15} color={T.labelSecondary} />
                 <Text style={[ty.subhead, { color: T.label, flex: 1 }]} numberOfLines={1}>{g.name.split(',')[0]}</Text>
               </Pressable>
@@ -448,13 +448,13 @@ export function MapHomeScreen({ navigation }: Props) {
         {q.trim().length >= 3 ? (
           <Wrapper marginHorizontal={12} marginTop={8}><ContentBlock size="flush" elevated>
             {geoBusy && geo.length === 0 ? (
-              <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelSecondary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Поиск адресов…')}</Text></View>
+              <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelSecondary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Поиск адресов…')}</Text></View>
             ) : null}
             {!geoBusy && geo.length === 0 ? (
-              <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelTertiary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Ничего не найдено')}</Text></View>
+              <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}><SF name="magnifyingglass" size={14} color={T.labelTertiary} /><Text style={[ty.subhead, { color: T.labelSecondary }]}>{tr('Ничего не найдено')}</Text></View>
             ) : null}
             {geo.map((g, i) => (
-              <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 14, borderTopWidth: i ? 0.5 : 0, borderTopColor: T.separator }}>
+              <Pressable key={i} onPress={() => pickGeo(g)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 16, borderTopWidth: i ? 0.5 : 0, borderTopColor: T.separator }}>
                 <SF name="mappin.and.ellipse" size={16} color={T.brand} />
                 <Text style={[ty.subhead, { color: T.label, flex: 1 }]} numberOfLines={2}>{g.name}</Text>
               </Pressable>
@@ -522,7 +522,7 @@ export function MapHomeScreen({ navigation }: Props) {
         <View style={{ position: 'absolute', left: 12, right: 74, bottom: dockInset + 4 }} pointerEvents="box-none">
           <ContentBlock size="compact" elevated accessibilityLiveRegion="polite"><Wrapper gap={10}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 10, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 34, height: 34, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
                 <SF name="location.fill" size={17} color={T.brand} />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -536,7 +536,7 @@ export function MapHomeScreen({ navigation }: Props) {
                 <Text style={[ty.footnoteEm, { color: T.onBrand }]} numberOfLines={1}>{tr('Разрешить')}</Text>
               </Pressable>
               <Pressable onPress={() => setLocPerm('skipped')} accessibilityRole="button" accessibilityLabel={tr('Не сейчас')}
-                style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                 <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{tr('Не сейчас')}</Text>
               </Pressable>
             </View>
@@ -545,7 +545,7 @@ export function MapHomeScreen({ navigation }: Props) {
       ) : null}
       {!target && locPerm === 'denied' ? (
         <View style={{ position: 'absolute', left: 12, right: 74, bottom: dockInset + 4 }} pointerEvents="box-none">
-          <View style={{ backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', paddingVertical: 8, paddingLeft: 14, paddingRight: 6, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
+          <View style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', paddingVertical: 8, paddingLeft: 16, paddingRight: 6, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
             <SF name="location.fill" size={16} color={T.labelSecondary} />
             <Text style={[ty.caption1, { color: T.labelSecondary, flex: 1 }]} numberOfLines={2}>{tr('Геолокация выключена — места рядом не показываются.')}</Text>
             <Pressable onPress={() => Linking.openSettings().catch(() => {})} accessibilityRole="button" accessibilityLabel={tr('Открыть настройки')}
@@ -599,18 +599,18 @@ export function MapHomeScreen({ navigation }: Props) {
                 </View>
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Pressable onPress={() => startNav(sel)} accessibilityRole="button" accessibilityLabel={tr('Вести сюда')} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
+                <Pressable onPress={() => startNav(sel)} accessibilityRole="button" accessibilityLabel={tr('Вести сюда')} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
                   <SF name="paperplane.fill" size={15} color={T.onBrand} /><Text style={[ty.headline, { color: T.onBrand }]} numberOfLines={1}>{tr('Вести сюда')}</Text>
                 </Pressable>
-                <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} accessibilityRole="button" accessibilityLabel={tr('Детали')} style={({ pressed }) => ({ width: 84, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                <Pressable onPress={() => { const id = sel.id; setSelId(null); openPlace(id); }} accessibilityRole="button" accessibilityLabel={tr('Детали')} style={({ pressed }) => ({ width: 84, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <Text style={[ty.headline, { color: T.brandText }]} numberOfLines={1}>{tr('Детали')}</Text>
                 </Pressable>
                 <Pressable onPress={() => toggleFav(sel.id)} accessibilityRole="button" accessibilityLabel={isFav(sel.id) ? tr('Убрать из избранного') : tr('В избранное')} accessibilityState={{ selected: isFav(sel.id) }}
-                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: isFav(sel.id) ? T.brandTinted : T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name={isFav(sel.id) ? 'heart.fill' : 'heart'} size={18} color={isFav(sel.id) ? T.brandText : T.label} />
                 </Pressable>
                 <Pressable onPress={() => Share.share({ message: `${sel.name} — ${CATEGORY_META[sel.category].label}\n${sel.highlights}\nhttps://2gis.kz/geo/${sel.lng},${sel.lat}` })} accessibilityRole="button" accessibilityLabel={tr('Поделиться')}
-                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                  style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.fillSecondary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <SF name="square.and.arrow.up" size={18} color={T.label} />
                 </Pressable>
               </View>
@@ -636,10 +636,10 @@ export function MapHomeScreen({ navigation }: Props) {
                 </View>
               </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Pressable onPress={() => navTo(searchPin)} accessibilityRole="button" accessibilityLabel={tr('Вести сюда')} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
+                <Pressable onPress={() => navTo(searchPin)} accessibilityRole="button" accessibilityLabel={tr('Вести сюда')} style={({ pressed }) => ({ flex: 1, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }], shadowColor: T.brand, shadowOpacity: 0.22, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 })}>
                   <SF name="figure.walk" size={15} color={T.onBrand} /><Text style={[ty.headline, { color: T.onBrand }]} numberOfLines={1}>{tr('Вести сюда')}</Text>
                 </Pressable>
-                <Pressable onPress={() => externalRoute(searchPin)} accessibilityRole="button" accessibilityLabel={tr('Навигатор')} style={({ pressed }) => ({ width: 110, height: 48, borderRadius: 14, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+                <Pressable onPress={() => externalRoute(searchPin)} accessibilityRole="button" accessibilityLabel={tr('Навигатор')} style={({ pressed }) => ({ width: 110, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
                   <Text style={[ty.headline, { color: T.brandText }]} numberOfLines={1}>{tr('Навигатор')}</Text>
                 </Pressable>
               </View>

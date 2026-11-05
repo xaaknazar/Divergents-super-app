@@ -39,7 +39,7 @@ export function ResumeCalloutCard({ area, done, needed, onPress }: { area: Resum
       accessibilityLabel={tr('Заполнить анкету')}
       style={({ pressed }) => ({
         minHeight: minTouch, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1,
-        backgroundColor: isDark ? T.brandTinted : 'rgba(61,91,219,0.13)', borderRadius: 14, borderCurve: 'continuous', padding: 14,
+        backgroundColor: isDark ? T.brandTinted : 'rgba(61,91,219,0.13)', borderRadius: 16, borderCurve: 'continuous', padding: 16,
       })}
     >
       <View style={{ width: 36, height: 36, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.cardBg, alignItems: 'center', justifyContent: 'center' }}>

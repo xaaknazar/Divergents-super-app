@@ -11,10 +11,10 @@ export function LearningShortcut({ subtitle, onPress }: LearningShortcutProps) {
   const { T, ty } = useTheme();
   const title = 'Подарок новым участникам';
   return <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}. ${subtitle}`}
-    style={({ pressed }) => ({ borderRadius: 14, borderCurve: 'continuous', overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
+    style={({ pressed }) => ({ borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', opacity: pressed ? 0.7 : 1 })}>
     <LinearGradient colors={[T.brandTintedStrong, T.brandTinted]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-      <View style={{ width: 46, height: 46, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 46, height: 46, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
         <SF name="gift.fill" size={23} color={T.onBrand} />
       </View>
       <View style={{ flex: 1 }}>

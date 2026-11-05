@@ -57,7 +57,7 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
   const labelEl = <FieldLabel nativeID={labelId} label={field.label} required={!field.optional} invalid={!!error} />;
   const errorEl = <FieldError message={error} />;
   const inputStyle = {
-    backgroundColor: T.cardBg, borderRadius: 16, minHeight: 52, borderCurve: 'continuous' as const, paddingVertical: 12, paddingHorizontal: 14, color: T.label,
+    backgroundColor: T.cardBg, borderRadius: 16, minHeight: 52, borderCurve: 'continuous' as const, paddingVertical: 12, paddingHorizontal: 16, color: T.label,
     borderWidth: 1, borderColor: error ? T.redText : T.cardBorder,
   };
 
@@ -125,7 +125,7 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
       return (
         <View style={{ marginBottom: 14 }}>
           {labelEl}
-          <View accessibilityLabel={accessibilityLabel} style={error ? { borderWidth: 1, borderColor: T.red, borderRadius: 11, borderCurve: 'continuous' } : null}>
+          <View accessibilityLabel={accessibilityLabel} style={error ? { borderWidth: 1, borderColor: T.red, borderRadius: 12, borderCurve: 'continuous' } : null}>
             <Segmented items={options} value={idx} onChange={(i) => onChange(options[i])} />
           </View>
           {errorEl}
@@ -140,7 +140,7 @@ export function ResumeFieldInput({ field, value, onChange, locked, lockNote, err
             const on = current === opt;
             return (
               <Pressable key={opt} onPress={() => onChange(opt)} accessibilityRole="radio" accessibilityLabel={`${field.label}: ${opt}`} accessibilityState={{ checked: on }}
-                style={{ minHeight: minTouch, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18, borderCurve: 'continuous', backgroundColor: on ? T.brandTinted : T.cardBg, borderWidth: 1, borderColor: error ? T.redText : on ? T.brandText : T.cardBorder }}>
+                style={{ minHeight: minTouch, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 16, borderCurve: 'continuous', backgroundColor: on ? T.brandTinted : T.cardBg, borderWidth: 1, borderColor: error ? T.redText : on ? T.brandText : T.cardBorder }}>
                 <Text style={[ty.footnoteEm, { color: on ? T.brandText : T.label }]}>{opt}</Text>
               </Pressable>
             );

@@ -269,7 +269,7 @@ export function AuthScreen({}: Props) {
             {step === 'email' ? (
               <>
                 {/* Segmented intent */}
-                <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 13, borderCurve: 'continuous', padding: 4, marginBottom: 18 }}>
+                <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 12, borderCurve: 'continuous', padding: 4, marginBottom: 18 }}>
                   {(['in', 'up'] as const).map((k) => {
                     const on = intent === k;
                     return (
@@ -279,7 +279,7 @@ export function AuthScreen({}: Props) {
                         accessibilityRole="radio"
                         accessibilityLabel={k === 'in' ? t('tab_signin') : t('tab_signup')}
                         accessibilityState={{ selected: on }}
-                        style={{ flex: 1, minHeight: 48, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: on ? T.cardBg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.1 : 0, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
+                        style={{ flex: 1, minHeight: 48, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: on ? T.cardBg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.1 : 0, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
                       >
                         <Text style={[ty.subheadEm, { color: on ? T.brand : T.labelSecondary, textAlign: 'center' }]}>{k === 'in' ? t('tab_signin') : t('tab_signup')}</Text>
                       </Pressable>
@@ -288,7 +288,7 @@ export function AuthScreen({}: Props) {
                 </View>
 
                 <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 7, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.5 }]}>{t('email')}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.fillTertiary, borderRadius: 14, borderCurve: 'continuous', paddingHorizontal: 10, paddingVertical: 8, minHeight: 54, borderWidth: 1.5, borderColor: focus ? T.brand : 'transparent' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.fillTertiary, borderRadius: 16, borderCurve: 'continuous', paddingHorizontal: 10, paddingVertical: 8, minHeight: 54, borderWidth: 1.5, borderColor: focus ? T.brand : 'transparent' }}>
                   <SF name="envelope.fill" size={17} color={focus ? T.brand : T.labelTertiary} />
                   <TextInput
                     value={email} onChangeText={setEmail}
@@ -334,7 +334,7 @@ export function AuthScreen({}: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={lang === 'ru' ? 'Войти через Google' : 'Continue with Google'}
                   accessibilityState={{ disabled: busy || !isLoaded, busy: sso === 'oauth_google' }}
-                  style={{ marginTop: 14, minHeight: 54, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 15, borderCurve: 'continuous', borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: (busy && sso !== 'oauth_google') || !isLoaded ? 0.5 : 1 }}>
+                  style={{ marginTop: 14, minHeight: 54, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 16, borderCurve: 'continuous', borderWidth: 1, borderColor: T.cardBorder, backgroundColor: T.cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: (busy && sso !== 'oauth_google') || !isLoaded ? 0.5 : 1 }}>
                   {sso === 'oauth_google' ? <ActivityIndicator size="small" color={T.label} /> : <GoogleG size={20} />}
                   <Text style={[ty.headline, { color: T.label, flexShrink: 1, textAlign: 'center' }]}>{lang === 'ru' ? 'Войти через Google' : 'Continue with Google'}</Text>
                 </Pressable>
@@ -346,7 +346,7 @@ export function AuthScreen({}: Props) {
                     accessibilityLabel={lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}
                     accessibilityState={{ disabled: busy || !isLoaded, busy: sso === 'oauth_apple' }}
                     // HIG: black button in light appearance, white with black content in dark.
-                    style={{ marginTop: 10, minHeight: 54, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 15, borderCurve: 'continuous', backgroundColor: isDark ? '#FFFFFF' : '#000000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy && sso !== 'oauth_apple') || !isLoaded ? 0.5 : 1 }}>
+                    style={{ marginTop: 10, minHeight: 54, paddingVertical: 13, paddingHorizontal: 16, borderRadius: 16, borderCurve: 'continuous', backgroundColor: isDark ? '#FFFFFF' : '#000000', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: (busy && sso !== 'oauth_apple') || !isLoaded ? 0.5 : 1 }}>
                     {sso === 'oauth_apple' ? <ActivityIndicator size="small" color={isDark ? '#000000' : '#FFFFFF'} /> : <SF name="applelogo" size={18} color={isDark ? '#000000' : '#FFFFFF'} />}
                     <Text style={[ty.headline, { color: isDark ? '#000000' : '#FFFFFF', flexShrink: 1, textAlign: 'center' }]}>{lang === 'ru' ? 'Войти через Apple' : 'Continue with Apple'}</Text>
                   </Pressable>
@@ -362,7 +362,7 @@ export function AuthScreen({}: Props) {
                 <Text style={[ty.title3, { color: T.label }]}>{t('code_title')}</Text>
                 <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]}>{t('code_sent')} <Text style={[ty.subheadEm, { color: T.label }]}>{email}</Text></Text>
                 {info ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 12, backgroundColor: T.brandTinted, borderRadius: 11, borderCurve: 'continuous', paddingVertical: 9, paddingHorizontal: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 12, backgroundColor: T.brandTinted, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 9, paddingHorizontal: 12 }}>
                     <SF name={mode === 'up' ? 'person.badge.plus' : 'checkmark.circle.fill'} size={14} color={T.brand} />
                     <Text style={[ty.caption1, { color: T.brand, flex: 1 }]}>{info}</Text>
                   </View>
@@ -378,7 +378,7 @@ export function AuthScreen({}: Props) {
                       const ch = code[i] ?? '';
                       const active = i === code.length;
                       return (
-                        <View key={i} style={{ flex: 1, maxWidth: 46, minHeight: 56, borderRadius: 13, borderCurve: 'continuous', backgroundColor: T.fillTertiary, borderWidth: 1.5, borderColor: ch ? T.brand : active ? T.brandAccent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                        <View key={i} style={{ flex: 1, maxWidth: 46, minHeight: 56, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, borderWidth: 1.5, borderColor: ch ? T.brand : active ? T.brandAccent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                           <Text style={[ty.title2, { color: T.label }]}>{ch}</Text>
                         </View>
                       );

@@ -281,7 +281,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader backLabel={route.params?.challengeId ? "Челлендж" : "Назад"} onBack={confirmDiscard} trailing={(
-        <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 10, borderCurve: 'continuous', padding: 2 }}>
+        <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 12, borderCurve: 'continuous', padding: 2 }}>
           {(['run', 'walk'] as const).map((k) => (
             <Pressable key={k} onPress={() => status === 'idle' && setType(k)} disabled={status !== 'idle'}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, borderCurve: 'continuous', backgroundColor: type === k ? T.systemBg : 'transparent', opacity: status !== 'idle' && type !== k ? 0.4 : 1 }}>
@@ -326,7 +326,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
         </MapView>
 
         {denied ? (
-          <View style={{ position: 'absolute', top: 16, left: 16, right: 16, backgroundColor: T.cardBg, borderRadius: 14, borderCurve: 'continuous', padding: 14, flexDirection: 'row', gap: 10, alignItems: 'center', borderWidth: 0.5, borderColor: T.cardBorder }}>
+          <View style={{ position: 'absolute', top: 16, left: 16, right: 16, backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16, flexDirection: 'row', gap: 10, alignItems: 'center', borderWidth: 0.5, borderColor: T.cardBorder }}>
             <SF name="location.fill" size={18} color={T.red} />
             <Text style={[ty.subhead, { color: T.label, flex: 1 }]}>Разрешите доступ к геолокации, чтобы записывать маршрут.</Text>
           </View>
