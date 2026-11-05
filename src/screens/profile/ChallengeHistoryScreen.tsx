@@ -150,7 +150,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
         >
           {active.length > 0 ? (
             <>
-              <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8, textTransform: 'uppercase', letterSpacing: 0.4 }]}>
+              <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 8 }]}>
                 {tr('Текущие')} · {active.length}
               </Text>
               {active.map((i) => <Row key={i.challengeId} item={i} />)}
@@ -158,7 +158,7 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
           ) : null}
           {past.length > 0 ? (
             <>
-              <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 8, textTransform: 'uppercase', letterSpacing: 0.4 }]}>
+              <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 8 }]}>
                 {tr('Завершённые')} · {past.length}
               </Text>
               {past.map((i) => <Row key={i.challengeId} item={i} />)}

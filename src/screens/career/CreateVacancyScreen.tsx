@@ -221,7 +221,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   const { T, ty } = useTheme();
   return (
     <View style={{ marginBottom: 14 }}>
-      <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 6, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{label}</Text>
+      <Text style={[ty.footnoteEm, { color: T.labelSecondary, marginBottom: 6, marginLeft: 2 }]}>{label}</Text>
       {children}
       {hint ? <Text style={[ty.caption2, { color: T.labelTertiary, marginTop: 5, marginLeft: 2 }]}>{hint}</Text> : null}
     </View>

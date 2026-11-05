@@ -205,7 +205,7 @@ export function OfflineMapScreen({ navigation }: Props) {
             ))}
           </View>
 
-          <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6, textTransform: 'uppercase' }]} numberOfLines={1}>{tr('Скачанные области')}</Text>
+          <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 }]} numberOfLines={1}>{tr('Скачанные области')}</Text>
           <ScrollView style={{ maxHeight: 220 }} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8 }}>
             {packs.length === 0 ? (
               <Text style={[ty.subhead, { color: T.labelTertiary, paddingHorizontal: 4, paddingVertical: 10 }]} numberOfLines={1}>{tr('Нет скачанных областей')}</Text>

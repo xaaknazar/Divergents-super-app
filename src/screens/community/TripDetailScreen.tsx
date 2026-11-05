@@ -320,7 +320,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
                 {i < trip.itinerary.length - 1 ? <View style={{ width: 2, flex: 1, backgroundColor: T.fillTertiary }} /> : null}
               </View>
               <View style={{ flex: 1, paddingBottom: i < trip.itinerary.length - 1 ? 12 : 0 }}>
-                <Text style={[ty.caption2Em, { color: T.labelSecondary, textTransform: 'uppercase' }]} numberOfLines={1}>{r.day}</Text>
+                <Text style={[ty.footnoteEm, { color: T.labelSecondary }]} numberOfLines={1}>{r.day}</Text>
                 <Text style={[ty.body, { color: T.label, marginTop: 2 }]} numberOfLines={2}>{r.title}</Text>
                 <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]}>{r.note}</Text>
               </View>

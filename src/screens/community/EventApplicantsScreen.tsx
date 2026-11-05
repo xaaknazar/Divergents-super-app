@@ -151,7 +151,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
       ) : (
         <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: 30 }}>
           {counts ? (
-            <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>
+            <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 6 }]}>
               {pl.applications(counts.total)} · {counts.pending} ждут решения · {counts.approved} принято
             </Text>
           ) : null}

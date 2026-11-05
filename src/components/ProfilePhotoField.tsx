@@ -84,7 +84,7 @@ export function ProfilePhotoField({ onChanged }: { onChanged?: (url: string) => 
 
   return (
     <View style={{ marginBottom: 16 }}>
-      <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 8, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>
+      <Text style={[ty.footnoteEm, { color: T.labelSecondary, marginBottom: 8, marginLeft: 2 }]}>
         Фото профиля
       </Text>
       <Pressable onPress={pick} disabled={busy} accessibilityRole="button" accessibilityLabel="Изменить фото профиля"

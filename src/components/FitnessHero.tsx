@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   glass: { position: 'absolute', right: 16, top: 4, width: 56, height: 56, borderRadius: 16, borderCurve: 'continuous',
     alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)',
     borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.28)' },
-  eyebrow: { color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: 0.6, paddingRight: 72 },
+  eyebrow: { color: 'rgba(255,255,255,0.8)', paddingRight: 72 },
   title: { color: '#FFFFFF', marginTop: 2, paddingRight: 64 },
   stats: { flexDirection: 'row', marginTop: 16 },
   stat: { flex: 1, minWidth: 0 },

@@ -367,7 +367,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       {/* Gardner — множественный интеллект */}
       {(profile?.gardner ?? []).length > 0 ? (
         <View style={{ marginTop: 18 }}>
-          <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Множественный интеллект')}</Text>
+          <Text style={[ty.headline, { color: T.label, paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6 }]}>{tr('Множественный интеллект')}</Text>
           <View style={{ marginHorizontal: 16 }}>
             <GardnerChart data={profile!.gardner} compact />
           </View>

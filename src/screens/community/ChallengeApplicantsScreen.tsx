@@ -153,7 +153,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
         <EmptyState icon="person.2.fill" title="Пока нет заявок" subtitle="Как только кто-то подаст заявку, она появится здесь." />
       ) : (
         <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: 30 }}>
-          <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Заявок · {items.length}</Text>
+          <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 6 }]}>Заявок · {items.length}</Text>
           {items.map((a) => {
 
             // В списке — псевдоним (его отдаёт сервер). ФИО и почта тут не

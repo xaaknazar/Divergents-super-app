@@ -206,7 +206,9 @@ export function createTypography(scale = 1): Typography {
 // Сетка 2026-11: скругления 8 / 12 / 16 / 24 (большие шторки) / круг, внутренний отступ 16.
 // `xxl` is kept for backward compatibility; `pill` is the fully-rounded token.
 // Original Divergents geometry, with semantic aliases for extracted components.
-export const radius = { sm: 8, md: 12, lg: 12, xl: 16, xxl: 16, block: 16, input: 12, action: 12, sheet: 24, pill: 999 } as const;
+// iOS 26: крупнее и концентричнее. Блоки и списки — 26, поля — 14,
+// кнопки — капсула, шторки — 34.
+export const radius = { sm: 10, md: 14, lg: 18, xl: 20, xxl: 26, block: 26, input: 14, action: 999, sheet: 34, pill: 999 } as const;
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
 // 48 dp also satisfies the iOS 44 pt minimum and keeps shared components safe
 // on both platforms without relying on hitSlop.

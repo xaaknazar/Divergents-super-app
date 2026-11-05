@@ -120,7 +120,7 @@ export function NicknameGateScreen() {
             </Text>
           </View>
 
-          <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 6, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Псевдоним</Text>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, marginBottom: 6, marginLeft: 2 }]}>Псевдоним</Text>
           <TextInput
             value={value}
             onChangeText={(v) => { if (!savingRef.current) setValue(sanitizeNickname(v)); }}

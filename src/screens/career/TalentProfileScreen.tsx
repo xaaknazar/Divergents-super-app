@@ -105,7 +105,7 @@ export function TalentProfileScreen({ navigation, route }: Props) {
     label: string; action?: string; accessibilityLabel?: string; onPress?: () => void;
   }) => (
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, paddingHorizontal: 36, paddingTop: 8, paddingBottom: 6 }}>
-      <Text style={[ty.footnote, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4, flex: 1, flexShrink: 1 }]}>{label}</Text>
+      <Text style={[ty.footnote, { color: T.labelSecondary, flex: 1, flexShrink: 1 }]}>{label}</Text>
       {onPress ? (
         <Pressable onPress={() => { hSelect(); onPress(); }} hitSlop={8} accessibilityRole="button"
           accessibilityLabel={accessibilityLabel ?? action ?? tr('Изменить')}

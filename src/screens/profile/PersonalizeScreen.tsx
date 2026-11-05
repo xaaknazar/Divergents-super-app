@@ -261,7 +261,7 @@ export function PersonalizeScreen({ navigation }: Props) {
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
-            <Text style={[ty.caption1, { color: T.labelTertiary, textTransform: 'uppercase', letterSpacing: 0.4 }]} numberOfLines={1}>{tr('Пример')}</Text>
+            <Text style={[ty.caption1, { color: T.labelTertiary }]} numberOfLines={1}>{tr('Пример')}</Text>
             <Text style={[ty.body, { color: T.label, marginTop: 3 }]} numberOfLines={2}>{tr('Дизайн, который подстраивается под вас.')}</Text>
           </View>
         </Group>

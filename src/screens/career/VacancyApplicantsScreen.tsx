@@ -80,7 +80,7 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
         <EmptyState icon="person.2.fill" title="Пока нет откликов" subtitle="Как только кто-то откликнется, он появится здесь." />
       ) : (
         <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: 30 }}>
-          <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>Откликнулось · {items.length}</Text>
+          <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 6 }]}>Откликнулось · {items.length}</Text>
           {items.map((a) => {
 
             const name = a.userName || a.profile?.fullName || (a.userEmail ? a.userEmail.split('@')[0] : 'Кандидат');

@@ -204,7 +204,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
         {/* Highlights */}
         <Wrapper marginHorizontal={16} marginBottom={14}><ContentBlock size="regular" elevated>
-          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', marginBottom: 6 }]} numberOfLines={1}>{tr('Чем хорошо')}</Text>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary, marginBottom: 6 }]} numberOfLines={1}>{tr('Чем хорошо')}</Text>
           <Text style={[ty.body, { color: T.label }]}>{place.highlights}</Text>
         </ContentBlock></Wrapper>
 
@@ -227,7 +227,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           const visibleReviews = place.reviews.filter((r) => !isBlocked(r.author));
           return (
             <>
-              <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Отзывы')} · {visibleReviews.length}</Text>
+              <Text style={[ty.footnoteEm, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 8 }]} numberOfLines={1}>{tr('Отзывы')} · {visibleReviews.length}</Text>
               {visibleReviews.map((rev) => (
                 <Wrapper marginHorizontal={16} marginBottom={10} key={rev.id}><ContentBlock size="compact" elevated>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>

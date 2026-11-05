@@ -665,7 +665,7 @@ export function MapHomeScreen({ navigation }: Props) {
           <ScrollView contentContainerStyle={{ paddingBottom: 10 }}>
             {COUNTRIES.map((co) => (
               <View key={co.key}>
-                <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 }]} numberOfLines={1}>{co.name}</Text>
+                <Text style={[ty.footnoteEm, { color: T.labelSecondary, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 }]} numberOfLines={1}>{co.name}</Text>
                 {co.cities.map((ci) => {
                   const on = co.key === country && ci.key === city;
                   const hasPack = offline && !!findCityPack(packs, ci.key);

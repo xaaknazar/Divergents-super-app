@@ -86,7 +86,7 @@ export function AdminPlacesScreen({ navigation }: Props) {
         <EmptyState icon="checkmark.seal.fill" title={tr('Заявок нет')} subtitle={tr('Новые предложенные метки появятся здесь на одобрение.')} />
       ) : (
         <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 30 }}>
-          <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]} numberOfLines={1}>{tr('На модерации')} · {items.length}</Text>
+          <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 6 }]} numberOfLines={1}>{tr('На модерации')} · {items.length}</Text>
           {items.map((p) => {
             const meta = CATEGORY_META[p.category];
             const cityName = cityCenter(p.country, p.city)?.name ?? p.city;

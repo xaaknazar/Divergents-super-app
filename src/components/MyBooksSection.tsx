@@ -19,7 +19,7 @@ export function MyBooksSection({ title, count, children }: { title: string; coun
 }
 const styles = StyleSheet.create({
   section: { marginHorizontal: 16, gap: 8 },
-  caption: { paddingHorizontal: 4, textTransform: 'uppercase', letterSpacing: 0.4 },
+  caption: { paddingHorizontal: 4 },
   card: { borderRadius: radius.block, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 0.5 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 62 },
 });

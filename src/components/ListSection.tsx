@@ -2,7 +2,10 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { ListRow } from './ListRow';
+import { radius } from '../theme/tokens';
 
+// iOS 26: заголовок секции — обычным регистром и жирнее, без КАПСА;
+// углы секции крупнее (radius.block).
 export function ListSection({
   header, footer, children,
 }: { header?: string; footer?: string; children: React.ReactNode }) {
@@ -10,16 +13,16 @@ export function ListSection({
   return (
     <View>
       {header ? (
-        <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{header}</Text>
+        <Text accessibilityRole="header" style={[ty.headline, { color: T.label, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8 }]}>{header}</Text>
       ) : null}
-      <View style={{ backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', overflow: 'hidden' }}>
+      <View style={{ backgroundColor: T.cardBg, borderRadius: radius.block, borderCurve: 'continuous', overflow: 'hidden' }}>
         {React.Children.toArray(children).filter(child => React.isValidElement(child)).map((child, index) => <React.Fragment key={React.isValidElement(child) ? child.key ?? index : index}>
           {index > 0 && React.isValidElement(child) && child.type === ListRow ? <View accessible={false} style={{ height: 0.5, marginLeft: 16, backgroundColor: T.separator }} /> : null}
           {child}
         </React.Fragment>)}
       </View>
       {footer ? (
-        <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 20, paddingTop: 6 }]}>{footer}</Text>
+        <Text style={[ty.footnote, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 8 }]}>{footer}</Text>
       ) : null}
     </View>
   );

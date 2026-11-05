@@ -407,6 +407,7 @@ export interface Challenge {
   captainId?: string | null;  // Clerk id of the team captain (drives captain-only tools)
   teamStandings?: TeamStanding[]; // all teams by points → the «Рейтинг команд» screen
   overall?: OverallStanding[];    // все участники по очкам → «Рейтинг участников»
+  season?: number | null;          // номер сезона → капсула «Сезон 3» в рейтинге
   myDays?: ChallengeDay[];        // разбор по дням → экран «Дни челленджа»
 }
 
@@ -550,6 +551,10 @@ export interface OverallStanding {
   award?: boolean;
   isMe: boolean;
   rank: number;
+  /** Место вчера (по очкам без сегодняшнего дня). null — первый день или старый сервер. */
+  previousRank?: number | null;
+  /** Насколько мест сдвинулся со вчера: >0 поднялся, <0 опустился. */
+  rankChange?: number | null;
 }
 
 /** Итог одного дня челленджа — для экрана истории. */
@@ -784,8 +789,12 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
         award: r?.award === true,
         isMe: r?.isMe === true,
         rank: numOf(r?.rank),
+        previousRank: typeof r?.previousRank === 'number' ? numOf(r.previousRank) : null,
+        rankChange: typeof r?.rankChange === 'number' ? numOf(r.rankChange) : null,
       }))
       .filter((r: OverallStanding) => r.id),
+    // Номер сезона для шапки рейтинга («Сезон 3»). Старый сервер не отдаёт — null.
+    season: typeof (raw as any).season === 'number' && (raw as any).season > 0 ? numOf((raw as any).season) : null,
     trainer: strOf(raw.trainer),
     price: strOf(raw.price),
     tasks,

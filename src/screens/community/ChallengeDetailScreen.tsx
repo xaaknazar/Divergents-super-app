@@ -292,7 +292,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
         {/* Rules — open/hide */}
         <Pressable onPress={() => setRulesOpen((v) => !v)} accessibilityRole="button" accessibilityLabel={tr('Правила')} accessibilityState={{ expanded: rulesOpen }}
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6, minHeight: 44 }}>
-          <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Правила')}</Text>
+          <Text style={[ty.footnoteEm, { color: T.labelSecondary }]}>{tr('Правила')}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Text style={[ty.subheadEm, { color: T.brand }]}>{rulesOpen ? tr('Скрыть') : tr('Открыть')}</Text>
             <SF name={rulesOpen ? 'chevron.down' : 'chevron.right'} size={13} color={T.brand} />
@@ -593,7 +593,6 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
 
   const openRoster = () => navigation.navigate('ChallengeRoster', { challengeId: c.id });
   const openStandings = () => navigation.navigate('TeamStandings', { challengeId: c.id });
-  const openOverall = () => navigation.navigate('OverallStandings', { challengeId: c.id });
   const todayLeaderboard = [...leaderboard].sort((a, b) => {
     if (b.day !== a.day) return b.day - a.day;
     const bDone = b.todayTasks.filter((task) => task.completed).length;
@@ -623,8 +622,8 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
     const actions: MenuAction[] = [
       { label: tr('Состав команды'), icon: 'person.2.fill', run: openRoster },
       { label: tr('Дни челленджа'), icon: 'calendar', run: () => navigation.navigate('ChallengeDays', { challengeId: c.id }) },
-      { label: tr('Рейтинг команд'), icon: 'trophy.fill', run: openStandings },
-      { label: tr('Рейтинг всех участников'), icon: 'list.number', run: openOverall },
+      // Команды и участники — один экран рейтинга с переключателем.
+      { label: tr('Рейтинг'), icon: 'trophy.fill', run: openStandings },
       { label: tr('Мои тренировки'), icon: 'figure.run', run: () => navigation.navigate('WorkoutHistory') },
       ...(isCaptain ? [
         { label: chat ? tr('Изменить чат команды') : tr('Добавить чат команды'), icon: 'paperplane.fill', run: editChat },
@@ -817,9 +816,9 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
       <ChallengeCalendar totalDays={c.totalDays} currentDay={c.currentDay} startISO={c.startISO} days={c.myDays} T={T} />
 
       {/* Team card follows the supplied leaderboard reference. */}
-      <Pressable onPress={openStandings} accessibilityRole="button" accessibilityLabel={tr('Открыть рейтинг команд')}
+      <Pressable onPress={openStandings} accessibilityRole="button" accessibilityLabel={tr('Открыть рейтинг')}
         style={({ pressed }) => ({ minHeight: 44, marginHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: pressed ? 0.6 : 1 })}>
-        <Text style={[ty.caption2Em, { color: T.labelSecondary, flex: 1, flexShrink: 1, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
+        <Text style={[ty.footnoteEm, { color: T.labelSecondary, flex: 1, flexShrink: 1 }]}>
           {c.teamName ? `${tr('Команда')} «${c.teamName}»` : tr('Моя команда')} · {c.teamRank > 0 ? `${tr('вы')} ${c.teamRank}-${tr('е место')}` : tr('рейтинг команд')}
         </Text>
         <SF name="chevron.forward" size={12} color={T.labelTertiary} />

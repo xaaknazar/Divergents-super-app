@@ -287,7 +287,7 @@ export function AuthScreen({}: Props) {
                   })}
                 </View>
 
-                <Text style={[ty.caption2Em, { color: T.labelSecondary, marginBottom: 7, marginLeft: 2, textTransform: 'uppercase', letterSpacing: 0.5 }]}>{t('email')}</Text>
+                <Text style={[ty.footnoteEm, { color: T.labelSecondary, marginBottom: 7, marginLeft: 2 }]}>{t('email')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.fillTertiary, borderRadius: 16, borderCurve: 'continuous', paddingHorizontal: 10, paddingVertical: 8, minHeight: 54, borderWidth: 1.5, borderColor: focus ? T.brand : 'transparent' }}>
                   <SF name="envelope.fill" size={17} color={focus ? T.brand : T.labelTertiary} />
                   <TextInput

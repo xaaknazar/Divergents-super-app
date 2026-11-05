@@ -203,7 +203,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
 function FieldLabel({ children }: { children: string }) {
   const { T, ty } = useTheme();
   return (
-    <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4, textTransform: 'uppercase', letterSpacing: 0.4 }]} numberOfLines={1}>{children}</Text>
+    <Text style={[ty.footnote, { color: T.labelSecondary, marginBottom: 6, marginLeft: 4 }]} numberOfLines={1}>{children}</Text>
   );
 }
 

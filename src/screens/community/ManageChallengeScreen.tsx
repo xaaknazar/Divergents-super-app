@@ -385,7 +385,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                   const roster = members.filter((m) => m.teamId === team.id);
                   return (
                     <View key={team.id}>
-                      <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 2 }]} numberOfLines={1}>{team.name} · {roster.length}/{team.capacity}</Text>
+                      <Text style={[ty.footnoteEm, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 2 }]} numberOfLines={1}>{team.name} · {roster.length}/{team.capacity}</Text>
                       {roster.length === 0 ? (
                         <Text style={[ty.caption1, { color: T.labelTertiary, paddingHorizontal: 16, paddingVertical: 8 }]}>Нет участников</Text>
                       ) : roster.map((m) => <MemberRow key={m.applicationId} m={m} captain={m.userId === team.captainId} locked={locked} onPress={() => memberMenu(m)} T={T} />)}
@@ -394,7 +394,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
                 })}
                 {unassigned.length > 0 ? (
                   <View>
-                    <Text style={[ty.footnoteEm, { color: T.labelSecondary, textTransform: 'uppercase', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 2 }]} numberOfLines={1}>Без команды · {unassigned.length}</Text>
+                    <Text style={[ty.footnoteEm, { color: T.labelSecondary, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 2 }]} numberOfLines={1}>Без команды · {unassigned.length}</Text>
                     {unassigned.map((m) => <MemberRow key={m.applicationId} m={m} captain={false} locked={locked} onPress={() => memberMenu(m)} T={T} />)}
                   </View>
                 ) : null}

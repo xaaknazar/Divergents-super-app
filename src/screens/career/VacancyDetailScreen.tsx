@@ -209,7 +209,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
             ) : null}
             {job.companyValues.length > 0 ? (
               <View style={{ gap: 6 }}>
-                <Text style={[ty.caption2Em, { color: T.labelTertiary, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Ценности')}</Text>
+                <Text style={[ty.footnoteEm, { color: T.labelTertiary }]}>{tr('Ценности')}</Text>
                 {job.companyValues.map((v, i) => (
                   <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
                     <SF name="checkmark.seal.fill" size={15} color={T.brand} />
@@ -229,7 +229,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
             {job.conditions ? <Text style={[ty.body, { color: T.label }]}>{job.conditions}</Text> : null}
             {job.benefits.length > 0 ? (
               <View style={{ gap: 6 }}>
-                <Text style={[ty.caption2Em, { color: T.labelTertiary, textTransform: 'uppercase', letterSpacing: 0.4 }]}>{tr('Преимущества')}</Text>
+                <Text style={[ty.footnoteEm, { color: T.labelTertiary }]}>{tr('Преимущества')}</Text>
                 {job.benefits.map((b, i) => (
                   <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
                     <SF name="star.fill" size={14} color="#FF9500" />

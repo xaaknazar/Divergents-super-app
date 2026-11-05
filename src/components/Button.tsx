@@ -54,8 +54,9 @@ export function Button({ label, icon, onPress, variant = 'solid', tone = 'brand'
 }
 
 const styles = StyleSheet.create({
-  base: { minHeight: 50, paddingVertical: space.md, paddingHorizontal: space.lg,
-    borderRadius: radius.xl, borderCurve: 'continuous', flexDirection: 'row',
+  base: { minHeight: 52, paddingVertical: space.md, paddingHorizontal: space.xl,
+    // iOS 26: кнопки — капсулы.
+    borderRadius: radius.pill, borderCurve: 'continuous', flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center', gap: space.sm },
   regular: {},
   compact: { minHeight: Platform.OS === 'android' ? 48 : 44, paddingVertical: space.sm },

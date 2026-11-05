@@ -33,5 +33,5 @@ export function PersonalActivityCard({ icon, eyebrow, title, subtitle, onPress }
 const styles = StyleSheet.create({
   row: { minHeight: 68, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   text: { flex: 1, minWidth: 0, gap: 1 },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 0.25 },
+  eyebrow: { letterSpacing: 0.25 },
 });

@@ -12,8 +12,9 @@ export function ListRow({
 }) {
   const { T, ty } = useTheme();
   const rowStyle: ViewStyle = {
-    flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 16,
-    minHeight: minTouch, position: 'relative',
+    flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16,
+    // iOS 26: строки списков выше и просторнее.
+    minHeight: 52, position: 'relative',
   };
   const inner = (
     <>

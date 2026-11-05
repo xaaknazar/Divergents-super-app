@@ -557,7 +557,7 @@ function ManageChannel({ channel, onClose, onSaved, onDeleted }: { channel: Serv
   useEffect(() => { (async () => { const t = await getToken(); setMembers(await fetchChannelMembers(t, channel.id)); })(); }, []);
 
   const inp = { backgroundColor: T.cardBg, borderRadius: 12, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, color: T.label, ...ty.body } as any;
-  const sectionLabel = { ...ty.footnote, color: T.labelSecondary, marginBottom: 6, marginLeft: 4, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
+  const sectionLabel = { ...ty.footnote, color: T.labelSecondary, marginBottom: 6, marginLeft: 4 as const, letterSpacing: 0.4 };
 
   const pickAvatar = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();

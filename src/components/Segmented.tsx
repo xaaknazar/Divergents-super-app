@@ -12,14 +12,14 @@ export function Segmented({
   const { width, fontScale } = useWindowDimensions();
   const stacked = fontScale * textScale > 1.3 || (items.length > 3 && width < 400);
   return (
-    <View testID="segmented-control" accessibilityRole="radiogroup" style={{ flexDirection: stacked ? 'column' : 'row', backgroundColor: T.fillTertiary, borderRadius: radius.md, borderCurve: 'continuous', padding: 2, minHeight: minTouch }}>
+    <View testID="segmented-control" accessibilityRole="radiogroup" style={{ flexDirection: stacked ? 'column' : 'row', backgroundColor: T.fillTertiary, borderRadius: stacked ? radius.lg : radius.pill, borderCurve: 'continuous', padding: 3, minHeight: minTouch }}>
       {items.map((s, i) => {
         const on = i === value;
         return (
           <Pressable key={i} onPress={() => { hSelect(); onChange?.(i); }} accessibilityRole="radio"
             disabled={!onChange} accessibilityLabel={s} accessibilityState={{ checked: on, selected: on, disabled: !onChange }} style={({ pressed }) => ({
             flex: stacked ? undefined : 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.65 : 1,
-            minHeight: minTouch, paddingVertical: 8, paddingHorizontal: space.xs, backgroundColor: on ? T.systemBg : 'transparent', borderRadius: radius.sm,
+            minHeight: minTouch, paddingVertical: 8, paddingHorizontal: space.xs, backgroundColor: on ? T.systemBg : 'transparent', borderRadius: stacked ? radius.md : radius.pill,
             borderCurve: 'continuous',
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
           })}>
