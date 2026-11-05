@@ -3,6 +3,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { ReadingChallengeContent, ReadingChallengeContentProps } from '../ReadingChallengeContent';
 import { ReadingChallengeForm } from '../ReadingChallengeForm';
 import { ReadingBookHistoryCard } from '../ReadingBookHistoryCard';
+import { ReadingRankRow } from '../ReadingRankRow';
 import { ReadingBookField } from '../ReadingBookField';
 import { ReadingRankingContent } from '../ReadingRankingContent';
 import { ReadingDiary } from '../ReadingDiary';
@@ -45,10 +46,13 @@ test('legacy waiting and review fields cannot exclude anyone; sorting does not m
   expect(readingStandings([...ranking, newcomer])[0]).toMatchObject({ member: newcomer, place: 1 });
 });
 test('rank row: even a first-day reader with no pages has a place and a zero pace', async () => {
-  const me = { ...individualReadingFixture.me!, userId: 'zero', name: 'Дана', pages: 0, averagePages: 0, daysParticipated: 1, readingDays: 0, flags: 0 };
-  const v = await render(<ThemePreviewProvider><ReadingRankingContent data={{ ...individualReadingFixture, ranking: [me], me }} /></ThemePreviewProvider>);
-  expect(v.getByText('0 дней чтения')).toBeTruthy();
-  expect(v.getByLabelText(/1 место\. Дана\. это вы\..*средний темп 0 стр\/день/)).toBeTruthy();
+  const v = await render(<ThemePreviewProvider><ReadingRankRow place={2} name="Нурлан" readingDays={13} flags={2} pace={36.5} pages={511} /></ThemePreviewProvider>);
+  expect(v.getByText('13 дней чтения')).toBeTruthy(); expect(v.getByText('36,5 стр/день')).toBeTruthy(); expect(v.getByText('стр/день')).toBeTruthy();
+  expect(v.getByLabelText(/2 место\. Нурлан\..*красных флагов: 2/)).toBeTruthy();
+  await v.rerender(<ThemePreviewProvider><ReadingRankRow place={5} name="Дана" readingDays={0} flags={0} pace={0} pages={0} isMe /></ThemePreviewProvider>);
+  expect(v.getByLabelText(/5 место\. Дана\..*средний темп 0 стр\/день/)).toBeTruthy();
+  expect(v.getByText('вы')).toBeTruthy();
+  expect(v.getByText('стр/день')).toBeTruthy();
 });
 test('ranking explanation and rules describe first-day calendar-day pace without a review queue', async () => {
   const v = await render(<ThemePreviewProvider><ReadingRankingContent data={individualReadingFixture} /></ThemePreviewProvider>);
