@@ -13,7 +13,7 @@ import { tr } from '../state/LanguageContext';
 import { fmtDecimal } from '../data/format';
 import { hSelect } from '../lib/haptics';
 import type { MemberTaskProgress } from '../data/community';
-import { useColorWash, useWashGlass, WashSurface } from './ColorWash';
+import { CLEAR_GLASS, useColorWash, useGlassControl, useWashGlass, WashSurface } from './ColorWash';
 
 export type RankingTab = 'teams' | 'members';
 
@@ -42,6 +42,7 @@ export function ChallengeRankingHeader({ title = 'Divergents Challenge', season 
   const { T, ty } = useTheme();
   const wash = useColorWash();
   const glass = useWashGlass();
+  const seasonGlass = useGlassControl(false);
   // На цветном фоне шапка белая, как в Apple Sports; без фона — цветом текста.
   const ink = wash ? '#FFFFFF' : T.label;
   return (
@@ -56,8 +57,8 @@ export function ChallengeRankingHeader({ title = 'Divergents Challenge', season 
       {season ? (
         <View testID="ranking-season" accessible accessibilityLabel={`${tr('Сезон')} ${season}`}
           style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center', borderRadius: radius.pill, borderCurve: 'continuous',
-            backgroundColor: glass ?? T.brandTinted, borderWidth: glass ? 0.5 : 0, borderColor: 'rgba(255,255,255,0.35)' }}>
-          <Text style={[ty.headline, { color: wash ? '#FFFFFF' : T.brandText }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
+            backgroundColor: glass ?? seasonGlass.thumb, borderWidth: 0.5, borderColor: glass ? CLEAR_GLASS.rim : seasonGlass.trackRim }}>
+          <Text style={[ty.headline, { color: wash ? '#FFFFFF' : T.label }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
         </View>
       ) : null}
     </View>
@@ -83,7 +84,8 @@ export function RankingCard({ caption, tabs, value, onChange, children }: {
 
 /** Маленький переключатель-капсулы внутри карточки, например «Все | Моя команда». */
 export function PillToggle({ items, value, onChange, label }: { items: string[]; value: number; onChange: (index: number) => void; label: string }) {
-  const { T, ty } = useTheme();
+  const { ty } = useTheme();
+  const g = useGlassControl(false);
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', justifyContent: 'center', columnGap: 8, paddingTop: 8 }}>
       {items.map((item, i) => {
@@ -92,8 +94,10 @@ export function PillToggle({ items, value, onChange, label }: { items: string[];
           <Pressable key={item} onPress={() => { hSelect(); onChange(i); }} accessibilityRole="radio" accessibilityLabel={item}
             accessibilityState={{ checked: on, selected: on }}
             style={({ pressed }) => ({ minHeight: minTouch, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-            <View style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderCurve: 'continuous', backgroundColor: on ? T.brand : T.brandTinted }}>
-              <Text style={[ty.subheadEm, { color: on ? T.onBrand : T.brandText }]}>{item}</Text>
+            <View style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderCurve: 'continuous', borderWidth: 0.5,
+              backgroundColor: on ? g.thumb : g.track, borderColor: on ? g.thumbRim : g.trackRim,
+              ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } } : null) }}>
+              <Text style={[on ? ty.subheadEm : ty.subhead, { color: on ? g.onInk : g.offInk }]}>{item}</Text>
             </View>
           </Pressable>
         );
