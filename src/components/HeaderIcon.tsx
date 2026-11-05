@@ -6,9 +6,11 @@ import { GlassButton } from './GlassButton';
  * как в iOS 26 (Liquid Glass); `primary` — главное действие на стекле цвета бренда.
  * `floating` оставлен для совместимости и выглядит так же, как обычная.
  */
-export function HeaderIcon({ name, onPress, onLongPress, badge, label, variant = 'plain' }: {
+export function HeaderIcon({ name, onPress, onLongPress, badge, label, variant = 'plain', danger, scheme }: {
   name: string; onPress?: () => void; onLongPress?: () => void; badge?: number; label: string;
-  variant?: 'plain' | 'floating' | 'primary';
+  variant?: 'plain' | 'floating' | 'primary'; danger?: boolean;
+  /** На цветной шапке или фото — 'dark'. */
+  scheme?: 'light' | 'dark';
 }) {
-  return <GlassButton icon={name} onPress={onPress} onLongPress={onLongPress} badge={badge} label={label} prominent={variant === 'primary'} />;
+  return <GlassButton icon={name} onPress={onPress} onLongPress={onLongPress} badge={badge} label={label} prominent={variant === 'primary'} danger={danger} scheme={scheme} />;
 }

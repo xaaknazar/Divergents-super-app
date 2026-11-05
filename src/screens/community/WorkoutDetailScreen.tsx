@@ -4,6 +4,7 @@ import { ContentBlock } from '../../components/ContentBlock';
 //
 // Здесь, в отличие от списка, карта настоящая: человек пришёл смотреть именно
 // маршрут, и одна карта на экран — это нормально.
+import { HeaderIcon } from '../../components/HeaderIcon';
 import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
@@ -155,9 +156,7 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader backLabel={tr('Тренировки')} onBack={() => navigation.goBack()} trailing={
-          <Pressable onPress={confirmDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel={tr('Удалить тренировку')}>
-            <SF name="trash.fill" size={18} color={T.red} />
-          </Pressable>
+          <HeaderIcon name="trash.fill" danger label={tr('Удалить тренировку')} onPress={confirmDelete} />
         } />
 
       {/* Прокрутка: карта, цифры и подробности не помещаются на экран целиком,

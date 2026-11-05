@@ -2,6 +2,7 @@ import { ContentBlock } from '../../components/ContentBlock';
 import { IconBadge } from '../../components/IconBadge';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Wrapper } from '../../components/Wrapper';
+import { HeaderIcon } from '../../components/HeaderIcon';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { nums } from '../../theme/tokens';
@@ -206,8 +207,8 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
       {/* Gradient hero background */}
       <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} trailing={isChallengeManager
-            ? <Pressable onPress={confirmDelete} hitSlop={10} accessibilityRole="button" accessibilityLabel="Удалить челлендж"><SF name="trash.fill" size={19} color="#fff" /></Pressable>
-            : <Pressable onPress={shareChallenge} hitSlop={10} accessibilityRole="button" accessibilityLabel={tr('Поделиться')}><SF name="square.and.arrow.up" size={20} color="#fff" /></Pressable>} variant="hero" />
+            ? <HeaderIcon name="trash.fill" scheme="dark" label="Удалить челлендж" onPress={confirmDelete} />
+            : <HeaderIcon name="square.and.arrow.up" scheme="dark" label={tr('Поделиться')} onPress={shareChallenge} />} variant="hero" />
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 22, position: 'relative' }}>
           <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
             <SF name={meta.icon} size={120} color="#fff" />
@@ -646,10 +647,7 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <Aurora />
       <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} trailing={(
-        <Pressable onPress={openMenu} accessibilityRole="button" accessibilityLabel={tr('Меню челленджа')}
-          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <SF name="list.bullet" size={21} color={T.brandAccent} />
-        </Pressable>
+        <HeaderIcon name="list.bullet" label={tr('Меню челленджа')} onPress={openMenu} />
       )} variant="plain" />
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 16, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>

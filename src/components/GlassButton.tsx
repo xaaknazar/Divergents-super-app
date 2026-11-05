@@ -9,11 +9,13 @@ import { minTouch } from '../theme/tokens';
 import { GlassSurface } from './GlassSurface';
 import { SF } from './SFIcon';
 
-export function GlassButton({ icon, onPress, onLongPress, label, prominent = false, scheme, badge, size = minTouch }: {
+export function GlassButton({ icon, onPress, onLongPress, label, prominent = false, danger = false, scheme, badge, size = minTouch }: {
   icon: string; onPress?: () => void; onLongPress?: () => void;
   /** Подпись для VoiceOver: у иконки нет текста. */
   label: string;
   prominent?: boolean;
+  /** Удаляющее действие: красный глиф на обычном стекле. */
+  danger?: boolean;
   /** Поверх фото — 'dark'. По умолчанию — тема приложения. */
   scheme?: 'light' | 'dark';
   badge?: number;
@@ -21,7 +23,9 @@ export function GlassButton({ icon, onPress, onLongPress, label, prominent = fal
 }) {
   const { T, ty, isDark } = useTheme();
   const dark = scheme ? scheme === 'dark' : isDark;
-  const glyph = prominent ? '#FFFFFF' : dark ? '#FFFFFF' : T.label;
+  // Светлое стекло поверх фото (scheme="light") светлое и в тёмной теме — глиф на нём всегда тёмный,
+  // иначе белая стрелка пропадает на светлом кадре.
+  const glyph = prominent ? '#FFFFFF' : danger ? T.redText : scheme === 'light' ? '#1C1C1E' : dark ? '#FFFFFF' : T.label;
   return <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} onLongPress={onLongPress} disabled={!onPress}
     accessibilityRole="button" accessibilityLabel={badge ? `${label}. ${badge}` : label} accessibilityState={{ disabled: !onPress }}
     hitSlop={Math.max(0, (minTouch - size) / 2)}

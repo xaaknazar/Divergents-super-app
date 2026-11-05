@@ -80,7 +80,7 @@ export function NavHeader({
     }}>
       {/* iOS 26: «назад» — круглая стеклянная кнопка со стрелкой, без подписи. Куда ведёт кнопка,
           VoiceOver по-прежнему называет экран, куда она ведёт. На hero-шапке стекло тёмное. */}
-      {onBack ? <GlassButton icon="chevron.left" onPress={onBack} scheme={variant === 'hero' ? 'dark' : undefined}
+      {onBack ? <GlassButton icon={backLabel === 'Закрыть' ? 'xmark' : 'chevron.left'} onPress={onBack} scheme={variant === 'hero' ? 'dark' : undefined}
         label={backLabel} /> : <View style={{ width: 8 }} />}
 
       {title && !largeTitle && !stackedTitle ? <Text accessibilityRole="header" style={[ty.headline, { color: titleColor, flex: 1, textAlign: 'center', marginHorizontal: 8 }]}>{title}</Text> : null}

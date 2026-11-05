@@ -1,6 +1,7 @@
 import { Wrapper } from '../../components/Wrapper';
 import { ContentBlock } from '../../components/ContentBlock';
 import { NavHeader } from '../../components/NavHeader';
+import { HeaderIcon } from '../../components/HeaderIcon';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, Pressable, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Share, RefreshControl } from 'react-native';
@@ -208,9 +209,7 @@ export function ServerChannelScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader backLabel="Каналы" onBack={() => navigation.goBack()} trailing={!owner ? (
-        <Pressable onPress={moderateChannel} hitSlop={10} accessibilityRole="button" accessibilityLabel="Пожаловаться или заблокировать">
-          <SF name="ellipsis" size={18} color={T.label} />
-        </Pressable>
+        <HeaderIcon name="ellipsis" label="Пожаловаться или заблокировать" onPress={moderateChannel} />
       ) : undefined} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }} showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}>
