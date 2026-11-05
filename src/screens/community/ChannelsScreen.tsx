@@ -13,6 +13,7 @@ import { SF } from '../../components/SFIcon';
 import { EmptyState, ErrorState } from '../../components/StateViews';
 import { useChannel } from '../../state/ChannelContext';
 import { tr } from '../../state/LanguageContext';
+import { word } from '../../data/plural';
 import { CommunityStackParams } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'Channels'>;
@@ -58,10 +59,9 @@ export function ChannelsScreen({ navigation }: Props) {
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{ch.name}</Text>
                 {secondary ? <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{secondary}</Text> : null}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                  <SF name="doc.text.fill" size={10} color={T.labelTertiary} />
-                  <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{posts.length}{closed ? ` · ${tr('Закрытый')}` : ` · ${tr('Открытый')}`}</Text>
-                </View>
+                <Text style={[ty.caption1, { color: T.labelTertiary }]} numberOfLines={1}>
+                  {posts.length} {tr(word(posts.length, 'пост', 'поста', 'постов'))} · {closed ? tr('закрытый') : tr('открытый')}
+                </Text>
               </View>
               {joined && count > 0 ? (
                 <View style={{ minWidth: 22, height: 22, borderRadius: 11, borderCurve: 'continuous', paddingHorizontal: 6, backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>

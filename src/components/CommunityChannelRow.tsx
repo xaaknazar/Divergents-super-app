@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet,Text,View } from 'react-native';
 import { Channel } from '../data/channel';
+import { word } from '../data/plural';
 import { CommunityStackParams } from '../navigation/types';
 import { useChannel } from '../state/ChannelContext';
 import { tr } from '../state/LanguageContext';
@@ -59,18 +60,17 @@ export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: 
           </View>
           <View style={[styles.text, cover ? styles.textCover : null]}>
             <View style={styles.titleRow}>
-              <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{channel.name}</Text>
+              {/* Две строки: «Книжный клуб Divergents» не превращается в «Книжный клуб Diver…». */}
+              <Text style={[ty.headline, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{channel.name}</Text>
               {channel.verified ? <SF name="checkmark.seal.fill" size={16} color={T.sky} /> : null}
             </View>
             {secondary ? (
               <Text style={[ty.subhead, { color: T.labelSecondary }]} numberOfLines={1}>{secondary}</Text>
             ) : null}
-            <View style={styles.meta}>
-              <SF name="doc.text.fill" size={10} color={T.labelTertiary} />
-              <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>
-                {posts.length}{closed ? ` · ${tr('Закрытый')}` : ` · ${tr('Открытый')}`}
-              </Text>
-            </View>
+            {/* Словами, а не «📄 3 · Открытый»: значок документа с числом не читался как «3 поста». */}
+            <Text style={[ty.caption1, { color: T.labelTertiary }]} numberOfLines={1}>
+              {posts.length} {tr(word(posts.length, 'пост', 'поста', 'постов'))} · {closed ? tr('закрытый') : tr('открытый')}
+            </Text>
           </View>
           {joined && count > 0 ? (
             <View style={[styles.count, { backgroundColor: T.brand }]}>
@@ -102,7 +102,6 @@ const styles = StyleSheet.create({
   text: { flex: 1, minWidth: 0, gap: 2 },
   textCover: { paddingTop: 10 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 },
   count: { minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
-  open: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999 },
+  open: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999 },
 });
