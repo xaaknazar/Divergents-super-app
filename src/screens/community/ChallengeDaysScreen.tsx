@@ -15,6 +15,7 @@ import { View, Text, Pressable, Modal, ScrollView, StyleSheet, useWindowDimensio
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../theme/ThemeContext';
 import { nums } from '../../theme/tokens';
+import { ColorWash } from '../../components/ColorWash';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
@@ -260,8 +261,9 @@ export function ChallengeDaysScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+      <ColorWash />
       <NavHeader backLabel={tr('Челлендж')} onBack={() => navigation.goBack()} />
-      <Screen tabPadding={false} topInset={false}>
+      <Screen tabPadding={false} topInset={false} aurora={false} surface="transparent">
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
           {/* У завершённого челленджа это уже не дневник, а итоги, — и человек
               должен видеть это первой строкой, до того как начнёт искать

@@ -19,8 +19,9 @@ export function ChallengeRankingHeader({ title = 'Divergents Challenge', season 
     <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
       <View accessible accessibilityRole="header" accessibilityLabel={title}
         style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', columnGap: 8 }}>
-        {/* На цветном фоне синий логотип сливается — тогда тело знака цветом текста. */}
-        <Logo size={34} body={isDark ? '#FFFFFF' : wash ? T.label : undefined} />
+        {/* На тёмном или цветном фоне фирменные синие части логотипа сливаются
+            с фоном — тогда знак целиком цветом заголовка (белый в тёмной теме). */}
+        <Logo size={34} body={isDark || wash ? T.label : undefined} head={isDark || wash ? T.label : undefined} />
         <Text style={[ty.title1, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{title}</Text>
       </View>
       {season ? (

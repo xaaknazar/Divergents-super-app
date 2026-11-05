@@ -16,7 +16,7 @@ import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { Logo } from '../../components/Logo';
-import { Aurora } from '../../components/Aurora';
+import { ColorWash } from '../../components/ColorWash';
 import { ListSection, ListRow, Button } from '../../components/ui';
 import { ChallengeTaskRow } from '../../components/ChallengeTaskRow';
 import { MemberAvatar } from '../../components/MemberAvatar';
@@ -644,7 +644,8 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <Aurora />
+      {/* Цветной фон как в Apple Sports — из цветов «Персонализации». */}
+      <ColorWash />
       <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} trailing={(
         <HeaderIcon name="list.bullet" label={tr('Меню челленджа')} onPress={openMenu} />
       )} variant="plain" />
