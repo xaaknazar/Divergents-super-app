@@ -12,7 +12,6 @@ import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { MemberAvatar } from '../../components/MemberAvatar';
-import { AwardBadge } from '../../components/AwardBadge';
 import { ListSection, Button } from '../../components/ui';
 import { EmptyState } from '../../components/StateViews';
 import { tr } from '../../state/LanguageContext';
@@ -132,7 +131,6 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
                       <Text style={[ty.body, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>
                         {m.name}{m.isMe ? <Text style={[ty.caption1, { color: T.brand }]}>{`  · ${tr('вы')}`}</Text> : null}
                       </Text>
-                      {m.award ? <AwardBadge size={15} /> : null}
                     </View>
                     {/* m.day — это БАЛЛЫ ЗА СЕГОДНЯ, а не номер дня: подпись
                         «День 45» читалась как 45-й день челленджа. */}

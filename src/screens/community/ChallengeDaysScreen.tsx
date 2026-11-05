@@ -19,7 +19,6 @@ import { ColorWash } from '../../components/ColorWash';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
-import { AwardBadge } from '../../components/AwardBadge';
 import { ListSection, Segmented } from '../../components/ui';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { EmptyState, ErrorState } from '../../components/StateViews';
@@ -721,7 +720,6 @@ function MemberDayRow({ r, past, last }: { r: TeamDayRow; past: boolean; last: b
               <Text style={[ty.subheadEm, { color: r.isMe ? T.brand : T.label, flexShrink: 1 }]} numberOfLines={1}>
                 {r.name}{r.isMe ? ` · ${tr('вы')}` : ''}
               </Text>
-              {r.award ? <AwardBadge size={14} /> : null}
             </View>
             {left || !showStats ? (
               <Text style={[ty.caption1, { color: missed ? T.redText : T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>

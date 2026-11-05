@@ -260,7 +260,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       )} />
 
       <Wrapper marginHorizontal={16} marginBottom={14}>
-        <ProfileSummary name={name} email={email} photoUrl={photoUrl} completeness={completeness} award={!!challengeStats.award}
+        <ProfileSummary name={name} email={email} photoUrl={photoUrl} completeness={completeness}
           talent={profile?.mbtiType ? `MBTI · ${profile.mbtiName || `${profile.mbtiType} ${mbtiName(profile.mbtiType)}`}` : undefined}
           onEdit={editAnketa} />
       </Wrapper>

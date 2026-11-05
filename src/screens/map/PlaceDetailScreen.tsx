@@ -11,7 +11,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
-import { AwardBadge } from '../../components/AwardBadge';
 import { Button } from '../../components/ui';
 import { Stars } from '../../components/Stars';
 import { NavHeader } from '../../components/NavHeader';
@@ -233,7 +232,6 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 }}>
                       <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]} numberOfLines={1}>{rev.author}</Text>
-                      {rev.award ? <AwardBadge size={14} /> : null}
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Text style={[ty.caption2, { color: T.labelTertiary }]} numberOfLines={1}>{rev.date}</Text>

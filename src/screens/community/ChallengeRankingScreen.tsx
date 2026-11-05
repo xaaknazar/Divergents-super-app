@@ -41,7 +41,6 @@ export function memberRows(members: ReadonlyArray<OverallStanding>): StandingRow
     flags: totalFlags(m.flags),
     points: m.points, isMine: m.isMe,
     dimmed: m.eliminated || m.left === true,
-    award: m.award,
   }));
 }
 

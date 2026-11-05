@@ -3,12 +3,11 @@ import { Image } from 'expo-image';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeContext';
-import { AwardBadge } from './AwardBadge';
 import { ProgressRing } from './ProgressRing';
 import { SF } from './SFIcon';
 import { StatusBadge } from './StatusBadge';
-export function ProfileSummary({ name, email, photoUrl, completeness, talent, award, onEdit }: {
- name: string; email?: string | null; photoUrl?: string | null; completeness: number; talent?: string; award?: boolean; onEdit: () => void;
+export function ProfileSummary({ name, email, photoUrl, completeness, talent, onEdit }: {
+ name: string; email?: string | null; photoUrl?: string | null; completeness: number; talent?: string; onEdit: () => void;
 }) {
  const { T, ty, textScale = 1 } = useTheme();
  const { fontScale } = useWindowDimensions();
@@ -35,12 +34,8 @@ export function ProfileSummary({ name, email, photoUrl, completeness, talent, aw
               </View>
             )}
             <View style={{ flex: 1 }}>
-              {/* Награда 🏆 за победу в челлендже — рядом со своим именем.
-                  Её видит и сам человек: награда, которую видно только другим,
-                  наградой не ощущается. */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={[ty.title2, { color: T.onBrand, flexShrink: 1 }]}>{name}</Text>
-                {award ? <AwardBadge size={18} /> : null}
               </View>
               <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 2 }]}>
                 {email ?? 'Divergents'}

@@ -2,7 +2,6 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { BookComment } from '../data/books';
 import { useTheme } from '../theme/ThemeContext';
-import { AwardBadge } from './AwardBadge';
 import { Button } from './Button';
 import { ContentBlock } from './ContentBlock';
 import { Wrapper } from './Wrapper';
@@ -15,7 +14,6 @@ export function BookCommentCard({ comment, onEdit, onDelete }: { comment: BookCo
   return <ContentBlock size="compact"><View style={{ gap: 10 }}>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
       <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]}>{comment.author}{comment.mine ? ' · вы' : ''}</Text>
-      {comment.award ? <AwardBadge size={16} /> : null}
     </View>
     {label ? <Text style={[ty.caption1, { color: T.labelSecondary }]}>{label}</Text> : null}
     <Text style={[ty.body, { color: T.label }]}>{comment.content}</Text>

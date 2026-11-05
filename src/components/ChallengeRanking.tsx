@@ -50,16 +50,28 @@ export interface ChallengeRankingCardProps {
 
 const TABS: RankingTab[] = ['teams', 'members'];
 
+/** Карточка «Рейтинг» как в Apple Sports: заголовок, подпись, переключатель и таблица. */
+export function RankingCard({ caption, tabs, value, onChange, children }: {
+  caption?: string; tabs: string[]; value: number; onChange?: (index: number) => void; children: React.ReactNode;
+}) {
+  const { T, ty } = useTheme();
+  return (
+    <WashSurface testID="ranking-card" radius={radius.block}><View style={{ paddingTop: 16, paddingBottom: 8 }}>
+      <Text accessibilityRole="header" style={[ty.headline, { color: T.label, textAlign: 'center' }]}>{tr('Рейтинг')}</Text>
+      {caption ? <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginTop: 2, paddingHorizontal: 16 }]}>{caption}</Text> : null}
+      <View style={{ paddingHorizontal: 12, paddingTop: 14 }}>
+        <Segmented items={tabs} value={value} onChange={onChange} />
+      </View>
+      {children}
+    </View></WashSurface>
+  );
+}
+
 export function ChallengeRankingCard({ tab, onTab, teams, members, caption, emptyText }: ChallengeRankingCardProps) {
   const { T, ty } = useTheme();
   const rows = tab === 'teams' ? teams : members;
   return (
-    <WashSurface testID="challenge-ranking-card" radius={radius.block}><View style={{ paddingTop: 16, paddingBottom: 8 }}>
-      <Text accessibilityRole="header" style={[ty.headline, { color: T.label, textAlign: 'center' }]}>{tr('Рейтинг')}</Text>
-      {caption ? <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginTop: 2, paddingHorizontal: 16 }]}>{caption}</Text> : null}
-      <View style={{ paddingHorizontal: 12, paddingTop: 14 }}>
-        <Segmented items={[tr('Команды'), tr('Участники')]} value={TABS.indexOf(tab)} onChange={onTab ? (i) => onTab(TABS[i]) : undefined} />
-      </View>
+    <RankingCard caption={caption} tabs={[tr('Команды'), tr('Участники')]} value={TABS.indexOf(tab)} onChange={onTab ? (i) => onTab(TABS[i]) : undefined}>
       {rows.length ? (
         <StandingsTable nameColumn={tab === 'teams' ? tr('Команда') : tr('Участник')} rows={rows} />
       ) : (
@@ -67,6 +79,6 @@ export function ChallengeRankingCard({ tab, onTab, teams, members, caption, empt
           {emptyText ?? tr('Рейтинг ещё пуст')}
         </Text>
       )}
-    </View></WashSurface>
+    </RankingCard>
   );
 }

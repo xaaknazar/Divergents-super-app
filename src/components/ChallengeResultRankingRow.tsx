@@ -6,7 +6,6 @@ import * as pl from '../data/plural';
 import { tr } from '../state/LanguageContext';
 import { useTheme } from '../theme/ThemeContext';
 import { nums } from '../theme/tokens';
-import { AwardBadge } from './AwardBadge';
 import { MemberAvatar } from './MemberAvatar';
 import { SF } from './SFIcon';
 
@@ -41,7 +40,6 @@ export function ChallengeResultRankingRow(props: Props) {
       <View style={{ flex: stacked ? undefined : 1, minWidth: 0, gap: 3 }}>
         <Text style={[ty.body, { color: T.label }]}>{row.name}{mine ? ` · ${props.kind === 'team' ? tr('ваша') : tr('вы')}` : ''}</Text>
         {subtitle ? <Text style={[ty.caption1, { color: T.labelSecondary }]}>{subtitle}</Text> : null}
-        {props.kind === 'member' && props.row.award ? <AwardBadge size={16} /> : null}
       </View>
       <View style={{ alignItems: stacked ? 'flex-start' : 'flex-end' }}>
         <Text style={[ty.headline, nums, { color: mine ? T.brandText : T.label }]}>{fmtInt(row.points)}</Text>

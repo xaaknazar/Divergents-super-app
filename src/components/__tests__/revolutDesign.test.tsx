@@ -50,12 +50,11 @@ it('keeps chat sending disabled for empty text and during a response', async () 
   await fireEvent.press(view.getByRole('button', { name: 'Отправить сообщение' }));
   expect(onSend).toHaveBeenCalledTimes(1);
 });
-it('keeps profile editing, progress and award visible with long names', async () => {
+it('keeps profile editing and progress visible with long names, without a trophy by the name', async () => {
   const onEdit = jest.fn();
-  const view = await render(theme(<ProfileSummary name="Очень длинное имя участника сообщества" completeness={75} award onEdit={onEdit} />));
+  const view = await render(theme(<ProfileSummary name="Очень длинное имя участника сообщества" completeness={75} onEdit={onEdit} />));
   expect(view.getByText('Очень длинное имя участника сообщества').props.numberOfLines).toBeUndefined();
   expect(view.getByRole('progressbar').props.accessibilityValue.now).toBe(75);
-  expect(view.getByLabelText('Награда за первое место в челлендже')).toBeTruthy();
   await fireEvent.press(view.getByRole('button', { name: 'Редактировать анкету' }));
   expect(onEdit).toHaveBeenCalledTimes(1);
 });
