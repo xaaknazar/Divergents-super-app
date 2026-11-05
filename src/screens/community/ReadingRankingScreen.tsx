@@ -19,7 +19,7 @@ export function ReadingRankingScreen({ route, navigation }: NativeStackScreenPro
   const { T } = useTheme();
   const state = useReadingRanking(route.params.challengeId);
   return <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-    <ColorWash />
+    <ColorWash strength="strong" />
     <NavHeader backLabel="Назад" onBack={() => navigation.goBack()} />
     <Screen topInset={false} onRefresh={state.retry} aurora={false} surface="transparent">
       <ChallengeRankingHeader title="Divergents Reading" />

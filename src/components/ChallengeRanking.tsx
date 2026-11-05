@@ -16,27 +16,33 @@ import type { MemberTaskProgress } from '../data/community';
 import { useColorWash, WashSurface } from './ColorWash';
 
 export type RankingTab = 'teams' | 'members';
+
+/** Фирменные цвета знака Divergents — не меняются с темой. */
+const BRAND_LOGO = { body: '#234088', head: '#3D5BDB' };
 export type RankingPeriod = 'overall' | 'today';
 
 export function ChallengeRankingHeader({ title = 'Divergents Challenge', season }: { title?: string; season?: number | null }) {
-  const { T, ty, isDark } = useTheme();
+  const { T, ty } = useTheme();
   const wash = useColorWash();
+  // На цветном фоне шапка белая, как в Apple Sports; без фона — цветом текста.
+  const ink = wash ? '#FFFFFF' : T.label;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 12, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
       <View accessible accessibilityRole="header" accessibilityLabel={title}
-        style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', columnGap: 8 }}>
-        {/* На тёмном или цветном фоне фирменные синие части логотипа сливаются
-            с фоном — тогда знак целиком цветом заголовка (белый в тёмной теме). */}
-        <Logo size={34} body={isDark || wash ? T.label : undefined} head={isDark || wash ? T.label : undefined} />
-        <Text style={[ty.title1, { color: T.label, flexShrink: 1 }]} numberOfLines={2}>{title}</Text>
+        style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', columnGap: 10 }}>
+        {/* Логотип всегда в фирменных цветах — на белой плашке, как значок
+            приложения: так он виден на любом фоне и в любой теме. */}
+        <View testID="ranking-logo" style={{ width: 44, height: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: '#FFFFFF',
+          alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
+          <Logo size={30} body={BRAND_LOGO.body} head={BRAND_LOGO.head} />
+        </View>
+        <Text style={[ty.title1, { color: ink, flexShrink: 1 }]} numberOfLines={2}>{title}</Text>
       </View>
       {season ? (
-        <View testID="ranking-season" accessible accessibilityLabel={`${tr('Сезон')} ${season}`}>
-          <WashSurface radius={radius.pill}>
-            <View style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' }}>
-              <Text style={[ty.headline, { color: T.label }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
-            </View>
-          </WashSurface>
+        <View testID="ranking-season" accessible accessibilityLabel={`${tr('Сезон')} ${season}`}
+          style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center', borderRadius: radius.pill, borderCurve: 'continuous',
+            backgroundColor: wash ? 'rgba(255,255,255,0.22)' : T.brandTinted, borderWidth: wash ? 0.5 : 0, borderColor: 'rgba(255,255,255,0.45)' }}>
+          <Text style={[ty.headline, { color: wash ? '#FFFFFF' : T.brandText }]} numberOfLines={1}>{tr('Сезон')} {season}</Text>
         </View>
       ) : null}
     </View>
@@ -71,8 +77,8 @@ export function PillToggle({ items, value, onChange, label }: { items: string[];
           <Pressable key={item} onPress={() => { hSelect(); onChange(i); }} accessibilityRole="radio" accessibilityLabel={item}
             accessibilityState={{ checked: on, selected: on }}
             style={({ pressed }) => ({ minHeight: minTouch, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-            <View style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderCurve: 'continuous', backgroundColor: on ? T.brand : T.fillTertiary }}>
-              <Text style={[ty.subheadEm, { color: on ? T.onBrand : T.labelSecondary }]}>{item}</Text>
+            <View style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderCurve: 'continuous', backgroundColor: on ? T.brand : T.brandTinted }}>
+              <Text style={[ty.subheadEm, { color: on ? T.onBrand : T.brandText }]}>{item}</Text>
             </View>
           </Pressable>
         );

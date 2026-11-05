@@ -13,13 +13,15 @@ export function useColorWash(): boolean {
   return !!useTheme().auroraColors;
 }
 
-export function ColorWash() {
+export function ColorWash({ strength = 'soft' }: { strength?: 'soft' | 'strong' }) {
   const { isDark, auroraColors } = useTheme();
   if (!auroraColors) return null;
   const [c1, c2, c3] = auroraColors;
   // В тёмной теме цвет глубже и плотнее, в светлой — мягче, чтобы чёрный
   // текст шапки оставался читаемым.
-  const a = isDark ? 0.9 : 0.5;
+  // strong — как шапка команды в Apple Sports: насыщенный цвет, на нём белый
+  // заголовок. soft — мягкий оттенок для экранов с тёмным текстом наверху.
+  const a = strength === 'strong' ? (isDark ? 0.95 : 0.92) : isDark ? 0.9 : 0.5;
   return (
     <View testID="color-wash" pointerEvents="none" style={StyleSheet.absoluteFill}>
       <LinearGradient

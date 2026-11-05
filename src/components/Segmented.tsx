@@ -5,16 +5,25 @@ import { minTouch, radius, space } from '../theme/tokens';
 import { hSelect } from '../lib/haptics';
 import { SF, SFName } from './SFIcon';
 
+/**
+ * Переключатель в цвете бренда, без серого: дорожка — лёгкий оттенок акцента,
+ * ползунок — белый с текстом акцента (в тёмной теме — акцент с белым текстом).
+ * `glass` — для цветного фона (как в Apple Sports): прозрачная белая дорожка,
+ * белый ползунок, остальные подписи белые.
+ */
 export function Segmented({
-  items, value, onChange, leadingIcons,
-}: { items: string[]; value: number; onChange?: (i: number) => void; leadingIcons?: (SFName | string)[] }) {
+  items, value, onChange, leadingIcons, variant = 'standard',
+}: { items: string[]; value: number; onChange?: (i: number) => void; leadingIcons?: (SFName | string)[]; variant?: 'standard' | 'glass' }) {
   const { T, ty, isDark, textScale = 1 } = useTheme();
-  // iOS: в тёмной теме ползунок светло-серый, а не чёрный — иначе он тонет в карточке.
-  const thumb = isDark ? '#636366' : T.systemBg;
+  const glass = variant === 'glass';
+  const track = glass ? (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.24)') : T.brandTinted;
+  const thumb = glass ? '#FFFFFF' : isDark ? T.brand : '#FFFFFF';
+  const onInk = glass ? (isDark ? '#1B2A5C' : T.brand) : isDark ? T.onBrand : T.brandText;
+  const offInk = glass ? '#FFFFFF' : T.brandText;
   const { width, fontScale } = useWindowDimensions();
   const stacked = fontScale * textScale > 1.3 || (items.length > 3 && width < 400);
   return (
-    <View testID="segmented-control" accessibilityRole="radiogroup" style={{ flexDirection: stacked ? 'column' : 'row', backgroundColor: T.fillTertiary, borderRadius: stacked ? radius.lg : radius.pill, borderCurve: 'continuous', padding: 3, minHeight: minTouch }}>
+    <View testID="segmented-control" accessibilityRole="radiogroup" style={{ flexDirection: stacked ? 'column' : 'row', backgroundColor: track, borderRadius: stacked ? radius.lg : radius.pill, borderCurve: 'continuous', padding: 3, minHeight: minTouch }}>
       {items.map((s, i) => {
         const on = i === value;
         return (
@@ -25,8 +34,8 @@ export function Segmented({
             borderCurve: 'continuous',
             ...(on ? { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null),
           })}>
-            {leadingIcons ? <SF name={leadingIcons[i]} size={12} color={T.label} /> : null}
-            <Text style={[ty.footnoteEm, { color: T.label, flexShrink: 1, textAlign: 'center' }]}>{s}</Text>
+            {leadingIcons ? <SF name={leadingIcons[i]} size={12} color={on ? onInk : offInk} /> : null}
+            <Text style={[ty.footnoteEm, { color: on ? onInk : offInk, flexShrink: 1, textAlign: 'center' }]}>{s}</Text>
           </Pressable>
         );
       })}

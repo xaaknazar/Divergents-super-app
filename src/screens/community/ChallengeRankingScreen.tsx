@@ -18,7 +18,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Screen } from '../../components/Screen';
 import { NavHeader } from '../../components/NavHeader';
 import { Wrapper } from '../../components/Wrapper';
-import { ColorWash } from '../../components/ColorWash';
+import { ColorWash, useColorWash } from '../../components/ColorWash';
 import { ErrorState, ListSkeleton } from '../../components/StateViews';
 import { ChallengeRankingCard, ChallengeRankingHeader, PillToggle, RankingPeriod, RankingTab } from '../../components/ChallengeRanking';
 import { memberRows, memberTodayRows, teamRows, teamTodayRows } from '../../components/challengeRankingRows';
@@ -35,6 +35,7 @@ export function ChallengeRankingScreen({ challengeId: routeId, initialTab, onBac
   const [tab, setTab] = useState<RankingTab>(initialTab);
   const [period, setPeriod] = useState<RankingPeriod>('overall');
   const [mineOnly, setMineOnly] = useState(false);
+  const wash = useColorWash();
 
   const isLive = challenge.id === challengeId;
   const liveMembers = isLive ? challenge.overall ?? [] : [];
@@ -68,13 +69,13 @@ export function ChallengeRankingScreen({ challengeId: routeId, initialTab, onBac
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Цветной фон как в Apple Sports — из цветов «Персонализации». */}
-      <ColorWash />
+      <ColorWash strength="strong" />
       <NavHeader backLabel={tr('Челлендж')} onBack={onBack} />
       <Screen tabPadding={false} topInset={false} aurora={false} surface="transparent">
         <ChallengeRankingHeader season={season} />
         {hasToday ? (
           <Wrapper marginHorizontal={16} marginBottom={12}>
-            <Segmented items={[tr('Весь челлендж'), tr('Сегодня')]} value={period === 'overall' ? 0 : 1}
+            <Segmented variant={wash ? 'glass' : 'standard'} items={[tr('Весь челлендж'), tr('Сегодня')]} value={period === 'overall' ? 0 : 1}
               onChange={(i) => setPeriod(i === 0 ? 'overall' : 'today')} />
           </Wrapper>
         ) : null}
