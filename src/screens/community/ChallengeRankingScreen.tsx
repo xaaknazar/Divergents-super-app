@@ -14,7 +14,7 @@ import { NavHeader } from '../../components/NavHeader';
 import { Wrapper } from '../../components/Wrapper';
 import { ErrorState, ListSkeleton } from '../../components/StateViews';
 import { ChallengeRankingCard, ChallengeRankingHeader, RankingTab } from '../../components/ChallengeRanking';
-import { rankChangeOf, StandingRow } from '../../components/StandingsTable';
+import { rankChangeOf, shortPersonName, StandingRow } from '../../components/StandingsTable';
 import { tr } from '../../state/LanguageContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { useChallengeResults } from '../../state/useChallengeResults';
@@ -31,7 +31,7 @@ export function teamRows(teams: ReadonlyArray<TeamStanding | ResultsTeamRow>): S
 
 export function memberRows(members: ReadonlyArray<OverallStanding>): StandingRow[] {
   return members.map((m) => ({
-    id: m.id, rank: m.rank, name: m.name,
+    id: m.id, rank: m.rank, name: shortPersonName(m.name), fullName: m.name,
     // Вышел по белому флагу и выбыл — разные вещи: первое разрешил капитан,
     // второе человек заработал сам.
     subtitle: [m.teamName || tr('без команды'), m.left ? `🏳️ ${tr('вышел')}` : m.eliminated ? tr('выбыл') : ''].filter(Boolean).join(' · '),

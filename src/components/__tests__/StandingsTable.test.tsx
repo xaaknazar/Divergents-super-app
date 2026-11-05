@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import { StandingsTable, StandingRow, rankChangeOf } from '../StandingsTable';
+import { StandingsTable, StandingRow, rankChangeOf, shortPersonName } from '../StandingsTable';
 import { ChallengeRankingCard, ChallengeRankingHeader } from '../ChallengeRanking';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
 
@@ -43,6 +43,11 @@ describe('StandingsTable', () => {
     const view = await table([row('m', 1, 2, 0, { name: 'Алия', subtitle: 'Книжные черви', avatar: { uri: null } })]);
     expect(view.getByText('Книжные черви')).toBeTruthy();
     expect(view.getByTestId('standing-m').props.accessibilityLabel).toContain('поднялся на 2 места');
+  });
+
+  it('shortens a full name like Apple Sports, keeps a one-word nickname', () => {
+    expect(shortPersonName('Мадина Ахметова')).toBe('Мадина А.');
+    expect(shortPersonName('  Aknazar ')).toBe('Aknazar');
   });
 
   it('derives change from previousRank when the server omits rankChange', () => {

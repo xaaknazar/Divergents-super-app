@@ -14,6 +14,8 @@ export interface StandingRow {
   id: string;
   rank: number;
   name: string;
+  /** Полное имя для VoiceOver, если на экране оно сокращено («Мадина А.»). */
+  fullName?: string;
   /** Вторая строка — у участника это команда. */
   subtitle?: string;
   /** Фото участника. У команд фото нет — передайте undefined. */
@@ -43,6 +45,18 @@ export function rankChangeOf(t: { rank: number; previousRank?: number | null; ra
   return null;
 }
 
+/**
+ * Имя как в Apple Sports («L. Norris»), только по-нашему: «Мадина Ахметова» →
+ * «Мадина А.». Так в узкой строке видно имя целиком, а не «Мадина Ахм…».
+ * Псевдоним из одного слова не трогаем.
+ */
+export function shortPersonName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return name.trim();
+  const last = parts[parts.length - 1];
+  return `${parts.slice(0, -1).join(' ')} ${last[0].toUpperCase()}.`;
+}
+
 export function movementLabel(change: number | null, plural: 'team' | 'member' = 'team'): string {
   if (change == null || change === 0) return tr('место не изменилось');
   const n = Math.abs(change);
@@ -59,9 +73,9 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3 }: StandingsTab
   const withAvatars = rows.some((r) => r.avatar);
   // Колонки растут вместе с крупным шрифтом, чтобы числа не слипались.
   const COL_RANK = Math.round(28 * textScale);
-  const COL_MOVE = Math.round(40 * textScale);
-  const COL_FLAG = Math.round(34 * textScale);
-  const COL_PTS = Math.round(60 * textScale);
+  const COL_MOVE = Math.round(38 * textScale);
+  const COL_FLAG = Math.round(30 * textScale);
+  const COL_PTS = Math.round(56 * textScale);
   const AVATAR = Math.round(36 * Math.min(textScale, 1.25));
   const mineBg = isDark ? 'rgba(124,149,255,0.14)' : 'rgba(35,64,136,0.07)';
 
@@ -79,7 +93,7 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3 }: StandingsTab
         const up = (r.change ?? 0) > 0;
         const moved = r.change != null && r.change !== 0;
         const label = [
-          `${r.rank} ${tr('место')}`, r.name, r.isMine ? tr(withAvatars ? 'это вы' : 'ваша команда') : '', r.subtitle ?? '',
+          `${r.rank} ${tr('место')}`, r.fullName ?? r.name, r.isMine ? tr(withAvatars ? 'это вы' : 'ваша команда') : '', r.subtitle ?? '',
           r.change == null ? '' : movementLabel(r.change, withAvatars ? 'member' : 'team'),
           r.flags ? `${tr('флагов')}: ${r.flags}` : '',
           `${r.points} ${tr('очков')}`,
