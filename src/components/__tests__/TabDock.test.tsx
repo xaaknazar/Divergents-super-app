@@ -42,11 +42,11 @@ it.each(['light', 'dark'] as const)('uses the system material and themed translu
   expect(view.getByTestId('tab-dock-blur', hidden).props.tint).toBe(scheme);
   const tint = view.getByTestId('tab-dock-tint', hidden);
   if (scheme === 'dark') expect(flattened(tint).backgroundColor).toBe(hexToRgba(resolveThemePalette(scheme).cardBg, 0.84));
-  else expect(tint.props.colors).toEqual(['rgba(255,255,255,0.58)', 'rgba(244,246,251,0.42)'].map(c => processColor(c)));
+  else expect(tint.props.colors).toEqual(['rgba(255,255,255,0.58)', 'rgba(255,255,255,0.42)'].map(c => processColor(c)));
   const selected = view.getByRole('tab', { name: 'Обучение' });
   await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 340 } } });
   // iOS 26 pill: neutral glass capsule, concentric with the dock (dock radius − 4 pt inset).
-  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).backgroundColor).toBe(scheme === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.065)');
+  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).backgroundColor).toBe(scheme === 'dark' ? 'rgba(255,255,255,0.14)' : hexToRgba(resolveThemePalette('light').brand, 0.10));
   expect(flattened(selected).borderRadius).toBe(TAB_DOCK_HEIGHT / 2 - 4);
   expect(flattened(view.getByTestId('tab-dock-surface'))).toMatchObject({ height: TAB_DOCK_HEIGHT, borderRadius: TAB_DOCK_HEIGHT / 2, overflow: 'hidden' });
   expect(flattened(selected).minHeight).toBeGreaterThanOrEqual(48);

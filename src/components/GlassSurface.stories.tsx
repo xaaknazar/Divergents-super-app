@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-native';
 import React from 'react';
 import { Text } from 'react-native';
 import { GlassSurface } from './GlassSurface';
-const meta = { title: 'Atoms/GlassSurface', component: GlassSurface, args: {
+const meta = { parameters: { reduceTransparency: false }, title: 'Atoms/GlassSurface', component: GlassSurface, args: {
   style: { height: 44, paddingHorizontal: 18, borderRadius: 22 },
   children: <Text>Стекло</Text>,
 } } satisfies Meta<typeof GlassSurface>;

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native';
 import { GlassButton } from './GlassButton';
-const meta = { title: 'Atoms/GlassButton', component: GlassButton, args: { icon: 'chevron.left', label: 'Назад', onPress: () => {} } } satisfies Meta<typeof GlassButton>;
+const meta = { parameters: { reduceTransparency: false }, title: 'Atoms/GlassButton', component: GlassButton, args: { icon: 'chevron.left', label: 'Назад', onPress: () => {} } } satisfies Meta<typeof GlassButton>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Back: Story = {};

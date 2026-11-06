@@ -393,3 +393,12 @@ The schema-2 sidecar retains ten historical HTML/CSS previews of representative 
 - Don't make decorative animation gate saving, rewards or navigation.
 - Don't describe the partial migration, passing tests or JavaScript exports as native visual approval, complete motion review or a mobile release.
 - Don't infer full-flow, physical-device or pixel-diff approval from the four reviewed Reading component captures.
+
+
+## Glass appearance refinement · 2026-11-06
+
+This narrow correction follows the owner's request after build 111 and supersedes older material notes only for shared navigation controls. Light glass has a white base, and its selected tab capsule uses a subtle brand tint rather than a gray fill. Native GlassView explicitly follows the app appearance, including when iOS appearance differs. Navigation action glyphs stay white in both appearances, with the light variant of the user's accent behind them; destructive actions retain a red surface. Disabled controls remain dimmed and inaccessible to activation. The existing tab icons, routing, spring motion and layout are preserved.
+
+GlassSurface owns the semantic `navigation` variant, `tone` and `emphasis`; arbitrary tint overrides were removed. Native and fallback implementations share this contract. Reduced Transparency uses opaque surfaces. GlassNavigationPreview provides isolated Storybook coverage without authentication or API requests.
+
+Finish reviewer disposition: **ship**, limited to the supplied iPhone iOS 26.5 Simulator component captures. Native before/after, cross-appearance and Reduced Transparency evidence, verification and limits are recorded in [glass refinement](docs/glass-light-consistency-2026-11-06.md). This is not a TestFlight release or a physical-device claim. No shipping raster assets were added.

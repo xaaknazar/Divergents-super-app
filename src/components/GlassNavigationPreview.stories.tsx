@@ -1,0 +1,10 @@
+import type { Meta,StoryObj } from '@storybook/react-native';
+import { GlassNavigationPreview } from './GlassNavigationPreview';
+const meta={title:'Навигация/Стекло и иконки',component:GlassNavigationPreview,parameters:{canvasLayout:'screen',reduceTransparency:false,reduceMotion:false}} satisfies Meta<typeof GlassNavigationPreview>;
+export default meta;
+type Story=StoryObj<typeof meta>;
+export const Light:Story={};
+export const Dark:Story={parameters:{scheme:'dark'}};
+export const ReducedTransparency:Story={parameters:{reduceTransparency:true}};
+export const DarkReducedTransparency:Story={parameters:{scheme:'dark',reduceTransparency:true}};
+export const LargeText:Story={parameters:{textSize:'xl'}};

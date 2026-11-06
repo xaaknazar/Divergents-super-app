@@ -2,7 +2,7 @@ import type { Meta,StoryObj } from '@storybook/react-native';
 import { fn } from 'storybook/test';
 import { HeaderIcon } from './HeaderIcon';
 
-const meta = { title: 'Навигация/HeaderIcon', component: HeaderIcon, args: { name: 'bell', label: 'Уведомления', onPress: fn() },
+const meta = { parameters: { reduceTransparency: false }, title: 'Навигация/HeaderIcon', component: HeaderIcon, args: { name: 'bell', label: 'Уведомления', onPress: fn() },
 } satisfies Meta<typeof HeaderIcon>;
 export default meta;
 type Story = StoryObj<typeof meta>;

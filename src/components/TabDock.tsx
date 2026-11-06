@@ -64,7 +64,7 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
   const idle = isDark ? T.labelTertiary : '#8A8F98';
   // Выбранная вкладка: синяя в светлой теме, белая в тёмной — как системные панели iOS 26.
   const active = isDark ? '#FFFFFF' : T.brandText;
-  const capsuleFill = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.065)';
+  const capsuleFill = isDark ? 'rgba(255,255,255,0.14)' : hexToRgba(T.brand, 0.10);
   const capsuleEdge = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)';
   const liquid = nativeGlass && !reduceTransparency;
 
@@ -83,10 +83,11 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
         : shadow({ color: '#234088', opacity: 0.14, radius: 15, y: 10, elevation: 6 })]}>
       <View testID="tab-dock-surface" onLayout={event => setMeasuredWidth(event.nativeEvent.layout.width)} style={[styles.surface, { borderColor: edge }]}>
         <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
-          {liquid ? <GlassView testID="tab-dock-glass" glassEffectStyle="regular" style={StyleSheet.absoluteFill} />
-          : useNativeMaterial ? <BlurView testID="tab-dock-blur" intensity={72}
+          {liquid ? <GlassView testID="tab-dock-glass" glassEffectStyle="clear" colorScheme={isDark ? 'dark' : 'light'}
+            tintColor={isDark ? hexToRgba(T.cardBg, 0.55) : 'rgba(255,255,255,0.62)'} style={StyleSheet.absoluteFill} />
+          : useNativeMaterial ? <BlurView testID="tab-dock-blur" intensity={40}
             tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
-          {liquid ? null : glass ? <LinearGradient testID="tab-dock-tint" colors={['rgba(255,255,255,0.58)', 'rgba(244,246,251,0.42)']}
+          {liquid ? null : glass ? <LinearGradient testID="tab-dock-tint" colors={['rgba(255,255,255,0.58)', 'rgba(255,255,255,0.42)']}
             style={StyleSheet.absoluteFill} />
             : <View testID="tab-dock-tint" style={[StyleSheet.absoluteFill, { backgroundColor: surface }]} />}
         </View>
