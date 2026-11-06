@@ -62,7 +62,7 @@ it.each(['light', 'dark'] as const)('falls back to an opaque legible surface wit
   const view = await render(<ThemePreviewProvider scheme={scheme} reduceTransparency>
     <MapCityButton city="Алматы" country="Казахстан" onPress={jest.fn()} />
   </ThemePreviewProvider>);
-  const surface = StyleSheet.flatten(view.getByTestId('map-city-name').parent!.props.style);
+  const surface = StyleSheet.flatten(view.getByTestId('map-city-name').parent!.parent!.props.style);
   const city = StyleSheet.flatten(view.getByTestId('map-city-name').props.style);
   expect(surface.backgroundColor).toBe(palette.cardBg);
   expect(contrast(city.color, surface.backgroundColor)).toBeGreaterThanOrEqual(4.5);

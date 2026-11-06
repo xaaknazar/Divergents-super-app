@@ -15,7 +15,8 @@ export interface MapCityButtonProps {
 }
 
 /** Город — стеклянная капсула поверх карты, как элементы управления в Картах на iOS 26:
- * стекло подстраивается под тайлы и читается на любом фоне. Длинные названия переносятся. */
+ * стекло подстраивается под тайлы и читается на любом фоне. Страна — мелко под городом;
+ * длинные названия переносятся. */
 export function MapCityButton({ city, country, expanded = false, onPress }: MapCityButtonProps) {
   const { T, ty } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -30,8 +31,11 @@ export function MapCityButton({ city, country, expanded = false, onPress }: MapC
       <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <SF name="location.fill" size={15} color={T.brandText} />
       </View>
-      <Text testID="map-city-name" style={[ty.headline, { color: T.label, flexShrink: 1 }]}>{city}</Text>
-      {country ? <Text testID="map-country-name" style={[ty.subhead, { color: T.labelSecondary, flexShrink: 1 }]}>{country}</Text> : null}
+      {/* Город и страна — столбиком: страна мелко под городом, обе строки с одного левого края. */}
+      <View style={styles.names}>
+        <Text testID="map-city-name" style={[ty.headline, { color: T.label }]}>{city}</Text>
+        {country ? <Text testID="map-country-name" style={[ty.caption1, { color: T.labelSecondary }]}>{country}</Text> : null}
+      </View>
       <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <SF name={expanded ? 'chevron.up' : 'chevron.down'} size={12} color={T.labelSecondary} />
       </View>
@@ -41,7 +45,8 @@ export function MapCityButton({ city, country, expanded = false, onPress }: MapC
 
 const styles = StyleSheet.create({
   button: {
-    flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-start', columnGap: 8,
-    minHeight: minTouch, minWidth: minTouch, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.pill,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', columnGap: 8,
+    minHeight: minTouch, minWidth: minTouch, paddingHorizontal: 16, paddingVertical: 6, borderRadius: radius.pill,
   },
+  names: { flexShrink: 1, alignItems: 'flex-start' },
 });
