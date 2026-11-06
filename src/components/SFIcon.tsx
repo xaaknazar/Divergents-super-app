@@ -18,7 +18,7 @@ export type SFName =
   | 'cart.fill' | 'cart' | 'target' | 'location.fill' | 'bolt.fill' | 'clock' | 'airplane' | 'arrow.down.circle' | 'square.and.arrow.down' | 'trash.fill' | 'creditcard.fill' | 'clock.arrow.circlepath' | 'lock.open.fill' | 'photo' | 'smallcircle.filled.circle' | 'xmark.circle.fill' | 'waveform' | 'doc.text.fill' | 'headphones' | 'eye.fill' | 'person.2.fill' | 'figure.run' | 'brain.head.profile' | 'quote.bubble.fill' | 'quote.bubble' | 'bubble.left' | 'bubble.left.fill' | 'arrow.up'
   | 'heart.text.square.fill' | 'leaf.fill' | 'arrow.up.circle.fill' | 'bookmark'
   | 'bookmark.fill' | 'square.and.arrow.up' | 'ellipsis' | 'lock.fill' | 'lock' | 'face.smiling' | 'arrowshape.turn.up.right.fill'
-  | 'doc.text' | 'doc.fill' | 'circle.fill' | 'circle' | 'list.bullet' | 'map.fill' | 'map'
+  | 'doc.text' | 'doc.fill' | 'doc.on.doc' | 'circle.fill' | 'circle' | 'list.bullet' | 'map.fill' | 'map'
   | 'paperplane.fill' | 'goforward.15' | 'gobackward.15' | 'pause.fill' | 'airplayvideo'
   | 'arrow.up.left.and.arrow.down.right' | 'clock.fill' | 'calendar' | 'graduationcap.fill'
   | 'puzzlepiece.fill' | 'figure.2.and.child.holdinghands' | 'flag.fill' | 'tag.fill'
@@ -46,6 +46,7 @@ const SVG_PATHS: Record<string, string> = {
 };
 // name -> [library, icon]
 const MAP: Record<string, [Lib, string]> = {
+  'doc.on.doc': ['ion', 'copy-outline'],
   'book.fill': ['ion', 'book'], 'book': ['ion', 'book-outline'],
   'sparkles': ['ion', 'sparkles'], 'sparkles.outline': ['ion', 'sparkles-outline'],
   'person.3.fill': ['ion', 'people'], 'person.3': ['ion', 'people-outline'],

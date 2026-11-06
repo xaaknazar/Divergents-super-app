@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { ChannelCard } from '../ChannelCard';
 import { ChannelHero } from '../ChannelHero';
 import { ChannelPostCard } from '../ChannelPostCard';
@@ -8,6 +8,10 @@ import { ThemePreviewProvider } from '../ThemePreviewProvider';
 import { channelDemo, channelDetailDemo, articleDemo, audioDemo, channelActions, channelViewActions } from '../../storybook/channelFixtures';
 
 jest.mock('../SFIcon', () => ({ SF: () => null }));
+jest.mock('expo-blur', () => ({ BlurView: (props: any) => {
+  const { View } = require('react-native');
+  return <View {...props} />;
+} }));
 jest.mock('../GlassSurface', () => ({ GlassSurface: ({ children }: any) => children }));
 jest.mock('../HeaderIcon', () => ({ HeaderIcon: () => null }));
 jest.mock('../Segmented', () => ({ Segmented: ({ items, onChange }: any) => {
@@ -73,8 +77,10 @@ test('post controls retain play, reaction and owner delete callbacks', async () 
   const props = { onPlay, onReact, onDelete };
   const v = await render(frame(<ChannelPostCard post={audioDemo} playing owner {...props} />));
   await fireEvent.press(v.getByRole('button', { name: 'Приостановить аудио' }));
-  await fireEvent.press(v.getByRole('button', { name: 'Добавить реакцию' }));
-  await fireEvent.press(v.getByRole('button', { name: 'Огонь' }));
+  expect(v.queryByRole('button', { name: 'Добавить реакцию' })).toBeNull();
+  await fireEvent(v.getByTestId(`channel-message-${audioDemo.id}`), 'longPress');
+  await fireEvent.press(v.getByRole('button', { name: 'Реакция: Огонь' }));
+  await waitFor(() => expect(v.queryByTestId('channel-reaction-panel')).toBeNull());
   await fireEvent.press(v.getByRole('button', { name: 'Удалить публикацию' }));
   expect(onPlay).toHaveBeenCalledTimes(1); expect(onReact).toHaveBeenCalledWith('🔥'); expect(onDelete).toHaveBeenCalledTimes(1);
   await v.rerender(frame(<ChannelPostCard post={articleDemo} {...props} />));
@@ -114,4 +120,37 @@ test('channel information keeps management out of the reading feed', async () =>
   expect(v.queryByRole('button', { name: 'Управление' })).toBeNull();
   await fireEvent.press(v.getByRole('button', { name: `О канале ${channelDetailDemo.name}` }));
   expect(v.getByRole('button', { name: 'Управление' })).toBeTruthy();
+});
+
+test('existing reactions remain tappable and a long press opens all five choices without sending one', async () => {
+  const onReact = jest.fn();
+  const v = await render(<ThemePreviewProvider reduceMotion reduceTransparency={false}><ChannelPostCard post={articleDemo} onPlay={() => {}} onReact={onReact} onDelete={() => {}} /></ThemePreviewProvider>);
+  await fireEvent.press(v.getByRole('button', { name: 'Огонь: 4' }));
+  expect(onReact).toHaveBeenCalledWith('🔥'); onReact.mockClear();
+  await fireEvent(v.getByTestId(`channel-message-${articleDemo.id}`), 'longPress');
+  expect(v.getAllByRole('button', { name: /^Реакция:/ })).toHaveLength(5);
+  expect(v.getByRole('button', { name: 'Реакция: Любовь' }).props.accessibilityState.selected).toBe(true);
+  expect(onReact).not.toHaveBeenCalled();
+  expect(v.getByTestId('reaction-blur')).toBeTruthy();
+  await fireEvent.press(v.getByRole('button', { name: 'Закрыть выбор реакции' }));
+  expect(v.queryByTestId('channel-reaction-panel')).toBeNull();
+  expect(onReact).not.toHaveBeenCalled();
+});
+
+test('assistive action opens reactions without a hidden emoji button, respects reduced transparency', async () => {
+  const v = await render(<ThemePreviewProvider reduceMotion reduceTransparency><ChannelPostCard post={articleDemo} onPlay={() => {}} onReact={() => {}} onDelete={() => {}} /></ThemePreviewProvider>);
+  await fireEvent(v.getByText(articleDemo.title), 'accessibilityAction', { nativeEvent: { actionName: 'react' } });
+  expect(v.getByTestId('reaction-opaque-backdrop')).toBeTruthy();
+  expect(v.queryByTestId('reaction-blur')).toBeNull();
+  await fireEvent.press(v.getByRole('button', { name: 'Реакция: Спасибо' }));
+  expect(v.queryByTestId('channel-reaction-panel')).toBeNull();
+});
+
+test('changing the post closes its picker instead of reacting to a different post', async () => {
+  const props = { onPlay: jest.fn(), onReact: jest.fn(), onDelete: jest.fn() };
+  const v = await render(frame(<ChannelPostCard post={articleDemo} {...props} />));
+  await fireEvent(v.getByTestId(`channel-message-${articleDemo.id}`), 'longPress');
+  await v.rerender(frame(<ChannelPostCard post={audioDemo} {...props} />));
+  expect(v.queryByTestId('channel-reaction-panel')).toBeNull();
+  expect(props.onReact).not.toHaveBeenCalled();
 });
