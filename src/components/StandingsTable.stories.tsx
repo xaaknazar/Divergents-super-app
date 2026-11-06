@@ -31,3 +31,18 @@ export const Members: Story = { args: { nameColumn: 'Участник', rows: me
 export const FirstDay: Story = { args: { rows: teams.map((t) => ({ ...t, change: null })) } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { args: { nameColumn: 'Участник', rows: members }, parameters: { textSize: 'xl', viewport: 'compact' } };
+
+const readingRows: StandingRow[] = [
+  { ...member('r1', 'Алия', '17 дней чтения', 1, 1005, null), value: '1 005', secondary: '59,1' },
+  { ...member('r2', 'Бекназар', '15 дней чтения', 2, 838, null, 2), value: '838', secondary: '55,9' },
+  { ...member('r3', 'Александра', '14 дней чтения', 3, 761, null, 4, true), value: '761', secondary: '54,4' },
+];
+export const ReadingPages: Story = {
+  args: { nameColumn: 'Участник', rows: readingRows, showMove: false, valueColumn: 'Стр.', secondaryColumn: 'Стр/день' },
+};
+export const ReadingPace: Story = {
+  args: { ...ReadingPages.args, valueColumn: 'Стр/день', secondaryColumn: 'Стр.',
+    rows: readingRows.map(row => ({ ...row, value: row.secondary, secondary: row.value })) },
+};
+export const ReadingNarrow: Story = { args: ReadingPages.args, parameters: { viewport: 'compact' } };
+export const ReadingLargeText: Story = { args: ReadingPace.args, parameters: { viewport: 'compact', textSize: 'xl', scheme: 'dark' } };
