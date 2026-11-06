@@ -13,11 +13,11 @@ export const Light: Story = {};
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
 const withPicture = { ...channel, avatar: 'https://picsum.photos/seed/divergents-channel/600/400' };
-/** На главной: целая обложка, название и одна строка действия. */
-export const Cover: Story = { args: { channel: withPicture, variant: 'cover' } };
-export const CoverDark: Story = { args: { channel: withPicture, variant: 'cover' }, parameters: { scheme: 'dark' } };
-export const CoverLargeText: Story = { args: { channel: withPicture, variant: 'cover' }, parameters: { textSize: 'xl', viewport: 'compact' } };
-export const CoverPortrait: Story = { args: { channel: { ...withPicture, avatar: 'https://picsum.photos/seed/divergents-channel/400/600' }, variant: 'cover' } };
-export const CoverSquare: Story = { args: { channel: { ...withPicture, avatar: 'https://picsum.photos/seed/divergents-channel/600/600' }, variant: 'cover' } };
+/** На главной: круглый аватар, название и превью публикации. */
+export const Cover: Story = { args: { channel: withPicture } };
+export const CoverDark: Story = { args: { channel: withPicture }, parameters: { scheme: 'dark' } };
+export const CoverLargeText: Story = { args: { channel: withPicture }, parameters: { textSize: 'xl', viewport: 'compact' } };
+export const CoverPortrait: Story = { args: { channel: { ...withPicture, avatar: 'https://picsum.photos/seed/divergents-channel/400/600' } } };
+export const CoverSquare: Story = { args: { channel: { ...withPicture, avatar: 'https://picsum.photos/seed/divergents-channel/600/600' } } };
 /** Без картинки сохраняется композиция с инициалом канала. */
-export const CoverWithoutPicture: Story = { args: { variant: 'cover' } };
+export const CoverWithoutPicture: Story = { args: {  } };

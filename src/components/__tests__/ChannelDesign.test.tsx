@@ -8,7 +8,7 @@ import { ThemePreviewProvider } from '../ThemePreviewProvider';
 import { channelDemo, channelDetailDemo, articleDemo, audioDemo, channelActions, channelViewActions } from '../../storybook/channelFixtures';
 
 jest.mock('../SFIcon', () => ({ SF: () => null }));
-jest.mock('../NavHeader', () => ({ NavHeader: () => null }));
+jest.mock('../GlassSurface', () => ({ GlassSurface: ({ children }: any) => children }));
 jest.mock('../HeaderIcon', () => ({ HeaderIcon: () => null }));
 jest.mock('../Segmented', () => ({ Segmented: ({ items, onChange }: any) => {
   const { Pressable, Text, View } = require('react-native');
@@ -48,6 +48,7 @@ test('approved private member can read and filter posts; deletion of final audio
   const privateChannel = { ...channelDetailDemo, access: 'request' as const };
   const v = await render(frame(<ChannelDetailView {...channelViewActions} channel={privateChannel} membership="approved" />));
   expect(v.getByText(articleDemo.title)).toBeTruthy();
+  await fireEvent.press(v.getByRole('button', { name: 'Поиск по каналу' }));
   await fireEvent.press(v.getByRole('radio', { name: 'Аудио' }));
   expect(v.queryByText(articleDemo.title)).toBeNull();
   expect(v.getByText(audioDemo.title)).toBeTruthy();
@@ -67,17 +68,17 @@ test('owner has create, requests and manage; nonowner has none of those', async 
   expect(v.queryByRole('button', { name: 'Управление' })).toBeNull();
 });
 
-test('post controls retain play, reaction, expansion and owner delete callbacks', async () => {
-  const onPlay = jest.fn(), onReact = jest.fn(), onDelete = jest.fn(), onExpand = jest.fn();
-  const props = { onPlay, onReact, onDelete, onExpand };
+test('post controls retain play, reaction and owner delete callbacks', async () => {
+  const onPlay = jest.fn(), onReact = jest.fn(), onDelete = jest.fn();
+  const props = { onPlay, onReact, onDelete };
   const v = await render(frame(<ChannelPostCard post={audioDemo} playing owner {...props} />));
   await fireEvent.press(v.getByRole('button', { name: 'Приостановить аудио' }));
+  await fireEvent.press(v.getByRole('button', { name: 'Добавить реакцию' }));
   await fireEvent.press(v.getByRole('button', { name: 'Огонь' }));
   await fireEvent.press(v.getByRole('button', { name: 'Удалить публикацию' }));
   expect(onPlay).toHaveBeenCalledTimes(1); expect(onReact).toHaveBeenCalledWith('🔥'); expect(onDelete).toHaveBeenCalledTimes(1);
   await v.rerender(frame(<ChannelPostCard post={articleDemo} {...props} />));
-  await fireEvent.press(v.getByRole('button', { name: 'Читать далее' }));
-  expect(onExpand).toHaveBeenCalledTimes(1);
+  expect(v.getByText(articleDemo.body!)).toBeTruthy();
   expect(v.queryByRole('button', { name: 'Удалить публикацию' })).toBeNull();
 });
 
@@ -89,4 +90,28 @@ test('missing channel offers retry and empty channel does not claim loading fail
   await v.rerender(frame(<ChannelDetailView {...channelViewActions} channel={{ ...channelDetailDemo, posts: [] }} />));
   expect(v.getByText('Здесь пока тихо')).toBeTruthy();
   expect(v.queryByText('Канал не найден')).toBeNull();
+});
+
+
+test('search can find body text and close restores all posts', async () => {
+  const v = await render(frame(<ChannelDetailView {...channelViewActions} channel={channelDetailDemo} />));
+  await fireEvent.press(v.getByRole('button', { name: 'Поиск по каналу' }));
+  await fireEvent.changeText(v.getByLabelText('Поиск по публикациям'), 'запишите');
+  expect(v.getByText(articleDemo.title)).toBeTruthy();
+  expect(v.queryByText(audioDemo.title)).toBeNull();
+  await fireEvent.press(v.getAllByRole('button', { name: 'Закрыть поиск' })[0]);
+  expect(v.getByText(audioDemo.title)).toBeTruthy();
+});
+
+test('private discovery preview does not expose embedded post title', async () => {
+  const v = await render(frame(<ChannelCard channel={{ ...channelDemo, access: 'request' }} postCount={2}
+    latestTitle="Секретная публикация" onOpen={() => {}} />));
+  expect(v.queryByText('Секретная публикация')).toBeNull();
+});
+
+test('channel information keeps management out of the reading feed', async () => {
+  const v = await render(frame(<ChannelDetailView {...channelViewActions} channel={channelDetailDemo} owner />));
+  expect(v.queryByRole('button', { name: 'Управление' })).toBeNull();
+  await fireEvent.press(v.getByRole('button', { name: `О канале ${channelDetailDemo.name}` }));
+  expect(v.getByRole('button', { name: 'Управление' })).toBeTruthy();
 });

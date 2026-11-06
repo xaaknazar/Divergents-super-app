@@ -17,7 +17,7 @@ export type SFName =
   | 'mappin.circle.fill' | 'mappin.and.ellipse' | 'person.fill' | 'building.2.fill'
   | 'cart.fill' | 'cart' | 'target' | 'location.fill' | 'bolt.fill' | 'clock' | 'airplane' | 'arrow.down.circle' | 'square.and.arrow.down' | 'trash.fill' | 'creditcard.fill' | 'clock.arrow.circlepath' | 'lock.open.fill' | 'photo' | 'smallcircle.filled.circle' | 'xmark.circle.fill' | 'waveform' | 'doc.text.fill' | 'headphones' | 'eye.fill' | 'person.2.fill' | 'figure.run' | 'brain.head.profile' | 'quote.bubble.fill' | 'quote.bubble' | 'bubble.left' | 'bubble.left.fill' | 'arrow.up'
   | 'heart.text.square.fill' | 'leaf.fill' | 'arrow.up.circle.fill' | 'bookmark'
-  | 'bookmark.fill' | 'square.and.arrow.up' | 'ellipsis' | 'lock.fill' | 'lock'
+  | 'bookmark.fill' | 'square.and.arrow.up' | 'ellipsis' | 'lock.fill' | 'lock' | 'face.smiling' | 'arrowshape.turn.up.right.fill'
   | 'doc.text' | 'doc.fill' | 'circle.fill' | 'circle' | 'list.bullet' | 'map.fill' | 'map'
   | 'paperplane.fill' | 'goforward.15' | 'gobackward.15' | 'pause.fill' | 'airplayvideo'
   | 'arrow.up.left.and.arrow.down.right' | 'clock.fill' | 'calendar' | 'graduationcap.fill'
@@ -85,6 +85,7 @@ const MAP: Record<string, [Lib, string]> = {
   'arrow.up.circle.fill': ['ion', 'arrow-up-circle'],
   'bookmark': ['ion', 'bookmark-outline'], 'bookmark.fill': ['ion', 'bookmark'],
   'square.and.arrow.up': ['ion', 'share-outline'], 'ellipsis': ['ion', 'ellipsis-horizontal'],
+  'face.smiling': ['ion', 'happy-outline'], 'arrowshape.turn.up.right.fill': ['ion', 'arrow-redo'],
   'lock.fill': ['ion', 'lock-closed'], 'lock': ['ion', 'lock-closed-outline'],
   'doc.text': ['ion', 'document-text-outline'], 'doc.fill': ['ion', 'document'],
   'circle.fill': ['ion', 'ellipse'], 'circle': ['ion', 'ellipse-outline'],

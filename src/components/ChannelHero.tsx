@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ServerChannel } from '../data/api';
 import { word } from '../data/plural';
+import { useChannelAppearance } from './useChannelAppearance';
 import { useTheme } from '../theme/ThemeContext';
 import { ChannelArtwork } from './ChannelArtwork';
 import { Button } from './Button';
@@ -21,7 +22,14 @@ export interface ChannelHeroProps {
 }
 export function ChannelHero({ channel, owner = false, membership, busy = false,
   requestCount = 0, onJoin, onCreatePost, onRequests, onManage }: ChannelHeroProps) {
-  const { T, ty } = useTheme();
+  const { T } = useTheme();
+  const C = useChannelAppearance();
+  const ty = {
+    title1: { fontSize: 25 * C.textScale, fontWeight: '700' as const },
+    subhead: { fontSize: 15 * C.textScale }, footnote: { fontSize: 13 * C.textScale },
+    body: { fontSize: 17 * C.textScale, lineHeight: 24 * C.textScale },
+    headline: { fontSize: 17 * C.textScale, fontWeight: '600' as const },
+  };
   const [expanded, setExpanded] = useState(false);
   const joined = membership === 'subscribed' || membership === 'approved';
   const pending = membership === 'requested';

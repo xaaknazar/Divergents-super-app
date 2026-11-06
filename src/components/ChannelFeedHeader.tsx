@@ -15,13 +15,11 @@ export function ChannelFeedHeader({ posts, value, onChange }: {
     ...(posts.some(p => p.type === 'audio') ? [{ key: 'audio' as const, label: 'Аудио' }] : []),
   ];
   return <View style={styles.header}>
-    <View style={styles.heading}><Text accessibilityRole="header" style={[ty.title2, { color: T.label }]}>Публикации</Text>
-      <Text style={[ty.subhead, { color: T.labelSecondary }]}>{posts.length}</Text></View>
     {options.length > 2 ? <Segmented items={options.map(o => o.label)} value={Math.max(0, options.findIndex(o => o.key === value))}
       onChange={index => onChange(options[index].key)} /> : null}
   </View>;
 }
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, gap: 14 },
+  header: { paddingTop: 2 },
   heading: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
 });

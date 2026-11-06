@@ -51,7 +51,7 @@ export function CommunityFeed({ navigation, setSeg, trips, sport, challenges, er
       </Wrapper>
       {channels.length === 0
         ? <ContentEmptyState error={channelsError} onRetry={reloadChannels} icon="tray" title={tr('Пока ничего нет')} subtitle={tr('Каналы сообщества появятся здесь.')} />
-        : channels.map((ch) => <CommunityChannelRow key={ch.id} channel={ch} navigation={navigation} variant="cover" />)}
+        : channels.map((ch) => <CommunityChannelRow key={ch.id} channel={ch} navigation={navigation} />)}
 
       <Wrapper marginTop={12}>
         <SectionHeader title={t('upcoming_trips')} action={t('all')} onAction={() => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(3); }} />
