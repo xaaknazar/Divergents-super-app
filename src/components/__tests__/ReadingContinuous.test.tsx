@@ -29,9 +29,9 @@ test('page report preserves its calculated continuation point', async () => {
   await fireEvent.press(v.getByRole('button', { name: 'Сохранить подход' }));
   expect(p.onReport).toHaveBeenCalledWith(22, 43);
 });
-test('standings rank everyone by average page pace from their first day', () => {
+test('standings rank qualified readers by average page pace', () => {
   const rows = readingStandings(individualReadingFixture.ranking);
-  expect(rows.map(r => [r.member.name, r.place])).toEqual([['Аружан', 1], ['Нурлан', 2], ['Ербол', 3], ['Акназар', 4], ['Дана', 5]]);
+  expect(rows.map(r => [r.member.name, r.place])).toEqual([['Аружан', 1], ['Нурлан', 2], ['Ербол', 3], ['Акназар', 4], ['Дана', 21]]);
   const tie = readingStandings([{ ...rows[0].member, userId: 'a', averagePages: 10, daysParticipated: 5 }, { ...rows[0].member, userId: 'b', averagePages: 10, daysParticipated: 9 }]);
   expect(tie.map(r => r.member.userId)).toEqual(['b', 'a']);
 });
@@ -39,10 +39,10 @@ test('legacy waiting and review fields cannot exclude anyone; sorting does not m
   const ranking = individualReadingFixture.ranking.map(m => ({ ...m, rankingEligible: false, rankingPending: true, qualificationDaysLeft: 10 }));
   const before = ranking.map(m => m.userId);
   const rows = readingStandings(ranking);
-  expect(rows.map(r => r.place)).toEqual([1, 2, 3, 4, 5]);
+  expect(rows.map(r => r.place)).toEqual([1, 2, 3, 4, 21]);
   expect(ranking.map(m => m.userId)).toEqual(before);
   const newcomer = { ...ranking[0], userId: 'new', averagePages: 100, daysParticipated: 1, readingDays: 0 };
-  expect(readingStandings([...ranking, newcomer])[0]).toMatchObject({ member: newcomer, place: 1 });
+  expect(readingStandings([...ranking, newcomer]).find(row => row.member.userId === 'new')).toMatchObject({ member: newcomer, place: 21 });
 });
 test('rank row: even a first-day reader with no pages has a place and a zero pace', async () => {
   const me = { ...individualReadingFixture.me!, userId: 'zero', name: 'Дана', pages: 0, averagePages: 0, daysParticipated: 1, readingDays: 0, flags: 0 };
@@ -95,4 +95,13 @@ test('creation is individual: no teams, captains or duration', async () => {
   expect(v.queryByText(/Псевдоним капитана/)).toBeNull();
   await fireEvent.press(v.getByRole('button', { name: 'Опубликовать' }));
   expect(onSubmit).toHaveBeenCalledWith({ title: 'Читаем каждый день', startDate: '2199-01-01', durationDays: 1, mode: 'continuous', teams: [] });
+});
+
+test('challenge home shows the same protected pace place and remaining calendar days as the table', async () => {
+  const p = props();
+  const me = { ...individualReadingFixture.me!, daysParticipated: 1, pages: 200, averagePages: 200 };
+  p.data = { ...individualReadingFixture, me, ranking: individualReadingFixture.ranking.map(m => m.userId === me.userId ? me : m) };
+  p.awaitingPages = false;
+  const v = await render(<ThemePreviewProvider><ReadingChallengeContent {...p} /></ThemePreviewProvider>);
+  expect(v.getByRole('button', { name: /Мой рейтинг\..*По среднему темпу: 21 место\. До допуска в топ-20 по темпу: 6 дней участия/ })).toBeTruthy();
 });
