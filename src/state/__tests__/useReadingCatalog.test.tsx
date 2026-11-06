@@ -19,6 +19,10 @@ jest.mock('../persist', () => ({
 const catalog = { enabled: true, challenges: [{ id: 'reading', title: 'Extreme reading', startDate: '2026-10-20',
   durationDays: 1, mode: 'continuous' as const, phase: 'active' as const, membership: 'approved' as const }] };
 const fetchCatalog = jest.mocked(fetchReadingCatalog);
+const choices = { enabled: true, challenges: [
+  { ...catalog.challenges[0], id: 'extreme', level: 'extreme' as const, membership: null },
+  { ...catalog.challenges[0], id: 'moderate', title: 'Moderate reading', level: 'moderate' as const, membership: null },
+] };
 function saveCatalog(value: unknown = catalog, age = 0) {
   mockDisk[READING_CATALOG_CACHE_KEY] = [[readingCatalogKey('reader'), { data: value, updatedAt: Date.now() - age }]];
 }
@@ -139,4 +143,52 @@ test('retry replaces cached cards with the current server catalog when connectio
   fetchCatalog.mockResolvedValue({ enabled: true, challenges: [] });
   await act(async () => { await h.result.current.retry(); });
   expect(h.result.current.items).toEqual([]); expect(h.result.current.error).toBe(false);
+});
+
+test.each(['extreme', 'moderate'])('shows only the joined %s challenge and keeps both in the offline cache', async id => {
+  const joined = { ...choices, challenges: choices.challenges.map(item => ({ ...item,
+    membership: item.id === id ? 'approved' as const : null })) };
+  fetchCatalog.mockResolvedValue(joined);
+  const h = await renderHook(useReadingCatalog);
+  await waitFor(() => expect(h.result.current.items.map(item => item.id)).toEqual([id]));
+  expect(readingCatalogCache.get(readingCatalogKey('reader')).data).toEqual(joined);
+  const disk = JSON.parse(JSON.stringify(mockDisk));
+  await h.unmount(); await readingCatalogCache.reset(); mockDisk = disk;
+  mockToken.mockResolvedValue(null);
+  const offline = await renderHook(useReadingCatalog);
+  await waitFor(() => expect(offline.result.current.error).toBe(true));
+  expect(offline.result.current.items.map(item => item.id)).toEqual([id]);
+});
+
+test.each([null, 'pending', 'rejected'] as const)('keeps both reading choices without approved participation (%s)', async membership => {
+  fetchCatalog.mockResolvedValue({ ...choices, challenges: choices.challenges.map(item => ({ ...item, membership })) });
+  const h = await renderHook(useReadingCatalog);
+  await waitFor(() => expect(h.result.current.items.map(item => item.id)).toEqual(['extreme', 'moderate']));
+});
+
+test.each(['finished', 'completed-year'] as const)('past participation does not hide other reading modes (%s)', async ended => {
+  fetchCatalog.mockResolvedValue({ ...choices, challenges: [
+    { ...choices.challenges[0], membership: 'approved', phase: ended === 'finished' ? 'finished' : 'active',
+      period: ended === 'completed-year' ? { startsAt: 1, endsAt: 2, totalDays: 365, personalDay: 365, completed: true } : undefined },
+    choices.challenges[1],
+  ] });
+  const h = await renderHook(useReadingCatalog);
+  await waitFor(() => expect(h.result.current.items.map(item => item.id)).toEqual(['extreme', 'moderate']));
+});
+
+test('joining and leaving update discovery, with account isolation preserved', async () => {
+  fetchCatalog.mockResolvedValue(choices);
+  const h = await renderHook(useReadingCatalog);
+  await waitFor(() => expect(h.result.current.items).toHaveLength(2));
+  fetchCatalog.mockResolvedValue({ ...choices, challenges: [
+    { ...choices.challenges[0], membership: 'approved' }, choices.challenges[1],
+  ] });
+  await act(async () => { await h.result.current.retry(); });
+  expect(h.result.current.items.map(item => item.id)).toEqual(['extreme']);
+  fetchCatalog.mockResolvedValue(choices);
+  await act(async () => { await h.result.current.retry(); });
+  expect(h.result.current.items.map(item => item.id)).toEqual(['extreme', 'moderate']);
+  mockUserId = 'other'; mockToken.mockResolvedValue(null);
+  await h.rerender(undefined);
+  expect(h.result.current.items).toEqual([]);
 });

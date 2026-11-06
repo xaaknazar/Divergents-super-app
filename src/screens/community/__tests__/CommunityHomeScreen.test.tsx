@@ -202,10 +202,13 @@ it('opens the detail retry screen instead of denying access when participation c
   expect(Alert.alert).not.toHaveBeenCalled();
 });
 
-it('opens saved Reading from both home and challenges even when every community request is offline', async () => {
+it('shows and opens only joined Reading on home and challenges even while offline', async () => {
   await readingCatalogCache.reset();
   await readingCatalogCache.load(readingCatalogKey('offline-reader'), async () => ({ enabled: true, challenges: [{
     id: 'reading-offline', title: 'Extreme reading', phase: 'active', membership: 'approved',
+    mode: 'continuous', startDate: '2026-10-20', durationDays: 1,
+  }, {
+    id: 'moderate-offline', title: 'Moderate reading', phase: 'active', membership: null,
     mode: 'continuous', startDate: '2026-10-20', durationDays: 1,
   }] }));
   jest.mocked(useAuth).mockReturnValue({ isSignedIn: true, userId: 'offline-reader', getToken: async () => null } as unknown as ReturnType<typeof useAuth>);
@@ -213,10 +216,12 @@ it('opens saved Reading from both home and challenges even when every community 
   mockUseChallenge.mockReturnValue({ ...mockUseChallenge(), loading: true });
   const view = await render(screen());
   await waitFor(() => expect(view.getByText('Не удалось обновить список. Сохранённые челленджи можно открыть.')).toBeTruthy());
+  expect(view.queryByText('Moderate reading')).toBeNull();
   await fireEvent.press(view.getByText('Extreme reading'));
   expect(navigate).toHaveBeenLastCalledWith('ReadingChallenge', { challengeId: 'reading-offline' });
   navigate.mockClear();
   await fireEvent.press(view.getByRole('tab', { name: 'sec_challenges' }));
+  expect(view.queryByText('Moderate reading')).toBeNull();
   await fireEvent.press(view.getByText('Extreme reading'));
   expect(navigate).toHaveBeenLastCalledWith('ReadingChallenge', { challengeId: 'reading-offline' });
   await view.unmount();
