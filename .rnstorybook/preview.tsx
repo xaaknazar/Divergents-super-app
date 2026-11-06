@@ -4,7 +4,7 @@ import { StoryCanvas } from '../src/components/StoryCanvas';
 
 const preview: Preview = {
   decorators: [(Story, context) => (
-    <StoryCanvas scheme={context.parameters.scheme ?? 'light'}
+    <StoryCanvas scheme={context.parameters.scheme ?? 'light'} background={context.parameters.background} accent={context.parameters.accent}
       textSize={context.parameters.textSize ?? 'md'} viewport={context.parameters.viewport ?? 'phone'}
       layout={context.parameters.canvasLayout ?? 'content'}
       reduceMotion={context.parameters.reduceMotion ?? true}

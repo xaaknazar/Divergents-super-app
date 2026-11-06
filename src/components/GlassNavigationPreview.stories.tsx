@@ -8,3 +8,6 @@ export const Dark:Story={parameters:{scheme:'dark'}};
 export const ReducedTransparency:Story={parameters:{reduceTransparency:true}};
 export const DarkReducedTransparency:Story={parameters:{scheme:'dark',reduceTransparency:true}};
 export const LargeText:Story={parameters:{textSize:'xl'}};
+
+export const OverColour:Story={parameters:{background:'sunrise'}};
+export const OverColourDark:Story={parameters:{background:'sunrise',scheme:'dark'}};

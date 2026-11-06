@@ -45,3 +45,14 @@ The owner reported the previously documented truncation and requested a fix. The
 - No TestFlight upload, physical-device or Android visual check in this follow-up.
 
 Follow-up finish reviewer: **disposition: ship**, limited to the corrected tab labels and supplied native captures. The 11pt minimum and full title at320/402pt were confirmed; no remaining material findings.
+
+
+## Follow-up: buttons refract the real backdrop
+
+Owner explicitly rejected the action buttons' own colored fill. Native navigation GlassView now has no tintColor and uses clear material; non-native fallback removes its brand fill and keeps backdrop blur/highlights. The native glass remains explicitly tied to the app appearance. The action glyphs remain white; SF owns a semantic onGlass contour: four small glyph offsets for font icons and a thin stroke for SVG icons. Underlays are excluded from accessibility and touch input; disabled actions have a muted contour. The icon foreground stays white, and no scrim fills the button. No cosmetic style override was added to callers.
+
+Destructive and prominent states use glass rims rather than colored fills. Reduced Transparency intentionally uses opaque controls, respecting the system accessibility setting. Badge colors, tab routing, springs and full Community labels are preserved.
+
+Added Storybook SFIcon contrast states and the existing navigation preview over the real ColorWash sunrise theme. StoryCanvas now receives background/accent parameters from the story decorator. Test evidence: 1155 full Jest tests passed, 46 targeted tests passed, TypeScript passed; native preview uses the existing simulator binary with the actual updated JS components. No TestFlight build or physical-device/Android visual check was performed. Native captures in the evidence directory: backdrop-light.png, backdrop-colour.png, backdrop-dark.png, backdrop-reduced.png. No generated raster assets ship.
+
+Backdrop-glass finish review: **disposition: ship**, limited to the corrected contrast and supplied iOS26.5 Simulator captures. White glyphs read on white; local outlines do not add a button fill; native glass still follows the actual background. No remaining material findings.

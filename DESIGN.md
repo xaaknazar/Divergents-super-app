@@ -407,3 +407,8 @@ Finish reviewer disposition: **ship**, limited to the supplied iPhone iOS 26.5 S
 ### Full tab titles · 2026-11-06 follow-up
 
 The owner subsequently requested that «Сообщество» be visible in full. Tab slots now give long names more horizontal room instead of reserving identical widths for «AI» and «Сообщество». Targets retain a 44pt minimum on supported phone widths. Native layout measures every full title in its bold font; labels stay at least 11pt, with no automatic shrinking. Focus rings are overlaid and do not consume title space. Both the capsule's position and width spring between destinations. Oversized accessibility text retains the icon-only mode and full native large-content/VoiceOver title. The unused shortLabel/SHORT_RU API was removed. Actual native 402pt and constrained 320pt captures show the full selected title; regression suites pass.
+
+
+### Backdrop glass · 2026-11-06 owner correction
+
+The owner's subsequent clarification removes the navigation controls' own blue fill. This supersedes the earlier accent-filled action treatment above: navigation GlassView now uses clear material with no tintColor, sampling the real backdrop. The fallback retains blur, a light rim and highlights without a colored fill. White glyphs remain white in both appearances; their local contrast treatment is owned by SF's semantic `contrast="onGlass"` option, not by painting the button. Destructive actions use a red rim; prominent actions use a stronger clear rim. Reduced Transparency intentionally retains an opaque accessible alternative. Tab layout and its full Community title are unchanged.

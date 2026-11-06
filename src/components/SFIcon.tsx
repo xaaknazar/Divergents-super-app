@@ -3,6 +3,7 @@
 // Глифы, которых нет в шрифтах, нарисованы вручную как SVG (viewBox 24) — ветка `svg`.
 import { Ionicons,MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import Svg,{ Path } from 'react-native-svg';
 
 export type SFName =
@@ -143,17 +144,32 @@ export interface SFProps {
   name: SFName | string;
   size?: number;
   color?: string;
+  /** Локальный контур глифа сохраняет белую иконку читаемой на прозрачном стекле. */
+  contrast?: 'onGlass' | 'onGlassMuted';
 }
 
-export function SF({ name, size = 20, color = '#000' }: SFProps) {
+export function SF({ name, size = 20, color = '#000', contrast }: SFProps) {
   const [lib, icon] = MAP[name] ?? ['ion', 'ellipse-outline'];
+  const outline = contrast === 'onGlassMuted' ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.78)';
   if (lib === 'svg') {
-    return <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={SVG_PATHS[icon]} fill={color} /></Svg>;
+    return <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={SVG_PATHS[icon]} fill={color} stroke={contrast ? outline : undefined} strokeWidth={contrast ? 0.75 : 0} strokeLinejoin="round" /></Svg>;
   }
-  if (lib === 'mci') {
-    return <MaterialCommunityIcons name={icon as any} size={size} color={color} />;
-  }
-  return <Ionicons name={icon as any} size={size} color={color} />;
+  const Icon = lib === 'mci' ? MaterialCommunityIcons : Ionicons;
+  if (!contrast) return <Icon name={icon as any} size={size} color={color} />;
+  // Font glyphs have no native text-stroke prop. Four tiny, non-interactive
+  // offsets make a crisp contour; no circle, scrim or colour fills the glass.
+  return <View pointerEvents="none" style={[styles.glyph, { width: size, height: size }]}>
+    {OUTLINE_OFFSETS.map(([x,y],index) => <View key={index} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+      style={[styles.outline, { transform: [{translateX:x}, {translateY:y}] }]}>
+      <Icon name={icon as any} size={size} color={outline} />
+    </View>)}
+    <Icon name={icon as any} size={size} color={color} />
+  </View>;
 }
+const OUTLINE_OFFSETS = [[-0.65,0],[0.65,0],[0,-0.65],[0,0.65]] as const;
+const styles = StyleSheet.create({
+  glyph: { alignItems:'center', justifyContent:'center' },
+  outline: { ...StyleSheet.absoluteFillObject, alignItems:'center', justifyContent:'center' },
+});
 
 export default SF;

@@ -35,7 +35,7 @@ it.each(['light','dark'] as const)('uses an opaque control with white icons unde
   expect(view.queryByTestId('native-glass')).toBeNull();
   expect(StyleSheet.flatten(view.getByTestId('bell.fill').props.style).color).toBe('#FFFFFF');
   expect(JSON.stringify(view.toJSON())).not.toContain('rgba(35,64,136');
-  expect(JSON.stringify(view.toJSON())).toContain('#234088');
+  expect(JSON.stringify(view.toJSON())).toContain('#353A46');
 });
 it('keeps group action icons white in the light appearance', async () => {
   const view = await render(preview(<GlassGroup items={[{icon:'square.and.arrow.up',label:'Поделиться',onPress:jest.fn()}]} />, 'light'));
@@ -46,4 +46,13 @@ it.each(['light','dark'] as const)('pins the tab material to %s and uses clear g
   const glass=view.getByTestId('tab-dock-glass',{includeHiddenElements:true});
   expect(glass.props.colorScheme).toBe(scheme);
   expect(glass.props.glassEffectStyle).toBe('clear');
+});
+
+
+it.each(['light','dark'] as const)('navigation glass samples the backdrop without a colour tint in %s', async scheme => {
+  const view = await render(preview(<HeaderIcon name="bell.fill" label="Уведомления" onPress={jest.fn()} />,scheme));
+  const glass = view.getByTestId('native-glass');
+  expect(glass.props.tintColor).toBeUndefined();
+  expect(glass.props.glassEffectStyle).toBe('clear');
+  expect(StyleSheet.flatten(glass.props.style).backgroundColor).toBeUndefined();
 });
