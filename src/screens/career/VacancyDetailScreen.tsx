@@ -9,6 +9,7 @@ import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { Screen } from '../../components/Screen';
+import { HeaderIcon } from '../../components/HeaderIcon';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { ListSection, Button } from '../../components/ui';
@@ -117,9 +118,7 @@ export function VacancyDetailScreen({ route, navigation }: Props) {
   return (
     <Screen topInset={false} tabPadding={false}>
       <NavHeader backLabel={tr('Карьера')} onBack={() => navigation.goBack()} trailing={
-        <Pressable onPress={() => toggleSave(job.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('Сохранить')}>
-          <SF name={isSaved(job.id) ? 'bookmark.fill' : 'bookmark'} size={20} color={T.brandAccent} />
-        </Pressable>
+        <HeaderIcon name={isSaved(job.id) ? 'bookmark.fill' : 'bookmark'} label={isSaved(job.id) ? tr('Убрать из сохранённых') : tr('Сохранить')} onPress={() => toggleSave(job.id)} />
       } variant="plain" />
 
       {/* Hero */}

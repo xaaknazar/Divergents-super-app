@@ -49,10 +49,11 @@ it.each(['light','dark'] as const)('pins the tab material to %s with the appropr
 });
 
 
-it.each(['light','dark'] as const)('navigation glass samples the backdrop without an opaque fill in %s', async scheme => {
+it.each(['light','dark'] as const)('navigation glass samples the backdrop with only a translucent veil in %s', async scheme => {
   const view = await render(preview(<HeaderIcon name="bell.fill" label="Уведомления" onPress={jest.fn()} />,scheme));
   const glass = view.getByTestId('native-glass');
-  if (scheme === 'light') expect(glass.props.tintColor).toBeUndefined();
+  // Светлая тема: дымчатая полупрозрачная вуаль, не сплошная заливка.
+  if (scheme === 'light') expect(glass.props.tintColor).toMatch(/^rgba\(18,22,34,0\.(2|3)0?\)$/);
   expect(glass.props.glassEffectStyle).toBe(scheme === 'dark' ? 'regular' : 'clear');
   expect(StyleSheet.flatten(glass.props.style).backgroundColor).toBeUndefined();
 });

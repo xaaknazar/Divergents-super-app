@@ -5,6 +5,7 @@ import { View, Text, Pressable, FlatList, RefreshControl, InteractionManager } f
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SF } from '../../components/SFIcon';
+import { HeaderTextButton } from '../../components/HeaderTextButton';
 import { NavHeader } from '../../components/NavHeader';
 import { ListSkeleton, EmptyState, ErrorState } from '../../components/StateViews';
 import { Wrapper } from '../../components/Wrapper';
@@ -90,12 +91,8 @@ export function NotificationsScreen({ navigation }: Props) {
       {/* Shared header: modal «Закрыть» on the left, «Прочитать все» as the trailing
           text action (a bare icon would hide what it does). */}
       <NavHeader title={tr('Уведомления')} backLabel={tr('Закрыть')} hideBackLabel={false} onBack={() => navigation.goBack()} trailing={(
-          <Pressable onPress={markAllRead} disabled={unread === 0} accessibilityRole="button"
-            accessibilityLabel={lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
-            accessibilityState={{ disabled: unread === 0 }}
-            style={({ pressed }) => ({ minHeight: minTouch, minWidth: minTouch, justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 4, opacity: pressed ? 0.5 : 1 })}>
-            <Text style={[ty.subhead, { color: unread ? T.brandText : T.labelTertiary, textAlign: 'right' }]} numberOfLines={1}>{lang === 'ru' ? 'Прочитать все' : 'Mark all read'}</Text>
-          </Pressable>
+          <HeaderTextButton label={lang === 'ru' ? 'Прочитать все' : 'Mark all read'} accessibilityLabel={lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
+            onPress={unread === 0 ? undefined : markAllRead} />
         )} />
 
       {showSkeleton ? (

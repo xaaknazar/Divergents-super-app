@@ -13,11 +13,13 @@ export interface ChipRailProps {
   inset?: 'page' | 'compact' | 'none';
   itemRole?: 'button' | 'tab';
   overflowHint?: boolean;
+  /** Рейка лежит поверх карты: стеклянные чипы (см. Chip.onMap). */
+  onMap?: boolean;
 }
 
 /** Shared filter pills. When more filters are offscreen, the edge softly fades (no arrow
  * buttons covering pills — November 2026); selection and keyboard focus scroll a pill into view. */
-export function ChipRail({ items, inset = 'page', itemRole = 'button', overflowHint = false }: ChipRailProps) {
+export function ChipRail({ items, inset = 'page', itemRole = 'button', overflowHint = false, onMap = false }: ChipRailProps) {
   const { T, reduceMotion } = useTheme();
   const scroll = useRef<ScrollView>(null);
   const positions = useRef(new Map<string, { x: number; width: number }>());
@@ -74,7 +76,7 @@ export function ChipRail({ items, inset = 'page', itemRole = 'button', overflowH
       onScroll={event => { offset.current = event.nativeEvent.contentOffset.x; updateEdges(); }}>
       {items.map(item => <View key={item.key} testID={`chip-rail-item-${item.key}`}
         onLayout={event => { positions.current.set(item.key, event.nativeEvent.layout); if (item.key === activeKey) reveal(item.key, false); }}>
-        <Chip label={item.label} icon={item.icon} active={item.active} accessibilityRole={itemRole}
+        <Chip label={item.label} icon={item.icon} active={item.active} accessibilityRole={itemRole} onMap={onMap}
           onFocus={() => reveal(item.key, true)} onPress={() => { reveal(item.key, true); item.onPress(); }} />
       </View>)}
     </ScrollView>

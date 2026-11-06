@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { Aurora } from './Aurora';
 import { HeaderBackdrop, HeaderBackdropMotif } from './HeaderBackdrop';
+import { ColorWash } from './ColorWash';
 import { tabDockContentInset, tabDockMiniPlayerHeight } from '../lib/tabDockLayout';
 import { useOptionalAudioTrack } from '../state/audioPlayerValue';
 
@@ -21,6 +22,8 @@ export interface ScreenProps {
   /** Фон шапки корневого экрана вкладки. Заменяет «аврору», пока фон в персонализации —
    * «По акценту» (по умолчанию); выбранный человеком другой фон остаётся его выбором. */
   backdrop?: HeaderBackdropMotif;
+  /** Цветной фон из «Персонализации» (ColorWash) вместо мотива шапки — пока только «Профиль». */
+  wash?: 'soft' | 'strong';
   largeTitle?: string;
   onRefresh?: () => void | Promise<void>;
   keyboardAware?: boolean;
@@ -29,7 +32,7 @@ export interface ScreenProps {
 }
 
 export function Screen({ children, surface = 'grouped', scroll = true, tabPadding = true,
-  topInset = true, bottomInset = true, aurora = true, backdrop, largeTitle, onRefresh, keyboardAware = false, scrollResetKey }: ScreenProps) {
+  topInset = true, bottomInset = true, aurora = true, backdrop, wash, largeTitle, onRefresh, keyboardAware = false, scrollResetKey }: ScreenProps) {
   const { T, isDark, reduceTransparency, ty, background: backgroundPreset } = useTheme();
   const background = surface === 'transparent' ? 'transparent' : T.groupedBg;
   const insets = useSafeAreaInsets();
@@ -50,7 +53,8 @@ export function Screen({ children, surface = 'grouped', scroll = true, tabPaddin
 
   return (
     <KeyboardAvoidingView enabled={keyboardAware} behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: background }}>
-      {backdrop && (backgroundPreset ?? 'accent') === 'accent' ? <HeaderBackdrop motif={backdrop} />
+      {wash ? <ColorWash strength={wash} />
+        : backdrop && (backgroundPreset ?? 'accent') === 'accent' ? <HeaderBackdrop motif={backdrop} />
         : aurora ? <Aurora /> : null}
 
       {scroll ? (

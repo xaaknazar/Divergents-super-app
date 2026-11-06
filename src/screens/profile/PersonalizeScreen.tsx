@@ -8,6 +8,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { HeaderTextButton } from '../../components/HeaderTextButton';
 import { NavHeader } from '../../components/NavHeader';
 import { SF, SFName } from '../../components/SFIcon';
 import { Button, Segmented, ProgressBar } from '../../components/ui';
@@ -129,16 +130,7 @@ export function PersonalizeScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader backLabel={tr('Профиль')} onBack={() => navigation.goBack()} trailing={!isDefault ? (
-          <Pressable
-            onPress={resetAll}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={tr('Сбросить настройки')}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 4, opacity: pressed ? 0.5 : 1 })}
-          >
-            <SF name="arrow.counterclockwise" size={14} color={T.brandText} />
-            <Text style={[ty.body, { color: T.brandText }]}>{tr('Сбросить')}</Text>
-          </Pressable>
+          <HeaderTextButton label={tr('Сбросить')} icon="arrow.counterclockwise" accessibilityLabel={tr('Сбросить настройки')} onPress={resetAll} />
         ) : undefined} />
       <Screen tabPadding={false} topInset={false} bottomInset={false}>
         <Wrapper paddingBottom={44}>

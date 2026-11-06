@@ -253,7 +253,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
   );
 
   return (
-    <Screen largeTitle="Профиль" backdrop="profile" onRefresh={async () => { reloadCourses(); await Promise.all([reload(), loadCommunityActivities(), myBooks.reload()]); }}>
+    <Screen largeTitle="Профиль" wash="soft" onRefresh={async () => { reloadCourses(); await Promise.all([reload(), loadCommunityActivities(), myBooks.reload()]); }}>
       <PageIntro page="profile" />
       <NavBarLarge title={t('profile')} trailing={(
         <HeaderIcon name="bell.fill" badge={unread} label="Уведомления" onPress={() => navigation.getParent()?.getParent()?.navigate('Notifications' as never)} />

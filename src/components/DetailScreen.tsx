@@ -5,19 +5,28 @@ import { NavHeader } from './NavHeader';
 import { Screen } from './Screen';
 
 /** Shared detail chrome. Screens own data and composition, never surface styling. */
-export function DetailScreen({ children, title, backLabel, onBack, actions, footer, onRefresh, keyboard = false, scroll = true }: {
+export function DetailScreen({ children, title, backLabel, onBack, actions, footer, onRefresh, keyboard = false, scroll = true, hero }: {
   children: React.ReactNode; title?: string; backLabel?: string; onBack?: () => void;
   actions?: React.ReactNode; footer?: React.ReactNode; onRefresh?: () => void | Promise<void>; keyboard?: boolean; scroll?: boolean;
+  /** Обложка во всю ширину под статус-баром (iOS 26): шапка с кнопками парит над ней
+   * прозрачным стеклом, а не занимает отдельную полосу. */
+  hero?: React.ReactNode;
 }) {
   const { T } = useTheme();
+  const withHero = !!hero && scroll;
   return <View style={[styles.root, { backgroundColor: T.groupedBg }]}>
-    <NavHeader title={title} backLabel={backLabel} onBack={onBack} trailing={actions} />
+    {withHero ? null : <NavHeader title={title} backLabel={backLabel} onBack={onBack} trailing={actions} />}
     <KeyboardAvoidingView style={styles.root} enabled={keyboard} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen scroll={scroll} topInset={false} bottomInset={!footer} tabPadding={false} aurora={false} onRefresh={onRefresh}>
+        {withHero ? hero : null}
         {scroll ? <View style={styles.content}>{children}</View> : children}
       </Screen>
       {footer}
     </KeyboardAvoidingView>
+    {withHero ? <View pointerEvents="box-none" style={styles.float}>
+      <NavHeader backLabel={backLabel} onBack={onBack} trailing={actions} />
+    </View> : null}
   </View>;
 }
-const styles = StyleSheet.create({ root: { flex: 1 }, content: { width: '100%', maxWidth: 680, alignSelf: 'center' } });
+const styles = StyleSheet.create({ root: { flex: 1 }, content: { width: '100%', maxWidth: 680, alignSelf: 'center' },
+  float: { position: 'absolute', top: 0, left: 0, right: 0 } });

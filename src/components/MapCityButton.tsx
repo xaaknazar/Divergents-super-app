@@ -5,6 +5,7 @@ import { tr } from '../state/LanguageContext';
 import { useTheme } from '../theme/ThemeContext';
 import { minTouch, radius } from '../theme/tokens';
 import { SF } from './SFIcon';
+import { GlassSurface } from './GlassSurface';
 
 export interface MapCityButtonProps {
   city: string;
@@ -13,8 +14,8 @@ export interface MapCityButtonProps {
   onPress: () => void;
 }
 
-/** An opaque surface keeps the current city readable over every map tile.
- * Long names wrap at the user's text size instead of shrinking or disappearing. */
+/** Город — стеклянная капсула поверх карты, как элементы управления в Картах на iOS 26:
+ * стекло подстраивается под тайлы и читается на любом фоне. Длинные названия переносятся. */
 export function MapCityButton({ city, country, expanded = false, onPress }: MapCityButtonProps) {
   const { T, ty } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -23,30 +24,24 @@ export function MapCityButton({ city, country, expanded = false, onPress }: MapC
     accessibilityHint={tr('Открыть список городов')} accessibilityState={{ expanded }}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     onPress={() => { hSelect(); onPress(); }}
-    style={({ pressed }) => [styles.button, {
-      backgroundColor: T.cardBg, borderColor: T.separator,
-      outlineColor: T.brandText, outlineWidth: focused ? 2 : 0, outlineOffset: -2,
-      transform: [{ scale: pressed ? 0.99 : 1 }],
-    }]}>
-    <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <SF name="mappin.and.ellipse" size={20} color={T.brandText} />
-    </View>
-    <View style={styles.copy}>
-      <Text testID="map-city-name" style={[ty.headline, { color: T.label }]}>{city}</Text>
-      {country ? <Text testID="map-country-name" style={[ty.caption1, { color: T.labelSecondary }]}>{country}</Text> : null}
-    </View>
-    <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <SF name={expanded ? 'chevron.up' : 'chevron.down'} size={14} color={T.brandText} />
-    </View>
+    style={({ pressed }) => ({ alignSelf: 'flex-start', maxWidth: '100%', minHeight: minTouch, minWidth: minTouch, borderRadius: radius.pill,
+      outlineColor: T.brandText, outlineWidth: focused ? 2 : 0, outlineOffset: 2, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+    <GlassSurface interactive style={styles.button}>
+      <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <SF name="location.fill" size={15} color={T.brandText} />
+      </View>
+      <Text testID="map-city-name" style={[ty.headline, { color: T.label, flexShrink: 1 }]}>{city}</Text>
+      {country ? <Text testID="map-country-name" style={[ty.subhead, { color: T.labelSecondary, flexShrink: 1 }]}>{country}</Text> : null}
+      <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <SF name={expanded ? 'chevron.up' : 'chevron.down'} size={12} color={T.labelSecondary} />
+      </View>
+    </GlassSurface>
   </Pressable>;
 }
 
 const styles = StyleSheet.create({
   button: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    minHeight: 64, minWidth: minTouch, paddingHorizontal: 16, paddingVertical: 10,
-    borderRadius: radius.lg, borderCurve: 'continuous', borderWidth: 0.5,
-    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 4,
+    flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-start', columnGap: 8,
+    minHeight: minTouch, minWidth: minTouch, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.pill,
   },
-  copy: { flex: 1, minWidth: 0, gap: 2 },
 });

@@ -15,6 +15,9 @@ import { SF } from '../../components/SFIcon';
 import { ChipRail } from '../../components/ChipRail';
 import { useProfileButton } from '../../state/useProfileButton';
 import { HeaderIcon } from '../../components/HeaderIcon';
+import { GlassSurface } from '../../components/GlassSurface';
+import { GlassGroup } from '../../components/GlassButton';
+import { radius } from '../../theme/tokens';
 import { RouteModeOption } from '../../components/RouteModeOption';
 import { PageIntro } from '../../components/PageIntro';
 import { Stars } from '../../components/Stars';
@@ -461,7 +464,7 @@ export function MapHomeScreen({ navigation }: Props) {
             ))}
           </ContentBlock></Wrapper>
         ) : null}
-        <Wrapper paddingTop={8}><ChipRail inset="compact" items={[
+        <Wrapper paddingTop={8}><ChipRail inset="compact" onMap items={[
           { key: 'all', label: t('all'), active: !cat, onPress: () => setCat(null) },
           ...CATEGORIES.map((c) => ({ key: `cat-${c}`, label: CATEGORY_META[c].label, active: cat === c, onPress: () => setCat(cat === c ? null : c) })),
           ...TAGS.map((tag) => ({ key: `tag-${tag}`, label: TAG_META[tag].label, active: tags.includes(tag), onPress: () => setTags((p) => p.includes(tag) ? p.filter((x) => x !== tag) : [...p, tag]) })),
@@ -520,10 +523,11 @@ export function MapHomeScreen({ navigation }: Props) {
           left of the floating buttons so nothing overlaps. */}
       {!target && locPerm === 'prompt' ? (
         <View style={{ position: 'absolute', left: 12, right: 74, bottom: dockInset + 4 }} pointerEvents="box-none">
-          <ContentBlock size="compact" elevated accessibilityLiveRegion="polite"><Wrapper gap={10}>
+          {/* iOS 26: подсказка парит над картой стеклянной панелью, кнопки — капсулы. */}
+          <View accessibilityLiveRegion="polite"><GlassSurface style={{ borderRadius: radius.block, alignItems: 'stretch', padding: 14, gap: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
-                <SF name="location.fill" size={17} color={T.brand} />
+              <View style={{ width: 34, height: 34, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}>
+                <SF name="location.fill" size={17} color={T.onBrand} />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[ty.subheadEm, { color: T.label }]} numberOfLines={2}>{tr('Покажем места рядом с вами')}</Text>
@@ -532,15 +536,17 @@ export function MapHomeScreen({ navigation }: Props) {
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable onPress={requestLocation} accessibilityRole="button" accessibilityLabel={tr('Разрешить геопозицию')}
-                style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
+                style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: radius.pill, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
                 <Text style={[ty.footnoteEm, { color: T.onBrand }]} numberOfLines={1}>{tr('Разрешить')}</Text>
               </Pressable>
               <Pressable onPress={() => setLocPerm('skipped')} accessibilityRole="button" accessibilityLabel={tr('Не сейчас')}
-                style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 16, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.fillTertiary, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-                <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{tr('Не сейчас')}</Text>
+                style={({ pressed }) => ({ minHeight: 44, borderRadius: radius.pill, opacity: pressed ? 0.7 : 1 })}>
+                <GlassSurface interactive style={{ minHeight: 44, paddingHorizontal: 18, borderRadius: radius.pill }}>
+                  <Text style={[ty.footnoteEm, { color: T.label }]} numberOfLines={1}>{tr('Не сейчас')}</Text>
+                </GlassSurface>
               </Pressable>
             </View>
-          </Wrapper></ContentBlock>
+          </GlassSurface></View>
         </View>
       ) : null}
       {!target && locPerm === 'denied' ? (
@@ -562,9 +568,12 @@ export function MapHomeScreen({ navigation }: Props) {
           <HeaderIcon variant="floating" name="checkmark.seal.fill" label={tr('Заявки на метки')} badge={pendingCount}
             onPress={() => navigation.navigate('AdminPlaces')} />
         ) : null}
-        {OFFLINE_ENABLED ? <HeaderIcon variant="floating" name="arrow.down.circle" label={tr('Офлайн-карта')} onPress={() => navigation.navigate('OfflineMap')} /> : null}
-        {/* Долгое нажатие — пересоздать карту: спасение от пустой сетки без тайлов. */}
-        <HeaderIcon variant="floating" name="location.fill" label={tr('Моё местоположение')} onPress={recenter} onLongPress={() => { reloadMap(); Alert.alert(tr('Карта перезагружена'), tr('Если тайлы не появились — проверьте интернет.')); }} />
+        {/* Как в Картах iOS 26: связанные кнопки карты — одной вертикальной стеклянной капсулой.
+            Долгое нажатие на «Моё местоположение» — пересоздать карту: спасение от пустой сетки без тайлов. */}
+        <GlassGroup vertical items={[
+          ...(OFFLINE_ENABLED ? [{ icon: 'arrow.down.circle', label: tr('Офлайн-карта'), onPress: () => navigation.navigate('OfflineMap') }] : []),
+          { icon: 'location.fill', label: tr('Моё местоположение'), onPress: recenter, onLongPress: () => { reloadMap(); Alert.alert(tr('Карта перезагружена'), tr('Если тайлы не появились — проверьте интернет.')); } },
+        ]} />
         <HeaderIcon variant="primary" name="plus" label={tr('Добавить место')} onPress={() => navigation.navigate('AddPlace')} />
       </View>
 

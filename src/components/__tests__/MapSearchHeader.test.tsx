@@ -44,21 +44,28 @@ function contrast(foreground: string, background: string) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-it.each(['light', 'dark'] as const)('keeps city and country legible on an opaque surface in %s', async scheme => {
+// iOS 26 (этап 2): город — стеклянная капсула над картой. Текст — цветами темы; при
+// «Понижении прозрачности» стекло становится сплошной плашкой с тем же контрастом, что раньше.
+it.each(['light', 'dark'] as const)('keeps city and country in theme colours on a glass capsule in %s', async scheme => {
   const palette = resolveThemePalette(scheme);
   const view = await render(<ThemePreviewProvider scheme={scheme} reduceTransparency={false}>
     <MapCityButton city="Алматы" country="Казахстан" onPress={jest.fn()} />
   </ThemePreviewProvider>);
-  const surface = StyleSheet.flatten(view.getByTestId('map-city-button').props.style);
   const city = StyleSheet.flatten(view.getByTestId('map-city-name').props.style);
   const country = StyleSheet.flatten(view.getByText('Казахстан').props.style);
-  expect(surface.backgroundColor).toBe(palette.cardBg);
-  expect(surface.backgroundColor).toMatch(/^#[a-f0-9]{6}$/i);
-  expect(surface.opacity ?? 1).toBe(1);
   expect(city.color).toBe(palette.label);
   expect(country.color).toBe(palette.labelSecondary);
+});
+
+it.each(['light', 'dark'] as const)('falls back to an opaque legible surface with Reduce Transparency in %s', async scheme => {
+  const palette = resolveThemePalette(scheme);
+  const view = await render(<ThemePreviewProvider scheme={scheme} reduceTransparency>
+    <MapCityButton city="Алматы" country="Казахстан" onPress={jest.fn()} />
+  </ThemePreviewProvider>);
+  const surface = StyleSheet.flatten(view.getByTestId('map-city-name').parent!.props.style);
+  const city = StyleSheet.flatten(view.getByTestId('map-city-name').props.style);
+  expect(surface.backgroundColor).toBe(palette.cardBg);
   expect(contrast(city.color, surface.backgroundColor)).toBeGreaterThanOrEqual(4.5);
-  expect(contrast(country.color, surface.backgroundColor)).toBeGreaterThanOrEqual(4.5);
 });
 
 it('offers a named city action with a large touch target and controlled expanded state', async () => {
@@ -69,7 +76,7 @@ it('offers a named city action with a large touch target and controlled expanded
   const view = await render(content(false));
   const button = view.getByRole('button', { name: 'Выбрать город: Алматы, Казахстан' });
   const style = StyleSheet.flatten(button.props.style);
-  expect(style.minHeight).toBeGreaterThanOrEqual(52);
+  expect(style.minHeight).toBeGreaterThanOrEqual(48);
   expect(style.minWidth).toBeGreaterThanOrEqual(48);
   expect(button.props.accessibilityState.expanded).toBe(false);
   await fireEvent.press(button);

@@ -18,7 +18,7 @@ export interface MapSearchHeaderProps {
   onOpenProfile: () => void;
 }
 
-/** Location gets its own row; search never competes with a long city name. */
+/** Город — своей стеклянной капсулой над поиском: поиск не спорит с длинным названием. */
 export function MapSearchHeader(p: MapSearchHeaderProps) {
   return <Wrapper testID="map-search-header" gap={10}>
     <Wrapper testID="map-location-row" dir="row" gap={10} align="center">

@@ -43,8 +43,11 @@ export function GlassSurface({ children, style, interactive = false, scheme, var
   // App appearance can differ from the device appearance. Never leave UIKit on auto.
   const colorScheme = isDark ? 'dark' : 'light';
   // A faint neutral reflection lifts dark glass; never use an opaque brand fill.
+  // Кнопки навигации в светлой теме (этап 2, ноябрь 2026) — «дымчатое» стекло, как над обложкой
+  // курса: лёгкая тёмная вуаль, и белый символ читается на любом светлом фоне без чёрной обводки.
+  const smoke = navigation && !isDark ? (emphasis === 'subtle' ? 'rgba(18,22,34,0.20)' : 'rgba(18,22,34,0.30)') : undefined;
   const materialTint = isDark && variant !== 'clear' ? darkGlassTint
-    : !navigation && !isDark && !clear ? 'rgba(255,255,255,0.52)' : undefined;
+    : !navigation && !isDark && !clear ? 'rgba(255,255,255,0.52)' : smoke;
   const rim = tone === 'danger' ? lightTheme.redText : emphasis === 'strong' ? (isDark ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.85)') : isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.35)';
   const rimWidth = tone === 'danger' || emphasis === 'strong' ? 1 : StyleSheet.hairlineWidth;
   const radius = (StyleSheet.flatten(style)?.borderRadius as number | undefined) ?? 999;
@@ -63,7 +66,7 @@ export function GlassSurface({ children, style, interactive = false, scheme, var
   // сквозь почти прозрачное тело, яркий блик по верхней кромке и отражённый свет по нижней,
   // мягкий свет сверху внутрь и лёгкая тень под стеклом. Серой заливки нет.
   const dark = isDark || scheme === 'dark';
-  const fill = dark ? 'rgba(255,255,255,0.04)' : navigation ? 'transparent' : (clear ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.50)');
+  const fill = dark ? 'rgba(255,255,255,0.04)' : navigation ? smoke ?? 'transparent' : (clear ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.50)');
   const sheen = dark ? ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0)'] as const : navigation ? ['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)'] as const : clear ? ['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0)'] as const
     : ['rgba(255,255,255,0.70)', 'rgba(255,255,255,0.18)', 'rgba(255,255,255,0)'] as const;
   const glow = dark || navigation ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.03)'] as const : clear ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.14)'] as const : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.35)'] as const;

@@ -1,3 +1,4 @@
+import { GlassSurface } from '../../components/GlassSurface';
 import { NavHeader } from '../../components/NavHeader';
 import { Wrapper } from '../../components/Wrapper';
 // Трекер пробежки и ходьбы: маршрут на карте, дистанция, время, темп, а по
@@ -287,15 +288,17 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader backLabel={route.params?.challengeId ? "Челлендж" : "Назад"} onBack={confirmDiscard} trailing={(
-        <View style={{ flexDirection: 'row', backgroundColor: T.fillSecondary, borderRadius: 12, borderCurve: 'continuous', padding: 2 }}>
+        // Переключатель в шапке — тем же стеклом, что и кнопки навигации: выбранный пункт — светлая капсула.
+        <GlassSurface variant="navigation" style={{ flexDirection: 'row', borderRadius: 999, padding: 3 }}>
           {(['run', 'walk'] as const).map((k) => (
             <Pressable key={k} onPress={() => status === 'idle' && setType(k)} disabled={status !== 'idle'}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, borderCurve: 'continuous', backgroundColor: type === k ? T.systemBg : 'transparent', opacity: status !== 'idle' && type !== k ? 0.4 : 1 }}>
-              <SF name={k === 'run' ? 'figure.run' : 'figure.walk'} size={13} color={type === k ? T.brand : T.labelSecondary} />
-              <Text style={[ty.caption2Em, { color: type === k ? T.brand : T.labelSecondary }]}>{k === 'run' ? 'Бег' : 'Ходьба'}</Text>
+              accessibilityRole="radio" accessibilityState={{ checked: type === k, disabled: status !== 'idle' }} accessibilityLabel={k === 'run' ? 'Бег' : 'Ходьба'}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 12, borderRadius: 999, backgroundColor: type === k ? 'rgba(255,255,255,0.92)' : 'transparent', opacity: status !== 'idle' && type !== k ? 0.45 : 1 }}>
+              <SF name={k === 'run' ? 'figure.run' : 'figure.walk'} size={13} color={type === k ? '#1C1C1E' : '#FFFFFF'} />
+              <Text style={[ty.footnoteEm, { color: type === k ? '#1C1C1E' : '#FFFFFF' }]}>{k === 'run' ? 'Бег' : 'Ходьба'}</Text>
             </Pressable>
           ))}
-        </View>
+        </GlassSurface>
       )} />
 
       {(memberships.activeChallenges?.length ?? 0) > 1 ? <Wrapper paddingHorizontal={16} paddingVertical={8}>

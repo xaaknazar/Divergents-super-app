@@ -7,6 +7,8 @@ import { View, Text, ScrollView, Linking, Pressable, ActivityIndicator, Alert } 
 import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { HeaderTextButton } from '../../components/HeaderTextButton';
+import { HeaderIcon } from '../../components/HeaderIcon';
 import { NavHeader } from '../../components/NavHeader';
 import { SF } from '../../components/SFIcon';
 import { ListSection, ListRow, Button } from '../../components/ui';
@@ -174,24 +176,11 @@ export function TalentProfileScreen({ navigation, route }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       <NavHeader title={tr('Моя анкета')} backLabel={backLabel} onBack={() => navigation.goBack()} trailing={
-          <>
+          <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 8 }}>
             {/* Share the анкета as a PDF (send to other apps / save). */}
-            <Pressable onPress={onSharePdf} disabled={sharing} hitSlop={8}
-              accessibilityRole="button" accessibilityState={{ busy: sharing }}
-              accessibilityLabel={tr('Поделиться PDF')}
-              style={({ pressed }) => ({ padding: 6, opacity: pressed || sharing ? 0.5 : 1 })}>
-              {sharing
-                ? <ActivityIndicator color={T.brandAccent} />
-                : <SF name="square.and.arrow.up" size={20} color={T.brandAccent} />}
-            </Pressable>
-            {/* DEFERRED: SFIcon has no 'pencil'/'square.and.pencil' glyph, so the
-                edit affordance is a standard iOS text button (avoids a blank icon). */}
-            <Pressable onPress={() => { hSelect(); navigation.navigate('Resume'); }} hitSlop={8}
-              accessibilityRole="button" accessibilityLabel={tr('Редактировать анкета')}
-              style={({ pressed }) => ({ padding: 6, opacity: pressed ? 0.5 : 1 })}>
-              <Text style={[ty.body, { color: T.brandAccent }]}>{tr('Править')}</Text>
-            </Pressable>
-          </>
+            <HeaderIcon name="square.and.arrow.up" label={tr('Поделиться PDF')} onPress={sharing ? undefined : onSharePdf} />
+            <HeaderTextButton label={tr('Править')} accessibilityLabel={tr('Редактировать анкета')} onPress={() => navigation.navigate('Resume')} />
+          </View>
         } />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {unavailable || source === 'cache' || source === 'local' ? (

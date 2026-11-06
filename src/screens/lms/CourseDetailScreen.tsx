@@ -17,6 +17,7 @@ import { Button } from '../../components/Button';
 import { ListSection } from '../../components/ListSection';
 import { TextSection } from '../../components/TextSection';
 import { CourseOverview } from '../../components/CourseOverview';
+import { CourseHero } from '../../components/CourseHero';
 import { CourseProgressCard } from '../../components/CourseProgressCard';
 import { CourseAccessCard } from '../../components/CourseAccessCard';
 import { CourseIncludes } from '../../components/CourseIncludes';
@@ -92,7 +93,7 @@ export function CourseDetailScreen({ route, navigation }: Props) {
 
   // Два действия — одной стеклянной капсулой, как в панелях iOS 26; одно — отдельным кругом.
   const share = { icon: 'square.and.arrow.up', label: 'Поделиться', onPress: () => { Share.share({ message: course.title + ' — Divergents\n' + API_BASE + '/courses/' + courseId }); } };
-  return <DetailScreen onBack={goBack} backLabel="Обучение" actions={owned
+  return <DetailScreen onBack={goBack} backLabel="Обучение" hero={<CourseHero imageUrl={course.imageUrl} icon={course.icon} />} actions={owned
     ? <GlassGroup items={[{ icon: 'arrow.down.circle', label: 'Загрузки', onPress: () => navigation.navigate('Downloads') }, share]} />
     : <HeaderIcon name={share.icon} label={share.label} onPress={share.onPress} />} footer={!owned && (canBuy || freeLesson || (store.available && store.catalog.accountToken && (store.message || store.phase === 'pending'))) ? <BottomBar>
     {store.available && store.catalog.accountToken ? <CoursePurchasePanel priceLabel={canBuy ? product?.displayPrice : undefined}
@@ -101,7 +102,7 @@ export function CourseDetailScreen({ route, navigation }: Props) {
     {freeLesson ? <Button label={tr('Смотреть бесплатный урок')} icon="play.fill" onPress={() => openLesson(freeLesson.id)} variant={canBuy ? 'plain' : 'solid'} /> : null}
   </BottomBar> : undefined}>
     <Wrapper padding={16} gap={20}>
-      <CourseOverview course={course} accessible={owned} />
+      <CourseOverview course={course} accessible={owned} withHero />
       {owned ? course.lessons.length > 0 ? <CourseProgressCard progress={p} completed={allDone} lesson={currentLesson}
         onStart={currentLesson ? () => openLesson(currentLesson.id) : undefined} /> : null
         : <CourseAccessCard gifted={gifted} canBuy={canBuy} />}
