@@ -19,7 +19,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { nums } from '../../theme/tokens';
 import { SF } from '../../components/SFIcon';
 import { hTap, hSuccess } from '../../lib/haptics';
-import { useActivities, distanceToSteps, stepsPlausible, WorkoutType, WorkoutCoord, Workout } from '../../state/ActivityContext';
+import { useActivities, distanceToSteps, stepsPlausible, paceTimeSec, WorkoutType, WorkoutCoord, Workout } from '../../state/ActivityContext';
 import { useChallenge } from '../../state/ChallengeContext';
 import { ChallengePicker } from '../../components/ChallengePicker';
 import * as tracker from '../../state/workoutTracker';
@@ -58,7 +58,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   // экране. Экран — только пульт и отображение.
   const [session, setSession] = useState<WorkoutSession>(() => tracker.getSession());
   const [type, setType] = useState<WorkoutType>('run');
-  const [done, setDone] = useState(false);
+  const [completedWorkout, setCompletedWorkout] = useState<Workout | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [user, setUser] = useState<WorkoutCoord | null>(null);
   const [denied, setDenied] = useState(false);
@@ -70,10 +70,16 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   const mapRef = useRef<MapView | null>(null);
   const savedRef = useRef<Workout | null>(null);
 
-  const coords = session.coords;
-  const distanceM = session.distanceM;
+  // Трекер очищает рабочий сеанс на финише. Итоговый экран показывает
+  // сохранённую тренировку, а не пустые счётчики следующей записи.
+  const coords = completedWorkout?.coords ?? session.coords;
+  const distanceM = completedWorkout?.distanceM ?? session.distanceM;
+  const displayedElapsed = completedWorkout?.durationSec ?? elapsed;
+  const paceSeconds = completedWorkout
+    ? paceTimeSec(completedWorkout)
+    : session.active ? session.movingMs / 1000 : elapsed;
   const status: 'idle' | 'tracking' | 'paused' | 'done' =
-    done ? 'done' : !session.active ? 'idle' : session.paused ? 'paused' : 'tracking';
+    completedWorkout ? 'done' : !session.active ? 'idle' : session.paused ? 'paused' : 'tracking';
 
   // Подписка на хранилище + подъём сохранённой записи. Человек мог свернуть
   // приложение на середине пробежки, а вернуться через полчаса — маршрут
@@ -177,7 +183,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
   // финише, когда дистанция известна целиком. На ходу она бы заставляла число
   // прыгать между датчиком и прикидкой.
   const measured = session.active && session.steps !== null;
-  const steps = measured ? (session.steps as number) : distanceToSteps(distanceM, type);
+  const steps = completedWorkout?.steps ?? (measured ? (session.steps as number) : distanceToSteps(distanceM, type));
   // Флаг ставится ДО await: `savedRef` заполняется только после сохранения, а
   // между нажатием и ответом трекера успевает пройти второй тап — и тренировка
   // сохранялась дважды, причём вторая пустышкой на 0,00 км: сессия к тому
@@ -188,7 +194,6 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
     if (savedRef.current || finishingRef.current) return;
     finishingRef.current = true;
     const result = await tracker.finish();
-    setDone(true);
     const trustSensor = result.steps !== null && stepsPlausible(result.steps, result.distanceM);
     const w = addWorkout({
       type: result.type,
@@ -206,6 +211,7 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
       elevationGainM: result.elevationGainM,
     });
     savedRef.current = w;
+    setCompletedWorkout(w);
     hSuccess();
     // Итог берём из результата записи, а не из состояния экрана: между
     // нажатием «Финиш» и этой строкой могла прийти последняя фоновая точка.
@@ -337,10 +343,10 @@ export function WorkoutTrackScreen({ route, navigation }: Props) {
           <View style={{ flexDirection: 'row' }}>
             {[
               { v: (distanceM / 1000).toFixed(2), l: 'км' },
-              { v: fmtTime(elapsed), l: 'время' },
+              { v: fmtTime(displayedElapsed), l: 'время' },
               // Темп — по времени в движении, как на часах: минута у
               // светофора не должна замедлять цифру на экране.
-              { v: fmtPace(session.active ? session.movingMs / 1000 : elapsed, distanceM), l: 'мин/км' },
+              { v: fmtPace(paceSeconds, distanceM), l: 'мин/км' },
               { v: String(steps), l: 'шагов' },
             ].map((s, i, arr) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', borderRightWidth: i < arr.length - 1 ? 0.5 : 0, borderRightColor: T.separator }}>

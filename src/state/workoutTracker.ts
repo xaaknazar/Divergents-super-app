@@ -74,6 +74,10 @@ const EMPTY: WorkoutSession = {
 
 let session: WorkoutSession = { ...EMPTY };
 let loaded = false;
+let restoring: Promise<WorkoutSession> | null = null;
+// Пока останавливается GPS, принимаем доставленный с задержкой хвост маршрута,
+// но только замеры, сделанные до нажатия «Финиш».
+let finishingAt: number | null = null;
 /** Шагомер в этом процессе уже подключён к текущей записи. См. restore(). */
 let stepsWired = false;
 /** Когда в последний раз опрашивали шагомер — чтобы не дёргать его ежесекундно. */
@@ -87,9 +91,9 @@ const listeners = new Set<(s: WorkoutSession) => void>();
  * открывает новый. Иначе шаги, сделанные во время паузы, попали бы в
  * тренировку.
  */
-async function currentSegmentSteps(): Promise<number | null> {
+async function currentSegmentSteps(untilMs = Date.now()): Promise<number | null> {
   if (session.stepsFrom === 0) return null;
-  return pedometer.segmentSteps(session.stepsFrom, Date.now());
+  return pedometer.segmentSteps(session.stepsFrom, untilMs);
 }
 
 function emit() {
@@ -127,6 +131,9 @@ function trackOf(s: WorkoutSession): Track {
  */
 function appendFixes(fixes: Fix[]) {
   if (!session.active || session.paused || fixes.length === 0) return;
+  const cutoff = finishingAt;
+  if (cutoff !== null) fixes = fixes.filter((fix) => fix.timestamp <= cutoff);
+  if (fixes.length === 0) return;
   const before = session.coords.length;
   const t = applyFixes(trackOf(session), fixes, session.type);
   const accepted = t.coords.length - before;
@@ -174,16 +181,22 @@ TaskManager.defineTask(WORKOUT_TASK, async ({ data, error }: any) => {
 
 export async function restore(): Promise<WorkoutSession> {
   if (loaded) return session;
+  // Экран и фоновая задача могут одновременно поднимать одну запись.
+  // Второе чтение не должно затереть точки, принятые после первого.
+  if (!restoring) restoring = restoreSession().finally(() => { restoring = null; });
+  return restoring;
+}
+
+async function restoreSession(): Promise<WorkoutSession> {
   const saved = await loadJSON<WorkoutSession | null>(KEY, null);
   if (saved && typeof saved === 'object') session = { ...EMPTY, ...saved };
   loaded = true;
 
   // Подъём записи после того, как систему выгрузила приложение из памяти.
   //
-  // Ровно один раз за жизнь процесса. Возврат из фона тоже зовёт restore()
-  // (файл мог обновить фоновая задача), но чинить подписку там нельзя: она жива,
-  // её счётчик копится с самого старта, и повторное «закрытие отрезка»
-  // прибавило бы одни и те же шаги второй раз.
+  // Ровно один раз за жизнь процесса. При обычном возврате из фона подписка
+  // ещё жива: её счётчик копится с самого старта, и повторное «закрытие
+  // отрезка» прибавило бы одни и те же шаги второй раз.
   if (!stepsWired && session.active && !session.paused && session.steps !== null) {
     stepsWired = true;
     // Без системной истории восстановить пропущенное нечем: подписка умерла
@@ -216,7 +229,7 @@ export function subscribe(fn: (s: WorkoutSession) => void): () => void {
  * систему в фоне ради числа, которое всё равно некому показать.
  */
 export async function refreshSteps(): Promise<void> {
-  if (!session.active || session.paused || session.steps === null) return;
+  if (!session.active || session.paused || session.steps === null || finishingAt !== null) return;
   // Экран тикает раз в секунду, но шагомеру такая частота ни к чему: на iOS
   // это запрос к системной истории, и делать его шестьдесят раз в минуту ради
   // цифры, которая меняется на единицы, — зря тратить батарею.
@@ -224,7 +237,11 @@ export async function refreshSteps(): Promise<void> {
   if (now - stepsCheckedAt < 4000) return;
   stepsCheckedAt = now;
 
+  const origin = session;
   const seg = await currentSegmentSteps();
+  // Пока датчик отвечал, отрезок мог закончиться или начаться заново.
+  if (!session.active || session.paused || finishingAt !== null
+    || session.startedAt !== origin.startedAt || session.stepsFrom !== origin.stepsFrom) return;
   if (seg === null) return;
   const next = session.stepsBefore + seg;
   if (next === session.steps) return;
@@ -384,17 +401,23 @@ export async function finish(): Promise<{
   /** Измеренные шаги. `null` — считать было нечем, берите из расстояния. */
   steps: number | null;
 }> {
+  const finishedAt = Date.now();
+  finishingAt = finishedAt;
+  await restore();
   // Итоговые шаги берём здесь, а не из живого счётчика: на iOS это запрос к
   // системной истории, и он включает время, пока приложение было свёрнуто, —
   // то есть почти всю пробежку.
   let steps: number | null = null;
   if (session.steps !== null) {
-    const seg = await currentSegmentSteps();
-    steps = session.stepsBefore + (seg ?? 0);
+    const seg = await currentSegmentSteps(finishedAt);
+    steps = seg === null ? session.steps : Math.max(session.steps, session.stepsBefore + seg);
   }
   pedometer.stopWatching();
 
-  const durationSec = elapsedSec();
+  // До завершения остановки система ещё может доставить последние координаты.
+  // Итог снимаем ПОСЛЕ них, из того же состояния, которое видит экран.
+  await stopUpdates();
+  const durationSec = elapsedSec(session, finishedAt);
   const result = {
     coords: session.coords,
     distanceM: session.distanceM,
@@ -406,8 +429,8 @@ export async function finish(): Promise<{
     elevationGainM: Math.round(session.elevationGainM),
     steps,
   };
-  await stopUpdates();
   session = { ...EMPTY };
+  finishingAt = null;
   stepsWired = false;
   persist();
   emit();
@@ -424,10 +447,10 @@ export async function discard(): Promise<void> {
   emit();
 }
 
-// Возврат в приложение: перечитываем с диска. Пока экран был свёрнут, точки
-// добавляла фоновая задача — возможно, в другом процессе.
+// В живом JS-процессе фоновая задача обновляет то же session. Перечитывание
+// старой копии при каждом возврате могло откатить маршрут. После перезапуска
+// процесса loaded снова false, и restore поднимет запись с диска.
 AppState.addEventListener('change', (state) => {
   if (state !== 'active') return;
-  loaded = false;
   void restore();
 });
