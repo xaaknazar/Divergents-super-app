@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { minTouch, radius } from '../theme/tokens';
 import { hSelect } from '../lib/haptics';
 import { SF, SFName } from './SFIcon';
+import { GlassSurface } from './GlassSurface';
 
 export function Chip({
   label, active, icon, onPress, accessibilityRole = 'button', onFocus,
@@ -13,10 +14,9 @@ export function Chip({
 }) {
   const { T, ty, isDark } = useTheme();
   const [focused, setFocused] = useState(false);
-  // Мягкий чип (ноябрь 2026): без рамки, невыбранный — сплошная светло-синяя заливка (читается
-  // и на карте), выбранный — цвет бренда. Видимая «таблетка» 38 pt, но область нажатия — 48:
-  // внешний Pressable прозрачный и держит минимальный размер касания.
-  const soft = isDark ? '#23262E' : '#E4E7F0';
+  // Dark filters share the navigation material; the selected pill catches more
+  // light. Keep the existing light palette and 48 pt touch target.
+  const ink = isDark ? '#FFFFFF' : active ? T.onBrand : T.label;
   return (
     <Pressable onPress={onPress ? () => { hSelect(); onPress(); } : undefined} accessibilityRole={accessibilityRole}
       onFocus={() => { setFocused(true); onFocus?.(); }} onBlur={() => setFocused(false)}
@@ -27,11 +27,15 @@ export function Chip({
       <View style={{
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, maxWidth: '100%',
         minHeight: 38, paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.pill, borderCurve: 'continuous',
-        backgroundColor: active ? T.brand : soft,
+        backgroundColor: isDark ? 'transparent' : active ? T.brand : '#E4E7F0',
         outlineWidth: focused ? 2 : 0, outlineColor: T.label, outlineOffset: 2,
       }}>
-        {icon ? <SF name={icon} size={14} color={active ? T.onBrand : T.brandText} /> : null}
-        <Text style={[ty.subheadEm, { color: active ? T.onBrand : T.label, flexShrink: 1 }]}>{label}</Text>
+        {isDark ? <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <GlassSurface style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
+          {active ? <View style={[StyleSheet.absoluteFill, { borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.12)' }]} /> : null}
+        </View> : null}
+        {icon ? <SF name={icon} size={14} color={isDark ? '#FFFFFF' : active ? T.onBrand : T.brandText} /> : null}
+        <Text style={[ty.subheadEm, { color: ink, flexShrink: 1 }]}>{label}</Text>
       </View>
     </Pressable>
   );

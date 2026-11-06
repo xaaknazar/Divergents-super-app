@@ -7,6 +7,7 @@ import { HeaderIcon } from './HeaderIcon';
 import { NavHeader } from './NavHeader';
 import { Segmented } from './Segmented';
 import { TabDock } from './TabDock';
+import { ChipRail } from './ChipRail';
 
 const destinations = [
   { id:'learn', label:'Обучение', icon:'book.fill' },
@@ -21,9 +22,11 @@ export function GlassNavigationPreview() {
   const { T,ty,isDark }=useTheme();
   const [tab,setTab]=useState('community');
   const [period,setPeriod]=useState(0);
+  const [filter,setFilter]=useState('Главное');
   return <View style={[styles.root,{backgroundColor:T.groupedBg}]}>
     <ScrollView contentContainerStyle={styles.content}>
       <NavHeader title="Сообщество" onBack={noop} trailing={<HeaderIcon name="bell.fill" label="Уведомления" badge={3} onPress={noop} />} />
+      <ChipRail overflowHint itemRole="tab" items={['Главное','Каналы','Челленджи','Поездки','Спорт'].map(label=>({key:label,label,active:filter===label,onPress:()=>setFilter(label)}))} />
       <View style={styles.section}>
         <Text style={[ty.title2,{color:T.label}]}>Стекло и навигация</Text>
         <Text style={[ty.subhead,{color:T.labelSecondary}]}>{isDark ? 'Тёмная' : 'Светлая'} тема · демонстрация компонентов</Text>

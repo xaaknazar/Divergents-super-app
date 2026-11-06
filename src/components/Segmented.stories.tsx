@@ -15,4 +15,5 @@ export const Interactive: Story = { render: function InteractiveStory(args) {
 } };
 export const ReadOnly: Story = { args: { onChange: undefined } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const DarkGlass: Story = { parameters: { scheme: 'dark', reduceTransparency: false } };
 export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };

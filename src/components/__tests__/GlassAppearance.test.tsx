@@ -41,18 +41,18 @@ it('keeps group action icons white in the light appearance', async () => {
   const view = await render(preview(<GlassGroup items={[{icon:'square.and.arrow.up',label:'Поделиться',onPress:jest.fn()}]} />, 'light'));
   expect(StyleSheet.flatten(view.getByTestId('square.and.arrow.up').props.style).color).toBe('#FFFFFF');
 });
-it.each(['light','dark'] as const)('pins the tab material to %s and uses clear glass', async scheme => {
+it.each(['light','dark'] as const)('pins the tab material to %s with the appropriate adaptive material', async scheme => {
   const view = await render(preview(<TabDock items={[{id:'home',label:'Обучение',icon:'book.fill',selected:true}]} onSelect={jest.fn()} />,scheme));
   const glass=view.getByTestId('tab-dock-glass',{includeHiddenElements:true});
   expect(glass.props.colorScheme).toBe(scheme);
-  expect(glass.props.glassEffectStyle).toBe('clear');
+  expect(glass.props.glassEffectStyle).toBe(scheme === 'dark' ? 'regular' : 'clear');
 });
 
 
-it.each(['light','dark'] as const)('navigation glass samples the backdrop without a colour tint in %s', async scheme => {
+it.each(['light','dark'] as const)('navigation glass samples the backdrop without an opaque fill in %s', async scheme => {
   const view = await render(preview(<HeaderIcon name="bell.fill" label="Уведомления" onPress={jest.fn()} />,scheme));
   const glass = view.getByTestId('native-glass');
-  expect(glass.props.tintColor).toBeUndefined();
-  expect(glass.props.glassEffectStyle).toBe('clear');
+  if (scheme === 'light') expect(glass.props.tintColor).toBeUndefined();
+  expect(glass.props.glassEffectStyle).toBe(scheme === 'dark' ? 'regular' : 'clear');
   expect(StyleSheet.flatten(glass.props.style).backgroundColor).toBeUndefined();
 });

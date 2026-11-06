@@ -14,4 +14,7 @@ export const TextOnlyFilter: Story = { args: { label: 'Мероприятия', 
 export const CommunityTab: Story = { args: { label: 'Главное', icon: undefined, active: true, accessibilityRole: 'tab' } };
 export const ReadOnly: Story = { args: { onPress: undefined } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
+export const DarkGlass: Story = { parameters: { scheme: 'dark', reduceTransparency: false } };
+export const DarkGlassSelected: Story = { args: { active: true }, parameters: { scheme: 'dark', reduceTransparency: false } };
+export const DarkReducedTransparency: Story = { args: { active: true }, parameters: { scheme: 'dark', reduceTransparency: true } };
 export const LargeText: Story = { args: { label: 'Все завершённые программы' }, parameters: { textSize: 'xl', viewport: 'compact' } };

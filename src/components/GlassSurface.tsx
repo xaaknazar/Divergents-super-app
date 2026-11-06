@@ -19,6 +19,8 @@ function detectNativeGlass() {
 }
 /** Один раз на запуск: версия системы за время работы приложения не меняется. */
 export const nativeGlass = detectNativeGlass();
+/** A hint of neutral reflected light, applied to the material, not over the backdrop. */
+export const darkGlassTint = 'rgba(255,255,255,0.10)';
 
 export function GlassSurface({ children, style, interactive = false, scheme, variant = 'regular', tone = 'default', emphasis = 'standard' }: {
   children?: React.ReactNode;
@@ -40,13 +42,17 @@ export function GlassSurface({ children, style, interactive = false, scheme, var
   const clear = variant === 'clear' || navigation;
   // App appearance can differ from the device appearance. Never leave UIKit on auto.
   const colorScheme = isDark ? 'dark' : 'light';
-  // Navigation glass samples the real backdrop; never paint it with a brand tint.
-  const materialTint = !navigation && !isDark && !clear ? 'rgba(255,255,255,0.52)' : undefined;
-  const rim = tone === 'danger' ? lightTheme.redText : emphasis === 'strong' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)';
+  // A faint neutral reflection lifts dark glass; never use an opaque brand fill.
+  const materialTint = isDark && variant !== 'clear' ? darkGlassTint
+    : !navigation && !isDark && !clear ? 'rgba(255,255,255,0.52)' : undefined;
+  const rim = tone === 'danger' ? lightTheme.redText : emphasis === 'strong' ? (isDark ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.85)') : isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.35)';
   const rimWidth = tone === 'danger' || emphasis === 'strong' ? 1 : StyleSheet.hairlineWidth;
   const radius = (StyleSheet.flatten(style)?.borderRadius as number | undefined) ?? 999;
   if (nativeGlass && !reduceTransparency) {
-    return <GlassView glassEffectStyle={clear || !isDark ? 'clear' : 'regular'} isInteractive={interactive} tintColor={materialTint} colorScheme={colorScheme}
+    // Dark navigation uses the system's adaptive regular material: it lifts
+    // off a black backdrop while still transmitting the content underneath.
+    // Explicit clear remains available for photographic/coloured backgrounds.
+    return <GlassView glassEffectStyle={isDark && variant !== 'clear' ? 'regular' : 'clear'} isInteractive={interactive} tintColor={materialTint} colorScheme={colorScheme}
       style={[styles.center, { overflow: 'hidden', borderCurve: 'continuous' }, style, navigation ? { borderWidth: rimWidth, borderColor: rim } : undefined]}>{children}</GlassView>;
   }
   if (reduceTransparency) {
@@ -57,21 +63,21 @@ export function GlassSurface({ children, style, interactive = false, scheme, var
   // сквозь почти прозрачное тело, яркий блик по верхней кромке и отражённый свет по нижней,
   // мягкий свет сверху внутрь и лёгкая тень под стеклом. Серой заливки нет.
   const dark = isDark || scheme === 'dark';
-  const fill = navigation ? 'transparent' : (clear ? 'rgba(255,255,255,0.08)' : dark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.50)');
-  const sheen = navigation ? ['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)'] as const : clear || dark ? ['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0)'] as const
+  const fill = dark ? 'rgba(255,255,255,0.04)' : navigation ? 'transparent' : (clear ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.50)');
+  const sheen = dark ? ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0)'] as const : navigation ? ['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)'] as const : clear ? ['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0)'] as const
     : ['rgba(255,255,255,0.70)', 'rgba(255,255,255,0.18)', 'rgba(255,255,255,0)'] as const;
-  const glow = navigation ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.03)'] as const : clear || dark ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.14)'] as const : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.35)'] as const;
+  const glow = dark || navigation ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.03)'] as const : clear ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.14)'] as const : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.35)'] as const;
   return <View style={[styles.center, style, clear ? styles.liftClear : dark ? styles.liftDark : styles.lift, { borderCurve: 'continuous' }]}>
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden', borderCurve: 'continuous' }]}>
       {/* Радиус — и на самом размытии: иначе в браузере размытие выходит прямоугольником за скругление. */}
-      <BlurView intensity={navigation ? (emphasis === 'subtle' ? 18 : 28) : clear ? 22 : 40} tint={navigation ? (dark ? 'dark' : 'light') : clear ? 'light' : dark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]} />
+      <BlurView intensity={dark ? 40 : navigation ? (emphasis === 'subtle' ? 18 : 28) : clear ? 22 : 40} tint={dark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]} />
       <View style={[StyleSheet.absoluteFill, { backgroundColor: fill }]} />
       <LinearGradient colors={sheen} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
       <LinearGradient colors={glow} start={{ x: 0.5, y: 0.55 }} end={{ x: 0.5, y: 1 }} style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: navigation ? rimWidth : 1, borderCurve: 'continuous',
-        borderColor: navigation ? rim : clear || dark ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.75)',
-        borderTopColor: navigation ? rim : clear || dark ? 'rgba(255,255,255,0.75)' : '#FFFFFF',
-        borderBottomColor: navigation ? rim : clear || dark ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.9)' }]} />
+        borderColor: navigation ? rim : dark ? 'rgba(255,255,255,0.16)' : clear ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.75)',
+        borderTopColor: dark && tone !== 'danger' ? 'rgba(255,255,255,0.30)' : navigation ? rim : clear ? 'rgba(255,255,255,0.75)' : '#FFFFFF',
+        borderBottomColor: dark && tone !== 'danger' ? 'rgba(255,255,255,0.12)' : navigation ? rim : clear ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.9)' }]} />
     </View>
     {children}
   </View>;

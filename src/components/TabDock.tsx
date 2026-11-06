@@ -9,7 +9,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { hexToRgba } from '../theme/personalization';
 import { shadow } from '../theme/tokens';
 import { GlassView } from 'expo-glass-effect';
-import { nativeGlass } from './GlassSurface';
+import { darkGlassTint, nativeGlass } from './GlassSurface';
 import { SF } from './SFIcon';
 
 export interface TabDockProps {
@@ -65,11 +65,12 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
   // SDK 54's Android blur is experimental. A tinted translucent surface keeps
   // navigation cheap over video/maps, without opting into that renderer.
   const useNativeMaterial = Platform.OS === 'ios' && !reduceTransparency;
-  const surface = reduceTransparency ? T.cardBg : hexToRgba(T.cardBg, Platform.OS === 'android' ? 0.96 : 0.84);
+  const surface = reduceTransparency ? T.cardBg : Platform.OS === 'ios' && isDark ? 'rgba(255,255,255,0.04)'
+    : hexToRgba(T.cardBg, Platform.OS === 'android' ? 0.96 : 0.84);
   // Светлое стекло поверх blur: градиент сверху вниз, как в макете.
   const glass = useNativeMaterial && !isDark;
   const edge = isDark ? hexToRgba(T.label, 0.22) : 'rgba(255,255,255,0.75)';
-  const idle = isDark ? T.labelTertiary : '#8A8F98';
+  const idle = isDark ? 'rgba(255,255,255,0.86)' : '#8A8F98';
   // Выбранная вкладка: синяя в светлой теме, белая в тёмной — как системные панели iOS 26.
   const active = isDark ? '#FFFFFF' : T.brandText;
   const capsuleFill = isDark ? 'rgba(255,255,255,0.14)' : hexToRgba(T.brand, 0.10);
@@ -100,8 +101,8 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
         : shadow({ color: '#234088', opacity: 0.14, radius: 15, y: 10, elevation: 6 })]}>
       <View testID="tab-dock-surface" onLayout={event => setMeasuredWidth(event.nativeEvent.layout.width)} style={[styles.surface, { borderColor: edge }]}>
         <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
-          {liquid ? <GlassView testID="tab-dock-glass" glassEffectStyle="clear" colorScheme={isDark ? 'dark' : 'light'}
-            tintColor={isDark ? hexToRgba(T.cardBg, 0.55) : 'rgba(255,255,255,0.62)'} style={StyleSheet.absoluteFill} />
+          {liquid ? <GlassView testID="tab-dock-glass" glassEffectStyle={isDark ? 'regular' : 'clear'} colorScheme={isDark ? 'dark' : 'light'}
+            tintColor={isDark ? darkGlassTint : 'rgba(255,255,255,0.62)'} style={StyleSheet.absoluteFill} />
           : useNativeMaterial ? <BlurView testID="tab-dock-blur" intensity={40}
             tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
           {liquid ? null : glass ? <LinearGradient testID="tab-dock-tint" colors={['rgba(255,255,255,0.58)', 'rgba(255,255,255,0.42)']}

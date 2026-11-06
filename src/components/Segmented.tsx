@@ -9,7 +9,8 @@ import { GlassSurface } from './GlassSurface';
 /**
  * Переключатель из стекла, как в iOS 26: дорожка — стекло, выбранный пункт —
  * стеклянная «капля» поверх неё. На iOS 26 это настоящий Liquid Glass
- * (GlassView), на остальных — его запасной вид. Ни серой, ни цветной заливки.
+ * (GlassView), на остальных — его запасной вид. В тёмной теме выбранная
+ * капсула светлее дорожки; непрозрачной цветной заливки нет.
  * `glass` — для цветного фона (как в Apple Sports): прозрачное стекло, белые подписи.
  */
 export function Segmented({
@@ -36,6 +37,7 @@ export function Segmented({
             })}>
               {on ? <GlassSurface interactive variant={clear ? 'clear' : 'regular'}
                 style={[StyleSheet.absoluteFill, { borderRadius: thumbRadius }]} /> : null}
+              {on && isDark ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: thumbRadius, backgroundColor: 'rgba(255,255,255,0.12)' }]} /> : null}
               <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: space.xs }}>
                 {leadingIcons ? <SF name={leadingIcons[i]} size={12} color={on ? onInk : offInk} /> : null}
                 <Text style={[on ? ty.footnoteEm : ty.footnote, { color: on ? onInk : offInk, flexShrink: 1, textAlign: 'center' }]}>{s}</Text>

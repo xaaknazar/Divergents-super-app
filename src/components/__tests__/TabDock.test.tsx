@@ -41,7 +41,7 @@ it.each(['light', 'dark'] as const)('uses the system material and themed translu
   const view = await render(theme(<TabDock items={items} onSelect={jest.fn()} />, scheme));
   expect(view.getByTestId('tab-dock-blur', hidden).props.tint).toBe(scheme);
   const tint = view.getByTestId('tab-dock-tint', hidden);
-  if (scheme === 'dark') expect(flattened(tint).backgroundColor).toBe(hexToRgba(resolveThemePalette(scheme).cardBg, 0.84));
+  if (scheme === 'dark') expect(flattened(tint).backgroundColor).toBe('rgba(255,255,255,0.04)');
   else expect(tint.props.colors).toEqual(['rgba(255,255,255,0.58)', 'rgba(255,255,255,0.42)'].map(c => processColor(c)));
   const selected = view.getByRole('tab', { name: 'Обучение' });
   await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 340 } } });
