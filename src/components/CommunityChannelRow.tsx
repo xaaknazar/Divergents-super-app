@@ -1,6 +1,6 @@
 // Карточка канала (в макете — ChannelCard). `plain` — обычная белая карточка (список
-// каналов); `cover` — на главной «Сообщества»: сверху полоса 72 с картинкой канала и
-// лёгким затемнением снизу, аватар 56 наезжает на неё на 26 с белой обводкой 3.
+// каналов); `cover` — на главной «Сообщества»: обложка 16:9 с целой картинкой
+// канала, ниже — аватар 56 с белой обводкой 3 и информация о канале.
 // Без картинки у канала `cover` честно сводится к `plain`.
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
@@ -17,6 +17,7 @@ import { shadow } from '../theme/tokens';
 import { SF } from './SFIcon';
 import { TappableSurface } from './TappableSurface';
 import { Wrapper } from './Wrapper';
+import { CommunityChannelCover } from './CommunityChannelCover';
 type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['navigation'];
 
 export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: { channel: Channel; navigation: Nav; variant?: 'plain' | 'cover' }) {
@@ -35,10 +36,7 @@ export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: 
     <Wrapper marginHorizontal={16} marginBottom={12}>
       <TappableSurface onPress={() => navigation.navigate('ServerChannel', { channelId: channel.id })}
         accessibilityLabel={`${tr('Канал')} ${channel.name}`}>
-        {cover ? <View style={styles.banner}>
-          <Image source={{ uri: channel.avatar }} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={{ top: '35%' }} cachePolicy="memory-disk" />
-          <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.25)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
-        </View> : null}
+        {cover ? <CommunityChannelCover uri={channel.avatar} /> : null}
         <View style={[styles.row, cover ? styles.rowCover : null]}>
           <View style={cover ? [styles.avatarLift, shadow({ color: '#101D2C', opacity: 0.18, radius: 6, y: 4, elevation: 3 })] : null}>
             <View style={[styles.avatarFrame, cover ? { borderColor: T.cardBg, borderWidth: 3 } : null]}>
@@ -90,7 +88,6 @@ export function CommunityChannelRow({ channel, navigation, variant = 'plain' }: 
 }
 
 const styles = StyleSheet.create({
-  banner: { height: 72, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
   rowCover: { alignItems: 'flex-end', gap: 12, paddingTop: 0 },
   avatarLift: { marginTop: -26, borderRadius: 21 },
