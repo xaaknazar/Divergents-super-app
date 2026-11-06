@@ -9,11 +9,11 @@ import { Segmented } from './Segmented';
 import { TabDock } from './TabDock';
 
 const destinations = [
-  { id:'learn', label:'Обучение', shortLabel:'Курсы', icon:'book.fill' },
+  { id:'learn', label:'Обучение', icon:'book.fill' },
   { id:'ai', label:'AI', icon:'sparkles.outline' },
-  { id:'community', label:'Сообщество', shortLabel:'Клуб', icon:'person.3' },
+  { id:'community', label:'Сообщество', icon:'person.3' },
   { id:'map', label:'Карта', icon:'map' },
-  { id:'career', label:'Карьера', shortLabel:'Работа', icon:'briefcase' },
+  { id:'career', label:'Карьера', icon:'briefcase' },
 ];
 const noop = () => {};
 /** Изолированная витрина настоящих компонентов: без авторизации, сети и пользовательских данных. */

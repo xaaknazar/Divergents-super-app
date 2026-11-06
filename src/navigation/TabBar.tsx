@@ -19,15 +19,6 @@ const TABS: Record<string, { label: 'tab_learn' | 'tab_ai' | 'tab_community' | '
   // remaining labels fit at full size.
 };
 
-// Compact fallbacks used only when the full word can't fit the tab slot
-// (narrow screen or enlarged system/app text). Keeps the label readable at
-// 11 pt instead of wrapping to «Сообществ / о» or shrinking to 9 pt.
-const SHORT_RU: Record<string, string> = {
-  CommunityTab: 'Клуб',
-  LMSTab: 'Курсы',
-  CareerTab: 'Работа',
-};
-
 // The bar is shown ONLY on the six tab-root screens; every pushed/detail screen
 // is fullscreen (no bar). Inverting the rule this way means new detail screens
 // are fullscreen automatically — no allow-list to keep in sync — which avoids
@@ -69,7 +60,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   return <TabDock items={visible.map(route => {
     const meta = TABS[route.name];
     const selected = route.key === active.key;
-    return { id: route.key, label: t(meta.label), shortLabel: SHORT_RU[route.name], icon: selected ? meta.on : meta.off, selected };
+    return { id: route.key, label: t(meta.label), icon: selected ? meta.on : meta.off, selected };
   })} onSelect={key => {
     const route = state.routes.find(r => r.key === key);
     if (!route) return;

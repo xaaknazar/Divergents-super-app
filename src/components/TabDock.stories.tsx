@@ -27,11 +27,11 @@ const meta = { title: 'Навигация/TabDock', component: TabDock,
     </Wrapper>;
   },
   args: { onSelect: fn(), onLongPress: fn(), items: [
-    { id: 'learn', label: 'Обучение', shortLabel: 'Курсы', icon: 'book.fill', selected: true },
+    { id: 'learn', label: 'Обучение', icon: 'book.fill', selected: true },
     { id: 'ai', label: 'AI', icon: 'sparkles.outline', selected: false },
-    { id: 'community', label: 'Сообщество', shortLabel: 'Клуб', icon: 'person.3', selected: false },
+    { id: 'community', label: 'Сообщество', icon: 'person.3', selected: false },
     { id: 'map', label: 'Карта', icon: 'map', selected: false },
-    { id: 'career', label: 'Карьера', shortLabel: 'Работа', icon: 'briefcase', selected: false },
+    { id: 'career', label: 'Карьера', icon: 'briefcase', selected: false },
   ] },
 } satisfies Meta<typeof TabDock>;
 export default meta;
@@ -45,3 +45,5 @@ export const DarkReducedTransparency: Story = { parameters: { scheme: 'dark', re
 export const FewerDestinations: Story = { args: { items: meta.args.items.filter(item => item.id === 'learn' || item.id === 'community') } };
 export const CommunitySelected: Story = { args: { items: meta.args.items.map(item => ({ ...item,
   selected: item.id === 'community', icon: item.id === 'learn' ? 'book' : item.id === 'community' ? 'person.3.fill' : item.icon })) } };
+
+export const CommunityCompact: Story = { ...CommunitySelected, parameters: { viewport: 'compact' } };

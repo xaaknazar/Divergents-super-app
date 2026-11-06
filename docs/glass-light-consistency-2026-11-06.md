@@ -30,3 +30,18 @@ Evidence directory: `/Users/xaknazar/.codex/visualizations/2026/09/01/01a05b3e-1
 Physical iPhone and Android were not visually tested. Full user flows and native motion were not visually reviewed; spring/nav behavior retains automated coverage. Large-text preview was captured but not included in the reviewer disposition. Existing long tab-label truncation is identical in baseline and remains outside this material-only change. iPad support is disabled in the shipping config. No build was uploaded to TestFlight for this task.
 
 The historical design sidecar is out of sync with DESIGN.md; no broad documentation regeneration or skill update was included.
+
+
+## Follow-up: full «Сообщество» tab label
+
+The owner reported the previously documented truncation and requested a fix. The old equal-slot layout and approximate width check accepted a title that the selected bold font did not actually fit.
+
+- `tabDockItemWidths` reserves minimum touch widths and distributes spare space using full title widths measured by native Text in the bold font. Actual measured row width constrains the result. Measurement-only text is hidden from accessibility and interaction.
+- Labels remain at least 11pt with no automatic shrinking. Focus rings are overlays and do not consume text space. Full titles replace alternate «Клуб»/«Курсы»/«Работа» labels; removed unused `shortLabel` and SHORT_RU API.
+- Capsule x-position and width both spring. Geometry changes and Reduced Motion remain immediate. Accessibility names remain full.
+- Added CommunityCompact Storybook regression state.
+- TypeScript passed; targeted 44/44 tests; full **1153/1153 tests**, 135 suites.
+- Native iOS26.5 Simulator captures: `tab-label-light.png`, `tab-label-dark.png`, `tab-label-compact.png` in the evidence directory above. The compact capture constrains the real native preview to 320pt inside the 402pt simulator; it is not a separate physical phone. All show the full selected Community label with no tab-label overlap.
+- No TestFlight upload, physical-device or Android visual check in this follow-up.
+
+Follow-up finish reviewer: **disposition: ship**, limited to the corrected tab labels and supplied native captures. The 11pt minimum and full title at320/402pt were confirmed; no remaining material findings.

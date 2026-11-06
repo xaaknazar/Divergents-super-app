@@ -402,3 +402,8 @@ This narrow correction follows the owner's request after build 111 and supersede
 GlassSurface owns the semantic `navigation` variant, `tone` and `emphasis`; arbitrary tint overrides were removed. Native and fallback implementations share this contract. Reduced Transparency uses opaque surfaces. GlassNavigationPreview provides isolated Storybook coverage without authentication or API requests.
 
 Finish reviewer disposition: **ship**, limited to the supplied iPhone iOS 26.5 Simulator component captures. Native before/after, cross-appearance and Reduced Transparency evidence, verification and limits are recorded in [glass refinement](docs/glass-light-consistency-2026-11-06.md). This is not a TestFlight release or a physical-device claim. No shipping raster assets were added.
+
+
+### Full tab titles · 2026-11-06 follow-up
+
+The owner subsequently requested that «Сообщество» be visible in full. Tab slots now give long names more horizontal room instead of reserving identical widths for «AI» and «Сообщество». Targets retain a 44pt minimum on supported phone widths. Native layout measures every full title in its bold font; labels stay at least 11pt, with no automatic shrinking. Focus rings are overlaid and do not consume title space. Both the capsule's position and width spring between destinations. Oversized accessibility text retains the icon-only mode and full native large-content/VoiceOver title. The unused shortLabel/SHORT_RU API was removed. Actual native 402pt and constrained 320pt captures show the full selected title; regression suites pass.

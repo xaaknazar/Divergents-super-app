@@ -3,7 +3,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { Platform, processColor, StyleSheet, Text } from 'react-native';
 import { resolveThemePalette } from '../../theme/ThemeContext';
 import { hexToRgba } from '../../theme/personalization';
-import { TAB_DOCK_HEIGHT, tabDockBottomInset, tabDockContentInset, tabDockMiniPlayerHeight } from '../../lib/tabDockLayout';
+import { TAB_DOCK_HEIGHT, tabDockBottomInset, tabDockContentInset, tabDockMiniPlayerHeight, tabDockItemWidths } from '../../lib/tabDockLayout';
 import { TabDock, TabDockProps } from '../TabDock';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
 import { withSpring } from 'react-native-reanimated';
@@ -22,11 +22,11 @@ const mockInsets = { top: 44, bottom: 34, left: 0, right: 0 };
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => mockInsets }));
 
 const items: TabDockProps['items'] = [
-  { id: 'learn', label: 'Обучение', shortLabel: 'Курсы', icon: 'book.fill', selected: true },
+  { id: 'learn', label: 'Обучение', icon: 'book.fill', selected: true },
   { id: 'ai', label: 'AI', icon: 'sparkles.outline', selected: false },
-  { id: 'community', label: 'Сообщество', shortLabel: 'Клуб', icon: 'person.3', selected: false },
+  { id: 'community', label: 'Сообщество', icon: 'person.3', selected: false },
   { id: 'map', label: 'Карта', icon: 'map', selected: false },
-  { id: 'career', label: 'Карьера', shortLabel: 'Работа', icon: 'briefcase', selected: false },
+  { id: 'career', label: 'Карьера', icon: 'briefcase', selected: false },
 ];
 const originalOS = Platform.OS;
 afterEach(() => { Object.defineProperty(Platform, 'OS', { value: originalOS }); mockInsets.bottom = 34; mockInsets.left = 0; mockInsets.right = 0; mockDimensions.width = 393; mockDimensions.fontScale = 1; });
@@ -67,13 +67,13 @@ it('uses the inexpensive tinted fallback on Android', async () => {
 
 it('fits the actual parent width without shortening accessible names', async () => {
   const view = await render(theme(<TabDock items={items} onSelect={jest.fn()} />));
-  await fireEvent(view.getByTestId('tab-dock-surface'), 'layout', { nativeEvent: { layout: { width: 270 } } });
-  expect(view.getByText('Курсы')).toBeTruthy();
-  expect(view.getByText('Клуб')).toBeTruthy();
-  expect(view.getByText('Работа')).toBeTruthy();
+  await fireEvent(view.getByTestId('tab-dock-surface'), 'layout', { nativeEvent: { layout: { width: 320 } } });
+  expect(view.getByText('Обучение')).toBeTruthy();
+  expect(view.getByText('Сообщество')).toBeTruthy();
+  expect(view.getByText('Карьера')).toBeTruthy();
   expect(view.getByRole('tab', { name: 'Сообщество' })).toBeTruthy();
   await fireEvent(view.getByTestId('tab-dock-surface'), 'layout', { nativeEvent: { layout: { width: 220 } } });
-  expect(view.queryByText('Курсы')).toBeNull();
+  expect(view.queryByText('Обучение')).toBeNull();
   expect(view.getAllByRole('tab')).toHaveLength(5);
 });
 
@@ -99,9 +99,9 @@ it('keeps selection, long press, focus and the mini-player slot independent of d
   await fireEvent(view.getByTestId('tab-dock-player'), 'layout', { nativeEvent: { layout: { height: 63 } } });
   expect(flattened(view.getByTestId('tab-dock-player')).marginBottom).toBe(8);
   await fireEvent(tab, 'focus');
-  expect(flattened(view.getByRole('tab', { name: 'Сообщество' })).borderColor).toBe(resolveThemePalette('light').brandText);
+  expect(flattened(view.getByTestId('tab-dock-focus-ring')).borderColor).toBe(resolveThemePalette('light').brandText);
   await fireEvent(tab, 'blur');
-  expect(flattened(view.getByRole('tab', { name: 'Сообщество' })).borderColor).toBe('transparent');
+  expect(view.queryByTestId('tab-dock-focus-ring')).toBeNull();
 });
 
 it('reserves content space for the capsule, safe area and a scalable mini-player', () => {
@@ -140,9 +140,9 @@ it('moves one non-interactive capsule to the latest tab during rapid switches', 
   await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 350 } } });
   jest.mocked(withSpring).mockClear();
   await view.rerender(motionPreview('career'));
-  expect(withSpring).toHaveBeenLastCalledWith(280, expect.any(Object));
+  expect(withSpring).toHaveBeenCalledWith(expect.closeTo(279.75, 2), expect.any(Object));
   await view.rerender(motionPreview('ai'));
-  expect(withSpring).toHaveBeenLastCalledWith(70, expect.any(Object));
+  expect(withSpring).toHaveBeenCalledWith(expect.closeTo(78.5, 2), expect.any(Object));
   expect(view.getAllByTestId('tab-dock-active-capsule', hidden)).toHaveLength(1);
   expect(view.getByTestId('tab-dock-active-capsule', hidden).props.pointerEvents).toBe('none');
   expect(view.getByRole('tab', { name: 'AI', selected: true })).toBeTruthy();
@@ -154,13 +154,13 @@ it('does not animate first placement, resizing or changes to visible destination
   await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 350 } } });
   expect(withSpring).not.toHaveBeenCalled();
   await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 500 } } });
-  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).width).toBe(100);
+  expect(flattened(view.getByRole('tab', { name: 'Сообщество' })).width).toBeCloseTo(125);
   const fewer = items.filter(item => item.id === 'learn' || item.id === 'community');
   await view.rerender(motionPreview('community', false, fewer));
-  expect(flattened(view.getByTestId('tab-dock-active-capsule', hidden)).width).toBe(250);
+  expect(flattened(view.getByRole('tab', { name: 'Сообщество' })).width).toBeCloseTo(258.25);
   expect(withSpring).not.toHaveBeenCalled();
   await view.rerender(motionPreview('learn', false, fewer));
-  expect(withSpring).toHaveBeenLastCalledWith(0, expect.any(Object));
+  expect(withSpring).toHaveBeenCalledWith(0, expect.any(Object));
 });
 
 it('respects reduced motion when the setting changes while the panel is mounted', async () => {
@@ -174,5 +174,26 @@ it('respects reduced motion when the setting changes while the panel is mounted'
   expect(withSpring).not.toHaveBeenCalled();
   expect(view.getByRole('tab', { name: 'Карьера', selected: true })).toBeTruthy();
   await view.rerender(motionPreview('learn', false));
-  expect(withSpring).toHaveBeenLastCalledWith(0, expect.any(Object));
+  expect(withSpring).toHaveBeenCalledWith(0, expect.any(Object));
+});
+
+
+it.each([283, 338, 365, 711])('keeps full titles and 44pt touch targets within a %spt row', width => {
+  const widths = tabDockItemWidths([54,12,73,31,49], width);
+  expect(widths.reduce((sum, value) => sum + value, 0)).toBeCloseTo(width);
+  expect(Math.min(...widths)).toBeGreaterThanOrEqual(44);
+  expect(widths[2]).toBeGreaterThan(widths[1]);
+});
+
+it('uses measured bold widths to fit Community at 11pt without an alternate name', async () => {
+  const view = await render(motionPreview('community'));
+  await fireEvent(view.getByTestId('tab-dock-row'), 'layout', { nativeEvent: { layout: { width: 283 } } });
+  for (const [index, item] of items.entries()) {
+    await fireEvent(view.getByTestId(`tab-dock-measure-${item.id}`, hidden), 'textLayout', { nativeEvent: { lines: [{ width: [54,12,73,31,49][index] }] } });
+  }
+  const label = view.getByText('Сообщество');
+  expect(label.props.adjustsFontSizeToFit).toBeUndefined();
+  expect(flattened(label).fontSize).toBeGreaterThanOrEqual(11);
+  expect(flattened(label).width).toBe('100%');
+  expect(view.queryByText('Клуб')).toBeNull();
 });
