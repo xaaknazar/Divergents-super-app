@@ -141,7 +141,7 @@ export function MyFitnessScreen({ navigation }: Props) {
           onRecord={() => navigation.navigate('WorkoutTrack')} onHistory={() => navigation.navigate('WorkoutHistory')} />
 
         {/* Программы */}
-        <SectionTitle title={tr('Программы')} action={tr('Новая')} onAction={() => { hTap(); setProgramSheet(true); }} first />
+        <SectionTitle title={tr('Программы')} action={activePrograms.length ? tr('Новая') : undefined} onAction={() => { hTap(); setProgramSheet(true); }} first />
         {activePrograms.length === 0 ? (
           <Hint
             icon="calendar"
@@ -196,7 +196,7 @@ export function MyFitnessScreen({ navigation }: Props) {
         </View>
 
         {/* Цели */}
-        <SectionTitle title={tr('Цели')} action={tr('Добавить')} onAction={() => { hTap(); setGoalSheet(true); }} />
+        <SectionTitle title={tr('Цели')} action={goals.length ? tr('Добавить') : undefined} onAction={() => { hTap(); setGoalSheet(true); }} />
         {goals.length === 0 ? (
           <Hint icon="target" title={tr('Поставьте цель')} text={tr('Пробежать десятку, выйти из 5:00 на километре или подтянуться пятнадцать раз. Прогресс считается сам по тренировкам и показателям.')} action={tr('Добавить цель')} onAction={() => setGoalSheet(true)} />
         ) : (
@@ -232,7 +232,7 @@ export function MyFitnessScreen({ navigation }: Props) {
         )}
 
         {/* Свои показатели */}
-        <SectionTitle title={tr('Показатели')} action={tr('Добавить')} onAction={() => { hTap(); setMetricSheet(true); }} />
+        <SectionTitle title={tr('Показатели')} action={metrics.length ? tr('Добавить') : undefined} onAction={() => { hTap(); setMetricSheet(true); }} />
         {metrics.length === 0 ? (
           <Hint icon="dumbbell" title={tr('Личные рекорды')} text={tr('Турник, отжимания, планка, вес — всё, что хочется отслеживать. Записывайте результат, рекорд считается сам.')} action={tr('Добавить показатель')} onAction={() => setMetricSheet(true)} />
         ) : (
