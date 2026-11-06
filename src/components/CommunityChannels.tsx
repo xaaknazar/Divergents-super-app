@@ -9,7 +9,7 @@ import { CommunityChannelRow } from './CommunityChannelRow';
 import { ContentEmptyState } from './ContentEmptyState';
 import { ContentLoading } from './ContentLoading';
 
-type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['navigation'];
+type Nav = Pick<NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['navigation'], 'navigate'>;
 export function CommunityChannels({ navigation }: { navigation: Nav }) {
   const { T, ty } = useTheme();
   const { t } = useLang();
