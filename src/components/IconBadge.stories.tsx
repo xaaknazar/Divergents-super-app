@@ -11,6 +11,7 @@ const meta = { title: 'Основа/IconBadge', component: IconBadge,
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
+export const BooksRead: Story = { args: { icon: 'checkmark' } };
 export const Sport: Story = { args: { tone: 'success', icon: 'figure.run' } };
 export const Sugar: Story = { args: { tone: 'danger', icon: 'cube.fill', shape: 'squircle', size: 'large' } };
 export const Route: Story = { args: { variant: 'tinted', size: 'small', icon: 'mappin.and.ellipse' } };

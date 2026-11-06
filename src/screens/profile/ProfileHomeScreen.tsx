@@ -329,7 +329,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
             leading={<BookThumb uri={s.cover} />} title={s.title} subtitle={s.detail} chevron />
         ))}
         {readBooks.length > 0 ? (
-          <ListRow leading={<IconBadge icon="checkmark.circle.fill" tone="success" />}
+          <ListRow leading={<IconBadge icon="checkmark" />}
             title={tr('Прочитано')} detail={String(readBooks.length)} chevron onPress={openMyBooks} />
         ) : null}
         {myBooks.items.length > 0 ? <ListRow leading={<IconBadge icon="books.vertical.fill" />}
