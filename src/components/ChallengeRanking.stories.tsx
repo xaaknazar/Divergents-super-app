@@ -38,3 +38,5 @@ export const MembersToday: Story = { args: { tab: 'members', rows: today, period
 export const Empty: Story = { args: { rows: [] } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { args: { tab: 'members', rows: members }, parameters: { textSize: 'xl', viewport: 'compact' } };
+export const NarrowTeams: Story = { parameters: { viewport: 'compact' } };
+export const NarrowToday: Story = { args: MembersToday.args, parameters: { viewport: 'compact', textSize: 'xl', scheme: 'dark' } };

@@ -12,3 +12,5 @@ export const Team: Story = { args: { kind: 'team', row: finalResultsFixture.team
 export const WhiteFlag: Story = { args: { kind: 'member', row: finalResultsFixture.overall[3] } };
 export const Eliminated: Story = { args: { kind: 'member', row: finalResultsFixture.overall[4] } };
 export const LongName: Story = { args: { kind: 'member', row: { ...finalResultsFixture.overall[1], name: 'Очень длинный псевдоним участника команды' } }, parameters: { viewport: 'compact', textSize: 'xl' } };
+export const NarrowTeam: Story = { args: { kind: 'team', row: { ...finalResultsFixture.teams[1], name: 'Divergents long team name', points: 1234567 } }, parameters: { viewport: 'compact' } };
+export const LargeScore: Story = { args: { kind: 'member', row: { ...finalResultsFixture.overall[1], rank: 123, points: 1234567 } }, parameters: { viewport: 'compact', textSize: 'xl', scheme: 'dark' } };

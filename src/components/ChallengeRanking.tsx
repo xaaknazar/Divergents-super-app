@@ -130,7 +130,7 @@ export function TodayGoals({ tasks }: { tasks: MemberTaskProgress[] }) {
   const { T, ty } = useTheme();
   if (!tasks.length) return null;
   return (
-    <View testID="today-goals" accessible accessibilityLabel={tasks.map(goalLabel).join(', ')} style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, marginTop: 2 }}>
+    <View testID="today-goals" accessible accessibilityLabel={tasks.map(goalLabel).join(', ')} style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, rowGap: 6, marginTop: 4 }}>
       {tasks.map((t) => {
         const color = t.completed ? T.greenText : t.marked ? T.redText : T.labelTertiary;
         const kind = goalKind(t);

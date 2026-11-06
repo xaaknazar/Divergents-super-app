@@ -31,6 +31,14 @@ export const Members: Story = { args: { nameColumn: 'Участник', rows: me
 export const FirstDay: Story = { args: { rows: teams.map((t) => ({ ...t, change: null })) } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { args: { nameColumn: 'Участник', rows: members }, parameters: { textSize: 'xl', viewport: 'compact' } };
+export const TeamsNarrow: Story = { parameters: { viewport: 'compact' } };
+export const MembersNarrow: Story = { args: Members.args, parameters: { viewport: 'compact' } };
+export const LargeScores: Story = {
+  args: { nameColumn: 'Участник', rows: [
+    { ...members[0], rank: 123, points: 1234567, change: 120, flags: 12 },
+    { ...members[1], rank: 124, points: 998765, change: -12, flags: 4 },
+  ] }, parameters: { viewport: 'compact', textSize: 'xl', scheme: 'dark' },
+};
 
 const readingRows: StandingRow[] = [
   { ...member('r1', 'Алия', '17 дней чтения', 1, 1005, null), value: '1 005', secondary: '59,1' },
