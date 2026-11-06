@@ -14,3 +14,14 @@ export const DifferentLeaders: Story = { args: { data: { ...individualReadingFix
 export const Empty: Story = { args: { data: { ...individualReadingFixture, ranking: [], me: null } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { viewport: 'compact', textSize: 'xl' } };
+
+/** Фото из профиля и запасные инициалы видны вместе; узкий экран сохраняет фото. */
+export const ProfilePhotos: Story = { args: { data: { ...individualReadingFixture,
+  me: { ...individualReadingFixture.me!, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=faces' },
+  ranking: individualReadingFixture.ranking.map((member, index) => ({ ...member,
+    avatar: index === 0 ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop&crop=faces'
+      : member.userId === individualReadingFixture.me!.userId
+        ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=faces' : null,
+  })),
+} } };
+export const ProfilePhotosNarrow: Story = { args: ProfilePhotos.args, parameters: { viewport: 'compact', textSize: 'xl' } };

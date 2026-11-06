@@ -30,7 +30,7 @@ const flagRecovery = z.object({ requiredDays: z.number().int().positive(), progr
 export type ReadingFlagRecoveryState = z.infer<typeof flagRecovery>;
 export const ReadingPeriodSchema = z.object({ startsAt: z.number(), endsAt: z.number(), totalDays: z.number(), personalDay: z.number(), completed: z.boolean() });
 export type ReadingPeriod = z.infer<typeof ReadingPeriodSchema>;
-const member = z.object({ period: ReadingPeriodSchema.optional(), targetMs: z.number().optional(), userId: z.string(), name: z.string(), teamId: z.string().nullable().optional(), flags: z.number(), completedDays: z.number(),
+const member = z.object({ period: ReadingPeriodSchema.optional(), targetMs: z.number().optional(), userId: z.string(), name: z.string(), avatar: z.string().trim().nullable().optional(), teamId: z.string().nullable().optional(), flags: z.number(), completedDays: z.number(),
   pages: z.number(), elapsedMs: z.number(), extraMs: z.number().default(0), eliminatedOn: z.number().nullable(), history: z.array(history),
   averageMinutes: z.number().optional(), averagePages: z.number().optional(), daysParticipated: z.number().optional(), readingDays: z.number().optional(),
   firstDay: z.number().optional(), streak: z.number().optional(), bestStreak: z.number().optional(),

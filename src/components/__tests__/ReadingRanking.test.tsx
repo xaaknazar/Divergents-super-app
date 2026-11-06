@@ -1,12 +1,13 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, within } from '@testing-library/react-native';
 import { ReadingRankingContent } from '../ReadingRankingContent';
 import { ReadingLinksGroup } from '../ReadingLinksGroup';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
 import { individualReadingFixture } from '../../storybook/readingFixtures';
-import { readingStandings } from '../../data/reading';
+import { ReadingDetailSchema, readingStandings } from '../../data/reading';
 
 jest.mock('../../data/api', () => ({ API_BASE: 'https://example.test' }));
+jest.mock('expo-image', () => ({ Image: require('react-native').Image }));
 jest.mock('../SFIcon', () => ({ SF: () => null }));
 jest.mock('../../lib/haptics', () => ({ hTap: jest.fn(), hSelect: jest.fn() }));
 const base = individualReadingFixture.me!;
@@ -58,4 +59,20 @@ test('empty list works in either mode and never pretends there are ranked partic
   expect(v.getByRole('radio', { name: 'Всего страниц' }).props.accessibilityState.selected).toBe(true);
   await fireEvent.press(v.getByRole('radio', { name: 'Средний темп' }));
   expect(v.getByText('Пока никто не вступил. Первые участники появятся здесь.')).toBeTruthy();
+});
+
+test('profile photos survive API parsing and appear in both rankings and own place on a narrow screen', async () => {
+  const photo = 'https://example.test/reader.jpg';
+  const reader = { ...ranking[1], avatar: photo };
+  const parsed = ReadingDetailSchema.parse({ ...data, me: reader, ranking: [ranking[0], reader] });
+  const v = await render(<ThemePreviewProvider><ReadingRankingContent data={parsed} /></ThemePreviewProvider>);
+  await fireEvent(v.getByTestId('standings-table'), 'layout', { nativeEvent: { layout: { width: 320 } } });
+  const assertPhoto = () => {
+    expect(within(v.getByTestId('standing-fast')).getByLabelText('Быстрый Ч.', { includeHiddenElements: true }).props.source).toEqual({ uri: photo });
+    expect(within(v.getByTestId('reading-my-place')).getByLabelText('Быстрый читатель', { includeHiddenElements: true }).props.source).toEqual({ uri: photo });
+    expect(within(v.getByTestId('standing-steady')).queryByLabelText('Постоянный Ч.', { includeHiddenElements: true })).toBeNull();
+  };
+  assertPhoto();
+  await fireEvent.press(v.getByRole('radio', { name: 'Средний темп' }));
+  assertPhoto();
 });

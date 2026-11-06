@@ -31,7 +31,7 @@ export function ReadingRankingContent({ data, onHistory, initialMetric = 'pages'
     return {
       id: m.userId, rank: place, name: shortPersonName(m.name), fullName: m.name,
       subtitle: `${days(readingDays)} чтения`,
-      avatar: { uri: null },
+      avatar: { uri: m.avatar },
       change: null, flags: m.flags, points: m.pages, isMine: isMe,
       value: pagesFirst ? pagesText : paceText,
       secondary: pagesFirst ? paceText : pagesText,
@@ -49,7 +49,7 @@ export function ReadingRankingContent({ data, onHistory, initialMetric = 'pages'
     {data.me && myPages && myPace ? <WashSurface testID="reading-my-place" radius={radius.block}>
       <View accessible accessibilityLabel={`Ваше место: по страницам ${myPages}, по среднему темпу ${myPace}, из ${participantsOf(data.ranking.length)}`}
         style={{ flexDirection: 'row', alignItems: 'center', padding: 16, columnGap: 12 }}>
-        <MemberAvatar name={data.me.name} avatar={null} size={40} />
+        <MemberAvatar name={data.me.name} avatar={data.me.avatar} size={40} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[ty.headline, { color: T.label }]}>Ваше место</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary }]}>из {participantsOf(data.ranking.length)}</Text>

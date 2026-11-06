@@ -104,18 +104,17 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
     : { minWidth: COL_PTS, paddingLeft: 6 };
   const numericWidth = (showMove ? COL_MOVE : 0) + COL_FLAG + COL_PTS + numericGap
     + (secondaryColumn ? COL_SEC + numericGap : 0);
-  // В узкой таблице чтения отдаём место имени, сохраняя промежутки между
-  // числами. Наличие аватаров в данных по-прежнему определяет подпись VoiceOver.
+  // На узком экране переносим показатели под имя, сохраняя фото участника
+  // и промежутки между числами.
   const contentWidth = (tableWidth ?? screenWidth - 32) - 32;
-  const stacked = Boolean(secondaryColumn && contentWidth - COL_RANK - numericWidth < 90 * textScale);
-  const showAvatars = withAvatars && (stacked || !secondaryColumn
-    || contentWidth - COL_RANK - numericWidth - AVATAR - 10 >= 90 * textScale);
+  const avatarWidth = withAvatars ? AVATAR + 10 : 0;
+  const stacked = Boolean(secondaryColumn && contentWidth - COL_RANK - numericWidth - avatarWidth < 90 * textScale);
   const mineBg = isDark ? 'rgba(124,149,255,0.14)' : 'rgba(35,64,136,0.07)';
 
   return (
     <View testID="standings-table" onLayout={event => setTableWidth(event.nativeEvent.layout.width)}>
       {!stacked ? <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.headRow}>
-        <View style={{ width: COL_RANK + (showAvatars ? AVATAR + 10 : 0) }} />
+        <View style={{ width: COL_RANK + (withAvatars ? AVATAR + 10 : 0) }} />
         <Text style={[head, { flex: 1 }]} numberOfLines={1}>{nameColumn}</Text>
         {showMove ? <Text style={[head, { width: COL_MOVE, textAlign: 'right' }]}>±</Text> : null}
         <View style={{ width: COL_FLAG, alignItems: 'flex-end' }}><SF name="flag.fill" size={11} color={T.labelSecondary} /></View>
@@ -138,7 +137,7 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
             <Row testID={`standing-${r.id}`} label={label} onPress={r.onPress} hint={r.a11yHint}
               style={[styles.row, { minHeight: r.subtitle || r.detail ? 60 : 48 }, stacked && styles.stackedRow, r.isMine && { backgroundColor: mineBg }]}>
               <Text style={[ty.body, num, { width: COL_RANK, color: T.label }]}>{r.rank}</Text>
-              {showAvatars && r.avatar ? <View style={{ marginRight: 10, opacity: r.dimmed ? 0.55 : 1 }}>
+              {withAvatars && r.avatar ? <View style={{ marginRight: 10, opacity: r.dimmed ? 0.55 : 1 }}>
                 <MemberAvatar name={r.name} avatar={r.avatar.uri} size={AVATAR} eliminated={r.avatar.eliminated} left={r.avatar.left} />
               </View> : null}
               <View style={{ flex: 1, minWidth: 0, opacity: r.dimmed ? 0.55 : 1 }}>
