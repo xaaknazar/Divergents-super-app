@@ -30,7 +30,7 @@ export function GlassSurface({ children, style, interactive = false, scheme, var
   /** Поверх фото: тёмное стекло читается на любом кадре. По умолчанию — тема приложения. */
   scheme?: 'light' | 'dark';
   /** clear — прозрачное стекло поверх яркого фона (фото, цветная шапка), как «clear» у Apple. */
-  variant?: 'regular' | 'clear' | 'navigation';
+  variant?: 'regular' | 'clear' | 'navigation' | 'readingNavigation';
   /** Удаляющее действие обозначается красной кромкой без цветной заливки. */
   tone?: 'default' | 'danger';
   emphasis?: 'subtle' | 'standard' | 'strong';
@@ -38,15 +38,18 @@ export function GlassSurface({ children, style, interactive = false, scheme, var
   const theme = useTheme();
   const { reduceTransparency, T } = theme;
   const isDark = scheme ? scheme === 'dark' : theme.isDark;
-  const navigation = variant === 'navigation';
+  // Text-heavy feeds need adaptive regular glass to keep foreground labels
+  // distinct from the paragraphs passing underneath in both appearances.
+  const readingNavigation = variant === 'readingNavigation';
+  const navigation = variant === 'navigation' || readingNavigation;
   const clear = variant === 'clear' || navigation;
   // App appearance can differ from the device appearance. Never leave UIKit on auto.
   const colorScheme = isDark ? 'dark' : 'light';
   // A faint neutral reflection lifts dark glass; never use an opaque brand fill.
-  // Кнопки навигации в светлой теме (этап 2, ноябрь 2026) — «дымчатое» стекло, как над обложкой
-  // курса: лёгкая тёмная вуаль, и белый символ читается на любом светлом фоне без чёрной обводки.
-  const smoke = navigation && !isDark ? (emphasis === 'subtle' ? 'rgba(18,22,34,0.20)' : 'rgba(18,22,34,0.30)') : undefined;
-  const materialTint = isDark && variant !== 'clear' ? darkGlassTint
+  // Preserve stage-2 navigation smoke and the separate text-feed material.
+  const smoke = navigation && !readingNavigation && !isDark ? (emphasis === 'subtle' ? 'rgba(18,22,34,0.20)' : 'rgba(18,22,34,0.30)') : undefined;
+  const materialTint = readingNavigation && isDark ? 'rgba(0,0,0,0.55)'
+    : isDark && variant !== 'clear' ? darkGlassTint
     : !navigation && !isDark && !clear ? 'rgba(255,255,255,0.52)' : smoke;
   const rim = tone === 'danger' ? lightTheme.redText : emphasis === 'strong' ? (isDark ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.85)') : isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.35)';
   const rimWidth = tone === 'danger' || emphasis === 'strong' ? 1 : StyleSheet.hairlineWidth;
@@ -55,7 +58,7 @@ export function GlassSurface({ children, style, interactive = false, scheme, var
     // Dark navigation uses the system's adaptive regular material: it lifts
     // off a black backdrop while still transmitting the content underneath.
     // Explicit clear remains available for photographic/coloured backgrounds.
-    return <GlassView glassEffectStyle={isDark && variant !== 'clear' ? 'regular' : 'clear'} isInteractive={interactive} tintColor={materialTint} colorScheme={colorScheme}
+    return <GlassView glassEffectStyle={readingNavigation || isDark && variant !== 'clear' ? 'regular' : 'clear'} isInteractive={interactive} tintColor={materialTint} colorScheme={colorScheme}
       style={[styles.center, { overflow: 'hidden', borderCurve: 'continuous' }, style, navigation ? { borderWidth: rimWidth, borderColor: rim } : undefined]}>{children}</GlassView>;
   }
   if (reduceTransparency) {
@@ -66,14 +69,14 @@ export function GlassSurface({ children, style, interactive = false, scheme, var
   // сквозь почти прозрачное тело, яркий блик по верхней кромке и отражённый свет по нижней,
   // мягкий свет сверху внутрь и лёгкая тень под стеклом. Серой заливки нет.
   const dark = isDark || scheme === 'dark';
-  const fill = dark ? 'rgba(255,255,255,0.04)' : navigation ? smoke ?? 'transparent' : (clear ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.50)');
+  const fill = dark ? 'rgba(255,255,255,0.04)' : readingNavigation ? 'rgba(255,255,255,0.28)' : navigation ? smoke ?? 'transparent' : (clear ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.50)');
   const sheen = dark ? ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0)'] as const : navigation ? ['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)'] as const : clear ? ['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0)'] as const
     : ['rgba(255,255,255,0.70)', 'rgba(255,255,255,0.18)', 'rgba(255,255,255,0)'] as const;
   const glow = dark || navigation ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.03)'] as const : clear ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.14)'] as const : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.35)'] as const;
   return <View style={[styles.center, style, clear ? styles.liftClear : dark ? styles.liftDark : styles.lift, { borderCurve: 'continuous' }]}>
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden', borderCurve: 'continuous' }]}>
       {/* Радиус — и на самом размытии: иначе в браузере размытие выходит прямоугольником за скругление. */}
-      <BlurView intensity={dark ? 40 : navigation ? (emphasis === 'subtle' ? 18 : 28) : clear ? 22 : 40} tint={dark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]} />
+      <BlurView intensity={readingNavigation ? 45 : dark ? 40 : navigation ? (emphasis === 'subtle' ? 18 : 28) : clear ? 22 : 40} tint={dark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]} />
       <View style={[StyleSheet.absoluteFill, { backgroundColor: fill }]} />
       <LinearGradient colors={sheen} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
       <LinearGradient colors={glow} start={{ x: 0.5, y: 0.55 }} end={{ x: 0.5, y: 1 }} style={StyleSheet.absoluteFill} />

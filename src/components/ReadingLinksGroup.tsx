@@ -1,3 +1,4 @@
+import { days } from '../data/plural';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { participantsOf, ReadingPeriod } from '../data/reading';
@@ -16,15 +17,17 @@ export function ReadingLinksGroup({ statistics, rank, onHistory }: {
   /** Нет — строка скрыта (например, год уже завершён и итоги показаны выше). */
   statistics?: { period?: ReadingPeriod; onPress?: () => void };
   /** `place` — место по среднему темпу, `pagesPlace` — по страницам. */
-  rank: { place: number | null; pagesPlace: number | null; participants: number; onPress: () => void };
+  rank: { place: number | null; pagesPlace: number | null; participants: number; paceTopDaysLeft?: number; onPress: () => void };
   onHistory?: () => void;
 }) {
   const { T } = useTheme();
   const of = participantsOf(rank.participants);
-  const rankLabel = `Мой рейтинг. ${rank.pagesPlace != null ? `По страницам: ${rank.pagesPlace} место из ${of}` : 'По страницам: место пока недоступно'}. По среднему темпу: ${rank.place != null ? `${rank.place} место из ${of}` : 'Открыть рейтинг участников'}`;
+  const pacePlaceLabel = rank.place != null ? `${rank.place} место${rank.place <= rank.participants ? ` из ${of}` : ''}` : 'Открыть рейтинг участников';
+  const qualification = (rank.paceTopDaysLeft ?? 0) > 0 ? `До допуска в топ-20 по темпу: ${days(rank.paceTopDaysLeft!)} участия` : '';
+  const rankLabel = `Мой рейтинг. ${rank.pagesPlace != null ? `По страницам: ${rank.pagesPlace} место из ${of}` : 'По страницам: место пока недоступно'}. По среднему темпу: ${pacePlaceLabel}${qualification ? `. ${qualification}` : ''}`;
   // Части переносятся целиком: «4 из 5 по страницам» / «4 из 5 по темпу», а не «… по / темпу».
   const rankDetail = rank.pagesPlace == null && rank.place == null ? ['Места появятся после первого дня']
-    : [`${rank.pagesPlace ?? '—'} из ${rank.participants} по страницам`, `${rank.place ?? '—'} из ${rank.participants} по темпу`];
+    : [`${rank.pagesPlace ?? '—'} из ${rank.participants} по страницам`, `${rank.place ?? '—'}${rank.place != null && rank.place <= rank.participants ? ` из ${rank.participants}` : ' место'} по темпу`, ...(qualification ? [qualification] : [])];
   const rows: RowProps[] = [];
   if (statistics) rows.push({ icon: 'chart.bar.fill', tone: 'brand', title: 'Статистика', label: 'Статистика чтения', onPress: statistics.onPress,
     detail: statistics.period ? `День ${statistics.period.personalDay} из ${statistics.period.totalDays} · ваш год чтения` : 'Прогресс и карточки для сторис' });

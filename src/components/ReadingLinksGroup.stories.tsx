@@ -11,3 +11,4 @@ export const Default: Story = {};
 export const NoPlaces: Story = { args: { rank: { place: null, pagesPlace: null, participants: 5, onPress: () => {} } } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const LargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+export const Newcomer: Story = { args: { rank: { place: 21, pagesPlace: 1, participants: 10, paceTopDaysLeft: 6, onPress: () => {} } } };

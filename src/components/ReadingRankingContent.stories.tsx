@@ -25,3 +25,14 @@ export const ProfilePhotos: Story = { args: { data: { ...individualReadingFixtur
   })),
 } } };
 export const ProfilePhotosNarrow: Story = { args: ProfilePhotos.args, parameters: { viewport: 'compact', textSize: 'xl' } };
+
+const newcomer = { ...individualReadingFixture.me!, userId: 'newcomer', name: 'Новый читатель',
+  daysParticipated: 1, readingDays: 1, completedDays: 1, pages: 200, averagePages: 200, flags: 0 };
+export const NewcomerPace: Story = { args: { initialMetric: 'pace', data: {
+  ...individualReadingFixture, me: newcomer, ranking: [...individualReadingFixture.ranking, newcomer],
+} } };
+export const NewcomerNarrow: Story = { args: NewcomerPace.args, parameters: { viewport: 'compact', textSize: 'xl' } };
+export const NewcomerDark: Story = { args: NewcomerPace.args, parameters: { scheme: 'dark' } };
+export const OnlyNewcomers: Story = { args: { initialMetric: 'pace', data: {
+  ...individualReadingFixture, me: newcomer, ranking: [newcomer],
+} } };

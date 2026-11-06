@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { API_BASE } from './api';
 import { netFetch } from './net';
+import { protectedReadingPaceStandings } from './readingPaceRanking';
 
 export const READING_TARGET_MS = 3_600_000;
 /** Решение владельца (20.10.2026): «Старт» доступен только после подтверждения книги —
@@ -18,7 +19,7 @@ export const READING_CHALLENGE_RULES: { title: string; text: string }[] = [
   { title: 'Дополнительное время', text: 'После 60 минут таймер продолжает считать дополнительное время. Оно тоже записывается, блокировка остаётся до паузы.' },
   { title: 'День заканчивается в 00:00 по Алматы', text: 'Сутки считаются по времени Казахстана (Asia/Almaty). После полуночи начинается следующий день.' },
   { title: 'Красный флаг', text: 'Если к 00:00 за день набрано меньше 60 минут, за этот день ставится красный флаг. Флаг ставит сервер при закрытии дня — в том числе за дни, когда приложение не открывали. Флаги накапливаются.' },
-  { title: 'Два рейтинга — с первого дня', text: 'Вы попадаете в оба рейтинга с первого дня участия. «Средний темп» — все сохранённые страницы делятся на календарные дни участия, включая дни без чтения. «Всего страниц» — суммарно прочитанные страницы по всем книгам за всё участие в этом челлендже. В каждом рейтинге видно оба показателя. При равном числе страниц выше участник с большим средним темпом; при равном темпе — с большим числом дней участия.' },
+  { title: 'Два рейтинга — с первого дня', text: 'Вы попадаете в оба рейтинга с первого дня участия. В рейтинге «Средний темп» места 1–20 доступны с 7-го календарного дня участия. До этого ваш результат виден ниже топ-20; после допуска место определяется темпом, а не выдаётся автоматически. «Средний темп» — все сохранённые страницы делятся на календарные дни участия, включая дни без чтения. «Всего страниц» — суммарно прочитанные страницы по всем книгам за всё участие в этом челлендже. В каждом рейтинге видно оба показателя. При равном числе страниц выше участник с большим средним темпом; при равном темпе — с большим числом дней участия.' },
   { title: 'Книга и честность', text: 'Название и автора книги вы пишете сами, ИИ проверяет, что такая книга существует. Во время чтения приложения ограничены. Страницы указывайте честно: результат не требует отдельного подтверждения администратором.' },
 ];
 const phase = z.enum(['upcoming', 'active', 'finished']);
@@ -34,6 +35,7 @@ const member = z.object({ period: ReadingPeriodSchema.optional(), targetMs: z.nu
   pages: z.number(), elapsedMs: z.number(), extraMs: z.number().default(0), eliminatedOn: z.number().nullable(), history: z.array(history),
   averageMinutes: z.number().optional(), averagePages: z.number().optional(), daysParticipated: z.number().optional(), readingDays: z.number().optional(),
   firstDay: z.number().optional(), streak: z.number().optional(), bestStreak: z.number().optional(),
+  paceRank: z.number().int().positive().optional(), paceTopEligible: z.boolean().optional(), paceTopDaysLeft: z.number().int().nonnegative().optional(),
   rankingEligible: z.boolean().optional(), rankingPending: z.boolean().optional(), qualificationDaysLeft: z.number().optional(),
   flagRecovery: flagRecovery.optional(),
   pace: z.enum(['on_target', 'below_target']).optional() });
@@ -44,6 +46,7 @@ export const ReadingBookSummarySchema = z.object({ key: z.string(), title: z.str
   pages: z.number(), elapsedMs: z.number(), nextPage: z.number().nullable() });
 export type ReadingBookSummary = z.infer<typeof ReadingBookSummarySchema>;
 export const ReadingDetailSchema = z.object({ id: z.string(), title: z.string(), startDate: z.string(), durationDays: z.number(), phase, mode,
+  paceRankingPolicy: z.object({ minParticipationDays: z.number().int().positive(), protectedPlaces: z.number().int().positive() }).optional(),
   supportsLeave: z.boolean().optional(), participationId: z.string().nullable().optional(),
   /** Годовой челлендж: столько красных флагов одновременно завершают участие (вернуться можно только с нуля). */
   eliminationFlags: z.number().int().positive().optional(),
@@ -114,10 +117,16 @@ export function readingPaceOf(m: ReadingMemberStats) {
   return m.averagePages ?? 0;
 }
 export type ReadingRankingMetric = 'pace' | 'pages';
-/** Two views of the SAME credited server totals, never a weighted score or a
- * client-side sum of book/history rows. Keep the existing pace order unchanged.
- * All participants rank from day one; final ID ordering makes ties stable. */
-export function readingStandings(ranking: ReadingMemberStats[], metric: ReadingRankingMetric = 'pace') {
+/** Two views of the same credited totals. Server pace places are authoritative;
+ * cached/older replies use the identical calendar-day policy. Scheduled Reading
+ * uses its previous ordering; regular R/NS/Activity challenges never call this. */
+export function readingStandings(ranking: ReadingMemberStats[], metric: ReadingRankingMetric = 'pace', protectPaceTop = true) {
+  if (metric === 'pace' && protectPaceTop) {
+    if (ranking.length && ranking.every(m => m.paceRank != null) && new Set(ranking.map(m => m.paceRank)).size === ranking.length) {
+      return [...ranking].sort((a, b) => a.paceRank! - b.paceRank!).map(member => ({ member, place: member.paceRank! }));
+    }
+    return protectedReadingPaceStandings(ranking);
+  }
   return [...ranking]
     .sort((a, b) => (metric === 'pages' ? b.pages - a.pages : 0)
       || readingPaceOf(b) - readingPaceOf(a) || (b.daysParticipated ?? 0) - (a.daysParticipated ?? 0) || a.userId.localeCompare(b.userId))

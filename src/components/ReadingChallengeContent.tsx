@@ -1,3 +1,4 @@
+import { readingPaceTopDaysLeft } from '../data/readingPaceRanking';
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { READING_REQUIRE_VERIFIED_BOOK, ReadingBookSummary, ReadingDetail, ReadingReportBook, readingStandings } from '../data/reading';
@@ -110,7 +111,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
   // Фокус: пока идёт чтение или записываются страницы, на экране только таймер, действие и книга.
   // Статистика, рейтинг, история и правила возвращаются после подхода.
   const focus = reader && !p.sessionNotice && (running || recording);
-  const standing = readingStandings(d.ranking).find(s => s.member.userId === member.userId);
+  const standing = readingStandings(d.ranking, 'pace', d.mode === 'continuous').find(s => s.member.userId === member.userId);
   const pagesStanding = readingStandings(d.ranking, 'pages').find(s => s.member.userId === member.userId);
   const book = p.book;
   const selectedBookArchived = p.library?.books.some(saved => saved.key === book.verified?.key && saved.finished);
@@ -253,7 +254,7 @@ export function ReadingChallengeContent(p: ReadingChallengeContentProps) {
       dayLeftMs={reader ? dayLeftMs : undefined}
       books={reader && d.todayBooks?.length ? d.todayBooks : undefined} /> : null}
     <ReadingLinksGroup statistics={!yearComplete ? { period: member.period, onPress: p.onStatistics } : undefined}
-      rank={{ place: standing?.place ?? null, pagesPlace: pagesStanding?.place ?? null, participants, onPress: p.onRanking }}
+      rank={{ place: standing?.place ?? null, pagesPlace: pagesStanding?.place ?? null, participants, paceTopDaysLeft: d.mode === 'continuous' ? readingPaceTopDaysLeft(member) : 0, onPress: p.onRanking }}
       onHistory={p.onHistory ? () => p.onHistory?.(member.userId) : undefined} />
     {allowedApps && !appsNeedAttention ? <ReadingAllowedAppsCard variant="row" value={allowedApps} /> : null}
     <ReadingRules targetMinutes={HOUR / 60000} variant="collapsed" blockingMode={p.blockingMode} flagRecoveryDays={d.flagRecoveryDays} eliminationFlags={d.eliminationFlags} />

@@ -30,8 +30,8 @@ test('total pages opens first; average pace is the second tab; both open the sam
   expect(onHistory).toHaveBeenCalledWith('steady');
   await fireEvent.press(v.getByRole('radio', { name: 'Средний темп' }));
   expect(v.getByRole('radio', { name: 'Средний темп' }).props.accessibilityState.selected).toBe(true);
-  expect(v.getAllByRole('button')[0].props.accessibilityLabel).toMatch(/^1 место\. Быстрый читатель/);
-  expect(v.getByRole('button', { name: /1 место\. Быстрый читатель/ }).props.accessibilityLabel).toContain('всего прочитано 100 страниц');
+  expect(v.getAllByRole('button')[0].props.accessibilityLabel).toMatch(/^1 место\. Постоянный читатель/);
+  expect(v.getByRole('button', { name: /21 место\. Быстрый читатель/ }).props.accessibilityLabel).toContain('всего прочитано 100 страниц');
   await fireEvent.press(v.getByRole('radio', { name: 'Всего страниц' }));
   expect(v.getAllByRole('button')[0].props.accessibilityLabel).toMatch(/^1 место\. Постоянный читатель/);
 });
@@ -49,7 +49,7 @@ test('my ranking distinguishes both places from the same full ranking and keeps 
   const pages = readingStandings(ranking, 'pages').find(r => r.member.userId === 'fast')!.place;
   const onPress = jest.fn();
   const v = await render(<ThemePreviewProvider textSize="xl"><ReadingLinksGroup rank={{ place: pace, pagesPlace: pages, participants: 2, onPress }} /></ThemePreviewProvider>);
-  const button = v.getByRole('button', { name: 'Мой рейтинг. По страницам: 2 место из 2 участников. По среднему темпу: 1 место из 2 участников' });
+  const button = v.getByRole('button', { name: 'Мой рейтинг. По страницам: 2 место из 2 участников. По среднему темпу: 21 место' });
   await fireEvent.press(button);
   expect(onPress).toHaveBeenCalledTimes(1);
 });
@@ -75,4 +75,17 @@ test('profile photos survive API parsing and appear in both rankings and own pla
   assertPhoto();
   await fireEvent.press(v.getByRole('radio', { name: 'Средний темп' }));
   assertPhoto();
+});
+
+test('newcomer countdown is visible and day seven unlocks pace without resetting totals or mode', async () => {
+  const v = await render(<ThemePreviewProvider><ReadingRankingContent data={data} onHistory={() => {}} initialMetric="pace" /></ThemePreviewProvider>);
+  expect(v.getByText('До допуска в топ-20: 6 дней')).toBeTruthy();
+  expect(v.getByLabelText(/Ваше место: по страницам 2, по среднему темпу 21/)).toBeTruthy();
+  expect(v.queryByText('21 из 2')).toBeNull();
+  const ready = { ...ranking[1], daysParticipated: 7 };
+  await v.rerender(<ThemePreviewProvider><ReadingRankingContent data={{ ...data, me: ready, ranking: [ranking[0], ready] }} onHistory={() => {}} initialMetric="pace" /></ThemePreviewProvider>);
+  expect(v.queryByText('До допуска в топ-20: 6 дней')).toBeNull();
+  expect(v.getByRole('radio', { name: 'Средний темп' }).props.accessibilityState.selected).toBe(true);
+  expect(v.getAllByRole('button')[0].props.accessibilityLabel).toMatch(/^1 место\. Быстрый читатель/);
+  expect(v.getByRole('button', { name: /1 место\. Быстрый читатель/ }).props.accessibilityLabel).toContain('всего прочитано 100 страниц');
 });

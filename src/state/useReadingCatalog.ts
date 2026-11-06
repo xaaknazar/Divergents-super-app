@@ -38,6 +38,11 @@ export function useReadingCatalog() {
     void load();
   }, [load, userId]));
   const parsed = ReadingCatalogSchema.safeParse(state.data);
-  return { items: userId && parsed.success && parsed.data.enabled ? parsed.data.challenges : [],
+  const catalog = userId && parsed.success && parsed.data.enabled ? parsed.data.challenges : [];
+  // Keep the full catalog in the account-bound offline cache. Discovery shows
+  // only current participation; pending requests and completed years do not hide choices.
+  const joined = catalog.filter(item => item.membership === 'approved'
+    && item.phase !== 'finished' && !item.period?.completed);
+  return { items: joined.length ? joined : catalog,
     error: !!userId && (state.error || !!state.data && !parsed.success), retry: load };
 }
