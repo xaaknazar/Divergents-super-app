@@ -12,7 +12,7 @@ export function ChannelGlassControl({ icon, label, caption, disabled = false, bu
   return <Pressable accessibilityRole="button" accessibilityLabel={label}
     accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress}
     style={({ pressed }) => [styles.target, { opacity: pressed ? 0.6 : disabled ? 0.65 : 1 }]}>
-    <GlassSurface style={caption ? styles.capsule : styles.circle} variant="readingNavigation" interactive>
+    <GlassSurface style={caption ? styles.capsule : styles.circle} variant="navigation" interactive>
       <View style={styles.content}>
         {busy ? <ActivityIndicator color={C.glassInk} /> : icon ? <SF name={icon} size={23} color={C.glassInk} /> : null}
         {caption ? <Text style={[styles.caption, { fontSize: 17 * C.textScale, color: C.glassInk }]}>{caption}</Text> : null}

@@ -12,6 +12,7 @@ import { ChannelDateDivider } from './ChannelDateDivider';
 import { ChannelInfoSheet } from './ChannelInfoSheet';
 import { ChannelSearch } from './ChannelSearch';
 import { useChannelAppearance } from './useChannelAppearance';
+import { Aurora } from './Aurora';
 import { ContentLoading } from './ContentLoading';
 import { EmptyState } from './EmptyState';
 import { Button } from './Button';
@@ -62,6 +63,7 @@ export function ChannelDetailView({ channel, loading = false, refreshing = false
   const closeSearch = () => { setSearching(false); setQuery(''); setFilter('all'); };
   const actionLabel = hero.owner ? 'Написать' : joined ? 'О канале' : pending ? 'Запрос отправлен' : channel?.access === 'open' ? 'Подписаться' : 'Запросить доступ';
   return <View style={[styles.screen, { backgroundColor: C.background }]}>
+    <Aurora />
     {loading && !channel ? <Wrapper flex={1} justify="center"><ContentLoading /></Wrapper> : !channel ? <Wrapper padding={24} flex={1} justify="center">
       <EmptyState icon="tray" title="Канал не найден" subtitle="Возможно, он ещё публикуется или был удалён." />
       <Button label="Обновить" icon="arrow.clockwise" loading={refreshing} onPress={onRefresh} />

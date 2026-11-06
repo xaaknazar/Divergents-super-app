@@ -13,7 +13,7 @@ export function ChannelFloatingHeader({ name, avatar, members, onBack, onInfo }:
   return <View style={styles.row}>
     <ChannelGlassControl icon="chevron.left" label="Назад к каналам" onPress={onBack} />
     <Pressable onPress={onInfo} accessibilityRole="button" accessibilityLabel={`О канале ${name}`} style={styles.identity}>
-      <GlassSurface style={styles.pill} variant="readingNavigation" interactive>
+      <GlassSurface style={styles.pill} variant="navigation" interactive>
         <Text style={[styles.name, { color: C.glassInk, fontSize: 17 * C.textScale }]} numberOfLines={2}>{name}</Text>
         <Text style={[styles.members, { color: C.glassInk, fontSize: 12 * C.textScale }]}>
           {members == null ? 'Канал' : `${members.toLocaleString('ru-RU')} ${word(members, 'подписчик', 'подписчика', 'подписчиков')}`}
