@@ -6,7 +6,8 @@ import { useLang, tr } from '../../state/LanguageContext';
 import { View, Text, Pressable, ScrollView, Linking, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Keyboard, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { VideoView } from 'expo-video';
+import { LessonPlayer } from '../../components/LessonPlayer';
+import { LessonActions } from '../../components/LessonActions';
 import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { NavHeader } from '../../components/NavHeader';
@@ -96,7 +97,6 @@ export function VideoScreen({ route, navigation }: Props) {
   // Offline-audio store. Called unconditionally (before any early return) so the
   // hook count stays stable across renders — see Rules of Hooks.
   const { isDownloaded, downloadLesson, removeDownload, cancelDownload, isDownloading } = useDownloads();
-  const videoRef = useRef<VideoView>(null);
 
   // Отдать урок общему плееру, как только появилась настоящая ссылка (у
   // купленного курса она приходит позже, отдельным запросом). Повторный вход в
@@ -273,63 +273,12 @@ export function VideoScreen({ route, navigation }: Props) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#000' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
-      {/* Video area */}
-      <View style={{ paddingTop: insets.top, height: 240 + insets.top, backgroundColor: '#0E1729' }}>
-        <View style={{ position: 'absolute', top: insets.top + 12, left: 12, right: 12, zIndex: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* Не «закрыть», а «свернуть»: урок продолжает звучать, а управление
-              переезжает в полоску над вкладками. Подпись важна для VoiceOver —
-              иначе шеврон вниз читается как выход и человек не ждёт, что звук
-              останется. */}
-          <Pressable onPress={() => navigation.goBack()} accessibilityRole="button"
-            accessibilityLabel={tr('Свернуть урок')} accessibilityHint={tr('Урок продолжит играть, управление появится над вкладками')}
-            style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
-            <SF name="chevron.down" size={18} color="#fff" />
-          </Pressable>
-          <View style={{ alignItems: 'center', flex: 1, paddingHorizontal: 8 }}>
-            <Text style={[ty.subheadEm, { color: '#fff' }]} numberOfLines={1}>{tr('Урок')} {lesson.n}</Text>
-            <Text style={[ty.caption2, { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1}>{lesson.title}</Text>
-          </View>
-          {hls ? (
-            <Pressable onPress={() => { try { videoRef.current?.enterFullscreen(); } catch {} }} accessibilityRole="button" accessibilityLabel="Полноэкранный режим"
-              style={{ width: 48, height: 48, borderRadius: 24, borderCurve: 'continuous', backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
-              <SF name="arrow.up.left.and.arrow.down.right" size={16} color="#fff" />
-            </Pressable>
-          ) : <View style={{ width: 48 }} />}
-        </View>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          {hls ? (
-            // allowsPictureInPicture — кнопка «картинка в картинке» в родных
-            // элементах управления: видео сжимается в окошко и остаётся поверх
-            // приложения, пока человек листает другие разделы. Свернуть с одним
-            // звуком тоже можно (шеврон вниз), но лекцию со слайдами хочется
-            // видеть. Нативная часть включена плагином expo-video.
-            <VideoView ref={videoRef} player={player} style={{ width: '100%', height: '100%' }} contentFit="contain" nativeControls
-              allowsPictureInPicture fullscreenOptions={{ enable: true }} />
-          ) : resolving ? (
-            <ActivityIndicator color="#fff" />
-          ) : needsPurchase ? (
-            <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
-              <SF name="lock.fill" size={40} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={2}>{tr('Урок доступен владельцам курса')}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Этот урок откроется вместе с доступом к курсу')}</Text>
-            </View>
-          ) : unavailable ? (
-            <View style={{ alignItems: 'center', paddingHorizontal: 30 }}>
-              <SF name="exclamationmark.triangle.fill" size={36} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.headline, { color: '#fff', marginTop: 12, textAlign: 'center' }]} numberOfLines={1}>{tr('Видео недоступно')}</Text>
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.7)', marginTop: 4, textAlign: 'center' }]}>{tr('Видео этого урока сейчас не загружается. Проверьте подключение или попробуйте позже.')}</Text>
-            </View>
-          ) : (
-            <View style={{ alignItems: 'center' }}>
-              <SF name="play.circle.fill" size={64} color="rgba(255,255,255,0.85)" />
-              <Text style={[ty.caption1, { color: 'rgba(255,255,255,0.6)', marginTop: 10 }]} numberOfLines={1}>{tr('Демо-урок без видео')}</Text>
-            </View>
-          )}
-        </View>
-      </View>
+      <LessonPlayer player={player} lessonNumber={lesson.n} title={lesson.title}
+        state={hls ? 'ready' : resolving ? 'loading' : needsPurchase ? 'locked' : unavailable ? 'unavailable' : 'demo'}
+        onMinimize={() => navigation.goBack()} />
 
       {/* Sheet */}
-      <View style={{ flex: 1, backgroundColor: T.systemBg, borderTopLeftRadius: 14, borderTopRightRadius: 14, borderCurve: 'continuous', marginTop: -2 }}>
+      <View style={{ flex: 1, backgroundColor: T.systemBg, borderTopLeftRadius: 14, borderTopRightRadius: 14, borderCurve: 'continuous' }}>
         <View style={{ alignItems: 'center', paddingVertical: 8 }}>
           <View style={{ width: 36, height: 5, borderRadius: 3, borderCurve: 'continuous', backgroundColor: T.fillSecondary }} />
         </View>
@@ -464,18 +413,9 @@ export function VideoScreen({ route, navigation }: Props) {
             composer; it hides while the keyboard is up. No website deep link:
             purchases are not offered in the app (App Store 3.1.1). */}
         {keyboardOpen ? null : (
-          <View style={{ padding: 16, paddingBottom: insets.bottom + 12, backgroundColor: T.cardBg, borderTopWidth: 0.5, borderTopColor: T.separator }}>
-            {needsPurchase ? (
-              <Button label={tr('К программе курса')} icon="chevron.left" onPress={() => navigation.goBack()} variant="tinted" />
-            ) : alreadyDone ? (
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Wrapper flex={1}><Button label={tr('Урок пройден')} icon="checkmark" disabled variant="tinted" /></Wrapper>
-                <Wrapper flex={1}><Button label={nextLesson ? tr('Следующий урок') : tr('К программе курса')} icon={nextLesson ? 'arrow.right' : 'chevron.left'} onPress={goNext} /></Wrapper>
-              </View>
-            ) : (
-              <Button label={tr('Завершить урок')} icon="checkmark" onPress={complete} />
-            )}
-          </View>
+          <LessonActions state={needsPurchase ? 'locked' : alreadyDone ? 'completed' : 'ready'}
+            next={nextLesson ? 'lesson' : 'course'}
+            onContinue={needsPurchase ? () => navigation.goBack() : alreadyDone ? goNext : complete} />
         )}
       </View>
     </KeyboardAvoidingView>
