@@ -4,6 +4,7 @@ import { fn } from 'storybook/test';
 import { MapSearchHeader } from './MapSearchHeader';
 import { NavBarLarge } from './NavBarLarge';
 import { ProfileAvatarButton } from './ProfileAvatarButton';
+import { HeaderIcon } from './HeaderIcon';
 import { Wrapper } from './Wrapper';
 
 const meta = { title: 'Навигация/ProfileAvatarButton', component: ProfileAvatarButton,
@@ -26,7 +27,7 @@ export const LargeText: Story = { args: { badge: 12 }, parameters: { textSize: '
 export const AllTabHeaders: Story = {
   render: args => <Wrapper gap={16}>
     {['Обучение', 'Divergents AI', 'Сообщество', 'Карьера'].map(title => <NavBarLarge key={title}
-      title={title} trailing={<ProfileAvatarButton {...args} />} />)}
+      title={title} trailing={<><HeaderIcon name="plus" label="Создать" onPress={fn()} /><ProfileAvatarButton {...args} /></>} />)}
     <Wrapper paddingHorizontal={16}>
       <MapSearchHeader city="Алматы" country="Казахстан" cityPickerOpen={false} onChooseCity={fn()}
         searchValue="" searchPlaceholder="Поиск мест" onSearchChange={fn()}

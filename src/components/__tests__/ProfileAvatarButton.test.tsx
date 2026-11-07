@@ -1,6 +1,8 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
+import { HeaderIcon } from '../HeaderIcon';
+import { minTouch } from '../../theme/tokens';
 import { MapSearchHeader } from '../MapSearchHeader';
 import { NavBarLarge } from '../NavBarLarge';
 import { ProfileAvatarButton, ProfileAvatarButtonProps } from '../ProfileAvatarButton';
@@ -18,14 +20,14 @@ function expectUniformProfile(view: Awaited<ReturnType<typeof render>>) {
   const buttons = view.getAllByRole('button', { name: /^Профиль/ });
   for (const button of buttons) {
     const style = StyleSheet.flatten(button.props.style);
-    expect(style).toMatchObject({ width: 52, height: 52, minWidth: 52, maxWidth: 52,
-      minHeight: 52, maxHeight: 52, flexShrink: 0, flexGrow: 0, borderRadius: 26 });
-    // The outer 52 pt circle stays visible, even without a progress ring.
-    expect(style.backgroundColor).toBeTruthy();
-    expect(style.backgroundColor).not.toBe('transparent');
+    expect(style).toMatchObject({ width: minTouch, height: minTouch, minWidth: minTouch, maxWidth: minTouch,
+      minHeight: minTouch, maxHeight: minTouch, flexShrink: 0, flexGrow: 0, borderRadius: minTouch / 2 });
+    const glass = button.children[0];
+    if (typeof glass === 'string') throw new Error('Missing profile surface');
+    expect(StyleSheet.flatten(glass.props.style)).toMatchObject({ width: minTouch, height: minTouch, borderRadius: minTouch / 2 });
   }
   for (const face of view.getAllByTestId('profile-avatar-face')) {
-    expect(StyleSheet.flatten(face.props.style)).toMatchObject({ width: 42, height: 42, borderRadius: 21 });
+    expect(StyleSheet.flatten(face.props.style)).toMatchObject({ width: 40, height: 40, borderRadius: 20 });
   }
   return buttons;
 }
@@ -51,7 +53,7 @@ it('uses the same profile button on titled tabs and the map, preserving every ac
   const actions = Array.from({ length: 5 }, () => jest.fn());
   const view = await render(<ThemePreviewProvider>
     <>{['Обучение', 'Divergents AI', 'Сообщество', 'Карьера'].map((title, index) =>
-      <NavBarLarge key={title} title={title} trailing={<ProfileAvatarButton {...profile} onPress={actions[index]} />} />)}
+      <NavBarLarge key={title} title={title} trailing={<><HeaderIcon name="plus" label="Создать" onPress={jest.fn()} /><ProfileAvatarButton {...profile} onPress={actions[index]} /></>} />)}
       <MapSearchHeader city="Петропавловск-Камчатский" country="Россия" cityPickerOpen={false}
         onChooseCity={jest.fn()} searchValue="" searchPlaceholder="Поиск мест" onSearchChange={jest.fn()}
         profile={profile} onOpenProfile={actions[4]} />
@@ -59,6 +61,11 @@ it('uses the same profile button on titled tabs and the map, preserving every ac
   </ThemePreviewProvider>);
   const buttons = expectUniformProfile(view);
   expect(buttons).toHaveLength(5);
+  for (const create of view.getAllByRole('button', { name: 'Создать' })) {
+    const glass = create.children[0];
+    if (typeof glass === 'string') throw new Error('Missing header surface');
+    expect(StyleSheet.flatten(glass.props.style)).toMatchObject({ width: minTouch, height: minTouch });
+  }
   const surfaces = buttons.map(button => StyleSheet.flatten(button.props.style));
   surfaces.forEach(style => expect(style).toEqual(surfaces[0]));
   for (const button of buttons) await fireEvent.press(button);
