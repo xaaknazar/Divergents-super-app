@@ -1,3 +1,5 @@
+import { ActivityCalculatorSheet } from '../../components/ActivityCalculatorSheet';
+import { useActivityGender } from '../../state/useActivityGender';
 import { ContentBlock } from '../../components/ContentBlock';
 import { IconBadge } from '../../components/IconBadge';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -472,6 +474,8 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
   const [showConv, setShowConv] = useState(false);
   const [metricEditor, setMetricEditor] = useState<MetricTask | null>(null);
   const [metricDraft, setMetricDraft] = useState('');
+  const activityGender = useActivityGender(!!metricEditor && isActivityTask(metricEditor));
+  useEffect(() => { setMetricEditor(null); }, [userId, c.id, c.currentDay]);
   const [ratingMode, setRatingMode] = useState<'overall' | 'today'>('overall');
   const myFlags = c.flags;
   const myEliminated = c.eliminated === true;
@@ -883,7 +887,19 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
         </Pressable>
       </Modal>
 
-      <Modal visible={metricEditor !== null} transparent animationType="fade" onRequestClose={() => setMetricEditor(null)}>
+      {metricEditor && isActivityTask(metricEditor) && !tasksLocked ? <ActivityCalculatorSheet
+        key={`${userId}:${c.id}:${c.currentDay}`} current={metricEditor.current} phoneSteps={phoneSteps} gender={activityGender}
+        onClose={() => setMetricEditor(null)} onSave={value => {
+          const latest = c.tasks.find(t => t.id === metricEditor.id);
+          if (latest?.kind === 'metric' && latest.current !== metricEditor.current) {
+            setMetricEditor(null);
+            Alert.alert(tr('Активность обновилась'), tr('Значение изменилось, пока панель была открыта. Откройте её снова — новый результат сохранён.'));
+            return;
+          }
+          if (!tasksLocked) setMetric(metricEditor.id, value);
+          setMetricEditor(null);
+        }} /> : null}
+      <Modal visible={metricEditor !== null && !isActivityTask(metricEditor)} transparent animationType="fade" onRequestClose={() => setMetricEditor(null)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <Pressable onPress={() => setMetricEditor(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
             <Pressable onPress={() => {}} accessible={false} style={{ backgroundColor: T.cardBg, borderRadius: 16, borderCurve: 'continuous', padding: 16 }}>

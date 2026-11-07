@@ -1,20 +1,22 @@
 import React from 'react';
 import { ChallengeSpectatorContent } from '../../components/ChallengeSpectatorContent';
-import { NavHeader } from '../../components/NavHeader';
-import { Screen } from '../../components/Screen';
-import { InlineNotice } from '../../components/InlineNotice';
+import { RankingScreenFrame } from '../../components/RankingScreenFrame';
+import { ChallengeSeasonSheet } from '../../components/ChallengeSeasonSheet';
 import { ErrorState, ListSkeleton } from '../../components/StateViews';
-import { Wrapper } from '../../components/Wrapper';
-import { tr } from '../../state/LanguageContext';
 import { useSpectatorStandings } from '../../state/useSpectatorStandings';
-
+import { useChallengeSeasons } from '../../state/useChallengeSeasons';
 export function ChallengeSpectatorScreen({ challengeId, onBack }: { challengeId: string; onBack: () => void }) {
-  const { data, loading, error, reload } = useSpectatorStandings(challengeId);
-  return <Screen scroll={false} topInset={false} aurora={false} wash="strong" tabPadding={false}>
-    <NavHeader backLabel={tr('Челлендж')} onBack={onBack} onWash />
-    {!data ? loading ? <ListSkeleton /> : <ErrorState message={tr('Рейтинг недоступен. Возможно, челлендж завершён. Попробуйте обновить.')} onRetry={reload} /> : <>
-      {error || loading ? <Wrapper padding={16}><InlineNotice message={error ? tr('Не удалось обновить. Показан сохранённый рейтинг.') : tr('Показан сохранённый рейтинг · обновляем…')} onRetry={error ? reload : undefined} /></Wrapper> : null}
-      <ChallengeSpectatorContent key={challengeId} data={data} refreshing={loading} onRefresh={reload} />
-    </>}
-  </Screen>;
+  const seasons = useChallengeSeasons(challengeId);
+  const { data, loading, error, reload } = useSpectatorStandings(seasons.selected);
+  return <>
+    <RankingScreenFrame onBack={onBack} season={data?.challenge.season ?? seasons.seasons.find(s => s.id === seasons.selected)?.season}
+      onSeason={() => seasons.setOpen(true)} refreshing={loading} onRefresh={reload} resetKey={seasons.selected}>
+      {!data ? loading ? <ListSkeleton /> : <ErrorState message="Не удалось загрузить рейтинг этого сезона." onRetry={reload} /> : <>
+        {error ? <ErrorState message="Не удалось обновить. Ниже сохранённый рейтинг." onRetry={reload} /> : null}
+        <ChallengeSpectatorContent key={seasons.selected} data={data} onRefresh={reload} />
+      </>}
+    </RankingScreenFrame>
+    <ChallengeSeasonSheet visible={seasons.open} seasons={seasons.seasons} selected={seasons.selected} loading={seasons.loading}
+      error={seasons.error} onRetry={seasons.retry} onClose={() => seasons.setOpen(false)} onSelect={seasons.choose} />
+  </>;
 }

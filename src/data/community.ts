@@ -1,3 +1,4 @@
+import { ACTIVITY_RULES } from './activityConversion';
 // Community data: challenge scoring rules + live content fetched from the
 // Divergents website API. The app is a client — real content (trips, teams and
 // the challenges catalog) is published by the admin server-side and read here
@@ -1434,17 +1435,9 @@ export const CHALLENGE_RULES: string[] = [
   'Побеждает команда с наибольшей суммой баллов всех участников.',
 ];
 
-export const ACTIVITY_CONVERSIONS: { label: string; value: string }[] = [
-  { label: 'Бег', value: '1 км = 2000 шагов' },
-  { label: 'Плавание', value: '100 м = 1000 шагов' },
-  { label: 'Велосипед', value: '3 км = 2000 шагов' },
-  { label: 'Отжимания', value: '1 повт = 20 шагов' },
-  { label: 'Приседания', value: '1 повт = 15 шагов' },
-  { label: 'Пресс (скручивания)', value: '1 повт = 20 шагов' },
-  { label: 'Подтягивания', value: '1 повт = 40 шагов' },
-  { label: 'Планка', value: '2 мин = 400 шагов' },
-  { label: 'Йога / пилатес (для девушек)', value: '30 мин = 2000 шагов' },
-];
+export const ACTIVITY_CONVERSIONS = ACTIVITY_RULES.map(rule => ({
+  label: rule.id === 'yoga' ? `${rule.label} (для девушек)` : rule.label, value: rule.rule,
+}));
 
 // ─── Teams (live) ────────────────────────────────────────────────────────
 export interface ChallengeTeam {

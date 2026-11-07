@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
+import { RankingScreenFrame } from '../RankingScreenFrame';
 import { ChallengeSpectatorContent } from '../ChallengeSpectatorContent';
 import { spectatorFixture } from '../../storybook/challengeSpectatorFixtures';
 jest.mock('../Logo', () => ({ Logo: () => null }));
@@ -37,12 +38,12 @@ it('does not invent flags or yesterday movement absent from the spectator API', 
 it('shows an empty roster and supports refreshing it', async () => {
   const onRefresh = jest.fn();
   const data = { ...spectatorFixture, members: [] };
-  const view = await render(<ThemePreviewProvider><ChallengeSpectatorContent data={data} onRefresh={onRefresh} /></ThemePreviewProvider>);
+  const view = await render(<ThemePreviewProvider><RankingScreenFrame onBack={() => {}} onSeason={() => {}} onRefresh={onRefresh}><ChallengeSpectatorContent data={data} onRefresh={onRefresh} /></RankingScreenFrame></ThemePreviewProvider>);
   await fireEvent.press(view.getByTestId('standing-a'));
   expect(view.getByText('Участников пока нет')).toBeTruthy();
-  await act(async () => view.getByTestId('spectator-scroll').props.refreshControl.props.onRefresh());
+  await act(async () => view.getByTestId('ranking-fullscreen-scroll').props.refreshControl.props.onRefresh());
   expect(onRefresh).toHaveBeenCalledTimes(1);
-  await view.rerender(<ThemePreviewProvider><ChallengeSpectatorContent data={spectatorFixture} onRefresh={onRefresh} /></ThemePreviewProvider>);
+  await view.rerender(<ThemePreviewProvider><RankingScreenFrame onBack={() => {}} onSeason={() => {}} onRefresh={onRefresh}><ChallengeSpectatorContent data={spectatorFixture} onRefresh={onRefresh} /></RankingScreenFrame></ThemePreviewProvider>);
   expect(view.getByTestId('standing-three').props.accessibilityLabel).toMatch(/^2 место/);
 });
 

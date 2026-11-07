@@ -3,11 +3,11 @@ import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { fetchSpectatorStandings, SpectatorStandings } from '../data/challengeSpectator';
 import { challengeReadCache, challengeReadKey } from './challengeReadCache';
 
-export function useSpectatorStandings(challengeId: string) {
+export function useSpectatorStandings(challengeId: string, enabled = true) {
   const { userId, isLoaded, isSignedIn, getToken } = useAuth();
   const tokenRef = useRef(getToken); tokenRef.current = getToken;
   const key = challengeReadKey(userId ?? '', challengeId, 'spectator');
-  const allowed = isLoaded && !!isSignedIn && !!userId;
+  const allowed = enabled && isLoaded && !!isSignedIn && !!userId;
   const snapshot = useCallback(() => challengeReadCache.get(key), [key]);
   const state = useSyncExternalStore(challengeReadCache.subscribe, snapshot, snapshot);
   const load = useCallback((force: boolean) => {

@@ -1,3 +1,8 @@
+import { RankingScreenFrame } from '../../components/RankingScreenFrame';
+import { ChallengeSeasonSheet } from '../../components/ChallengeSeasonSheet';
+import { ChallengeSpectatorContent } from '../../components/ChallengeSpectatorContent';
+import { useChallengeSeasons } from '../../state/useChallengeSeasons';
+import { useSpectatorStandings } from '../../state/useSpectatorStandings';
 // Единый рейтинг челленджа: команды и участники на одном экране, как
 // «Rankings» в Apple Sports. Раньше это были два экрана — «Рейтинг команд» и
 // «Рейтинг участников»; оба маршрута теперь открывают этот, каждый на своей
@@ -32,6 +37,9 @@ export function ChallengeRankingScreen({ challengeId: routeId, initialTab, onBac
   const { T, ty } = useTheme();
   const { challenge, leaderboard } = useChallenge(routeId);
   const challengeId = routeId ?? challenge.id;
+  const seasons = useChallengeSeasons(challengeId);
+  const otherSeason = seasons.selected !== challengeId;
+  const archived = useSpectatorStandings(seasons.selected, otherSeason);
   const [tab, setTab] = useState<RankingTab>(initialTab);
   const [period, setPeriod] = useState<RankingPeriod>('overall');
   const [mineOnly, setMineOnly] = useState(false);
@@ -67,12 +75,14 @@ export function ChallengeRankingScreen({ challengeId: routeId, initialTab, onBac
       : undefined;
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      {/* Цветной фон как в Apple Sports — из цветов «Персонализации». */}
-      <ColorWash strength="strong" />
-      <NavHeader backLabel={tr('Челлендж')} onBack={onBack} onWash />
-      <Screen tabPadding={false} topInset={false} aurora={false} surface="transparent">
-        <ChallengeRankingHeader season={season} />
+    <>
+      <RankingScreenFrame onBack={onBack} season={otherSeason ? archived.data?.challenge.season ?? seasons.seasons.find(s => s.id === seasons.selected)?.season : season}
+        onSeason={() => seasons.setOpen(true)} resetKey={seasons.selected}
+        onRefresh={otherSeason ? archived.reload : needResults ? reload : undefined} refreshing={otherSeason ? archived.loading && !!archived.data : loading && !!results}>
+      {otherSeason && archived.error && archived.data ? <ErrorState onRetry={archived.reload} /> : null}
+      {otherSeason ? archived.data ? <ChallengeSpectatorContent key={seasons.selected} data={archived.data} onRefresh={archived.reload} />
+        : archived.loading ? <ListSkeleton /> : <ErrorState onRetry={archived.reload} /> : <>
+        <ChallengeRankingHeader />
         {hasToday ? (
           <Wrapper marginHorizontal={16} marginBottom={12}>
             <Segmented variant={wash ? 'glass' : 'standard'} items={[tr('Весь челлендж'), tr('Сегодня')]} value={period === 'overall' ? 0 : 1}
@@ -100,7 +110,10 @@ export function ChallengeRankingScreen({ challengeId: routeId, initialTab, onBac
             </Wrapper>
           )}
         <View style={{ height: 30 }} />
-      </Screen>
-    </View>
+      </>}
+      </RankingScreenFrame>
+      <ChallengeSeasonSheet visible={seasons.open} seasons={seasons.seasons} selected={seasons.selected} loading={seasons.loading}
+        error={seasons.error} onRetry={seasons.retry} onClose={() => seasons.setOpen(false)} onSelect={seasons.choose} />
+    </>
   );
 }

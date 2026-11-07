@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, RefreshControl, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SpectatorStandings } from '../data/challengeSpectator';
 import { fmtInt } from '../data/format';
@@ -37,12 +37,10 @@ export function ChallengeSpectatorContent({ data, refreshing = false, onRefresh 
       })), [data, tab, team]);
   const day = `${tr('День')} ${data.challenge.currentDay} ${tr('из')} ${data.challenge.durationDays}`;
 
-  return <ScrollView testID="spectator-scroll" style={styles.scroll} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) }}
-    showsVerticalScrollIndicator={false}
-    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brandText} />}>
-    <ChallengeRankingHeader season={data.challenge.season} />
+  return <View testID="spectator-scroll">
+    <ChallengeRankingHeader />
     <Wrapper marginHorizontal={16} gap={12}>
-      <RankingCard caption={`${data.challenge.title}\n${day}`} tabs={[tr('Команды'), tr('Участники')]}
+      <RankingCard caption={`${data.challenge.title}\n${data.challenge.finished ? tr('Итоговый рейтинг') : day}`} tabs={[tr('Команды'), tr('Участники')]}
         value={tab === 'teams' ? 0 : 1} onChange={value => { setTab(value === 0 ? 'teams' : 'members'); setTeamId(null); }}>
         {tab === 'members' && team ? <Wrapper paddingHorizontal={16} gap={8} paddingBottom={8}>
           <PillToggle label={tr('Кого показать')} items={[tr('Все'), tr('Команда')]} value={1}
@@ -60,7 +58,7 @@ export function ChallengeSpectatorContent({ data, refreshing = false, onRefresh 
         <ScreenDescription text={tr('Режим просмотра · отметки доступны только участникам челленджа.')} />
       </Wrapper>
     </Wrapper>
-  </ScrollView>;
+  </View>;
 }
 
 const styles = StyleSheet.create({ scroll: { flex: 1 } });
