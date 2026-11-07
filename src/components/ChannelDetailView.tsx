@@ -85,7 +85,6 @@ export function ChannelDetailView({ channel, loading = false, refreshing = false
         <ChannelPostCard post={item} author={channel.name} owner={hero.owner} playing={playingId === item.id}
           onPlay={() => onPlay(item.id)} onReact={emoji => onReact(item.id, emoji)} onDelete={() => onDeletePost(item.id)} />
       </View>} />}
-    <View pointerEvents="none" style={[styles.statusBackdrop, { height: insets.top, backgroundColor: C.background }]} />
     <View pointerEvents="box-none" style={[styles.header, { top: insets.top + 8 }]} onLayout={e => setHeaderHeight(e.nativeEvent.layout.height)}>
       <ChannelFloatingHeader name={channel?.name ?? 'Канал'} avatar={channel?.avatarUrl} members={channel?._count?.members}
         onBack={onBack} onInfo={() => { if (channel) setInfo(true); }} />
@@ -111,7 +110,6 @@ export function ChannelDetailView({ channel, loading = false, refreshing = false
 }
 const styles = StyleSheet.create({
   screen: { flex: 1 }, content: { width: '100%', maxWidth: 700, alignSelf: 'center' },
-  statusBackdrop: { position: 'absolute', top: 0, left: 0, right: 0 },
   header: { position: 'absolute', left: 0, right: 0, maxWidth: 700, width: '100%', alignSelf: 'center', gap: 8 },
   searchPanel: { marginHorizontal: 12, padding: 10, borderRadius: 24, gap: 8 },
   footer: { position: 'absolute', left: 14, right: 14, maxWidth: 672, alignSelf: 'center', gap: 8 },
