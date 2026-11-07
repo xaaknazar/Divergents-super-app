@@ -35,6 +35,7 @@ const member = z.object({ period: ReadingPeriodSchema.optional(), targetMs: z.nu
   pages: z.number(), elapsedMs: z.number(), extraMs: z.number().default(0), eliminatedOn: z.number().nullable(), history: z.array(history),
   averageMinutes: z.number().optional(), averagePages: z.number().optional(), daysParticipated: z.number().optional(), readingDays: z.number().optional(),
   firstDay: z.number().optional(), streak: z.number().optional(), bestStreak: z.number().optional(),
+  pagesRankChange: z.number().int().nullable().optional(), paceRankChange: z.number().int().nullable().optional(),
   paceRank: z.number().int().positive().optional(), paceTopEligible: z.boolean().optional(), paceTopDaysLeft: z.number().int().nonnegative().optional(),
   rankingEligible: z.boolean().optional(), rankingPending: z.boolean().optional(), qualificationDaysLeft: z.number().optional(),
   flagRecovery: flagRecovery.optional(),

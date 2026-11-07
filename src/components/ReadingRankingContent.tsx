@@ -38,7 +38,7 @@ export function ReadingRankingContent({ data, onHistory, initialMetric = 'pages'
       id: m.userId, rank: place, name: shortPersonName(m.name), fullName: m.name,
       subtitle,
       avatar: { uri: m.avatar },
-      change: null, flags: m.flags, points: m.pages, isMine: isMe,
+      change: (pagesFirst ? m.pagesRankChange : m.paceRankChange) ?? null, flags: m.flags, points: m.pages, isMine: isMe,
       value: pagesFirst ? pagesText : paceText,
       secondary: pagesFirst ? paceText : pagesText,
       a11yLabel: [`${place} место`, m.name, isMe ? 'это вы' : null, `${days(readingDays)} чтения`, daysLeft > 0 ? subtitle : null,
@@ -73,12 +73,13 @@ export function ReadingRankingContent({ data, onHistory, initialMetric = 'pages'
     {paceDaysLeft > 0 ? <InlineNotice message={`До допуска в топ-20 по среднему темпу: ${days(paceDaysLeft)} участия. Ваши страницы уже учитываются; место после допуска будет зависеть от среднего темпа.`} /> : null}
     <RankingCard caption={data.title} tabs={TABS} value={pagesFirst ? 0 : 1} onChange={index => setMetric(index === 0 ? 'pages' : 'pace')}>
       {rows.length
-        ? <StandingsTable nameColumn="Участник" rows={rows} showMove={false} zoneAfter={!pagesFirst && protectPaceTop ? rows.filter(row => row.rank <= 20).length : 3}
+        ? <StandingsTable nameColumn="Участник" rows={rows} showMove showFlags={false} zoneAfter={!pagesFirst && protectPaceTop ? rows.filter(row => row.rank <= 20).length : 3}
             valueColumn={pagesFirst ? 'Стр.' : 'Стр/день'} secondaryColumn={pagesFirst ? 'Стр/день' : 'Стр.'} />
         : <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', paddingVertical: 32, paddingHorizontal: 24 }]}>
             Пока никто не вступил. Первые участники появятся здесь.
           </Text>}
     </RankingCard>
+    <ScreenDescription text="▲ / ▼ — изменение места относительно итогов вчера. Для страниц и среднего темпа сравнение отдельное." />
     <ScreenDescription text={metric === 'pace'
       ? `${protectPaceTop ? 'Топ-20 доступен с 7-го календарного дня участия. До этого результат виден ниже топ-20. Свободные места в топ-20 не заполняются новичками. ' : ''}Выше тот, кто читает больше страниц в среднем за день. При равном темпе — тот, кто участвует дольше.`
       : 'Выше тот, кто прочитал больше страниц за всё участие в этом челлендже. При равном количестве — выше средний темп, затем больше дней участия.'} />

@@ -45,3 +45,10 @@ it('shows an empty roster and supports refreshing it', async () => {
   await view.rerender(<ThemePreviewProvider><ChallengeSpectatorContent data={spectatorFixture} onRefresh={onRefresh} /></ThemePreviewProvider>);
   expect(view.getByTestId('standing-three').props.accessibilityLabel).toMatch(/^2 место/);
 });
+
+it('uses public participant photos and movements supplied by the server', async () => {
+  const data = { ...spectatorFixture, members: spectatorFixture.members.map(m => ({ ...m, avatar: 'https://utfs.io/f/public-avatar', rankChange: 2, teamRankChange: 1 })) };
+  const view = await render(<ThemePreviewProvider><ChallengeSpectatorContent data={data} onRefresh={() => {}} /></ThemePreviewProvider>);
+  await fireEvent.press(view.getByRole('radio', { name: 'Участники' }));
+  expect(view.getByTestId(`standing-move-${data.members[0].id}`)).toHaveTextContent('2');
+});

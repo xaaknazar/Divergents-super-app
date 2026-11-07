@@ -90,3 +90,10 @@ describe('ChallengeRankingCard', () => {
       .toBe('Чтение 24 из 20 выполнено, Без сахара не выполнено, Активность 0 из 10000 не отмечено');
   });
 });
+
+it('medals decorate only numbered places, and team rows never have avatars', async () => {
+  const view = await table([row('a',1,2), row('b',2,-1), row('c',3,0), row('d',4,null)]);
+  for(const rank of [1,2,3]) expect(view.getByTestId(`rank-medal-${rank}`)).toBeTruthy();
+  expect(view.queryByTestId('rank-medal-4')).toBeNull();
+  expect(view.getByTestId('standing-d').props.accessibilityLabel).toContain('нет данных для сравнения');
+});

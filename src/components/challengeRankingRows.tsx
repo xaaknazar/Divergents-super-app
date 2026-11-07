@@ -36,7 +36,7 @@ export function teamTodayRows(teams: ReadonlyArray<TeamStanding>, members: Reado
   for (const m of members) if (m.teamId) today.set(m.teamId, (today.get(m.teamId) ?? 0) + m.day);
   return [...teams]
     .sort((a, b) => (today.get(b.id) ?? 0) - (today.get(a.id) ?? 0) || a.rank - b.rank)
-    .map((t, i) => ({ id: t.id, rank: i + 1, name: t.name, change: null, flags: t.flags ?? 0,
+    .map((t, i) => ({ id: t.id, rank: t.dayRank ?? i + 1, name: t.name, change: t.dayRankChange ?? null, flags: t.flags ?? 0,
       points: today.get(t.id) ?? 0, value: `+${today.get(t.id) ?? 0}`, isMine: t.isMine }));
 }
 
@@ -48,15 +48,15 @@ export function teamTodayRows(teams: ReadonlyArray<TeamStanding>, members: Reado
 export function memberTodayRows(members: ReadonlyArray<OverallStanding>, tasks: ReadonlyMap<string, MemberTaskProgress[]>): StandingRow[] {
   const done = (id: string) => (tasks.get(id) ?? []).filter((t) => t.completed).length;
   return [...members]
-    .sort((a, b) => b.day - a.day || done(b.id) - done(a.id) || a.name.localeCompare(b.name, 'ru'))
+    .sort((a, b) => a.dayRank && b.dayRank ? a.dayRank - b.dayRank : b.day - a.day || done(b.id) - done(a.id) || a.name.localeCompare(b.name, 'ru'))
     .map((m, i) => {
       const goals = tasks.get(m.id);
       return {
-        id: m.id, rank: i + 1, name: shortPersonName(m.name), fullName: m.name,
+        id: m.id, rank: m.dayRank ?? i + 1, name: shortPersonName(m.name), fullName: m.name,
         subtitle: goals?.length ? undefined : m.teamName || tr('без команды'),
         detail: goals?.length ? <TodayGoals tasks={goals} /> : undefined,
         avatar: { uri: m.avatar, eliminated: m.eliminated, left: m.left === true },
-        change: null, flags: totalFlags(m.flags), points: m.day, value: `+${m.day}`,
+        change: m.dayRankChange ?? null, flags: totalFlags(m.flags), points: m.day, value: `+${m.day}`,
         isMine: m.isMe, dimmed: m.eliminated || m.left === true,
       };
     });

@@ -4,11 +4,12 @@ import { netFetch } from './net';
 import { ReadAccessError } from './readAccessError';
 
 const rank = z.number().int().nonnegative();
+const movement = { previousRank: rank.nullable().optional(), rankChange: z.number().int().nullable().optional() };
 const schema = z.object({
   ok: z.literal(true),
-  challenge: z.object({ id: z.string(), title: z.string(), currentDay: rank, durationDays: rank }),
-  teams: z.array(z.object({ id: z.string(), name: z.string(), points: z.number(), rank, members: rank })),
-  members: z.array(z.object({ id: z.string(), name: z.string(), teamId: z.string().nullable(), teamName: z.string(), points: z.number(), rank, teamRank: rank })),
+  challenge: z.object({ id: z.string(), title: z.string(), currentDay: rank, durationDays: rank, season: rank.optional() }),
+  teams: z.array(z.object({ id: z.string(), name: z.string(), points: z.number(), rank, members: rank, ...movement })),
+  members: z.array(z.object({ id: z.string(), name: z.string(), teamId: z.string().nullable(), teamName: z.string(), points: z.number(), rank, teamRank: rank, ...movement, teamRankChange: z.number().int().nullable().optional(), avatar: z.string().nullable().optional() })),
 });
 export type SpectatorStandings = z.infer<typeof schema>;
 

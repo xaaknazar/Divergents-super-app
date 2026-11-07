@@ -53,15 +53,15 @@ export function ChallengeRankingScreen({ challengeId: routeId, initialTab, onBac
 
   const rows = useMemo(() => {
     if (tab === 'teams') return showToday ? teamTodayRows(liveTeams, liveMembers) : teamRows(liveTeams.length ? liveTeams : results?.teams ?? []);
-    return showToday ? memberTodayRows(shownMembers, tasks) : memberRows(shownMembers);
-  }, [tab, showToday, liveTeams, liveMembers, results, shownMembers, tasks]);
+    return showToday ? memberTodayRows(allMembers, tasks).filter(row => !mineOnly || !myTeamId || allMembers.find(m => m.id === row.id)?.teamId === myTeamId) : memberRows(shownMembers);
+  }, [tab, showToday, liveTeams, liveMembers, results, shownMembers, allMembers, mineOnly, myTeamId, tasks]);
 
   const finished = needResults && results?.challenge.finished === true;
   const season = (isLive ? challenge.season : null) ?? (results?.challenge.seq || null);
   const caption = finished
     ? tr('Итоговый рейтинг')
     : showToday
-      ? `${tr('День')} ${challenge.currentDay} · ${tr('очки за сегодня')}`
+      ? `${tr('День')} ${challenge.currentDay} · ${tr('очки за сегодня')} · ${tr('движение к итогу вчера')}`
     : isLive && challenge.currentDay > 0
       ? `${tr('День')} ${challenge.currentDay} ${tr('из')} ${challenge.totalDays}${challenge.currentDay > 1 ? ` · ${tr('изменения со вчера')}` : ''}`
       : undefined;

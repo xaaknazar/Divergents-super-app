@@ -172,7 +172,7 @@ export function ChallengeRankingCard({ tab, onTab, rows, period, caption, filter
       {rows.length ? (
         <StandingsTable
           nameColumn={tab === 'teams' ? tr('Команда') : today ? tr('Участник · цели дня') : tr('Участник')}
-          rows={rows} showMove={!today} valueColumn={today ? tr('Сегодня') : tr('Очки')} />
+          rows={rows} showFlags={tab === 'teams'} showMove valueColumn={today ? tr('Сегодня') : tr('Очки')} />
       ) : (
         <Text style={[ty.subhead, { color: T.labelSecondary, textAlign: 'center', paddingVertical: 32, paddingHorizontal: 24 }]}>
           {emptyText ?? tr('Рейтинг ещё пуст')}

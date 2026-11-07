@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-na
 import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
 import { MemberAvatar } from './MemberAvatar';
+import { RankMedal } from './RankMedal';
 import { tr } from '../state/LanguageContext';
 import * as pl from '../data/plural';
 
@@ -30,7 +31,7 @@ export interface StandingRow {
   dimmed?: boolean;
   /** Что показать в главной колонке вместо points (например «36,5»). */
   value?: string;
-  /** Вторая числовая колонка (серым), если у таблицы задан secondaryColumn. */
+  /** Второй показатель (серым под основным), если задан secondaryColumn. */
   secondary?: string;
   /** Своя подпись для VoiceOver вместо собранной автоматически. */
   a11yLabel?: string;
@@ -47,9 +48,9 @@ export interface StandingsTableProps {
   zoneAfter?: number;
   /** Подпись главной колонки. По умолчанию «Очки». */
   valueColumn?: string;
-  /** Подпись второй числовой колонки (серым). Без неё колонки нет. */
+  /** Подпись второго показателя под основным. */
   secondaryColumn?: string;
-  /** Колонка ± (движение со вчера). У рейтинга чтения её нет. */
+  /** Колонка ±: движение относительно вчерашнего результата. */
   showMove?: boolean;
   /** Скрываем колонку, когда API просмотра не отдаёт флаги. */
   showFlags?: boolean;
@@ -75,7 +76,8 @@ export function shortPersonName(name: string): string {
 }
 
 export function movementLabel(change: number | null, plural: 'team' | 'member' = 'team'): string {
-  if (change == null || change === 0) return tr('место не изменилось');
+  if (change == null) return tr('нет данных для сравнения');
+  if (change === 0) return tr('место не изменилось');
   const n = Math.abs(change);
   const verb = plural === 'team'
     ? (change > 0 ? tr('поднялась на') : tr('опустилась на'))
@@ -95,21 +97,16 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
   const scale = textScale * fontScale;
   const numberWidth = (values: string[], fontSize: number) =>
     Math.ceil(Math.max(1, ...values.map(value => value.length)) * fontSize * fontScale * 0.68 + 2);
-  const COL_RANK = Math.max(Math.round(28 * scale), numberWidth(rows.map(row => String(row.rank)), ty.body.fontSize ?? 17) + 8);
-  const COL_MOVE = Math.max(Math.round(30 * scale), numberWidth(rows.map(row => String(Math.abs(row.change ?? 0))), ty.footnoteEm.fontSize ?? 13) + 12);
+  const COL_RANK = Math.max(Math.round(40 * scale), numberWidth(rows.map(row => String(row.rank)), ty.body.fontSize ?? 17) + 8);
+  const COL_MOVE = Math.max(Math.round(34 * scale), numberWidth(rows.map(row => String(Math.abs(row.change ?? 0))), ty.footnoteEm.fontSize ?? 13) + 12);
   const COL_FLAG = Math.max(Math.round(20 * scale), numberWidth(rows.map(row => String(row.flags)), ty.body.fontSize ?? 17));
-  const COL_PTS = Math.max(Math.round(56 * scale),
+  const COL_PTS = Math.max(Math.round((secondaryColumn ? 82 : 56) * scale),
     numberWidth([valueColumn ?? tr('Очки')], ty.caption1.fontSize ?? 12),
     numberWidth(rows.map(row => row.value ?? String(row.points)), ty.headline.fontSize ?? 17));
-  const COL_SEC = Math.max(Math.round(58 * scale),
-    numberWidth([secondaryColumn ?? ''], ty.caption1.fontSize ?? 12),
-    numberWidth(rows.map(row => row.secondary ?? ''), ty.body.fontSize ?? 17));
   const numericGap = 12;
   const AVATAR = Math.round(36 * Math.min(textScale, 1.25));
-  const secondaryCell = { width: COL_SEC };
   const valueCell = { width: COL_PTS };
-  const numericWidth = (showMove ? COL_MOVE + numericGap : 0) + (showFlags ? COL_FLAG + numericGap : 0) + COL_PTS
-    + (secondaryColumn ? COL_SEC + numericGap : 0);
+  const numericWidth = (showMove ? COL_MOVE + numericGap : 0) + (showFlags ? COL_FLAG + numericGap : 0) + COL_PTS;
   const contentWidth = (tableWidth ?? screenWidth - 32) - 32;
   const avatarWidth = withAvatars ? AVATAR + 10 : 0;
   // Every ranking can stack, not only Reading. Keep identity readable rather
@@ -127,7 +124,7 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
         <View style={styles.metrics}>
           {showMove ? <Text style={[head, { width: COL_MOVE, textAlign: 'right' }]}>±</Text> : null}
           {showFlags ? <View style={{ width: COL_FLAG, alignItems: 'flex-end' }}><SF name="flag.fill" size={11} color={T.labelSecondary} /></View> : null}
-          {secondaryColumn ? <Text style={[head, secondaryCell, styles.numericText]} numberOfLines={1}>{secondaryColumn}</Text> : null}
+          
           <Text style={[head, valueCell, styles.numericText]} numberOfLines={1}>{valueColumn ?? tr('Очки')}</Text>
         </View>
       </View> : null}
@@ -137,8 +134,8 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
         const moved = r.change != null && r.change !== 0;
         const label = r.a11yLabel ?? [
           `${r.rank} ${tr('место')}`, r.fullName ?? r.name, r.isMine ? tr(withAvatars ? 'это вы' : 'ваша команда') : '', r.subtitle ?? '',
-          !showMove || r.change == null ? '' : movementLabel(r.change, withAvatars ? 'member' : 'team'),
-          showFlags && r.flags ? `${tr('флагов')}: ${r.flags}` : '',
+          !showMove ? '' : movementLabel(r.change, withAvatars ? 'member' : 'team'),
+          r.flags ? `${tr('флагов')}: ${r.flags}` : '',
           `${r.points} ${tr('очков')}`,
         ].filter(Boolean).join(', ');
         return (
@@ -146,7 +143,7 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
             {zoneAfter > 0 && i === zoneAfter ? <View testID="standings-zone" style={[styles.zone, { backgroundColor: T.separator }]} /> : null}
             <Row testID={`standing-${r.id}`} label={label} onPress={r.onPress} hint={r.a11yHint}
               style={[styles.row, { minHeight: r.subtitle || r.detail ? 60 : 48 }, stacked && styles.stackedRow, r.isMine && { backgroundColor: mineBg }]}>
-              <Text style={[ty.body, num, { width: COL_RANK, color: T.label }]}>{r.rank}</Text>
+              <View style={{ width: COL_RANK, alignItems: 'center', paddingRight: 8 }}><RankMedal rank={r.rank} /></View>
               {withAvatars ? <View style={{ marginRight: 10, opacity: r.dimmed ? 0.55 : 1 }}>
                 <MemberAvatar name={r.name} avatar={r.avatar?.uri} size={AVATAR} eliminated={r.avatar?.eliminated} left={r.avatar?.left} />
               </View> : null}
@@ -154,29 +151,27 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
                 <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}>
                   <Text style={[r.isMine ? ty.headline : ty.body, { flexShrink: 1, color: T.label }]} numberOfLines={stacked ? undefined : 2}>{r.name}</Text>
                 </View>
+                {!showFlags && r.flags > 0 ? <Text style={[ty.caption1, { color: T.redText }]}>Флаги: {r.flags}</Text> : null}
                 {r.detail ?? (r.subtitle ? <Text style={[secondaryColumn ? ty.caption1 : ty.subhead, { color: T.labelSecondary }]} numberOfLines={stacked ? undefined : 2}>{r.subtitle}</Text> : null)}
               </View>
               <View style={[styles.metrics, styles.rowMetrics, stacked && styles.stackedMetrics, wrapMetrics && styles.wrappedMetrics]}>
-                {showMove ? <View testID={`standing-move-${r.id}`} style={{ width: COL_MOVE, maxWidth: '100%', rowGap: 4 }}>
+                {showMove && r.change != null ? <View testID={`standing-move-${r.id}`} style={{ width: COL_MOVE, maxWidth: '100%', rowGap: 4 }}>
                   {stacked ? <Text style={[head, styles.numericText]}>±</Text> : null}
                   <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', columnGap: 1 }}>
                   {moved ? <>
                     <SF name={up ? 'arrowtriangle.up.fill' : 'arrowtriangle.down.fill'} size={9} color={up ? T.greenText : T.redText} />
                     <Text style={[ty.footnoteEm, num, { color: up ? T.greenText : T.redText }]}>{Math.abs(r.change!)}</Text>
-                  </> : <Text style={[ty.footnote, num, { color: T.labelTertiary }]}>–</Text>}
+                  </> : <Text style={[ty.footnote, num, { color: T.labelTertiary }]}>{r.change == null ? '' : '–'}</Text>}
                   </View>
-                </View> : null}
+                </View> : showMove ? <View style={{ width: COL_MOVE }} /> : null}
                 {showFlags ? <View style={{ width: COL_FLAG, alignItems: 'flex-end', rowGap: 4 }}>
                   {stacked ? <View accessible={false} style={styles.flagCaption}><SF name="flag.fill" size={11} color={T.labelSecondary} /></View> : null}
                   <Text testID={`standing-flags-${r.id}`} style={[ty.body, num, styles.numericText, { color: r.flags ? T.redText : T.labelTertiary }]}>{r.flags || '–'}</Text>
                 </View> : null}
-                {secondaryColumn ? <View style={[secondaryCell, styles.metricCell]}>
-                  {stacked ? <Text style={[head, styles.numericText]} numberOfLines={1}>{secondaryColumn}</Text> : null}
-                  <Text style={[ty.body, num, styles.numericText, { color: T.labelSecondary }]} numberOfLines={wrapMetrics ? undefined : 1}>{r.secondary ?? ''}</Text>
-                </View> : null}
                 <View style={[valueCell, styles.metricCell]}>
                   {stacked ? <Text style={[head, styles.numericText]} numberOfLines={1}>{valueColumn ?? tr('Очки')}</Text> : null}
                   <Text style={[ty.headline, num, styles.numericText, { color: T.label }]} numberOfLines={wrapMetrics ? undefined : 1}>{r.value ?? r.points}</Text>
+                  {secondaryColumn ? <Text style={[ty.caption1, styles.numericText, { color: T.labelSecondary }]}>{r.secondary} {secondaryColumn}</Text> : null}
                 </View>
               </View>
             </Row>

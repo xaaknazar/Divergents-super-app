@@ -343,6 +343,9 @@ export interface TeamStanding {
   previousRank?: number | null;
   /** Насколько мест сдвинулась со вчера: >0 поднялась, <0 опустилась. */
   rankChange?: number | null;
+  dayRank?: number;
+  dayRankChange?: number | null;
+  teamRankChange?: number | null;
 }
 
 /**
@@ -516,6 +519,9 @@ export interface Member {
   penalty?: number;
   previousRank?: number | null;
   rankChange?: number | null;
+  dayRank?: number;
+  dayRankChange?: number | null;
+  teamRankChange?: number | null;
   /** Очки за день по закрытым дням. null — закрытых дней ещё нет. */
   averagePoints?: number | null;
   /** День, на котором зачёт заморозился после вылета. */
@@ -555,6 +561,9 @@ export interface OverallStanding {
   previousRank?: number | null;
   /** Насколько мест сдвинулся со вчера: >0 поднялся, <0 опустился. */
   rankChange?: number | null;
+  dayRank?: number;
+  dayRankChange?: number | null;
+  teamRankChange?: number | null;
 }
 
 /** Итог одного дня челленджа — для экрана истории. */
@@ -765,6 +774,8 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
         left: numOf(r?.left),
         previousRank: typeof r?.previousRank === 'number' ? numOf(r.previousRank) : null,
         rankChange: typeof r?.rankChange === 'number' ? numOf(r.rankChange) : null,
+        dayRank: typeof r?.dayRank === 'number' ? r.dayRank : undefined,
+        dayRankChange: typeof r?.dayRankChange === 'number' ? r.dayRankChange : null,
       }))
       .filter((t: TeamStanding) => t.id),
     // Разбор по дням считает тот же зачёт, что и баллы: экран истории и
@@ -791,6 +802,8 @@ function mapActiveChallenge(raw: RawActiveChallenge): Challenge | null {
         rank: numOf(r?.rank),
         previousRank: typeof r?.previousRank === 'number' ? numOf(r.previousRank) : null,
         rankChange: typeof r?.rankChange === 'number' ? numOf(r.rankChange) : null,
+        dayRank: typeof r?.dayRank === 'number' ? r.dayRank : undefined,
+        dayRankChange: typeof r?.dayRankChange === 'number' ? r.dayRankChange : null,
       }))
       .filter((r: OverallStanding) => r.id),
     // Номер сезона для шапки рейтинга («Сезон 3»). Старый сервер не отдаёт — null.
@@ -2122,6 +2135,9 @@ function mapMyResult(raw: any): MyChallengeResult | null {
 
 /** Строка «тройки лучших» в общем зачёте. */
 export interface ResultsPodiumRow {
+  rankChange?: number | null;
+  dayRank?: number;
+  dayRankChange?: number | null;
   userId: string;
   name: string;
   avatar: string | null;
@@ -2133,6 +2149,9 @@ export interface ResultsPodiumRow {
 }
 
 export interface ResultsTeamRow {
+  rankChange?: number | null;
+  dayRank?: number;
+  dayRankChange?: number | null;
   id: string;
   name: string;
   points: number;
@@ -2264,6 +2283,7 @@ export async function fetchChallengeResults(
         name: strOf(t?.name, 'Команда'),
         points: numOf(t?.points),
         rank: numOf(t?.rank),
+        rankChange: typeof t?.rankChange === 'number' ? t.rankChange : null,
         members: numOf(t?.members),
         isMine: t?.isMine === true,
       })),
@@ -2281,6 +2301,8 @@ export async function fetchChallengeResults(
         award: r?.award === true,
         isMe: r?.isMe === true,
         rank: numOf(r?.rank),
+        rankChange: typeof r?.rankChange === 'number' ? r.rankChange : null,
+        teamRankChange: typeof r?.teamRankChange === 'number' ? r.teamRankChange : null,
       })).filter((r: OverallStanding) => r.id),
       myDays: (Array.isArray(d.myDays) ? d.myDays : [])
         .map((x: any): ChallengeDay => ({ ...mapDay(x), dateISO: strOf(x?.dateISO) }))
@@ -2301,6 +2323,7 @@ export async function fetchChallengeResults(
         teamName: strOf(m?.teamName),
         points: numOf(m?.points),
         rank: numOf(m?.rank),
+        rankChange: typeof m?.rankChange === 'number' ? m.rankChange : null,
         isMe: m?.isMe === true,
         award: m?.award === true,
       })),

@@ -11,7 +11,7 @@
 // в обе стороны. Белый флаг — это то, что человек получил по уважительной
 // причине, и путать его с наказанием нельзя.
 import { Image } from 'expo-image';
-import React,{ useState } from 'react';
+import React,{ useState, useEffect } from 'react';
 import { Text,View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -35,6 +35,7 @@ export function MemberAvatar({
   // Файл могли удалить в анкете — тогда молча возвращаемся к букве, а не
   // показываем пустой серый круг.
   const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [avatar]);
   const out = eliminated || left;
   const showPhoto = !!avatar && !broken && !out;
 
