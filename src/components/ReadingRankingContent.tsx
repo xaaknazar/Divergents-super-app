@@ -61,11 +61,11 @@ export function ReadingRankingContent({ data, onHistory, initialMetric = 'pages'
           <Text style={[ty.subhead, { color: T.labelSecondary }]}>Участников: {data.ranking.length}</Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={[ty.title2, num, { color: T.label }]}>{myPages}</Text>
+          <Text style={[ty.title2, num, { color: T.label }]}>№{myPages}</Text>
           <Text style={[ty.caption1, { color: T.labelSecondary }]}>по страницам</Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={[ty.title2, num, { color: T.label }]}>{myPace}</Text>
+          <Text style={[ty.title2, num, { color: T.label }]}>№{myPace}</Text>
           <Text style={[ty.caption1, { color: T.labelSecondary }]}>по темпу</Text>
         </View>
       </View>
