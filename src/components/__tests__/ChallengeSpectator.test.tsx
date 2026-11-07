@@ -1,8 +1,9 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
 import { ChallengeSpectatorContent } from '../ChallengeSpectatorContent';
 import { spectatorFixture } from '../../storybook/challengeSpectatorFixtures';
+jest.mock('../Logo', () => ({ Logo: () => null }));
 jest.mock('../SFIcon', () => ({ SF: () => null }));
 jest.mock('../../lib/haptics', () => ({ hTap: jest.fn(), hSelect: jest.fn() }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }) }));
@@ -13,10 +14,34 @@ it.each(['light', 'dark'] as const)('shows only rankings, filters team roster, p
   expect(view.queryByText('План на сегодня')).toBeNull();
   expect(view.queryByText('Подать заявку')).toBeNull();
   expect(view.queryByText('Отметиться')).toBeNull();
-  await fireEvent.press(view.getByRole('button', { name: 'Состав команды «Демо-север»' }));
-  expect(view.queryByTestId('result-ranking-member-two')).toBeNull();
-  expect(view.getByTestId('result-ranking-member-three').props.accessibilityLabel).toMatch(/^2 место.*0 баллов/);
-  await fireEvent.press(view.getByRole('button', { name: 'Показать всех участников' }));
-  expect(view.getByTestId('result-ranking-member-two')).toBeTruthy();
-  expect(view.getByTestId('result-ranking-member-three').props.accessibilityLabel).toMatch(/^3 место/);
+  await fireEvent.press(view.getByTestId('standing-a'));
+  expect(view.queryByTestId('standing-two')).toBeNull();
+  expect(view.getByTestId('standing-three').props.accessibilityLabel).toMatch(/^2 место.*0 баллов/);
+  await fireEvent.press(view.getByRole('radio', { name: 'Все' }));
+  expect(view.getByTestId('standing-two')).toBeTruthy();
+  expect(view.getByTestId('standing-three').props.accessibilityLabel).toMatch(/^3 место/);
+});
+
+it('does not invent flags or yesterday movement absent from the spectator API', async () => {
+  const view = await render(<ThemePreviewProvider><ChallengeSpectatorContent data={spectatorFixture} onRefresh={() => {}} /></ThemePreviewProvider>);
+  expect(view.getByTestId('ranking-card')).toBeTruthy();
+  expect(view.queryByTestId('standing-flags-a')).toBeNull();
+  expect(view.queryByTestId('standing-move-a')).toBeNull();
+  await fireEvent.press(view.getByRole('radio', { name: 'Участники' }));
+  expect(view.getByTestId('standing-three').props.accessibilityLabel).toMatch(/^3 место/);
+  expect(view.queryByTestId('standing-flags-three')).toBeNull();
+  await fireEvent.press(view.getByRole('radio', { name: 'Команды' }));
+  expect(view.getByTestId('standing-b')).toBeTruthy();
+});
+
+it('shows an empty roster and supports refreshing it', async () => {
+  const onRefresh = jest.fn();
+  const data = { ...spectatorFixture, members: [] };
+  const view = await render(<ThemePreviewProvider><ChallengeSpectatorContent data={data} onRefresh={onRefresh} /></ThemePreviewProvider>);
+  await fireEvent.press(view.getByTestId('standing-a'));
+  expect(view.getByText('Участников пока нет')).toBeTruthy();
+  await act(async () => view.getByTestId('spectator-scroll').props.refreshControl.props.onRefresh());
+  expect(onRefresh).toHaveBeenCalledTimes(1);
+  await view.rerender(<ThemePreviewProvider><ChallengeSpectatorContent data={spectatorFixture} onRefresh={onRefresh} /></ThemePreviewProvider>);
+  expect(view.getByTestId('standing-three').props.accessibilityLabel).toMatch(/^2 место/);
 });

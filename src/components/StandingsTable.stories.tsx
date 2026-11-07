@@ -54,3 +54,5 @@ export const ReadingPace: Story = {
 };
 export const ReadingNarrow: Story = { args: ReadingPages.args, parameters: { viewport: 'compact' } };
 export const ReadingLargeText: Story = { args: ReadingPace.args, parameters: { viewport: 'compact', textSize: 'xl', scheme: 'dark' } };
+
+export const Spectator: Story = { args: { showMove: false, showFlags: false } };
