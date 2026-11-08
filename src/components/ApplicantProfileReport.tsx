@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { GALLUP_DOMAIN_META, mbtiName, TalentProfile } from '../data/talentslab';
+import { mbtiName, TalentProfile } from '../data/talentslab';
 import { applicantResumeSections } from '../data/applicantResume';
 import { ApplicantReportSection } from './ApplicantReportSection';
 import { ContentBlock } from './ContentBlock';
@@ -20,7 +20,6 @@ export function ApplicantProfileReport({ profile, fallbackName, fallbackEmail }:
   const contacts = [r?.current_city || profile.currentCity, r?.phone || profile.phone,
     r?.email || profile.email || fallbackEmail, r?.instagram].filter(Boolean);
   const sections = applicantResumeSections(r);
-  const gallup = [...profile.gallup].sort((a, b) => a.rank - b.rank);
   return <Wrapper gap={28}>
     <ContentBlock>
       <Wrapper gap={18}>
@@ -38,20 +37,6 @@ export function ApplicantProfileReport({ profile, fallbackName, fallbackEmail }:
     {profile.mbtiType ? <ApplicantReportSection title="Психометрические данные" rows={[{
       label: 'Тип личности · MBTI', value: [profile.mbtiType, profile.mbtiName || mbtiName(profile.mbtiType)].filter(Boolean).join(' · '),
     }]} /> : null}
-    {gallup.length ? <ApplicantReportSection title="Сильные стороны · CliftonStrengths">
-      {gallup.map((talent, i) => {
-        const domain = GALLUP_DOMAIN_META[talent.domain];
-        return <View key={`${talent.rank}-${talent.name}`} style={[styles.talent, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: T.separator, paddingTop: 16 }]}>
-          <View style={[styles.rank, { backgroundColor: T.brand }]}>
-            <Text style={[ty.subheadEm, { color: '#fff' }]}>{talent.rank}</Text>
-          </View>
-          <Wrapper flex={1} gap={4}>
-            <Text style={[ty.headline, { color: T.label }]}>{talent.name}</Text>
-            {domain ? <Text style={[ty.caption1, { color: T.labelSecondary }]}>{domain.label}</Text> : null}
-          </Wrapper>
-        </View>;
-      })}
-    </ApplicantReportSection> : null}
     {profile.gardner.length ? <Wrapper gap={12}>
       <Text accessibilityRole="header" style={[ty.title3, styles.heading, { color: T.label }]}>Множественный интеллект</Text>
       <GardnerChart data={profile.gardner} />
@@ -68,13 +53,11 @@ export function ApplicantProfileReport({ profile, fallbackName, fallbackEmail }:
         <SF name="chevron.forward" size={14} color={T.labelSecondary} />
       </Pressable>)}
     </ApplicantReportSection> : null}
-    {!sections.length && !profile.mbtiType && !gallup.length && !profile.gardner.length && !profile.reports.length ?
+    {!sections.length && !profile.mbtiType && !profile.gardner.length && !profile.reports.length ?
       <Text style={[ty.subhead, { color: T.labelSecondary }]}>В анкете пока указаны только основные данные.</Text> : null}
   </Wrapper>;
 }
 const styles = StyleSheet.create({
   identity: { flexGrow: 1, flexShrink: 1, flexBasis: 180 }, heading: { paddingHorizontal: 4 },
-  talent: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  rank: { minWidth: 36, minHeight: 36, padding: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   report: { flexDirection: 'row', gap: 12, alignItems: 'center', minHeight: 48 }, reportTitle: { flex: 1 },
 });

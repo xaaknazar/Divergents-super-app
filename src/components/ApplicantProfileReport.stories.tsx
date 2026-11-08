@@ -16,6 +16,7 @@ const profile: TalentProfile = {
     language_skills: [{ language: 'Казахский', level: 'Родной' }, { language: 'Английский', level: 'B2' }],
     computer_skills: 'Excel, PowerPoint, Figma', hobbies: 'Чтение, плавание, путешествия', books_per_year: 24,
   },
+  reports: [{ type: 'gallup', title: 'CliftonStrengths · PDF-отчёт', url: 'https://example.com/cliftonstrengths.pdf' }],
   gallup: [{ rank: 1, name: 'Strategic', domain: 'strategic' }, { rank: 2, name: 'Achiever', domain: 'executing' }, { rank: 3, name: 'Communication', domain: 'influencing' }],
   gardner: [{ category: 'Лингвистический', score: 72 }, { category: 'Межличностный', score: 85 }, { category: 'Логико-математический', score: 63 }],
 };
