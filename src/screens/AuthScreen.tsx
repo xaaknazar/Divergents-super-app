@@ -46,11 +46,14 @@ const CLERK_ERRORS: Record<string, string> = {
   oauth_callback_invalid: 'Не удалось завершить вход. Попробуйте ещё раз.',
   user_locked: 'Аккаунт временно заблокирован. Попробуйте позже.',
   form_identifier_not_allowed: 'Эта почта не может быть использована для входа.',
+  form_password_incorrect: 'Неверная почта или пароль. Попробуйте ещё раз или войдите по коду из письма.',
+  strategy_for_user_invalid: 'Для этого аккаунта используйте вход по коду из письма.',
 };
 function clerkErrorText(e: any, fallback: string): string {
   const code = e?.errors?.[0]?.code as string | undefined;
   if (code && CLERK_ERRORS[code]) return CLERK_ERRORS[code];
-  if (code || e?.errors?.[0]?.message) console.warn('[auth] clerk error', code, e?.errors?.[0]?.message);
+  // Provider messages can contain submitted identifiers. Never log credentials
+  // or raw authentication responses.
   return fallback;
 }
 const SIGNUP_UNAVAILABLE = 'Регистрация временно недоступна. Попробуйте позже.';
@@ -85,6 +88,9 @@ export function AuthScreen({}: Props) {
   const [intent, setIntent] = useState<'in' | 'up'>('in');
   const [mode, setMode] = useState<'in' | 'up'>('in');
   const [email, setEmail] = useState('');
+  const [signInMethod, setSignInMethod] = useState<'email_code' | 'password'>('email_code');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +98,35 @@ export function AuthScreen({}: Props) {
   const [focus, setFocus] = useState(false);
   const [left, setLeft] = useState(0); // resend countdown
   const otpRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const passwordPending = useRef(false);
+  const usesPassword = intent === 'in' && signInMethod === 'password';
+
+  const clearPassword = () => { setPassword(''); setShowPassword(false); };
+  const passwordSignIn = async () => {
+    if (!siLoaded || !signIn || !setActiveSignIn || busy || passwordPending.current || !email.trim() || !password) return;
+    passwordPending.current = true;
+    setBusy(true); setError(null); setInfo(null);
+    try {
+      const result = await signIn.create({ identifier: email.trim(), password });
+      if (result.status !== 'complete' || !result.createdSessionId) {
+        setError(lang === 'ru'
+          ? 'Нужен дополнительный шаг подтверждения. Войдите по коду из письма или свяжитесь с поддержкой.'
+          : 'Additional verification is required. Use an email code or contact support.');
+        return;
+      }
+      await setActiveSignIn({ session: result.createdSessionId });
+      finishRegistration();
+    } catch (e: any) {
+      setError(clerkErrorText(e, lang === 'ru'
+        ? 'Не удалось войти по паролю. Попробуйте ещё раз или войдите по коду из письма.'
+        : 'Could not sign in with a password. Try again or use an email code.'));
+    } finally {
+      clearPassword();
+      passwordPending.current = false;
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (left <= 0) return;
@@ -114,7 +149,7 @@ export function AuthScreen({}: Props) {
   };
 
   const sendCode = async (forceIntent?: 'in' | 'up') => {
-    if (!isLoaded || !email.trim()) return;
+    if (!isLoaded || busy || !email.trim()) return;
     // `recover()` flips intent and calls this synchronously, so the closure's
     // `intent` is still stale — accept an explicit override.
     const useIntent = forceIntent ?? intent;
@@ -233,10 +268,10 @@ export function AuthScreen({}: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, step]);
 
-  // Passwordless "forgot" path: there is no password to reset — recovery just
-  // means sending a fresh sign-in code. If the email is filled we send it right
-  // away; otherwise we prompt the user to enter their email first.
+  // Recovery uses the existing email-code flow, without changing any password.
   const recover = () => {
+    if (busy) return;
+    clearPassword(); setSignInMethod('email_code');
     setError(null);
     if (!email.trim()) { setInfo(t('recover_body')); return; }
     setIntent('in'); setInfo(null);
@@ -275,10 +310,11 @@ export function AuthScreen({}: Props) {
                     return (
                       <Pressable
                         key={k}
-                        onPress={() => { setIntent(k); setError(null); }}
+                        onPress={() => { setIntent(k); setSignInMethod('email_code'); clearPassword(); setError(null); setInfo(null); }}
+                        disabled={busy}
                         accessibilityRole="radio"
                         accessibilityLabel={k === 'in' ? t('tab_signin') : t('tab_signup')}
-                        accessibilityState={{ selected: on }}
+                        accessibilityState={{ selected: on, disabled: busy }}
                         style={{ flex: 1, minHeight: 48, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: on ? T.cardBg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.1 : 0, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
                       >
                         <Text style={[ty.subheadEm, { color: on ? T.brand : T.labelSecondary, textAlign: 'center' }]}>{k === 'in' ? t('tab_signin') : t('tab_signup')}</Text>
@@ -292,17 +328,19 @@ export function AuthScreen({}: Props) {
                   <SF name="envelope.fill" size={17} color={focus ? T.brand : T.labelTertiary} />
                   <TextInput
                     value={email} onChangeText={setEmail}
+                    editable={!busy}
                     onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
                     placeholder={t('email_ph')} placeholderTextColor={T.labelTertiary}
                     autoCapitalize="none" keyboardType="email-address" autoCorrect={false}
                     textContentType="emailAddress" autoComplete="email"
                     accessibilityLabel={t('email')}
                     style={[ty.body, { flex: 1, color: T.label, minHeight: 38, paddingVertical: 6 }]}
-                    onSubmitEditing={() => sendCode()} returnKeyType="go"
+                    onSubmitEditing={() => usesPassword ? passwordRef.current?.focus() : sendCode()} returnKeyType={usesPassword ? 'next' : 'go'}
                   />
                   {email.length > 0 ? (
                     <Pressable
                       onPress={() => setEmail('')}
+                      disabled={busy}
                       accessibilityRole="button"
                       accessibilityLabel={lang === 'ru' ? 'Очистить адрес электронной почты' : 'Clear email address'}
                       style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}
@@ -312,15 +350,49 @@ export function AuthScreen({}: Props) {
                   ) : null}
                 </View>
 
+                {usesPassword ? (
+                  <>
+                    <Text style={[ty.footnoteEm, { color: T.labelSecondary, marginTop: 14, marginBottom: 7, marginLeft: 2 }]}>{lang === 'ru' ? 'Пароль' : 'Password'}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: T.fillTertiary, borderRadius: 16, borderCurve: 'continuous', paddingHorizontal: 10, paddingVertical: 8, minHeight: 54 }}>
+                      <TextInput
+                        ref={passwordRef}
+                        value={password} onChangeText={setPassword} editable={!busy}
+                        secureTextEntry={!showPassword} autoCapitalize="none" autoCorrect={false}
+                        textContentType="password" autoComplete="current-password"
+                        accessibilityLabel={lang === 'ru' ? 'Пароль' : 'Password'}
+                        onSubmitEditing={passwordSignIn} returnKeyType="go"
+                        style={[ty.body, { flex: 1, color: T.label, minHeight: 38, paddingVertical: 6 }]}
+                      />
+                      <Pressable onPress={() => setShowPassword((value) => !value)} disabled={busy}
+                        accessibilityRole="button"
+                        accessibilityLabel={lang === 'ru' ? (showPassword ? 'Скрыть пароль' : 'Показать пароль') : (showPassword ? 'Hide password' : 'Show password')}
+                        accessibilityState={{ disabled: busy }}
+                        style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+                        <SF name={showPassword ? 'eye.slash' : 'eye'} size={20} color={T.labelSecondary} />
+                      </Pressable>
+                    </View>
+                  </>
+                ) : null}
+
                 {error ? <Text style={[ty.footnote, { color: T.red, marginTop: 10, marginLeft: 2 }]}>{error}</Text> : null}
                 {!error && info ? <Text style={[ty.footnote, { color: T.brandAccent, marginTop: 10, marginLeft: 2 }]}>{info}</Text> : null}
 
-                <GradientButton label={t('cont')} icon="arrow.right" loading={busy} disabled={!isLoaded || !email.trim()} onPress={() => sendCode()} T={T} style={{ marginTop: 16 }} />
+                <GradientButton label={usesPassword ? (lang === 'ru' ? 'Войти' : 'Sign in') : t('cont')} icon="arrow.right" loading={busy} disabled={!isLoaded || !email.trim() || (usesPassword && !password)} onPress={() => usesPassword ? passwordSignIn() : sendCode()} T={T} style={{ marginTop: 16 }} />
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14, paddingHorizontal: 4 }}>
+                {!usesPassword ? <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 14, paddingHorizontal: 4 }}>
                   <SF name="lock.open.fill" size={12} color={T.labelTertiary} />
                   <Text style={[ty.caption1, { color: T.labelTertiary, flexShrink: 1, textAlign: 'center' }]}>{t('passwordless')}</Text>
-                </View>
+                </View> : null}
+                {intent === 'in' ? (
+                  <Pressable
+                    onPress={() => { setSignInMethod(usesPassword ? 'email_code' : 'password'); clearPassword(); setError(null); setInfo(null); }}
+                    disabled={busy} accessibilityRole="button" accessibilityState={{ disabled: busy }}
+                    style={{ minHeight: 48, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={[ty.subheadEm, { color: T.brand, textAlign: 'center' }]}>
+                      {lang === 'ru' ? (usesPassword ? 'Войти по коду из письма' : 'Войти по паролю') : (usesPassword ? 'Sign in with an email code' : 'Sign in with a password')}
+                    </Text>
+                  </Pressable>
+                ) : null}
 
                 {/* Divider */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18 }}>
