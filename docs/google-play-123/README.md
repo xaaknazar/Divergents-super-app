@@ -26,7 +26,7 @@
 - Native ELF audit passed: all 27 arm64 libraries have PT_LOAD alignment >=16384, as recorded in `docs/android-123-build-2026-11-08.md` at `8d535dab91b161536e463aca99864d4434bdb59c`. This is not a physical-device or Play acceptance test. Actual Android smoke testing, screenshots, manifest fixes and a corrected rebuild remain.
 - IARC agreement requested separately for Divergents; acceptance for PickChick does not cover this app.
 - Target audience is awaiting the owner's answer.
-- App access requires a verified review account. Credentials belong only in Play, never this document.
+- App access requires a verified review account. Read-only inspection of App Store Connect app6796377452, iOS1.0 review details found empty username/password and notes fields; the project chat also has no confirmed permanent reviewer flow. Credentials belong only in Play, never this document.
 - The owner supplied a phone/four-digit review method, but `AuthScreen.tsx` accepts email and a six-digit Clerk code. This discrepancy was raised with the owner; no unusable credentials were submitted and no authentication bypass was added.
 - Data safety must be based on current Android code and SDK/server behavior, not copied from PickChick or the old App Store guide.
 - Public `/account-delete` returns HTTP 200 and explains account deletion, but its operator footer still contains a literal template. Owner asked for the actual legal identity and publishable address. No fabricated values were submitted.
@@ -50,6 +50,14 @@
 - Broad READ_MEDIA_AUDIO/IMAGES/VIDEO and SYSTEM_ALERT_WINDOW permissions remain in the candidate and require minimization or actual justification. FCM is not configured. Native ELF 16KB alignment audit passed for all 27 arm64 libraries; device and Play checks remain.
 - Known-defective candidate was not uploaded merely to test signature acceptance. Preserve versionCode123 for a corrected first upload where possible; no signing-key reset is required by the current evidence.
 - Relevant versioning reference: https://developer.android.com/studio/publish/versioning . Google Play disallows reusing a versionCode already used for a previous version.
+
+## Permission follow-up - source only
+
+- Corrected source published at `76b0a74ff9de24dd23c9f757a7d2d5d17574fe8d`, branch `codex/android-permissions-1108`.
+- Blocked READ_MEDIA_AUDIO/IMAGES/VIDEO and SYSTEM_ALERT_WINDOW; media-library granular permissions disabled while keeping legacy photo support and write-only story export.
+- Expo config introspection confirms all four native remove directives. iOS config/generated mods are unchanged. TypeScript and live release protocol v2 checks pass.
+- Existing signed AAB still has the previous permissions. No corrected build was started while the restricted Android Maps key is missing. Final AAB and real-device checks remain required.
+- Detailed evidence: [Android permissions preparation](https://github.com/xaaknazar/Divergents-super-app/blob/codex/android-permissions-1108/docs/android-123-permissions-2026-11-08.md).
 
 ## Draft Russian release notes
 
