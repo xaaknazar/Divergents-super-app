@@ -4,7 +4,6 @@ import { StyleSheet } from 'react-native';
 import { MapCityButton } from '../MapCityButton';
 import { MapSearchHeader } from '../MapSearchHeader';
 import { ThemePreviewProvider } from '../ThemePreviewProvider';
-import { resolveThemePalette } from '../../theme/ThemeContext';
 
 jest.mock('../SFIcon', () => ({ SF: () => null }));
 jest.mock('../../lib/haptics', () => ({ hTap: jest.fn(), hSelect: jest.fn() }));
@@ -44,27 +43,24 @@ function contrast(foreground: string, background: string) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-// iOS 26 (этап 2): город — стеклянная капсула над картой. Текст — цветами темы; при
-// «Понижении прозрачности» стекло становится сплошной плашкой с тем же контрастом, что раньше.
-it.each(['light', 'dark'] as const)('keeps city and country in theme colours on a glass capsule in %s', async scheme => {
-  const palette = resolveThemePalette(scheme);
+// Город сохраняет контраст на тёмном стекле независимо от темы и подложки карты.
+it.each(['light', 'dark'] as const)('keeps city and country legible on navy glass in %s', async scheme => {
   const view = await render(<ThemePreviewProvider scheme={scheme} reduceTransparency={false}>
     <MapCityButton city="Алматы" country="Казахстан" onPress={jest.fn()} />
   </ThemePreviewProvider>);
   const city = StyleSheet.flatten(view.getByTestId('map-city-name').props.style);
   const country = StyleSheet.flatten(view.getByText('Казахстан').props.style);
-  expect(city.color).toBe(palette.label);
-  expect(country.color).toBe(palette.labelSecondary);
+  expect(city.color).toBe('#FFFFFF');
+  expect(country.color).toBe('#D4DFF2');
 });
 
 it.each(['light', 'dark'] as const)('falls back to an opaque legible surface with Reduce Transparency in %s', async scheme => {
-  const palette = resolveThemePalette(scheme);
   const view = await render(<ThemePreviewProvider scheme={scheme} reduceTransparency>
     <MapCityButton city="Алматы" country="Казахстан" onPress={jest.fn()} />
   </ThemePreviewProvider>);
-  const surface = StyleSheet.flatten(view.getByTestId('map-city-name').parent!.parent!.props.style);
+  const surface = StyleSheet.flatten(view.getByTestId('map-material-city-opaque').props.style);
   const city = StyleSheet.flatten(view.getByTestId('map-city-name').props.style);
-  expect(surface.backgroundColor).toBe(palette.cardBg);
+  expect(surface.backgroundColor).toBe('#202D46');
   expect(contrast(city.color, surface.backgroundColor)).toBeGreaterThanOrEqual(4.5);
 });
 

@@ -5,7 +5,7 @@ import { tr } from '../state/LanguageContext';
 import { useTheme } from '../theme/ThemeContext';
 import { minTouch, radius } from '../theme/tokens';
 import { SF } from './SFIcon';
-import { GlassSurface } from './GlassSurface';
+import { MapGlassMaterial } from './MapGlassMaterial';
 
 export interface MapCityButtonProps {
   city: string;
@@ -27,19 +27,20 @@ export function MapCityButton({ city, country, expanded = false, onPress }: MapC
     onPress={() => { hSelect(); onPress(); }}
     style={({ pressed }) => ({ alignSelf: 'flex-start', maxWidth: '100%', minHeight: minTouch, minWidth: minTouch, borderRadius: radius.pill,
       outlineColor: T.brandText, outlineWidth: focused ? 2 : 0, outlineOffset: 2, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
-    <GlassSurface interactive style={styles.button}>
+    <View style={styles.button}>
+      <MapGlassMaterial role="city" />
       <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <SF name="location.fill" size={15} color={T.brandText} />
+        <SF name="location.fill" size={15} color="#BBD2FF" />
       </View>
       {/* Город и страна — столбиком: страна мелко под городом, обе строки с одного левого края. */}
       <View style={styles.names}>
-        <Text testID="map-city-name" style={[ty.headline, { color: T.label }]}>{city}</Text>
-        {country ? <Text testID="map-country-name" style={[ty.caption1, { color: T.labelSecondary }]}>{country}</Text> : null}
+        <Text testID="map-city-name" style={[ty.headline, { color: '#FFFFFF' }]}>{city}</Text>
+        {country ? <Text testID="map-country-name" style={[ty.caption1, { color: '#D4DFF2' }]}>{country}</Text> : null}
       </View>
       <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <SF name={expanded ? 'chevron.up' : 'chevron.down'} size={12} color={T.labelSecondary} />
+        <SF name={expanded ? 'chevron.up' : 'chevron.down'} size={12} color="#D4DFF2" />
       </View>
-    </GlassSurface>
+    </View>
   </Pressable>;
 }
 

@@ -30,7 +30,7 @@ export function MapSearchHeader(p: MapSearchHeaderProps) {
       </Wrapper>
     </Wrapper>
     <Wrapper testID="map-search-row">
-      <SearchField surface="raised" value={p.searchValue} onChangeText={p.onSearchChange}
+      <SearchField surface="map" value={p.searchValue} onChangeText={p.onSearchChange}
         onFocus={p.onSearchFocus} onBlur={p.onSearchBlur} placeholder={p.searchPlaceholder} />
     </Wrapper>
   </Wrapper>;

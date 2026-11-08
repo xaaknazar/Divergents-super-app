@@ -5,13 +5,14 @@ import { minTouch, radius } from '../theme/tokens';
 import { hSelect } from '../lib/haptics';
 import { SF, SFName } from './SFIcon';
 import { GlassSurface } from './GlassSurface';
+import { MapGlassMaterial } from './MapGlassMaterial';
 
 export function Chip({
   label, active, icon, onPress, accessibilityRole = 'button', onFocus, onMap = false,
 }: {
   label: string; active?: boolean; icon?: SFName | string; onPress?: () => void;
   accessibilityRole?: 'button' | 'tab'; onFocus?: () => void;
-  /** Фильтр поверх карты (iOS 26): в светлой теме — стеклянная капсула, выбранный — тёмный. */
+  /** Фильтр поверх карты (iOS 26): выбранная категория — синее стекло в обеих темах. */
   onMap?: boolean;
 }) {
   const { T, ty, isDark } = useTheme();
@@ -28,15 +29,11 @@ export function Chip({
       maxWidth: '100%', minHeight: minTouch, minWidth: minTouch, justifyContent: 'center',
       transform: [{ scale: pressed ? 0.96 : 1 }],
     })}>
-      {onMap && !isDark ? (active
-        ? <View style={[mapShape, { backgroundColor: T.label, outlineWidth: focused ? 2 : 0, outlineColor: T.label, outlineOffset: 2 }]}>
-          {icon ? <SF name={icon} size={14} color="#FFFFFF" /> : null}
-          <Text style={[ty.subheadEm, { color: '#FFFFFF', flexShrink: 1 }]}>{label}</Text>
-        </View>
-        : <GlassSurface interactive style={[mapShape, focused ? { outlineWidth: 2, outlineColor: T.label, outlineOffset: 2 } : null]}>
-          {icon ? <SF name={icon} size={14} color={T.label} /> : null}
-          <Text style={[ty.subheadEm, { color: T.label, flexShrink: 1 }]}>{label}</Text>
-        </GlassSurface>) : (
+      {onMap ? <View style={[mapShape, { outlineWidth: focused ? 2 : 0, outlineColor: T.brandText, outlineOffset: 2 }]}>
+        <MapGlassMaterial role={active ? 'selected' : 'filter'} />
+        {icon ? <SF name={icon} size={14} color={active || isDark ? '#FFFFFF' : '#182843'} /> : null}
+        <Text style={[ty.subheadEm, { color: active || isDark ? '#FFFFFF' : '#182843', flexShrink: 1 }]}>{label}</Text>
+      </View> : (
       <View style={{
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, maxWidth: '100%',
         minHeight: 38, paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.pill, borderCurve: 'continuous',

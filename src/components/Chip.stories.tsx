@@ -18,3 +18,7 @@ export const DarkGlass: Story = { parameters: { scheme: 'dark', reduceTransparen
 export const DarkGlassSelected: Story = { args: { active: true }, parameters: { scheme: 'dark', reduceTransparency: false } };
 export const DarkReducedTransparency: Story = { args: { active: true }, parameters: { scheme: 'dark', reduceTransparency: true } };
 export const LargeText: Story = { args: { label: 'Все завершённые программы' }, parameters: { textSize: 'xl', viewport: 'compact' } };
+
+export const MapFilter: Story = { args: { label: 'Кафе', icon: undefined, onMap: true }, parameters: { reduceTransparency: false } };
+export const MapSelected: Story = { ...MapFilter, args: { ...MapFilter.args, active: true } };
+export const MapDark: Story = { ...MapSelected, parameters: { scheme: 'dark', reduceTransparency: false } };

@@ -14,9 +14,8 @@ import { useAuth } from '@clerk/clerk-expo';
 import { SF } from '../../components/SFIcon';
 import { ChipRail } from '../../components/ChipRail';
 import { useProfileButton } from '../../state/useProfileButton';
-import { HeaderIcon } from '../../components/HeaderIcon';
 import { GlassSurface } from '../../components/GlassSurface';
-import { GlassGroup } from '../../components/GlassButton';
+import { MapActionButton } from '../../components/MapActionButton';
 import { radius } from '../../theme/tokens';
 import { RouteModeOption } from '../../components/RouteModeOption';
 import { PageIntro } from '../../components/PageIntro';
@@ -562,19 +561,15 @@ export function MapHomeScreen({ navigation }: Props) {
         </View>
       ) : null}
 
-      {/* Right floating buttons */}
+      {/* Map actions: quiet navigation controls and one blue creation action. */}
       <View style={{ position: 'absolute', right: 14, bottom: dockInset, gap: 12 }}>
-        {canModerate ? (
-          <HeaderIcon variant="floating" name="checkmark.seal.fill" label={tr('Заявки на метки')} badge={pendingCount}
-            onPress={() => navigation.navigate('AdminPlaces')} />
-        ) : null}
-        {/* Как в Картах iOS 26: связанные кнопки карты — одной вертикальной стеклянной капсулой.
-            Долгое нажатие на «Моё местоположение» — пересоздать карту: спасение от пустой сетки без тайлов. */}
-        <GlassGroup vertical items={[
-          ...(OFFLINE_ENABLED ? [{ icon: 'arrow.down.circle', label: tr('Офлайн-карта'), onPress: () => navigation.navigate('OfflineMap') }] : []),
-          { icon: 'location.fill', label: tr('Моё местоположение'), onPress: recenter, onLongPress: () => { reloadMap(); Alert.alert(tr('Карта перезагружена'), tr('Если тайлы не появились — проверьте интернет.')); } },
-        ]} />
-        <HeaderIcon variant="primary" name="plus" label={tr('Добавить место')} onPress={() => navigation.navigate('AddPlace')} />
+        {canModerate ? <MapActionButton icon="checkmark.seal.fill" label={tr('Заявки на метки')} badge={pendingCount}
+          onPress={() => navigation.navigate('AdminPlaces')} /> : null}
+        {OFFLINE_ENABLED ? <MapActionButton icon="arrow.down.circle" label={tr('Офлайн-карта')}
+          onPress={() => navigation.navigate('OfflineMap')} /> : null}
+        <MapActionButton icon="location.fill" label={tr('Моё местоположение')} onPress={recenter}
+          onLongPress={() => { reloadMap(); Alert.alert(tr('Карта перезагружена'), tr('Если тайлы не появились — проверьте интернет.')); }} />
+        <MapActionButton primary icon="plus" label={tr('Добавить место')} onPress={() => navigation.navigate('AddPlace')} />
       </View>
 
       {/* Place peek */}
