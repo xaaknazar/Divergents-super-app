@@ -1,3 +1,5 @@
+import { EventHistoryPanel } from '../../components/EventHistoryPanel';
+import { EventAttendancePanel } from '../../components/EventAttendancePanel';
 import { useAuth,useClerk,useUser } from '@clerk/clerk-expo';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -323,6 +325,12 @@ export function ProfileHomeScreen({ navigation }: Props) {
       </ListSection></Wrapper>
 
       {/* My books — reading now / read, with a link into the Library */}
+      <Wrapper marginTop={18} marginHorizontal={16}><EventHistoryPanel onOpen={event => navigation.getParent()?.navigate('CommunityTab', {
+        screen: event.kind === 'trip' ? 'TripDetail' : event.kind === 'sport' ? 'SportDetail' : 'MeetupDetail',
+        params: { [`${event.kind}Id`]: event.eventId }, initial: false,
+      } as never)} /></Wrapper>
+      <Wrapper marginTop={18} marginHorizontal={16}><EventAttendancePanel /></Wrapper>
+
       <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={tr('Моя библиотека')} >
         {reading.slice(0, 2).map((s) => (
           <ListRow key={s.id} onPress={() => s.libraryBookId ? openBook(s.libraryBookId) : openMyBooks()}

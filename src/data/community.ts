@@ -1259,6 +1259,7 @@ export interface EventApplicant {
 }
 
 export interface EventApplicants {
+  finished?: boolean;
   canViewProfiles: boolean;
   applications: EventApplicant[];
   counts: { total: number; pending: number; approved: number; rejected: number };
@@ -1288,6 +1289,7 @@ export async function fetchEventApplicants(
         ...(d.canViewProfiles === true ? { userEmail: a.userEmail, fullName: a.fullName, profile: a.profile } : {}),
       })) : [],
       canViewProfiles: d?.canViewProfiles === true,
+      finished: d?.finished === true,
       counts: d?.counts ?? { total: 0, pending: 0, approved: 0, rejected: 0 },
     };
   } catch {

@@ -1,3 +1,4 @@
+import { EventAttendancePanel } from '../../components/EventAttendancePanel';
 import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { FieldValueRow } from '../../components/FieldValueRow';
 import { ApplicationStatusBadge, applicationStatusLabel } from '../../components/ApplicationStatusBadge';
@@ -206,6 +207,8 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
               </View>
             </ListSection></Wrapper>
 
+            {sel ? <Wrapper marginTop={20} marginHorizontal={16}><EventAttendancePanel key={`${userId}-${sel.id}`} applicant={{ kind, eventId, applicationId: sel.id }} /></Wrapper> : null}
+
             {canViewProfiles && sel ? <Wrapper marginTop={20} marginHorizontal={16}>
               <EventApplicantActivity key={`${userId}-${sel.id}`} kind={kind} eventId={eventId} applicationId={sel.id}
                 completeness={p ? effectiveResumeCompleteness(normalizeProfile(p)) : null} />
@@ -230,11 +233,11 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
           {/* Решение. «Вернуть на рассмотрение» нужно, чтобы отказ не был
               необратимым: организатор мог нажать не то. */}
           <View style={{ padding: 16, paddingBottom: insets.bottom + 16, gap: 8, borderTopWidth: 0.5, borderTopColor: T.separator, backgroundColor: T.cardBg }}>
-            {sel && sel.status !== 'cancelled' && sel.status !== 'approved' && sel.status !== 'going' ? (
+            {!data?.finished && sel && sel.status !== 'cancelled' && sel.status !== 'approved' && sel.status !== 'going' ? (
               <Button label="Принять" icon="checkmark" loading={busy} onPress={() => sel && decide(sel, 'approved')} tone="success" />
             ) : null}
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              {sel && sel.status !== 'cancelled' && sel.status !== 'rejected' ? (
+              {!data?.finished && sel && sel.status !== 'cancelled' && sel.status !== 'rejected' ? (
                 <Pressable
                   disabled={busy}
                   onPress={() => sel && decide(sel, 'rejected')}
@@ -245,7 +248,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                   <Text style={[ty.headline, { color: T.redText }]}>Отклонить</Text>
                 </Pressable>
               ) : null}
-              {sel && sel.status !== 'cancelled' && sel.status !== 'pending' ? (
+              {!data?.finished && sel && sel.status !== 'cancelled' && sel.status !== 'pending' ? (
                 <Pressable
                   disabled={busy}
                   onPress={() => sel && decide(sel, 'pending')}

@@ -4,6 +4,7 @@ import { EventApplicantsScreen } from '../EventApplicantsScreen';
 import { fetchApplicantActivity } from '../../../data/applicantActivity';
 import { fetchEventApplicants, decideEventApplicant } from '../../../data/community';
 
+jest.mock('../../../data/eventManagement', () => ({ fetchAttendance: jest.fn().mockResolvedValue({ flags: [], canMark: false, canRevoke: false }) }));
 jest.mock('../../../data/applicantActivity', () => ({ fetchApplicantActivity: jest.fn() }));
 jest.mock('../../../data/community', () => ({ fetchEventApplicants: jest.fn(), decideEventApplicant: jest.fn() }));
 jest.mock('@clerk/clerk-expo', () => ({ useAuth: () => ({ userId: 'owner', getToken: async () => 'token' }) }));
@@ -58,4 +59,14 @@ it('shows the grouped questionnaire and preserves the decision for an authorized
   expect(view.getByText('Первый вуз\n\nВторой вуз')).toBeTruthy();
   await fireEvent.press(view.getByRole('button', { name: 'Отклонить заявку' }));
   expect(decideEventApplicant).toHaveBeenCalledWith('meetup', 'm1', 'u', 'rejected', 'token');
+});
+
+it('completed event keeps attendance accessible and hides application decisions', async () => {
+ const component = screen(false);
+ jest.mocked(fetchEventApplicants).mockResolvedValue({ finished: true, applications: [{ ...applicant, status: 'approved' }], canViewProfiles: false, counts: { total:1, pending:0, approved:1, rejected:0 } });
+ const v=await render(component);
+ await fireEvent.press(v.getByRole('button',{name:'Псевдоним, Принят'}));
+ expect(v.getByText('Участие во встречах')).toBeTruthy();
+ expect(v.queryByRole('button',{name:'Отклонить заявку'})).toBeNull();
+ expect(v.queryByRole('button',{name:'Вернуть заявку на рассмотрение'})).toBeNull();
 });

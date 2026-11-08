@@ -3,12 +3,12 @@ import { Alert } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MeetupDetailScreen, SportDetailScreen } from '../MeetupDetailScreen';
 import { fetchSportDetail, fetchMeetupDetail } from '../../../data/community';
-import { joinSport } from '../../../data/api';
+import { joinSport, cancelEventApplication } from '../../../data/api';
 import { confirmEventApplication } from '../eventApplicationConsent';
 import { useEnrollment } from '../../../state/EnrollmentContext';
 
 jest.mock('../../../data/community', () => ({ ...jest.requireActual('../../../data/community'), fetchSportDetail: jest.fn(), fetchMeetupDetail: jest.fn() }));
-jest.mock('../../../data/api', () => ({ ...jest.requireActual('../../../data/api'), joinSport: jest.fn() }));
+jest.mock('../../../data/api', () => ({ ...jest.requireActual('../../../data/api'), joinSport: jest.fn(), cancelEventApplication: jest.fn() }));
 jest.mock('../eventApplicationConsent', () => ({ confirmEventApplication: jest.fn() }));
 jest.mock('../../../state/EnrollmentContext', () => ({ useEnrollment: jest.fn() }));
 jest.mock('../../../state/useEventRefreshSignal', () => ({ useEventRefreshSignal: () => 0 }));
@@ -73,4 +73,14 @@ it('retains management for an administrator who is also an approved attendee', a
   const view = await render(<MeetupDetailScreen {...props} route={{ name: 'MeetupDetail', key: 'meetup', params: { meetupId: 's1' } }} />);
   await fireEvent.press(view.getByText('Заявки'));
   expect(navigate).toHaveBeenCalledWith('EventApplicants', { kind: 'meetup', eventId: 's1', title: 'Футбол' });
+});
+
+it('started cancellation explains contacting the organizer rather than retrying the connection', async () => {
+  jest.mocked(fetchSportDetail).mockResolvedValue({ ...detail, myStatus: 'approved' });
+  jest.mocked(cancelEventApplication).mockResolvedValue({ ok: false, status: 409, reason: 'started' });
+  const view = await render(<SportDetailScreen {...props} />);
+  await fireEvent.press(view.getByRole('button', { name: 'Отменить заявку' }));
+  const actions = jest.mocked(Alert.alert).mock.calls.at(-1)?.[2];
+  await actions?.find(a => a.text === 'Отменить заявку')?.onPress?.();
+  expect(Alert.alert).toHaveBeenLastCalledWith('Встреча уже началась', expect.stringContaining('Свяжитесь с организатором'));
 });
