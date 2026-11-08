@@ -184,6 +184,8 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
     }
   };
 
+  const locationLabel = [meetup.city, meetup.place].filter(Boolean).join(' · ');
+
   const buttonLabel = isCreator ? 'Вы организатор'
     : past ? 'Встреча завершена'
     : joined ? 'Вы идёте ✓'
@@ -213,7 +215,7 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
               // Связанные действия — одной стеклянной капсулой, как в панелях iOS 26.
               <GlassGroup scheme="light" items={[
                 { icon: fav ? 'heart.fill' : 'heart', label: tr('В избранное'), onPress: () => toggle(`meetupfav:${meetup.id}`) },
-                { icon: 'square.and.arrow.up', label: tr('Поделиться'), onPress: () => Share.share({ message: [`${meetup.title} — мероприятие Divergents`, meetup.place, when].filter(Boolean).join(' · ') }) },
+                { icon: 'square.and.arrow.up', label: tr('Поделиться'), onPress: () => Share.share({ message: [`${meetup.title} — мероприятие Divergents`, locationLabel, when].filter(Boolean).join(' · ') }) },
               ]} />} />
           <View style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
             {when ? <StatusBadge label={String((when))} tone="neutral" variant="surface" icon="calendar" /> : null}
@@ -223,8 +225,8 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
               adjustsFontSizeToFit
               minimumFontScale={0.75}
             >{meetup.title}</Text>
-            {meetup.place ? (
-              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={1}>{meetup.place}</Text>
+            {locationLabel ? (
+              <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.92)', marginTop: 2 }]} numberOfLines={2}>{locationLabel}</Text>
             ) : null}
           </View>
         </View>
@@ -252,10 +254,10 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
           </ListSection></Wrapper>
         ) : null}
 
-        {(meetup.place || meetup.meetAt || hasCoords) ? (
+        {(meetup.city || meetup.place || meetup.meetAt || hasCoords) ? (
           <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Где и когда')}>
-            {meetup.place ? (
-              <ListRow leading={<SF name="mappin.and.ellipse" size={18} color={T.brand} />} title={meetup.place} />
+            {(meetup.city || meetup.place) ? (
+              <ListRow leading={<SF name="mappin.and.ellipse" size={18} color={T.brand} />} title={meetup.city || meetup.place} subtitle={meetup.city ? meetup.place : undefined} />
             ) : null}
             {meetup.meetAt ? (
               <ListRow leading={<SF name="clock.fill" size={18} color={T.brand} />} title={meetAtLabel(meetup.meetAt)} subtitle={tr('Начало')} />
@@ -270,7 +272,6 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
           </ListSection></Wrapper>
         ) : null}
 
-        {meetup.city ? <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Город"><ListRow title={meetup.city} /></ListSection></Wrapper> : null}
         <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Организатор')}>
           <ListRow
             leading={<View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{meetup.organizer.charAt(0)}</Text></View>}

@@ -84,3 +84,17 @@ it('started cancellation explains contacting the organizer rather than retrying 
   await actions?.find(a => a.text === 'Отменить заявку')?.onPress?.();
   expect(Alert.alert).toHaveBeenLastCalledWith('Встреча уже началась', expect.stringContaining('Свяжитесь с организатором'));
 });
+
+
+it('shows the sports city immediately in the cover and above the venue address', async () => {
+  const view = await render(<SportDetailScreen {...props} />);
+  expect(view.getByText('Алматы · Стадион')).toBeTruthy();
+  expect(view.getByText('Алматы')).toBeTruthy();
+  expect(view.getByText('Стадион')).toBeTruthy();
+});
+it('keeps an address visible when the server cannot determine a city', async () => {
+  jest.mocked(fetchSportDetail).mockResolvedValue({ ...detail, meetup: { ...event, city: '' } });
+  const view = await render(<SportDetailScreen {...props} />);
+  expect(view.getAllByText('Стадион')).toHaveLength(2);
+  expect(view.queryByText('Алматы')).toBeNull();
+});
