@@ -1,49 +1,36 @@
 # Mobile reviewer sign-in - 2026-11-08
 
-## Scope and status
+## Current decision and status
 
-- Owner requested a separate Clerk email/password account for mobile store review.
-- Base: Android/iOS build 123 source plus Android permission fix 76b0a74. Branch: codex/mobile-review-login-1108.
-- AuthScreen now offers optional password sign-in through the installed Clerk Core 2 SDK. Default email OTP, OTP registration and SSO remain available.
-- This is shared mobile source for a future build. Existing iOS/TestFlight and the initial Android AAB 123 were not changed or replaced.
-- Follow-up: after the owner's confirmation, created the ordinary Divergents Review user in the existing production Clerk application. The profile visibly confirms account creation and its primary verified email. No password has been entered or saved.
-- No production Clerk authentication settings have been changed. No Play credentials saved, release uploaded, or rollout started.
-
-## Implementation
-
-- Sign-in calls Clerk signIn.create with the entered identifier and password. Only status complete with a non-empty createdSessionId is activated.
-- Incorrect passwords do not create accounts. Extra verification, password reset requirements or missing sessions stay unauthenticated and show an email-code/support option.
-- Password input is secure by default, supports password autofill and a labelled 48-point visibility control. Password is cleared after every attempt and when switching authentication methods.
-- Pending requests disable changes to account/method; a synchronous guard prevents duplicate password submissions.
-- No special reviewer bypass, hardcoded account, role grant, stored password, or raw Clerk error logging.
-
-## Clerk setup still required
-
-- Correct existing application: Divergents - Learning Management System, Production. Email sign-up, email sign-in and email-code verification are enabled.
-- Observed Password settings: Sign-up with password OFF and Add password to account OFF. Do not enable mandatory password registration: the existing signup flow is passwordless.
-- A distinct reviewer account now exists at an owner-approved address. Its profile lists Password under Disabled fields; no password editor is available yet. No organization membership or privileged metadata was assigned, and Ignore access restrictions remained unchecked during creation.
-- Password settings were inspected again: Add password to account is OFF. Enabling it is an application-wide optional-enrollment change, not a switch restricted to this reviewer. Obtain confirmation of that concrete scope before saving it; preserve OTP registration and keep Sign-up with password OFF.
-- The owner must enter and submit the new password personally in Clerk because browser credential changes require handoff. Store the credential outside Git and enter it directly in the Play App access form. Do not turn on global Test mode or disable authentication safeguards.
-- No credentials, real user identifiers or signing secrets belong in this report, tests, logs or project-chat coordination.
+- Owner explicitly chose "Оставить только вход по коду" when asked to enable Add password to account in production Clerk. This supersedes the earlier password-account request.
+- The optional password UI and sign-in handler introduced in ad9fb71 have been removed from codex/mobile-review-login-1108. AuthScreen uses the previous email-code sign-in and registration flows; existing Google/Apple SSO is unchanged.
+- The only AuthScreen difference from build 123 base plus Android permission fix 76b0a74 is removal of raw provider-message logging, so submitted identifiers cannot leak through that log.
+- Neither Sign-up with password nor Add password to account was enabled. No global Test mode or authentication bypass was enabled. No password has been entered or saved.
+- The ordinary Divergents Review account created with owner approval remains in the existing production Clerk application. Its primary email was shown as verified by Clerk; no privileged metadata or organization membership was assigned. Ignore access restrictions stayed unchecked.
+- No credentials or real account identifiers are recorded here. The account was not deleted, and no actual sign-in has yet been verified.
+- Existing iOS/TestFlight and the initial Android AAB 123 were not changed. No Play App access credentials saved, new release uploaded, or rollout started.
 
 ## Validation
 
-- TypeScript: npm run typecheck passed.
-- AuthScreen component tests: npm test -- --watchman=false src/screens/__tests__/AuthScreen.test.tsx, 11 tests passed.
-- Tests cover default OTP, complete session activation, wrong/unknown provider errors, incomplete sessions, secret clearing, passwordless registration, duplicate submissions and failed session activation.
-- Provider calls in component tests use mocks and synthetic example.invalid data. They do not prove an actual production login.
-- Actual reviewer login on Android, visual/device verification, account content/access and Google Play App access remain pending.
-- Corrected AAB rebuild is still required after account setup and resolution of the separately documented Android Maps configuration blocker.
+- TypeScript: npm run typecheck passed after removal of password sign-in.
+- AuthScreen component tests: npm test -- --watchman=false src/screens/__tests__/AuthScreen.test.tsx, 3 tests passed.
+- Checks cover email-code sign-in, email-code registration, and unknown provider errors remaining out of logs with no session/account creation on failure.
+- Tests use mocked Clerk calls and synthetic example.invalid data. They do not establish a real production login or delivery of a verification email.
+- The prior 11 password-flow tests applied only to the withdrawn implementation and are not evidence for the current flow.
 
-## Continue and rollback
+## Remaining closed-test prerequisites
 
-1. Resolve optional password enrollment and let the owner set the dedicated account's password in Clerk without granting administrative access.
-2. Verify actual login and ordinary review content with the rebuilt Android app. Enter its credentials only in store review fields.
-3. Complete the remaining closed-test prerequisites. Production publication is not authorized.
-- Rollback of this source change: revert its commit. Existing APK/AAB/iOS releases are unaffected until a new build is distributed.
+1. Resolve repeatable store-review access compatible with the owner's email-code-only decision. A created account is insufficient evidence that reviewers can sign in independently. Do not invent a permanent code or silently enable production Test mode.
+2. Verify real account login, ordinary review content and Android device behavior before declaring Play App access complete.
+3. Resolve the separately documented Android Maps configuration blocker, rebuild the corrected AAB, and complete the other closed-test prerequisites. Production publication is not authorized.
+
+## Integration and rollback
+
+- Do not cherry-pick ad9fb71 alone into a future release: its password UI was withdrawn by the owner. Use the updated branch state or explicitly apply the removal if it was already integrated elsewhere.
+- Removal of password UI does not remove the separately committed Android permission fix 76b0a74.
+- No rollback of Clerk settings is required because those settings never changed. Account deletion would need separate authorization.
 
 ## References
 
-- [Clerk Core 2 email/password flow](https://clerk.com/docs/guides/development/custom-flows/authentication/legacy/email-password)
 - [Clerk authentication settings](https://clerk.com/docs/guides/configure/auth-strategies/sign-up-sign-in-options)
 - [Production testing guidance](https://clerk.com/docs/guides/development/testing/test-against-production)
