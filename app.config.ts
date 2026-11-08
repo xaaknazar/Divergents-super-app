@@ -73,6 +73,15 @@ const config: ExpoConfig = {
       // Android 10 без него шагомер молчит.
       'android.permission.ACTIVITY_RECOGNITION',
     ],
+    // Android photo selection uses the system picker; story export only writes
+    // app-created images. Do not inherit broad media reads or the dev overlay
+    // permission from transitive native modules into the Play bundle.
+    blockedPermissions: [
+      'android.permission.READ_MEDIA_AUDIO',
+      'android.permission.READ_MEDIA_IMAGES',
+      'android.permission.READ_MEDIA_VIDEO',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+    ],
     ...(googleMapsApiKey ? { config: { googleMaps: { apiKey: googleMapsApiKey } } } : {}),
   },
   web: { bundler: 'metro' },
@@ -102,6 +111,9 @@ const config: ExpoConfig = {
       photosPermission: 'Divergents использует фото, чтобы прикреплять снимки к местам на карте сообщества, добавлять фото в анкету, загружать отчёт Gallup и ставить фон на карточку тренировки.',
       savePhotosPermission: 'Divergents сохраняет карточку тренировки в вашу галерею, чтобы её можно было выложить в сторис.',
       isAccessMediaLocationEnabled: false,
+      // Android only: this app saves its own story cards and does not enumerate
+      // the user's photo, video or audio library. Keep legacy write support.
+      granularPermissions: [],
     }],
     'expo-localization',
     '@maplibre/maplibre-react-native',
