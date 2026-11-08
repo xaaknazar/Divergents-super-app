@@ -14,3 +14,5 @@ export const Light: Story = {};
 export const ParallelChallenges: Story = { parameters: { parallel: true }, args: { challenges: [challenge, { ...challenge, id: 'demo-new', title: 'Демо · Новый набор', status: 'upcoming', startLabel: '12 октября' }] } };
 export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
+
+export const NoOpenEnrollment: Story = { args: { challenges: [] } };

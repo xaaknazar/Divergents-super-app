@@ -44,12 +44,12 @@ export function CommunityChallenges({ navigation, challenges, error, onRetry }: 
       ) : challenges === null ? <ContentLoading /> : (
         <ContentEmptyState error={error || participationError} onRetry={onRetry} icon="flame.fill" title={tr('Сейчас нет активного челленджа')} subtitle={tr('Следите за анонсами — новый старт скоро.')} />
       )}
-      <SectionHeader title={tr('Открыт набор')} />
-      {challenges === null ? <ContentLoading /> : upcoming.length === 0 ? (
-        <ContentEmptyState error={error} onRetry={onRetry} icon="calendar" title={tr('Пока ничего нет')} subtitle={tr('Новые челленджи появятся здесь.')} />
-      ) : upcoming.map((ch) => (
-        <CommunityChallengeCard key={ch.id} ch={ch} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })} />
-      ))}
+      {upcoming.length > 0 ? <>
+        <SectionHeader title={tr('Открыт набор')} />
+        {upcoming.map((ch) => (
+          <CommunityChallengeCard key={ch.id} ch={ch} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: ch.id })} />
+        ))}
+      </> : null}
     </>
   );
 }
