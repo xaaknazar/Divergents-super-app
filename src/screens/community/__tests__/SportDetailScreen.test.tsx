@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
-import { SportDetailScreen } from '../MeetupDetailScreen';
+import { MeetupDetailScreen, SportDetailScreen } from '../MeetupDetailScreen';
 import { fetchSportDetail, fetchMeetupDetail } from '../../../data/community';
 import { joinSport } from '../../../data/api';
 import { confirmEventApplication } from '../eventApplicationConsent';
@@ -39,7 +39,7 @@ it('sports apply requires consent, uses the sports API, and remains pending unti
   const view = await render(<SportDetailScreen {...props} />);
   expect(fetchSportDetail).toHaveBeenCalledWith('s1', 'token');
   expect(fetchMeetupDetail).not.toHaveBeenCalled();
-  await fireEvent.press(view.getByRole('button', { name: 'Записаться · Бесплатно' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Отправить заявку' }));
   expect(confirmEventApplication).toHaveBeenCalledTimes(1);
   expect(joinSport).toHaveBeenCalledWith('token', 's1');
   expect(add).toHaveBeenCalledWith('sport:s1', 'pending');
@@ -49,7 +49,7 @@ it('sports apply requires consent, uses the sports API, and remains pending unti
 it('cancelling consent sends no application', async () => {
   jest.mocked(confirmEventApplication).mockResolvedValue(false);
   const view = await render(<SportDetailScreen {...props} />);
-  await fireEvent.press(view.getByRole('button', { name: 'Записаться · Бесплатно' }));
+  await fireEvent.press(view.getByRole('button', { name: 'Отправить заявку' }));
   expect(joinSport).not.toHaveBeenCalled();
 });
 it('creator opens the correct applications list and cannot apply to their own event', async () => {
@@ -59,4 +59,18 @@ it('creator opens the correct applications list and cannot apply to their own ev
   expect(navigate).toHaveBeenCalledWith('EventApplicants', { kind: 'sport', eventId: 's1', title: 'Футбол' });
   await fireEvent.press(view.getByRole('button', { name: 'Вы организатор' }));
   expect(joinSport).not.toHaveBeenCalled();
+});
+
+
+it.each([null, 'pending', 'approved'])('hides applications from ordinary meetup visitors with status %s', async myStatus => {
+  jest.mocked(fetchMeetupDetail).mockResolvedValue({ ...detail, myStatus, pendingCount: 2 });
+  const view = await render(<MeetupDetailScreen {...props} route={{ name: 'MeetupDetail', key: 'meetup', params: { meetupId: 's1' } }} />);
+  expect(view.queryByText('Организатору')).toBeNull();
+  expect(view.queryByText('Заявки')).toBeNull();
+});
+it('retains management for an administrator who is also an approved attendee', async () => {
+  jest.mocked(fetchMeetupDetail).mockResolvedValue({ ...detail, myStatus: 'approved', canManage: true, pendingCount: 2 });
+  const view = await render(<MeetupDetailScreen {...props} route={{ name: 'MeetupDetail', key: 'meetup', params: { meetupId: 's1' } }} />);
+  await fireEvent.press(view.getByText('Заявки'));
+  expect(navigate).toHaveBeenCalledWith('EventApplicants', { kind: 'meetup', eventId: 's1', title: 'Футбол' });
 });

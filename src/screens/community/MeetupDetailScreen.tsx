@@ -1,3 +1,4 @@
+import { EventApplicationsRow } from '../../components/EventApplicationsRow';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Wrapper } from '../../components/Wrapper';
 // Карточка мероприятия: встреча сообщества — лекция, мастер-класс, кинопоказ.
@@ -189,7 +190,7 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
     : closed ? 'Набор закрыт'
     : left === 0 ? 'Мест нет'
     : status === 'rejected' ? 'Подать заявку повторно'
-    : 'Записаться · Бесплатно';
+    : 'Отправить заявку';
 
   return (
     <View style={{ flex: 1, backgroundColor: T.systemBg }}>
@@ -275,19 +276,11 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
             title={meetup.organizer} subtitle="Divergents" />
         </ListSection></Wrapper>
 
-        {canManage ? (
-          <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={tr('Организатору')}>
-            <ListRow
-              leading={<SF name="person.2.fill" size={18} color={T.brand} />}
-              title={tr('Заявки')}
-              subtitle={pendingCount > 0 ? `${pl.applications(pendingCount)} ждут решения` : tr('Все заявки рассмотрены')}
-              trailing={pendingCount > 0
-                ? <StatusBadge label={String((String(pendingCount)))} tone="warning" />
-                : undefined}
-              chevron
-              onPress={() => navigation.navigate('EventApplicants', { kind, eventId: meetup.id, title: meetup.title })}
-            />
-          </ListSection></Wrapper>
+        {isSignedIn && canManage ? (
+          <Wrapper marginTop={6} marginHorizontal={16}>
+            <EventApplicationsRow canManage={canManage} pendingCount={pendingCount}
+              onPress={() => navigation.navigate('EventApplicants', { kind: kind, eventId: meetup.id, title: meetup.title })} />
+          </Wrapper>
         ) : null}
 
         <Wrapper marginTop={6} marginHorizontal={16}><ListSection header={`${tr('Идут')} · ${pl.people(goingCount)}`}>
