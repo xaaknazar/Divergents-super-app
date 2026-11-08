@@ -21,7 +21,7 @@ export function EventManagementPanel({ kind, eventId, onChanged, onAttendance }:
     await changeEvent({ kind, eventId }, input, await resource.getToken());
     await resource.refresh(); onChanged?.();
   };
-  const complete = () => Alert.alert('Завершить встречу?', 'Набор закроется. Состав участников сохранится, и вы сможете отметить тех, кто не пришёл или нарушил правила. Автоматических флагов не будет.', [
+  const complete = () => Alert.alert('Завершить встречу?', 'Набор закроется. Состав участников сохранится, и вы сможете отметить тех, кто не пришёл или нарушил правила. Отметки о посещении вы добавляете вручную.', [
     { text: 'Отмена', style: 'cancel' }, { text: 'Завершить', onPress: async () => {
       if (lock.current) return; lock.current = true; setBusy(true);
       completeOperation.current ??= Crypto.randomUUID();

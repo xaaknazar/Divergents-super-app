@@ -33,8 +33,8 @@ export function EventMessageSheet({ mode, initialNote = '', initialReason = 'no_
       : mode === 'flag' ? 'Участник и организаторы его следующих заявок увидят причину и ваше пояснение. Баллы челленджей не меняются. Ошибочную отметку можно снять.'
       : 'Отметка исчезнет из профиля и анкет. Участник получит уведомление, а исправление останется в журнале.'}</Text>
     {mode === 'flag' ? <>
-      <Button label="Не пришёл" variant={reason === 'no_show' ? 'tinted' : 'outline'} icon={reason === 'no_show' ? 'checkmark' : undefined} disabled={busy} onPress={() => setReason('no_show')} />
-      <Button label="Нарушение правил" variant={reason === 'misconduct' ? 'tinted' : 'outline'} icon={reason === 'misconduct' ? 'checkmark' : undefined} disabled={busy} onPress={() => setReason('misconduct')} />
+      <Button label="Не пришёл" selected={reason === 'no_show'} variant={reason === 'no_show' ? 'tinted' : 'outline'} icon="calendar" disabled={busy} onPress={() => setReason('no_show')} />
+      <Button label="Нарушение правил" selected={reason === 'misconduct'} variant={reason === 'misconduct' ? 'tinted' : 'outline'} icon="exclamationmark.bubble" disabled={busy} onPress={() => setReason('misconduct')} />
     </> : null}
     <EventTextField label={mode === 'announcement' ? 'Текст сообщения' : mode === 'flag' ? 'Что произошло' : 'Причина исправления'} mode="note" value={note} onChange={setNote} disabled={busy} />
     {error ? <InlineNotice message={error} /> : null}

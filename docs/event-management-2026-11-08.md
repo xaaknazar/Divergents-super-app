@@ -21,6 +21,8 @@ This extension reuses `useTheme()` semantic colors and Gotham Rounded type, flat
 
 Presentation stories cover the report, editing/message sheets, date and text fields, including light/dark and relevant loading/error/disabled variants. No global visual authority changed. `PRODUCT.md`, `DESIGN.md`, tokens and the design sidecar were preserved. The existing DESIGN record already acknowledges older neutral/radius drift; current theme source remains the implementation authority for this extension, and that wider drift was not repaired.
 
+The requested attendance badge update names the section «Посещение мероприятий». «Не пришёл» uses a `calendar` badge; «Нарушение правил» uses `exclamationmark.bubble`, each with an amber semantic icon on a neutral background. The reason buttons use the same icons and expose their selected state to accessibility tools; the mark action uses the mapped `square.and.pencil` icon. Completion copy explains that organizers add marks manually. The red flag visual is removed; internal `flag` API/schema names remain for compatibility.
+
 ## Backend contract and release dependency
 
 All new routes require Clerk authentication and return `Cache-Control: private, no-store`:
@@ -40,6 +42,8 @@ Before releasing the client, apply the backend's `prisma/migrations/20261108_eve
 ## Verification and limits
 
 The implementation handoff reports a clean mobile TypeScript check and all 156 Jest suites passing: 1,311 passed, zero failed, including the authorized Swift cache checks. Backend TypeScript passed; 384 tests ran with 374 passed, 10 skipped and zero failed. These totals are reported from the parent implementation run, not rerun by this documentation pass.
+
+The full-suite totals above precede only the subsequent cosmetic attendance badge/copy update. TypeScript passed after the badge update, and all four targeted EventManagement tests passed. The final TypeScript rerun after the minor action-icon/accessibility adjustment also passed. No fresh badge screenshot has been captured, so the older captures below do not verify the new badge appearance.
 
 SQL was exercised separately in an isolated `pgvector/pgvector:pg17` container with no network and a minimal base fixture. Checks covered the new tables and three `completedAt` columns, API-role SELECT/INSERT/UPDATE/DELETE permissions, uniqueness, invalid reason rejection, revocation and audit writes. Transaction rollback left zero test rows. This was not a production restore, full-schema migration rehearsal or production test.
 

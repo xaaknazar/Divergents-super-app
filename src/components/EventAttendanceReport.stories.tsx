@@ -12,3 +12,5 @@ export const Organizer: Story = { args: { flags: [{ id:'sample', kind:'meetup', 
 export const Own: Story = { args: { ...Organizer.args, own: true, onMark: undefined, onRevoke: undefined } };
 export const Dark: Story = { ...Organizer, parameters: { scheme: 'dark' } };
 export const LargeText: Story = { ...Organizer, parameters: { viewport: 'compact', textSize: 'xl' } };
+
+export const Misconduct: Story = { args: { ...Organizer.args, flags: [{ ...Organizer.args!.flags![0], reason: 'misconduct', note: 'Пример: пояснение организатора о нарушении правил встречи.' }] } };
