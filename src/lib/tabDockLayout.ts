@@ -19,7 +19,7 @@ export function tabDockItemWidths(labelWidths: readonly number[], width: number)
   return needs.map(need => minimum + need * scale + extra);
 }
 
-/** MiniPlayer has 48pt controls, two text lines, 12pt padding and a 2pt track. */
+/** MiniPlayer has 48pt controls, two text lines and 14pt padding; allow half a point for rounding. */
 export function tabDockMiniPlayerHeight(titleLineHeight: number, subtitleLineHeight: number, fontScale: number): number {
   return Math.ceil(Math.max(48, (titleLineHeight + subtitleLineHeight) * fontScale + 1) + 14.5);
 }

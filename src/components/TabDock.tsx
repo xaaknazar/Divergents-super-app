@@ -94,7 +94,7 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
       </View>
       {/* Mini-player stays above the capsule, without a screen-wide scrim. */}
       <View testID="tab-dock-player" onLayout={event => setPlayerHeight(event.nativeEvent.layout.height)}
-        style={[styles.player, { backgroundColor: T.cardBg, marginBottom: playerHeight > 0 ? TAB_DOCK_PLAYER_GAP : 0 }]}>
+        style={{ marginBottom: playerHeight > 0 ? TAB_DOCK_PLAYER_GAP : 0 }}>
         {children}
       </View>
       <View style={[styles.elevation, isDark ? shadow({ color: T.systemBg, opacity: 0.32, radius: 18, y: 6 })
@@ -147,7 +147,6 @@ const styles = StyleSheet.create({
   width: { width: '100%', maxWidth: TAB_DOCK_MAX_WIDTH },
   elevation: { borderRadius: DOCK_RADIUS, borderCurve: 'continuous' },
   surface: { height: TAB_DOCK_HEIGHT, borderRadius: DOCK_RADIUS, borderCurve: 'continuous', borderWidth: 0.5, overflow: 'hidden', padding: 4 },
-  player: { borderRadius: 24, borderCurve: 'continuous', overflow: 'hidden' },
   row: { flex: 1, flexDirection: 'row' },
   tab: { minWidth: 0, minHeight: 60, paddingHorizontal: 2, gap: 3,
     alignItems: 'center', justifyContent: 'center', borderRadius: TAB_RADIUS, borderCurve: 'continuous' },
