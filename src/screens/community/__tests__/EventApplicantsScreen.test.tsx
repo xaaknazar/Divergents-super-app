@@ -66,7 +66,7 @@ it('completed event keeps attendance accessible and hides application decisions'
  jest.mocked(fetchEventApplicants).mockResolvedValue({ finished: true, applications: [{ ...applicant, status: 'approved' }], canViewProfiles: false, counts: { total:1, pending:0, approved:1, rejected:0 } });
  const v=await render(component);
  await fireEvent.press(v.getByRole('button',{name:'Псевдоним, Принят'}));
- expect(v.getByText('Участие во встречах')).toBeTruthy();
+ expect(v.getByText('Посещение мероприятий')).toBeTruthy();
  expect(v.queryByRole('button',{name:'Отклонить заявку'})).toBeNull();
  expect(v.queryByRole('button',{name:'Вернуть заявку на рассмотрение'})).toBeNull();
 });
