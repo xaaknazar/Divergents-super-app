@@ -323,7 +323,7 @@ export function ProfileHomeScreen({ navigation }: Props) {
       </ListSection></Wrapper>
 
       {/* My books — reading now / read, with a link into the Library */}
-      <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={tr('Мои книги')} >
+      <Wrapper marginTop={18} marginHorizontal={16}><ListSection header={tr('Моя библиотека')} >
         {reading.slice(0, 2).map((s) => (
           <ListRow key={s.id} onPress={() => s.libraryBookId ? openBook(s.libraryBookId) : openMyBooks()}
             leading={<BookThumb uri={s.cover} />} title={s.title} subtitle={s.detail} chevron />
@@ -332,8 +332,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
           <ListRow leading={<IconBadge icon="checkmark" />}
             title={tr('Прочитано')} detail={String(readBooks.length)} chevron onPress={openMyBooks} />
         ) : null}
-        {myBooks.items.length > 0 ? <ListRow leading={<IconBadge icon="books.vertical.fill" />}
-          title={tr('Все мои книги')} detail={String(myBooks.items.length)} chevron onPress={openMyBooks} /> : null}
+        <ListRow leading={<IconBadge icon="books.vertical.fill" />}
+          title={tr('Моя библиотека')} detail={String(myBooks.items.length)} chevron onPress={openMyBooks} />
         <ListRow leading={<IconBadge icon="book.fill" />}
           title={tr('Библиотека книг')} chevron onPress={openLibrary} />
       </ListSection></Wrapper>

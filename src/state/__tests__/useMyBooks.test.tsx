@@ -1,0 +1,34 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useMyBooks } from '../useMyBooks';
+import { addPersonalLibraryBook, fetchMyBooks, setPersonalLibraryBookStatus } from '../../data/books';
+import { sendReadingCommand } from '../../data/reading';
+let mockUser = 'one';
+const mockToken = jest.fn(async () => 'token');
+jest.mock('@clerk/clerk-expo', () => ({ useAuth: () => ({ userId: mockUser, isSignedIn: true, getToken: mockToken }) }));
+jest.mock('expo-crypto', () => ({ randomUUID: () => 'operation' }));
+jest.mock('../../data/books', () => ({ fetchMyBooks: jest.fn(), addPersonalLibraryBook: jest.fn(), setPersonalLibraryBookStatus: jest.fn(), setBookShelf: jest.fn() }));
+jest.mock('../../data/reading', () => ({ sendReadingCommand: jest.fn() }));
+const book = { id: 'manual', title: 'Книга', author: 'Автор', status: 'read' as const };
+beforeEach(() => { jest.clearAllMocks(); mockUser = 'one'; jest.mocked(fetchMyBooks).mockResolvedValue({ shelf: [], readingBooks: [], personalBooks: [] }); });
+it('keeps a confirmed manual addition if refresh fails; updates manual status without calling Reading', async () => {
+  const hook = await renderHook(useMyBooks);
+  await waitFor(() => expect(hook.result.current.loaded).toBe(true));
+  jest.mocked(addPersonalLibraryBook).mockResolvedValue(book);
+  jest.mocked(fetchMyBooks).mockRejectedValue(new Error('offline'));
+  await act(async () => { await hook.result.current.addReadBook('Книга', 'Автор'); });
+  await waitFor(() => expect(hook.result.current.items[0]?.title).toBe('Книга'));
+  expect(hook.result.current.error).toBeTruthy();
+  await act(async () => { await hook.result.current.setRead(hook.result.current.items[0], false); });
+  expect(setPersonalLibraryBookStatus).toHaveBeenCalledWith('token', 'manual', 'reading');
+  expect(sendReadingCommand).not.toHaveBeenCalled();
+});
+it('ignores another account’s late library response after a switch', async () => {
+  let resolve!: (value: any) => void;
+  jest.mocked(fetchMyBooks).mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+  const hook = await renderHook(useMyBooks);
+  await waitFor(() => expect(fetchMyBooks).toHaveBeenCalledTimes(1));
+  mockUser = 'two'; await hook.rerender({});
+  await waitFor(() => expect(hook.result.current.loaded).toBe(true));
+  await act(async () => resolve({ shelf: [], readingBooks: [], personalBooks: [book] }));
+  expect(hook.result.current.items).toEqual([]);
+});

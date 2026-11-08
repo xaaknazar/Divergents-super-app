@@ -1,7 +1,8 @@
 // «Мои книги»: библиотека Divergents и книги Reading-челленджей вместе. Отметка «Прочитана»
 // здесь та же, что в «Что читаете» челленджа, — книга уходит из полки выбора и там.
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useState } from 'react';
+import { AddReadBookSheet } from '../../components/AddReadBookSheet';
 import { Button } from '../../components/Button';
 import { DetailScreen } from '../../components/DetailScreen';
 import { EmptyState } from '../../components/EmptyState';
@@ -19,6 +20,7 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'MyBooks'>;
 
 export function MyBooksScreen({ navigation }: Props) {
   const books = useMyBooks();
+  const [adding, setAdding] = useState(false);
   const openBook = (id: string) => navigation.navigate('BookDetail', { bookId: id });
   const openLibrary = () => navigation.navigate('Books');
   const reading = books.items.filter(b => b.status === 'reading');
@@ -29,16 +31,20 @@ export function MyBooksScreen({ navigation }: Props) {
     onToggleRead={item.status === 'want' ? undefined : () => books.setRead(item, item.status !== 'read')} />;
   return <DetailScreen backLabel="Профиль" onBack={() => navigation.goBack()} onRefresh={books.reload}>
     <Wrapper paddingHorizontal={20} paddingTop={4} paddingBottom={16}>
-      <PageHeading title="Мои книги" description="Библиотека и Reading вместе. Прочитанная книга уходит из «Что читаете» во всех челленджах." />
+      <PageHeading title="Моя библиотека" description="Книги, которые вы читаете, планируете и уже прочитали — в одном месте." />
     </Wrapper>
     {books.error ? <Wrapper paddingHorizontal={16} paddingBottom={12}><InlineNotice message={books.error} /></Wrapper> : null}
-    {!books.loaded ? <ContentLoading /> : !books.items.length ? <EmptyState icon="book.fill" title="Пока нет книг"
-      subtitle="Добавьте книгу в библиотеке или на полку «Что читаете» в Reading-челлендже." actionLabel="Открыть библиотеку" onAction={openLibrary} />
+    {!books.loaded ? <ContentLoading /> : !books.items.length && !books.error ? <EmptyState icon="book.fill" title="Пока нет книг"
+      subtitle="Сохраните уже прочитанную книгу вручную или выберите следующую в каталоге." />
       : <Wrapper gap={22} paddingBottom={16}>
         <MyBooksSection title="Читаю" count={reading.length}>{reading.map(row)}</MyBooksSection>
         <MyBooksSection title="Прочитано" count={read.length}>{read.map(row)}</MyBooksSection>
         <MyBooksSection title="В планах" count={planned.length}>{planned.map(row)}</MyBooksSection>
       </Wrapper>}
-    <Wrapper paddingHorizontal={16} paddingBottom={32}><Button label="Библиотека книг" icon="book.fill" variant="tinted" onPress={openLibrary} /></Wrapper>
+    <Wrapper paddingHorizontal={16} paddingBottom={32} gap={12}>
+      <Button label="Добавить прочитанную книгу" icon="plus" onPress={() => setAdding(true)} />
+      <Button label="Библиотека книг" icon="book.fill" variant="tinted" onPress={openLibrary} />
+    </Wrapper>
+    {adding ? <AddReadBookSheet onClose={() => setAdding(false)} onSave={books.addReadBook} /> : null}
   </DetailScreen>;
 }

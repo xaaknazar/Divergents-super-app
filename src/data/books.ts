@@ -143,15 +143,42 @@ export interface MyReadingBook {
   catalogBookId: string | null;
 }
 
+export interface PersonalLibraryBook { id: string; title: string; author: string; status: 'read' | 'reading' }
+export interface MyBooksResponse { shelf: ShelfEntry[]; readingBooks: MyReadingBook[]; personalBooks?: PersonalLibraryBook[] }
+
+async function personalBookRequest(token: string | null, method: 'POST' | 'PATCH', body: object) {
+  if (!token) throw new Error('Войдите в аккаунт, чтобы сохранить книгу.');
+  let response: Response;
+  try {
+    response = await timedFetch(`${API_BASE}/api/mobile/me/books`, { method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+  } catch { throw new Error('Не удалось связаться с сервером. Данные остались в форме — попробуйте ещё раз.'); }
+  if (!response.ok) throw new Error(response.status === 401 ? 'Войдите в аккаунт, чтобы сохранить книгу.' : 'Не удалось сохранить книгу. Попробуйте ещё раз.');
+  return response.json();
+}
+export async function addPersonalLibraryBook(token: string | null, title: string, author: string): Promise<PersonalLibraryBook> {
+  const data = await personalBookRequest(token, 'POST', { title: title.trim(), author: author.trim() });
+  if (!data?.personalBook?.id || data.personalBook.status !== 'read') throw new Error('Сервер не подтвердил сохранение книги. Попробуйте ещё раз.');
+  return data.personalBook;
+}
+export async function setPersonalLibraryBookStatus(token: string | null, id: string, status: 'read' | 'reading') {
+  const data = await personalBookRequest(token, 'PATCH', { id, status });
+  if (!data?.ok) throw new Error('Сервер не подтвердил изменение. Попробуйте ещё раз.');
+}
+
 /** Полка библиотеки и книги Reading-челленджей одним запросом. Старый сервер readingBooks не отдаёт. */
-export async function fetchMyBooks(token: string | null): Promise<{ shelf: ShelfEntry[]; readingBooks: MyReadingBook[] }> {
+export async function fetchMyBooks(token: string | null): Promise<MyBooksResponse> {
   const record = captureAchievementRecorder(token ?? null);
-  const d = await authedGet<{ shelf?: ShelfEntry[]; readingBooks?: MyReadingBook[] }>('/api/mobile/me/books', token, {});
+  if (!token) return { shelf: [], readingBooks: [], personalBooks: [] };
+  const response = await timedFetch(`${API_BASE}/api/mobile/me/books`, { headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error('Не удалось загрузить вашу библиотеку. Потяните вниз, чтобы повторить.');
+  const d: Partial<MyBooksResponse> = await response.json();
+  if (!Array.isArray(d.shelf)) throw new Error('Не удалось загрузить вашу библиотеку. Потяните вниз, чтобы повторить.');
   const shelf = Array.isArray(d?.shelf) ? d.shelf : [];
   const readingBooks = Array.isArray(d?.readingBooks) ? d.readingBooks.filter(b => b && typeof b.key === 'string' && typeof b.title === 'string'
     && Array.isArray(b.challengeIds) && b.challengeIds.length > 0) : [];
   recordShelfAchievements(record, token, shelf);
-  return { shelf, readingBooks };
+  return { shelf, readingBooks, personalBooks: Array.isArray(d.personalBooks) ? d.personalBooks : [] };
 }
 
 function recordShelfAchievements(record: ReturnType<typeof captureAchievementRecorder>, token: string | null, shelf: ShelfEntry[]) {
