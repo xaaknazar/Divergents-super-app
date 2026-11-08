@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
-import { ChallengeSeason, fetchChallengeSeasons } from '../data/challengeSeasons';
+import { ChallengeSeason, fetchChallengeSeasons, fetchSeasonChampion } from '../data/challengeSeasons';
 export const SEASONS_DEADLINE_MS = 15_000;
 
 export function useChallengeSeasons(initialId: string) {
@@ -27,7 +27,15 @@ export function useChallengeSeasons(initialId: string) {
         const token = await tokenRef.current();
         if (controller.signal.aborted) return;
         const data = await fetchChallengeSeasons(token, controller.signal);
-        if (!controller.signal.aborted) setSeasons(data);
+        if (controller.signal.aborted) return;
+        setSeasons(data);
+        // Separate bounded reads: selecting a season never waits for its champion.
+        // A failed ranking keeps the catalog usable and offers the existing retry.
+        for (const season of data.filter(item => item.finished)) {
+          void fetchSeasonChampion(season, token, controller.signal).then(champion => {
+            if (!controller.signal.aborted) setSeasons(items => items.map(item => item.id === season.id ? { ...item, champion } : item));
+          }).catch(() => { if (!controller.signal.aborted) setError(true); });
+        }
       }
       catch { if (!controller.signal.aborted) setError(true); }
       finally { clearTimeout(deadline); if (!controller.signal.aborted) setLoading(false); }
