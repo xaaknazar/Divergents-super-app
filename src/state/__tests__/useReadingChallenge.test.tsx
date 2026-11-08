@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { readingOperationId, useReadingChallenge } from '../useReadingChallenge';
 import { readingFixture } from '../../storybook/readingFixtures';
-import { fetchReadingDetail, sendReadingCommand } from '../../data/reading';
+import { fetchReadingDetail, sendReadingCommand, ReadingApiError } from '../../data/reading';
 import { readingNative } from '../readingNative';
 import { READING_OUTBOX_KEY } from '../readingOutbox';
 import { saveJSON } from '../persist';
@@ -411,6 +411,53 @@ test('unstable Clerk token function does not trigger refresh loops', async () =>
   await waitFor(() => expect(h.result.current.busy).toBe(false));
   for (let i = 0; i < 4; i++) await h.rerender({});
   expect(fetchDetail).toHaveBeenCalledTimes(1);
+});
+test('cached reading opens without an offline flash while the first request is pending', async () => {
+  mockDisk['dvg.readingDetail.demo-reader.reading-demo'] = readingFixture;
+  let resolve!: (value: typeof readingFixture) => void;
+  fetchDetail.mockReturnValue(new Promise(done => { resolve = done; }));
+  const states: boolean[] = [];
+  const h = await renderHook(() => {
+    const reading = useReadingChallenge('reading-demo');
+    states.push(reading.offline);
+    return reading;
+  });
+  await waitFor(() => expect(fetchDetail).toHaveBeenCalledTimes(1));
+  expect(h.result.current.data?.id).toBe('reading-demo');
+  expect(h.result.current.busy).toBe(true);
+  expect(states).not.toContain(true);
+  await act(async () => { resolve(readingFixture); });
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  expect(states).not.toContain(true);
+});
+test('offline notice waits for an actual transport failure and clears after a successful retry', async () => {
+  mockDisk['dvg.readingDetail.demo-reader.reading-demo'] = readingFixture;
+  let reject!: (error: Error) => void;
+  fetchDetail.mockReturnValue(new Promise((_done, fail) => { reject = fail; }));
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(fetchDetail).toHaveBeenCalledTimes(1));
+  expect(h.result.current.offline).toBe(false);
+  await act(async () => { reject(new TypeError('Network request failed')); });
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  expect(h.result.current.offline).toBe(true);
+  expect(h.result.current.data?.id).toBe('reading-demo');
+  expect(h.result.current.error).toBeUndefined();
+  fetchDetail.mockResolvedValue(readingFixture);
+  await act(async () => { await h.result.current.retry(); });
+  expect(h.result.current.offline).toBe(false);
+});
+test.each([401, 500])('HTTP %s with cached data is not labelled as no internet', async status => {
+  mockDisk['dvg.readingDetail.demo-reader.reading-demo'] = readingFixture;
+  fetchDetail.mockRejectedValue(new ReadingApiError('Сервер отклонил запрос', status));
+  const states: boolean[] = [];
+  const h = await renderHook(() => {
+    const reading = useReadingChallenge('reading-demo');
+    states.push(reading.offline);
+    return reading;
+  });
+  await waitFor(() => expect(h.result.current.error).toBeDefined());
+  expect(h.result.current.data?.id).toBe('reading-demo');
+  expect(states).not.toContain(true);
 });
 test('cold offline restart restores controls and saves pages before sending', async () => {
   mockDisk['dvg.readingDetail.demo-reader.reading-demo'] = server;

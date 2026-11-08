@@ -301,7 +301,11 @@ export function useReadingChallenge(challengeId: string) {
     const view = readingLocalView(raw, approaches, stale ? (await readingPhoneNow(account)).now : Date.now(), stale);
     if (!current()) return view;
     serverDetailRef.current = raw; staleRef.current = stale;
-    setData(view); dataRef.current = view; setOffline(stale);
+    setData(view); dataRef.current = view;
+    // A cached view is displayed while the first request is still in flight.
+    // Stale data alone says nothing about connectivity; only a failed request
+    // enables the offline notice. A fresh server receipt clears it.
+    if (!stale) setOffline(false);
     setLocalCounts({ pending: approaches.length,
       pendingToday: approaches.filter(a => a.phase === 'saved' && a.day === view.currentDay).length });
     return view;
@@ -462,6 +466,7 @@ export function useReadingChallenge(challengeId: string) {
       // and are delivered by the next synchronization that reaches the server.
       if (!isReadingOffline(e) || !serverDetailRef.current) throw e;
       result = await applyLocalView(serverDetailRef.current, true); stale = true;
+      if (current()) setOffline(true);
     }
     if (!result || !current()) return;
     // Local storage/protection failures are actionable, but cannot hide teams,
@@ -807,6 +812,7 @@ export function useReadingChallenge(challengeId: string) {
     const raw = serverDetailRef.current;
     if (!raw) throw new Error('На телефоне нет данных челленджа. Один раз откройте его с интернетом.');
     const view = await applyLocalView(raw, true);
+    if (current()) setOffline(true);
     const session = view.session;
     if (session?.id !== pending.sessionId) throw new Error('Не удалось начать подход на телефоне. Повторите.');
     try {
