@@ -18,11 +18,12 @@
 - Category: Education. Public support email and website from the existing support page.
 - Russian listing text, icon and feature graphic saved as a draft; Console confirms "Изменения сохранены". Listing cannot be completed until at least two actual Android screenshots are attached.
 - Data safety step 2 saved as a draft: collection Yes, email/other authentication and OAuth, existing deletion URL. Encryption and remaining data-purpose answers were not certified without final review.
+- Alpha release draft 1 saved with name `1.0.0 (123) - Alpha` and Russian notes. Console confirms the draft is saved; its App Bundle slot is intentionally empty until a corrected candidate is ready.
 
 ## In progress and blockers
 
-- Signed Android AAB 123 is building in the project chat; no upload or Google approval is claimed here.
-- Final manifest review, actual Android smoke test and screenshots are still required.
+- Signed Android AAB 123 finished, but is not release-ready. See the candidate checks below. No AAB uploaded to Play and no Google approval or tester rollout claimed.
+- Final native 16KB review, actual Android smoke test and screenshots are still required. The project chat owns manifest fixes and any corrected rebuild.
 - IARC agreement requested separately for Divergents; acceptance for PickChick does not cover this app.
 - Target audience is awaiting the owner's answer.
 - App access requires a verified review account. Credentials belong only in Play, never this document.
@@ -37,6 +38,26 @@
 - Play app-signing SHA-256: `BD:6A:AC:30:0C:3B:29:E3:42:64:6C:12:6D:0F:BE:DF:09:24:B7:BA:DD:42:00:E6:23:07:2E:5C:6C:71:24:D0`.
 - Existing EAS upload certificate reported by project chat: `33:2C:83:27:D1:3D:4C:B8:A8:05:7D:67:18:C7:CA:70:71:06:11:EF:85:90:B6:12:2E:87:84:FA:2E:2D:59:DC`.
 - Current Play signing page exposes app signing only, no separate upload certificate. These fingerprints are different roles, not evidence of a signing mismatch. Actual AAB acceptance remains to be checked. No key changed.
+
+## Initial Android 123 candidate - not uploaded
+
+- EAS build: `2efff331-7c8b-48bb-b378-e1edd2650fd3`, reported FINISHED by the project chat.
+- Android source: `719dd827331d22989b9f0470ff80a006d0b9ca8d`, based on the shared iOS123 source.
+- Local artifact: `/Users/xaknazar/divergents-private-backups/2026-11-08/divergents-android123.aab`.
+- SHA-256 independently checked here: `4b7db66aa2238461671a59d0500f9847c8d37d76027b9c7e09bb42002c657cb0`.
+- Project chat reports bundletool validate PASS, jarsigner verified, duplicate ZIP entries 0; package `kz.divergents.app`, version `1.0.0`/code123, minSdk24, targetSdk36, debuggable=false. Self-signed/timestamp/manifest stream-order signing warnings were recorded by the builder.
+- Final manifest lacks `com.google.android.geo.API_KEY`, while app screens use react-native-maps. Maps configuration must be corrected before release.
+- Broad READ_MEDIA_AUDIO/IMAGES/VIDEO and SYSTEM_ALERT_WINDOW permissions remain in the candidate and require minimization or actual justification. FCM is not configured. Native 16KB review is still with the project chat.
+- Known-defective candidate was not uploaded merely to test signature acceptance. Preserve versionCode123 for a corrected first upload where possible; no signing-key reset is required by the current evidence.
+- Relevant versioning reference: https://developer.android.com/studio/publish/versioning . Google Play disallows reusing a versionCode already used for a previous version.
+
+## Draft Russian release notes
+
+```text
+Первая версия Divergents для закрытого тестирования на Android.
+Обучение, личная библиотека, профиль талантов, челленджи и мероприятия.
+Изменения сборки 123: работа с личными книгами, управление мероприятиями и отметки участия.
+```
 
 ## Graphics
 
