@@ -17,6 +17,7 @@
 - Health declaration: Activity and Fitness; Nutrition and Weight Management. Evidence: `src/state/FitnessContext.tsx`, `src/data/fitness.ts`, `src/screens/profile/MyFitnessScreen.tsx` (exercise tracking, weight measurements and personal metric goals). No medical-device or clinical claims.
 - Category: Education. Public support email and website from the existing support page.
 - Russian listing text, icon and feature graphic saved as a draft; Console confirms "Изменения сохранены". Listing cannot be completed until at least two actual Android screenshots are attached.
+- Data safety step 2 saved as a draft: collection Yes, email/other authentication and OAuth, existing deletion URL. Encryption and remaining data-purpose answers were not certified without final review.
 
 ## In progress and blockers
 
@@ -25,9 +26,11 @@
 - IARC agreement requested separately for Divergents; acceptance for PickChick does not cover this app.
 - Target audience is awaiting the owner's answer.
 - App access requires a verified review account. Credentials belong only in Play, never this document.
+- The owner supplied a phone/four-digit review method, but `AuthScreen.tsx` accepts email and a six-digit Clerk code. This discrepancy was raised with the owner; no unusable credentials were submitted and no authentication bypass was added.
 - Data safety must be based on current Android code and SDK/server behavior, not copied from PickChick or the old App Store guide.
 - Public `/account-delete` returns HTTP 200 and explains account deletion, but its operator footer still contains a literal template. Owner asked for the actual legal identity and publishable address. No fabricated values were submitted.
 - Android FCM is not configured. Do not advertise working Android push.
+- Account deletion propagation is unverified: mobile deletes Clerk and local data, while the inspected LMS Clerk webhook only handles create/update events. A separate verified deletion workflow is needed to substantiate the public 30-day promise; no real account was deleted during this audit.
 
 ## Signing evidence
 

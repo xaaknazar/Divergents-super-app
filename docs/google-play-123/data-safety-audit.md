@@ -29,8 +29,11 @@ Source: iPhone 123 shared client `0d3956c`. Final Android manifest/SDK and serve
 - Google exceptions for processors and user-initiated sharing must be assessed against the actual flow; no blanket exception assumed.
 - Deletion URL currently has an operator placeholder; do not claim the public deletion information is fully ready.
 - Live `/privacy` also visibly says it is a draft, contains operator/BIN/address placeholders and incorrectly describes activity steps as manual-only. Its provider list includes Anthropic and OpenRouter processing prompts and profile/psychometric data, plus Clerk, Talentslab, Neon, Vercel, Mux, UploadThing, Voyage, Expo and MapTiler/MapLibre. It does not identify the observed OSM/OSRM routing flow. The page must be reconciled with 123 before the release is represented as ready for Google review.
+- Deletion evidence: `src/screens/profile/ProfileHomeScreen.tsx` passes `user.delete()` into `src/state/signOut.ts::deleteAccountAndClear`, which also clears local state. The inspected server `app/api/clerk-webhook/route.ts` only handles `user.created` and `user.updated`, not `user.deleted`. Propagated LMS/Talentslab/file deletion and the claimed 30-day process are not proven by this implementation. A manual or separate workflow may exist, but it has not been confirmed. No actual deletion was attempted.
 
 ## Official references checked
 
 - https://support.google.com/googleplay/android-developer/answer/10787469
 - https://support.google.com/googleplay/android-developer/answer/14738291
+- https://clerk.com/legal/privacy (general service notice is not a precise inventory of this app's SDK behavior)
+- https://expo.dev/privacy-explained
