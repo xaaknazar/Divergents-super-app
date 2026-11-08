@@ -48,7 +48,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'kz.divergents.app',
-    versionCode: 1,
+    versionCode: 123,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundImage: './assets/icon-bg.png',
