@@ -24,14 +24,21 @@
 
 - Signed Android AAB 123 finished, but is not release-ready. See the candidate checks below. No AAB uploaded to Play and no Google approval or tester rollout claimed.
 - Native ELF audit passed: all 27 arm64 libraries have PT_LOAD alignment >=16384, as recorded in `docs/android-123-build-2026-11-08.md` at `8d535dab91b161536e463aca99864d4434bdb59c`. This is not a physical-device or Play acceptance test. Actual Android smoke testing, screenshots, manifest fixes and a corrected rebuild remain.
-- IARC agreement requested separately for Divergents; acceptance for PickChick does not cover this app.
-- Target audience is awaiting the owner's answer.
+- IARC terms accepted explicitly by the owner for Divergents on 2026-11-08. Questionnaire saved and Console status is "Выполнен"; IARC Generic/PEGI rating3+, other regions as listed in `content-rating.md`. No release submitted.
+- Owner selected teenagers13+ and adults: groups13-15,16-17,18+. The Console currently blocks the audience form until App access is saved; this selection is recorded but NOT yet saved in Play.
 - App access requires a verified review account. Read-only inspection of App Store Connect app6796377452, iOS1.0 review details found empty username/password and notes fields; the project chat also has no confirmed permanent reviewer flow. Credentials belong only in Play, never this document.
 - The owner supplied a phone/four-digit review method, but `AuthScreen.tsx` accepts email and a six-digit Clerk code. This discrepancy was raised with the owner; no unusable credentials were submitted and no authentication bypass was added.
 - Data safety must be based on current Android code and SDK/server behavior, not copied from PickChick or the old App Store guide.
-- Public `/account-delete` returns HTTP 200 and explains account deletion, but its operator footer still contains a literal template. Owner asked for the actual legal identity and publishable address. No fabricated values were submitted.
+- Public `/account-delete` returns HTTP 200 and explains account deletion, but its operator footer still contains a literal template. Owner instructed "бери шаблон". Use the existing template structure with the verified Divergents name/support contact; do not invent a company, BIN or address. Google permits identification by app name in the privacy policy; actual retention/deletion and current data-flow accuracy remain unresolved. No server page changed in this Console task.
 - Android FCM is not configured. Do not advertise working Android push.
 - Account deletion propagation is unverified: mobile deletes Clerk and local data, while the inspected LMS Clerk webhook only handles create/update events. A separate verified deletion workflow is needed to substantiate the public 30-day promise; no real account was deleted during this audit.
+
+## Latest owner decisions and follow-up
+
+- Owner will enter a different Divergents review account directly into Play. No account-save confirmation received yet; supplied PickChick-style phone credentials were not entered.
+- Owner confirms the official catalog contains no violence, sexual content, profanity or drug material. This confirmation was used for IARC, not treated as an audit of future user posts.
+- Inspection found incomplete UGC reporting: `ServerChannelScreen.tsx:67` and `VideoScreen.tsx:154` only display an acknowledgement Alert, without submitting a report. `reportPlace` has an actual server endpoint and local author blocking exists. IARC does not claim chat moderation or friends-only interactions. This gap was sent to the authorized project chat for follow-up.
+- Public-page template acceptance does not establish a deletion job, mail-processing workflow or retention deadlines. These still need evidence before certifying complete account-data deletion.
 
 ## Signing evidence
 
