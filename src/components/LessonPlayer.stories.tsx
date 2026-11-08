@@ -21,3 +21,6 @@ export const Locked: Story = { args: { state: 'locked' } };
 export const Unavailable: Story = { args: { state: 'unavailable' } };
 export const NativeControls: Story = { args: { state: 'ready' } };
 export const LargeText: Story = { args: { state: 'unavailable' }, parameters: { viewport: 'compact', textSize: 'xl' } };
+
+export const WidePhone: Story = { args: { state: 'ready' }, parameters: { canvasLayout: 'screen', viewport: 'phone' } };
+export const Tablet: Story = { args: { state: 'ready' }, parameters: { canvasLayout: 'screen', viewport: 'tablet' } };

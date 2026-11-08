@@ -61,7 +61,9 @@ const styles = StyleSheet.create({
   heading: { flex: 1, minWidth: 0 },
   title: { color: '#FFFFFF' },
   subtitle: { color: 'rgba(255,255,255,0.75)', marginTop: 2 },
-  video: { width: '100%', aspectRatio: 16 / 9, maxHeight: 240, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
+  // A height cap also constrains Yoga's aspect-ratio width on wider phones.
+  // Let the full-width frame determine its height; contain preserves the complete video.
+  video: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
   nativeVideo: { width: '100%', height: '100%' },
   placeholderFrame: { minHeight: 180, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
   placeholder: { alignItems: 'center', paddingHorizontal: 24, paddingVertical: 12, gap: 8 },
