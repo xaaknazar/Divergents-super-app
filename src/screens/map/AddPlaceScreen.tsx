@@ -7,7 +7,8 @@ import { View, Text, Pressable, ScrollView, TextInput, Alert, KeyboardAvoidingVi
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import MapView, { Marker } from 'react-native-maps';
+import { PlaceLocationPicker } from '../../components/PlaceLocationPicker';
+import { Wrapper } from '../../components/Wrapper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser, useAuth } from '@clerk/clerk-expo';
@@ -40,7 +41,7 @@ async function persistImage(uri: string): Promise<string> {
 }
 
 export function AddPlaceScreen({ navigation, route }: Props) {
-  const { T, isDark, ty } = useTheme();
+  const { T, ty } = useTheme();
   useLang();
   const insets = useSafeAreaInsets();
   const { user } = useUser();
@@ -138,18 +139,9 @@ export function AddPlaceScreen({ navigation, route }: Props) {
       {/* The keyboard-avoiding viewport spans the screen; navigation clearance is inside the scroll content. */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
       <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { padding: 16, paddingBottom: insets.bottom + 100 })} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
-        <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 12 }]}>{tr('Город:')} {cityName}, {countryName} · {tr('нажмите на карту, чтобы поставить точку')}</Text>
-
-        {/* Map picker */}
-        <View style={{ borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', height: 220, marginBottom: 16 }}>
-          <MapView style={{ flex: 1 }}
-            initialRegion={{ latitude: initLat, longitude: initLng, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
-            userInterfaceStyle={isDark ? 'dark' : 'light'}
-            onPress={(e) => setCoord(e.nativeEvent.coordinate)}>
-            <Marker draggable coordinate={coord} pinColor={CATEGORY_META[cat].color}
-              onDragEnd={(e) => setCoord(e.nativeEvent.coordinate)} />
-          </MapView>
-        </View>
+        <Wrapper marginBottom={16}>
+          <PlaceLocationPicker coordinate={coord} city={cityName} country={countryName} onChange={setCoord} />
+        </Wrapper>
 
         <Field label={tr('Название')}><TextInput value={name} onChangeText={setName} placeholder={tr('напр. Coffee BOOM')} placeholderTextColor={T.labelTertiary} accessibilityLabel={tr('Название')} style={inp(T, ty)} /></Field>
 
