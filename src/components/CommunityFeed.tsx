@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React from 'react';
 import { LayoutAnimation } from 'react-native';
-import { ChallengeListItem,SportActivity,Trip } from '../data/community';
+import { ChallengeListItem,Meetup,SportActivity,Trip } from '../data/community';
 import { CommunityStackParams } from '../navigation/types';
 import { useChannel } from '../state/ChannelContext';
 import { useEnrollment } from '../state/EnrollmentContext';
@@ -11,6 +11,8 @@ import { CommunityChallenges } from './CommunityChallenges';
 import { CommunityChannelRow } from './CommunityChannelRow';
 import { CommunitySportCard } from './CommunitySportCard';
 import { CommunityTripCard } from './CommunityTripCard';
+import { CommunityMeetupCard } from './CommunityMeetupCard';
+import { isEventPast } from '../data/eventLifetime';
 import { ContentEmptyState } from './ContentEmptyState';
 import { ContentLoading } from './ContentLoading';
 import { PersonalActivityCard } from './PersonalActivityCard';
@@ -18,7 +20,7 @@ import { SectionHeader } from './ui';
 import { Wrapper } from './Wrapper';
 
 type Nav = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>['navigation'];
-export function CommunityFeed({ navigation, setSeg, trips, sport, challenges, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
+export function CommunityFeed({ navigation, setSeg, trips, sport, meetups, challenges, error, onRetry }: { navigation: Nav; setSeg: (i: number) => void; trips: Trip[] | null; sport: SportActivity[] | null; meetups: Meetup[] | null; challenges: ChallengeListItem[] | null; error: boolean; onRetry: () => void }) {
   const { t } = useLang();
   const { reduceMotion } = useTheme();
   const { channels, error: channelsError, reload: reloadChannels } = useChannel();
@@ -27,10 +29,17 @@ export function CommunityFeed({ navigation, setSeg, trips, sport, challenges, er
   // рассмотрении — это ещё НЕ «Ваша поездка»: подписываем её честно.
   const myTrips = ready ? (trips ?? []).filter((trip) => has(`trip:${trip.id}`)) : [];
   const mySport = ready ? (sport ?? []).filter((activity) => has(`sport:${activity.id}`)) : [];
+  const activeMeetups = (meetups ?? []).filter(m => !isEventPast(m.meetAt, 1));
   const hasPersonalActivity = myTrips.length > 0 || mySport.length > 0;
   return (
     <>
       <CommunityChallenges navigation={navigation} challenges={challenges} error={error} onRetry={onRetry} />
+      {activeMeetups.length > 0 ? <Wrapper marginTop={8}>
+        <SectionHeader title={tr('Активные мероприятия')} action={t('all')} onAction={() => setSeg(4)} />
+        {activeMeetups.map(meetup => <Wrapper key={meetup.id} marginHorizontal={16} marginBottom={12}>
+          <CommunityMeetupCard meetup={meetup} onPress={() => navigation.navigate('MeetupDetail', { meetupId: meetup.id })} />
+        </Wrapper>)}
+      </Wrapper> : null}
       {/* Personal activity is visible only to the signed-up participant. */}
       {/* Разделы через 24 (макет: pad-top 24), карточки в разделе — через 12. Карточки челленджей выше дают 16 снизу. */}
       {hasPersonalActivity ? <Wrapper marginTop={8}><SectionHeader title={tr('Мои активности')} /></Wrapper> : null}

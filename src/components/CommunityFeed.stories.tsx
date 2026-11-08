@@ -1,12 +1,12 @@
 import type { Meta,StoryObj } from '@storybook/react-native';
 import React from 'react';
 import { fn } from 'storybook/test';
-import { challenge,navigation,sport,trip } from '../storybook/communityFixtures';
+import { challenge,meetup,navigation,sport,trip } from '../storybook/communityFixtures';
 import { CommunityFeed } from './CommunityFeed';
 import { CommunityPreviewProvider } from './CommunityPreviewProvider';
 const meta = { title: 'Сообщество/CommunityFeed', component: CommunityFeed,
   decorators: [(Story, context) => <CommunityPreviewProvider participant parallel={context.parameters.parallel}><Story /></CommunityPreviewProvider>],
-  args: { navigation, setSeg: fn(), trips: [trip], sport: [sport], challenges: [challenge], error: false, onRetry: fn() },
+  args: { navigation, setSeg: fn(), trips: [trip], meetups: [meetup], sport: [sport], challenges: [challenge], error: false, onRetry: fn() },
 } satisfies Meta<typeof CommunityFeed>;
 export default meta;
 type Story = StoryObj<typeof meta>;

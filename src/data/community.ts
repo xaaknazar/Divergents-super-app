@@ -1625,7 +1625,7 @@ export async function fetchCommunityHome(): Promise<CommunityHomeData> {
     trips: (t.data ?? []).map(mapTrip),
     sport,
     challenges: (c.data ?? []).map(mapChallenge),
-    meetups: (m.data ?? []).map(mapMeetup),
+    meetups: (m.data ?? []).map(mapMeetup).filter(meetup => !isEventPast(meetup.meetAt, 1)),
     // Ошибкой считаем только полный отказ: если не доехали мероприятия, но
     // приехали поездки, экран должен показать то, что есть.
     error: t.error && c.error,

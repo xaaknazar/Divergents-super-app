@@ -34,7 +34,7 @@ export function CommunityMeetups({ navigation, meetups, error, onRetry }: { navi
           )}
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[ty.headline, { color: T.label }]} numberOfLines={2}>{m.title}</Text>
-            {m.place ? (
+            {m.city || m.place ? (
               <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 2 }]} numberOfLines={1}>{[m.city, m.place].filter(Boolean).join(' · ')}</Text>
             ) : null}
             <Text style={[ty.caption1, { color: T.labelSecondary, marginTop: 1 }]} numberOfLines={1}>

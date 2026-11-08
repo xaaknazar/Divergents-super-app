@@ -155,7 +155,7 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
           }] : [])} />
       </Wrapper>
 
-      {seg === 0 && <CommunityFeed navigation={navigation} setSeg={setSeg} trips={trips} sport={sport} challenges={challenges} error={error} onRetry={onRefresh} />}
+      {seg === 0 && <CommunityFeed navigation={navigation} setSeg={setSeg} meetups={sectionOn(4) ? meetups : []} trips={trips} sport={sport} challenges={challenges} error={error} onRetry={onRefresh} />}
       {seg === 1 && sectionOn(1) && <CommunityChannels navigation={navigation} />}
       {seg === 2 && <CommunityChallenges navigation={navigation} challenges={challenges} error={error} onRetry={onRefresh} />}
       {seg === 3 && sectionOn(3) && <CommunityTrips navigation={navigation} trips={trips} error={error} onRetry={load} />}
