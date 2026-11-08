@@ -3,7 +3,6 @@ import { BookAdvisorCard } from '../../components/BookAdvisorCard';
 import { Wrapper } from '../../components/Wrapper';
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useWindowDimensions } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTheme } from '../../theme/ThemeContext';
 import { DetailScreen } from '../../components/DetailScreen';
@@ -17,9 +16,9 @@ import { FilterPicker } from '../../components/FilterPicker';
 import { CourseGridSkeleton, ErrorState, EmptyState } from '../../components/StateViews';
 import { fetchBooks, fetchMyShelf, BookListItem, ShelfEntry } from '../../data/books';
 import { onShelfChanged } from '../../state/shelfBus';
-import { LMSStackParams } from '../../navigation/types';
+import { BookScreenProps } from '../../navigation/types';
 
-type Props = NativeStackScreenProps<LMSStackParams, 'Books'>;
+type Props = BookScreenProps<'Books'>;
 
 type Sort = 'rating' | 'title' | 'newest';
 const SORTS: { key: Sort; label: string }[] = [
@@ -82,7 +81,7 @@ export function BooksCatalogScreen({ navigation }: Props) {
   const plan = shelf.filter((s) => s.status === 'want');
 
   return (
-    <DetailScreen title="Библиотека" backLabel="Обучение" onBack={() => navigation.goBack()} onRefresh={load}
+    <DetailScreen title="Библиотека" backLabel="Назад" onBack={() => navigation.goBack()} onRefresh={load}
       actions={<HeaderIcon name="sparkles" label="AI-помощник" onPress={() => navigation.navigate('BookAI')} />}>
         <Wrapper paddingHorizontal={20} paddingTop={8} paddingBottom={4}>
           {/* Count only once loaded — «· 0» during the fetch reads as an empty library. */}

@@ -111,8 +111,8 @@ export function ProfileHomeScreen({ navigation }: Props) {
   const reading = myBooks.items.filter((s) => s.status === 'reading');
   const readBooks = myBooks.items.filter((s) => s.status === 'read');
   const openMyBooks = () => navigation.navigate('MyBooks');
-  const openBook = (id: string) => navigation.getParent()?.navigate('LMSTab', { screen: 'BookDetail', params: { bookId: id }, initial: false } as never);
-  const openLibrary = () => navigation.getParent()?.navigate('LMSTab', { screen: 'Books', initial: false } as never);
+  const openBook = (id: string) => navigation.navigate('BookDetail', { bookId: id });
+  const openLibrary = () => navigation.navigate('Books');
 
   // Let users review and lift blocks (App Store 1.2 requires blocking be reversible).
   const manageBlocked = () => {

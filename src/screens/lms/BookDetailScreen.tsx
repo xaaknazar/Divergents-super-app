@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Alert, Share } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { DetailScreen } from '../../components/DetailScreen';
 import { Wrapper } from '../../components/Wrapper';
@@ -15,9 +14,9 @@ import { TextSection } from '../../components/TextSection';
 import { Segmented } from '../../components/Segmented';
 import { fetchBook, postBookComment, updateBookComment, deleteBookComment, rateBook, setBookShelf, BookDetailResponse, BookComment, ShelfStatus } from '../../data/books';
 import { emitShelfChanged } from '../../state/shelfBus';
-import { LMSStackParams } from '../../navigation/types';
+import { BookScreenProps } from '../../navigation/types';
 
-type Props = NativeStackScreenProps<LMSStackParams, 'BookDetail'>;
+type Props = BookScreenProps<'BookDetail'>;
 
 export function BookDetailScreen({ route, navigation }: Props) {
   const bookId = route.params?.bookId ?? '';

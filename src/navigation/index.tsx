@@ -181,6 +181,9 @@ function ProfileNavigator() {
       <ProfileStack.Screen name="ProgramHistory" component={ProgramHistoryScreen} />
       <ProfileStack.Screen name="ProgramResult" component={ProgramResultScreen} />
       <ProfileStack.Screen name="MyBooks" component={MyBooksScreen} />
+      <ProfileStack.Screen name="Books" component={BooksCatalogScreen} />
+      <ProfileStack.Screen name="BookDetail" component={BookDetailScreen} />
+      <ProfileStack.Screen name="BookAI" component={BookAIScreen} options={{ presentation: 'modal' }} />
       <ProfileStack.Screen name="WorkoutTrack" component={WorkoutTrackScreen as React.ComponentType<any>} />
       <ProfileStack.Screen name="WorkoutHistory" component={WorkoutHistoryScreen as React.ComponentType<any>} />
       <ProfileStack.Screen name="WorkoutDetail" component={WorkoutDetailScreen as React.ComponentType<any>} />

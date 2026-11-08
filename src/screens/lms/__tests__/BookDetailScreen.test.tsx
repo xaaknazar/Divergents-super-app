@@ -86,3 +86,12 @@ it('does not submit signed-out mutations', async () => {
   expect(setBookShelf).not.toHaveBeenCalled(); expect(rateBook).not.toHaveBeenCalled();
   expect(Alert.alert).toHaveBeenCalledWith('Войдите', expect.any(String));
 });
+
+it('returns to the stack that opened the book rather than navigating to Learning', async () => {
+  const navigation = { goBack: jest.fn(), navigate: jest.fn() };
+  const view = await render(<BookDetailScreen route={{ key: 'profile-book', name: 'BookDetail', params: { bookId: demoDetailBook.id } }} navigation={navigation as any} />);
+  await view.findByText(demoDetailBook.title);
+  await fireEvent.press(view.getByRole('button', { name: 'Книги' }));
+  expect(navigation.goBack).toHaveBeenCalledTimes(1);
+  expect(navigation.navigate).not.toHaveBeenCalled();
+});

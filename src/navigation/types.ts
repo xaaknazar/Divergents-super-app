@@ -1,3 +1,4 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
 /**
@@ -11,14 +12,21 @@ export interface ShareCard {
 }
 export type ShareParams = { workoutId: string; card?: undefined } | { workoutId?: undefined; card: ShareCard };
 
-export type LMSStackParams = {
+/** Shared book routes live in both Learning and Profile stacks. */
+export type BookStackParams = {
+  Books: undefined;
+  BookDetail: { bookId: string };
+  BookAI: undefined;
+};
+export type BookScreenProps<Route extends keyof BookStackParams> = {
+  route: NativeStackScreenProps<BookStackParams, Route>['route'];
+  navigation: Pick<NativeStackScreenProps<BookStackParams, Route>['navigation'], 'navigate' | 'goBack'>;
+};
+export type LMSStackParams = BookStackParams & {
   LMSHome: undefined;
   CourseDetail: { courseId: string };
   Video: { courseId: string; lessonId: string };
   Downloads: undefined;
-  Books: undefined;
-  BookDetail: { bookId: string };
-  BookAI: undefined;
 };
 
 export type CommunityStackParams = {
@@ -68,7 +76,7 @@ export type AIStackParams = { AIChat: undefined };
 export type MapStackParams = { MapHome: undefined; PlaceDetail: { placeId: string }; AddPlace: { lat?: number; lng?: number; editId?: string } | undefined; OfflineMap: undefined; AdminPlaces: undefined };
 export type TalentProfileParams = { origin?: 'profile' } | undefined;
 export type CareerStackParams = { CareerHome: undefined; VacancyDetail: { jobId: string }; Resume: { step?: number } | undefined; TalentProfile: TalentProfileParams; CreateVacancy: undefined; VacancyApplicants: { jobId: string } };
-export type ProfileStackParams = {
+export type ProfileStackParams = BookStackParams & {
   ProfileHome: undefined;
   Achievements: undefined;
   ChallengeHistory: undefined;

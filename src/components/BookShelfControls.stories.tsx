@@ -10,3 +10,4 @@ export const Dark: Story = { parameters: { scheme: 'dark' } };
 export const CompactLargeText: Story = { parameters: { textSize: 'xl', viewport: 'compact' } };
 export const Tablet: Story = { parameters: { viewport: 'tablet' } };
 export const Busy: Story = { args: { busy: true } }; export const NoShelf: Story = { args: { status: undefined } }; export const Read: Story = { args: { status: 'read', progress: 100 } };
+export const DarkCompactLargeText: Story = { parameters: { scheme: 'dark', textSize: 'xl', viewport: 'compact' } };

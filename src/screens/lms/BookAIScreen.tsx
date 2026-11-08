@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '@clerk/clerk-expo';
 import { DetailScreen } from '../../components/DetailScreen';
 import { BottomBar } from '../../components/BottomBar';
@@ -9,10 +8,10 @@ import { ChatSuggestions } from '../../components/ChatSuggestions';
 import { askAi, AiMessage, AiUnavailableError } from '../../data/ai';
 import { profileSummary } from '../../data/talentslab';
 import { useTalentProfile } from '../../state/useTalentProfile';
-import { LMSStackParams } from '../../navigation/types';
+import { BookScreenProps } from '../../navigation/types';
 import { useAiThread, getAiThread } from '../../state/aiChat';
 
-type Props = NativeStackScreenProps<LMSStackParams, 'BookAI'>;
+type Props = BookScreenProps<'BookAI'>;
 type Msg = { id: string; role: 'user' | 'bot'; text: string };
 const uid = () => Math.random().toString(36).slice(2);
 

@@ -19,8 +19,8 @@ type Props = NativeStackScreenProps<ProfileStackParams, 'MyBooks'>;
 
 export function MyBooksScreen({ navigation }: Props) {
   const books = useMyBooks();
-  const openBook = (id: string) => navigation.getParent()?.navigate('LMSTab', { screen: 'BookDetail', params: { bookId: id }, initial: false } as never);
-  const openLibrary = () => navigation.getParent()?.navigate('LMSTab', { screen: 'Books', initial: false } as never);
+  const openBook = (id: string) => navigation.navigate('BookDetail', { bookId: id });
+  const openLibrary = () => navigation.navigate('Books');
   const reading = books.items.filter(b => b.status === 'reading');
   const read = books.items.filter(b => b.status === 'read');
   const planned = books.items.filter(b => b.status === 'want');
