@@ -30,7 +30,8 @@ import {
   fetchEventApplicants, decideEventApplicant,
   EventApplicant, EventApplicants, EventAppStatus, EventKind,
 } from '../../data/community';
-import { resumeRows } from '../../data/talentslab';
+import { normalizeProfile } from '../../data/talentslab';
+import { ApplicantProfileReport } from '../../components/ApplicantProfileReport';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
 
@@ -199,8 +200,8 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
               <View style={{ padding: 16, gap: 8 }}>
                 <FieldValueRow label="Статус" value={sel ? STATUS_LABEL[sel.status] ?? sel.status : ''} hideWhenEmpty />
                 {/* ФИО и почта доступны только администраторам. */}
-                {canViewProfiles ? <FieldValueRow label="Имя" value={sel?.fullName} hideWhenEmpty /> : null}
-                {canViewProfiles ? <FieldValueRow label="Почта" value={sel?.userEmail} hideWhenEmpty /> : null}
+                {canViewProfiles && !p ? <FieldValueRow label="Имя" value={sel?.fullName} hideWhenEmpty /> : null}
+                {canViewProfiles && !p ? <FieldValueRow label="Почта" value={sel?.userEmail} hideWhenEmpty /> : null}
               </View>
             </ListSection></Wrapper>
 
@@ -214,11 +215,9 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                 </Text>
               </View>
             ) : (
-              <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Анкета">
-                <View style={{ padding: 16, gap: 8 }}>
-                  {resumeRows(p?.resume ?? null).map((r, i) => <FieldValueRow key={i} label={r.label} value={r.value} hideWhenEmpty />)}
-                </View>
-              </ListSection></Wrapper>
+              <Wrapper marginTop={12} marginHorizontal={16}>
+                <ApplicantProfileReport profile={normalizeProfile(p)} fallbackName={sel?.fullName || sel?.userName || 'Участник'} fallbackEmail={sel?.userEmail} />
+              </Wrapper>
             )}
           </ScrollView>
 

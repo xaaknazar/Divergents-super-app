@@ -35,3 +35,22 @@ it('shows private fields when authorized by the server for an administrator', as
   expect(view.getByText(applicant.fullName)).toBeTruthy();
   expect(view.getByText(applicant.userEmail)).toBeTruthy();
 });
+it('keeps a populated private questionnaire hidden without server permission', async () => {
+  const component = screen(false);
+  jest.mocked(fetchEventApplicants).mockResolvedValue({ applications: [{ ...applicant, profile: { resume: { school: 'Секретная школа' }, mbtiType: 'ENTJ' } }], canViewProfiles: false, counts: { total: 1, pending: 1, approved: 0, rejected: 0 } });
+  const view = await render(component);
+  await fireEvent.press(view.getByRole('button', { name: 'Псевдоним, Новая' }));
+  expect(view.queryByText('Секретная школа')).toBeNull();
+  expect(view.queryByText('Психометрические данные')).toBeNull();
+});
+it('shows the grouped questionnaire and preserves the decision for an authorized organizer', async () => {
+  const component = screen(true);
+  jest.mocked(fetchEventApplicants).mockResolvedValue({ applications: [{ ...applicant, profile: { resume: { school: 'Школа искусств с длинным названием', universities: ['Первый вуз', 'Второй вуз'], ready_to_relocate: false } } }], canViewProfiles: true, counts: { total: 1, pending: 1, approved: 0, rejected: 0 } });
+  jest.mocked(decideEventApplicant).mockResolvedValue({ ok: true });
+  const view = await render(component);
+  await fireEvent.press(view.getByRole('button', { name: 'Псевдоним, Новая' }));
+  expect(view.getByText('Образование')).toBeTruthy();
+  expect(view.getByText('Первый вуз\n\nВторой вуз')).toBeTruthy();
+  await fireEvent.press(view.getByRole('button', { name: 'Отклонить заявку' }));
+  expect(decideEventApplicant).toHaveBeenCalledWith('meetup', 'm1', 'u', 'rejected', 'token');
+});
