@@ -3,7 +3,7 @@
 - Date: 2026-11-08.
 - Scope: closed Alpha only, using the iPhone 123 source. Public production is not authorized.
 - iPhone source: `0d3956c2988273c7d4fa0b6f4b57fc7a9a343227`.
-- Android build belongs to the project chat and branch `codex/android-play-1108`; do not run a competing build or edit its worktree.
+- Initial Android build and native audit were completed by the project chat in `codex/android-play-1108`. On 2026-11-08 that chat explicitly released `/private/tmp/divergents-android-play-1108` at `8d535dab91b161536e463aca99864d4434bdb59c` for the next Android preparation stage. No competing build is running.
 - Console materials are isolated in `codex/android-console-1108`.
 - App: `kz.divergents.app`, Play app ID `4976059887398795768`.
 - Closed Alpha ID: `4700596526635703248`.
@@ -23,7 +23,7 @@
 ## In progress and blockers
 
 - Signed Android AAB 123 finished, but is not release-ready. See the candidate checks below. No AAB uploaded to Play and no Google approval or tester rollout claimed.
-- Final native 16KB review, actual Android smoke test and screenshots are still required. The project chat owns manifest fixes and any corrected rebuild.
+- Native ELF audit passed: all 27 arm64 libraries have PT_LOAD alignment >=16384, as recorded in `docs/android-123-build-2026-11-08.md` at `8d535dab91b161536e463aca99864d4434bdb59c`. This is not a physical-device or Play acceptance test. Actual Android smoke testing, screenshots, manifest fixes and a corrected rebuild remain.
 - IARC agreement requested separately for Divergents; acceptance for PickChick does not cover this app.
 - Target audience is awaiting the owner's answer.
 - App access requires a verified review account. Credentials belong only in Play, never this document.
@@ -46,8 +46,8 @@
 - Local artifact: `/Users/xaknazar/divergents-private-backups/2026-11-08/divergents-android123.aab`.
 - SHA-256 independently checked here: `4b7db66aa2238461671a59d0500f9847c8d37d76027b9c7e09bb42002c657cb0`.
 - Project chat reports bundletool validate PASS, jarsigner verified, duplicate ZIP entries 0; package `kz.divergents.app`, version `1.0.0`/code123, minSdk24, targetSdk36, debuggable=false. Self-signed/timestamp/manifest stream-order signing warnings were recorded by the builder.
-- Final manifest lacks `com.google.android.geo.API_KEY`, while app screens use react-native-maps. Maps configuration must be corrected before release.
-- Broad READ_MEDIA_AUDIO/IMAGES/VIDEO and SYSTEM_ALERT_WINDOW permissions remain in the candidate and require minimization or actual justification. FCM is not configured. Native 16KB review is still with the project chat.
+- Final manifest lacks `com.google.android.geo.API_KEY`, while app screens use react-native-maps. `app.config.ts` reads `GOOGLE_MAPS_ANDROID_KEY`; a valid existing Android Maps SDK key restricted to `kz.divergents.app` and the Play app-signing certificate is required. No unrestricted key was created, no new billing accepted, and maps were not silently disabled.
+- Broad READ_MEDIA_AUDIO/IMAGES/VIDEO and SYSTEM_ALERT_WINDOW permissions remain in the candidate and require minimization or actual justification. FCM is not configured. Native ELF 16KB alignment audit passed for all 27 arm64 libraries; device and Play checks remain.
 - Known-defective candidate was not uploaded merely to test signature acceptance. Preserve versionCode123 for a corrected first upload where possible; no signing-key reset is required by the current evidence.
 - Relevant versioning reference: https://developer.android.com/studio/publish/versioning . Google Play disallows reusing a versionCode already used for a previous version.
 
