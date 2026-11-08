@@ -129,10 +129,9 @@ export function PersonalizeScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader backLabel={tr('Профиль')} onBack={() => navigation.goBack()} trailing={!isDefault ? (
+      <Screen tabPadding={false} topInset={false} bottomInset={false} header={<NavHeader backLabel={tr('Профиль')} onBack={() => navigation.goBack()} trailing={!isDefault ? (
           <HeaderTextButton label={tr('Сбросить')} icon="arrow.counterclockwise" accessibilityLabel={tr('Сбросить настройки')} onPress={resetAll} />
-        ) : undefined} />
-      <Screen tabPadding={false} topInset={false} bottomInset={false}>
+        ) : undefined} />}>
         <Wrapper paddingBottom={44}>
         <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 18 }}>
           <Text style={[ty.largeTitle, { color: T.label }]}>{tr('Персонализация')}</Text>

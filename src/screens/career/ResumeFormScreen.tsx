@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { Wrapper } from '../../components/Wrapper';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-expo';
@@ -255,12 +256,7 @@ export function ResumeFormScreen({ navigation, route }: Props) {
   const stepStatusText = (i: number) => stepStates[i] === 'complete' ? 'заполнен' : stepStates[i] === 'started' ? 'заполнен частично' : 'не заполнен';
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      {/* Header */}
-      <NavHeader title={`${tr('Анкета')} · ${completeness}%`} backLabel={tr('Закрыть')} onBack={close} />
-
-      {/* Stepper: полоска 4pt остаётся визуальной, а область нажатия — 44pt. */}
-      <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingVertical: 2 }}>
+    <ScrollHeaderLayout header={<><NavHeader title={`${tr('Анкета')} · ${completeness}%`} backLabel={tr('Закрыть')} onBack={close} /><View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingVertical: 2 }}>
         {RESUME_STEPS.map((st, i) => (
           <Pressable
             key={st.key}
@@ -274,12 +270,11 @@ export function ResumeFormScreen({ navigation, route }: Props) {
             <View style={{ height: i === step ? 6 : 4, borderRadius: 3, borderCurve: 'continuous', backgroundColor: stepColor(i) }} />
           </Pressable>
         ))}
-      </View>
-
+      </View></>}>{headerHeight => <>
       {/* Панель с кнопкой — обычный элемент потока, а не absolute: только так
           KeyboardAvoidingView может поднять её над клавиатурой. */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
-        <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+        <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={scrollHeaderContentInset(headerHeight, { padding: 16, paddingBottom: 24 })} keyboardShouldPersistTaps="handled">
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <View style={{ width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', backgroundColor: T.brandTinted, alignItems: 'center', justifyContent: 'center' }}>
               <SF name={s.icon} size={20} color={T.brand} />
@@ -339,6 +334,6 @@ export function ResumeFormScreen({ navigation, route }: Props) {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

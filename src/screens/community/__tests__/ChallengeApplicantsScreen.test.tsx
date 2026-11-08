@@ -7,6 +7,7 @@ jest.mock('../../../data/community', () => ({ fetchChallengeApplicants: jest.fn(
 jest.mock('@clerk/clerk-expo', () => ({ useAuth: () => ({ getToken: async () => 'token' }) }));
 jest.mock('../../../theme/ThemeContext', () => ({ useTheme: () => jest.requireActual('../../../theme/tokens') }));
 jest.mock('../../../components/SFIcon', () => ({ SF: () => null }));
+jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }) }));
 jest.mock('../../../components/NavHeader', () => ({ NavHeader: () => null }));
 jest.mock('../../../lib/haptics', () => ({ hSuccess: jest.fn() }));
 

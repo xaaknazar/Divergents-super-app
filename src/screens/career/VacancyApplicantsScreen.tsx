@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { ActionBlock } from '../../components/ActionBlock';
 import { FieldValueRow } from '../../components/FieldValueRow';
 import { ApplicationStatusBadge } from '../../components/ApplicationStatusBadge';
@@ -72,14 +73,14 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
   const rows = p?.resume ? resumeRows(p.resume) : [];
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title="Отклики" onBack={() => navigation.goBack()} />
+    <ScrollHeaderLayout header={<NavHeader title="Отклики" onBack={() => navigation.goBack()} />}>{headerHeight => <>
+
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       ) : items.length === 0 ? (
         <EmptyState icon="person.2.fill" title="Пока нет откликов" subtitle="Как только кто-то откликнется, он появится здесь." />
       ) : (
-        <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: 30 }}>
+        <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 8, paddingBottom: 30 })}>
           <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 6 }]}>Откликнулось · {items.length}</Text>
           {items.map((a) => {
 
@@ -104,10 +105,10 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
 
       {/* Applicant detail */}
       <Modal visible={!!sel} animationType="slide" onRequestClose={() => setSel(null)}>
-        <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-          <NavHeader title={sel?.userName || sel?.profile?.fullName || 'Кандидат'} backLabel="Закрыть" onBack={() => setSel(null)} />
+        <ScrollHeaderLayout header={<NavHeader title={sel?.userName || sel?.profile?.fullName || 'Кандидат'} backLabel="Закрыть" onBack={() => setSel(null)} />}>{headerHeight => <>
+
           <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
-            <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+            <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 10, paddingBottom: 24 })} keyboardShouldPersistTaps="handled">
               {!p ? (
                 <View style={{ padding: 20 }}>
                   <Text style={[ty.subhead, { color: T.labelSecondary }]}>Анкета кандидата не найдена в Talentslab{sel?.userEmail ? ` (${sel.userEmail})` : ''}. Возможно, он ещё не заполнил профиль.</Text>
@@ -180,8 +181,8 @@ export function VacancyApplicantsScreen({ route, navigation }: Props) {
               </View>
             </ScrollView>
           </KeyboardAvoidingView>
-        </View>
+        </>}</ScrollHeaderLayout>
       </Modal>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

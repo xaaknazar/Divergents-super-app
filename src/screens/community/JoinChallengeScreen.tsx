@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { ContentBlock } from '../../components/ContentBlock';
 import { Wrapper } from '../../components/Wrapper';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -130,10 +131,10 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Заявка')} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
+    <ScrollHeaderLayout header={<NavHeader title={tr('Заявка')} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />}>{headerHeight => <>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 130 }} keyboardShouldPersistTaps="handled">
+
+      <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { padding: 16, paddingBottom: insets.bottom + 130 })} keyboardShouldPersistTaps="handled">
         <Text style={[ty.title3, { color: T.label }]} numberOfLines={1}>{meta?.title}</Text>
         <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 2, marginBottom: 18 }]} numberOfLines={1}>{tr('Старт')} {meta?.startLabel} · {pl.days(meta?.durationDays ?? 0)}</Text>
 
@@ -258,6 +259,6 @@ export function JoinChallengeScreen({ route, navigation }: Props) {
           <Text style={[ty.caption1, { color: T.labelSecondary, textAlign: 'center', marginTop: 8 }]} numberOfLines={2}>{missingHint}</Text>
         ) : null}
       </View>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

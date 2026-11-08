@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Wrapper } from '../../components/Wrapper';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -174,15 +175,15 @@ export function TalentProfileScreen({ navigation, route }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Моя анкета')} backLabel={backLabel} onBack={() => navigation.goBack()} trailing={
+    <ScrollHeaderLayout header={<NavHeader title={tr('Моя анкета')} backLabel={backLabel} onBack={() => navigation.goBack()} trailing={
           <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 8 }}>
             {/* Share the анкета as a PDF (send to other apps / save). */}
             <HeaderIcon name="square.and.arrow.up" label={tr('Поделиться PDF')} onPress={sharing ? undefined : onSharePdf} />
             <HeaderTextButton label={tr('Править')} accessibilityLabel={tr('Редактировать анкета')} onPress={() => navigation.navigate('Resume')} />
           </View>
-        } />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        } />}>{headerHeight => <>
+
+      <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" showsVerticalScrollIndicator={false} contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingBottom: 40 })}>
         {unavailable || source === 'cache' || source === 'local' ? (
           <View style={{ marginHorizontal: 16, marginBottom: 14, padding: 12, borderRadius: 12, borderCurve: 'continuous', backgroundColor: 'rgba(255,149,0,0.12)', flexDirection: 'row', alignItems: 'center', gap: 9 }}>
             <SF name="wifi.exclamationmark" size={17} color={T.orange} />
@@ -306,6 +307,6 @@ export function TalentProfileScreen({ navigation, route }: Props) {
 
         <View style={{ height: 20 }} />
       </ScrollView>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

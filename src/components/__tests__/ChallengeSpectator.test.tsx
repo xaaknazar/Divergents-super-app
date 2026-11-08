@@ -41,7 +41,7 @@ it('shows an empty roster and supports refreshing it', async () => {
   const view = await render(<ThemePreviewProvider><RankingScreenFrame onBack={() => {}} onSeason={() => {}} onRefresh={onRefresh}><ChallengeSpectatorContent data={data} onRefresh={onRefresh} /></RankingScreenFrame></ThemePreviewProvider>);
   await fireEvent.press(view.getByTestId('standing-a'));
   expect(view.getByText('Участников пока нет')).toBeTruthy();
-  await act(async () => view.getByTestId('ranking-fullscreen-scroll').props.refreshControl.props.onRefresh());
+  await act(async () => view.getByTestId('screen-fullscreen-scroll').props.refreshControl.props.onRefresh());
   expect(onRefresh).toHaveBeenCalledTimes(1);
   await view.rerender(<ThemePreviewProvider><RankingScreenFrame onBack={() => {}} onSeason={() => {}} onRefresh={onRefresh}><ChallengeSpectatorContent data={spectatorFixture} onRefresh={onRefresh} /></RankingScreenFrame></ThemePreviewProvider>);
   expect(view.getByTestId('standing-three').props.accessibilityLabel).toMatch(/^2 место/);

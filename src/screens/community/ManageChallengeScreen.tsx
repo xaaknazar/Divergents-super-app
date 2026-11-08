@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Wrapper } from '../../components/Wrapper';
 // Creator's control room for a challenge — available only BEFORE it starts.
@@ -270,10 +271,10 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
   const unassigned = members.filter((m) => !m.teamId || !teams.some((t) => t.id === m.teamId));
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title="Управление" backLabel="Назад" onBack={() => navigation.goBack()} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-        <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+    <ScrollHeaderLayout header={<NavHeader title="Управление" backLabel="Назад" onBack={() => navigation.goBack()} />}>{headerHeight => <>
+
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+        <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 10, paddingBottom: 40 })} keyboardShouldPersistTaps="handled">
 
           {locked ? (
             <View style={{ marginHorizontal: 16, marginBottom: 6, backgroundColor: 'rgba(255,149,0,0.12)', borderRadius: 16, borderCurve: 'continuous', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: 'rgba(255,149,0,0.3)' }}>
@@ -410,7 +411,7 @@ export function ManageChallengeScreen({ route, navigation }: Props) {
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }
 

@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import { useLang, tr } from '../../state/LanguageContext';
@@ -87,23 +88,23 @@ export function NotificationsScreen({ navigation }: Props) {
   const showSkeleton = !ready || (loading && !refreshing && items.length === 0);
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      {/* Shared header: modal «Закрыть» on the left, «Прочитать все» as the trailing
-          text action (a bare icon would hide what it does). */}
-      <NavHeader title={tr('Уведомления')} backLabel={tr('Закрыть')} hideBackLabel={false} onBack={() => navigation.goBack()} trailing={(
+    <ScrollHeaderLayout header={<NavHeader title={tr('Уведомления')} backLabel={tr('Закрыть')} hideBackLabel={false} onBack={() => navigation.goBack()} trailing={(
           <HeaderTextButton label={lang === 'ru' ? 'Прочитать все' : 'Mark all read'} accessibilityLabel={lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
             onPress={unread === 0 ? undefined : markAllRead} />
-        )} />
+        )} />}>{headerHeight => <>
+      {/* Shared header: modal «Закрыть» on the left, «Прочитать все» as the trailing
+          text action (a bare icon would hide what it does). */}
+
 
       {showSkeleton ? (
-        <View style={{ paddingTop: 12 }}>
+        <View style={{ paddingTop: headerHeight + 12 }}>
           <Wrapper marginHorizontal={16}><ListSkeleton rows={6} /></Wrapper>
         </View>
       ) : (
-        <FlatList
+        <FlatList scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never"
           data={items}
           keyExtractor={(it) => it.id}
-          contentContainerStyle={{ paddingVertical: 8, paddingBottom: insets.bottom + 30, flexGrow: 1 }}
+          contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 8, paddingBottom: insets.bottom + 30, flexGrow: 1 })}
           showsVerticalScrollIndicator={false}
           initialNumToRender={6}
           maxToRenderPerBatch={8}
@@ -135,7 +136,7 @@ export function NotificationsScreen({ navigation }: Props) {
           }
         />
       )}
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }
 

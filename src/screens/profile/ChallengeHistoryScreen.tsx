@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { ApplicationStatusBadge, applicationStatusLabel } from '../../components/ApplicationStatusBadge';
 // История всех челленджей пользователя: где участвовал, в какой команде и с
 // каким статусом заявки. Открывается по тапу на плитку «День» в профиле.
@@ -134,8 +135,8 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Мои челленджи')} onBack={() => navigation.goBack()} />
+    <ScrollHeaderLayout header={<NavHeader title={tr('Мои челленджи')} onBack={() => navigation.goBack()} />}>{headerHeight => <>
+
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       ) : error && items.length === 0 ? (
@@ -144,8 +145,8 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
         <EmptyState icon="flame.fill" title={tr('Пока нет челленджей')}
           subtitle={tr('Вступите в челлендж в разделе «Сообщество» — он появится здесь.')} />
       ) : (
-        <ScrollView
-          contentContainerStyle={{ paddingVertical: 10, paddingBottom: 30 }}
+        <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never"
+          contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 10, paddingBottom: 30 })}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.brand} />}
         >
           {active.length > 0 ? (
@@ -166,6 +167,6 @@ export function ChallengeHistoryScreen({ navigation }: { navigation: { goBack: (
           ) : null}
         </ScrollView>
       )}
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

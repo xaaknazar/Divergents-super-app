@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { Wrapper } from '../../components/Wrapper';
 import { ContentBlock } from '../../components/ContentBlock';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -74,8 +75,8 @@ export function AdminPlacesScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={tr('Заявки на метки')} backLabel={tr('Карта')} onBack={() => navigation.goBack()} />
+    <ScrollHeaderLayout header={<NavHeader title={tr('Заявки на метки')} backLabel={tr('Карта')} onBack={() => navigation.goBack()} />}>{headerHeight => <>
+
       {!canModerate ? (
         <EmptyState icon="lock.fill" title={tr('Нет доступа')} subtitle={tr('Модерация меток доступна только администратору.')} />
       ) : loading ? (
@@ -85,7 +86,7 @@ export function AdminPlacesScreen({ navigation }: Props) {
       ) : items.length === 0 ? (
         <EmptyState icon="checkmark.seal.fill" title={tr('Заявок нет')} subtitle={tr('Новые предложенные метки появятся здесь на одобрение.')} />
       ) : (
-        <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 30 }}>
+        <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 10, paddingBottom: 30 })}>
           <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 6 }]} numberOfLines={1}>{tr('На модерации')} · {items.length}</Text>
           {items.map((p) => {
             const meta = CATEGORY_META[p.category];
@@ -133,6 +134,6 @@ export function AdminPlacesScreen({ navigation }: Props) {
           })}
         </ScrollView>
       )}
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

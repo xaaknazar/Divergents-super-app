@@ -15,18 +15,16 @@ export function DetailScreen({ children, title, backLabel, onBack, actions, foot
   const { T } = useTheme();
   const withHero = !!hero && scroll;
   return <View style={[styles.root, { backgroundColor: T.groupedBg }]}>
-    {withHero ? null : <NavHeader title={title} backLabel={backLabel} onBack={onBack} trailing={actions} />}
+    {scroll ? null : <NavHeader title={title} backLabel={backLabel} onBack={onBack} trailing={actions} />}
     <KeyboardAvoidingView style={styles.root} enabled={keyboard} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Screen scroll={scroll} topInset={false} bottomInset={!footer} tabPadding={false} aurora={false} onRefresh={onRefresh}>
+      <Screen scroll={scroll} topInset={false} bottomInset={!footer} tabPadding={false} aurora={false} onRefresh={onRefresh}
+        headerOverCover={withHero}
+        header={scroll ? <NavHeader title={withHero ? undefined : title} backLabel={backLabel} onBack={onBack} trailing={actions} /> : undefined}>
         {withHero ? hero : null}
         {scroll ? <View style={styles.content}>{children}</View> : children}
       </Screen>
       {footer}
     </KeyboardAvoidingView>
-    {withHero ? <View pointerEvents="box-none" style={styles.float}>
-      <NavHeader backLabel={backLabel} onBack={onBack} trailing={actions} />
-    </View> : null}
   </View>;
 }
-const styles = StyleSheet.create({ root: { flex: 1 }, content: { width: '100%', maxWidth: 680, alignSelf: 'center' },
-  float: { position: 'absolute', top: 0, left: 0, right: 0 } });
+const styles = StyleSheet.create({ root: { flex: 1 }, content: { width: '100%', maxWidth: 680, alignSelf: 'center' } });

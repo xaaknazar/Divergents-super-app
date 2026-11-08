@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout } from '../../components/ScrollHeaderLayout';
 import { ActivityCalculatorSheet } from '../../components/ActivityCalculatorSheet';
 import { useActivityGender } from '../../state/useActivityGender';
 import { ContentBlock } from '../../components/ContentBlock';
@@ -204,12 +205,13 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      {/* Gradient hero background */}
-      <LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} trailing={isChallengeManager
+    <ScrollHeaderLayout header={<NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} trailing={isChallengeManager
             ? <HeaderIcon name="trash.fill" scheme="dark" label="Удалить челлендж" onPress={confirmDelete} />
-            : <HeaderIcon name="square.and.arrow.up" scheme="dark" label={tr('Поделиться')} onPress={shareChallenge} />} variant="hero" />
+            : <HeaderIcon name="square.and.arrow.up" scheme="dark" label={tr('Поделиться')} onPress={shareChallenge} />} variant="hero" />}>{headerHeight => <>
+      {/* Gradient hero background */}
+
+      <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: panelH > 0 ? panelH + 16 : insets.bottom + 90 }}><LinearGradient colors={[T.brand, T.brandAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <View style={{ height: headerHeight }} />
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 22, position: 'relative' }}>
           <View style={{ position: 'absolute', right: 8, top: -6, opacity: 0.18 }}>
             <SF name={meta.icon} size={120} color="#fff" />
@@ -218,8 +220,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
           <Text style={[ty.largeTitle, { color: '#fff', marginTop: 12 }]} numberOfLines={1}>{meta.title}</Text>
           <Text style={[ty.subhead, { color: 'rgba(255,255,255,0.9)', marginTop: 4 }]} numberOfLines={1}>{pl.days(meta.durationDays)} · 3 категории · {meta.maxFlags} 🚩 — вылет</Text>
         </View>
-      </LinearGradient>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: panelH > 0 ? panelH + 16 : insets.bottom + 90 }}>
+      </LinearGradient><View style={{ paddingTop: 16 }}>
 
         {/* Countdown */}
         <Wrapper marginHorizontal={16} marginBottom={18}><ContentBlock size="regular"><Wrapper dir={'row'} align={'center'} gap={18}>
@@ -310,7 +311,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
           </ContentBlock></Wrapper>
         ) : null}
         <View style={{ height: 20 }} />
-      </ScrollView>
+      </View></ScrollView>
 
       {/* CTA */}
       <View onLayout={(e) => setPanelH(e.nativeEvent.layout.height)}
@@ -376,7 +377,7 @@ function UpcomingChallenge({ meta, teams, navigation }: { meta: ChallengeListIte
           </>
         )}
       </View>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }
 
@@ -649,16 +650,15 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
       {/* Цветной фон как в Apple Sports — из цветов «Персонализации». */}
       <ColorWash />
-      <NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} onWash trailing={(
-        <HeaderIcon name="list.bullet" label={tr('Меню челленджа')} onPress={openMenu} onWash />
-      )} variant="plain" />
       <Animated.View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 56, left: 0, right: 0, alignItems: 'center', zIndex: 20, opacity: cel, transform: [{ scale: cel.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>
         <View style={{ backgroundColor: T.brand, borderRadius: 16, borderCurve: 'continuous', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}>
           <Text style={{ fontSize: 18 }}>🎉</Text>
           <Text style={[ty.headline, { color: '#fff' }]}>{tr('День закрыт!')} · {tr('День')} {c.currentDay} 🔥</Text>
         </View>
       </Animated.View>
-      <Screen tabPadding={false} topInset={false} surface="transparent" aurora={false}>
+      <Screen tabPadding={false} topInset={false} surface="transparent" aurora={false} header={<NavHeader backLabel={tr('Сообщество')} onBack={() => backToCommunity(navigation)} onWash trailing={(
+        <HeaderIcon name="list.bullet" label={tr('Меню челленджа')} onPress={openMenu} onWash />
+      )} variant="plain" />}>
 
       {/* Compact overview: context and season progress, without repeating daily data. */}
       <View accessible accessibilityLabel={`${c.title}. ${tr('День')} ${c.currentDay} ${tr('из')} ${c.totalDays}. ${myEliminated ? tr('Очки зафиксированы') : `+${pointsToday} pts ${tr('сегодня')}`}. ${c.teamName ? `${tr('Команда')} ${c.teamName}. ` : ''}${finished ? tr('Челлендж завершён') : `${tr('Осталось')} ${pl.days(remainingDays)}`}`}

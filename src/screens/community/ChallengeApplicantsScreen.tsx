@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { FieldValueRow } from '../../components/FieldValueRow';
 import { ApplicationStatusBadge, applicationStatusLabel } from '../../components/ApplicationStatusBadge';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -139,8 +140,8 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
   const rows = p?.resume ? resumeRows(p.resume) : [];
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={directProfile ? 'Анкета участника' : 'Заявки'} onBack={() => navigation.goBack()} />
+    <ScrollHeaderLayout header={<NavHeader title={directProfile ? 'Анкета участника' : 'Заявки'} onBack={() => navigation.goBack()} />}>{headerHeight => <>
+
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={T.brand} /></View>
       ) : error ? (
@@ -152,7 +153,7 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
       ) : items.length === 0 ? (
         <EmptyState icon="person.2.fill" title="Пока нет заявок" subtitle="Как только кто-то подаст заявку, она появится здесь." />
       ) : (
-        <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: 30 }}>
+        <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 8, paddingBottom: 30 })}>
           <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 6 }]}>Заявок · {items.length}</Text>
           {items.map((a) => {
 
@@ -184,10 +185,10 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
 
       {/* Applicant detail */}
       <Modal visible={!!sel} animationType={directProfile ? "none" : "slide"} onRequestClose={closeApplicant}>
-        <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-          <NavHeader title={sel?.userName || 'Участник'} backLabel={directProfile ? "Состав" : "Закрыть"} onBack={closeApplicant} />
+        <ScrollHeaderLayout header={<NavHeader title={sel?.userName || 'Участник'} backLabel={directProfile ? "Состав" : "Закрыть"} onBack={closeApplicant} />}>{headerHeight => <>
+
           <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
-            <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+            <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 10, paddingBottom: 24 })} keyboardShouldPersistTaps="handled">
               {!directProfile ? (
                 <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Заявка">
                   <View style={{ padding: 16, gap: 8 }}>
@@ -306,8 +307,8 @@ export function ChallengeApplicantsScreen({ route, navigation }: Props) {
               ) : null}
             </ScrollView>
           </KeyboardAvoidingView>
-        </View>
+        </>}</ScrollHeaderLayout>
       </Modal>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

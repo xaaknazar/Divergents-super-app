@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { FieldValueRow } from '../../components/FieldValueRow';
 import { ApplicationStatusBadge, applicationStatusLabel } from '../../components/ApplicationStatusBadge';
 import { Wrapper } from '../../components/Wrapper';
@@ -133,8 +134,8 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
   const p = canViewProfiles ? sel?.profile ?? null : null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title="Заявки" subtitle={eventTitle || undefined} backLabel={kind === 'trip' ? 'Поездка' : kind === 'sport' ? 'Спорт' : 'Мероприятие'} onBack={() => navigation.goBack()} />
+    <ScrollHeaderLayout header={<NavHeader title="Заявки" subtitle={eventTitle || undefined} backLabel={kind === 'trip' ? 'Поездка' : kind === 'sport' ? 'Спорт' : 'Мероприятие'} onBack={() => navigation.goBack()} />}>{headerHeight => <>
+
 
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -149,7 +150,7 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
           subtitle="Как только кто-то подаст заявку, она появится здесь."
         />
       ) : (
-        <ScrollView contentContainerStyle={{ paddingVertical: 8, paddingBottom: 30 }}>
+        <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 8, paddingBottom: 30 })}>
           {counts ? (
             <Text style={[ty.headline, { color: T.label, paddingHorizontal: 20, paddingBottom: 6 }]}>
               {pl.applications(counts.total)} · {counts.pending} ждут решения · {counts.approved} принято
@@ -191,9 +192,9 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
 
       {/* Карточка заявителя */}
       <Modal visible={!!sel} animationType="slide" onRequestClose={() => setSel(null)}>
-        <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-          <NavHeader title={sel?.userName || 'Участник'} backLabel="Закрыть" onBack={() => setSel(null)} />
-          <ScrollView contentContainerStyle={{ paddingVertical: 10, paddingBottom: 24 }}>
+        <ScrollHeaderLayout header={<NavHeader title={sel?.userName || 'Участник'} backLabel="Закрыть" onBack={() => setSel(null)} />}>{headerHeight => <>
+
+          <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingVertical: 10, paddingBottom: 24 })}>
             <Wrapper marginTop={6} marginHorizontal={16}><ListSection header="Заявка">
               <View style={{ padding: 16, gap: 8 }}>
                 <FieldValueRow label="Статус" value={sel ? STATUS_LABEL[sel.status] ?? sel.status : ''} hideWhenEmpty />
@@ -252,8 +253,8 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
               ) : null}
             </View>
           </View>
-        </View>
+        </>}</ScrollHeaderLayout>
       </Modal>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

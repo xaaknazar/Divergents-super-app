@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { Wrapper } from '../../components/Wrapper';
 import { ContentBlock } from '../../components/ContentBlock';
 // Одна тренировка: маршрут на карте и цифры под ним.
@@ -154,14 +155,14 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader backLabel={tr('Тренировки')} onBack={() => navigation.goBack()} trailing={
+    <ScrollHeaderLayout header={<NavHeader backLabel={tr('Тренировки')} onBack={() => navigation.goBack()} trailing={
           <HeaderIcon name="trash.fill" danger label={tr('Удалить тренировку')} onPress={confirmDelete} />
-        } />
+        } />}>{headerHeight => <>
+
 
       {/* Прокрутка: карта, цифры и подробности не помещаются на экран целиком,
           а нижняя панель с действиями закрывала хвост. */}
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+      <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" style={{ flex: 1 }} contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingBottom: 20 })} showsVerticalScrollIndicator={false}>
         {(memberships.activeChallenges?.length ?? 0) > 1 ? <Wrapper paddingHorizontal={16} paddingVertical={8}>
           <ChallengePicker challenges={memberships.activeChallenges!} selectedId={challenge.id} onChange={selectChallenge} disabled={busy || w.addedToChallenge} />
         </Wrapper> : null}
@@ -282,6 +283,6 @@ export function WorkoutDetailScreen({ route, navigation }: Props) {
           <Text style={[ty.headline, { color: T.brand }]}>{tr('Поделиться')}</Text>
         </Pressable>
       </View>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }

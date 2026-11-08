@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import React, { useState } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import type { Typography } from '../../theme/tokens';
@@ -131,12 +132,12 @@ export function AddPlaceScreen({ navigation, route }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title={editing ? 'Редактировать' : 'Новое место'} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
+    <ScrollHeaderLayout header={<NavHeader title={editing ? 'Редактировать' : 'Новое место'} backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />}>{headerHeight => <>
 
-      {/* The header sits outside the KAV, so offset by its height (safe-area + bar). */}
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 52}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
+
+      {/* The keyboard-avoiding viewport spans the screen; navigation clearance is inside the scroll content. */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+      <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { padding: 16, paddingBottom: insets.bottom + 100 })} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Text style={[ty.caption1, { color: T.labelSecondary, marginBottom: 12 }]}>{tr('Город:')} {cityName}, {countryName} · {tr('нажмите на карту, чтобы поставить точку')}</Text>
 
         {/* Map picker */}
@@ -194,7 +195,7 @@ export function AddPlaceScreen({ navigation, route }: Props) {
         ) : null}
         <Button label={editing ? 'Сохранить' : 'Добавить место'} icon="checkmark" loading={submitting} disabled={!ok || submitting} onPress={submit} />
       </View>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }
 

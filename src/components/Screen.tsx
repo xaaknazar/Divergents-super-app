@@ -2,9 +2,9 @@
 // optional collapsing blurred header that fades in on scroll (iOS large-title style).
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Animated, ScrollView, RefreshControl, Text, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
+import { ScrollHeader } from './ScrollHeader';
 import { Aurora } from './Aurora';
 import { HeaderBackdrop, HeaderBackdropMotif } from './HeaderBackdrop';
 import { ColorWash } from './ColorWash';
@@ -13,6 +13,11 @@ import { useOptionalAudioTrack } from '../state/audioPlayerValue';
 
 export interface ScreenProps {
   children: React.ReactNode;
+  /** Fixed navigation floats above the scroll viewport instead of cutting it off. */
+  header?: React.ReactNode;
+  /** Full-bleed course artwork starts beneath the controls, without a top spacer. */
+  headerOverCover?: boolean;
+  refreshing?: boolean;
   surface?: 'grouped' | 'transparent';
   scroll?: boolean;
   tabPadding?: boolean;
@@ -32,11 +37,12 @@ export interface ScreenProps {
 }
 
 export function Screen({ children, surface = 'grouped', scroll = true, tabPadding = true,
-  topInset = true, bottomInset = true, aurora = true, backdrop, wash, largeTitle, onRefresh, keyboardAware = false, scrollResetKey }: ScreenProps) {
-  const { T, isDark, reduceTransparency, ty, background: backgroundPreset } = useTheme();
+  header, headerOverCover = false, refreshing: externalRefreshing = false, topInset = true, bottomInset = true, aurora = true, backdrop, wash, largeTitle, onRefresh, keyboardAware = false, scrollResetKey }: ScreenProps) {
+  const { T, ty, background: backgroundPreset } = useTheme();
   const background = surface === 'transparent' ? 'transparent' : T.groupedBg;
   const insets = useSafeAreaInsets();
-  const top = topInset ? insets.top : 0;
+  const [headerHeight, setHeaderHeight] = useState(insets.top + 72);
+  const top = header && scroll ? headerOverCover ? 0 : headerHeight : topInset ? insets.top : 0;
   const { fontScale } = useWindowDimensions();
   const audioTrack = useOptionalAudioTrack();
   const playerHeight = audioTrack ? tabDockMiniPlayerHeight(ty.footnoteEm.lineHeight ?? 18, ty.caption2.lineHeight ?? 14, fontScale) : 0;
@@ -60,6 +66,9 @@ export function Screen({ children, surface = 'grouped', scroll = true, tabPaddin
       {scroll ? (
         <Animated.ScrollView
           ref={scrollRef}
+          testID={header ? 'screen-fullscreen-scroll' : undefined}
+          contentInsetAdjustmentBehavior="never"
+          scrollIndicatorInsets={header ? { top: headerHeight, bottom: insets.bottom } : undefined}
           style={{ flex: 1, backgroundColor: 'transparent' }}
           contentContainerStyle={{ paddingTop: top, paddingBottom: bottom }}
           showsVerticalScrollIndicator={false}
@@ -67,7 +76,7 @@ export function Screen({ children, surface = 'grouped', scroll = true, tabPaddin
           keyboardDismissMode="on-drag"
           scrollEventThrottle={16}
           onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
-          refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={doRefresh} tintColor={T.brand} /> : undefined}
+          refreshControl={onRefresh ? <RefreshControl refreshing={refreshing || externalRefreshing} progressViewOffset={header ? headerHeight : undefined} onRefresh={doRefresh} tintColor={T.brand} /> : undefined}
         >
           {children}
         </Animated.ScrollView>
@@ -75,26 +84,16 @@ export function Screen({ children, surface = 'grouped', scroll = true, tabPaddin
         <View style={{ flex: 1, paddingTop: top }}>{children}</View>
       )}
 
+      {header && scroll ? <ScrollHeader height={headerHeight} onHeight={setHeaderHeight} overCover={headerOverCover}>{header}</ScrollHeader> : null}
+
       {/* Collapsing compact header */}
       {largeTitle && scroll ? (
         <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, opacity: headerOpacity }}>
-          {reduceTransparency ? (
-            // Reduce Transparency: opaque header instead of the frosted blur.
-            <View style={{
-              paddingTop: insets.top, height: insets.top + 46, justifyContent: 'flex-end',
-              borderBottomWidth: 0.5, borderBottomColor: T.separator, backgroundColor: T.cardBg,
-            }}>
+          <ScrollHeader height={insets.top + 46} onHeight={() => {}}>
+            <View style={{ paddingTop: insets.top, height: insets.top + 46, justifyContent: 'flex-end' }}>
               <Text numberOfLines={1} style={[ty.headline, { color: T.label, textAlign: 'center', paddingBottom: 11, paddingHorizontal: 48 }]}>{largeTitle}</Text>
             </View>
-          ) : (
-            <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={{
-              paddingTop: insets.top, height: insets.top + 46, justifyContent: 'flex-end',
-              borderBottomWidth: 0.5, borderBottomColor: T.separator,
-              backgroundColor: isDark ? 'rgba(18,22,33,0.62)' : 'rgba(249,249,249,0.62)',
-            }}>
-              <Text numberOfLines={1} style={[ty.headline, { color: T.label, textAlign: 'center', paddingBottom: 11, paddingHorizontal: 48 }]}>{largeTitle}</Text>
-            </BlurView>
-          )}
+          </ScrollHeader>
         </Animated.View>
       ) : null}
     </KeyboardAvoidingView>

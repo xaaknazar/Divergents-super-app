@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { ContentBlock } from '../../components/ContentBlock';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Wrapper } from '../../components/Wrapper';
@@ -142,10 +143,10 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
+    <ScrollHeaderLayout header={<NavHeader title={place.photo ? undefined : place.name} backLabel={tr('Места')} onBack={() => navigation.goBack()} />}>{headerHeight => <>
       {/* No photo hero → the bar would be blank; name the screen in the title. */}
-      <NavHeader title={place.photo ? undefined : place.name} backLabel={tr('Места')} onBack={() => navigation.goBack()} />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}>
+
+      <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" showsVerticalScrollIndicator={false} contentContainerStyle={scrollHeaderContentInset(headerHeight, { paddingBottom: insets.bottom + 30 })}>
         {place.photo ? (
           <Image
             source={{ uri: place.photo }}
@@ -285,7 +286,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </ContentBlock></Wrapper>
         ) : null}
       </ScrollView>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }
 

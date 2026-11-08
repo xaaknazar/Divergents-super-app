@@ -82,8 +82,7 @@ export function WorkoutHistoryScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader backLabel={tr('Назад')} onBack={() => navigation.goBack()} />
-      <Screen tabPadding={false} topInset={false}>
+      <Screen tabPadding={false} topInset={false} header={<NavHeader backLabel={tr('Назад')} onBack={() => navigation.goBack()} />}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
           <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={2}>{tr('Тренировки')}</Text>
           {totals.count > 0 ? (

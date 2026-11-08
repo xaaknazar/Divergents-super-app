@@ -1,3 +1,4 @@
+import { ScrollHeaderLayout, scrollHeaderContentInset } from '../../components/ScrollHeaderLayout';
 import { Wrapper } from '../../components/Wrapper';
 import { ActionBlock } from '../../components/ActionBlock';
 // Create a vacancy from the app (role-gated: only users with canCreate reach it).
@@ -106,10 +107,10 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader title="Новая вакансия" backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />
+    <ScrollHeaderLayout header={<NavHeader title="Новая вакансия" backLabel={tr('Отмена')} onBack={() => navigation.goBack()} />}>{headerHeight => <>
+
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }} keyboardShouldPersistTaps="handled">
+        <ScrollView scrollIndicatorInsets={{ top: headerHeight }} contentInsetAdjustmentBehavior="never" contentContainerStyle={scrollHeaderContentInset(headerHeight, { padding: 16, paddingBottom: insets.bottom + 40 })} keyboardShouldPersistTaps="handled">
           <Field label="Должность *">
             <TextInput value={title} onChangeText={setTitle} placeholder="Например: Продуктовый дизайнер" placeholderTextColor={T.labelTertiary} style={inp} />
           </Field>
@@ -210,7 +211,7 @@ export function CreateVacancyScreen({ navigation }: { navigation: { goBack: () =
           <Button label={busy ? 'Создание…' : 'Создать вакансию'} icon="checkmark" loading={busy} disabled={!ok} onPress={submit} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </>}</ScrollHeaderLayout>
   );
 }
 

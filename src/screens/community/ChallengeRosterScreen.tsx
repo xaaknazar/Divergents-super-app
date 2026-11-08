@@ -90,8 +90,7 @@ export function ChallengeRosterScreen({ navigation, route }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.groupedBg }}>
-      <NavHeader backLabel={tr('Челлендж')} onBack={() => navigation.goBack()} />
-      <Screen tabPadding={false} topInset={false}>
+      <Screen tabPadding={false} topInset={false} header={<NavHeader backLabel={tr('Челлендж')} onBack={() => navigation.goBack()} />}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
           <Text style={[ty.largeTitle, { color: T.label }]} numberOfLines={2}>{tr('Состав команды')}</Text>
           <Text style={[ty.subhead, { color: T.labelSecondary, marginTop: 4 }]} numberOfLines={1}>

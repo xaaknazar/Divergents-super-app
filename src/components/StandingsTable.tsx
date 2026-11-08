@@ -124,7 +124,7 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
         <View style={styles.metrics}>
           {showMove ? <Text style={[head, { width: COL_MOVE, textAlign: 'right' }]}>±</Text> : null}
           {showFlags ? <View style={{ width: COL_FLAG, alignItems: 'flex-end' }}><SF name="flag.fill" size={11} color={T.labelSecondary} /></View> : null}
-          
+
           <Text style={[head, valueCell, styles.numericText]} numberOfLines={1}>{valueColumn ?? tr('Очки')}</Text>
         </View>
       </View> : null}
@@ -171,7 +171,7 @@ export function StandingsTable({ nameColumn, rows, zoneAfter = 3, valueColumn, s
                 <View style={[valueCell, styles.metricCell]}>
                   {stacked ? <Text style={[head, styles.numericText]} numberOfLines={1}>{valueColumn ?? tr('Очки')}</Text> : null}
                   <Text style={[ty.headline, num, styles.numericText, { color: T.label }]} numberOfLines={wrapMetrics ? undefined : 1}>{r.value ?? r.points}</Text>
-                  {secondaryColumn ? <Text style={[ty.caption1, styles.numericText, { color: T.labelSecondary }]}>{r.secondary} {secondaryColumn}</Text> : null}
+                  {secondaryColumn ? <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={[ty.caption1, styles.numericText, { color: T.labelSecondary }]}>{r.secondary} {secondaryColumn}</Text> : null}
                 </View>
               </View>
             </Row>
