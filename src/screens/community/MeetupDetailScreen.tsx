@@ -1,3 +1,4 @@
+import { EventManagementPanel } from '../../components/EventManagementPanel';
 import { EventApplicationsRow } from '../../components/EventApplicationsRow';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Wrapper } from '../../components/Wrapper';
@@ -148,7 +149,7 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
       try {
         const token = await getToken();
         const res = await cancelEventApplication(kind, token, meetup.id);
-        if (!res.ok) { Alert.alert('Не удалось отменить', 'Проверьте подключение и обновите карточку.'); return; }
+        if (!res.ok) { const message = joinFailureMessage(res); Alert.alert(message.title, message.body); return; }
         setServerStatus('cancelled'); remove(`${kind}:${meetup.id}`);
         const detail = await fetchDetail(meetup.id, token);
         if (detail) setMeetup(detail.meetup);
@@ -275,6 +276,10 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
             leading={<View style={{ width: 44, height: 44, borderRadius: 22, borderCurve: 'continuous', backgroundColor: T.brand, alignItems: 'center', justifyContent: 'center' }}><Text style={[ty.headline, { color: '#fff' }]}>{meetup.organizer.charAt(0)}</Text></View>}
             title={meetup.organizer} subtitle="Divergents" />
         </ListSection></Wrapper>
+
+        <Wrapper marginTop={16} marginHorizontal={16}><EventManagementPanel kind={kind} eventId={meetup.id}
+          onChanged={() => { navigation.replace(route.name as any, route.params as any); }}
+          onAttendance={() => navigation.navigate('EventApplicants', { kind: kind, eventId: meetup.id, title: meetup.title })} /></Wrapper>
 
         {isSignedIn && canManage ? (
           <Wrapper marginTop={6} marginHorizontal={16}>

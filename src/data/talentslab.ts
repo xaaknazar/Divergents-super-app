@@ -13,6 +13,16 @@ export interface GallupTalent { rank: number; name: string; domain: GallupDomain
 export interface GardnerResult { category: string; score: number } // score 0..100
 export interface TalentReport { type: string; title: string; url: string }
 
+export interface ResumeFamilyMember {
+  relation?: string; type?: string; name?: string;
+  birth_year?: string | number | null; profession?: string | null;
+}
+export interface ResumeFamilyGroups {
+  parents?: ResumeFamilyMember[]; siblings?: ResumeFamilyMember[]; children?: ResumeFamilyMember[];
+  no_parents?: boolean; only_child?: boolean; is_new_structure?: boolean;
+}
+export type ResumeFamily = string | (string | ResumeFamilyMember)[] | ResumeFamilyGroups;
+
 export interface ResumeData {
   full_name?: string | null; email?: string | null; phone?: string | null;
   gender?: string | null; marital_status?: string | null; birth_date?: string | null;
@@ -25,7 +35,7 @@ export interface ResumeData {
   school?: string | null; universities?: any[]; language_skills?: any[]; computer_skills?: string | null;
   work_experience?: any[]; total_experience_years?: number | null; job_satisfaction?: number | null;
   desired_position?: string | null; desired_positions?: string[]; activity_sphere?: string | null;
-  awards?: any[]; expected_salary?: string | null; employer_requirements?: string | null; family?: string[];
+  awards?: any[]; expected_salary?: string | null; employer_requirements?: string | null; family?: ResumeFamily | null;
   /** Вузы/опыт/языки/награды строками — для формы приложения (сервер TalentsLab ≥ 2026-09). */
   resume_lines?: Partial<Record<ResumeListKey, string[]>>;
 }
@@ -426,24 +436,54 @@ export function applyGallupOrder(
 }
 
 // ─── Resume formatting helpers ─────────────────────────────────────
-export function fmtList(v: any): string {
-  if (!Array.isArray(v)) return v ? String(v) : '';
-  return v.map((it) => {
-    if (it && typeof it === 'object') {
-      if (it.language) return [it.language, it.level].filter(Boolean).join(' — ');
-      if (it.name) return [it.name, it.city, it.graduation_year].filter(Boolean).join(', ');
-      if (it.company || it.position) return [it.position, it.company].filter(Boolean).join(' · ');
-      return Object.values(it).filter(Boolean).join(' · ');
-    }
-    return String(it);
-  }).filter(Boolean).join(', ');
+/** Format supported JSON values without coercing nested objects to "[object Object]". */
+export function fmtList(value: unknown): string {
+  return formatResumeValue(value, 0);
+}
+function formatResumeValue(value: unknown, depth: number): string {
+  if (value == null || depth > 8) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : '';
+  if (typeof value === 'boolean') return value ? 'Да' : 'Нет';
+  const text = (item: unknown) => formatResumeValue(item, depth + 1);
+  const join = (items: unknown[], separator: string) => items.map(text).filter(Boolean).join(separator);
+  if (Array.isArray(value)) return join(value, ', ');
+  if (typeof value !== 'object') return '';
+  const item = value as Record<string, unknown>;
+  if (item.language) return join([item.language, item.level], ' — ');
+  if (item.name) return join([item.name, item.city, item.graduation_year], ', ');
+  if (item.company || item.position) return join([item.position, item.company], ' · ');
+  return join(Object.values(item), ' · ');
+}
+
+/** Mirrors Talentslab getFamilyStructured(); also supports legacy text/member lists. */
+export function formatResumeFamily(value: unknown): string {
+  const scalar = (v: unknown) => typeof v === 'string' || typeof v === 'number' ? fmtList(v) : '';
+  const member = (v: unknown): string => {
+    if (typeof v === 'string') return v.trim();
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return '';
+    const m = v as Record<string, unknown>;
+    const year = scalar(m.birth_year);
+    return [scalar(m.relation) || scalar(m.type), scalar(m.name), year ? `${year} г. р.` : '', scalar(m.profession)].filter(Boolean).join(' · ');
+  };
+  if (typeof value === 'string') return value.trim();
+  if (Array.isArray(value)) return value.map(member).filter(Boolean).join('\n');
+  if (!value || typeof value !== 'object') return '';
+  const family = value as Record<string, unknown>;
+  return ([['parents', 'Родители'], ['siblings', 'Братья и сёстры'], ['children', 'Дети']] as const).flatMap(([key, label]) => {
+    const entries = family[key];
+    const answer = key === 'parents' && family.no_parents === true ? 'Нет родителей'
+      : key === 'siblings' && family.only_child === true ? 'Единственный ребёнок'
+      : Array.isArray(entries) ? entries.map(member).filter(Boolean).join('\n') : '';
+    return answer ? [`${label}:\n${answer}`] : [];
+  }).join('\n\n');
 }
 
 export function resumeRows(r: ResumeData | null): { label: string; value: string }[] {
   if (!r) return [];
   const rows: { label: string; value: string }[] = [];
   const add = (label: string, v: any) => {
-    const val = Array.isArray(v) ? fmtList(v) : (v == null ? '' : String(v));
+    const val = fmtList(v);
     if (val && val.trim()) rows.push({ label, value: val.trim() });
   };
   // Личные данные
@@ -476,7 +516,7 @@ export function resumeRows(r: ResumeData | null): { label: string; value: string
   add('Часов на развлечения в неделю', r.entertainment_hours_weekly);
   add('Часов в соцсетях в неделю', r.social_media_hours_weekly);
   add('Водительские права', r.has_driving_license === undefined ? '' : r.has_driving_license ? 'Да' : 'Нет');
-  add('Семья', r.family);
+  add('Семья', formatResumeFamily(r.family));
   return rows;
 }
 

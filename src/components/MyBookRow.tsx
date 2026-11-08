@@ -33,7 +33,7 @@ export function MyBookRow({ title, author, cover, detail, read, busy = false, on
         ширину у названия; что именно произойдёт, говорит подсказка VoiceOver. */}
     {onToggleRead ? <Button label={read ? 'Вернуть' : 'Готово'} icon={read ? undefined : 'checkmark'} size="compact"
       variant={read ? 'plain' : 'tinted'} tone={read ? 'neutral' : 'brand'} loading={busy}
-      accessibilityHint={read ? `Вернуть «${title}» в «Читаю»` : `Отметить «${title}» прочитанной — и в Reading-челленджах тоже`} onPress={onToggleRead} /> : null}
+      accessibilityHint={read ? `Вернуть «${title}» в «Читаю»` : `Отметить «${title}» прочитанной`} onPress={onToggleRead} /> : null}
   </View>;
 }
 const styles = StyleSheet.create({

@@ -1,5 +1,5 @@
 import { applicantResumeSections } from '../applicantResume';
-import { resumeRows, ResumeData } from '../talentslab';
+import { resumeRows, ResumeData, fmtList } from '../talentslab';
 
 it('keeps zero and false answers, separates long lists, and uses resume_lines when raw lists are empty', () => {
   const sections = applicantResumeSections({ ready_to_relocate: false, books_per_year: 0,
@@ -38,4 +38,25 @@ it('retains Talentslab education specialisation and dated work responsibilities'
   }).flatMap(s => s.rows);
   expect(rows.find(r => r.label === 'Вузы')?.value).toBe('Вуз, Маркетинг, Магистр, 2020');
   expect(rows.find(r => r.label === 'Опыт работы')?.value).toBe('Менеджер · Компания\nАстана\n2.2021 — по настоящее время\nОбучение команды\nЗапуск программ');
+});
+
+
+it('formats the structured family returned by Talentslab without displaying transport metadata', () => {
+  const family = { parents: [{ relation: 'Мать', birth_year: 1970, profession: 'Учитель' }],
+    siblings: [{ relation: 'Брат', birth_year: '1998' }], children: [{ name: 'Ребёнок', birth_year: 2020 }], is_new_structure: true };
+  const original = JSON.stringify(family);
+  const expected = 'Родители:\nМать · 1970 г. р. · Учитель\n\nБратья и сёстры:\nБрат · 1998 г. р.\n\nДети:\nРебёнок · 2020 г. р.';
+  expect(resumeRows({ family }).find(r => r.label === 'Семья')?.value).toBe(expected);
+  expect(applicantResumeSections({ family }).flatMap(s => s.rows).find(r => r.label === 'Семья')?.value).toBe(expected);
+  expect(JSON.stringify(family)).toBe(original);
+});
+it('preserves legacy family entries and does not infer missing family answers', () => {
+  expect(resumeRows({ family: ['Мать', { type: 'Брат', birth_year: 2000 }] })).toEqual([{ label: 'Семья', value: 'Мать\nБрат · 2000 г. р.' }]);
+  expect(resumeRows({ family: { parents: [], siblings: [{}], children: [], is_new_structure: true } })).toEqual([]);
+  expect(resumeRows({ family: { no_parents: true, only_child: true } })[0].value).toBe('Родители:\nНет родителей\n\nБратья и сёстры:\nЕдинственный ребёнок');
+});
+it('does not leak object coercions or null into nested resume lists and preserves zero', () => {
+  expect(fmtList([{ detail: { text: 'Награда' }, year: 0 }, null])).toBe('Награда · 0');
+  expect(fmtList([{ name: { text: 'Вуз' }, city: 'Астана' }])).toBe('Вуз, Астана');
+  expect(resumeRows({ computer_skills: { text: 'Excel' } } as unknown as ResumeData)).toEqual([{ label: 'Компьютерные навыки', value: 'Excel' }]);
 });

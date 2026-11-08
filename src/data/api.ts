@@ -715,6 +715,8 @@ export function joinFailureMessage(r: PostResult): { title: string; body: string
     const detail = r.spots ? ` Все ${r.spots} мест заняты.` : '';
     return { title: 'Свободных мест нет', body: `Набор уже заполнен.${detail} Попробуйте следующую поездку или напишите организатору.` };
   }
+  if (r.reason === 'started') return { title: 'Встреча уже началась', body: 'Участие после начала встречи нельзя отменить в приложении. Свяжитесь с организатором.' };
+  if (r.reason === 'organizer') return { title: 'Вы организатор', body: 'Организатор не отправляет и не отменяет заявку на своё событие.' };
   if (r.reason === 'closed') {
     return { title: 'Набор закрыт', body: 'Организатор больше не принимает заявки.' };
   }

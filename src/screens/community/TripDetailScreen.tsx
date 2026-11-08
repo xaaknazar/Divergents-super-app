@@ -1,3 +1,4 @@
+import { EventManagementPanel } from '../../components/EventManagementPanel';
 import { EventApplicationsRow } from '../../components/EventApplicationsRow';
 import { IconBadge } from '../../components/IconBadge';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -160,7 +161,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
       try {
         const token = await getToken();
         const res = await cancelEventApplication('trip', token, trip.id);
-        if (!res.ok) { Alert.alert('Не удалось отменить', 'Проверьте подключение и обновите карточку.'); return; }
+        if (!res.ok) { const message = joinFailureMessage(res); Alert.alert(message.title, message.body); return; }
         setServerStatus('cancelled'); remove(`${'trip'}:${trip.id}`);
         const detail = await fetchTripDetail(trip.id, token);
         if (detail) setTrip(detail.trip);
@@ -297,6 +298,10 @@ export function TripDetailScreen({ route, navigation }: Props) {
 
         {/* Инструменты организатора. Раньше их не было вовсе: человек создавал
             поездку и не мог ни увидеть заявки, ни принять решение. */}
+        <Wrapper marginTop={16} marginHorizontal={16}><EventManagementPanel kind={'trip'} eventId={trip.id}
+          onChanged={() => { navigation.replace(route.name as any, route.params as any); }}
+          onAttendance={() => navigation.navigate('EventApplicants', { kind: 'trip', eventId: trip.id, title: trip.title })} /></Wrapper>
+
         {isSignedIn && canManage ? (
           <Wrapper marginTop={6} marginHorizontal={16}>
             <EventApplicationsRow canManage={canManage} pendingCount={pendingCount}

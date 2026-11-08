@@ -1,0 +1,10 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
+import { EventMessageSheet } from './EventMessageSheet';
+const meta = { title: 'Community/EventMessageSheet', component: EventMessageSheet, args: { mode: 'announcement', onClose: () => {}, onSave: async () => {} } } satisfies Meta<typeof EventMessageSheet>;
+export default meta; type Story = StoryObj<typeof meta>;
+export const Announcement: Story = {};
+export const Flag: Story = { args: { mode: 'flag' } };
+export const Revoke: Story = { args: { mode: 'revoke' } };
+export const Dark: Story = { ...Flag, parameters: { scheme: 'dark' } };
+export const SaveError: Story = { args: { onSave: async () => { throw new Error('Нет связи. Введённый текст сохранён в форме. Повторите попытку.'); } } };
+export const LargeText: Story = { ...Flag, parameters: { viewport: 'compact', textSize: 'xl' } };
