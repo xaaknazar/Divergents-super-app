@@ -30,7 +30,8 @@ import {
   fetchEventApplicants, decideEventApplicant,
   EventApplicant, EventApplicants, EventAppStatus, EventKind,
 } from '../../data/community';
-import { normalizeProfile } from '../../data/talentslab';
+import { effectiveResumeCompleteness, normalizeProfile } from '../../data/talentslab';
+import { EventApplicantActivity } from '../../components/EventApplicantActivity';
 import { ApplicantProfileReport } from '../../components/ApplicantProfileReport';
 import { CommunityStackParams } from '../../navigation/types';
 import * as pl from '../../data/plural';
@@ -204,6 +205,11 @@ export function EventApplicantsScreen({ route, navigation }: Props) {
                 {canViewProfiles && !p ? <FieldValueRow label="Почта" value={sel?.userEmail} hideWhenEmpty /> : null}
               </View>
             </ListSection></Wrapper>
+
+            {canViewProfiles && sel ? <Wrapper marginTop={20} marginHorizontal={16}>
+              <EventApplicantActivity key={`${userId}-${sel.id}`} kind={kind} eventId={eventId} applicationId={sel.id}
+                completeness={p ? effectiveResumeCompleteness(normalizeProfile(p)) : null} />
+            </Wrapper> : null}
 
             {!canViewProfiles ? (
               <Text style={[ty.subhead, { color: T.labelSecondary, padding: 20 }]}>Анкеты и контакты доступны только администраторам. Вы можете принять или отклонить заявку по публичному имени.</Text>
