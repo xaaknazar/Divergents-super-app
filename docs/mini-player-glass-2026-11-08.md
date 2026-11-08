@@ -1,7 +1,17 @@
-# Mini-player glass capsule — 2026-11-08
+# Мини-плеер: синее стекло — 8 ноября 2026
 
-Implemented the owner's iOS photo-picker primary-action reference: blue translucent capsule, white labels/symbols, circular play/pause and close targets, subtle inset playback progress. The blue treatment is consistent in both themes; Reduce Transparency uses an opaque readable blue surface. iOS 26 uses native GlassView; earlier iOS uses blur, other platforms use tinted fallback.
+## Изменение
 
-MiniPlayerCard owns visuals with semantic/data props and Storybook variants (playing, paused, dark, downloaded audio, compact, large text, reduced transparency). MiniPlayer retains existing navigation and audio-context callbacks. TabDock now only positions the card: its opaque/clipping wrapper was removed so the material and shadow are visible. Existing content-clearance calculation still reserves at least the card's height.
+Материал мини-плеера приближен к выбранному образцу кнопки iOS «Добавить 1 элемент»: прозрачное синее стекло, тонкий светлый край и мягкая тень. На iOS 26 используется нативный clear GlassView со скруглением самого материала, а не только внешнего контейнера. На предыдущих версиях сохранён вариант с размытием; при понижении прозрачности используется сплошной контрастный фон.
 
-Validation: TypeScript pass; 27 TabDock/Screen/TabBar tests pass. Isolated preview on iOS 26.5 simulator inspected at normal/compact width and reduced transparency; tapping pause changed to Continue. No real account/audio data used; no physical iPhone or end-to-end audio playback verification. Preview /private/tmp/divergents-mini-player-preview.png. Temporary preview entry removed, index.js restored. Not uploaded to TestFlight in this task.
+Размеры, название урока, прогресс и действия открытия, воспроизведения, паузы и закрытия сохранены. В Storybook добавлены сцены поверх изображений и вариант с понижением прозрачности.
+
+## Проверки
+
+- `npm run typecheck` — успешно.
+- Jest: TabDock, Screen, TabBar — 3 набора, 27 тестов, без ошибок.
+- `git diff --check` — успешно.
+- Нативная Storybook-сцена проверена в симуляторе iOS 26.5: воспроизведение и пауза поверх обложек, а также обычный фон. Финальный снимок: `/tmp/mini-player-glass-final.png`.
+- На физическом iPhone, старых версиях iOS и Android визуальная проверка не проводилась. Вариант с понижением прозрачности добавлен в Storybook, но отдельно не снят.
+
+Новая сборка и публикация в TestFlight в рамках этой правки не выполнялись.

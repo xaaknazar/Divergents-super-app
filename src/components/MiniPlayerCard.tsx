@@ -19,7 +19,8 @@ export interface MiniPlayerCardProps {
   onClose: () => void;
 }
 
-/** Tinted floating glass, like the compact primary action in the iOS photo picker. */
+/** Photo-picker style: clear refracting glass, a readable blue tint and a rounded native lens.
+ * The material itself needs its radius; clipping only its parent leaves rectangular optics. */
 export function MiniPlayerCard({ title, courseTitle, kind, playing, progress, onOpen, onToggle, onClose }: MiniPlayerCardProps) {
   const { ty, reduceTransparency } = useTheme();
   const fraction = Number.isFinite(progress) ? Math.max(0, Math.min(1, progress)) : 0;
@@ -27,12 +28,12 @@ export function MiniPlayerCard({ title, courseTitle, kind, playing, progress, on
     <View style={styles.capsule}>
       <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
         {reduceTransparency ? <View style={[StyleSheet.absoluteFill, styles.solid]} />
-          : nativeGlass ? <GlassView testID="mini-player-glass" glassEffectStyle="regular" colorScheme="light"
-            tintColor="rgba(0,124,218,0.86)" style={StyleSheet.absoluteFill} />
+          : nativeGlass ? <GlassView testID="mini-player-glass" glassEffectStyle="clear" colorScheme="light"
+            tintColor="rgba(0,78,170,0.80)" style={[StyleSheet.absoluteFill, styles.material]} />
           : <>
-            {Platform.OS === 'ios' ? <BlurView intensity={32} tint="dark" style={StyleSheet.absoluteFill} /> : null}
+            {Platform.OS === 'ios' ? <BlurView intensity={18} tint="dark" style={[StyleSheet.absoluteFill, styles.material]} /> : null}
             <View style={[StyleSheet.absoluteFill, styles.tint]} />
-            <LinearGradient colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0)', 'rgba(0,176,255,0.16)']}
+            <LinearGradient colors={['rgba(255,255,255,0.10)', 'rgba(255,255,255,0)', 'rgba(0,137,255,0.10)']}
               locations={[0, 0.4, 1]} style={StyleSheet.absoluteFill} />
           </>}
       </View>
@@ -66,18 +67,19 @@ export function MiniPlayerCard({ title, courseTitle, kind, playing, progress, on
 }
 
 const styles = StyleSheet.create({
-  elevation: { shadowColor: '#001B45', shadowOpacity: 0.16, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  elevation: { shadowColor: '#001B45', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   capsule: { borderRadius: 999, overflow: 'hidden', borderCurve: 'continuous' },
-  solid: { backgroundColor: '#006CCB' },
-  tint: { backgroundColor: 'rgba(0,108,211,0.90)' },
+  material: { borderRadius: 999, borderCurve: 'continuous' },
+  solid: { backgroundColor: '#0062B8' },
+  tint: { backgroundColor: 'rgba(0,66,145,0.76)' },
   rim: { ...StyleSheet.absoluteFillObject, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(151,223,255,0.38)', borderTopColor: 'rgba(218,244,255,0.68)', borderBottomColor: 'rgba(96,204,255,0.48)' },
+    borderColor: 'rgba(169,225,255,0.48)', borderTopColor: 'rgba(218,244,255,0.80)', borderBottomColor: 'rgba(96,204,255,0.52)' },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, paddingLeft: 18, paddingRight: 8, gap: 4 },
   source: { flex: 1, minWidth: 0, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10 },
   sourceIcon: { width: 26, alignItems: 'center' },
   text: { flex: 1, minWidth: 0 },
   title: { color: '#FFFFFF' },
-  subtitle: { color: 'rgba(255,255,255,0.9)', marginTop: 1 },
+  subtitle: { color: '#FFFFFF', marginTop: 1 },
   play: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.65 },
