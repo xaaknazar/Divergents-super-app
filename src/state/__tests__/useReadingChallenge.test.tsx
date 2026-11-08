@@ -16,7 +16,7 @@ jest.mock('../persist', () => ({ loadJSON: jest.fn(async (key, fallback) => mock
   readJSON: jest.fn(async (key, fallback) => ({ ok: true, value: mockDisk[key] ?? fallback })),
   saveJSON: jest.fn(async (key, value) => { mockDisk[key] = JSON.parse(JSON.stringify(value)); }) }));
 jest.mock('../readingNative', () => ({ ...jest.requireActual('../readingNative'), readingNative: { capabilities: jest.fn(),
-  snapshot: jest.fn(async () => null), remainingMs: jest.fn(async () => 1800000), pause: jest.fn(), start: jest.fn(), acknowledge: jest.fn(), authorize: jest.fn(), selectApps: jest.fn(),
+  snapshot: jest.fn(async () => null), remainingMs: jest.fn(async () => 1800000), pause: jest.fn(), finish: jest.fn(), start: jest.fn(), acknowledge: jest.fn(), authorize: jest.fn(), selectApps: jest.fn(),
   reconcileLiveActivity: jest.fn(), restoreLiveActivity: jest.fn(), configurePageReminder: jest.fn(async () => {}) } }));
 jest.mock('expo-crypto', () => ({ CryptoDigestAlgorithm: { SHA256: 'SHA256' },
   digestStringAsync: async (algorithm: string, value: string) => value.includes('report') ? 'b'.repeat(64) : 'a'.repeat(64), randomUUID: () => 'random-id' }));
@@ -92,6 +92,7 @@ beforeEach(() => { jest.clearAllMocks(); mockAccount = 'demo-reader'; mockDisk =
   jest.mocked(readingNative.snapshot).mockReset().mockResolvedValue(null);
   jest.mocked(readingNative.pause).mockReset().mockResolvedValue(null);
   jest.mocked(readingNative.start).mockReset();
+  jest.mocked(readingNative.finish).mockReset();
   jest.mocked(readingNative.authorize).mockReset().mockResolvedValue(undefined);
   jest.mocked(readingNative.selectApps).mockReset().mockResolvedValue(undefined);
   jest.mocked(readingNative.acknowledge).mockReset().mockResolvedValue(undefined);
@@ -913,8 +914,19 @@ test('leave pauses locally and only clears evidence after the server confirms re
   const participationId = '10de0677-6bf7-44ef-a301-94c98d9c35d2';
   const d = { ...server, supportsLeave: true, participationId };
   fetchDetail.mockResolvedValue(d);
-  const running = { ...local, status: 'running' as const, resumeVersion: 1 as const, terminal: false };
-  jest.mocked(readingNative.snapshot).mockResolvedValue(running);
+  const running = { ...local, status: 'running' as const, resumeVersion: 1 as const, terminal: false, generation: 'running' };
+  let journal: import('../readingNative').NativeReadingSession | null = running;
+  jest.mocked(readingNative.snapshot).mockImplementation(async () => journal);
+  jest.mocked(readingNative.pause).mockImplementation(async () => {
+    journal = { ...running, status: 'paused', generation: 'paused' }; return journal;
+  });
+  jest.mocked(readingNative.finish).mockImplementation(async (_account, _id, generation) => {
+    expect(generation).toBe('paused');
+    journal = { ...journal!, terminal: true }; return journal;
+  });
+  jest.mocked(readingNative.acknowledge).mockImplementation(async () => {
+    expect(journal?.terminal).toBe(true); journal = null;
+  });
   const h = await renderHook(() => useReadingChallenge('reading-demo'));
   await waitFor(() => expect(h.result.current.busy).toBe(false));
   send.mockImplementation(async (_token, command) => {
@@ -922,7 +934,6 @@ test('leave pauses locally and only clears evidence after the server confirms re
       expect(readingNative.pause).toHaveBeenCalled();
       expect(readingNative.acknowledge).not.toHaveBeenCalled();
       fetchDetail.mockResolvedValue({ ...d, membership: null, me: null, session: null });
-      jest.mocked(readingNative.snapshot).mockResolvedValue(null);
     }
     return { ok: true };
   });
@@ -947,13 +958,58 @@ test('lost leave response preserves evidence and repeats the same destructive op
 test('new participation on another device releases only this challenge old native session', async () => {
   const d = { ...server, supportsLeave: true, participationId: 'old' };
   fetchDetail.mockResolvedValue(d);
-  jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, status: 'running', resumeVersion: 1, terminal: false });
+  jest.mocked(readingNative.snapshot).mockResolvedValue({ ...local, status: 'running', resumeVersion: 1, terminal: false, generation: 'old' });
+  jest.mocked(readingNative.finish).mockResolvedValue({ ...local, resumeVersion: 1, terminal: true, generation: 'sealed' });
   const h = await renderHook(() => useReadingChallenge('reading-demo'));
   await waitFor(() => expect(h.result.current.busy).toBe(false));
   fetchDetail.mockResolvedValue({ ...readingFixture, supportsLeave: true, participationId: 'new' });
   jest.mocked(readingNative.acknowledge).mockImplementation(async () => { jest.mocked(readingNative.snapshot).mockResolvedValue(null); });
   await act(async () => { await h.result.current.retry(); });
-  expect(readingNative.pause).toHaveBeenCalled();
+  expect(readingNative.finish).toHaveBeenCalledWith('demo-reader', 's1', 'old');
   expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 's1');
   expect(h.result.current.data?.participationId).toBe('new');
+});
+
+
+test.each(['paused', 'running'] as const)('rejoined participant releases server-closed %s resumable journal without reporting it again', async status => {
+  let journal: Omit<typeof local, 'status'> & { resumeVersion: 1; terminal: boolean; generation: string; status: 'paused' | 'running' } | null =
+    { ...local, status, resumeVersion: 1, terminal: false, generation: 'old-generation' };
+  fetchDetail.mockResolvedValue({ ...readingFixture, participationId: 'new-participation', reportedSessionIds: ['s1'] });
+  jest.mocked(readingNative.snapshot).mockImplementation(async () => journal);
+  jest.mocked(readingNative.finish).mockImplementation(async (account, id, generation) => {
+    expect([account, id, generation]).toEqual(['demo-reader', 's1', 'old-generation']);
+    journal = { ...journal!, status: 'paused', terminal: true };
+    return journal;
+  });
+  jest.mocked(readingNative.acknowledge).mockImplementation(async () => {
+    if (!journal?.terminal || journal.status !== 'paused') throw new Error('Native session still active');
+    journal = null;
+  });
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  expect(readingNative.finish).toHaveBeenCalledTimes(1);
+  expect(readingNative.acknowledge).toHaveBeenCalledWith('demo-reader', 's1');
+  expect(h.result.current.sessionNotice).toBeUndefined();
+  expect(h.result.current.startBlocked).toBe(false);
+  expect(send).not.toHaveBeenCalled();
+});
+
+
+test.each(['unconfirmed', 'offline', 'foreign', 'changed-generation'] as const)('server closure recovery preserves %s evidence', async reason => {
+  const journal = { ...local, resumeVersion: 1 as const, terminal: false, generation: 'g1',
+    ...(reason === 'foreign' ? { accountId: 'someone-else' } : {}) };
+  const confirmed = { ...readingFixture, reportedSessionIds: ['s1'] };
+  jest.mocked(readingNative.snapshot).mockResolvedValue(journal);
+  if (reason === 'offline') {
+    mockDisk['dvg.readingDetail.demo-reader.reading-demo'] = confirmed;
+    fetchDetail.mockRejectedValue(new Error('offline'));
+  } else fetchDetail.mockResolvedValue(reason === 'unconfirmed' ? readingFixture : confirmed);
+  jest.mocked(readingNative.finish).mockRejectedValue(new Error('Сеанс изменился'));
+  const h = await renderHook(() => useReadingChallenge('reading-demo'));
+  await waitFor(() => expect(h.result.current.busy).toBe(false));
+  expect(readingNative.acknowledge).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  if (reason !== 'changed-generation') expect(readingNative.finish).not.toHaveBeenCalled();
+  else expect(h.result.current.error).toContain('Сеанс изменился');
+  expect(h.result.current.startBlocked).toBe(true);
 });

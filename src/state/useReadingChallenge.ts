@@ -117,7 +117,7 @@ function sessionNoticeFor(local: NativeReadingSession | null, account: string, s
   if (local.accountId !== account) return { kind: 'other-account',
     message: 'Сохранён незавершённый подход другого аккаунта. Рейтинг и правила доступны. Для нового таймера сначала войдите в прежний аккаунт и сохраните его страницы; затем вернитесь и нажмите «Повторить».' };
   if (local.sessionId !== sessionId) return { kind: 'other-challenge',
-    message: 'На телефоне сохранён подход другого челленджа. Откройте тот челлендж и сохраните страницы, затем вернитесь и нажмите «Повторить». Рейтинг и правила доступны.' };
+    message: 'На телефоне остался незавершённый подход, который пока не удалось связать с этим участием. Нажмите «Повторить», чтобы проверить его состояние. Если вы читали в другом Reading challenge, сохраните страницы там. Не удаляйте приложение: время подхода сохранено на телефоне.' };
 }
 export function useReadingChallenge(challengeId: string) {
   const { userId, getToken } = useAuth();
@@ -179,6 +179,22 @@ export function useReadingChallenge(challengeId: string) {
   const context = useMemo(() => Symbol('reading-screen'), [account, challengeId]);
   const contextRef = useRef(context); contextRef.current = context;
   const current = useCallback(() => mounted.current && authRef.current.userId === account && contextRef.current === context, [account, context]);
+  // Call only after a definitive server closure/reset/rejection, or a durable local report.
+  // A resumable pause is NOT a sealed journal: native acknowledge intentionally rejects it.
+  // finish is identity + generation guarded and never submits time/pages to the server.
+  const releaseClosedSession = useCallback(async (local: NativeReadingSession) => {
+    if (!current() || local.accountId !== account || isLegacyReadingQASession(local)) throw new Error('Сеанс изменился. Обновите экран.');
+    if (!isTerminalSession(local)) {
+      if (local.resumeVersion === 1 && !local.generation) throw new Error('Не удалось подтвердить состояние таймера. Нажмите «Повторить».');
+      const sealed = local.resumeVersion === 1
+        ? await readingNative.finish(account, local.sessionId, local.generation!)
+        : await readingNative.pause();
+      if (!sealed || sealed.accountId !== account || sealed.sessionId !== local.sessionId || !isTerminalSession(sealed))
+        throw new Error('Не удалось завершить сохранённый таймер. Нажмите «Повторить».');
+    }
+    if (!current()) return;
+    await readingNative.acknowledge(account, local.sessionId);
+  }, [account, current]);
   const observeLocalSession = useCallback((local: NativeReadingSession | null) => {
     if (!current()) return;
     const owned = local?.accountId === account && local.status === 'running' ? local : null;
@@ -254,8 +270,7 @@ export function useReadingChallenge(challengeId: string) {
         pages: typeof report?.pages === 'number' ? report.pages : undefined });
       if (own) {
         try {
-          if (own.status === 'running') await readingNative.pause();
-          await readingNative.acknowledge(account, sessionId);
+          await releaseClosedSession(own);
         } catch { /* the next synchronization shows the remaining journal */ }
       }
     },
@@ -277,7 +292,7 @@ export function useReadingChallenge(challengeId: string) {
         message: receipt.message ?? 'Подход пересекается по времени с другим подходом и не засчитан.',
         elapsedMs: typeof command.elapsedMs === 'number' ? command.elapsedMs : undefined });
     },
-  }), [account, current, token, rememberRejected]);
+  }), [account, current, token, rememberRejected, releaseClosedSession]);
   /** Server copy + approaches saved on this phone but not delivered yet. `stale`: no fresh server answer,
    * so the calendar day follows the phone clock. Never sends anything. */
   const applyLocalView = useCallback(async (raw: ReadingDetail, stale: boolean) => {
@@ -311,7 +326,7 @@ export function useReadingChallenge(challengeId: string) {
       const pending = (await queue.pending()).commands;
       if (!current()) return null;
       const belongs = local?.accountId === account && (local.sessionId === previous.session?.id || pending.some(c => c.challengeId === challengeId && c.sessionId === local.sessionId));
-      if (belongs) { await readingNative.pause(); await readingNative.acknowledge(account, local.sessionId); }
+      if (belongs) await releaseClosedSession(local);
       await queue.discardChallenge(challengeId);
       await saveJSON(pendingStartKey, null, { strict: true });
       if (current()) { setNativeSession(null); setStartRecovery(null); startRecoveryRef.current = null; }
@@ -332,7 +347,7 @@ export function useReadingChallenge(challengeId: string) {
     const caps = await readingNative.capabilities();
     if (current()) setCapabilities(caps);
     return view;
-  }, [challengeId, current, cacheKey, token, applyLocalView, account]);
+  }, [challengeId, current, cacheKey, token, applyLocalView, account, releaseClosedSession]);
   const run = useCallback(async (action: () => Promise<unknown>, kind: 'action' | 'refresh' = 'action') => {
     if (!account || !current()) return;
     const operation = Symbol('reading-operation');
@@ -454,14 +469,15 @@ export function useReadingChallenge(challengeId: string) {
     if (deviceError) throw deviceError;
     let local = await readingNative.snapshot();
     if (!current()) return;
+    // Keep the start blocked even if sealing a confirmed old journal fails below.
+    setSessionNotice(sessionNoticeFor(local, account, result.session?.id));
     // A timer whose start, time or pages the server definitively refused (possibly while it was being
     // launched) can never be credited: release it so the next approach can start. The refusal stays visible.
     if (local?.accountId === account) {
       const refusedNow = await loadJSON<ReadingRejectedApproach[]>(rejectedKey, []);
       if (Array.isArray(refusedNow) && refusedNow.some(r => r.sessionId === local!.sessionId)) {
         if (current()) setRejected(refusedNow);
-        if (local.status === 'running') await readingNative.pause();
-        await readingNative.acknowledge(account, local.sessionId);
+        await releaseClosedSession(local);
         local = await readingNative.snapshot();
         if (!current()) return;
       }
@@ -485,9 +501,14 @@ export function useReadingChallenge(challengeId: string) {
         .some(a => a.sessionId === local.sessionId && a.phase === 'saved'); } catch { savedLocally = false; }
     }
     if (local?.sessionId !== initialLocal?.sessionId || local?.status !== initialLocal?.status) void reconcileLiveActivity(local);
-    if (local?.accountId === account && isTerminalSession(local) && (savedLocally || result.reportedSessionIds.includes(local.sessionId))) {
-      await readingNative.acknowledge(account, local.sessionId);
+    // A fresh server receipt also closes resumable/running leftovers after a lost
+    // report acknowledgement or leaving/rejoining. Never infer closure from a missing
+    // session, a cached response, another account, or another challenge's results.
+    const closedOnServer = !stale && local && serverDetailRef.current?.reportedSessionIds.includes(local.sessionId);
+    if (local?.accountId === account && (closedOnServer || isTerminalSession(local) && savedLocally)) {
+      await releaseClosedSession(local);
       if (!current()) return;
+      observeLocalSession(null);
       setNativeSession(null); setSessionNotice(undefined);
       setRemaining(readingGoalMs(result) - (result.me?.history.find(day => day.day === result.currentDay)?.elapsedMs ?? 0));
     } else if (local?.accountId === account && result.session && local.sessionId === result.session.id) {
@@ -519,7 +540,7 @@ export function useReadingChallenge(challengeId: string) {
     if (uploadError && !(stale && isReadingOffline(uploadError))) throw uploadError;
     return stale ? 'offline' : 'online';
   }, [queue, refresh, current, account, challengeId, cacheKey, observeLocalSession, reconcileLiveActivity, reconcilePendingStart,
-    applyLocalView, rejectedKey, pendingStartKey]);
+    applyLocalView, rejectedKey, pendingStartKey, releaseClosedSession]);
   synchronizeRef.current = () => synchronize(false, REFRESH_DEADLINE_MS);
   useEffect(() => {
     mounted.current = true;
@@ -999,7 +1020,11 @@ export function useReadingChallenge(challengeId: string) {
       await sendReadingCommand(accessToken, { action: 'leave', challengeId, participationId: detail.participationId, confirmReset: true, operationId });
       if (!current()) return;
       await queue.discardChallenge(challengeId);
-      if (ownSession) await readingNative.acknowledge(account, local.sessionId);
+      if (ownSession) {
+        // The pause above may have changed the generation; re-read before sealing.
+        const afterLeave = await readingNative.snapshot();
+        if (afterLeave?.accountId === account && afterLeave.sessionId === local.sessionId) await releaseClosedSession(afterLeave);
+      }
       await clearPendingStart();
       await saveJSON(cacheKey, null, { strict: true });
       setNativeSession(null); setRemaining(readingGoalMs(detail));
