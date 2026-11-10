@@ -2,6 +2,15 @@
 
 Status: NOT submitted, NOT available to testers. Closed Alpha only; no production rollout. Main working copy and iOS build number remain unchanged.
 
+## Owner follow-up, November 10
+
+- Owner selected Google Maps with the ordinary no-map-ID map, rather than migrating providers. Source search found no `googleMapId`, `mapId`, or Street View usage in `src`. Google still requires a billing-enabled project; selection/attachment of the billing account has not been verified. The browser controller was unavailable during the follow-up, so no Google Cloud changes were made.
+- Owner reports the reviewer password has been set. This supersedes the pending password-entry step below, but is not independent proof of a successful clean-device login. Device Trust remains a separate gate.
+- Owner supplied and confirmed the public operator details: **ИП Tynys Tech**, identification number **010603550366**, **Казахстан, г. Алматы, ул. Розыбакиева, 181а**. These are ready for the policy operator block; do not invent a postal code or claim the live website has been updated.
+- The matching official arm64 emulator archive finished downloading, its SHA-1 matched Google's repository metadata, and it was extracted separately under the private artifacts directory. Existing installed SDK was not replaced. Android smoke tests/screenshots are still pending.
+
+Google Maps pricing checked November 10: https://developers.google.com/maps/billing-and-pricing/pricing lists Maps SDK unlimited free usage. Map loads with map IDs and Street View have separate billing. Billing-account enablement is required even for the no-map-ID SDK: https://developers.google.com/maps/documentation/android-sdk/usage-and-billing.
+
 ## Source and checks
 
 - Isolated worktree `/Users/xaknazar/divergents-android-closed-test-1110`, branch `codex/android-closed-test-1110`, based on `bf1ed2a`. Android versionCode remains 123 because the previous candidate was not uploaded.
