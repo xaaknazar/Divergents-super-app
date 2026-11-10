@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "release:check": "node scripts/check-progress-protocol.cjs",
-    "eas-build-pre-install": "node scripts/check-reading-archive.cjs && node scripts/check-progress-protocol.cjs --eas",
+    "eas-build-pre-install": "node scripts/check-android-release.cjs && node scripts/check-reading-archive.cjs && node scripts/check-progress-protocol.cjs --eas",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",

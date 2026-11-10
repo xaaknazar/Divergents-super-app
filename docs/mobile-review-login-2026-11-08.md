@@ -1,5 +1,7 @@
 # Mobile reviewer sign-in - 2026-11-08
 
+> Update 2026-11-10: the owner explicitly approved a separate reviewer password account. Optional password sign-in has been restored in `codex/android-closed-test-1110`; email-code remains the default and registration stays passwordless. See `docs/google-play-123/preparation-2026-11-10.md` for current blockers. The following November 8 decision is historical.
+
 ## Current decision and status
 
 - Owner explicitly chose "Оставить только вход по коду" when asked to enable Add password to account in production Clerk. This supersedes the earlier password-account request.
