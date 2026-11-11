@@ -1,6 +1,6 @@
 # Отметки посещения — 11 ноября 2026
 
-Статус: подготовлено локально в `codex/event-attendance`, не опубликовано. Ветка продолжает предыдущую неопубликованную работу над книгами обычного челленджа (`0e6c736`).
+Реализовано поверх книг обычного челленджа (`0e6c736`), включено в выпуск `codex/books-attendance-125`. Точный статус сборки: [iOS 125](release-125-2026-11-11.md).
 
 ## Поведение
 
@@ -20,7 +20,7 @@
 
 ## Сервер и порядок включения
 
-Серверная ветка находится в `/Users/xaknazar/divergents-challenge-books-server`, также `codex/event-attendance`, поверх книг `19433f2`. Новый API: `GET/POST /api/mobile/events/attendance`; существующий `GET /api/mobile/event-attendance` дополнен `visits`.
+Серверная ветка находится в `/Users/xaknazar/divergents-challenge-books-server`, `codex/books-attendance-125`, поверх книг `19433f2`. Новый API: `GET/POST /api/mobile/events/attendance`; существующий `GET /api/mobile/event-attendance` дополнен `visits`.
 
 Перед мобильным выпуском нужен сервер с миграцией `20261111_event_attendance.sql` и правами runtime-роли на `EventAttendanceRecord`. Порядок и контракт описаны в одноимённом документе серверного репозитория. Старый сервер не отдаёт `canTakeAttendance`, поэтому новая кнопка до серверного выпуска не показывается.
 
@@ -33,4 +33,4 @@
 - Настоящие снимки React Native из iOS-симулятора, с демонстрационными участниками: [светлая](previews/event-attendance/01-list.png), [тёмная](previews/event-attendance/02-dark.png), [крупный текст](previews/event-attendance/03-large-text.png), [системный accessibility-размер](previews/event-attendance/04-accessibility.png), [кнопка организатора](previews/event-attendance/05-organizer-action.png).
 - Нативное нажатие через средство управления симулятором было недоступно (`noWindowsAvailable`). Нажатия и комментарии проверены компонентными тестами; серверное сохранение — на PostgreSQL. Полный путь на физическом iPhone и Android не проверялся.
 
-Новая сборка и серверный выпуск не выполнялись.
+Серверный выпуск выполнен 11 ноября; статус TestFlight и итоговые проверки — в отчёте iOS 125.

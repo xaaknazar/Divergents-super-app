@@ -1,6 +1,6 @@
 # Книги в обычном челлендже
 
-Реализовано в отдельной ветке `codex/challenge-reading-books` от TestFlight 124 (`8d13df7`), в `/Users/xaknazar/divergents-challenge-books`. Исходная рабочая папка `/Users/xaknazar/Divergents-super-app` не изменена. Сервер: `/Users/xaknazar/divergents-challenge-books-server`, одноимённая ветка от `9462515`. Ничего не опубликовано.
+Реализовано от TestFlight 124 (`8d13df7`), в `/Users/xaknazar/divergents-challenge-books`; выпуск на ветке `codex/books-attendance-125`. Исходная рабочая папка `/Users/xaknazar/Divergents-super-app` не изменена. Сервер: `/Users/xaknazar/divergents-challenge-books-server`, одноимённая ветка от `9462515`. [Статус выпуска](release-125-2026-11-11.md).
 
 ## Сценарий
 
@@ -32,4 +32,4 @@
 
 ## Выпуск
 
-Сначала нужен серверный релиз с миграцией двух новых таблиц и grants runtime-роли; затем новая сборка приложения. API и порядок выпуска/отката описаны в одноимённом отчёте серверной ветки. До этого эти изменения доступны только локально. Номер сборки не повышался. Production, данные участников и TestFlight не изменены. Физический iPhone/Android с новой функцией не проверялись.
+Серверный релиз с обеими таблицами и grants runtime-роли выполнен 11 ноября вместе с посещениями. Подготовлена iOS 125; актуальный статус TestFlight и доказательства в [отчёте выпуска](release-125-2026-11-11.md). API и порядок отката описаны в серверном репозитории. Физический iPhone/Android с новой функцией не проверялись.
