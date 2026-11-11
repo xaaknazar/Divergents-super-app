@@ -1,3 +1,5 @@
+import { ChallengeReadingSheet } from "../../components/ChallengeReadingSheet";
+import { useChallengeReadingBooks } from "../../state/useChallengeReadingBooks";
 import { ScrollHeaderLayout } from '../../components/ScrollHeaderLayout';
 import { ActivityCalculatorSheet } from '../../components/ActivityCalculatorSheet';
 import { useActivityGender } from '../../state/useActivityGender';
@@ -475,6 +477,9 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
   const [showConv, setShowConv] = useState(false);
   const [metricEditor, setMetricEditor] = useState<MetricTask | null>(null);
   const [metricDraft, setMetricDraft] = useState('');
+  const [readingTask, setReadingTask] = useState<MetricTask | null>(null);
+  const readingBooks = useChallengeReadingBooks(c.id, readingTask?.id ?? '', c.currentDay, refreshChallenge);
+  useEffect(() => { setReadingTask(null); }, [userId, c.id, c.currentDay]);
   const activityGender = useActivityGender(!!metricEditor && isActivityTask(metricEditor));
   useEffect(() => { setMetricEditor(null); }, [userId, c.id, c.currentDay]);
   const [ratingMode, setRatingMode] = useState<'overall' | 'today'>('overall');
@@ -509,6 +514,10 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
   // Manual entry for metric tasks (steps / pages): tap the value → type it.
   const promptSet = (t: ChallengeTask) => {
     if (t.kind !== 'metric') return;
+    if (t.category === 'R' || (t.category === undefined && /стр/i.test(t.unit))) {
+      if (syncPending || syncError) { Alert.alert('Предыдущая запись ещё не сохранена', 'Дождитесь синхронизации отметок, затем откройте чтение снова.'); return; }
+      setReadingTask(t); return;
+    }
     // Задача про шаги открывается своим окном на обеих платформах: системный
     // Alert.prompt не умеет показать строку с подсказкой от шагомера, а без неё
     // человеку опять пришлось бы переписывать число из «Здоровья» руками.
@@ -868,6 +877,9 @@ function ActiveChallenge({ navigation, challengeId }: { navigation: Props['navig
         ) : null}
       </ContentBlock></Wrapper>
 
+      {readingTask && !tasksLocked ? <ChallengeReadingSheet key={`${userId}:${c.id}:${c.currentDay}`} books={readingBooks.books}
+        unassignedPages={readingBooks.unassignedPages} loading={readingBooks.loading} error={readingBooks.error}
+        onClose={() => setReadingTask(null)} onRetry={readingBooks.load} onAdd={readingBooks.add} onSave={readingBooks.save} /> : null}
       {/* Activity step-conversions sheet (from the Divergents rules) */}
       <Modal visible={showConv} transparent animationType="slide" onRequestClose={() => setShowConv(false)}>
         <Pressable onPress={() => setShowConv(false)} accessibilityRole="button" accessibilityLabel={tr('Закрыть справку')}

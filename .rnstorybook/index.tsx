@@ -1,3 +1,6 @@
+import { LogBox } from 'react-native';
+// Existing simulator dev clients may lack the notifications persistence module.
+LogBox.ignoreLogs(['[expo-notifications] Error reading persisted']);
 import { view } from './storybook.requires';
 
 // Storybook must not depend on the signed-in app's Keychain/persistence. RN 9

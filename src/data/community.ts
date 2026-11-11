@@ -282,6 +282,7 @@ export interface MetricTask {
   id: string;
   version?: number;
   kind: 'metric';
+  category?: 'R' | 'A' | 'NS';
   title: string;
   icon: SFName;
   unit: string;       // "шагов", "стр."
@@ -637,6 +638,7 @@ const EMPTY_ACTIVE: ActiveChallengeData = { challenge: null, members: [], ok: fa
 // the daily metric/binary task definitions (incl. the user's current values),
 // members is the full team leaderboard. We pass it through with light guards.
 interface RawActiveTask {
+  category?: unknown;
   version?: unknown;
   id?: unknown; kind?: unknown; title?: unknown; icon?: unknown;
   unit?: unknown; min?: unknown; current?: unknown; basePts?: unknown;
@@ -733,6 +735,7 @@ function mapActiveTask(raw: RawActiveTask): ChallengeTask | null {
   return {
     id,
     kind: 'metric',
+    category: raw.category === 'R' || raw.category === 'A' || raw.category === 'NS' ? raw.category : undefined,
     version: numOf(raw.version),
     title,
     icon: coerceIcon(raw.icon, 'target'),

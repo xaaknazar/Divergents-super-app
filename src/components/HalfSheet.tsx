@@ -5,11 +5,11 @@ import { useTheme } from '../theme/ThemeContext';
 import { HeaderIcon } from './HeaderIcon';
 
 /** A focused half-height task. Only its handle dismisses by dragging; lists retain their own scrolling. */
-export function HalfSheet({ visible, title, onClose, onBack, children, footer }: {
+export function HalfSheet({ visible, title, onClose, onBack, children, footer, size = 'regular' }: {
   visible: boolean; title: string; onClose: () => void; onBack?: () => void;
-  children: React.ReactNode; footer?: React.ReactNode;
+  children: React.ReactNode; footer?: React.ReactNode; size?: 'regular' | 'large';
 }) {
-  const { T, ty, reduceMotion } = useTheme();
+  const { T, ty, reduceMotion, textScale = 1 } = useTheme();
   const { height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const pan = useMemo(() => PanResponder.create({ onMoveShouldSetPanResponder: (_, g) => g.dy > 12 && Math.abs(g.dx) < g.dy,
@@ -17,10 +17,10 @@ export function HalfSheet({ visible, title, onClose, onBack, children, footer }:
   return <Modal visible={visible} transparent statusBarTranslucent animationType={reduceMotion ? 'none' : 'slide'} onRequestClose={onClose}>
     <KeyboardAvoidingView style={[styles.host, { paddingTop: insets.top + 16 }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Закрыть панель" />
-      <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: T.cardBg, height: Math.min(height - insets.top - 16, Math.max(410, height * (fontScale > 1.3 ? 0.8 : 0.57))), paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: T.cardBg, height: Math.min(height - insets.top - 16, Math.max(410, height * (fontScale * textScale > 1.15 ? 0.88 : size === 'large' ? 0.68 : 0.57))), paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View {...pan.panHandlers} style={styles.handleArea}><View style={[styles.handle, { backgroundColor: T.labelTertiary }]} /></View>
         <View style={styles.header}>
-          {onBack ? <HeaderIcon name="chevron.left" label="Назад к активности" onPress={onBack} /> : null}
+          {onBack ? <HeaderIcon name="chevron.left" label="Назад" onPress={onBack} /> : null}
           <Text accessibilityRole="header" style={[ty.title3, styles.title, { color: T.label }]}>{title}</Text>
           <HeaderIcon name="xmark" label="Закрыть" onPress={onClose} />
         </View>
