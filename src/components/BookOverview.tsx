@@ -2,13 +2,13 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { BookDetail } from '../data/books';
 import { useTheme } from '../theme/ThemeContext';
-import { BookCover } from './BookCover';
+import { BookCoverPreview } from './BookCoverPreview';
 import { StatusBadge } from './StatusBadge';
 
 export function BookOverview({ book }: { book: BookDetail }) {
   const { T, ty } = useTheme();
   return <View style={{ alignItems: 'center', gap: 12, paddingVertical: 12 }}>
-    <BookCover imageUrl={book.imageUrl} size="detail" />
+    <BookCoverPreview imageUrl={book.imageUrl} title={book.title} />
     <View style={{ gap: 6, width: '100%' }}>
       <Text accessibilityRole="header" style={[ty.title2, { color: T.label, textAlign: 'center' }]}>{book.title}</Text>
       <Text style={[ty.body, { color: T.labelSecondary, textAlign: 'center' }]}>{book.author}</Text>

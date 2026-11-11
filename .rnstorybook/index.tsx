@@ -7,6 +7,7 @@ import { view } from './storybook.requires';
 // requires an explicit storage adapter even for an isolated simulator preview.
 const session = new Map<string, string>();
 export default view.getStorybookUI({
+  onDeviceUI: process.env.EXPO_PUBLIC_STORYBOOK_HIDE_UI !== 'true',
   initialSelection: process.env.EXPO_PUBLIC_STORYBOOK_STORY || undefined,
   storage: {
   getItem: async key => session.get(key) ?? null,

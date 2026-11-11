@@ -1,5 +1,6 @@
 import { BlurView } from 'expo-blur';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
+import { useHorizontalFilterScroll } from '../state/useHorizontalFilterScroll';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { hexToRgba } from '../theme/personalization';
@@ -13,25 +14,9 @@ export interface SectionTabsProps {
 
 /** One scrollable glass rail that follows the light/dark theme; full labels remain available at any text size. */
 export function SectionTabs({ items, value, onChange }: SectionTabsProps) {
-  const { T, ty, isDark, reduceTransparency, reduceMotion } = useTheme();
-  const scroll = useRef<ScrollView>(null);
-  const positions = useRef(new Map<number, { x: number; width: number }>());
-  const viewport = useRef(0);
-  const offset = useRef(0);
+  const { T, ty, isDark, reduceTransparency } = useTheme();
   const [focusedId, setFocusedId] = useState<number>();
-  const reveal = (id: number) => {
-    const item = positions.current.get(id);
-    if (!item || !viewport.current) return;
-    const left = item.x - 4;
-    const right = item.x + item.width + 4;
-    const next = item.width > viewport.current - 8 || left < offset.current ? left
-      : right > offset.current + viewport.current ? right - viewport.current : offset.current;
-    if (next !== offset.current) {
-      offset.current = Math.max(0, next);
-      scroll.current?.scrollTo({ x: offset.current, animated: !reduceMotion });
-    }
-  };
-  useEffect(() => { reveal(value); }, [value, reduceMotion]);
+  const { scroll, reveal, onItemLayout, scrollProps } = useHorizontalFilterScroll(String(value), 4);
 
   if (!items.length) return null;
 
@@ -44,14 +29,12 @@ export function SectionTabs({ items, value, onChange }: SectionTabsProps) {
         }]} />
       </View>
       <ScrollView ref={scroll} testID="section-tabs-scroll" horizontal showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row} keyboardShouldPersistTaps="handled" scrollEventThrottle={16}
-        onLayout={event => { viewport.current = event.nativeEvent.layout.width; reveal(value); }}
-        onScroll={event => { offset.current = event.nativeEvent.contentOffset.x; }}>
+        contentContainerStyle={styles.row} keyboardShouldPersistTaps="handled" {...scrollProps}>
         {items.map(item => <Pressable key={item.id} accessibilityRole="tab" accessibilityLabel={item.label}
           accessibilityState={{ selected: value === item.id }}
-          onLayout={event => { positions.current.set(item.id, event.nativeEvent.layout); if (item.id === value) reveal(value); }}
-          onFocus={() => { setFocusedId(item.id); reveal(item.id); }} onBlur={() => setFocusedId(undefined)}
-          onPress={() => { reveal(item.id); onChange(item.id); }}
+          onLayout={event => onItemLayout(String(item.id), event)}
+          onFocus={() => { setFocusedId(item.id); reveal(String(item.id)); }} onBlur={() => setFocusedId(undefined)}
+          onPress={() => onChange(item.id)}
           style={({ pressed }) => [styles.tab, {
             backgroundColor: value === item.id ? T.brand : pressed ? T.fillPrimary : 'transparent',
             borderColor: focusedId === item.id ? T.label : 'transparent',
@@ -66,9 +49,9 @@ export function SectionTabs({ items, value, onChange }: SectionTabsProps) {
 
 const styles = StyleSheet.create({
   surface: { borderRadius: radius.pill, borderWidth: 1, overflow: 'hidden' },
-  row: { flexDirection: 'row', flexWrap: 'nowrap', gap: 4, padding: 4 },
+  row: { flexDirection: 'row', flexWrap: 'nowrap', gap: 4, paddingHorizontal: 4, paddingVertical: 8 },
   tab: { minHeight: minTouch, minWidth: minTouch, flexShrink: 0, paddingHorizontal: 16, paddingVertical: 10,
     borderWidth: 2, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   // Soft lift for the selected segment, like the iOS segmented control.
-  selected: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  selected: { shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
 });

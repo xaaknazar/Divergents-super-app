@@ -74,6 +74,7 @@ it('reveals an externally selected offscreen tab without animation in Reduce Mot
   const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
   const view = await render(theme(<SectionTabs items={items} value={0} onChange={jest.fn()} />));
   await fireEvent(view.getByTestId('section-tabs-scroll'), 'layout', { nativeEvent: { layout: { width: 300 } } });
+  await fireEvent(view.getByTestId('section-tabs-scroll'), 'contentSizeChange', 674, 64);
   await fireEvent(view.getByRole('tab', { name: 'Спорт' }), 'layout', { nativeEvent: { layout: { x: 580, width: 90 } } });
   await view.rerender(theme(<SectionTabs items={items} value={5} onChange={jest.fn()} />));
   expect(scrollTo).toHaveBeenLastCalledWith({ x: 374, animated: false });

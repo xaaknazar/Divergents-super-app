@@ -24,3 +24,7 @@ FORM: direct implementation of the exact user-pinned narrow reference, no concep
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
 Verification: TypeScript, navigation/appearance regression tests and isolated Storybook states. Native evidence must be distinguished from browser approximations; no publication is requested.
+
+## Owner refinement · 2026-11-11
+
+The new request adds an interruptible spring active capsule and a bottom fade, and removes the excess bottom gap. These explicit motion requirements supersede the earlier "no decorative motion" sentence for selection continuity. Retain the current 720pt width cap and measured unequal label slots from the shipped implementation, full titles, role gates and mini-player. Bottom offset is the safe-area inset with an 8pt minimum; fade height cannot exceed reserved content space. Verification and device limits: `docs/interface-motion-2026-11-11.md`.

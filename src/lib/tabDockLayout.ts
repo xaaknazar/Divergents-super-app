@@ -25,7 +25,8 @@ export function tabDockMiniPlayerHeight(titleLineHeight: number, subtitleLineHei
 }
 
 export function tabDockBottomInset(safeAreaBottom: number): number {
-  return Math.max(12, safeAreaBottom) + 8;
+  // Keep the dock immediately above the safe area, without a second outer gap.
+  return Math.max(8, safeAreaBottom);
 }
 
 export function tabDockContentInset(safeAreaBottom: number, miniPlayerHeight = 0): number {

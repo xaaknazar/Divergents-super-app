@@ -2,8 +2,10 @@ import { useAuth } from '@clerk/clerk-expo';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Clipboard from 'expo-clipboard';
 import React,{ useEffect,useMemo,useRef,useState } from 'react';
-import { ActivityIndicator,Alert,Keyboard,KeyboardAvoidingView,Platform,ScrollView,Text,View,useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator,Alert,Keyboard,KeyboardAvoidingView,Platform,ScrollView,Text,View } from 'react-native';
+import { ChatInputBar } from '../../components/ChatInputBar';
+import { useChatScroll } from '../../state/useChatScroll';
+import { useTabScrollToTop } from '../../state/useTabScrollToTop';
 import { ChatComposer } from '../../components/ChatComposer';
 import { ChatIntroduction } from '../../components/ChatIntroduction';
 import { ChatMessage } from '../../components/ChatMessage';
@@ -16,17 +18,14 @@ import { PageIntro } from '../../components/PageIntro';
 import { Screen } from '../../components/Screen';
 import { ScreenDescription } from '../../components/ScreenDescription';
 import { EmptyState } from '../../components/StateViews';
-import { } from '../../components/ui';
 import { Wrapper } from '../../components/Wrapper';
 import { AiMessage,AiUnavailableError,askAi } from '../../data/ai';
 import { askCourseAI } from '../../data/api';
 import * as pl from '../../data/plural';
 import { profileSummary } from '../../data/talentslab';
 import { hSuccess } from '../../lib/haptics';
-import { tabDockContentInset, tabDockMiniPlayerHeight } from '../../lib/tabDockLayout';
 import { AIStackParams } from '../../navigation/types';
 import { AiChatMsg,getAiThread,setAiThread,useAiThread } from '../../state/aiChat';
-import { useOptionalAudioTrack } from '../../state/audioPlayerValue';
 import { useCourses } from '../../state/CourseContext';
 import { tr,useLang } from '../../state/LanguageContext';
 import { useMyCourses } from '../../state/useMyCourses';
@@ -48,11 +47,6 @@ export function AIChatScreen({ navigation }: Props) {
   const profileButton = useProfileButton();
   const { T, ty } = useTheme();
   useLang();
-  const insets = useSafeAreaInsets();
-  const { fontScale } = useWindowDimensions();
-  const audioTrack = useOptionalAudioTrack();
-  const dockInset = tabDockContentInset(insets.bottom, audioTrack
-    ? tabDockMiniPlayerHeight(ty.footnoteEm.lineHeight ?? 18, ty.caption2.lineHeight ?? 14, fontScale) : 0);
   const { isSignedIn, getToken } = useAuth();
   const my = useMyCourses();
   const { courses } = useCourses();
@@ -67,6 +61,9 @@ export function AIChatScreen({ navigation }: Props) {
   const [unavailable, setUnavailable] = useState(false);
   const [kbShown, setKbShown] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const chatScroll = useChatScroll(scrollRef);
+  const [inputHeight, setInputHeight] = useState(180);
+  useTabScrollToTop(scrollRef, true, chatScroll.pauseFollowing);
   const lastQueryRef = useRef('');
   // Active stream timer + mounted flag so the simulated typewriter stops (and
   // never calls setState) once the screen is unmounted.
@@ -108,9 +105,8 @@ export function AIChatScreen({ navigation }: Props) {
       if (!mountedRef.current) return;
       i = Math.min(full.length, i + 4);
       setAiThread(m, (prev) => prev.map((msg) => (msg.id === id ? { ...msg, text: full.slice(0, i) } : msg)));
-      if (i % 80 === 0) scrollRef.current?.scrollToEnd({ animated: true });
       if (i < full.length) streamTimerRef.current = setTimeout(tick, 16);
-      else { setStreaming(false); scrollRef.current?.scrollToEnd({ animated: true }); }
+      else { setStreaming(false); }
     };
     tick();
   };
@@ -121,9 +117,9 @@ export function AIChatScreen({ navigation }: Props) {
     setUnavailable(false);
     const userMsg: Msg = { id: uid(), role: 'user', text: q };
     setMessages((prev) => [...prev, userMsg]);
+    chatScroll.followNewMessage();
     setText('');
     setBusy(true);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
     try {
       const token = isSignedIn ? await getToken() : null;
       // Skip our own error bubbles: resending «⚠️ Не удалось получить ответ…»
@@ -163,7 +159,6 @@ export function AIChatScreen({ navigation }: Props) {
       setMessages((prev) => [...prev, botMsg]);
     } finally {
       setBusy(false);
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     }
   };
 
@@ -202,7 +197,9 @@ export function AIChatScreen({ navigation }: Props) {
         </View>
       ) : (
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
-        <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, padding: 16, paddingBottom: 8 }} keyboardDismissMode="interactive">
+        <Wrapper flex={1}>
+        <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, padding: 16, paddingBottom: inputHeight + 12 }} keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled" {...chatScroll.scrollProps}>
           {messages.length === 0 ? <ChatIntroduction title={isGeneral ? tr('Спросите что угодно') : tr('Спросите о курсе')}
             description={isGeneral ? tr('Ассистент Divergents поможет с курсами, психотипами, талантами, карьерой и развитием.')
               : `${tr('Вопросы по материалам курса')} «${activeCourse?.title ?? ''}» — ${tr('отвечаю по урокам с таймкодами.')}`} /> : null}
@@ -217,10 +214,11 @@ export function AIChatScreen({ navigation }: Props) {
           ) : null}
         </ScrollView>
 
-        <Wrapper paddingHorizontal={16} paddingTop={8} paddingBottom={kbShown ? 10 : dockInset}>
+        <ChatInputBar keyboardVisible={kbShown} onHeightChange={setInputHeight}>
           {messages.length === 0 ? <ChatSuggestions suggestions={quick.map(q => tr(q))} onSelect={send} disabled={locked} /> : null}
           <ChatComposer value={text} onChangeText={setText} onSend={() => send(text)} disabled={locked} busy={busy}
             placeholder={isGeneral ? tr('Спросите ассистента…') : tr('Спросите о курсе…')} />
+        </ChatInputBar>
         </Wrapper>
       </KeyboardAvoidingView>
       )}

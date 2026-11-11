@@ -4,6 +4,7 @@ const meta = { title: 'Atoms/SFIcon', component: SF, args: {name:'bell.fill',siz
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Default:Story={};
+export const Pencil:Story={args:{name:'square.and.pencil',size:22}};
 export const OnGlass:Story={args:{color:'#FFFFFF',contrast:'onGlass'}};
 export const OnGlassDark:Story={...OnGlass,parameters:{scheme:'dark'}};
 export const MutedOnGlass:Story={args:{color:'rgba(255,255,255,0.45)',contrast:'onGlassMuted'}};

@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React,{ useCallback,useEffect,useState } from 'react';
-import { LayoutAnimation } from 'react-native';
+import { SectionTransition } from '../../components/SectionTransition';
 import { CommunityChallenges } from '../../components/CommunityChallenges';
 import { CommunityChannels } from '../../components/CommunityChannels';
 import { CommunityFeed } from '../../components/CommunityFeed';
@@ -32,7 +32,6 @@ import { tr,useLang } from '../../state/LanguageContext';
 import { useNotifications } from '../../state/NotificationsContext';
 import { useProfileButton } from '../../state/useProfileButton';
 import { useRole } from '../../state/useRole';
-import { useTheme } from '../../theme/ThemeContext';
 
 type Props = NativeStackScreenProps<CommunityStackParams, 'CommunityHome'>;
 type Nav = Props['navigation'];
@@ -57,7 +56,6 @@ const SECTION_FEATURE: Record<number, string> = { 1: 'channels', 3: 'trips', 4: 
 
 export function CommunityHomeScreen({ navigation, route }: Props) {
   const profileButton = useProfileButton();
-  const { reduceMotion } = useTheme();
   const { t } = useLang();
   const { unread } = useNotifications();
   const { refresh: refreshEnrollments } = useEnrollment();
@@ -130,7 +128,6 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
       : focusParam === 'meetup' ? 4
       : 5;
     if (!sectionOn(idx)) return;
-    if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSeg(idx);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusParam, refreshToken, feature]);
@@ -145,22 +142,24 @@ export function CommunityHomeScreen({ navigation, route }: Props) {
         </>
       )} />
 
-      {seg === 2 ? <Wrapper paddingHorizontal={16} paddingTop={8}><ResumeCallout area="community" /></Wrapper> : null}
       {/* Разделы — мягкие чипы с иконками; ряд идёт до края экрана и затухает, если не влез. */}
-      <Wrapper paddingTop={seg === 2 ? 6 : 4} paddingBottom={14}>
+      <Wrapper paddingTop={4} paddingBottom={6}>
         <ChipRail inset="page" itemRole="tab" overflowHint
           items={SECTION_KEYS.flatMap((key, id) => sectionOn(id) ? [{
             key: String(id), label: t(key), icon: SECTION_ICONS[id], active: seg === id,
-            onPress: () => { if (!reduceMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setSeg(id); },
+            onPress: () => setSeg(id),
           }] : [])} />
       </Wrapper>
 
-      {seg === 0 && <CommunityFeed navigation={navigation} setSeg={setSeg} meetups={sectionOn(4) ? meetups : []} trips={trips} sport={sport} challenges={challenges} error={error} onRetry={onRefresh} />}
-      {seg === 1 && sectionOn(1) && <CommunityChannels navigation={navigation} />}
-      {seg === 2 && <CommunityChallenges navigation={navigation} challenges={challenges} error={error} onRetry={onRefresh} />}
-      {seg === 3 && sectionOn(3) && <CommunityTrips navigation={navigation} trips={trips} error={error} onRetry={load} />}
-      {seg === 4 && sectionOn(4) && <CommunityMeetups navigation={navigation} meetups={meetups} error={error} onRetry={load} />}
-      {seg === 5 && sectionOn(5) && <CommunitySport navigation={navigation} sport={sport} error={error} onRetry={load} />}
+      <SectionTransition value={seg}>
+        {seg === 2 ? <Wrapper paddingHorizontal={16} paddingBottom={12}><ResumeCallout area="community" /></Wrapper> : null}
+        {seg === 0 && <CommunityFeed navigation={navigation} setSeg={setSeg} meetups={sectionOn(4) ? meetups : []} trips={trips} sport={sport} challenges={challenges} error={error} onRetry={onRefresh} />}
+        {seg === 1 && sectionOn(1) && <CommunityChannels navigation={navigation} />}
+        {seg === 2 && <CommunityChallenges navigation={navigation} challenges={challenges} error={error} onRetry={onRefresh} />}
+        {seg === 3 && sectionOn(3) && <CommunityTrips navigation={navigation} trips={trips} error={error} onRetry={load} />}
+        {seg === 4 && sectionOn(4) && <CommunityMeetups navigation={navigation} meetups={meetups} error={error} onRetry={load} />}
+        {seg === 5 && sectionOn(5) && <CommunitySport navigation={navigation} sport={sport} error={error} onRetry={load} />}
+      </SectionTransition>
       <Wrapper paddingTop={16} />
     </Screen>
   );

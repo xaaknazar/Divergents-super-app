@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { imgUrl } from '../data/api';
+import { bookCoverSource } from '../lib/bookCoverSource';
 import { useTheme } from '../theme/ThemeContext';
 import { SF } from './SFIcon';
 
@@ -9,7 +9,7 @@ import { SF } from './SFIcon';
 export function BookThumb({ uri, size = 'regular' }: { uri?: string | null; size?: 'small' | 'regular' }) {
   const { T } = useTheme();
   const box = size === 'small' ? styles.small : styles.regular;
-  const source = uri ? (uri.startsWith('https://covers.openlibrary.org') ? uri : imgUrl(uri, 120)) : undefined;
+  const source = bookCoverSource(uri, 120);
   return <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
     {source ? <Image source={source} style={[box, { backgroundColor: T.fillTertiary }]} contentFit="cover" cachePolicy="memory-disk" />
       : <View style={[box, styles.placeholder, { backgroundColor: T.fillTertiary }]}><SF name="book.fill" size={size === 'small' ? 14 : 16} color={T.labelTertiary} /></View>}

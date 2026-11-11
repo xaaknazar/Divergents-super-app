@@ -157,15 +157,18 @@ export function SF({ name, size = 20, color = '#000', contrast }: SFProps) {
     return <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={SVG_PATHS[icon]} fill={color} stroke={contrast ? outline : undefined} strokeWidth={contrast ? 0.75 : 0} strokeLinejoin="round" /></Svg>;
   }
   const Icon = lib === 'mci' ? MaterialCommunityIcons : Ionicons;
-  if (!contrast) return <Icon name={icon as any} size={size} color={color} />;
+  // Icon fonts otherwise inherit an extra baseline box: a centred container
+  // still leaves its visible pencil/search glyph sitting below the centre.
+  const metrics = { width: size, height: size, lineHeight: size, textAlign: 'center' as const, includeFontPadding: false };
+  if (!contrast) return <Icon name={icon as any} size={size} color={color} style={metrics} allowFontScaling={false} />;
   // Font glyphs have no native text-stroke prop. Four tiny, non-interactive
   // offsets make a crisp contour; no circle, scrim or colour fills the glass.
   return <View pointerEvents="none" style={[styles.glyph, { width: size, height: size }]}>
     {OUTLINE_OFFSETS.map(([x,y],index) => <View key={index} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
       style={[styles.outline, { transform: [{translateX:x}, {translateY:y}] }]}>
-      <Icon name={icon as any} size={size} color={outline} />
+      <Icon name={icon as any} size={size} color={outline} style={metrics} allowFontScaling={false} />
     </View>)}
-    <Icon name={icon as any} size={size} color={color} />
+    <Icon name={icon as any} size={size} color={color} style={metrics} allowFontScaling={false} />
   </View>;
 }
 const OUTLINE_OFFSETS = [[-0.65,0],[0.65,0],[0,-0.65],[0,0.65]] as const;

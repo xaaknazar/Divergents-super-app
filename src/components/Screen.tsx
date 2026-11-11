@@ -9,6 +9,7 @@ import { Aurora } from './Aurora';
 import { HeaderBackdrop, HeaderBackdropMotif } from './HeaderBackdrop';
 import { ColorWash } from './ColorWash';
 import { tabDockContentInset, tabDockMiniPlayerHeight } from '../lib/tabDockLayout';
+import { useTabScrollToTop } from '../state/useTabScrollToTop';
 import { useOptionalAudioTrack } from '../state/audioPlayerValue';
 
 export interface ScreenProps {
@@ -49,6 +50,7 @@ export function Screen({ children, surface = 'grouped', scroll = true, tabPaddin
   const bottom = tabPadding ? tabDockContentInset(bottomInset ? insets.bottom : 0, playerHeight) : bottomInset ? insets.bottom : 0;
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
+  useTabScrollToTop(scrollRef, scroll);
   useEffect(() => {
     if (scrollResetKey !== undefined) scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [scrollResetKey]);

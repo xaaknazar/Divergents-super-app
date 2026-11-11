@@ -18,7 +18,7 @@ export function OwnedCourseShelf({ courses, progress, onCoursePress }: OwnedCour
   const { textScale = 1 } = useTheme();
   const singleColumn = availableWidth < 350 || fontScale * textScale > 1.3;
   const cardWidth = Math.max(0, Math.min(singleColumn ? availableWidth - 32 : 220, availableWidth - 32));
-  return <ScrollView horizontal showsHorizontalScrollIndicator={false}
+  return <ScrollView horizontal showsHorizontalScrollIndicator={false} decelerationRate="normal" directionalLockEnabled
     onLayout={event => setLayoutWidth(event.nativeEvent.layout.width)}>
     <Wrapper dir="row" gap={16} paddingHorizontal={16} paddingTop={4} paddingBottom={24} align="stretch">
       {courses.map(course => <Wrapper key={course.id} width={cardWidth}>

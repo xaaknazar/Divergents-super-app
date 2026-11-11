@@ -11,6 +11,7 @@ import { shadow } from '../theme/tokens';
 import { GlassView } from 'expo-glass-effect';
 import { darkGlassTint, nativeGlass } from './GlassSurface';
 import { SF } from './SFIcon';
+import { BottomFade } from './BottomFade';
 
 export interface TabDockProps {
   items: readonly { id: string; label: string; icon: string; selected: boolean }[];
@@ -56,7 +57,7 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
     // First layout and rotation place the pill directly. Subsequent taps can
     // interrupt the spring, continuing from its current position and velocity.
     const immediate = reduceMotion || previousGeometry.current !== geometry;
-    const spring = { stiffness: 330, damping: 29, mass: 0.85 };
+    const spring = { stiffness: 280, damping: 26, mass: 0.9 };
     capsuleX.value = immediate ? target : withSpring(target, spring);
     capsuleSize.value = immediate ? capsuleWidth : withSpring(capsuleWidth, spring);
     previousGeometry.current = geometry;
@@ -79,7 +80,9 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
 
   if (!items.length) return null;
 
-  return <View pointerEvents="box-none" testID="tab-dock-position" style={[styles.position, {
+  return <>
+    <BottomFade />
+    <View pointerEvents="box-none" testID="tab-dock-position" style={[styles.position, {
     left: insets.left + TAB_DOCK_GUTTER, right: insets.right + TAB_DOCK_GUTTER, bottom: tabDockBottomInset(insets.bottom),
   }]}>
     <View pointerEvents="box-none" style={styles.width}>
@@ -92,7 +95,7 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
             setTextWidths(previous => Math.abs((previous[key] ?? 0) - measured) < 0.1 ? previous : { ...previous, [key]: measured });
           }}>{label}</Text>)}
       </View>
-      {/* Mini-player stays above the capsule, without a screen-wide scrim. */}
+      {/* Mini-player stays above the capsule; the fade itself remains non-interactive. */}
       <View testID="tab-dock-player" onLayout={event => setPlayerHeight(event.nativeEvent.layout.height)}
         style={{ marginBottom: playerHeight > 0 ? TAB_DOCK_PLAYER_GAP : 0 }}>
         {children}
@@ -135,7 +138,7 @@ export function TabDock({ items, onSelect, onLongPress, children }: TabDockProps
       </View>
       </View>
     </View>
-  </View>;
+  </View></>;
 }
 
 const ICON = 24;

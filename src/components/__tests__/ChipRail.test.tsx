@@ -52,6 +52,41 @@ async function placeItem(view: Rendered, key: string, x: number, width: number) 
 beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
 
+it('reveals once and updates fades only when the content actually moves', async () => {
+  const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
+  const view = await render(rail());
+  await measure(view);
+  await placeItem(view, '0', 16, 100);
+  await placeItem(view, '5', 650, 100);
+  await view.rerender(rail({ items: items(5) }));
+  expect(scrollTo).toHaveBeenCalledTimes(1);
+  expect(fade(view, 'previous')).toBeNull();
+  expect(fade(view, 'next')).toBeTruthy();
+  await placeItem(view, '5', 650, 100);
+  await measure(view);
+  expect(scrollTo).toHaveBeenCalledTimes(1);
+  await move(view, 300);
+  expect(fade(view, 'previous')).toBeTruthy();
+  await move(view, 500);
+  expect(fade(view, 'next')).toBeNull();
+});
+
+it('does not interrupt native momentum with selection or item measurements', async () => {
+  const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
+  const view = await render(rail());
+  await measure(view);
+  await placeItem(view, '0', 16, 100);
+  await placeItem(view, '5', 650, 100);
+  const scroll = view.getByTestId('chip-rail-scroll');
+  await fireEvent(scroll, 'momentumScrollBegin');
+  await view.rerender(rail({ items: items(5) }));
+  await placeItem(view, '5', 650, 100);
+  await move(view, 100);
+  expect(scrollTo).not.toHaveBeenCalled();
+  await fireEvent(scroll, 'momentumScrollEnd');
+  expect(scrollTo).toHaveBeenCalledTimes(1);
+});
+
 it('fades only the edges that have more content, without controls over the pills', async () => {
   const view = await render(rail());
   expect(fade(view, 'previous')).toBeNull();

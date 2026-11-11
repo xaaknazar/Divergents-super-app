@@ -82,7 +82,7 @@ it('raises the capsule above the system gesture area and respects landscape notc
   const view = await render(theme(<TabDock items={items} onSelect={jest.fn()} />));
   const position = view.getByTestId('tab-dock-position');
   expect(position.props.pointerEvents).toBe('box-none');
-  expect(flattened(position)).toMatchObject({ bottom: 20, left: 73, right: 73 });
+  expect(flattened(position)).toMatchObject({ bottom: 8, left: 73, right: 73 });
   expect(flattened(position).backgroundColor).toBeUndefined();
   expect(flattened(view.getByTestId('tab-dock-surface')).paddingBottom).toBeUndefined();
 });
@@ -105,12 +105,17 @@ it('keeps selection, long press, focus and the mini-player slot independent of d
 });
 
 it('reserves content space for the capsule, safe area and a scalable mini-player', () => {
-  expect(tabDockBottomInset(34)).toBe(42);
-  expect(tabDockContentInset(34)).toBe(122);
+  expect(tabDockBottomInset(34)).toBe(34);
+  expect(tabDockContentInset(34)).toBe(114);
   expect(tabDockMiniPlayerHeight(18, 14, 1)).toBe(63);
-  expect(tabDockContentInset(34, tabDockMiniPlayerHeight(18, 14, 1))).toBe(193);
+  expect(tabDockContentInset(34, tabDockMiniPlayerHeight(18, 14, 1))).toBe(185);
   expect(tabDockMiniPlayerHeight(22, 17, 2)).toBe(94);
-  expect(tabDockContentInset(0)).toBe(100);
+  expect(tabDockContentInset(0)).toBe(88);
+});
+
+it('keeps the fade inside the reserved dock inset so it cannot wash out the chat composer', async () => {
+  const view = await render(theme(<TabDock items={items} onSelect={jest.fn()} />));
+  expect(flattened(view.getByTestId('bottom-fade-dock', hidden)).height).toBe(tabDockContentInset(mockInsets.bottom));
 });
 
 it('never clips oversized labels vertically and retains the native large-content title', async () => {
