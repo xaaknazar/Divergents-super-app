@@ -14,3 +14,8 @@ export const Dark: Story = { ...Organizer, parameters: { scheme: 'dark' } };
 export const LargeText: Story = { ...Organizer, parameters: { viewport: 'compact', textSize: 'xl' } };
 
 export const Misconduct: Story = { args: { ...Organizer.args, flags: [{ ...Organizer.args!.flags![0], reason: 'misconduct', note: 'Пример: пояснение организатора о нарушении правил встречи.' }] } };
+export const Visits: Story = { args: { visits: [
+ { id: 'present', kind: 'meetup', eventId: 'demo', eventTitle: 'Пример: книжный клуб', eventDate: null, status: 'arrived', comment: '', updatedAt: '2026-11-11T12:00:00Z' },
+ { id: 'late', kind: 'sport', eventId: 'demo2', eventTitle: 'Пример: волейбол', eventDate: null, status: 'late', comment: 'Пришёл на 10 минут позже', updatedAt: '2026-11-11T12:00:00Z' },
+ { id: 'absent', kind: 'sport', eventId: 'demo3', eventTitle: 'Пример: футбол', eventDate: null, status: 'absent', comment: '', updatedAt: '2026-11-11T12:00:00Z' },
+] } };

@@ -67,8 +67,8 @@ export type CommunityStackParams = {
   /** Мероприятие — встреча сообщества. На сервере называется Meetup. */
   MeetupDetail: { meetupId: string };
   SportDetail: { sportId: string };
-  // Разбор заявок на офлайн-событие. Один экран на поездки, спорт и
-  // мероприятия: логика одинаковая, различается только слово в заголовке.
+  EventAttendance: { kind: 'trip' | 'sport' | 'meetup'; eventId: string; title?: string };
+  // Разбор заявок на офлайн-событие. Один экран на поездки, спорт и мероприятия.
   EventApplicants: { kind: 'trip' | 'sport' | 'meetup'; eventId: string; title?: string };
 };
 

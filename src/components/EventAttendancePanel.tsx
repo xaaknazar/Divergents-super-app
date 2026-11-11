@@ -15,7 +15,7 @@ export function EventAttendancePanel({ applicant }: { applicant?: ApplicantTarge
     await resource.refresh();
   };
   return <>
-    <EventAttendanceReport flags={resource.data?.flags ?? []} loading={resource.loading} error={resource.error} own={!applicant} onRetry={resource.refresh}
+    <EventAttendanceReport flags={resource.data?.flags ?? []} visits={resource.data?.visits ?? []} loading={resource.loading} error={resource.error} own={!applicant} onRetry={resource.refresh}
       onMark={applicant && resource.data?.canMark ? () => setMode('flag') : undefined} onRevoke={applicant && resource.data?.canRevoke ? () => setMode('revoke') : undefined} />
     {mode ? <EventMessageSheet mode={mode} initialReason={current?.reason} initialNote={mode === 'flag' ? current?.note : undefined} onSave={save} onClose={() => setMode(undefined)} /> : null}
   </>;

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { EventAttendanceScreen } from '../screens/community/EventAttendanceScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
@@ -105,6 +106,7 @@ function CommunityNavigator() {
       <CommunityStack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
       <CommunityStack.Screen name="CreateReadingChallenge" component={CreateReadingChallengeScreen} />
       <CommunityStack.Screen name="ChallengeApplicants" component={ChallengeApplicantsScreen} />
+      <CommunityStack.Screen name="EventAttendance" component={EventAttendanceScreen} />
       <CommunityStack.Screen name="EventApplicants" component={EventApplicantsScreen} />
       <CommunityStack.Screen name="MeetupDetail" component={MeetupDetailScreen} />
       <CommunityStack.Screen name="SportDetail" component={SportDetailScreen} />

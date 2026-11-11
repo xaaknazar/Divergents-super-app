@@ -1,9 +1,10 @@
 import { API_BASE } from '../config';
 import type { EventKind } from './community';
 export interface EventDraft { title: string; description: string; place: string; meetAt: string; spots: number; meetLat: number | null; meetLng: number | null; updatedAt: string }
-export interface EventManagement { canManage: boolean; finished: boolean; canComplete: boolean; event: EventDraft; announcements: { id: string; text: string; createdAt: string }[] }
+export interface EventManagement { canTakeAttendance?: boolean; startsAt?: string | null; serverNow?: string; canManage: boolean; finished: boolean; canComplete: boolean; event: EventDraft; announcements: { id: string; text: string; createdAt: string }[] }
 export interface AttendanceFlag { id: string; kind: EventKind; eventId: string; eventTitle: string; eventDate: string | null; reason: 'no_show' | 'misconduct'; note: string; createdAt: string }
-export interface Attendance { flags: AttendanceFlag[]; canMark: boolean; canRevoke: boolean }
+export interface AttendanceVisit { id: string; kind: EventKind; eventId: string; eventTitle: string; eventDate: string | null; status: 'arrived' | 'late' | 'absent'; comment: string; updatedAt: string }
+export interface Attendance { visits?: AttendanceVisit[]; flags: AttendanceFlag[]; canMark: boolean; canRevoke: boolean }
 export interface EventTarget { kind: EventKind; eventId: string }
 export interface ApplicantTarget extends EventTarget { applicationId: string }
 async function request<T>(path: string, token: string | null | undefined, body?: object): Promise<T> {

@@ -15,7 +15,7 @@ export function useEventResource<T>(key: string, load: (token: string | null) =>
     if (!userId) return;
     setSnapshot(prev => ({ identity, data: prev?.identity === identity ? prev.data : null, loading: true }));
     try {
-      const authToken = await token.current();
+      const authToken = await eventToken(token.current);
       if (version !== generation.current) return;
       const data = await loader.current(authToken);
       if (version === generation.current) setSnapshot({ identity, data, loading: false });
@@ -23,5 +23,14 @@ export function useEventResource<T>(key: string, load: (token: string | null) =>
   }, [identity, userId]);
   useFocusEffect(useCallback(() => { void refresh(); return () => { generation.current++; }; }, [refresh]));
   const current = snapshot?.identity === identity ? snapshot : undefined;
-  return { data: current?.data ?? null, error: current?.error, loading: !!userId && (current?.loading ?? true), refresh, getToken: () => token.current(), signedIn: !!userId };
+  return { data: current?.data ?? null, error: current?.error, loading: !!userId && (current?.loading ?? true), refresh, getToken: () => eventToken(token.current), signedIn: !!userId };
+}
+
+async function eventToken(getToken: () => Promise<string | null>) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([getToken(), new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Не удалось проверить вход. Проверьте связь и повторите.')), 12000);
+    })]);
+  } finally { if (timer) clearTimeout(timer); }
 }

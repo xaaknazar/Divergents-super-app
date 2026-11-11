@@ -300,7 +300,7 @@ export function TripDetailScreen({ route, navigation }: Props) {
             поездку и не мог ни увидеть заявки, ни принять решение. */}
         <Wrapper marginTop={16} marginHorizontal={16}><EventManagementPanel kind={'trip'} eventId={trip.id}
           onChanged={() => { navigation.replace(route.name as any, route.params as any); }}
-          onAttendance={() => navigation.navigate('EventApplicants', { kind: 'trip', eventId: trip.id, title: trip.title })} /></Wrapper>
+          onAttendance={() => navigation.navigate('EventAttendance', { kind: 'trip', eventId: trip.id, title: trip.title })} /></Wrapper>
 
         {isSignedIn && canManage ? (
           <Wrapper marginTop={6} marginHorizontal={16}>

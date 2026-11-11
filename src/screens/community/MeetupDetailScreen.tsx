@@ -279,7 +279,7 @@ export function MeetupDetailScreen({ route, navigation }: Props | NativeStackScr
 
         <Wrapper marginTop={16} marginHorizontal={16}><EventManagementPanel kind={kind} eventId={meetup.id}
           onChanged={() => { navigation.replace(route.name as any, route.params as any); }}
-          onAttendance={() => navigation.navigate('EventApplicants', { kind: kind, eventId: meetup.id, title: meetup.title })} /></Wrapper>
+          onAttendance={() => navigation.navigate('EventAttendance', { kind: kind, eventId: meetup.id, title: meetup.title })} /></Wrapper>
 
         {isSignedIn && canManage ? (
           <Wrapper marginTop={6} marginHorizontal={16}>
