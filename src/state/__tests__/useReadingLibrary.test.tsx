@@ -168,7 +168,7 @@ test('addition waits for confirmation and reloads the server shelf without chang
   expect(selection.title).toBe(' Новая книга ');
   expect(addBook.mock.calls[0]).toEqual(['token', 'ch1', expect.stringMatching(/^[a-f0-9-]{36}$/),
     { title: 'Новая книга', author: 'Автор', key: 'unread' }]);
-  fetchHistory.mockResolvedValue(shelf());
+  fetchHistory.mockResolvedValue({ ...shelf(), shelfBooks: shelf().shelfBooks!.map(b => b.key === 'unread' ? { ...b, key: 'canonical-server-key' } : b) });
   await act(async () => { resolve({ bookKey: 'canonical-server-key' }); expect(await pending).toEqual({ bookKey: 'canonical-server-key' }); });
   expect(h.result.current.books).toHaveLength(2);
   expect(h.result.current.adding).toBe(false);
@@ -197,7 +197,7 @@ test('unknown results retain one operation identity across retries and remounts'
   expect(addBook.mock.calls[3][2]).not.toBe(firstId);
 });
 
-test('duplicate presses send one addition, and refresh failure does not erase its confirmed receipt', async () => {
+test('duplicate presses send one addition and a failed refresh is retried before success', async () => {
   fetchHistory.mockResolvedValue(shelf());
   let resolve!: (value: { bookKey: string }) => void;
   addBook.mockReturnValueOnce(new Promise(done => { resolve = done; }));
@@ -209,7 +209,7 @@ test('duplicate presses send one addition, and refresh failure does not erase it
   fetchHistory.mockRejectedValueOnce(new Error('Не удалось обновить полку'));
   await act(async () => { resolve({ bookKey: 'unread' }); expect(await first).toEqual({ bookKey: 'unread' }); });
   expect(h.result.current.books).toHaveLength(2);
-  expect(h.result.current.error).toBe('Не удалось обновить полку');
+  expect(h.result.current.error).toBeUndefined();
   expect(h.result.current.addError).toBeUndefined();
   expect(h.result.current.adding).toBe(false);
 });
@@ -252,6 +252,7 @@ test('stale handlers and late acknowledgments cannot overwrite a new account add
   await act(async () => { resolveOld({ bookKey: 'old-book' }); expect(await old).toBeNull(); });
   expect(h.result.current.adding).toBe(true);
   expect(h.result.current.books).toEqual([]);
+  fetchHistory.mockResolvedValue({ ...shelf('other'), shelfBooks: shelf('other').shelfBooks!.map(b => ({ ...b, key: 'new-book' })) });
   await act(async () => { resolveNew({ bookKey: 'new-book' }); expect(await fresh).toEqual({ bookKey: 'new-book' }); });
   expect(h.result.current.adding).toBe(false);
 });
@@ -325,3 +326,32 @@ test('«Прочитана» is sent once per tap as bookStatus, refreshes the s
   expect((send.mock.calls[2][1] as any).operationId).toBe((send.mock.calls[1][1] as any).operationId);
   off(); send.mockRestore();
 });
+
+ test('a write receipt without a visible book does not report success; retry reuses the operation', async () => {
+  fetchHistory.mockResolvedValue({ ...shelf(), shelfBooks: [] });
+  const h = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+  await waitFor(() => expect(h.result.current.supportsBookshelf).toBe(true));
+  await act(async () => { expect(await h.result.current.add(selection)).toBeNull(); });
+  expect(h.result.current.addError).toContain('Книга сохранена');
+  expect(h.result.current.books).toEqual([]);
+  fetchHistory.mockResolvedValue(shelf());
+  await act(async () => { expect(await h.result.current.add(selection)).toEqual({ bookKey: 'unread' }); });
+  expect(addBook.mock.calls[0][2]).toBe(addBook.mock.calls[1][2]);
+  expect(h.result.current.addError).toBeUndefined();
+ });
+ test('adding a finished book explains why it is hidden from the timer shelf', async () => {
+  fetchHistory.mockResolvedValue({ ...shelf(), shelfBooks: shelf().shelfBooks!.map(b => ({ ...b, finished: true })) });
+  const h = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+  await waitFor(() => expect(h.result.current.supportsBookshelf).toBe(true));
+  await act(async () => { expect(await h.result.current.add(selection)).toBeNull(); });
+  expect(h.result.current.addError).toContain('Прочитано');
+ });
+ test('failed reads after a receipt preserve the draft by returning failure', async () => {
+  fetchHistory.mockResolvedValue(shelf());
+  const h = await renderHook(() => useReadingLibrary('ch1', 'demo-reader'));
+  await waitFor(() => expect(h.result.current.supportsBookshelf).toBe(true));
+  fetchHistory.mockRejectedValue(new Error('Нет соединения'));
+  await act(async () => { expect(await h.result.current.add(selection)).toBeNull(); });
+  expect(h.result.current.addError).toContain('Книга сохранена');
+  expect(h.result.current.books).toHaveLength(2);
+ });

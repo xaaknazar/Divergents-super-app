@@ -62,6 +62,7 @@ export function useReadingLibrary(challengeId: string, readerId?: string, receip
       setState({ context, books, busy: false, supportsBookshelf });
       // A copy on the phone lets the reader pick a book and start without internet.
       void saveJSON(`dvg.readingShelf.v1.${userId}.${challengeId}`, { books, supportsBookshelf }).catch(() => {});
+      return books;
     } catch (error) {
       settled = true;
       if (!isCurrent() || sequence.current !== request) return;
@@ -109,10 +110,18 @@ export function useReadingLibrary(challengeId: string, readerId?: string, receip
       if (!currentAddition()) return null;
       const result = await addReadingBook(token, challengeId, operationId, book);
       if (!currentAddition()) return null;
-      // Refresh errors belong to the list. A valid write receipt is still a
-      // confirmed addition; never invent reading totals while refreshing fails.
-      await load();
+      // A receipt confirms the write, not that the reader can select the book.
+      // Retry the read once for a stale response; never fabricate a shelf row.
+      let books = await load();
       if (!currentAddition()) return null;
+      if (!books?.some(item => item.key === result.bookKey)) {
+        books = await load();
+        if (!currentAddition()) return null;
+      }
+      const saved = books?.find(item => item.key === result.bookKey);
+      if (!saved) throw new Error('Книга сохранена, но пока не появилась в списке. Повторите добавление — дубликат не появится.');
+      if (saved.finished) throw new Error('Эта книга уже в разделе «Прочитано». Откройте «Мои книги и история» и верните её в чтение.');
+      emitShelfChanged();
       return result;
     } catch (error) {
       if (currentAddition()) setAddition({ generation, adding: false,
